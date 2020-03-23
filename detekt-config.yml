@@ -5,7 +5,7 @@ build:
 
 config:
   validation: true
-  excludes: ""
+  excludes: ''
 
 processors:
   active: true
@@ -28,6 +28,8 @@ console-reports:
 
 comments:
   active: true
+  AbsentOrWrongFileLicense:
+    active: false
   CommentOverPrivateFunction:
     active: false
   CommentOverPrivateProperty:
@@ -55,6 +57,7 @@ complexity:
     active: true
     threshold: 10
     includeStaticDeclarations: false
+    includePrivateDeclarations: false
   ComplexMethod:
     active: true
     threshold: 16
@@ -64,14 +67,14 @@ complexity:
     nestingFunctions: run,let,apply,with,also,use,forEach,isNotNull,ifNull
   LabeledExpression:
     active: true
-    ignoredLabels: ""
+    ignoredLabels: ''
   LargeClass:
     active: true
     threshold: 600
   LongMethod:
     active: true
     threshold: 60
-    excludes: "**/test/**"
+    excludes: '**/test/**'
   LongParameterList:
     active: false
     threshold: 6
@@ -87,7 +90,7 @@ complexity:
     threshold: 2
     ignoreAnnotation: true
     excludeStringsWithLessThan5Characters: false
-    excludes: "**/test/**"
+    excludes: '**/test/**'
     ignoreStringsRegex: ''
   TooManyFunctions:
     active: true
@@ -111,7 +114,7 @@ empty-blocks:
   active: true
   EmptyCatchBlock:
     active: true
-    allowedExceptionNameRegex: "^(_|(ignore|expected).*)"
+    allowedExceptionNameRegex: '^(_|(ignore|expected).*)'
   EmptyClassBlock:
     active: true
   EmptyDefaultConstructor:
@@ -149,7 +152,7 @@ exceptions:
     methodNames: 'toString,hashCode,equals,finalize'
   InstanceOfCheckForException:
     active: true
-    excludes: "**/test/**"
+    excludes: '**/test/**'
   NotImplementedDeclaration:
     active: true
   PrintStackTrace:
@@ -162,7 +165,7 @@ exceptions:
   SwallowedException:
     active: true
     ignoredExceptionTypes: 'InterruptedException,NumberFormatException,ParseException,MalformedURLException'
-    allowedExceptionNameRegex: "^(_|(ignore|expected).*)"
+    allowedExceptionNameRegex: '^(_|(ignore|expected).*)'
   ThrowingExceptionFromFinally:
     active: true
   ThrowingExceptionInMain:
@@ -174,7 +177,7 @@ exceptions:
     active: true
   TooGenericExceptionCaught:
     active: true
-    excludes: "**/test/**"
+    excludes: '**/test/**'
     exceptionNames:
       - ArrayIndexOutOfBoundsException
       - Error
@@ -184,7 +187,7 @@ exceptions:
       - IndexOutOfBoundsException
       - RuntimeException
       - Throwable
-    allowedExceptionNameRegex: "^(_|(ignore|expected).*)"
+    allowedExceptionNameRegex: '^(_|(ignore|expected).*)'
   TooGenericExceptionThrown:
     active: true
     exceptionNames:
@@ -406,9 +409,9 @@ potential-bugs:
     active: true
   LateinitUsage:
     active: false
-    excludes: "**/test/**"
-    excludeAnnotatedProperties: ""
-    ignoreOnClassesPattern: ""
+    excludes: '**/test/**'
+    excludeAnnotatedProperties: ''
+    ignoreOnClassesPattern: ''
   MapGetWithNotNullAssertionOperator:
     active: true
   MissingWhenCase:
@@ -451,11 +454,11 @@ style:
   ForbiddenComment:
     active: false
     values: 'TODO:,FIXME:,STOPSHIP:'
-    allowedPatterns: ""
+    allowedPatterns: ''
   ForbiddenImport:
     active: false
     imports: ''
-    forbiddenPatterns: ""
+    forbiddenPatterns: ''
   ForbiddenMethodCall:
     active: false
     methods: ''
@@ -470,7 +473,7 @@ style:
     active: true
     ignoreOverridableFunction: true
     excludedFunctions: 'describeContents'
-    excludeAnnotatedFunction: "dagger.Provides"
+    excludeAnnotatedFunction: 'dagger.Provides'
   LibraryCodeMustSpecifyReturnType:
     active: true
   LoopWithTooManyJumpStatements:
@@ -478,7 +481,7 @@ style:
     maxJumpCount: 1
   MagicNumber:
     active: true
-    excludes: "**/test/**"
+    excludes: '**/test/**'
     ignoreNumbers: '-1,0,1,2'
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: false
@@ -524,7 +527,7 @@ style:
   ReturnCount:
     active: true
     max: 3
-    excludedFunctions: "equals"
+    excludedFunctions: 'equals'
     excludeLabeled: false
     excludeReturnFromLambda: true
     excludeGuardClauses: false
@@ -544,7 +547,7 @@ style:
     acceptableDecimalLength: 4
   UnnecessaryAbstractClass:
     active: true
-    excludeAnnotatedClasses: ""
+    excludeAnnotatedClasses: ''
   UnnecessaryAnnotationUseSiteTarget:
     active: true
   UnnecessaryApply:
@@ -563,14 +566,14 @@ style:
     active: true
   UnusedPrivateMember:
     active: true
-    allowedNames: "(_|ignored|expected|serialVersionUID)"
+    allowedNames: '(_|ignored|expected|serialVersionUID)'
   UseArrayLiteralsInAnnotations:
     active: true
   UseCheckOrError:
     active: true
   UseDataClass:
     active: true
-    excludeAnnotatedClasses: ""
+    excludeAnnotatedClasses: ''
     allowVars: false
   UseIfInsteadOfWhen:
     active: true
@@ -584,5 +587,5 @@ style:
     active: true
   WildcardImport:
     active: true
-    excludes: ""
-    excludeImports: ""
+    excludes: ''
+    excludeImports: ''
