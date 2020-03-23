@@ -4,7 +4,6 @@ import com.dominiczirbel.Secrets
 import com.github.kittinunf.fuel.core.await
 import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.github.kittinunf.fuel.httpPost
-import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import java.util.Base64
 import java.util.concurrent.TimeUnit
@@ -21,9 +20,6 @@ data class AccessToken(
 
     companion object {
         private val base64Encoder = Base64.getEncoder()
-        private val gson = Gson()
-
-        private val accessTokenDeserializer = gsonDeserializer<AccessToken>(gson)
 
         // TODO ensure we don't make two concurrent requests for the access token
         private var current: AccessToken? = null
@@ -38,7 +34,7 @@ data class AccessToken(
                 .body("grant_type=client_credentials")
                 .header("Authorization", "Basic $encodedAuth")
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .await(accessTokenDeserializer)
+                .await(gsonDeserializer<AccessToken>())
                 .also { current = it }
         }
 
