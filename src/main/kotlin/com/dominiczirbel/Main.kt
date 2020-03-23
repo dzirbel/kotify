@@ -28,6 +28,10 @@ fun main() {
         val (track, duration) = measureTimedValue { runBlocking { Spotify.getTrack(it) } }
         println()
         println("Track lookup succeeded in $duration:")
-        println(track)
+        println("  track name: ${track.name}")
+        println("  track duration: ${track.durationMs}ms")
+        println("  album name: ${track.album.name}")
+        println("  released: ${track.album.releaseDate}")
+        println("  artists: ${track.artists.map { it.name }}")
     }
 }
