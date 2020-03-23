@@ -1,7 +1,9 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
+    const val coroutines = "1.3.5"
     const val detekt = "1.7.0"
+    const val fuel = "2.2.1"
     const val gson = "2.8.6"
     const val junit = "5.6.1"
     const val okhttp = "4.4.1"
@@ -23,8 +25,13 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-jdk8", "1.3.70"))
 
+    implementation("com.github.kittinunf.fuel", "fuel", Versions.fuel)
+    implementation("com.github.kittinunf.fuel", "fuel-coroutines", Versions.fuel)
+    implementation("com.github.kittinunf.fuel", "fuel-gson", Versions.fuel)
     implementation("com.google.code.gson", "gson", Versions.gson)
     implementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
+    implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
+    implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8", Versions.coroutines)
 
     testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit)
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)

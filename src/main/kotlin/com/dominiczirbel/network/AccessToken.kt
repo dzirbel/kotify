@@ -1,56 +1,49 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.Secrets
+import com.github.kittinunf.fuel.core.await
+import com.github.kittinunf.fuel.gson.gsonDeserializer
+import com.github.kittinunf.fuel.httpPost
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import java.net.HttpURLConnection
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 data class AccessToken(
-    val value: String,
-    val type: String,
-    val expiration: Long
+    @SerializedName("access_token") val accessToken: String,
+    @SerializedName("token_type") val tokenType: String,
+    @SerializedName("expires_in") val expiresIn: Long
 ) {
+    private val received: Long = System.currentTimeMillis()
+
     val isExpired
-        get() = System.currentTimeMillis() > expiration
+        get() = System.currentTimeMillis() > received + TimeUnit.SECONDS.toMillis(expiresIn)
 
     companion object {
-        private val httpClient = HttpClient.newHttpClient()
         private val base64Encoder = Base64.getEncoder()
         private val gson = Gson()
 
-        fun get(): AccessToken? {
+        private val accessTokenDeserializer = gsonDeserializer<AccessToken>(gson)
+
+        // TODO ensure we don't make two concurrent requests for the access token
+        private var current: AccessToken? = null
+
+        suspend fun get(): AccessToken? {
+            current?.takeIf { !it.isExpired }?.let { return it }
+
             val unencodedAuth = Secrets["client-id"] + ":" + Secrets["client-secret"]
             val encodedAuth = base64Encoder.encodeToString(unencodedAuth.toByteArray())
-            val request = HttpRequest.newBuilder()
-                .uri(URI("https://accounts.spotify.com/api/token"))
+
+            return "https://accounts.spotify.com/api/token".httpPost()
+                .body("grant_type=client_credentials")
                 .header("Authorization", "Basic $encodedAuth")
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString("grant_type=client_credentials"))
-                .build()
-
-            return httpClient.send(request, HttpResponse.BodyHandlers.ofString())
-                .takeIf { it.statusCode() == HttpURLConnection.HTTP_OK }
-                ?.let { gson.fromJson(it.body(), Response::class.java) }
-                ?.let { response ->
-                    AccessToken(
-                        value = response.accessToken,
-                        type = response.tokenType,
-                        // assumes that expires_in is in seconds, documentation doesn't specify (value is 3600)
-                        expiration = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(response.expiresIn)
-                    )
-                }
+                .await(accessTokenDeserializer)
+                .also { current = it }
         }
-    }
 
-    private data class Response(
-        @SerializedName("access_token") val accessToken: String,
-        @SerializedName("token_type") val tokenType: String,
-        @SerializedName("expires_in") val expiresIn: Long
-    )
+        suspend fun getOrThrow(): AccessToken = get() ?: throw NoAccessTokenError
+
+        object NoAccessTokenError : Throwable()
+    }
 }
