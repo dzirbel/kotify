@@ -6,11 +6,12 @@ import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.github.kittinunf.fuel.httpGet
 
 object Spotify {
-    suspend fun getTrack(id: String): FullTrack? {
+    private suspend inline fun <reified T : Any> get(url: String): T {
         val token = AccessToken.getOrThrow()
-
-        return "https://api.spotify.com/v1/tracks/$id".httpGet()
-            .header("Authorization", "Bearer ${token.accessToken}")
+        return url.httpGet()
+            .header("Authorization", "${token.tokenType} ${token.accessToken}")
             .await(gsonDeserializer())
     }
+
+    suspend fun getTrack(id: String): FullTrack = get("https://api.spotify.com/v1/tracks/$id")
 }

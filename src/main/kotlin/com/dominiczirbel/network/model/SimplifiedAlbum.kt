@@ -10,7 +10,7 @@ data class SimplifiedAlbum(
      * The field is present when getting an artist’s albums. Possible values are “album”, “single”, “compilation”,
      * “appears_on”. Compare to album_type this field represents relationship between the artist and the album.
      */
-    @SerializedName("album_group") val albumGroup: String,
+    @SerializedName("album_group") val albumGroup: String?,
 
     /**
      * The type of the album: one of “album”, “single”, or “compilation”.
