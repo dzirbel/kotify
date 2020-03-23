@@ -1,7 +1,7 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.Secrets
-import com.github.kittinunf.fuel.core.await
+import com.github.kittinunf.fuel.core.awaitResponse
 import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.github.kittinunf.fuel.httpPost
 import com.google.gson.annotations.SerializedName
@@ -19,23 +19,20 @@ data class AccessToken(
         get() = System.currentTimeMillis() > received + TimeUnit.SECONDS.toMillis(expiresIn)
 
     companion object {
+        private val requestCache = RequestCache<Unit, AccessToken>(maxSize = 1)
         private val base64Encoder = Base64.getEncoder()
 
-        // TODO ensure we don't make two concurrent requests for the access token
-        private var current: AccessToken? = null
-
         suspend fun get(): AccessToken? {
-            current?.takeIf { !it.isExpired }?.let { return it }
+            return requestCache.request(Unit) {
+                val unencodedAuth = Secrets["client-id"] + ":" + Secrets["client-secret"]
+                val encodedAuth = base64Encoder.encodeToString(unencodedAuth.toByteArray())
 
-            val unencodedAuth = Secrets["client-id"] + ":" + Secrets["client-secret"]
-            val encodedAuth = base64Encoder.encodeToString(unencodedAuth.toByteArray())
-
-            return "https://accounts.spotify.com/api/token".httpPost()
-                .body("grant_type=client_credentials")
-                .header("Authorization", "Basic $encodedAuth")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .await(gsonDeserializer<AccessToken>())
-                .also { current = it }
+                "https://accounts.spotify.com/api/token".httpPost()
+                    .body("grant_type=client_credentials")
+                    .header("Authorization", "Basic $encodedAuth")
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .awaitResponse(gsonDeserializer())
+            }
         }
 
         suspend fun getOrThrow(): AccessToken = get() ?: throw NoAccessTokenError
