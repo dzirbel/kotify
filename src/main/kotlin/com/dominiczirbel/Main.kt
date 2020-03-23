@@ -1,4 +1,5 @@
-import com.dominiczirbel.Secrets
+package com.dominiczirbel
+
 import com.dominiczirbel.network.Spotify
 
 fun main() {

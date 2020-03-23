@@ -14,7 +14,6 @@ object Spotify {
 
     private var accessToken: AccessToken? = null
         get() {
-            println(field)
             return field?.takeIf { !it.isExpired }
                 ?: AccessToken.get().also { field = it }
         }
