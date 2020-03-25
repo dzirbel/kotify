@@ -59,7 +59,7 @@ interface Track : SpotifyObject {
     val linkedFrom: TrackLink?
 
     /** A URL to a 30 second preview (MP3 format) of the track. */
-    val previewUrl: String
+    val previewUrl: String?
 
     /**
      * Part of the response when Track Relinking is applied, the original track is not available in the given market,
@@ -90,7 +90,7 @@ data class SimplifiedTrack(
     @SerializedName("is_playable") override val isPlayable: Boolean?,
     @SerializedName("linked_from") override val linkedFrom: TrackLink?,
     override val name: String,
-    @SerializedName("preview_url") override val previewUrl: String,
+    @SerializedName("preview_url") override val previewUrl: String?,
     override val restrictions: Map<String, String>?,
     @SerializedName("track_number") override val trackNumber: Int,
     override val type: String,
@@ -114,7 +114,7 @@ data class FullTrack(
     @SerializedName("is_playable") override val isPlayable: Boolean?,
     @SerializedName("linked_from") override val linkedFrom: TrackLink?,
     override val name: String,
-    @SerializedName("preview_url") override val previewUrl: String,
+    @SerializedName("preview_url") override val previewUrl: String?,
     override val restrictions: Map<String, String>?,
     @SerializedName("track_number") override val trackNumber: Int,
     override val type: String,
