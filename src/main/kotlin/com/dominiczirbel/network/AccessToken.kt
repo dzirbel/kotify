@@ -27,6 +27,7 @@ data class AccessToken(
                 val unencodedAuth = Secrets["client-id"] + ":" + Secrets["client-secret"]
                 val encodedAuth = base64Encoder.encodeToString(unencodedAuth.toByteArray())
 
+                // TODO add custom error handling
                 "https://accounts.spotify.com/api/token".httpPost()
                     .body("grant_type=client_credentials")
                     .header("Authorization", "Basic $encodedAuth")

@@ -27,7 +27,7 @@ fun main() {
     Secrets["track-id"]?.let {
         trackLookup(it)
         trackLookup(it)
-        trackLookup(it)
+        tracksLookup(listOf(it, it))
     }
 }
 
@@ -39,7 +39,20 @@ private fun trackLookup(id: String) {
     println("  track name: ${track.name}")
     println("  track duration: ${track.durationMs}ms")
     println("  album name: ${track.album.name}")
-    println("  released: ${track.album.releaseDate}")
+    println("  released date: ${track.album.releaseDate}")
     println("  artists: ${track.artists.map { it.name }}")
+    println()
+}
+
+@ExperimentalTime
+private fun tracksLookup(ids: List<String>) {
+    val (tracks, duration) = measureTimedValue { runBlocking { Spotify.getTracks(ids) } }
+    println()
+    println("Track lookups for $ids succeeded in $duration:")
+    println("  track names: ${tracks.map { it.name }}")
+    println("  track durations: ${tracks.map { it.durationMs }}ms")
+    println("  album names: ${tracks.map { it.album.name }}")
+    println("  released dates: ${tracks.map { it.album.releaseDate }}")
+    println("  artists: ${tracks.map { track -> track.artists.map { it.name }}}")
     println()
 }
