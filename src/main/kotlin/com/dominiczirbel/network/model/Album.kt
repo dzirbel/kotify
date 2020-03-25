@@ -55,6 +55,8 @@ interface Album : SpotifyObject {
      * "restrictions" : {"reason" : "market"}
      */
     val restrictions: Map<String, String>?
+
+    enum class Type { ALBUM, SINGLE, APPEARS_ON, COMPILATION }
 }
 
 /**
