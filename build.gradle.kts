@@ -29,7 +29,6 @@ dependencies {
     implementation("com.github.kittinunf.fuel", "fuel-gson", Versions.fuel)
     implementation("com.google.code.gson", "gson", Versions.gson)
     implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
-    implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8", Versions.coroutines)
 
     testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit)
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)
