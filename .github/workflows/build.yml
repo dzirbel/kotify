@@ -14,4 +14,8 @@ jobs:
       with:
         java-version: 11.0.3
     - run: chmod +x ./gradlew
-    - run: ./gradlew --no-daemon --stacktrace clean detekt test
+    - run: ./gradlew --no-daemon --stacktrace detekt test
+      env:
+        CI: true
+        client_id: ${{ secrets.client_id }}
+        client_secret: ${{ secrets.client_secret }}

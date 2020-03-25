@@ -9,14 +9,19 @@ import java.util.Properties
  */
 object Secrets {
     private val secrets = Properties()
+    private val useEnvVars = runCatching { System.getenv("CI") }.getOrNull() == "true"
 
     fun load() {
-        try {
-            FileInputStream("config/secrets.properties").use { secrets.load(it) }
-        } catch (ex: FileNotFoundException) {
-            println("Secrets properties file not found: ${ex.message}")
+        if (!useEnvVars) {
+            try {
+                FileInputStream("config/secrets.properties").use { secrets.load(it) }
+            } catch (ex: FileNotFoundException) {
+                println("Secrets properties file not found: ${ex.message}")
+            }
         }
     }
 
-    operator fun get(name: String): String? = secrets.getProperty(name)
+    operator fun get(name: String): String? {
+        return if (useEnvVars) System.getenv(name) else secrets.getProperty(name)
+    }
 }

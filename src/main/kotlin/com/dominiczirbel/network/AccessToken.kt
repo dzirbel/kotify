@@ -24,7 +24,7 @@ data class AccessToken(
 
         suspend fun get(): AccessToken? {
             return requestCache.request(Unit) {
-                val unencodedAuth = Secrets["client-id"] + ":" + Secrets["client-secret"]
+                val unencodedAuth = Secrets["client_id"] + ":" + Secrets["client_secret"]
                 val encodedAuth = base64Encoder.encodeToString(unencodedAuth.toByteArray())
 
                 // TODO add custom error handling

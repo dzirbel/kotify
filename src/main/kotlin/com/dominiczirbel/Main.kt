@@ -24,7 +24,7 @@ fun main() {
         }
     }
 
-    Secrets["track-id"]?.let {
+    Secrets["track_id"]?.let {
         trackLookup(it)
         trackLookup(it)
         tracksLookup(listOf(it, it))

@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName
 /**
  * Shared properties for Track objects; see [SimplifiedTrack] and [FullTrack].
  */
+@Suppress("ComplexInterface")
 interface Track : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the track. */
     override val href: String

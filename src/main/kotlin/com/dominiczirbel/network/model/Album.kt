@@ -2,6 +2,7 @@ package com.dominiczirbel.network.model
 
 import com.google.gson.annotations.SerializedName
 
+@Suppress("ComplexInterface")
 interface Album : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the album. */
     override val href: String
