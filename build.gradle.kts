@@ -6,7 +6,6 @@ private object Versions {
     const val fuel = "2.2.1"
     const val gson = "2.8.6"
     const val junit = "5.6.1"
-    const val okhttp = "4.4.1"
 }
 
 plugins {
@@ -29,7 +28,6 @@ dependencies {
     implementation("com.github.kittinunf.fuel", "fuel-coroutines", Versions.fuel)
     implementation("com.github.kittinunf.fuel", "fuel-gson", Versions.fuel)
     implementation("com.google.code.gson", "gson", Versions.gson)
-    implementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
     implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
     implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-jdk8", Versions.coroutines)
 
