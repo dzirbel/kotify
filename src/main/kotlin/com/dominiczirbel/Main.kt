@@ -9,6 +9,7 @@ import kotlin.time.measureTimedValue
 @ExperimentalTime
 fun main() {
     Secrets.load()
+    Secrets.authenticate()
 
     FuelManager.instance.addRequestInterceptor { transformer ->
         { request ->
@@ -33,7 +34,7 @@ fun main() {
 
 @ExperimentalTime
 private fun trackLookup(id: String) {
-    val (track, duration) = measureTimedValue { runBlocking { Spotify.getTrack(id) } }
+    val (track, duration) = measureTimedValue { runBlocking { Spotify.Tracks.getTrack(id) } }
     println()
     println("Track lookup for $id succeeded in $duration:")
     println("  track name: ${track.name}")
@@ -46,7 +47,7 @@ private fun trackLookup(id: String) {
 
 @ExperimentalTime
 private fun tracksLookup(ids: List<String>) {
-    val (tracks, duration) = measureTimedValue { runBlocking { Spotify.getTracks(ids) } }
+    val (tracks, duration) = measureTimedValue { runBlocking { Spotify.Tracks.getTracks(ids) } }
     println()
     println("Track lookups for $ids succeeded in $duration:")
     println("  track names: ${tracks.map { it.name }}")

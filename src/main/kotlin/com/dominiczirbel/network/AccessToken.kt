@@ -1,6 +1,5 @@
 package com.dominiczirbel.network
 
-import com.dominiczirbel.Secrets
 import com.github.kittinunf.fuel.core.awaitResponse
 import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.github.kittinunf.fuel.httpPost
@@ -22,9 +21,13 @@ data class AccessToken(
         private val requestCache = RequestCache<Unit, AccessToken>(maxSize = 1)
         private val base64Encoder = Base64.getEncoder()
 
-        suspend fun get(): AccessToken? {
+        fun getCached(): AccessToken? = requestCache.getCached(Unit)
+
+        fun getCachedOrThrow(): AccessToken = requestCache.getCached(Unit) ?: throw NoAccessTokenError
+
+        suspend fun get(clientId: String, clientSecret: String): AccessToken? {
             return requestCache.request(Unit) {
-                val unencodedAuth = Secrets["client_id"] + ":" + Secrets["client_secret"]
+                val unencodedAuth = "$clientId:$clientSecret"
                 val encodedAuth = base64Encoder.encodeToString(unencodedAuth.toByteArray())
 
                 // TODO add custom error handling
@@ -36,7 +39,9 @@ data class AccessToken(
             }
         }
 
-        suspend fun getOrThrow(): AccessToken = get() ?: throw NoAccessTokenError
+        suspend fun getOrThrow(clientId: String, clientSecret: String): AccessToken {
+            return get(clientId, clientSecret) ?: throw NoAccessTokenError
+        }
 
         object NoAccessTokenError : Throwable()
     }

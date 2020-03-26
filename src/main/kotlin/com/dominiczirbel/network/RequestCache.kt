@@ -44,6 +44,8 @@ class RequestCache<K, T>(maxSize: Int? = 0) {
         statusCodeCounts.clear()
     }
 
+    fun getCached(key: K): T? = complete[key]
+
     suspend fun request(key: K, suspendedRequest: suspend () -> ResponseOf<T>): T {
         complete[key]?.let { return it }
 

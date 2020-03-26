@@ -1,5 +1,7 @@
 package com.dominiczirbel
 
+import com.dominiczirbel.network.Spotify
+import kotlinx.coroutines.runBlocking
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.util.Properties
@@ -18,6 +20,12 @@ object Secrets {
             } catch (ex: FileNotFoundException) {
                 println("Secrets properties file not found: ${ex.message}")
             }
+        }
+    }
+
+    fun authenticate() {
+        runBlocking {
+            Spotify.authenticate(clientId = get("client_id")!!, clientSecret = get("client_secret")!!)
         }
     }
 
