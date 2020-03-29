@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
     const val coroutines = "1.3.5"
-    const val detekt = "1.7.0"
+    const val detekt = "1.7.2"
     const val fuel = "2.2.1"
     const val gson = "2.8.6"
     const val junit = "5.6.1"
@@ -10,7 +10,7 @@ private object Versions {
 
 plugins {
     kotlin("jvm") version "1.3.71"
-    id("io.gitlab.arturbosch.detekt") version "1.7.0"
+    id("io.gitlab.arturbosch.detekt") version "1.7.2"
     id("name.remal.check-dependency-updates") version "1.0.178"
 }
 
