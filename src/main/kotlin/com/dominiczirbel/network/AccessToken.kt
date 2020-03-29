@@ -3,14 +3,13 @@ package com.dominiczirbel.network
 import com.github.kittinunf.fuel.core.awaitResponse
 import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.github.kittinunf.fuel.httpPost
-import com.google.gson.annotations.SerializedName
 import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 data class AccessToken(
-    @SerializedName("access_token") val accessToken: String,
-    @SerializedName("token_type") val tokenType: String,
-    @SerializedName("expires_in") val expiresIn: Long
+    val accessToken: String,
+    val tokenType: String,
+    val expiresIn: Long
 ) {
     private val received: Long = System.currentTimeMillis()
 
@@ -35,7 +34,7 @@ data class AccessToken(
                     .body("grant_type=client_credentials")
                     .header("Authorization", "Basic $encodedAuth")
                     .header("Content-Type", "application/x-www-form-urlencoded")
-                    .awaitResponse(gsonDeserializer())
+                    .awaitResponse(gsonDeserializer(Spotify.gson))
             }
         }
 

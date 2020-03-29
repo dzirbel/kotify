@@ -1,44 +1,87 @@
 package com.dominiczirbel
 
+import com.dominiczirbel.network.model.Album
 import com.dominiczirbel.network.model.Artist
+import com.dominiczirbel.network.model.FullAlbum
+import com.dominiczirbel.network.model.FullArtist
+import com.dominiczirbel.network.model.SpotifyObject
 import com.dominiczirbel.network.model.Track
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 
-data class ArtistProperties(val id: String, val name: String) {
+sealed class ObjectProperties(private val type: String) {
+    abstract val id: String
+    abstract val name: String
+
+    protected fun check(obj: SpotifyObject) {
+        assertEquals(id, obj.id)
+        assertEquals(name, obj.name)
+        assertEquals(type, obj.type)
+        assertNotNull(obj.href)
+        assertNotNull(obj.uri)
+    }
+}
+
+data class ArtistProperties(
+    override val id: String,
+    override val name: String,
+    val albums: List<AlbumProperties>
+) : ObjectProperties(type = "artist") {
     fun check(artist: Artist) {
-        assertEquals(id, artist.id)
-        assertEquals(name, artist.name)
-        assertEquals("artist", artist.type)
-        assertNotNull(artist.href)
-        assertNotNull(artist.uri)
+        super.check(artist)
         assertNotNull(artist.externalUrls)
+
+        if (artist is FullArtist) {
+            assertNotNull(artist.followers)
+            assertNotNull(artist.genres)
+            assertNotNull(artist.images)
+            assertTrue(artist.popularity in 0..100) { "popularity: ${artist.popularity}" }
+        }
+    }
+}
+
+data class AlbumProperties(override val id: String, override val name: String) : ObjectProperties(type = "album") {
+    fun check(album: Album) {
+        super.check(album)
+
+        assertTrue(album.albumType in Album.Type.values()) { "album type: ${album.albumType}" }
+        assertTrue(album.artists.isNotEmpty())
+        assertNotNull(album.availableMarkets)
+        assertNotNull(album.externalUrls)
+        assertNotNull(album.images)
+        assertNotNull(album.releaseDate)
+        assertNotNull(album.releaseDatePrecision)
+        assertNull(album.restrictions)
+
+        if (album is FullAlbum) {
+            assertNotNull(album.genres)
+            assertNotNull(album.label)
+            assertTrue(album.popularity in 0..100) { "popularity: ${album.popularity}" }
+            assertTrue(album.tracks.items.isNotEmpty())
+        }
     }
 }
 
 data class TrackProperties(
-    val id: String,
-    val name: String,
+    override val id: String,
+    override val name: String,
     val artistNames: Set<String>,
     val discNumber: Int = 1,
     val explicit: Boolean = false,
     val isLocal: Boolean = false,
     val trackNumber: Int
-) {
+) : ObjectProperties(type = "track") {
     fun check(track: Track, trackRelinking: Boolean = false) {
-        assertEquals(id, track.id)
-        assertEquals(name, track.name)
-        assertEquals("track", track.type)
+        super.check(track)
+
         assertEquals(artistNames, track.artists.map { it.name }.toSet())
         assertEquals(trackNumber, track.trackNumber)
         assertEquals(discNumber, track.discNumber)
-        assertTrue(track.durationMs > 0)
+        assertTrue(track.durationMs > 0) { "durationMs: ${track.durationMs}" }
         assertEquals(explicit, track.explicit)
         assertEquals(isLocal, track.isLocal)
-        assertNotNull(track.href)
-        assertNotNull(track.uri)
         assertNotNull(track.externalUrls)
         if (!trackRelinking) {
             assertNull(track.isPlayable)
@@ -51,9 +94,119 @@ data class TrackProperties(
 internal object Fixtures {
     val notFoundId = "a".repeat(22)
 
+    // TODO add more
+    val albums = mapOf(
+        AlbumProperties("1Z5Aw68hjd9e17izcGbLSQ", "Kikelet") to listOf(
+            TrackProperties(
+                id = "5p4S4vvrJO1wB5yxdOKcMl",
+                name = "Búcsúzó",
+                artistNames = setOf("Dalriada"),
+                trackNumber = 1
+            ),
+            TrackProperties(
+                id = "49JyVkrdxsciZiFQ1amvUl",
+                name = "Kikelet",
+                artistNames = setOf("Dalriada"),
+                trackNumber = 2
+            ),
+            TrackProperties(
+                id = "5bLICs3ZgqEe3MYFLCstdP",
+                name = "Vándor-Fohász",
+                artistNames = setOf("Dalriada"),
+                trackNumber = 3
+            ),
+            TrackProperties(
+                id = "5ghCuL8wPjC0yESL7e4xQ5",
+                name = "Táltosének",
+                artistNames = setOf("Dalriada"),
+                trackNumber = 4
+            ),
+            TrackProperties(
+                id = "4Aovdxm75RG9bM1daoGojO",
+                name = "Néma Harangok",
+                artistNames = setOf("Dalriada"),
+                trackNumber = 5
+            ),
+            TrackProperties(
+                id = "40y0VEUdIvVXKsNOOnd1To",
+                name = "Szentföld",
+                artistNames = setOf("Dalriada"),
+                trackNumber = 6
+            ),
+            TrackProperties(
+                id = "1ZowHVI8WFNjtfz7fqh7Rr",
+                name = "Tűzhozó",
+                artistNames = setOf("Dalriada"),
+                trackNumber = 7
+            ),
+            TrackProperties(
+                id = "2FDPS2gYmtXmrIUNsR9qkc",
+                name = "Tavasz Dala",
+                artistNames = setOf("Dalriada"),
+                trackNumber = 8
+            ),
+            TrackProperties(
+                id = "7gZJBbzUNQk36dYz7wrOqX",
+                name = "Szondi Két Apródja II.rész",
+                artistNames = setOf("Dalriada"),
+                trackNumber = 9
+            )
+        )
+    )
+
     val artists = listOf(
-        ArtistProperties(id = "4Lm0pUvmisUHMdoky5ch2I", name = "Apocalyptica"),
-        ArtistProperties(id = "4mIdyUBqjS36BQHYFBbGjm", name = "Dalriada")
+        ArtistProperties(
+            id = "4Lm0pUvmisUHMdoky5ch2I",
+            name = "Apocalyptica",
+            albums = listOf(
+                AlbumProperties("1H3J2vxFHf0WxYUa9iklzu", "Cell-0"),
+                AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
+                AlbumProperties("18Gt3lLDRHDLGoFVMGwHsN", "Plays Metallica by Four Cellos - A Live Performance"),
+                AlbumProperties("5lG9ONdudQ38vodYN0rdqf", "Plays Metallica by Four Cellos (Remastered)"),
+                AlbumProperties("7LZNQn0nVJCEUQXfidfizI", "Plays Metallica by Four Cellos (Remastered)"),
+                AlbumProperties("4TwdbWtWDxgeLykyt4ExRr", "Plays Metallica by Four Cellos (Remastered)"),
+                AlbumProperties("3SAl71qdd63DXgbhk5U9ML", "Shadowmaker - Commentary"),
+                AlbumProperties("5E9y1NhXyYvDz7VpzWffdM", "Shadowmaker - Track by Track Commentary"),
+                AlbumProperties("5jraCBpvLqFRcO2RuRAeWB", "Shadowmaker"),
+                AlbumProperties("5fw9PyEt5p0Krd9jmQzKPT", "Shadowmaker"),
+                AlbumProperties("34RyPrb9qW7uSCLGpeLrBQ", "Shadowmaker"),
+                AlbumProperties("5ZkGjaVnwZ2CwlYIw1x0Rk", "Shadowmaker"),
+                AlbumProperties("6HN2EqksuJcOZg6pDnlcOl", "Shadowmaker"),
+                AlbumProperties("5LtbqIjHM33GTDoEDiVX5M", "Shadowmaker"),
+                AlbumProperties("1FYyFV2BXQq34Juzb9JYYS", "Wagner Reloaded: Live in Leipzig"),
+                AlbumProperties("2qBC6mNZpLTP0dheus0w3n", "Wagner Reloaded: Live in Leipzig"),
+                AlbumProperties("17PXuvNOg0dfmNLXecQDtu", "7th Symphony"),
+                AlbumProperties("6y9oEt1nMg3xv1ISOr6Zeo", "7th Symphony"),
+                AlbumProperties("1gX0jHVdBfO6F0zd8beNnk", "7th Symphony"),
+                AlbumProperties("46OuN3LtlXn4GK9qE7OzAp", "7th Symphony")
+            )
+        ),
+        ArtistProperties(
+            id = "4mIdyUBqjS36BQHYFBbGjm",
+            name = "Dalriada",
+            albums = listOf(
+                AlbumProperties("20tfQomQDgRlElhDPsrS01", "Nyárutó"),
+                AlbumProperties("7AmTFZLUdkKHLjSjJpzMW9", "Forrás"),
+                AlbumProperties("6xcz5gX6lIFuO8eRcWlR0k", "Áldás"),
+                AlbumProperties("09r0cZ1aQuKoHcS40F0wWh", "Mesék, álmok, regék"),
+                AlbumProperties("596NzuBPZUZAfO5DZmdDJz", "Napisten Hava"),
+                AlbumProperties("2Yedn1ga2wg3QTVEfvuPDP", "Jégbontó"),
+                AlbumProperties("447wr2DtMcrrIIoRlkJr8w", "Ígéret"),
+                AlbumProperties("3DIDgySJcb6MsfBMjcnqBG", "Arany-Album"),
+                AlbumProperties("44PjwxnXvAD8HNz1DqwpQf", "Szelek"),
+                AlbumProperties("1Z5Aw68hjd9e17izcGbLSQ", "Kikelet"),
+                AlbumProperties("3oYnpsZG6kgnJIHf8Y659H", "Jégbontó"),
+                AlbumProperties("6yxK3hbXOsxXSeJbKmnRx5", "Fergeteg"),
+                AlbumProperties("77MdutiO7oxFTRU1bO6pvB", "Csillagok dala"),
+                AlbumProperties("5X7vHeH7hoHg1aJIHi3aYY", "Csillagok dala"),
+                AlbumProperties("43EQHlJYWqZonZEG7DQPuR", "Egyek vagyunk (Ossian Tribute)"),
+                AlbumProperties("2HQU4177V84JDOFI8AgwbC", "Alternative Flavors of Caledonia"),
+                AlbumProperties("2HrkiIP2NzNH0KOtVs0ILI", "Robert Burns - The Poems and the Music"),
+                AlbumProperties("4lAfyDtPRx4P0vm1BUPBdp", "Best Of Celtic Spirit - Ireland"),
+                AlbumProperties("0GMuyid3D0qKbZwpiMQoK4", "Celtic Music & Songs - Ireland"),
+                AlbumProperties("4lVOozQS8t0lsivEUOuHYH", "Salute To Scotland")
+            )
+        )
     )
 
     val tracks = listOf(

@@ -1,14 +1,18 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.network.model.Album
+import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.network.model.FullTrack
 import com.dominiczirbel.network.model.Paging
 import com.dominiczirbel.network.model.SimplifiedAlbum
+import com.dominiczirbel.network.model.SimplifiedTrack
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.await
 import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.github.kittinunf.fuel.httpGet
+import com.google.gson.FieldNamingPolicy
+import com.google.gson.GsonBuilder
 import java.util.Locale
 
 /**
@@ -16,7 +20,11 @@ import java.util.Locale
  * https://developer.spotify.com/documentation/web-api/reference-beta
  */
 object Spotify {
-    private val errorDeserializer = gsonDeserializer<ErrorObject>()
+    internal val gson = GsonBuilder()
+        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+        .create()
+
+    private val errorDeserializer = gsonDeserializer<ErrorObject>(gson)
 
     const val MARKET_FROM_TOKEN = "from_token"
     private const val API_URL = "https://api.spotify.com/v1/"
@@ -27,6 +35,7 @@ object Spotify {
     private data class ErrorObject(val error: ErrorDetails)
     private data class ErrorDetails(val status: Int, val message: String)
 
+    private data class AlbumsModel(val albums: List<FullAlbum>)
     private data class ArtistsModel(val artists: List<FullArtist>)
     private data class TracksModel(val tracks: List<FullTrack>)
 
@@ -36,7 +45,7 @@ object Spotify {
         return try {
             (API_URL + path).httpGet(queryParams)
                 .header("Authorization", "${token.tokenType} ${token.accessToken}")
-                .await(gsonDeserializer())
+                .await(gsonDeserializer(gson))
         } catch (ex: FuelError) {
             val message = if (ex.response.body().isConsumed()) {
                 ex.message ?: ex.response.body().toString()
@@ -58,10 +67,79 @@ object Spotify {
     }
 
     /**
+     * Endpoints for retrieving information about one or more albums from the Spotify catalog.
+     *
+     * https://developer.spotify.com/documentation/web-api/reference/albums/
+     * https://developer.spotify.com/documentation/web-api/reference-beta/#category-albums
+     */
+    object Albums {
+        /**
+         * Get Spotify catalog information for a single album.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/albums/get-album/
+         * TODO beta api
+         *
+         * @param id The Spotify ID for the album.
+         * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
+         *  if you want to apply Track Relinking.
+         */
+        suspend fun getAlbum(id: String, market: String? = null): FullAlbum {
+            return get("albums/$id", listOf("market" to market))
+        }
+
+        /**
+         * Get Spotify catalog information about an album’s tracks. Optional parameters can be used to limit the number
+         * of tracks returned.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/albums/get-albums-tracks/
+         * TODO beta api
+         *
+         * @param id The Spotify ID for the album.
+         * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
+         *  if you want to apply Track Relinking.
+         * @param limit Optional. The maximum number of tracks to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset Optional. The index of the first track to return. Default: 0 (the first object). Use with limit
+         *  to get the next set of tracks.
+         */
+        suspend fun getAlbumTracks(
+            id: String,
+            market: String? = null,
+            limit: Int? = null,
+            offset: Int? = null
+        ): Paging<SimplifiedTrack> {
+            return get(
+                "albums/$id/tracks",
+                listOf(
+                    "market" to market,
+                    "limit" to limit,
+                    "offset" to offset
+                )
+            )
+        }
+
+        /**
+         * Get Spotify catalog information for multiple albums identified by their Spotify IDs.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/albums/get-several-albums/
+         * TODO beta api
+         *
+         * @param ids Required. A comma-separated list of the Spotify IDs for the albums. Maximum: 20 IDs.
+         * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
+         *  if you want to apply Track Relinking.
+         */
+        suspend fun getAlbums(ids: List<String>, market: String? = null): List<FullAlbum> {
+            return get<AlbumsModel>(
+                "albums",
+                listOf("ids" to ids.joinToString(separator = ","), "market" to market)
+            ).albums
+        }
+    }
+
+    /**
      * Endpoints for retrieving information about one or more artists from the Spotify catalog.
      *
      * https://developer.spotify.com/documentation/web-api/reference/artists/
-     * TODO beta API
+     * https://developer.spotify.com/documentation/web-api/reference-beta/#category-artists
      */
     object Artists {
         /**
@@ -137,7 +215,7 @@ object Spotify {
          * @param id The Spotify ID for the artist
          * @param market An ISO 3166-1 alpha-2 country code or the string from_token. Synonym for country.
          */
-        suspend fun getArtistTopTracks(id: String, market: String? = null): List<FullTrack> {
+        suspend fun getArtistTopTracks(id: String, market: String): List<FullTrack> {
             return get<TracksModel>("artists/$id/top-tracks", listOf("market" to market)).tracks
         }
 
@@ -159,7 +237,7 @@ object Spotify {
      * Endpoints for retrieving information about one or more tracks from the Spotify catalog.
      *
      * https://developer.spotify.com/documentation/web-api/reference/tracks/
-     * TODO beta API
+     * https://developer.spotify.com/documentation/web-api/reference-beta/#category-tracks
      *
      * TODO audio analysis
      * TODO audio features

@@ -1,7 +1,5 @@
 package com.dominiczirbel.network.model
 
-import com.google.gson.annotations.SerializedName
-
 interface Artist : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the artist. */
     override val href: String
@@ -26,7 +24,7 @@ interface Artist : SpotifyObject {
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#artist-object-simplified
  */
 data class SimplifiedArtist(
-    @SerializedName("external_urls") override val externalUrls: Map<String, String>,
+    override val externalUrls: Map<String, String>,
     override val href: String,
     override val id: String,
     override val name: String,
@@ -39,7 +37,7 @@ data class SimplifiedArtist(
  * https://developer.spotify.com/documentation/web-api/reference-beta/#object-artistobject
  */
 data class FullArtist(
-    @SerializedName("external_urls") override val externalUrls: Map<String, String>,
+    override val externalUrls: Map<String, String>,
     override val href: String,
     override val id: String,
     override val name: String,

@@ -20,7 +20,7 @@ interface Album : SpotifyObject {
     override val uri: String
 
     /** The type of the album: one of “album”, “single”, or “compilation”. */
-    val albumType: String
+    val albumType: Type
 
     /**
      * The artists of the album. Each artist object includes a link in href to more detailed information about the
@@ -57,7 +57,19 @@ interface Album : SpotifyObject {
      */
     val restrictions: Map<String, String>?
 
-    enum class Type { ALBUM, SINGLE, APPEARS_ON, COMPILATION }
+    enum class Type {
+        @SerializedName("album")
+        ALBUM,
+
+        @SerializedName("single")
+        SINGLE,
+
+        @SerializedName("appears_on")
+        APPEARS_ON,
+
+        @SerializedName("compilation")
+        COMPILATION
+    }
 }
 
 /**
@@ -65,16 +77,16 @@ interface Album : SpotifyObject {
  * https://developer.spotify.com/documentation/web-api/reference-beta/#object-simplifiedalbumobject
  */
 data class SimplifiedAlbum(
-    @SerializedName("album_type") override val albumType: String,
+    override val albumType: Album.Type,
     override val artists: List<SimplifiedArtist>,
-    @SerializedName("available_markets") override val availableMarkets: List<String>,
-    @SerializedName("external_urls") override val externalUrls: Map<String, String>,
+    override val availableMarkets: List<String>,
+    override val externalUrls: Map<String, String>,
     override val href: String,
     override val id: String,
     override val images: List<Image>,
     override val name: String,
-    @SerializedName("release_date") override val releaseDate: String,
-    @SerializedName("release_date_precision") override val releaseDatePrecision: String,
+    override val releaseDate: String,
+    override val releaseDatePrecision: String,
     override val restrictions: Map<String, String>?,
     override val type: String,
     override val uri: String,
@@ -83,7 +95,7 @@ data class SimplifiedAlbum(
      * The field is present when getting an artist’s albums. Possible values are “album”, “single”, “compilation”,
      * “appears_on”. Compare to album_type this field represents relationship between the artist and the album.
      */
-    val albumGroup: String?
+    val albumGroup: Album.Type?
 ) : Album
 
 /**
@@ -91,16 +103,16 @@ data class SimplifiedAlbum(
  * https://developer.spotify.com/documentation/web-api/reference-beta/#object-albumobject
  */
 data class FullAlbum(
-    @SerializedName("album_type") override val albumType: String,
+    override val albumType: Album.Type,
     override val artists: List<SimplifiedArtist>,
-    @SerializedName("available_markets") override val availableMarkets: List<String>,
-    @SerializedName("external_urls") override val externalUrls: Map<String, String>,
+    override val availableMarkets: List<String>,
+    override val externalUrls: Map<String, String>,
     override val href: String,
     override val id: String,
     override val images: List<Image>,
     override val name: String,
-    @SerializedName("release_date") override val releaseDate: String,
-    @SerializedName("release_date_precision") override val releaseDatePrecision: String,
+    override val releaseDate: String,
+    override val releaseDatePrecision: String,
     override val restrictions: Map<String, String>?,
     override val type: String,
     override val uri: String,
@@ -109,13 +121,16 @@ data class FullAlbum(
     val copyrights: List<Copyright>,
 
     /** Known external IDs for the album. */
-    @SerializedName("external_ids") val externalIds: ExternalId,
+    val externalIds: ExternalId,
 
     /**
      * A list of the genres used to classify the album. For example: "Prog Rock" , "Post-Grunge". (If not yet
      * classified, the array is empty.)
      * */
     val genres: List<String>,
+
+    /** The label for the album. */
+    val label: String,
 
     /**
      * The popularity of the album. The value will be between 0 and 100, with 100 being the most popular. The popularity

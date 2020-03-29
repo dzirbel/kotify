@@ -1,7 +1,5 @@
 package com.dominiczirbel.network.model
 
-import com.google.gson.annotations.SerializedName
-
 /**
  * Shared properties for Track objects; see [SimplifiedTrack] and [FullTrack].
  */
@@ -80,20 +78,20 @@ interface Track : SpotifyObject {
  */
 data class SimplifiedTrack(
     override val artists: List<SimplifiedArtist>,
-    @SerializedName("available_markets") override val availableMarkets: List<String>,
-    @SerializedName("disc_number") override val discNumber: Int,
-    @SerializedName("duration_ms") override val durationMs: Long,
+    override val availableMarkets: List<String>,
+    override val discNumber: Int,
+    override val durationMs: Long,
     override val explicit: Boolean,
-    @SerializedName("external_urls") override val externalUrls: ExternalUrl,
+    override val externalUrls: ExternalUrl,
     override val href: String,
     override val id: String,
-    @SerializedName("is_local") override val isLocal: Boolean,
-    @SerializedName("is_playable") override val isPlayable: Boolean?,
-    @SerializedName("linked_from") override val linkedFrom: TrackLink?,
+    override val isLocal: Boolean,
+    override val isPlayable: Boolean?,
+    override val linkedFrom: TrackLink?,
     override val name: String,
-    @SerializedName("preview_url") override val previewUrl: String?,
+    override val previewUrl: String?,
     override val restrictions: Map<String, String>?,
-    @SerializedName("track_number") override val trackNumber: Int,
+    override val trackNumber: Int,
     override val type: String,
     override val uri: String
 ) : Track
@@ -104,20 +102,20 @@ data class SimplifiedTrack(
  */
 data class FullTrack(
     override val artists: List<SimplifiedArtist>,
-    @SerializedName("available_markets") override val availableMarkets: List<String>,
-    @SerializedName("disc_number") override val discNumber: Int,
-    @SerializedName("duration_ms") override val durationMs: Long,
+    override val availableMarkets: List<String>,
+    override val discNumber: Int,
+    override val durationMs: Long,
     override val explicit: Boolean,
-    @SerializedName("external_urls") override val externalUrls: ExternalUrl,
+    override val externalUrls: ExternalUrl,
     override val href: String,
     override val id: String,
-    @SerializedName("is_local") override val isLocal: Boolean,
-    @SerializedName("is_playable") override val isPlayable: Boolean?,
-    @SerializedName("linked_from") override val linkedFrom: TrackLink?,
+    override val isLocal: Boolean,
+    override val isPlayable: Boolean?,
+    override val linkedFrom: TrackLink?,
     override val name: String,
-    @SerializedName("preview_url") override val previewUrl: String?,
+    override val previewUrl: String?,
     override val restrictions: Map<String, String>?,
-    @SerializedName("track_number") override val trackNumber: Int,
+    override val trackNumber: Int,
     override val type: String,
     override val uri: String,
 
@@ -128,7 +126,7 @@ data class FullTrack(
     val album: SimplifiedAlbum,
 
     /** Known external IDs for the track. */
-    @SerializedName("external_ids") val externalIds: ExternalId,
+    val externalIds: ExternalId,
 
     /**
      * The popularity of the track. The value will be between 0 and 100, with 100 being the most popular.
