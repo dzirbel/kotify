@@ -191,20 +191,20 @@ internal object Fixtures {
                 AlbumProperties("09r0cZ1aQuKoHcS40F0wWh", "Mesék, álmok, regék"),
                 AlbumProperties("596NzuBPZUZAfO5DZmdDJz", "Napisten Hava"),
                 AlbumProperties("2Yedn1ga2wg3QTVEfvuPDP", "Jégbontó"),
-                AlbumProperties("447wr2DtMcrrIIoRlkJr8w", "Ígéret"),
+                AlbumProperties("43EQHlJYWqZonZEG7DQPuR", "Egyek vagyunk (Ossian Tribute)"),
                 AlbumProperties("3DIDgySJcb6MsfBMjcnqBG", "Arany-Album"),
-                AlbumProperties("44PjwxnXvAD8HNz1DqwpQf", "Szelek"),
+                AlbumProperties("447wr2DtMcrrIIoRlkJr8w", "Ígéret"),
                 AlbumProperties("1Z5Aw68hjd9e17izcGbLSQ", "Kikelet"),
-                AlbumProperties("3oYnpsZG6kgnJIHf8Y659H", "Jégbontó"),
+                AlbumProperties("3Rt5otPyF6OqMfO1wjN46o", "Ezer csillag"),
                 AlbumProperties("6yxK3hbXOsxXSeJbKmnRx5", "Fergeteg"),
                 AlbumProperties("77MdutiO7oxFTRU1bO6pvB", "Csillagok dala"),
                 AlbumProperties("5X7vHeH7hoHg1aJIHi3aYY", "Csillagok dala"),
-                AlbumProperties("43EQHlJYWqZonZEG7DQPuR", "Egyek vagyunk (Ossian Tribute)"),
+                AlbumProperties("3oYnpsZG6kgnJIHf8Y659H", "Jégbontó"),
                 AlbumProperties("2HQU4177V84JDOFI8AgwbC", "Alternative Flavors of Caledonia"),
                 AlbumProperties("2HrkiIP2NzNH0KOtVs0ILI", "Robert Burns - The Poems and the Music"),
-                AlbumProperties("4lAfyDtPRx4P0vm1BUPBdp", "Best Of Celtic Spirit - Ireland"),
+                AlbumProperties("44PjwxnXvAD8HNz1DqwpQf", "Szelek"),
                 AlbumProperties("0GMuyid3D0qKbZwpiMQoK4", "Celtic Music & Songs - Ireland"),
-                AlbumProperties("4lVOozQS8t0lsivEUOuHYH", "Salute To Scotland")
+                AlbumProperties("4lAfyDtPRx4P0vm1BUPBdp", "Best Of Celtic Spirit - Ireland")
             )
         )
     )
