@@ -56,3 +56,11 @@ detekt {
     input = files("src/main/kotlin", "src/test/kotlin")
     config = files("detekt-config.yml")
 }
+
+tasks.create<JavaExec>("run") {
+    description = "Run Main.kt"
+    group = "Build"
+
+    main = "com.dominiczirbel.MainKt"
+    classpath = sourceSets.main.get().runtimeClasspath
+}
