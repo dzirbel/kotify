@@ -8,6 +8,7 @@ import com.dominiczirbel.TrackProperties
 import com.dominiczirbel.assertThrowsInline
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -73,6 +74,26 @@ internal class SpotifyTest {
     fun getArtistRelatedArtists(artistProperties: ArtistProperties) {
         val relatedArtists = runBlocking { Spotify.Artists.getArtistRelatedArtists(artistProperties.id) }
         assertTrue(relatedArtists.isNotEmpty())
+    }
+
+    @ParameterizedTest
+    @MethodSource("tracks")
+    fun getAudioFeatures(trackProperties: TrackProperties) {
+        val audioFeatures = runBlocking { Spotify.Tracks.getAudioFeatures(trackProperties.id) }
+        assertNotNull(audioFeatures) // TODO more assertions
+    }
+
+    @Test
+    fun getAudioFeatures() {
+        val audioFeatures = runBlocking { Spotify.Tracks.getAudioFeatures(Fixtures.tracks.map { it.id }) }
+        assertEquals(Fixtures.tracks.size, audioFeatures.size) // TODO more assertions
+    }
+
+    @ParameterizedTest
+    @MethodSource("tracks")
+    fun getAudioAnalysis(trackProperties: TrackProperties) {
+        val audioAnalysis = runBlocking { Spotify.Tracks.getAudioAnalysis(trackProperties.id) }
+        assertNotNull(audioAnalysis) // TODO more assertions
     }
 
     @ParameterizedTest

@@ -1,11 +1,17 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.network.model.Album
+import com.dominiczirbel.network.model.AudioAnalysis
+import com.dominiczirbel.network.model.AudioFeatures
 import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.FullArtist
+import com.dominiczirbel.network.model.FullPlaylist
 import com.dominiczirbel.network.model.FullTrack
+import com.dominiczirbel.network.model.Image
 import com.dominiczirbel.network.model.Paging
+import com.dominiczirbel.network.model.PlaylistTrack
 import com.dominiczirbel.network.model.SimplifiedAlbum
+import com.dominiczirbel.network.model.SimplifiedPlaylist
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.await
@@ -37,6 +43,7 @@ object Spotify {
 
     private data class AlbumsModel(val albums: List<FullAlbum>)
     private data class ArtistsModel(val artists: List<FullArtist>)
+    private data class AudioFeaturesModel(val audioFeatures: List<AudioFeatures>)
     private data class TracksModel(val tracks: List<FullTrack>)
 
     private suspend inline fun <reified T : Any> get(path: String, queryParams: List<Pair<String, Any?>>? = null): T {
@@ -77,7 +84,7 @@ object Spotify {
          * Get Spotify catalog information for a single album.
          *
          * https://developer.spotify.com/documentation/web-api/reference/albums/get-album/
-         * TODO beta api
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-an-album
          *
          * @param id The Spotify ID for the album.
          * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
@@ -92,7 +99,7 @@ object Spotify {
          * of tracks returned.
          *
          * https://developer.spotify.com/documentation/web-api/reference/albums/get-albums-tracks/
-         * TODO beta api
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-an-albums-tracks
          *
          * @param id The Spotify ID for the album.
          * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
@@ -107,21 +114,14 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null
         ): Paging<SimplifiedTrack> {
-            return get(
-                "albums/$id/tracks",
-                listOf(
-                    "market" to market,
-                    "limit" to limit,
-                    "offset" to offset
-                )
-            )
+            return get("albums/$id/tracks", listOf("market" to market, "limit" to limit, "offset" to offset))
         }
 
         /**
          * Get Spotify catalog information for multiple albums identified by their Spotify IDs.
          *
          * https://developer.spotify.com/documentation/web-api/reference/albums/get-several-albums/
-         * TODO beta api
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-multiple-albums
          *
          * @param ids Required. A comma-separated list of the Spotify IDs for the albums. Maximum: 20 IDs.
          * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
@@ -234,15 +234,180 @@ object Spotify {
     }
 
     /**
+     * https://developer.spotify.com/documentation/web-api/reference/playlists/
+     */
+    object Playlists {
+        /**
+         * Get a list of the playlists owned or followed by the current Spotify user.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/playlists/get-a-list-of-current-users-playlists/
+         *
+         * @param limit Optional. The maximum number of playlists to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset Optional. The index of the first playlist to return. Default: 0 (the first object). Maximum
+         *  offset: 100.000. Use with limit to get the next set of playlists.
+         */
+        suspend fun getPlaylists(limit: Int? = null, offset: Int? = null): Paging<SimplifiedPlaylist> {
+            return get("me/playlists", listOf("limit" to limit, "offset" to offset))
+        }
+
+        /**
+         * Get a list of the playlists owned or followed by a Spotify user.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/playlists/get-list-users-playlists/
+         *
+         * @param limit Optional. The maximum number of playlists to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset Optional. The index of the first playlist to return. Default: 0 (the first object). Maximum
+         *  offset: 100.000. Use with limit to get the next set of playlists.
+         */
+        suspend fun getPlaylists(userId: String, limit: Int? = null, offset: Int? = null): Paging<SimplifiedPlaylist> {
+            return get("users/$userId/playlists", listOf("limit" to limit, "offset" to offset))
+        }
+
+        /**
+         * Get the current image associated with a specific playlist.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/playlists/get-playlist-cover/
+         *
+         * @param playlistId The Spotify ID for the playlist.
+         */
+        suspend fun getPlaylistCoverImages(playlistId: String): List<Image> {
+            return get("playlists/$playlistId/images")
+        }
+
+        /**
+         * Get a playlist owned by a Spotify user.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/playlists/get-playlist/
+         *
+         * @param playlistId The Spotify ID for the playlist.
+         * @param fields Optional. Filters for the query: a comma-separated list of the fields to return. If omitted,
+         *  all fields are returned. For example, to get just the playlist’s description and URI:
+         *  fields=description,uri. A dot separator can be used to specify non-reoccurring fields, while parentheses can
+         *  be used to specify reoccurring fields within objects. For example, to get just the added date and user ID of
+         *  the adder: fields=tracks.items(added_at,added_by.id). Use multiple parentheses to drill down into nested
+         *  objects, for example: fields=tracks.items(track(name,href,album(name,href))). Fields can be excluded by
+         *  prefixing them with an exclamation mark, for example:
+         *  fields=tracks.items(track(name,href,album(!name,href)))
+         * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
+         *  if you want to apply Track Relinking. For episodes, if a valid user access token is specified in the request
+         *  header, the country associated with the user account will take priority over this parameter.
+         *  Note: If neither market or user country are provided, the episode is considered unavailable for the client.
+         * @param additionalTypes Optional. A comma-separated list of item types that your client supports besides the
+         *  default track type. Valid types are: track and episode. Note: This parameter was introduced to allow
+         *  existing clients to maintain their current behaviour and might be deprecated in the future. In addition to
+         *  providing this parameter, make sure that your client properly handles cases of new types in the future by
+         *  checking against the type field of each object.
+         */
+        suspend fun getPlaylist(
+            playlistId: String,
+            fields: List<String>? = null,
+            market: String? = null,
+            additionalTypes: List<String>? = null
+        ): FullPlaylist {
+            return get(
+                "playlists/$playlistId",
+                listOf(
+                    "fields" to fields?.joinToString(separator = ","),
+                    "market" to market,
+                    "additional_types" to additionalTypes?.joinToString(separator = ",")
+                )
+            )
+        }
+
+        /**
+         * Get full details of the tracks or episodes of a playlist owned by a Spotify user.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/playlists/get-playlists-tracks/
+         *
+         * @param fields Optional. Filters for the query: a comma-separated list of the fields to return. If omitted,
+         *  all fields are returned. For example, to get just the total number of tracks and the request limit:
+         *  fields=total,limit
+         *  A dot separator can be used to specify non-reoccurring fields, while parentheses can be used to specify
+         *  reoccurring fields within objects. For example, to get just the added date and user ID of the adder:
+         *  fields=items(added_at,added_by.id)
+         *  Use multiple parentheses to drill down into nested objects, for example:
+         *  fields=items(track(name,href,album(name,href)))
+         *  Fields can be excluded by prefixing them with an exclamation mark, for example:
+         *  fields=items.track.album(!external_urls,images)
+         * @param limit Optional. The maximum number of tracks to return. Default: 100. Minimum: 1. Maximum: 100.
+         * @param offset Optional. The index of the first track to return. Default: 0 (the first object).
+         * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
+         *  if you want to apply Track Relinking. For episodes, if a valid user access token is specified in the request
+         *  header, the country associated with the user account will take priority over this parameter.
+         *  _Note: If neither market or user country are provided, the episode is considered unavailable for the client.
+         * @param additionalTypes Optional. A comma-separated list of item types that your client supports besides the
+         *  default track type. Valid types are: track and episode. Note: This parameter was introduced to allow
+         *  existing clients to maintain their current behaviour and might be deprecated in the future. In addition to
+         *  providing this parameter, make sure that your client properly handles cases of new types in the future by
+         *  checking against the type field of each object.
+         */
+        suspend fun getPlaylistTracks(
+            playlistId: String,
+            fields: List<String>? = null,
+            limit: Int? = null,
+            offset: Int? = null,
+            market: String? = null,
+            additionalTypes: List<String>? = null
+        ): Paging<PlaylistTrack> {
+            return get(
+                "playlists/$playlistId/tracks",
+                listOf(
+                    "fields" to fields?.joinToString(separator = ","),
+                    "limit" to limit,
+                    "offset" to offset,
+                    "market" to market,
+                    "additional_types" to additionalTypes?.joinToString(separator = ",")
+                )
+            )
+        }
+    }
+
+    /**
      * Endpoints for retrieving information about one or more tracks from the Spotify catalog.
      *
      * https://developer.spotify.com/documentation/web-api/reference/tracks/
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-tracks
-     *
-     * TODO audio analysis
-     * TODO audio features
      */
     object Tracks {
+        /**
+         * Get a detailed audio analysis for a single track identified by its unique Spotify ID.
+         *
+         * The Audio Analysis endpoint provides low-level audio analysis for all of the tracks in the Spotify catalog.
+         * The Audio Analysis describes the track’s structure and musical content, including rhythm, pitch, and timbre.
+         * All information is precise to the audio sample.
+         *
+         * Many elements of analysis include confidence values, a floating-point number ranging from 0.0 to 1.0.
+         * Confidence indicates the reliability of its corresponding attribute. Elements carrying a small confidence
+         * value should be considered speculative. There may not be sufficient data in the audio to compute the
+         * attribute with high certainty.
+         *
+         * @param id Required. The Spotify ID for the track.
+         */
+        suspend fun getAudioAnalysis(id: String): AudioAnalysis = get("audio-analysis/$id")
+
+        /**
+         * Get audio feature information for a single track identified by its unique Spotify ID.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-features/
+         *
+         * @param id Required. The Spotify ID for the track.
+         */
+        suspend fun getAudioFeatures(id: String): AudioFeatures = get("audio-features/$id")
+
+        /**
+         * Get audio features for multiple tracks based on their Spotify IDs.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/
+         *
+         * @param ids Required. A comma-separated list of the Spotify IDs for the tracks. Maximum: 100 IDs.
+         */
+        suspend fun getAudioFeatures(ids: List<String>): List<AudioFeatures> {
+            return get<AudioFeaturesModel>(
+                "audio-features",
+                listOf("ids" to ids.joinToString(separator = ","))
+            ).audioFeatures
+        }
+
         /**
          * Get Spotify catalog information for a single track identified by its unique Spotify ID.
          *

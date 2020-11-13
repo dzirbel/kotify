@@ -24,9 +24,11 @@ object Secrets {
     }
 
     fun authenticate() {
+        val id = get("client_id")!!
         runBlocking {
-            Spotify.authenticate(clientId = get("client_id")!!, clientSecret = get("client_secret")!!)
+            Spotify.authenticate(clientId = id, clientSecret = get("client_secret")!!)
         }
+        println("Authenticated with client ID $id")
     }
 
     operator fun get(name: String): String? {
