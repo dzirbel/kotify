@@ -17,7 +17,7 @@ sealed class ObjectProperties(private val type: String) {
 
     protected fun check(obj: SpotifyObject) {
         assertEquals(id, obj.id)
-        assertEquals(name, obj.name)
+        assertEquals(name, obj.name) { "unexpected name for id $id" }
         assertEquals(type, obj.type)
         assertNotNull(obj.href)
         assertNotNull(obj.uri)
@@ -159,52 +159,52 @@ internal object Fixtures {
             id = "4Lm0pUvmisUHMdoky5ch2I",
             name = "Apocalyptica",
             albums = listOf(
-                AlbumProperties("1H3J2vxFHf0WxYUa9iklzu", "Cell-0"),
-                AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
                 AlbumProperties("18Gt3lLDRHDLGoFVMGwHsN", "Plays Metallica by Four Cellos - A Live Performance"),
-                AlbumProperties("5lG9ONdudQ38vodYN0rdqf", "Plays Metallica by Four Cellos (Remastered)"),
-                AlbumProperties("7LZNQn0nVJCEUQXfidfizI", "Plays Metallica by Four Cellos (Remastered)"),
-                AlbumProperties("4TwdbWtWDxgeLykyt4ExRr", "Plays Metallica by Four Cellos (Remastered)"),
-                AlbumProperties("3SAl71qdd63DXgbhk5U9ML", "Shadowmaker - Commentary"),
-                AlbumProperties("5E9y1NhXyYvDz7VpzWffdM", "Shadowmaker - Track by Track Commentary"),
-                AlbumProperties("5jraCBpvLqFRcO2RuRAeWB", "Shadowmaker"),
-                AlbumProperties("5fw9PyEt5p0Krd9jmQzKPT", "Shadowmaker"),
+                AlbumProperties("1FYyFV2BXQq34Juzb9JYYS", "Wagner Reloaded: Live in Leipzig"),
+                AlbumProperties("1H3J2vxFHf0WxYUa9iklzu", "Cell-0"),
+                AlbumProperties("1rcVwAd9FXK9ONouJVeRSF", "Worlds Collide"),
+                AlbumProperties("2qBC6mNZpLTP0dheus0w3n", "Wagner Reloaded: Live in Leipzig"),
                 AlbumProperties("34RyPrb9qW7uSCLGpeLrBQ", "Shadowmaker"),
+                AlbumProperties("3SAl71qdd63DXgbhk5U9ML", "Shadowmaker - Commentary"),
+                AlbumProperties("46OuN3LtlXn4GK9qE7OzAp", "7th Symphony"),
+                AlbumProperties("4hdqEMOKD7aG2izjUOmk20", "Amplified - A Decade of Reinventing the Cello"),
+                AlbumProperties("4TwdbWtWDxgeLykyt4ExRr", "Plays Metallica by Four Cellos (Remastered)"),
+                AlbumProperties("5E9y1NhXyYvDz7VpzWffdM", "Shadowmaker - Track by Track Commentary"),
+                AlbumProperties("5fw9PyEt5p0Krd9jmQzKPT", "Shadowmaker"),
+                AlbumProperties("5jraCBpvLqFRcO2RuRAeWB", "Shadowmaker"),
+                AlbumProperties("5lG9ONdudQ38vodYN0rdqf", "Plays Metallica by Four Cellos (Remastered)"),
+                AlbumProperties("5LtbqIjHM33GTDoEDiVX5M", "Shadowmaker"),
                 AlbumProperties("5ZkGjaVnwZ2CwlYIw1x0Rk", "Shadowmaker"),
                 AlbumProperties("6HN2EqksuJcOZg6pDnlcOl", "Shadowmaker"),
-                AlbumProperties("5LtbqIjHM33GTDoEDiVX5M", "Shadowmaker"),
-                AlbumProperties("1FYyFV2BXQq34Juzb9JYYS", "Wagner Reloaded: Live in Leipzig"),
-                AlbumProperties("2qBC6mNZpLTP0dheus0w3n", "Wagner Reloaded: Live in Leipzig"),
-                AlbumProperties("17PXuvNOg0dfmNLXecQDtu", "7th Symphony"),
-                AlbumProperties("6y9oEt1nMg3xv1ISOr6Zeo", "7th Symphony"),
-                AlbumProperties("1gX0jHVdBfO6F0zd8beNnk", "7th Symphony"),
-                AlbumProperties("46OuN3LtlXn4GK9qE7OzAp", "7th Symphony")
+                AlbumProperties("728y0VvMcIuamGmKhDpa6X", "7th Symphony"),
+                AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
+                AlbumProperties("7LZNQn0nVJCEUQXfidfizI", "Plays Metallica by Four Cellos (Remastered)")
             )
         ),
         ArtistProperties(
             id = "4mIdyUBqjS36BQHYFBbGjm",
             name = "Dalriada",
             albums = listOf(
-                AlbumProperties("20tfQomQDgRlElhDPsrS01", "Nyárutó"),
-                AlbumProperties("7AmTFZLUdkKHLjSjJpzMW9", "Forrás"),
-                AlbumProperties("6xcz5gX6lIFuO8eRcWlR0k", "Áldás"),
                 AlbumProperties("09r0cZ1aQuKoHcS40F0wWh", "Mesék, álmok, regék"),
-                AlbumProperties("596NzuBPZUZAfO5DZmdDJz", "Napisten Hava"),
-                AlbumProperties("2Yedn1ga2wg3QTVEfvuPDP", "Jégbontó"),
-                AlbumProperties("43EQHlJYWqZonZEG7DQPuR", "Egyek vagyunk (Ossian Tribute)"),
-                AlbumProperties("3DIDgySJcb6MsfBMjcnqBG", "Arany-Album"),
-                AlbumProperties("447wr2DtMcrrIIoRlkJr8w", "Ígéret"),
+                AlbumProperties("0GMuyid3D0qKbZwpiMQoK4", "Celtic Music & Songs - Ireland"),
                 AlbumProperties("1Z5Aw68hjd9e17izcGbLSQ", "Kikelet"),
-                AlbumProperties("3Rt5otPyF6OqMfO1wjN46o", "Ezer csillag"),
-                AlbumProperties("6yxK3hbXOsxXSeJbKmnRx5", "Fergeteg"),
-                AlbumProperties("77MdutiO7oxFTRU1bO6pvB", "Csillagok dala"),
-                AlbumProperties("5X7vHeH7hoHg1aJIHi3aYY", "Csillagok dala"),
-                AlbumProperties("3oYnpsZG6kgnJIHf8Y659H", "Jégbontó"),
+                AlbumProperties("20tfQomQDgRlElhDPsrS01", "Nyárutó"),
                 AlbumProperties("2HQU4177V84JDOFI8AgwbC", "Alternative Flavors of Caledonia"),
                 AlbumProperties("2HrkiIP2NzNH0KOtVs0ILI", "Robert Burns - The Poems and the Music"),
+                AlbumProperties("2Yedn1ga2wg3QTVEfvuPDP", "Jégbontó"),
+                AlbumProperties("3DIDgySJcb6MsfBMjcnqBG", "Arany-Album"),
+                AlbumProperties("3ED6HUUV0MtC1aiHLPOpbU", "Kalapács - Kikalapált dalok"),
+                AlbumProperties("3oYnpsZG6kgnJIHf8Y659H", "Jégbontó"),
+                AlbumProperties("3Rt5otPyF6OqMfO1wjN46o", "Ezer csillag"),
+                AlbumProperties("43EQHlJYWqZonZEG7DQPuR", "Egyek vagyunk (Ossian Tribute)"),
+                AlbumProperties("447wr2DtMcrrIIoRlkJr8w", "Ígéret"),
                 AlbumProperties("44PjwxnXvAD8HNz1DqwpQf", "Szelek"),
-                AlbumProperties("0GMuyid3D0qKbZwpiMQoK4", "Celtic Music & Songs - Ireland"),
-                AlbumProperties("4lAfyDtPRx4P0vm1BUPBdp", "Best Of Celtic Spirit - Ireland")
+                AlbumProperties("596NzuBPZUZAfO5DZmdDJz", "Napisten Hava"),
+                AlbumProperties("5X7vHeH7hoHg1aJIHi3aYY", "Csillagok dala"),
+                AlbumProperties("6xcz5gX6lIFuO8eRcWlR0k", "Áldás"),
+                AlbumProperties("6yxK3hbXOsxXSeJbKmnRx5", "Fergeteg"),
+                AlbumProperties("77MdutiO7oxFTRU1bO6pvB", "Csillagok dala"),
+                AlbumProperties("7AmTFZLUdkKHLjSjJpzMW9", "Forrás")
             )
         )
     )
