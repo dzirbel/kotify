@@ -1,42 +1,35 @@
 build:
   maxIssues: 0
   excludeCorrectable: false
-  weights:
 
 config:
   validation: true
+  warningsAsErrors: true
   excludes: ''
 
 processors:
   active: true
   exclude:
-  # - 'DetektProgressListener'
-  # - 'FunctionCountProcessor'
-  # - 'PropertyCountProcessor'
-  # - 'ClassCountProcessor'
-  # - 'PackageCountProcessor'
-  # - 'KtFileCountProcessor'
+    - 'DetektProgressListener'
 
 console-reports:
   active: true
-  exclude:
-  # - 'ProjectStatisticsReport'
-  # - 'ComplexityReport'
-  # - 'NotificationReport'
-  # - 'FindingsReport'
-  # - 'FileBasedFindingsReport'
+
+output-reports:
+  active: false
 
 comments:
   active: true
   AbsentOrWrongFileLicense:
     active: false
+    licenseTemplateFile: 'license.template'
   CommentOverPrivateFunction:
     active: false
   CommentOverPrivateProperty:
     active: false
   EndOfSentenceFormat:
     active: false
-    endOfSentenceFormat: ([.?!][ \t\n\r\f<])|([.?!:]$)
+    endOfSentenceFormat: '([.?!][ \t\n\r\f<])|([.?!:]$)'
   UndocumentedPublicClass:
     active: false
     searchInNestedClass: true
@@ -64,10 +57,10 @@ complexity:
     ignoreSingleWhenExpression: false
     ignoreSimpleWhenEntries: false
     ignoreNestingFunctions: false
-    nestingFunctions: run,let,apply,with,also,use,forEach,isNotNull,ifNull
+    nestingFunctions: [run, let, apply, with, also, use, forEach, isNotNull, ifNull]
   LabeledExpression:
     active: true
-    ignoredLabels: ''
+    ignoredLabels: []
   LargeClass:
     active: true
     threshold: 600
@@ -76,25 +69,33 @@ complexity:
     threshold: 60
     excludes: '**/test/**'
   LongParameterList:
-    active: false
-    constructorThreshold: 6
-    functionThreshold: 6
+    active: true
+    functionThreshold: 10
+    constructorThreshold: 10
     ignoreDefaultParameters: false
+    ignoreDataClasses: true
+    ignoreAnnotated: []
   MethodOverloading:
     active: false
     threshold: 6
+  NamedArguments:
+    active: false # does not ignore vararg functions, e.g. listOf(1, 2, 3, 4)
+    threshold: 3
   NestedBlockDepth:
     active: true
     threshold: 6
+  ReplaceSafeCallChainWithRun:
+    active: true
   StringLiteralDuplication:
     active: false
-    threshold: 2
+    excludes: ['**/test/**']
+    threshold: 3
     ignoreAnnotation: true
-    excludeStringsWithLessThan5Characters: false
-    excludes: '**/test/**'
-    ignoreStringsRegex: ''
+    excludeStringsWithLessThan5Characters: true
+    ignoreStringsRegex: '$^'
   TooManyFunctions:
     active: true
+    excludes: ['**/test/**']
     thresholdInFiles: 25
     thresholdInClasses: 25
     thresholdInInterfaces: 10
@@ -110,12 +111,14 @@ coroutines:
     active: true
   RedundantSuspendModifier:
     active: true
+  SuspendFunWithFlowReturnType:
+    active: true
 
 empty-blocks:
   active: true
   EmptyCatchBlock:
     active: true
-    allowedExceptionNameRegex: '^(_|(ignore|expected).*)'
+    allowedExceptionNameRegex: '_|(ignore|expected).*'
   EmptyClassBlock:
     active: true
   EmptyDefaultConstructor:
@@ -130,7 +133,7 @@ empty-blocks:
     active: true
   EmptyFunctionBlock:
     active: true
-    ignoreOverridden: true
+    ignoreOverridden: false
   EmptyIfBlock:
     active: true
   EmptyInitBlock:
@@ -150,10 +153,10 @@ exceptions:
   active: true
   ExceptionRaisedInUnexpectedLocation:
     active: true
-    methodNames: 'toString,hashCode,equals,finalize'
+    methodNames: [toString, hashCode, equals, finalize]
   InstanceOfCheckForException:
     active: true
-    excludes: '**/test/**'
+    excludes: ['**/test/**']
   NotImplementedDeclaration:
     active: true
   PrintStackTrace:
@@ -165,15 +168,22 @@ exceptions:
     ignoreLabeled: false
   SwallowedException:
     active: true
-    ignoredExceptionTypes: 'InterruptedException,NumberFormatException,ParseException,MalformedURLException'
-    allowedExceptionNameRegex: '^(_|(ignore|expected).*)'
+    ignoredExceptionTypes:
+      - InterruptedException
+      - NumberFormatException
+      - ParseException
+      - MalformedURLException
+    allowedExceptionNameRegex: '_|(ignore|expected).*'
   ThrowingExceptionFromFinally:
     active: true
   ThrowingExceptionInMain:
     active: true
   ThrowingExceptionsWithoutMessageOrCause:
     active: true
-    exceptions: 'IllegalArgumentException,IllegalStateException,IOException'
+    exceptions:
+      - IllegalArgumentException
+      - IllegalStateException
+      - IOException
   ThrowingNewInstanceOfSameException:
     active: true
   TooGenericExceptionCaught:
@@ -204,6 +214,12 @@ formatting:
   AnnotationOnSeparateLine:
     active: true
     autoCorrect: true
+  AnnotationSpacing:
+    active: true
+    autoCorrect: true
+  ArgumentListWrapping:
+    active: true
+    autoCorrect: true
   ChainWrapping:
     active: true
     autoCorrect: true
@@ -222,6 +238,7 @@ formatting:
   ImportOrdering:
     active: false
     autoCorrect: true
+    layout: 'idea'
   Indentation:
     active: true
     autoCorrect: true
@@ -291,6 +308,9 @@ formatting:
   SpacingAroundDot:
     active: true
     autoCorrect: true
+  SpacingAroundDoubleColon:
+    active: true
+    autoCorrect: true
   SpacingAroundKeyword:
     active: true
     autoCorrect: true
@@ -301,6 +321,12 @@ formatting:
     active: true
     autoCorrect: true
   SpacingAroundRangeOperator:
+    active: true
+    autoCorrect: true
+  SpacingBetweenDeclarationsWithAnnotations:
+    active: true
+    autoCorrect: true
+  SpacingBetweenDeclarationsWithComments:
     active: true
     autoCorrect: true
   StringTemplate:
@@ -323,7 +349,7 @@ naming:
     enumEntryPattern: '^[A-Z][_a-zA-Z0-9]*'
   ForbiddenClassName:
     active: false
-    forbiddenName: ''
+    forbiddenName: []
   FunctionMaxLength:
     active: false
     maximumFunctionNameLength: 30
@@ -335,6 +361,7 @@ naming:
     functionPattern: '^([a-z$][a-zA-Z$0-9]*)|(`.*`)$'
     excludeClassPattern: '$^'
     ignoreOverridden: true
+    ignoreAnnotated: []
   FunctionParameterNaming:
     active: true
     parameterPattern: '[a-z][A-Za-z0-9]*'
@@ -349,6 +376,8 @@ naming:
   MemberNameEqualsClassName:
     active: false
     ignoreOverridden: true
+  NonBooleanPropertyPrefixedWithIs:
+    active: false
   ObjectPropertyNaming:
     active: true
     constantPattern: '[A-Za-z][_A-Za-z0-9]*'
@@ -400,8 +429,15 @@ potential-bugs:
     active: true
   HasPlatformType:
     active: true
+  IgnoredReturnValue:
+    active: false
+    restrictToAnnotatedMethods: true
+    returnValueAnnotations: ['*.CheckReturnValue', '*.CheckResult']
   ImplicitDefaultLocale:
     active: true
+  ImplicitUnitReturnType:
+    active: true
+    allowExplicitReturnType: true
   InvalidRange:
     active: true
   IteratorHasNextCallsNextMethod:
@@ -410,16 +446,23 @@ potential-bugs:
     active: true
   LateinitUsage:
     active: false
-    excludes: '**/test/**'
-    excludeAnnotatedProperties: ''
+    excludes: ['**/test/**']
+    excludeAnnotatedProperties: []
     ignoreOnClassesPattern: ''
   MapGetWithNotNullAssertionOperator:
     active: true
   MissingWhenCase:
     active: true
+    allowElseExpression: true
+  NullableToStringCall:
+    active: true
   RedundantElseInWhen:
     active: true
   UnconditionalJumpStatementInLoop:
+    active: true
+  UnnecessaryNotNullOperator:
+    active: true
+  UnnecessarySafeCall:
     active: true
   UnreachableCode:
     active: true
@@ -434,6 +477,8 @@ potential-bugs:
 
 style:
   active: true
+  ClassOrdering:
+    active: true
   CollapsibleIfStatements:
     active: true
   DataClassContainsFunctions:
@@ -454,18 +499,18 @@ style:
     includeLineWrapping: false
   ForbiddenComment:
     active: false
-    values: 'TODO:,FIXME:,STOPSHIP:'
+    values: ['TODO:', 'FIXME:', 'STOPSHIP:']
     allowedPatterns: ''
   ForbiddenImport:
     active: false
-    imports: ''
+    imports: []
     forbiddenPatterns: ''
   ForbiddenMethodCall:
     active: false
-    methods: ''
+    methods: []
   ForbiddenPublicDataClass:
     active: false
-    ignorePackages: '*.internal,*.internal.*'
+    ignorePackages: ['*.internal', '*.internal.*']
   ForbiddenVoid:
     active: true
     ignoreOverridden: false
@@ -474,16 +519,18 @@ style:
     active: true
     ignoreOverridableFunction: true
     excludedFunctions: 'describeContents'
-    excludeAnnotatedFunction: 'dagger.Provides'
+    excludeAnnotatedFunction: ['dagger.Provides']
   LibraryCodeMustSpecifyReturnType:
+    active: true
+  LibraryEntitiesShouldNotBePublic:
     active: true
   LoopWithTooManyJumpStatements:
     active: true
     maxJumpCount: 1
   MagicNumber:
     active: true
-    excludes: '**/test/**'
-    ignoreNumbers: '-1,0,1,2'
+    excludes: ['**/test/**']
+    ignoreNumbers: ['-1', '0', '1', '2']
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: false
     ignoreLocalVariableDeclaration: false
@@ -494,6 +541,8 @@ style:
     ignoreEnums: false
     ignoreRanges: false
   MandatoryBracesIfStatements:
+    active: true
+  MandatoryBracesLoops:
     active: true
   MaxLineLength:
     active: true
@@ -548,7 +597,7 @@ style:
     acceptableDecimalLength: 4
   UnnecessaryAbstractClass:
     active: true
-    excludeAnnotatedClasses: ''
+    excludeAnnotatedClasses: []
   UnnecessaryAnnotationUseSiteTarget:
     active: true
   UnnecessaryApply:
@@ -570,15 +619,23 @@ style:
     allowedNames: '(_|ignored|expected|serialVersionUID)'
   UseArrayLiteralsInAnnotations:
     active: true
+  UseCheckNotNull:
+    active: true
   UseCheckOrError:
     active: true
   UseDataClass:
     active: true
-    excludeAnnotatedClasses: ''
+    excludeAnnotatedClasses: []
     allowVars: false
+  UseEmptyCounterpart:
+    active: true
+  UseIfEmptyOrIfBlank:
+    active: true
   UseIfInsteadOfWhen:
     active: true
   UseRequire:
+    active: true
+  UseRequireNotNull:
     active: true
   UselessCallOnNotNull:
     active: true
@@ -588,5 +645,5 @@ style:
     active: true
   WildcardImport:
     active: true
-    excludes: ''
-    excludeImports: ''
+    excludes: []
+    excludeImports: []
