@@ -14,6 +14,9 @@ plugins {
 
     // https://plugins.gradle.org/plugin/name.remal.check-dependency-updates
     id("name.remal.check-dependency-updates") version "1.1.4"
+
+    // https://github.com/jetbrains/compose-jb
+    id("org.jetbrains.compose") version "0.2.0-build129"
 }
 
 version = "0.1"
@@ -21,9 +24,12 @@ version = "0.1"
 repositories {
     mavenCentral()
     jcenter()
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
 dependencies {
+    implementation(compose.desktop.currentOs)
+
     implementation("com.github.kittinunf.fuel", "fuel", Versions.fuel)
     implementation("com.github.kittinunf.fuel", "fuel-coroutines", Versions.fuel)
     implementation("com.github.kittinunf.fuel", "fuel-gson", Versions.fuel)
@@ -57,10 +63,8 @@ detekt {
     config = files("detekt-config.yml")
 }
 
-tasks.create<JavaExec>("run") {
-    description = "Run Main.kt"
-    group = "Build"
-
-    main = "com.dominiczirbel.MainKt"
-    classpath = sourceSets.main.get().runtimeClasspath
+compose.desktop {
+    application {
+        mainClass = "com.dominiczirbel.MainKt"
+    }
 }
