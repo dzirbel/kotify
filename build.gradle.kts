@@ -1,16 +1,18 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
-    const val coroutines = "1.4.1"
-    const val detekt = "1.7.2"
-    const val fuel = "2.3.0"
-    const val gson = "2.8.6"
-    const val junit = "5.7.0"
+    const val coroutines = "1.4.1" // https://github.com/Kotlin/kotlinx.coroutines
+    const val detekt = "1.7.2" // https://github.com/detekt/detekt; also update plugin version
+    const val fuel = "2.3.0" // https://github.com/kittinunf/fuel
+    const val gson = "2.8.6" // https://github.com/google/gson
+    const val junit = "5.7.0" // https://junit.org/junit5/
 }
 
 plugins {
     kotlin("jvm") version "1.4.20"
     id("io.gitlab.arturbosch.detekt") version "1.7.2"
+
+    // https://plugins.gradle.org/plugin/name.remal.check-dependency-updates
     id("name.remal.check-dependency-updates") version "1.1.4"
 }
 
@@ -22,8 +24,6 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8", "1.4.20"))
-
     implementation("com.github.kittinunf.fuel", "fuel", Versions.fuel)
     implementation("com.github.kittinunf.fuel", "fuel-coroutines", Versions.fuel)
     implementation("com.github.kittinunf.fuel", "fuel-gson", Versions.fuel)
