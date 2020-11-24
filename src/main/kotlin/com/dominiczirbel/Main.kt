@@ -1,19 +1,15 @@
 package com.dominiczirbel
 
 import androidx.compose.desktop.Window
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.dominiczirbel.network.Spotify
+import com.dominiczirbel.ui.AuthenticationView
 import com.github.kittinunf.fuel.core.FuelManager
 import kotlinx.coroutines.runBlocking
 import kotlin.time.ExperimentalTime
@@ -21,9 +17,6 @@ import kotlin.time.measureTimedValue
 
 @ExperimentalTime
 fun main() {
-    Secrets.load()
-    Secrets.authenticate()
-
     FuelManager.instance.addRequestInterceptor { transformer ->
         { request ->
             println(">> ${request.method} ${request.url}")
@@ -38,6 +31,7 @@ fun main() {
         }
     }
 
+    // TODO integrate with UI
     Secrets["track_id"]?.let {
         trackLookup(it)
         trackLookup(it)
@@ -45,22 +39,28 @@ fun main() {
     }
 
     @Suppress("MagicNumber")
-    Window(title = "Compose for Desktop", size = IntSize(300, 300)) {
-        val count = remember { mutableStateOf(0) }
+    Window(title = "Spotify Client") {
         MaterialTheme {
-            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Button(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = { count.value++ }
-                ) {
-                    Text(if (count.value == 0) "Hello World" else "Clicked ${count.value}!")
+            val authenticating = remember { mutableStateOf<Boolean?>(true) }
+            when (authenticating.value) {
+                true -> {
+                    Text("Authenticating...")
+                    Dialog(
+                        onDismissRequest = { authenticating.value = null }
+                    ) {
+                        AuthenticationView(onAuthenticated = { authenticating.value = false })
+                    }
                 }
-                Button(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    onClick = { count.value = 0 }
-                ) {
-                    Text("Reset")
-                }
+                false -> Text("Authenticated!")
+                null ->
+                    Column {
+                        Text("Cancelled authentication")
+                        Button(
+                            onClick = { authenticating.value = true }
+                        ) {
+                            Text("Authenticate again?")
+                        }
+                    }
             }
         }
     }
