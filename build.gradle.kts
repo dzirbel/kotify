@@ -9,7 +9,7 @@ private object Versions {
 }
 
 plugins {
-    kotlin("jvm") version "1.4.10"
+    kotlin("jvm") version "1.4.20"
     id("io.gitlab.arturbosch.detekt") version "1.7.2"
     id("name.remal.check-dependency-updates") version "1.1.4"
 }
@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8", "1.4.10"))
+    implementation(kotlin("stdlib-jdk8", "1.4.20"))
 
     implementation("com.github.kittinunf.fuel", "fuel", Versions.fuel)
     implementation("com.github.kittinunf.fuel", "fuel-coroutines", Versions.fuel)
