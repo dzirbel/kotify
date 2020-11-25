@@ -30,6 +30,10 @@ data class AuthenticationViewModel(
     val loadFromFileLoading: Boolean = false
 )
 
+private val PADDING = 10.dp
+private const val DIALOG_WIDTH = 400
+private const val DIALOG_HEIGHT = 400
+
 @Composable
 fun AuthenticationDialog(
     onDismissRequest: () -> Unit,
@@ -38,15 +42,13 @@ fun AuthenticationDialog(
     Dialog(
         properties = DesktopDialogProperties(
             title = "Spotify API Authentication",
-            size = IntSize(400, 400)
+            size = IntSize(DIALOG_WIDTH, DIALOG_HEIGHT)
         ),
         onDismissRequest = onDismissRequest
     ) {
         AuthenticationView(onAuthenticated = onAuthenticated)
     }
 }
-
-private val PADDING = 10.dp
 
 @Composable
 @Suppress("LongMethod")
