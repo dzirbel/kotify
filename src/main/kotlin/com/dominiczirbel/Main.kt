@@ -8,9 +8,7 @@ import androidx.compose.runtime.remember
 import com.dominiczirbel.ui.AuthenticationDialog
 import com.dominiczirbel.ui.MainContent
 import com.github.kittinunf.fuel.core.FuelManager
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 fun main() {
     FuelManager.instance.addRequestInterceptor { transformer ->
         { request ->

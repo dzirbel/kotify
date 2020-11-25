@@ -26,6 +26,8 @@ fun MainContent(authenticating: Boolean?, onAuthenticate: () -> Unit) {
 
         Spacer(Modifier.height(PADDING))
 
-        TrackLookup()
+        if (authenticating == false) {
+            TrackLookup()
+        }
     }
 }
