@@ -15,7 +15,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DesktopDialogProperties
+import androidx.compose.ui.window.Dialog
 import com.dominiczirbel.Secrets
 import com.dominiczirbel.network.Spotify
 import kotlinx.coroutines.launch
@@ -26,6 +29,22 @@ data class AuthenticationViewModel(
     val submitLoading: Boolean = false,
     val loadFromFileLoading: Boolean = false
 )
+
+@Composable
+fun AuthenticationDialog(
+    onDismissRequest: () -> Unit,
+    onAuthenticated: () -> Unit
+) {
+    Dialog(
+        properties = DesktopDialogProperties(
+            title = "Spotify API Authentication",
+            size = IntSize(400, 400)
+        ),
+        onDismissRequest = onDismissRequest
+    ) {
+        AuthenticationView(onAuthenticated = onAuthenticated)
+    }
+}
 
 private val PADDING = 10.dp
 
