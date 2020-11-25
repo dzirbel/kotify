@@ -1,19 +1,19 @@
 package com.dominiczirbel.ui
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material.Button
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.Secrets
@@ -27,6 +27,8 @@ data class AuthenticationViewModel(
     val loadFromFileLoading: Boolean = false
 )
 
+private val PADDING = 10.dp
+
 @Composable
 @Suppress("LongMethod")
 fun AuthenticationView(
@@ -35,9 +37,23 @@ fun AuthenticationView(
     val viewModel = remember { mutableStateOf(AuthenticationViewModel()) }
     val coroutineScope = rememberCoroutineScope()
 
-    Column {
+    Column(modifier = Modifier.padding(PADDING), verticalArrangement = Arrangement.spacedBy(PADDING, Alignment.Top)) {
+        Text("Enter your Spotify API application credentials.")
+
+        LinkedText(style = MaterialTheme.typography.caption) {
+            append("See ")
+            appendLinkedUrl(
+                text = "the spotify documentation",
+                url = "https://developer.spotify.com/documentation/web-api/quick-start/"
+            )
+            append(" for details.")
+        }
+
+        Spacer(Modifier.height(PADDING))
+
         TextField(
             value = viewModel.value.clientId,
+            modifier = Modifier.fillMaxWidth(),
             onValueChange = { viewModel.value = viewModel.value.copy(clientId = it) },
             label = {
                 Text("Client ID")
@@ -46,6 +62,7 @@ fun AuthenticationView(
 
         TextField(
             value = viewModel.value.clientSecret,
+            modifier = Modifier.fillMaxWidth(),
             onValueChange = { viewModel.value = viewModel.value.copy(clientSecret = it) },
             label = {
                 Text("Client secret")
@@ -54,6 +71,7 @@ fun AuthenticationView(
 
         LoadingButton(
             enabled = viewModel.value.clientId.isNotEmpty() && viewModel.value.clientSecret.isNotEmpty(),
+            modifier = Modifier.align(Alignment.End),
             loading = viewModel.value.submitLoading,
             onClick = {
                 viewModel.value = viewModel.value.copy(submitLoading = true)
@@ -75,8 +93,7 @@ fun AuthenticationView(
             Text("Submit")
         }
 
-        @Suppress("MagicNumber")
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(PADDING))
 
         LoadingButton(
             loading = viewModel.value.loadFromFileLoading,
@@ -94,25 +111,6 @@ fun AuthenticationView(
             }
         ) {
             Text("Load from secrets")
-        }
-    }
-}
-
-@Composable
-fun LoadingButton(
-    enabled: Boolean = true,
-    loading: Boolean,
-    onClick: () -> Unit,
-    content: @Composable RowScope.() -> Unit
-) {
-    Button(
-        enabled = enabled,
-        onClick = onClick
-    ) {
-        if (loading) {
-            Image(Icons.Filled.Check)
-        } else {
-            content()
         }
     }
 }

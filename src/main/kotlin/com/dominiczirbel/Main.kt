@@ -7,6 +7,8 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.window.DesktopDialogProperties
 import androidx.compose.ui.window.Dialog
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.ui.AuthenticationView
@@ -42,25 +44,26 @@ fun main() {
     Window(title = "Spotify Client") {
         MaterialTheme {
             val authenticating = remember { mutableStateOf<Boolean?>(true) }
-            when (authenticating.value) {
-                true -> {
-                    Text("Authenticating...")
-                    Dialog(
-                        onDismissRequest = { authenticating.value = null }
+            if (authenticating.value == true) {
+                Text("Authenticating...")
+                Dialog(
+                    properties = DesktopDialogProperties(
+                        title = "Spotify API Authentication",
+                        size = IntSize(400, 400)
+                    ),
+                    onDismissRequest = { authenticating.value = null }
+                ) {
+                    AuthenticationView(onAuthenticated = { authenticating.value = false })
+                }
+            } else {
+                Column {
+                    Text(if (authenticating.value == false) "Authenticated!" else "Canceled authentication")
+                    Button(
+                        onClick = { authenticating.value = true }
                     ) {
-                        AuthenticationView(onAuthenticated = { authenticating.value = false })
+                        Text("Authenticate again?")
                     }
                 }
-                false -> Text("Authenticated!")
-                null ->
-                    Column {
-                        Text("Cancelled authentication")
-                        Button(
-                            onClick = { authenticating.value = true }
-                        ) {
-                            Text("Authenticate again?")
-                        }
-                    }
             }
         }
     }
