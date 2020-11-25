@@ -13,51 +13,59 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.Secrets
 import com.dominiczirbel.network.Spotify
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+
+data class AuthenticationViewModel(
+    val clientId: String = "",
+    val clientSecret: String = "",
+    val submitLoading: Boolean = false,
+    val loadFromFileLoading: Boolean = false
+)
 
 @Composable
 @Suppress("LongMethod")
 fun AuthenticationView(
     onAuthenticated: () -> Unit
 ) {
-    val clientId = remember { mutableStateOf("") }
-    val clientSecret = remember { mutableStateOf("") }
-    val submitLoading = remember { mutableStateOf(false) }
-    val loadFromFileLoading = remember { mutableStateOf(false) }
+    val viewModel = remember { mutableStateOf(AuthenticationViewModel()) }
+    val coroutineScope = rememberCoroutineScope()
 
     Column {
         TextField(
-            value = clientId.value,
-            onValueChange = { clientId.value = it },
+            value = viewModel.value.clientId,
+            onValueChange = { viewModel.value = viewModel.value.copy(clientId = it) },
             label = {
                 Text("Client ID")
             }
         )
 
         TextField(
-            value = clientSecret.value,
-            onValueChange = { clientSecret.value = it },
+            value = viewModel.value.clientSecret,
+            onValueChange = { viewModel.value = viewModel.value.copy(clientSecret = it) },
             label = {
                 Text("Client secret")
             }
         )
 
         LoadingButton(
-            enabled = clientId.value.isNotEmpty() && clientSecret.value.isNotEmpty(),
-            loading = submitLoading.value,
+            enabled = viewModel.value.clientId.isNotEmpty() && viewModel.value.clientSecret.isNotEmpty(),
+            loading = viewModel.value.submitLoading,
             onClick = {
-                submitLoading.value = true
-                @Suppress("GlobalCoroutineUsage") // TODO find a better way
-                GlobalScope.launch {
+                viewModel.value = viewModel.value.copy(submitLoading = true)
+
+                coroutineScope.launch {
                     val result = runCatching {
-                        Spotify.authenticate(clientId = clientId.value, clientSecret = clientSecret.value)
+                        Spotify.authenticate(
+                            clientId = viewModel.value.clientId,
+                            clientSecret = viewModel.value.clientSecret
+                        )
                     }
-                    submitLoading.value = false
+                    viewModel.value = viewModel.value.copy(submitLoading = false)
                     if (result.isSuccess) {
                         onAuthenticated()
                     }
@@ -71,14 +79,14 @@ fun AuthenticationView(
         Spacer(Modifier.height(20.dp))
 
         LoadingButton(
-            loading = loadFromFileLoading.value,
+            loading = viewModel.value.loadFromFileLoading,
             onClick = {
-                loadFromFileLoading.value = true
-                @Suppress("GlobalCoroutineUsage") // TODO find a better way
-                GlobalScope.launch {
+                viewModel.value = viewModel.value.copy(loadFromFileLoading = true)
+
+                coroutineScope.launch {
                     Secrets.load()
                     val result = runCatching { Secrets.authenticate() }
-                    loadFromFileLoading.value = false
+                    viewModel.value = viewModel.value.copy(loadFromFileLoading = false)
                     if (result.isSuccess) {
                         onAuthenticated()
                     }
