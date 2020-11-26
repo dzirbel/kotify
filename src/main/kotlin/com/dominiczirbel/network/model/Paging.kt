@@ -14,14 +14,14 @@ data class Paging<T> (
     /** The maximum number of items in the response (as set in the query or by default). */
     val limit: Int,
 
-    /** URL to the next page of items. ( null if none) */
-    val next: String,
+    /** URL to the next page of items. (null if none) */
+    val next: String?,
 
     /** The offset of the items returned (as set in the query or by default). */
     val offset: Int,
 
-    /** URL to the previous page of items. ( null if none) */
-    val previous: String,
+    /** URL to the previous page of items. (null if none) */
+    val previous: String?,
 
     /** The maximum number of items available to return. */
     val total: Int

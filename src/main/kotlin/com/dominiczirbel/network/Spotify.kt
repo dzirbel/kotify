@@ -3,6 +3,7 @@ package com.dominiczirbel.network
 import com.dominiczirbel.network.model.Album
 import com.dominiczirbel.network.model.AudioAnalysis
 import com.dominiczirbel.network.model.AudioFeatures
+import com.dominiczirbel.network.model.Category
 import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.network.model.FullPlaylist
@@ -10,6 +11,7 @@ import com.dominiczirbel.network.model.FullTrack
 import com.dominiczirbel.network.model.Image
 import com.dominiczirbel.network.model.Paging
 import com.dominiczirbel.network.model.PlaylistTrack
+import com.dominiczirbel.network.model.Recommendations
 import com.dominiczirbel.network.model.SimplifiedAlbum
 import com.dominiczirbel.network.model.SimplifiedPlaylist
 import com.dominiczirbel.network.model.SimplifiedTrack
@@ -42,8 +44,11 @@ object Spotify {
     private data class ErrorDetails(val status: Int, val message: String)
 
     private data class AlbumsModel(val albums: List<FullAlbum>)
+    private data class AlbumsPagingModel(val albums: Paging<SimplifiedAlbum>)
     private data class ArtistsModel(val artists: List<FullArtist>)
     private data class AudioFeaturesModel(val audioFeatures: List<AudioFeatures>)
+    private data class CategoriesModel(val categories: Paging<Category>)
+    private data class PlaylistPagingModel(val playlists: Paging<SimplifiedPlaylist>)
     private data class TracksModel(val tracks: List<FullTrack>)
 
     private suspend inline fun <reified T : Any> get(path: String, queryParams: List<Pair<String, Any?>>? = null): T {
@@ -239,7 +244,199 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-browse
      */
     object Browse {
-        // TODO add browse endpoints
+        /**
+         * Get a single category used to tag items in Spotify (on, for example, the Spotify player’s "Browse" tab).
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/browse/get-category/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-a-category
+         *
+         * @param categoryId The Spotify category ID for the category.
+         * @param country Optional. A country: an ISO 3166-1 alpha-2 country code. Provide this parameter to ensure that
+         *  the category exists for a particular country.
+         * @param locale Optional. The desired language, consisting of an ISO 639-1 language code and an ISO 3166-1
+         *  alpha-2 country code, joined by an underscore. For example: es_MX, meaning "Spanish (Mexico)". Provide this
+         *  parameter if you want the category strings returned in a particular language. Note that, if locale is not
+         *  supplied, or if the specified language is not available, the category strings returned will be in the
+         *  Spotify default language (American English).
+         */
+        suspend fun getCategory(categoryId: String, country: String? = null, locale: String? = null): Category {
+            return get("browse/categories/$categoryId", listOf("country" to country, "locale" to locale))
+        }
+
+        /**
+         * Get a list of Spotify playlists tagged with a particular category.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/browse/get-categorys-playlists/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-a-categories-playlists
+         *
+         * @param categoryId The Spotify category ID for the category.
+         * @param country Optional. A country: an ISO 3166-1 alpha-2 country code.
+         * @param limit Optional. The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset Optional. The index of the first item to return. Default: 0 (the first object). Use with limit
+         *  to get the next set of items.
+         */
+        suspend fun getCategoryPlaylists(
+            categoryId: String,
+            country: String? = null,
+            limit: Int? = null,
+            offset: Int? = null
+        ): Paging<SimplifiedPlaylist> {
+            return get<PlaylistPagingModel>(
+                "browse/categories/$categoryId/playlists",
+                listOf("country" to country, "limit" to limit, "offset" to offset)
+            ).playlists
+        }
+
+        /**
+         * Get a list of categories used to tag items in Spotify (on, for example, the Spotify player’s “Browse” tab).
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/browse/get-list-categories/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-categories
+         *
+         * @param country Optional. A country: an ISO 3166-1 alpha-2 country code. Provide this parameter if you want to
+         *  narrow the list of returned categories to those relevant to a particular country. If omitted, the returned
+         *  items will be globally relevant.
+         * @param locale Optional. The desired language, consisting of an ISO 639-1 language code and an ISO 3166-1
+         *  alpha-2 country code, joined by an underscore. For example: es_MX, meaning “Spanish (Mexico)”. Provide this
+         *  parameter if you want the category metadata returned in a particular language. Note that, if locale is not
+         *  supplied, or if the specified language is not available, all strings will be returned in the Spotify default
+         *  language (American English). The locale parameter, combined with the country parameter, may give odd results
+         *  if not carefully matched. For example country=SE&locale=de_DE will return a list of categories relevant to
+         *  Sweden but as German language strings.
+         * @param limit Optional. The maximum number of categories to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset Optional. The index of the first item to return. Default: 0 (the first object). Use with limit
+         *  to get the next set of categories.
+         */
+        suspend fun getCategories(
+            country: String? = null,
+            locale: String? = null,
+            limit: Int? = null,
+            offset: Int? = null
+        ): Paging<Category> {
+            return get<CategoriesModel>(
+                "browse/categories",
+                listOf("country" to country, "locale" to locale, "limit" to limit, "offset" to offset)
+            ).categories
+        }
+
+        /**
+         * Get a list of Spotify featured playlists (shown, for example, on a Spotify player's 'Browse' tab).
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/browse/get-list-featured-playlists/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-featured-playlists
+         *
+         * @param locale Optional. The desired language, consisting of a lowercase ISO 639-1 language code and an
+         *  uppercase ISO 3166-1 alpha-2 country code, joined by an underscore. For example: es_MX, meaning "Spanish
+         *  (Mexico)". Provide this parameter if you want the results returned in a particular language (where
+         *  available). Note that, if locale is not supplied, or if the specified language is not available, all strings
+         *  will be returned in the Spotify default language (American English). The locale parameter, combined with the
+         *  country parameter, may give odd results if not carefully matched. For example country=SE&locale=de_DE will
+         *  return a list of categories relevant to Sweden but as German language strings.
+         * @param country Optional. A country: an ISO 3166-1 alpha-2 country code. Provide this parameter if you want
+         *  the list of returned items to be relevant to a particular country. If omitted, the returned items will be
+         *  relevant to all countries.
+         * @param timestamp Optional. A timestamp in ISO 8601 format: yyyy-MM-ddTHH:mm:ss. Use this parameter to specify
+         *  the user’s local time to get results tailored for that specific date and time in the day. If not provided,
+         *  the response defaults to the current UTC time. Example: "2014-10-23T09:00:00" for a user whose local time is
+         *  9AM. If there were no featured playlists (or there is no data) at the specified time, the response will
+         *  revert to the current UTC time.
+         * @param limit Optional. The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset Optional. The index of the first item to return. Default: 0 (the first object). Use with limit
+         *  to get the next set of items.
+         */
+        suspend fun getFeaturedPlaylists(
+            locale: String? = null,
+            country: String? = null,
+            timestamp: String? = null,
+            limit: Int? = null,
+            offset: Int? = null
+        ): Paging<SimplifiedPlaylist> {
+            return get<PlaylistPagingModel>(
+                "browse/featured-playlists",
+                listOf(
+                    "locale" to locale,
+                    "country" to country,
+                    "timestamp" to timestamp,
+                    "limit" to limit,
+                    "offset" to offset
+                )
+            ).playlists
+        }
+
+        /**
+         * Get a list of new album releases featured in Spotify (shown, for example, on a Spotify player's "Browse"
+         * tab).
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/browse/get-list-new-releases/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-new-releases
+         *
+         * @param country Optional. A country: an ISO 3166-1 alpha-2 country code. Provide this parameter if you want
+         *  the list of returned items to be relevant to a particular country. If omitted, the returned items will be
+         *  relevant to all countries.
+         * @param limit Optional. The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset Optional. The index of the first item to return. Default: 0 (the first object). Use with limit
+         *  to get the next set of items.
+         */
+        suspend fun getNewReleases(
+            country: String? = null,
+            limit: Int? = null,
+            offset: Int? = null
+        ): Paging<SimplifiedAlbum> {
+            return get<AlbumsPagingModel>(
+                "browse/new-releases",
+                listOf("country" to country, "limit" to limit, "offset" to offset)
+            ).albums
+        }
+
+        /**
+         * Create a playlist-style listening experience based on seed artists, tracks and genres.
+         *
+         * Recommendations are generated based on the available information for a given seed entity and matched against
+         * similar artists and tracks. If there is sufficient information about the provided seeds, a list of tracks
+         * will be returned together with pool size details.
+         *
+         * For artists and tracks that are very new or obscure there might not be enough data to generate a list of
+         * tracks.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/browse/get-recommendations/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-recommendations
+         *
+         * @param limit Optional. The target size of the list of recommended tracks. For seeds with unusually small
+         *  pools or when highly restrictive filtering is applied, it may be impossible to generate the requested number
+         *  of recommended tracks. Debugging information for such cases is available in the response. Default: 20.
+         *  Minimum: 1. Maximum: 100.
+         * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
+         *  if you want to apply Track Relinking. Because min_*, max_* and target_* are applied to pools before
+         *  relinking, the generated results may not precisely match the filters applied. Original, non-relinked tracks
+         *  are available via the linked_from attribute of the relinked track response.
+         * @param seedArtists A comma separated list of Spotify IDs for seed artists. Up to 5 seed values may be
+         *  provided in any combination of seed_artists, seed_tracks and seed_genres.
+         * @param seedGenres A comma separated list of any genres in the set of available genre seeds. Up to 5 seed
+         *  values may be provided in any combination of seed_artists, seed_tracks and seed_genres.
+         * @param seedTracks A comma separated list of Spotify IDs for a seed track. Up to 5 seed values may be provided
+         *  in any combination of seed_artists, seed_tracks and seed_genres.
+         * @param tunableTrackAttributes A set maximums, minimums, and targets for tunable track attributes. See the
+         *  Spotify documentation for details.
+         */
+        suspend fun getRecommendations(
+            limit: Int? = null,
+            market: String? = null,
+            seedArtists: List<String>,
+            seedGenres: List<String>,
+            seedTracks: List<String>,
+            tunableTrackAttributes: Map<String, String> = emptyMap()
+        ): Recommendations {
+            return get(
+                "recommendations",
+                listOf(
+                    "limit" to limit,
+                    "market" to market,
+                    "seed_artists" to seedArtists.joinToString(separator = ","),
+                    "seed_genres" to seedGenres.joinToString(separator = ","),
+                    "seed_tracks" to seedTracks.joinToString(separator = ",")
+                ).plus(tunableTrackAttributes.toList())
+            )
+        }
     }
 
     /**
@@ -300,6 +497,8 @@ object Spotify {
      *
      * https://developer.spotify.com/documentation/web-api/reference/playlists/
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-playlists
+     *
+     * TODO add tests
      *
      * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/add-tracks-to-playlist/
      * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/change-playlist-details/
