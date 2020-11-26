@@ -1,51 +1,52 @@
 package com.dominiczirbel.util
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import com.google.common.truth.FailureMetadata
+import com.google.common.truth.Subject
+import com.google.common.truth.Truth.assertAbout
+import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.Test
 
 internal class LruCacheTest {
     @Test
-    fun test1() {
+    fun `put and clear`() {
         val cache = LruCache<String, String>(maxSize = 3, initialCapacity = 1)
 
-        cache.assertEmpty()
+        assertThat(cache).isEmpty()
         cache.putAll("1" to "a", "2" to "b", "3" to "c", "4" to "d", "5" to "e")
-        cache.assertValues("3" to "c", "4" to "d", "5" to "e")
+        assertThat(cache).hasValues("3" to "c", "4" to "d", "5" to "e")
         cache.clear()
-        cache.assertEmpty("1", "2")
+        assertThat(cache).isEmpty("1", "2")
     }
 
     @Test
-    fun test2() {
+    fun `put overwrites existing values`() {
         val cache = LruCache<String, String>(maxSize = 3, initialCapacity = 1)
 
-        cache.assertEmpty()
+        assertThat(cache).isEmpty()
         cache.putAll("1" to "a", "2" to "b", "3" to "c")
-        cache["1"]
+        assertThat(cache["1"]).isEqualTo("a")
         cache.putAll("4" to "d", "5" to "e")
-        cache.assertValues("1" to "a", "4" to "d", "5" to "e")
+        assertThat(cache).hasValues("1" to "a", "4" to "d", "5" to "e")
         cache.clear()
-        cache.assertEmpty("1", "2")
+        assertThat(cache).isEmpty("1", "2")
     }
 
     @Test
-    fun testZeroLimit() {
+    fun `zero limit caches nothing`() {
         val cache = LruCache<String, String>(maxSize = 0, initialCapacity = 1)
 
-        cache.assertEmpty()
+        assertThat(cache).isEmpty()
         cache["key"] = "value"
-        cache.assertEmpty("key")
+        assertThat(cache).isEmpty("key")
     }
 
     @Test
-    fun testNoLimit() {
+    fun `no limit caches everything`() {
         val cache = LruCache<String, String>(maxSize = null, initialCapacity = 1)
 
-        cache.assertEmpty()
+        assertThat(cache).isEmpty()
         cache.putAll("1" to "a", "2" to "b", "3" to "c", "4" to "d", "5" to "e")
-        cache.assertValues("1" to "a", "2" to "b", "3" to "c", "4" to "d", "5" to "e")
+        assertThat(cache).hasValues("1" to "a", "2" to "b", "3" to "c", "4" to "d", "5" to "e")
     }
 
     private fun <K, V> LruCache<K, V>.putAll(vararg entries: Pair<K, V>) {
@@ -54,20 +55,29 @@ internal class LruCacheTest {
         }
     }
 
-    private fun <K, V> LruCache<K, V>.assertEmpty(vararg testKeys: K) {
-        assertEquals(0, size)
-        assertTrue(isEmpty())
-        testKeys.forEach { key ->
-            assertNull(get(key))
-            assertNull(remove(key))
-        }
+    private fun <K, V> assertThat(actual: LruCache<K, V>): LruCacheSubject<K, V> {
+        return assertAbout { metadata, factoryActual: LruCache<K, V> -> LruCacheSubject(metadata, factoryActual) }
+            .that(actual)
     }
 
-    private fun <K, V> LruCache<K, V>.assertValues(vararg values: Pair<K, V>) {
-        assertEquals(values.size, size)
-        assertEquals(size == 0, isEmpty())
-        values.forEach { (key, value) ->
-            assertEquals(value, get(key))
+    private class LruCacheSubject<K, V>(failureMetadata: FailureMetadata, private val actual: LruCache<K, V>) :
+        Subject(failureMetadata, actual) {
+
+        fun isEmpty(vararg testKeys: K) {
+            check("size").that(actual.size).isEqualTo(0)
+            check("isEmpty()").that(actual.isEmpty()).isTrue()
+            testKeys.forEach { key ->
+                check("get($key)").that(actual[key]).isNull()
+                check("remove($key)").that(actual.remove(key)).isNull()
+            }
+        }
+
+        fun hasValues(vararg values: Pair<K, V>) {
+            check("size").that(actual.size).isEqualTo(values.size)
+            check("isEmpty()").that(actual.isEmpty()).isEqualTo(values.isEmpty())
+            values.forEach { (key, value) ->
+                check("get($key)").that(actual[key]).isEqualTo(value)
+            }
         }
     }
 }

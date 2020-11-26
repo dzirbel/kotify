@@ -1,22 +1,21 @@
 package com.dominiczirbel.network
 
-import com.dominiczirbel.assertThrowsInline
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.Method
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.ResponseOf
 import com.github.kittinunf.fuel.core.requests.DefaultRequest
+import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.net.URL
@@ -43,24 +42,24 @@ internal class RequestCacheTest {
     }
 
     private fun RequestCache<*, *>.assertRequests(total: Int, inProgress: Int = 0) {
-        assertEquals(total, totalRequests) { "expected $total total, was $totalRequests" }
-        assertEquals(inProgress, numInProgress) { "expected $inProgress in progress, was $numInProgress" }
+        assertWithMessage("total requests").that(totalRequests).isEqualTo(total)
+        assertWithMessage("requests in process").that(numInProgress).isEqualTo(inProgress)
     }
 
     @ParameterizedTest
     @ValueSource(ints = [1, 3, 10, 25])
-    fun testSuccessUnbounded(n: Int) {
+    fun `success unbounded`(n: Int) {
         val cache = RequestCache<String, Int>(maxSize = null)
 
         runBlocking {
             for (i in 1..n) {
-                assertEquals(i * 2, cache.request("key$i", i * 2))
+                assertThat(cache.request("key$i", i * 2)).isEqualTo(i * 2)
             }
             cache.assertRequests(total = n)
 
             // check that we still have cached values i*2
             for (i in 1..n) {
-                assertEquals(i * 2, cache.request("key$i", i * 3))
+                assertThat(cache.request("key$i", i * 3)).isEqualTo(i * 2)
             }
             cache.assertRequests(total = n)
         }
@@ -68,18 +67,18 @@ internal class RequestCacheTest {
 
     @ParameterizedTest
     @ValueSource(ints = [1, 3, 10, 25])
-    fun testSuccessNoCache(n: Int) {
+    fun `success no cache`(n: Int) {
         val cache = RequestCache<String, Int>(maxSize = 0)
 
         runBlocking {
             for (i in 1..n) {
-                assertEquals(i * 2, cache.request("key$i", i * 2))
+                assertThat(cache.request("key$i", i * 2)).isEqualTo(i * 2)
             }
             cache.assertRequests(total = n)
 
             // check that the values i*2 were not cached
             for (i in 1..n) {
-                assertEquals(i * 3, cache.request("key$i", i * 3))
+                assertThat(cache.request("key$i", i * 3)).isEqualTo(i * 3)
             }
             cache.assertRequests(total = 2 * n)
         }
@@ -87,39 +86,36 @@ internal class RequestCacheTest {
 
     @ParameterizedTest
     @ValueSource(ints = [1, 3, 10, 25])
-    fun testSuccessCache(n: Int) {
+    fun `success with cache`(n: Int) {
         val cache = RequestCache<String, Int>(maxSize = n / 2)
 
         runBlocking {
             for (i in 1..n) {
-                assertEquals(i * 2, cache.request("key$i", i * 2))
+                assertThat(cache.request("key$i", i * 2)).isEqualTo(i * 2)
             }
             cache.assertRequests(total = n)
 
             // since we start back from 1, none of the values are cached any more
             for (i in 1..n) {
-                assertEquals(i * 3, cache.request("key$i", i * 3))
+                assertThat(cache.request("key$i", i * 3)).isEqualTo(i * 3)
             }
             cache.assertRequests(total = 2 * n)
 
             // when we count down from n, the first n/2 keys are still cached as i*3, the rest are computed as i*4
             for ((count, i) in (n downTo 1).withIndex()) {
-                if (count < n / 2) {
-                    assertEquals(i * 3, cache.request("key$i", i * 4))
-                } else {
-                    assertEquals(i * 4, cache.request("key$i", i * 4))
-                }
+                assertThat(cache.request("key$i", i * 4))
+                    .isEqualTo(if (count < n / 2) i * 3 else i * 4)
             }
             cache.assertRequests(total = (2.5 * n).roundToInt())
         }
     }
 
     @Test
-    fun testError() {
+    fun error() {
         val cache = RequestCache<String, Int>()
 
         runBlocking {
-            assertThrowsInline<FuelError> {
+            assertThrows<FuelError> {
                 cache.request("key") {
                     throw FuelError.wrap(Throwable("test error"))
                 }
@@ -129,7 +125,7 @@ internal class RequestCacheTest {
     }
 
     @RepeatedTest(REPETITIONS)
-    fun testConcurrentSameKey() {
+    fun `concurrent same key`() {
         val cache = RequestCache<String, Int>(maxSize = null)
         val calls = AtomicInteger(0)
         val delayMs = 50L
@@ -150,19 +146,19 @@ internal class RequestCacheTest {
                 }
             }
 
-            assertEquals(value, async1.await())
-            assertEquals(value, async2.await())
-            assertEquals(1, calls.get())
+            assertThat(async1.await()).isEqualTo(value)
+            assertThat(async2.await()).isEqualTo(value)
+            assertThat(calls.get()).isEqualTo(1)
             cache.assertRequests(total = 1)
 
-            assertEquals(value, withTimeout(5) { cache.request(key, 0) })
+            assertThat(withTimeout(5) { cache.request(key, 0) }).isEqualTo(value)
             cache.assertRequests(total = 1)
         }
     }
 
     @ExperimentalTime
     @RepeatedTest(REPETITIONS)
-    fun testConcurrentDifferentKey(repetitionInfo: RepetitionInfo) {
+    fun `concurrent different key`(repetitionInfo: RepetitionInfo) {
         val cache = RequestCache<String, Int>(maxSize = null)
         val calls = AtomicInteger(0)
         val delayMs = 50L
@@ -198,17 +194,17 @@ internal class RequestCacheTest {
             // only test timeout after the first repetition to allow the JVM to warm up
             if (repetitionInfo.currentRepetition > 1) {
                 val maxDelay = (delayMs * 1.75).roundToLong()
-                assertTrue(durationMs in delayMs..maxDelay) { "took ${durationMs}ms" }
+                assertThat(durationMs).isIn(delayMs..maxDelay)
             }
 
-            assertEquals(value1, result1)
-            assertEquals(value2, result2)
-            assertNotEquals(coroutine1, coroutine2)
-            assertEquals(2, calls.get())
+            assertThat(result1).isEqualTo(value1)
+            assertThat(result2).isEqualTo(value2)
+            assertThat(coroutine1).isNotEqualTo(coroutine2)
+            assertThat(calls.get()).isEqualTo(2)
             cache.assertRequests(total = 2)
 
-            assertEquals(value1, withTimeout(5) { cache.request(key1, 0) })
-            assertEquals(value2, withTimeout(5) { cache.request(key2, 0) })
+            assertThat(withTimeout(5) { cache.request(key1, 0) }).isEqualTo(value1)
+            assertThat(withTimeout(5) { cache.request(key2, 0) }).isEqualTo(value2)
             cache.assertRequests(total = 2)
         }
     }

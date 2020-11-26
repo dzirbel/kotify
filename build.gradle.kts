@@ -6,6 +6,7 @@ private object Versions {
     const val fuel = "2.3.0" // https://github.com/kittinunf/fuel
     const val gson = "2.8.6" // https://github.com/google/gson
     const val junit = "5.7.0" // https://junit.org/junit5/
+    const val truth = "1.1"
 }
 
 plugins {
@@ -39,6 +40,7 @@ dependencies {
     testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit)
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", Versions.junit)
+    testImplementation("com.google.truth", "truth", Versions.truth)
 
     detektPlugins("io.gitlab.arturbosch.detekt", "detekt-formatting", Versions.detekt)
 }

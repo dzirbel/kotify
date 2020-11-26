@@ -6,21 +6,18 @@ import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.network.model.SpotifyObject
 import com.dominiczirbel.network.model.Track
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import com.google.common.truth.Truth.assertThat
 
-sealed class ObjectProperties(private val type: String) {
+abstract class ObjectProperties(private val type: String) {
     abstract val id: String
     abstract val name: String
 
     protected fun check(obj: SpotifyObject) {
-        assertEquals(id, obj.id)
-        assertEquals(name, obj.name) { "unexpected name for id $id" }
-        assertEquals(type, obj.type)
-        assertNotNull(obj.href)
-        assertNotNull(obj.uri)
+        assertThat(obj.id).isEqualTo(id)
+        assertThat(obj.name).isEqualTo(name)
+        assertThat(obj.type).isEqualTo(type)
+        assertThat(obj.href).isNotNull()
+        assertThat(obj.uri).isNotNull()
     }
 }
 
@@ -31,13 +28,13 @@ data class ArtistProperties(
 ) : ObjectProperties(type = "artist") {
     fun check(artist: Artist) {
         super.check(artist)
-        assertNotNull(artist.externalUrls)
+        assertThat(artist.externalUrls).isNotNull()
 
         if (artist is FullArtist) {
-            assertNotNull(artist.followers)
-            assertNotNull(artist.genres)
-            assertNotNull(artist.images)
-            assertTrue(artist.popularity in 0..100) { "popularity: ${artist.popularity}" }
+            assertThat(artist.followers).isNotNull()
+            assertThat(artist.genres).isNotNull()
+            assertThat(artist.images).isNotNull()
+            assertThat(artist.popularity).isIn(0..100)
         }
     }
 }
@@ -46,20 +43,20 @@ data class AlbumProperties(override val id: String, override val name: String) :
     fun check(album: Album) {
         super.check(album)
 
-        assertTrue(album.albumType in Album.Type.values()) { "album type: ${album.albumType}" }
-        assertTrue(album.artists.isNotEmpty())
-        assertNotNull(album.availableMarkets)
-        assertNotNull(album.externalUrls)
-        assertNotNull(album.images)
-        assertNotNull(album.releaseDate)
-        assertNotNull(album.releaseDatePrecision)
-        assertNull(album.restrictions)
+        assertThat(album.albumType).isIn(Album.Type.values().toList())
+        assertThat(album.artists).isNotEmpty()
+        assertThat(album.availableMarkets).isNotNull()
+        assertThat(album.externalUrls).isNotNull()
+        assertThat(album.images).isNotNull()
+        assertThat(album.releaseDate).isNotNull()
+        assertThat(album.releaseDatePrecision).isNotNull()
+        assertThat(album.restrictions).isNull()
 
         if (album is FullAlbum) {
-            assertNotNull(album.genres)
-            assertNotNull(album.label)
-            assertTrue(album.popularity in 0..100) { "popularity: ${album.popularity}" }
-            assertTrue(album.tracks.items.isNotEmpty())
+            assertThat(album.genres).isNotNull()
+            assertThat(album.label).isNotNull()
+            assertThat(album.popularity).isIn(0..100)
+            assertThat(album.tracks.items).isNotEmpty()
         }
     }
 }
@@ -76,17 +73,17 @@ data class TrackProperties(
     fun check(track: Track, trackRelinking: Boolean = false) {
         super.check(track)
 
-        assertEquals(artistNames, track.artists.map { it.name }.toSet())
-        assertEquals(trackNumber, track.trackNumber)
-        assertEquals(discNumber, track.discNumber)
-        assertTrue(track.durationMs > 0) { "durationMs: ${track.durationMs}" }
-        assertEquals(explicit, track.explicit)
-        assertEquals(isLocal, track.isLocal)
-        assertNotNull(track.externalUrls)
+        assertThat(track.artists.map { it.name }).containsExactlyElementsIn(artistNames)
+        assertThat(track.trackNumber).isEqualTo(trackNumber)
+        assertThat(track.discNumber).isEqualTo(discNumber)
+        assertThat(track.durationMs).isAtLeast(0)
+        assertThat(track.explicit).isEqualTo(explicit)
+        assertThat(track.isLocal).isEqualTo(isLocal)
+        assertThat(track.externalUrls).isNotNull()
         if (!trackRelinking) {
-            assertNull(track.isPlayable)
-            assertNull(track.linkedFrom)
-            assertNull(track.restrictions)
+            assertThat(track.isPlayable).isNull()
+            assertThat(track.linkedFrom).isNull()
+            assertThat(track.restrictions).isNull()
         }
     }
 }
