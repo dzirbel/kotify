@@ -19,7 +19,7 @@ interface User {
     /** The user’s profile image. */
     val images: List<Image>
 
-    /** The object type: “user” */
+    /** The object type: "user" */
     val type: String
 
     /** The Spotify URI for this user. */
@@ -61,8 +61,8 @@ data class PrivateUser(
     val email: String,
 
     /**
-     * The user’s Spotify subscription level: “premium”, “free”, etc. (The subscription level “open” can be considered
-     * the same as “free”.)
+     * The user’s Spotify subscription level: "premium", "free", etc. (The subscription level "open" can be considered
+     * the same as "free".)
      * This field is only available when the current user has granted access to the user-read-private scope.
      */
     val product: String

@@ -14,7 +14,7 @@ interface Track : SpotifyObject {
     /** The name of the track. */
     override val name: String
 
-    /** The object type: “track”. */
+    /** The object type: "track". */
     override val type: String
 
     /** The Spotify URI for the track. */

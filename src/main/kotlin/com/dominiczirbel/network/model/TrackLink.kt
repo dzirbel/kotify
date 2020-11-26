@@ -20,7 +20,7 @@ data class TrackLink(
     val id: String,
 
     /**
-     * The object type: “track”.
+     * The object type: "track".
      */
     val type: String,
 

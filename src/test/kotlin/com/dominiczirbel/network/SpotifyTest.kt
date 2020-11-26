@@ -63,7 +63,7 @@ internal class SpotifyTest {
     @ParameterizedTest
     @MethodSource("artists")
     fun getArtistTopTracks(artistProperties: ArtistProperties) {
-        val tracks = runBlocking { Spotify.Artists.getArtistTopTracks(artistProperties.id, market = "US") }
+        val tracks = runBlocking { Spotify.Artists.getArtistTopTracks(artistProperties.id, country = "US") }
         assertThat(tracks).isNotEmpty()
     }
 

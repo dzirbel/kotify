@@ -11,7 +11,7 @@ interface Playlist : SpotifyObject {
     /** The name of the playlist. */
     override val name: String
 
-    /** The object type: “playlist” */
+    /** The object type: "playlist" */
     override val type: String
 
     /** The Spotify URI for the playlist. */

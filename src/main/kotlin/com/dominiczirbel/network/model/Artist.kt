@@ -10,7 +10,7 @@ interface Artist : SpotifyObject {
     /** The name of the artist. */
     override val name: String
 
-    /** The object type: “artist”. */
+    /** The object type: "artist". */
     override val type: String
 
     /** The Spotify URI for the artist. */

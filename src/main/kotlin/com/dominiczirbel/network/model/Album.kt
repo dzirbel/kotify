@@ -13,13 +13,13 @@ interface Album : SpotifyObject {
     /** The name of the album. In case of an album takedown, the value may be an empty string. */
     override val name: String
 
-    /** The object type: “album” */
+    /** The object type: "album" */
     override val type: String
 
     /** The Spotify URI for the album. */
     override val uri: String
 
-    /** The type of the album: one of “album”, “single”, or “compilation”. */
+    /** The type of the album: one of "album", "single", or "compilation". */
     val albumType: Type
 
     /**
@@ -92,8 +92,8 @@ data class SimplifiedAlbum(
     override val uri: String,
 
     /**
-     * The field is present when getting an artist’s albums. Possible values are “album”, “single”, “compilation”,
-     * “appears_on”. Compare to album_type this field represents relationship between the artist and the album.
+     * The field is present when getting an artist’s albums. Possible values are "album", "single", "compilation",
+     * "appears_on". Compare to album_type this field represents relationship between the artist and the album.
      */
     val albumGroup: Album.Type?
 ) : Album
@@ -124,8 +124,8 @@ data class FullAlbum(
     val externalIds: ExternalId,
 
     /**
-     * A list of the genres used to classify the album. For example: "Prog Rock" , "Post-Grunge". (If not yet
-     * classified, the array is empty.)
+     * A list of the genres used to classify the album. For example: "Prog Rock", "Post-Grunge". (If not yet classified,
+     * the array is empty.)
      * */
     val genres: List<String>,
 
