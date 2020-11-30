@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
-    const val coroutines = "1.4.1" // https://github.com/Kotlin/kotlinx.coroutines
+    const val coroutines = "1.4.2" // https://github.com/Kotlin/kotlinx.coroutines
     const val detekt = "1.15.0-RC1" // https://github.com/detekt/detekt; also update plugin version
     const val fuel = "2.3.0" // https://github.com/kittinunf/fuel
     const val gson = "2.8.6" // https://github.com/google/gson
