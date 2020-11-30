@@ -177,32 +177,6 @@ internal object Fixtures {
                 AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
                 AlbumProperties("7LZNQn0nVJCEUQXfidfizI", "Plays Metallica by Four Cellos (Remastered)")
             )
-        ),
-        ArtistProperties(
-            id = "4mIdyUBqjS36BQHYFBbGjm",
-            name = "Dalriada",
-            albums = listOf(
-                AlbumProperties("09r0cZ1aQuKoHcS40F0wWh", "Mesék, álmok, regék"),
-                AlbumProperties("0GMuyid3D0qKbZwpiMQoK4", "Celtic Music & Songs - Ireland"),
-                AlbumProperties("1Z5Aw68hjd9e17izcGbLSQ", "Kikelet"),
-                AlbumProperties("20tfQomQDgRlElhDPsrS01", "Nyárutó"),
-                AlbumProperties("2HQU4177V84JDOFI8AgwbC", "Alternative Flavors of Caledonia"),
-                AlbumProperties("2HrkiIP2NzNH0KOtVs0ILI", "Robert Burns - The Poems and the Music"),
-                AlbumProperties("2Yedn1ga2wg3QTVEfvuPDP", "Jégbontó"),
-                AlbumProperties("3DIDgySJcb6MsfBMjcnqBG", "Arany-Album"),
-                AlbumProperties("3ED6HUUV0MtC1aiHLPOpbU", "Kalapács - Kikalapált dalok"),
-                AlbumProperties("3oYnpsZG6kgnJIHf8Y659H", "Jégbontó"),
-                AlbumProperties("3Rt5otPyF6OqMfO1wjN46o", "Ezer csillag"),
-                AlbumProperties("43EQHlJYWqZonZEG7DQPuR", "Egyek vagyunk (Ossian Tribute)"),
-                AlbumProperties("447wr2DtMcrrIIoRlkJr8w", "Ígéret"),
-                AlbumProperties("44PjwxnXvAD8HNz1DqwpQf", "Szelek"),
-                AlbumProperties("596NzuBPZUZAfO5DZmdDJz", "Napisten Hava"),
-                AlbumProperties("5X7vHeH7hoHg1aJIHi3aYY", "Csillagok dala"),
-                AlbumProperties("6xcz5gX6lIFuO8eRcWlR0k", "Áldás"),
-                AlbumProperties("6yxK3hbXOsxXSeJbKmnRx5", "Fergeteg"),
-                AlbumProperties("77MdutiO7oxFTRU1bO6pvB", "Csillagok dala"),
-                AlbumProperties("7AmTFZLUdkKHLjSjJpzMW9", "Forrás")
-            )
         )
     )
 
