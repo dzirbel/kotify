@@ -1,6 +1,6 @@
 package com.dominiczirbel
 
-import com.dominiczirbel.network.Spotify
+import com.dominiczirbel.network.oauth.OAuth
 import kotlinx.coroutines.runBlocking
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -26,7 +26,7 @@ object Secrets {
     fun authenticate() {
         val id = get("client_id")!!
         runBlocking {
-            Spotify.authenticate(clientId = id, clientSecret = get("client_secret")!!)
+            OAuth.withClientCredentials(clientId = id, clientSecret = get("client_secret")!!)
         }
         println("Authenticated with client ID $id")
     }

@@ -15,6 +15,7 @@ import com.dominiczirbel.network.model.Recommendations
 import com.dominiczirbel.network.model.SimplifiedAlbum
 import com.dominiczirbel.network.model.SimplifiedPlaylist
 import com.dominiczirbel.network.model.SimplifiedTrack
+import com.dominiczirbel.network.oauth.AccessToken
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.await
 import com.github.kittinunf.fuel.gson.gsonDeserializer
@@ -52,7 +53,7 @@ object Spotify {
     private data class TracksModel(val tracks: List<FullTrack>)
 
     private suspend inline fun <reified T : Any> get(path: String, queryParams: List<Pair<String, Any?>>? = null): T {
-        val token = AccessToken.getCachedOrThrow()
+        val token = AccessToken.Cache.getOrThrow()
 
         return try {
             (API_URL + path).httpGet(queryParams)
@@ -66,16 +67,6 @@ object Spotify {
             }
             throw SpotifyError(code = ex.response.statusCode, message = message, cause = ex)
         }
-    }
-
-    /**
-     * Retrieve an [AccessToken] based on the given [clientId] and [clientSecret]. This [AccessToken] will automatically
-     * be applied to future requests.
-     *
-     * https://developer.spotify.com/documentation/general/guides/authorization-guide/
-     */
-    suspend fun authenticate(clientId: String, clientSecret: String): AccessToken {
-        return AccessToken.getOrThrow(clientId, clientSecret)
     }
 
     /**

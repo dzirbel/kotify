@@ -5,6 +5,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.dominiczirbel.network.oauth.AccessToken
 import com.dominiczirbel.ui.AuthenticationDialog
 import com.dominiczirbel.ui.MainContent
 import com.github.kittinunf.fuel.core.FuelManager
@@ -24,10 +25,13 @@ fun main() {
         }
     }
 
+    // clear non-refreshable tokens from tests
+    AccessToken.Cache.requireRefreshable()
+
     @Suppress("MagicNumber")
     Window(title = "Spotify Client") {
         MaterialTheme {
-            val authenticating = remember { mutableStateOf<Boolean?>(true) }
+            val authenticating = remember { mutableStateOf<Boolean?>(!AccessToken.Cache.hasToken) }
             if (authenticating.value == true) {
                 Text("Authenticating...")
                 AuthenticationDialog(

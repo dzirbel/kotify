@@ -29,6 +29,7 @@ internal class SpotifyArtistsTest {
     fun getArtistAlbums(artistProperties: ArtistProperties) {
         val albums = runBlocking { Spotify.Artists.getArtistAlbums(artistProperties.id) }
         assertThat(albums.items).hasSize(artistProperties.albums.size)
+        println(albums.items.sortedBy { it.id }.joinToString(separator = "\n") { "${it.id} | ${it.name}" })
         albums.items
             .sortedBy { it.id }
             .zip(artistProperties.albums.sortedBy { it.id })

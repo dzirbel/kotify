@@ -2,11 +2,9 @@ package com.dominiczirbel.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
@@ -19,15 +17,15 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DesktopDialogProperties
 import androidx.compose.ui.window.Dialog
-import com.dominiczirbel.Secrets
-import com.dominiczirbel.network.Spotify
+import com.dominiczirbel.network.oauth.OAuth
 import kotlinx.coroutines.launch
+import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
 
 data class AuthenticationViewModel(
-    val clientId: String = "",
-    val clientSecret: String = "",
-    val submitLoading: Boolean = false,
-    val loadFromFileLoading: Boolean = false
+    val clientId: String = OAuth.DEFAULT_CLIENT_ID,
+    val oauthState: OAuth? = null,
+    val redirectUri: String = ""
 )
 
 private val PADDING = 10.dp
@@ -59,79 +57,65 @@ fun AuthenticationView(
     val coroutineScope = rememberCoroutineScope()
 
     Column(modifier = Modifier.padding(PADDING), verticalArrangement = Arrangement.spacedBy(PADDING, Alignment.Top)) {
-        Text("Enter your Spotify API application credentials.")
+        val oauthState = viewModel.value.oauthState
+        if (oauthState != null) {
+            Text("Flow in progress")
 
-        LinkedText(style = MaterialTheme.typography.caption) {
-            append("See ")
-            appendLinkedUrl(
-                text = "the spotify documentation",
-                url = "https://developer.spotify.com/documentation/web-api/quick-start/"
+            Text("Authorize the Spotify API and then paste the resulting redirected url here:")
+
+            // TODO add button to cancel and restart
+            // TODO add redirect url in case the default open did not work
+
+            Button(
+                onClick = {
+                    val clipboard = Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor)
+                    viewModel.value = viewModel.value.copy(redirectUri = clipboard as String)
+                }
+            ) {
+                Text("Paste")
+            }
+
+            TextField(
+                value = viewModel.value.redirectUri,
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = { viewModel.value = viewModel.value.copy(redirectUri = it) },
+                label = {
+                    Text("Redirect URI")
+                }
             )
-            append(" for details.")
-        }
 
-        Spacer(Modifier.height(PADDING))
-
-        TextField(
-            value = viewModel.value.clientId,
-            modifier = Modifier.fillMaxWidth(),
-            onValueChange = { viewModel.value = viewModel.value.copy(clientId = it) },
-            label = {
-                Text("Client ID")
-            }
-        )
-
-        TextField(
-            value = viewModel.value.clientSecret,
-            modifier = Modifier.fillMaxWidth(),
-            onValueChange = { viewModel.value = viewModel.value.copy(clientSecret = it) },
-            label = {
-                Text("Client secret")
-            }
-        )
-
-        LoadingButton(
-            enabled = viewModel.value.clientId.isNotEmpty() && viewModel.value.clientSecret.isNotEmpty(),
-            modifier = Modifier.align(Alignment.End),
-            loading = viewModel.value.submitLoading,
-            onClick = {
-                viewModel.value = viewModel.value.copy(submitLoading = true)
-
-                coroutineScope.launch {
-                    val result = runCatching {
-                        Spotify.authenticate(
-                            clientId = viewModel.value.clientId,
-                            clientSecret = viewModel.value.clientSecret
-                        )
-                    }
-                    viewModel.value = viewModel.value.copy(submitLoading = false)
-                    if (result.isSuccess) {
+            // TODO loading state
+            Button(
+                enabled = viewModel.value.redirectUri.isNotEmpty(),
+                onClick = {
+                    coroutineScope.launch {
+                        // TODO handle failure (and errors)
+                        oauthState.onRedirect(redirectedUri = viewModel.value.redirectUri)
                         onAuthenticated()
                     }
                 }
+            ) {
+                Text("Finish")
             }
-        ) {
-            Text("Submit")
-        }
+        } else {
+            // TODO add ID/secret option (and others?)
 
-        Spacer(Modifier.height(PADDING))
-
-        LoadingButton(
-            loading = viewModel.value.loadFromFileLoading,
-            onClick = {
-                viewModel.value = viewModel.value.copy(loadFromFileLoading = true)
-
-                coroutineScope.launch {
-                    Secrets.load()
-                    val result = runCatching { Secrets.authenticate() }
-                    viewModel.value = viewModel.value.copy(loadFromFileLoading = false)
-                    if (result.isSuccess) {
-                        onAuthenticated()
-                    }
+            TextField(
+                value = viewModel.value.clientId,
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = { viewModel.value = viewModel.value.copy(clientId = it) },
+                label = {
+                    Text("Client ID")
                 }
+            )
+
+            Button(
+                onClick = {
+                    viewModel.value = viewModel.value.copy(oauthState = OAuth.start())
+                }
+            ) {
+                Text("Start OAuth Flow")
             }
-        ) {
-            Text("Load from secrets")
         }
     }
 }
