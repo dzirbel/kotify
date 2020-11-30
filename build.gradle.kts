@@ -6,19 +6,22 @@ private object Versions {
     const val fuel = "2.3.0" // https://github.com/kittinunf/fuel
     const val gson = "2.8.6" // https://github.com/google/gson
     const val junit = "5.7.0" // https://junit.org/junit5/
-    const val okhttp = "4.9.0"
-    const val truth = "1.1"
+    const val okhttp = "4.9.0" // https://square.github.io/okhttp/
+    const val truth = "1.1" // https://truth.dev/
 }
 
 plugins {
+    // https://kotlinlang.org/releases.html
     kotlin("jvm") version "1.4.20"
+
+    // https://github.com/detekt/detekt; also update dependency version
     id("io.gitlab.arturbosch.detekt") version "1.15.0-RC1"
 
     // https://plugins.gradle.org/plugin/name.remal.check-dependency-updates
     id("name.remal.check-dependency-updates") version "1.1.4"
 
     // https://github.com/jetbrains/compose-jb
-    id("org.jetbrains.compose") version "0.2.0-build129"
+    id("org.jetbrains.compose") version "0.2.0-build132"
 }
 
 version = "0.1"
