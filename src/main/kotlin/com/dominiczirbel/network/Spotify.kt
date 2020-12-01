@@ -11,6 +11,8 @@ import com.dominiczirbel.network.model.FullTrack
 import com.dominiczirbel.network.model.Image
 import com.dominiczirbel.network.model.Paging
 import com.dominiczirbel.network.model.PlaylistTrack
+import com.dominiczirbel.network.model.PrivateUser
+import com.dominiczirbel.network.model.PublicUser
 import com.dominiczirbel.network.model.Recommendations
 import com.dominiczirbel.network.model.SimplifiedAlbum
 import com.dominiczirbel.network.model.SimplifiedPlaylist
@@ -741,6 +743,28 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-users-profile
      */
     object UsersProfile {
-        // TODO add users profile endpoints
+        /**
+         * Get detailed profile information about the current user (including the current user’s username).
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/users-profile/get-current-users-profile/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-current-users-profile
+         */
+        suspend fun getCurrentUser(): PrivateUser {
+            return get("me")
+        }
+
+        /**
+         * Get public profile information about a Spotify user.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/users-profile/get-users-profile/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-users-profile
+         *
+         * TODO test
+         *
+         * @param userId The user’s Spotify user ID.
+         */
+        suspend fun getUser(userId: String): PublicUser {
+            return get("users/$userId")
+        }
     }
 }

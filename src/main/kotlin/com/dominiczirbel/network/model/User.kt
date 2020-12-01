@@ -2,7 +2,7 @@ package com.dominiczirbel.network.model
 
 interface User {
     /** The name displayed on the user’s profile. null if not available. */
-    val displayName: String
+    val displayName: String?
 
     /** Known public external URLs for this user. */
     val externalUrl: ExternalUrl
@@ -26,8 +26,11 @@ interface User {
     val uri: String
 }
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/object-model/#user-object-public
+ */
 data class PublicUser(
-    override val displayName: String,
+    override val displayName: String?,
     override val externalUrl: ExternalUrl,
     override val followers: Followers,
     override val href: String,
@@ -37,8 +40,11 @@ data class PublicUser(
     override val uri: String
 ) : User
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/object-model/#user-object-private
+ */
 data class PrivateUser(
-    override val displayName: String,
+    override val displayName: String?,
     override val externalUrl: ExternalUrl,
     override val followers: Followers,
     override val href: String,
@@ -51,19 +57,25 @@ data class PrivateUser(
      * The country of the user, as set in the user’s account profile. An ISO 3166-1 alpha-2 country code. This field is
      * only available when the current user has granted access to the user-read-private scope.
      */
-    val country: String,
+    val country: String?,
 
     /**
      * The user’s email address, as entered by the user when creating their account.
      * Important! This email address is unverified; there is no proof that it actually belongs to the user.
      * This field is only available when the current user has granted access to the user-read-email scope.
      */
-    val email: String,
+    val email: String?,
+
+    /**
+     * The user’s explicit content settings. This field is only available when the current user has granted access to
+     * the user-read-private scope.
+     */
+    val explicitContent: ExplicitContentSettings,
 
     /**
      * The user’s Spotify subscription level: "premium", "free", etc. (The subscription level "open" can be considered
      * the same as "free".)
      * This field is only available when the current user has granted access to the user-read-private scope.
      */
-    val product: String
+    val product: String?
 ) : User
