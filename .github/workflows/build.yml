@@ -14,13 +14,13 @@ jobs:
       with:
         java-version: 11.0.9
 
-    # download the current access token from B2
-    - run: pip install b2
-    - run: b2 authorize-account ${B2_APPKEY_ID} ${B2_APPKEY}
-    - run: b2 download-file-by-name ${B2_BUCKET_NAME} access_token.json access_token.json
+    # sync the access token with B2 (ie. download it now and upload if it changes on refresh)
+    - uses: jakejarvis/backblaze-b2-action@master
+      env:
+        SOURCE_DIR: './access_token.json'
+        B2_BUCKET: ${{ secrets.B2_BUCKET_NAME }}
+        B2_APPKEY_ID: ${{ secrets.B2_APPKEY_ID }}
+        B2_APPKEY: ${{ secrets.B2_APPKEY }}
 
     - run: chmod +x ./gradlew
     - run: ./gradlew --no-daemon --stacktrace check
-
-    # upload the new access token to B2 (in case it was refreshed)
-    - run: b2 upload-file ${B2_BUCKET_NAME} access_token.json access_token.json
