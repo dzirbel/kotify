@@ -1,19 +1,23 @@
 package com.dominiczirbel.network.oauth
 
+import com.google.common.io.Files
 import com.google.common.truth.BooleanSubject
 import com.google.common.truth.Truth.assertThat
 import com.google.gson.Gson
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.io.File
 
 // TODO test requireRefreshable
 // TODO test refresh
 internal class AccessTokenTest {
     @BeforeEach
     @Suppress("unused")
-    fun before() {
+    fun beforeEach() {
         AccessToken.Cache.clear()
     }
 
@@ -126,5 +130,27 @@ internal class AccessTokenTest {
         assertThat(accessToken.tokenType).isEqualTo("def")
         assertThat(accessToken.expiresIn).isEqualTo(30)
         assertThat(accessToken.received).isEqualTo(123)
+    }
+
+    companion object {
+        private val tempFile = File("temp_access_token.json")
+
+        @BeforeAll
+        @JvmStatic
+        @Suppress("unused")
+        fun before() {
+            println("Moving ${AccessToken.Cache.file} to temp file $tempFile")
+            Files.move(AccessToken.Cache.file, tempFile)
+            AccessToken.Cache.log = false
+        }
+
+        @AfterAll
+        @JvmStatic
+        @Suppress("unused")
+        fun after() {
+            println("Restoring ${AccessToken.Cache.file} from temp file $tempFile")
+            Files.move(tempFile, AccessToken.Cache.file)
+            AccessToken.Cache.log = true
+        }
     }
 }

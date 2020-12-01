@@ -155,21 +155,6 @@ class OAuth private constructor(
             )
         }
 
-        // TODO
-        suspend fun withClientCredentials(clientId: String, clientSecret: String) {
-            val unencodedAuth = "$clientId:$clientSecret"
-            val encodedAuth = Base64.getEncoder().encodeToString(unencodedAuth.toByteArray())
-
-            // TODO add custom error handling
-            val accessToken: AccessToken = "https://accounts.spotify.com/api/token".httpPost()
-                .body("grant_type=client_credentials")
-                .header("Authorization", "Basic $encodedAuth")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .await(gsonDeserializer(Spotify.gson))
-
-            AccessToken.Cache.put(accessToken)
-        }
-
         /**
          * Generates a new random string which can serve as state for the current OAuth flow, to prevent CSRF attacks.
          *

@@ -70,7 +70,7 @@ data class TrackProperties(
     val isLocal: Boolean = false,
     val trackNumber: Int
 ) : ObjectProperties(type = "track") {
-    fun check(track: Track, trackRelinking: Boolean = false) {
+    fun check(track: Track) {
         super.check(track)
 
         assertThat(track.artists.map { it.name }).containsExactlyElementsIn(artistNames)
@@ -80,11 +80,6 @@ data class TrackProperties(
         assertThat(track.explicit).isEqualTo(explicit)
         assertThat(track.isLocal).isEqualTo(isLocal)
         assertThat(track.externalUrls).isNotNull()
-        if (!trackRelinking) {
-            assertThat(track.isPlayable).isNull()
-            assertThat(track.linkedFrom).isNull()
-            assertThat(track.restrictions).isNull()
-        }
     }
 }
 

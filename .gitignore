@@ -1,5 +1,4 @@
 /.gradle/
 /.idea/
 /build/
-secrets.properties
 access_token.json

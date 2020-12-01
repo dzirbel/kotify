@@ -1,10 +1,8 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
-import com.dominiczirbel.Secrets
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 internal class SpotifyBrowseTest {
@@ -51,15 +49,5 @@ internal class SpotifyBrowseTest {
         }
         assertThat(recommendations.seeds.isNotEmpty())
         assertThat(recommendations.tracks.isNotEmpty())
-    }
-
-    companion object {
-        @BeforeAll
-        @JvmStatic
-        @Suppress("unused")
-        fun setup() {
-            Secrets.load()
-            Secrets.authenticate()
-        }
     }
 }

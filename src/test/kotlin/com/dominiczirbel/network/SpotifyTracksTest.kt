@@ -1,11 +1,9 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
-import com.dominiczirbel.Secrets
 import com.dominiczirbel.TrackProperties
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
@@ -53,14 +51,6 @@ internal class SpotifyTracksTest {
     }
 
     companion object {
-        @BeforeAll
-        @JvmStatic
-        @Suppress("unused")
-        fun setup() {
-            Secrets.load()
-            Secrets.authenticate()
-        }
-
         @JvmStatic
         @Suppress("unused")
         fun tracks() = Fixtures.tracks

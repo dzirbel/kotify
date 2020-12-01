@@ -2,10 +2,8 @@ package com.dominiczirbel.network
 
 import com.dominiczirbel.AlbumProperties
 import com.dominiczirbel.Fixtures
-import com.dominiczirbel.Secrets
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -35,14 +33,6 @@ internal class SpotifyAlbumsTest {
     }
 
     companion object {
-        @BeforeAll
-        @JvmStatic
-        @Suppress("unused")
-        fun setup() {
-            Secrets.load()
-            Secrets.authenticate()
-        }
-
         @JvmStatic
         @Suppress("unused")
         fun albums() = Fixtures.albums.keys

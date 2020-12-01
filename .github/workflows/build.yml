@@ -12,10 +12,15 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-java@v1
       with:
-        java-version: 11.0.7
+        java-version: 11.0.9
+
+    # download the current access token from B2
+    - run: pip install b2
+    - run: b2 authorize-account ${B2_APPKEY_ID} ${B2_APPKEY}
+    - run: b2 download-file-by-name ${B2_BUCKET_NAME} access_token.json access_token.json
+
     - run: chmod +x ./gradlew
     - run: ./gradlew --no-daemon --stacktrace check
-      env:
-        CI: true
-        client_id: ${{ secrets.client_id }}
-        client_secret: ${{ secrets.client_secret }}
+
+    # upload the new access token to B2 (in case it was refreshed)
+    - run: b2 upload-file ${B2_BUCKET_NAME} access_token.json access_token.json

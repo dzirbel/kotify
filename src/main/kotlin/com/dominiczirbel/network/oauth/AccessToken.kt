@@ -47,7 +47,16 @@ data class AccessToken(
      * refreshing it when it is expired.
      */
     object Cache {
-        private val file = File("access_token.json")
+        /**
+         * The file at which the access token is saved, relative to the current working directory.
+         */
+        internal val file = File("access_token.json")
+
+        /**
+         * Whether to log access token updates to the console; used to disable logging when testing the cache directly.
+         */
+        internal var log: Boolean = true
+
         private val gson = GsonBuilder().setPrettyPrinting().create()
         private var token: AccessToken? = null
 
@@ -64,6 +73,7 @@ data class AccessToken(
          */
         fun requireRefreshable() {
             if (getFromCache()?.refreshToken == null) {
+                log("Current token is not refreshable, clearing")
                 clear()
             }
         }
@@ -88,6 +98,7 @@ data class AccessToken(
             val token = getFromCache() ?: return null
 
             if (refresh && token.isExpired) {
+                log("Current access token is expired; refreshing")
                 refresh(clientId)
             }
 
@@ -98,8 +109,9 @@ data class AccessToken(
          * Puts the given [AccessToken] in the cache, immediately writing it to disk.
          */
         fun put(accessToken: AccessToken) {
+            log("Putting new access token")
             token = accessToken
-            save()
+            save(accessToken)
         }
 
         /**
@@ -108,6 +120,7 @@ data class AccessToken(
         fun clear() {
             token = null
             Files.deleteIfExists(file.toPath())
+            log("Cleared access token")
         }
 
         /**
@@ -122,27 +135,27 @@ data class AccessToken(
          * Returns the currently cached token, loading it from disk if there is not one in memory.
          */
         private fun getFromCache(): AccessToken? {
-            return token ?: load().let { token }
+            return token ?: load().also { token = it }
         }
 
         /**
-         * Writes the in-memory token to disk.
+         * Writes [token] to disk.
          */
-        private fun save() {
-            token?.let {
-                val json = gson.toJson(it)
-                Files.write(file.toPath(), json.split('\n'))
-            }
+        private fun save(token: AccessToken) {
+            val json = gson.toJson(token)
+            Files.write(file.toPath(), json.split('\n'))
+            log("Saved access token to $file")
         }
 
         /**
-         * Reads the token from disk, overwriting the in-memory token if it exists on disk.
+         * Reads the token from disk and returns it, or null if there is no token file.
          */
-        private fun load() {
-            try {
-                token = FileReader(file).use { gson.fromJson(it, AccessToken::class.java) }
+        private fun load(): AccessToken? {
+            return try {
+                FileReader(file).use { gson.fromJson(it, AccessToken::class.java) }
+                    .also { log("Loaded access from $file") }
             } catch (_: FileNotFoundException) {
-                // do nothing
+                null.also { log("No saved access token at $file") }
             }
         }
 
@@ -158,8 +171,17 @@ data class AccessToken(
                 token = "https://accounts.spotify.com/api/token".httpPost()
                     .body("grant_type=refresh_token&refresh_token=$refreshToken&client_id=$clientId")
                     .header("Content-Type", "application/x-www-form-urlencoded")
-                    .await(gsonDeserializer(Spotify.gson))
-                save()
+                    .await(gsonDeserializer<AccessToken>(Spotify.gson))
+                    .also {
+                        log("Got refreshed access token")
+                        save(it)
+                    }
+            }
+        }
+
+        private fun log(message: String) {
+            if (log) {
+                println(message)
             }
         }
 
