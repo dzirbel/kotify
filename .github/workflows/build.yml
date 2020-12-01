@@ -30,7 +30,7 @@ jobs:
         B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
 
     - run: chmod +x ./gradlew
-    - run: ./gradlew --no-daemon --stacktrace check
+    - run: ./gradlew --no-daemon --stacktrace --console=plain check
 
     - name: Upload access_token.json to B2 (in case it was refreshed)
       run: ./b2 upload-file ${B2_BUCKET_NAME} access_token.json access_token.json

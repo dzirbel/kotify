@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
@@ -63,6 +64,9 @@ configurations.all {
 
 tasks.test {
     useJUnitPlatform()
+    testLogging {
+        events = setOf(TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR, TestLogEvent.STANDARD_OUT)
+    }
 }
 
 detekt {
