@@ -15,12 +15,13 @@ jobs:
         java-version: 11.0.9
 
     # download the current access token from B2
-    - run: pip install --quiet --no-cache-dir b2==1.4.0
-    - run: b2 authorize-account ${B2_APPKEY_ID} ${B2_APPKEY}
-    - run: b2 download-file-by-name ${B2_BUCKET_NAME} access_token.json access_token.json
+    - run: curl https://github.com/Backblaze/B2_Command_Line_Tool/releases/download/v2.1.0/b2-linux -o b2
+    - run: chmod +x b2
+    - run: ./b2 authorize-account ${B2_APPKEY_ID} ${B2_APPKEY}
+    - run: ./b2 download-file-by-name ${B2_BUCKET_NAME} access_token.json access_token.json
 
     - run: chmod +x ./gradlew
     - run: ./gradlew --no-daemon --stacktrace check
 
     # upload the new access token to B2 (in case it was refreshed)
-    - run: b2 upload-file ${B2_BUCKET_NAME} access_token.json access_token.json
+    - run: ./b2 upload-file ${B2_BUCKET_NAME} access_token.json access_token.json
