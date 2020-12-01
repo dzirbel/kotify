@@ -14,14 +14,24 @@ jobs:
       with:
         java-version: 11.0.9
 
-    # download the current access token from B2
-    - run: curl https://github.com/Backblaze/B2_Command_Line_Tool/releases/download/v2.1.0/b2-linux -L -o b2
-    - run: chmod +x b2
-    - run: ./b2 authorize-account ${B2_APPKEY_ID} ${B2_APPKEY}
-    - run: ./b2 download-file-by-name ${B2_BUCKET_NAME} access_token.json access_token.json
+    - name: Download B2 binary
+      run: curl https://github.com/Backblaze/B2_Command_Line_Tool/releases/download/v2.1.0/b2-linux -L -o b2 && chmod +x b2
+
+    - name: Authorize B2 account
+      run: ./b2 authorize-account ${B2_APPKEY_ID} ${B2_APPKEY}
+      with:
+        - B2_APPKEY_ID: ${{ secrets.B2_APPKEY_ID }}
+        - B2_APPKEY: ${{ secrets.B2_APPKEY }}
+
+    - name: Download access_token.json from B2
+      run: ./b2 download-file-by-name ${B2_BUCKET_NAME} access_token.json access_token.json
+      with:
+        - B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
 
     - run: chmod +x ./gradlew
     - run: ./gradlew --no-daemon --stacktrace check
 
-    # upload the new access token to B2 (in case it was refreshed)
+    - name: Upload access_token.json to B2 (in case it was refreshed)
     - run: ./b2 upload-file ${B2_BUCKET_NAME} access_token.json access_token.json
+      with:
+        - B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
