@@ -15,7 +15,7 @@ jobs:
         java-version: 11.0.9
 
     # download the current access token from B2
-    - run: curl https://github.com/Backblaze/B2_Command_Line_Tool/releases/download/v2.1.0/b2-linux -o b2
+    - run: curl https://github.com/Backblaze/B2_Command_Line_Tool/releases/download/v2.1.0/b2-linux -L -o b2
     - run: chmod +x b2
     - run: ./b2 authorize-account ${B2_APPKEY_ID} ${B2_APPKEY}
     - run: ./b2 download-file-by-name ${B2_BUCKET_NAME} access_token.json access_token.json
