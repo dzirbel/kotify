@@ -21,13 +21,13 @@ jobs:
     - name: Authorize B2 account
       run: ./b2 authorize-account ${B2_APPKEY_ID} ${B2_APPKEY}
       with:
-        - B2_APPKEY_ID: ${{ secrets.B2_APPKEY_ID }}
-        - B2_APPKEY: ${{ secrets.B2_APPKEY }}
+        B2_APPKEY_ID: ${{ secrets.B2_APPKEY_ID }}
+        B2_APPKEY: ${{ secrets.B2_APPKEY }}
 
     - name: Download access_token.json from B2
       run: ./b2 download-file-by-name ${B2_BUCKET_NAME} access_token.json access_token.json
       with:
-        - B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
+        B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
 
     - run: chmod +x ./gradlew
     - run: ./gradlew --no-daemon --stacktrace check
@@ -35,4 +35,4 @@ jobs:
     - name: Upload access_token.json to B2 (in case it was refreshed)
       run: ./b2 upload-file ${B2_BUCKET_NAME} access_token.json access_token.json
       with:
-        - B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
+        B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
