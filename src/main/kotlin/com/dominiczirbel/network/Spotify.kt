@@ -491,8 +491,6 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference/playlists/
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-playlists
      *
-     * TODO add tests
-     *
      * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/add-tracks-to-playlist/
      * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/change-playlist-details/
      * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/create-playlist/

@@ -8,7 +8,7 @@ data class PlaylistTrack(
      * The date and time the track or episode was added.
      * Note that some very old playlists may return null in this field.
      */
-    val addedAt: Long,
+    val addedAt: String?,
 
     /**
      * The Spotify user who added the track or episode.
@@ -20,5 +20,5 @@ data class PlaylistTrack(
     val isLocal: Boolean,
 
     /** Information about the track or episode. */
-    val track: Track // TODO might be episode object instead
+    val track: SimplifiedTrack // TODO might be episode object instead
 )

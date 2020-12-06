@@ -4,20 +4,27 @@ import com.dominiczirbel.network.model.Album
 import com.dominiczirbel.network.model.Artist
 import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.FullArtist
+import com.dominiczirbel.network.model.FullPlaylist
+import com.dominiczirbel.network.model.Playlist
+import com.dominiczirbel.network.model.PlaylistTrack
 import com.dominiczirbel.network.model.SpotifyObject
 import com.dominiczirbel.network.model.Track
 import com.google.common.truth.Truth.assertThat
 
-abstract class ObjectProperties(private val type: String) {
-    abstract val id: String
+abstract class ObjectProperties(
+    private val type: String,
+    private val hrefNull: Boolean = false,
+    private val uriNull: Boolean = false
+) {
+    abstract val id: String?
     abstract val name: String
 
     protected fun check(obj: SpotifyObject) {
         assertThat(obj.id).isEqualTo(id)
         assertThat(obj.name).isEqualTo(name)
         assertThat(obj.type).isEqualTo(type)
-        assertThat(obj.href).isNotNull()
-        assertThat(obj.uri).isNotNull()
+        assertThat(obj.href).isNullIf(hrefNull)
+        assertThat(obj.uri).isNullIf(uriNull)
     }
 }
 
@@ -61,15 +68,33 @@ data class AlbumProperties(override val id: String, override val name: String) :
     }
 }
 
-data class TrackProperties(
+data class PlaylistProperties(
     override val id: String,
+    override val name: String,
+    val description: String,
+    val tracks: List<TrackProperties>? = null
+) : ObjectProperties(type = "playlist") {
+    fun check(playlist: Playlist) {
+        super.check(playlist)
+
+        assertThat(playlist.description).isEqualTo(description)
+        if (tracks != null && playlist is FullPlaylist) {
+            tracks.zip(playlist.tracks.items).forEach { (trackProperties, playlistTrack) ->
+                trackProperties.check(playlistTrack)
+            }
+        }
+    }
+}
+
+data class TrackProperties(
+    override val id: String?,
     override val name: String,
     val artistNames: Set<String>,
     val discNumber: Int = 1,
     val explicit: Boolean = false,
     val isLocal: Boolean = false,
     val trackNumber: Int
-) : ObjectProperties(type = "track") {
+) : ObjectProperties(type = "track", hrefNull = isLocal) {
     fun check(track: Track) {
         super.check(track)
 
@@ -80,6 +105,12 @@ data class TrackProperties(
         assertThat(track.explicit).isEqualTo(explicit)
         assertThat(track.isLocal).isEqualTo(isLocal)
         assertThat(track.externalUrls).isNotNull()
+    }
+
+    fun check(playlistTrack: PlaylistTrack) {
+        assertThat(playlistTrack.isLocal).isEqualTo(isLocal)
+        // TODO test addedAt and addedBy
+        check(playlistTrack.track)
     }
 }
 
@@ -171,6 +202,41 @@ internal object Fixtures {
                 AlbumProperties("728y0VvMcIuamGmKhDpa6X", "7th Symphony"),
                 AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
                 AlbumProperties("7LZNQn0nVJCEUQXfidfizI", "Plays Metallica by Four Cellos (Remastered)")
+            )
+        )
+    )
+
+    val playlists = listOf(
+        PlaylistProperties(
+            id = "5apAth0JL9APnjo62F93RN",
+            name = "Favorites",
+            description = ""
+        ),
+        PlaylistProperties(
+            id = "2kLnoVdQ8nNJZ0R09b6fPT",
+            name = "Test Playlist",
+            description = "test description",
+            tracks = listOf(
+                TrackProperties(
+                    id = "1lTqjO8itiTjspDlZ6EDtv",
+                    name = "Grace (feat. Hotei)",
+                    artistNames = setOf("Apocalyptica", "HOTEI"),
+                    trackNumber = 2
+                ),
+                TrackProperties(
+                    id = null,
+                    name = "Beyond Earth",
+                    artistNames = setOf("Oratory"),
+                    trackNumber = 0,
+                    discNumber = 0,
+                    isLocal = true
+                ),
+                TrackProperties(
+                    id = "0hrNeGXIsFXCzGv27hDYlz",
+                    name = "Chosen Time",
+                    artistNames = setOf("Jeff Loomis"),
+                    trackNumber = 8
+                )
             )
         )
     )
