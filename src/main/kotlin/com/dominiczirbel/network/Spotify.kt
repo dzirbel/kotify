@@ -759,8 +759,6 @@ object Spotify {
          * https://developer.spotify.com/documentation/web-api/reference/users-profile/get-users-profile/
          * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-users-profile
          *
-         * TODO test
-         *
          * @param userId The user’s Spotify user ID.
          */
         suspend fun getUser(userId: String): PublicUser {

@@ -11,6 +11,18 @@ internal class SpotifyUsersProfileTest {
 
         assertThat(user.displayName).isEqualTo("djynth")
         assertThat(user.email).isEqualTo("dominiczirbel@gmail.com")
-        // TODO test the rest of the object
+        assertThat(user.id).isEqualTo("djynth")
+        assertThat(user.country).isEqualTo("US")
+        assertThat(user.product).isEqualTo("premium")
+        assertThat(user.explicitContent.filterEnabled).isFalse()
+        assertThat(user.explicitContent.filterLocked).isFalse()
+    }
+
+    @Test
+    fun getUser() {
+        val user = runBlocking { Spotify.UsersProfile.getUser("djynth") }
+
+        assertThat(user.displayName).isEqualTo("djynth")
+        assertThat(user.id).isEqualTo("djynth")
     }
 }
