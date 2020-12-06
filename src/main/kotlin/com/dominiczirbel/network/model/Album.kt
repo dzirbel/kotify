@@ -32,7 +32,7 @@ interface Album : SpotifyObject {
      * The markets in which the album is available: ISO 3166-1 alpha-2 country codes. Note that an album is considered
      * available in a market when at least 1 of its tracks is available in that market.
      */
-    val availableMarkets: List<String>
+    val availableMarkets: List<String>?
 
     /** Known external URLs for this album. */
     val externalUrls: Map<String, String>
@@ -57,6 +57,9 @@ interface Album : SpotifyObject {
      */
     val restrictions: Map<String, String>?
 
+    /** Undocumented field. */
+    val totalTracks: Int?
+
     enum class Type {
         @SerializedName("album")
         ALBUM,
@@ -79,7 +82,7 @@ interface Album : SpotifyObject {
 data class SimplifiedAlbum(
     override val albumType: Album.Type,
     override val artists: List<SimplifiedArtist>,
-    override val availableMarkets: List<String>,
+    override val availableMarkets: List<String>?,
     override val externalUrls: Map<String, String>,
     override val href: String,
     override val id: String,
@@ -88,6 +91,7 @@ data class SimplifiedAlbum(
     override val releaseDate: String,
     override val releaseDatePrecision: String,
     override val restrictions: Map<String, String>?,
+    override val totalTracks: Int?,
     override val type: String,
     override val uri: String,
 
@@ -105,7 +109,7 @@ data class SimplifiedAlbum(
 data class FullAlbum(
     override val albumType: Album.Type,
     override val artists: List<SimplifiedArtist>,
-    override val availableMarkets: List<String>,
+    override val availableMarkets: List<String>?,
     override val externalUrls: Map<String, String>,
     override val href: String,
     override val id: String,
@@ -114,6 +118,7 @@ data class FullAlbum(
     override val releaseDate: String,
     override val releaseDatePrecision: String,
     override val restrictions: Map<String, String>?,
+    override val totalTracks: Int?,
     override val type: String,
     override val uri: String,
 

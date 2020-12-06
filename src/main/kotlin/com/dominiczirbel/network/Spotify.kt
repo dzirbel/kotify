@@ -33,6 +33,7 @@ import java.util.Locale
 object Spotify {
     internal val gson = GsonBuilder()
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+        .registerTypeAdapterFactory(StrictTypeAdapterFactory) // TODO maybe only enable for tests/debug builds
         .create()
 
     private val errorDeserializer = gsonDeserializer<ErrorObject>(gson)
@@ -51,7 +52,7 @@ object Spotify {
     private data class ArtistsModel(val artists: List<FullArtist>)
     private data class AudioFeaturesModel(val audioFeatures: List<AudioFeatures>)
     private data class CategoriesModel(val categories: Paging<Category>)
-    private data class PlaylistPagingModel(val playlists: Paging<SimplifiedPlaylist>)
+    private data class PlaylistPagingModel(val playlists: Paging<SimplifiedPlaylist>, val message: String?)
     private data class TracksModel(val tracks: List<FullTrack>)
 
     private suspend inline fun <reified T : Any> get(path: String, queryParams: List<Pair<String, Any?>>? = null): T {

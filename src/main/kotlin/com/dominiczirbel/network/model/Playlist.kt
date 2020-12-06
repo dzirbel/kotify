@@ -27,7 +27,7 @@ interface Playlist : SpotifyObject {
     val description: String
 
     /** Known external URLs for this playlist. */
-    val externalUrls: ExternalUrl
+    val externalUrls: ExternalUrls
 
     /**
      * Images for the playlist. The array may be empty or contain up to three images. The images are returned by size in
@@ -38,6 +38,9 @@ interface Playlist : SpotifyObject {
 
     /** The user who owns the playlist */
     val owner: PublicUser
+
+    /** Undocumented field. */
+    val primaryColor: String?
 
     /**
      * The playlist’s public/private status: true the playlist is public, false the playlist is private, null the
@@ -64,11 +67,15 @@ data class SimplifiedPlaylist(
     override val uri: String,
     override val collaborative: Boolean,
     override val description: String,
-    override val externalUrls: ExternalUrl,
+    override val externalUrls: ExternalUrls,
     override val images: List<Image>,
     override val owner: PublicUser,
+    override val primaryColor: String?,
     override val public: Boolean?,
-    override val snapshotId: String
+    override val snapshotId: String,
+
+    /** Undocumented field. */
+    val tracks: PlaylistTracks?
 ) : Playlist
 
 /**
@@ -83,9 +90,10 @@ data class FullPlaylist(
     override val uri: String,
     override val collaborative: Boolean,
     override val description: String,
-    override val externalUrls: ExternalUrl,
+    override val externalUrls: ExternalUrls,
     override val images: List<Image>,
     override val owner: PublicUser,
+    override val primaryColor: String?,
     override val public: Boolean?,
     override val snapshotId: String,
 
@@ -95,3 +103,9 @@ data class FullPlaylist(
     /** Information about the tracks of the playlist. */
     val tracks: Paging<PlaylistTrack>
 ) : Playlist
+
+/** Undocumented model. */
+data class PlaylistTracks(
+    val href: String,
+    val total: Int
+)

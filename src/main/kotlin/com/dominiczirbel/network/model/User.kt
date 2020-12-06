@@ -5,10 +5,10 @@ interface User {
     val displayName: String?
 
     /** Known public external URLs for this user. */
-    val externalUrl: ExternalUrl
+    val externalUrls: ExternalUrls
 
     /** Information about the followers of this user. */
-    val followers: Followers
+    val followers: Followers?
 
     /** A link to the Web API endpoint for this user. */
     val href: String
@@ -17,7 +17,7 @@ interface User {
     val id: String
 
     /** The user’s profile image. */
-    val images: List<Image>
+    val images: List<Image>?
 
     /** The object type: "user" */
     val type: String
@@ -31,11 +31,11 @@ interface User {
  */
 data class PublicUser(
     override val displayName: String?,
-    override val externalUrl: ExternalUrl,
-    override val followers: Followers,
+    override val externalUrls: ExternalUrls,
+    override val followers: Followers?,
     override val href: String,
     override val id: String,
-    override val images: List<Image>,
+    override val images: List<Image>?,
     override val type: String,
     override val uri: String
 ) : User
@@ -45,11 +45,11 @@ data class PublicUser(
  */
 data class PrivateUser(
     override val displayName: String?,
-    override val externalUrl: ExternalUrl,
-    override val followers: Followers,
+    override val externalUrls: ExternalUrls,
+    override val followers: Followers?,
     override val href: String,
     override val id: String,
-    override val images: List<Image>,
+    override val images: List<Image>?,
     override val type: String,
     override val uri: String,
 

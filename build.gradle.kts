@@ -7,6 +7,7 @@ private object Versions {
     const val fuel = "2.3.0" // https://github.com/kittinunf/fuel
     const val gson = "2.8.6" // https://github.com/google/gson
     const val junit = "5.7.0" // https://junit.org/junit5/
+    const val kotlinReflect = "1.4.20" // https://kotlinlang.org/docs/reference/reflection.html
     const val okhttp = "4.9.0" // https://square.github.io/okhttp/
     const val truth = "1.1" // https://truth.dev/
 }
@@ -42,6 +43,7 @@ dependencies {
     implementation("com.google.code.gson", "gson", Versions.gson)
     implementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
     implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
+    implementation("org.jetbrains.kotlin", "kotlin-reflect", Versions.kotlinReflect)
 
     testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit)
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)

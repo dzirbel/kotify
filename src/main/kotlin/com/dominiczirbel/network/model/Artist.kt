@@ -17,7 +17,7 @@ interface Artist : SpotifyObject {
     override val uri: String
 
     /** Known external URLs for this artist. */
-    val externalUrls: ExternalUrl
+    val externalUrls: ExternalUrls
 }
 
 /**

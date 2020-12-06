@@ -1,6 +1,7 @@
 package com.dominiczirbel.network.oauth
 
 import com.dominiczirbel.network.Spotify
+import com.dominiczirbel.network.StrictTypeAdapterFactory
 import com.github.kittinunf.fuel.core.await
 import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.github.kittinunf.fuel.httpPost
@@ -34,7 +35,7 @@ data class AccessToken(
     val scope: String? = null,
     val expiresIn: Long = 0,
     val refreshToken: String? = null,
-    val received: Long = System.currentTimeMillis()
+    @StrictTypeAdapterFactory.OptionalField val received: Long = System.currentTimeMillis()
 ) {
     // TODO tighten by a few seconds to account for network time
     val isExpired

@@ -1,9 +1,9 @@
 package com.dominiczirbel.network.oauth
 
+import com.dominiczirbel.network.Spotify
 import com.google.common.io.Files
 import com.google.common.truth.BooleanSubject
 import com.google.common.truth.Truth.assertThat
-import com.google.gson.Gson
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -87,16 +87,14 @@ internal class AccessTokenTest {
 
     @Test
     fun testFromJsonNoReceived() {
-        val gson = Gson()
-
         val before = System.currentTimeMillis()
 
-        val accessToken = gson.fromJson(
+        val accessToken = Spotify.gson.fromJson(
             """
             {
-                accessToken: abc,
-                tokenType: def,
-                expiresIn: 30
+                access_token: abc,
+                token_type: def,
+                expires_in: 30
             }
             """.trimIndent(),
             AccessToken::class.java
@@ -112,14 +110,12 @@ internal class AccessTokenTest {
 
     @Test
     fun testFromJsonWithReceived() {
-        val gson = Gson()
-
-        val accessToken = gson.fromJson(
+        val accessToken = Spotify.gson.fromJson(
             """
             {
-                accessToken: abc,
-                tokenType: def,
-                expiresIn: 30,
+                access_token: abc,
+                token_type: def,
+                expires_in: 30,
                 received: 123
             }
             """.trimIndent(),
@@ -139,18 +135,26 @@ internal class AccessTokenTest {
         @JvmStatic
         @Suppress("unused")
         fun before() {
-            println("Moving ${AccessToken.Cache.file} to temp file $tempFile")
-            Files.move(AccessToken.Cache.file, tempFile)
-            AccessToken.Cache.log = false
+            if (AccessToken.Cache.file.exists()) {
+                println("Moving ${AccessToken.Cache.file} to temp file $tempFile")
+                Files.move(AccessToken.Cache.file, tempFile)
+                AccessToken.Cache.log = false
+            } else {
+                println("${AccessToken.Cache.file} does not exist; skipping move to temp file")
+            }
         }
 
         @AfterAll
         @JvmStatic
         @Suppress("unused")
         fun after() {
-            println("Restoring ${AccessToken.Cache.file} from temp file $tempFile")
-            Files.move(tempFile, AccessToken.Cache.file)
-            AccessToken.Cache.log = true
+            if (tempFile.exists()) {
+                println("Restoring ${AccessToken.Cache.file} from temp file $tempFile")
+                Files.move(tempFile, AccessToken.Cache.file)
+                AccessToken.Cache.log = true
+            } else {
+                println("Temp file $tempFile does not exist; skipping restore to cache file")
+            }
         }
     }
 }

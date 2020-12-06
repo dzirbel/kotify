@@ -16,6 +16,9 @@ data class AudioAnalysis(
      */
     val beats: List<TimeInterval>,
 
+    /** Undocumented field. */
+    val meta: Map<String, String>,
+
     /**
      * Sections are defined by large variations in rhythm or timbre, e.g. chorus, verse, bridge, guitar solo, etc. Each
      * section contains its own descriptions of tempo, key, mode, time_signature, and loudness.
@@ -32,5 +35,8 @@ data class AudioAnalysis(
      * A tatum represents the lowest regular pulse train that a listener intuitively infers from the timing of perceived
      * musical events (segments). For more information about tatums, see Rhythm (below).
      */
-    val tatums: List<TimeInterval>
+    val tatums: List<TimeInterval>,
+
+    /** Undocumented field. */
+    val track: Map<String, String>?
 )

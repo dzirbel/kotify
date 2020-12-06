@@ -20,5 +20,11 @@ data class PlaylistTrack(
     val isLocal: Boolean,
 
     /** Information about the track or episode. */
-    val track: SimplifiedTrack // TODO might be episode object instead
+    val track: SimplifiedTrack, // TODO might be episode object instead
+
+    /** Undocumented field. */
+    val primaryColor: String?,
+
+    /** Undocumented field. */
+    val videoThumbnail: Map<String, String>?
 )

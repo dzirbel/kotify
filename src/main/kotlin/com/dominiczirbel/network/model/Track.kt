@@ -27,7 +27,7 @@ interface Track : SpotifyObject {
     val artists: List<SimplifiedArtist>
 
     /** A list of the countries in which the track can be played, identified by their ISO 3166-1 alpha-2 code. */
-    val availableMarkets: List<String>
+    val availableMarkets: List<String>?
 
     /** The disc number (usually 1 unless the album consists of more than one disc). */
     val discNumber: Int
@@ -39,7 +39,7 @@ interface Track : SpotifyObject {
     val explicit: Boolean
 
     /** External URLs for this track. */
-    val externalUrls: ExternalUrl
+    val externalUrls: ExternalUrls
 
     /** Whether or not the track is from a local file. */
     val isLocal: Boolean
@@ -78,11 +78,11 @@ interface Track : SpotifyObject {
  */
 data class SimplifiedTrack(
     override val artists: List<SimplifiedArtist>,
-    override val availableMarkets: List<String>,
+    override val availableMarkets: List<String>?,
     override val discNumber: Int,
     override val durationMs: Long,
     override val explicit: Boolean,
-    override val externalUrls: ExternalUrl,
+    override val externalUrls: ExternalUrls,
     override val href: String,
     override val id: String,
     override val isLocal: Boolean,
@@ -93,7 +93,22 @@ data class SimplifiedTrack(
     override val restrictions: Map<String, String>?,
     override val trackNumber: Int,
     override val type: String,
-    override val uri: String
+    override val uri: String,
+
+    /** Undocumented field. */
+    val album: SimplifiedAlbum?,
+
+    /** Undocumented field. */
+    val episode: Boolean?,
+
+    /** Undocumented field. */
+    val track: Boolean?,
+
+    /** Undocumented field. */
+    val externalIds: ExternalId?,
+
+    /** Undocumented field. */
+    val popularity: Int?
 ) : Track
 
 /**
@@ -102,11 +117,11 @@ data class SimplifiedTrack(
  */
 data class FullTrack(
     override val artists: List<SimplifiedArtist>,
-    override val availableMarkets: List<String>,
+    override val availableMarkets: List<String>?,
     override val discNumber: Int,
     override val durationMs: Long,
     override val explicit: Boolean,
-    override val externalUrls: ExternalUrl,
+    override val externalUrls: ExternalUrls,
     override val href: String,
     override val id: String,
     override val isLocal: Boolean,
