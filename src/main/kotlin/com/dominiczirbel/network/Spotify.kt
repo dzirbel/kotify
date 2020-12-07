@@ -33,7 +33,7 @@ import java.util.Locale
 object Spotify {
     internal val gson = GsonBuilder()
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-        .registerTypeAdapterFactory(StrictTypeAdapterFactory) // TODO maybe only enable for tests/debug builds
+        .registerTypeAdapterFactory(StrictReflectiveTypeAdapterFactory()) // TODO maybe only for tests/debug builds
         .create()
 
     private val errorDeserializer = gsonDeserializer<ErrorObject>(gson)
