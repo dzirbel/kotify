@@ -154,7 +154,7 @@ data class AccessToken(
         private fun load(): AccessToken? {
             return try {
                 FileReader(file).use { gson.fromJson(it, AccessToken::class.java) }
-                    .also { log("Loaded access from $file") }
+                    .also { log("Loaded access token from $file") }
             } catch (_: FileNotFoundException) {
                 null.also { log("No saved access token at $file") }
             }
