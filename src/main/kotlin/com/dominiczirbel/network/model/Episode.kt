@@ -1,5 +1,6 @@
 package com.dominiczirbel.network.model
 
+@Suppress("ComplexInterface")
 interface Episode : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the episode. */
     override val href: String

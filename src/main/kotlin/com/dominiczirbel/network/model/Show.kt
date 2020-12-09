@@ -1,5 +1,6 @@
 package com.dominiczirbel.network.model
 
+@Suppress("ComplexInterface")
 interface Show : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the show. */
     override val href: String
@@ -73,7 +74,6 @@ data class SimplifiedShow(
     override val type: String,
     override val uri: String
 ) : Show
-
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#show-object-full

@@ -263,7 +263,10 @@ internal object Fixtures {
                 director Neil deGrasse Tyson, his comic co-hosts, guest celebrities and scientists discuss astronomy,
                 physics, and everything else about life in the universe. Keep Looking Up! New episodes premiere Friday
                 nights at 7pm ET.
-                """.trimIndent().replace('\n', ' ').trim()
+                """
+                .trimIndent()
+                .replace('\n', ' ')
+                .trim()
         ),
         ShowProperties(
             id = "2mTUnDkuKUkhiueKcVWoP0",
@@ -274,7 +277,10 @@ internal object Fixtures {
                 Martin, Noel King, David Greene and Steve Inskeep. Now available on Saturdays by 8 a.m. ET, with hosts
                 Lulu Garcia-Navarro and Scott Simon. Subscribe and listen, then support your local NPR station at
                 donate.npr.org.
-                """.trimIndent().replace('\n', ' ').trim()
+                """
+                .trimIndent()
+                .replace('\n', ' ')
+                .trim()
         )
     )
 
