@@ -7,6 +7,7 @@ import com.dominiczirbel.network.model.Category
 import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.network.model.FullPlaylist
+import com.dominiczirbel.network.model.FullShow
 import com.dominiczirbel.network.model.FullTrack
 import com.dominiczirbel.network.model.Image
 import com.dominiczirbel.network.model.Paging
@@ -15,7 +16,9 @@ import com.dominiczirbel.network.model.PrivateUser
 import com.dominiczirbel.network.model.PublicUser
 import com.dominiczirbel.network.model.Recommendations
 import com.dominiczirbel.network.model.SimplifiedAlbum
+import com.dominiczirbel.network.model.SimplifiedEpisode
 import com.dominiczirbel.network.model.SimplifiedPlaylist
+import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.oauth.AccessToken
 import com.github.kittinunf.fuel.core.FuelError
@@ -53,6 +56,7 @@ object Spotify {
     private data class AudioFeaturesModel(val audioFeatures: List<AudioFeatures>)
     private data class CategoriesModel(val categories: Paging<Category>)
     private data class PlaylistPagingModel(val playlists: Paging<SimplifiedPlaylist>, val message: String?)
+    private data class ShowsModel(val shows: List<SimplifiedShow>)
     private data class TracksModel(val tracks: List<FullTrack>)
 
     private suspend inline fun <reified T : Any> get(path: String, queryParams: List<Pair<String, Any?>>? = null): T {
@@ -649,7 +653,71 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-shows
      */
     object Shows {
-        // TODO add shows endpoints
+        /**
+         * Get Spotify catalog information for a single show identified by its unique Spotify ID.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/shows/get-a-show/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-a-show
+         *
+         * @param id The Spotify ID for the show.
+         * @param market Optional. An ISO 3166-1 alpha-2 country code. If a country code is specified, only shows and
+         *  episodes that are available in that market will be returned. If a valid user access token is specified in
+         *  the request header, the country associated with the user account will take priority over this parameter.
+         *  Note: If neither market or user country are provided, the content is considered unavailable for the client.
+         *  Users can view the country that is associated with their account in the account settings.
+         */
+        suspend fun getShow(id: String, market: String? = null): FullShow {
+            return get("shows/$id", listOf("market" to market))
+        }
+
+        /**
+         * Get Spotify catalog information for multiple shows based on their Spotify IDs.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/shows/get-several-shows/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-multiple-shows
+         *
+         * @param ids Required. A comma-separated list of the Spotify IDs for the shows. Maximum: 50 IDs.
+         * @param market Optional. An ISO 3166-1 alpha-2 country code. If a country code is specified, only shows and
+         *  episodes that are available in that market will be returned. If a valid user access token is specified in
+         *  the request header, the country associated with the user account will take priority over this parameter.
+         *  Note: If neither market or user country are provided, the content is considered unavailable for the client.
+         *  Users can view the country that is associated with their account in the account settings.
+         */
+        suspend fun getShows(ids: List<String>, market: String? = null): List<SimplifiedShow> {
+            return get<ShowsModel>(
+                "shows",
+                listOf("ids" to ids.joinToString(separator = ","), "market" to market)
+            ).shows
+        }
+
+        /**
+         * Get Spotify catalog information about a show’s episodes. Optional parameters can be used to limit the number
+         * of episodes returned.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/shows/get-shows-episodes/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-a-shows-episodes
+         *
+         * @param id The Spotify ID for the show.
+         * @param limit Optional. The maximum number of episodes to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset Optional. The index of the first episode to return. Default: 0 (the first object). Use with
+         *  limit to get the next set of episodes.
+         * @param market Optional. An ISO 3166-1 alpha-2 country code. If a country code is specified, only shows and
+         *  episodes that are available in that market will be returned. If a valid user access token is specified in
+         *  the request header, the country associated with the user account will take priority over this parameter.
+         *  Note: If neither market or user country are provided, the content is considered unavailable for the client.
+         *  Users can view the country that is associated with their account in the account settings.
+         */
+        suspend fun getShowEpisodes(
+            id: String,
+            limit: Int? = null,
+            offset: Int? = null,
+            market: String? = null
+        ): Paging<SimplifiedEpisode> {
+            return get(
+                "shows/$id/episodes",
+                listOf("limit" to limit, "offset" to offset, "market" to market)
+            )
+        }
     }
 
     /**

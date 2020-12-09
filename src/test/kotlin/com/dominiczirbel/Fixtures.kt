@@ -7,6 +7,7 @@ import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.network.model.FullPlaylist
 import com.dominiczirbel.network.model.Playlist
 import com.dominiczirbel.network.model.PlaylistTrack
+import com.dominiczirbel.network.model.Show
 import com.dominiczirbel.network.model.SpotifyObject
 import com.dominiczirbel.network.model.Track
 import com.google.common.truth.Truth.assertThat
@@ -83,6 +84,18 @@ data class PlaylistProperties(
                 trackProperties.check(playlistTrack)
             }
         }
+    }
+}
+
+data class ShowProperties(
+    override val id: String,
+    override val name: String,
+    val description: String
+) : ObjectProperties(type = "show") {
+    fun check(show: Show) {
+        super.check(show)
+
+        assertThat(show.description).isEqualTo(description)
     }
 }
 
@@ -238,6 +251,30 @@ internal object Fixtures {
                     trackNumber = 8
                 )
             )
+        )
+    )
+
+    val shows = listOf(
+        ShowProperties(
+            id = "1mNsuXfG95Lf76YQeVMuo1",
+            name = "StarTalk Radio",
+            description = """
+                Science, pop culture and comedy collide on StarTalk Radio! Astrophysicist and Hayden Planetarium
+                director Neil deGrasse Tyson, his comic co-hosts, guest celebrities and scientists discuss astronomy,
+                physics, and everything else about life in the universe. Keep Looking Up! New episodes premiere Friday
+                nights at 7pm ET.
+                """.trimIndent().replace('\n', ' ').trim()
+        ),
+        ShowProperties(
+            id = "2mTUnDkuKUkhiueKcVWoP0",
+            name = "Up First",
+            description = """
+                NPR's Up First is the news you need to start your day. The three biggest stories of the day, with
+                reporting and analysis from NPR News — in 10 minutes. Available weekdays by 6 a.m. ET, with hosts Rachel
+                Martin, Noel King, David Greene and Steve Inskeep. Now available on Saturdays by 8 a.m. ET, with hosts
+                Lulu Garcia-Navarro and Scott Simon. Subscribe and listen, then support your local NPR station at
+                donate.npr.org.
+                """.trimIndent().replace('\n', ' ').trim()
         )
     )
 
