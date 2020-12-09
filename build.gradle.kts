@@ -7,14 +7,14 @@ private object Versions {
     const val fuel = "2.3.0" // https://github.com/kittinunf/fuel
     const val gson = "2.8.6" // https://github.com/google/gson
     const val junit = "5.7.0" // https://junit.org/junit5/
-    const val kotlinReflect = "1.4.20" // https://kotlinlang.org/docs/reference/reflection.html
+    const val kotlinReflect = "1.4.21" // https://kotlinlang.org/docs/reference/reflection.html
     const val okhttp = "4.9.0" // https://square.github.io/okhttp/
     const val truth = "1.1" // https://truth.dev/
 }
 
 plugins {
     // https://kotlinlang.org/releases.html
-    kotlin("jvm") version "1.4.20"
+    kotlin("jvm") version "1.4.21"
 
     // https://github.com/detekt/detekt; also update dependency version
     id("io.gitlab.arturbosch.detekt") version "1.15.0-RC1"
