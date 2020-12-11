@@ -565,7 +565,70 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-personalization
      */
     object Personalization {
-        // TODO add personalization endpoints
+        enum class TimeRange(val value: String) {
+            SHORT_TERM("short_term"),
+            MEDIUM_TERM("medium_term"),
+            LONG_TERM("long_term")
+        }
+
+        /**
+         * Get the current user’s top artists or tracks based on calculated affinity.
+         *
+         * Affinity is a measure of the expected preference a user has for a particular track or artist. It is based on
+         * user behavior, including play history, but does not include actions made while in incognito mode. Light or
+         * infrequent users of Spotify may not have sufficient play history to generate a full affinity data set. As a
+         * user's behavior is likely to shift over time, this preference data is available over three time spans. See
+         * time_range in the query parameter table for more information. For each time range, the top 50 tracks and
+         * artists are available for each user. In the future, it is likely that this restriction will be relaxed.
+         * This data is typically updated once each day for each user.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/personalization/get-users-top-artists-and-tracks/
+         *
+         * @Param limit Optional. The number of entities to return. Default: 20. Minimum: 1. Maximum: 50. For example:
+         *  limit=2
+         * @param offset Optional. The index of the first entity to return. Default: 0 (i.e., the first track). Use with
+         *  limit to get the next set of entities.
+         * @param timeRange Optional. Over what time frame the affinities are computed. Valid values: long_term
+         *  (calculated from several years of data and including all new data as it becomes available), medium_term
+         *  (approximately last 6 months), short_term (approximately last 4 weeks). Default: medium_term.
+         */
+        suspend fun topArtists(
+            limit: Int? = null,
+            offset: Int? = null,
+            timeRange: TimeRange? = null
+        ): Paging<FullArtist> {
+            return get("me/top/artists", listOf("limit" to limit, "offset" to offset, "time_range" to timeRange?.value))
+        }
+
+        /**
+         * Get the current user’s top artists or tracks based on calculated affinity.
+         *
+         * Affinity is a measure of the expected preference a user has for a particular track or artist. It is based on
+         * user behavior, including play history, but does not include actions made while in incognito mode. Light or
+         * infrequent users of Spotify may not have sufficient play history to generate a full affinity data set. As a
+         * user's behavior is likely to shift over time, this preference data is available over three time spans. See
+         * time_range in the query parameter table for more information. For each time range, the top 50 tracks and
+         * artists are available for each user. In the future, it is likely that this restriction will be relaxed.
+         * This data is typically updated once each day for each user.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/personalization/get-users-top-artists-and-tracks/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-users-top-artists-and-tracks
+         *
+         * @Param limit Optional. The number of entities to return. Default: 20. Minimum: 1. Maximum: 50. For example:
+         *  limit=2
+         * @param offset Optional. The index of the first entity to return. Default: 0 (i.e., the first track). Use with
+         *  limit to get the next set of entities.
+         * @param timeRange Optional. Over what time frame the affinities are computed. Valid values: long_term
+         *  (calculated from several years of data and including all new data as it becomes available), medium_term
+         *  (approximately last 6 months), short_term (approximately last 4 weeks). Default: medium_term.
+         */
+        suspend fun topTracks(
+            limit: Int? = null,
+            offset: Int? = null,
+            timeRange: TimeRange? = null
+        ): Paging<FullTrack> {
+            return get("me/top/tracks", listOf("limit" to limit, "offset" to offset, "time_range" to timeRange?.value))
+        }
     }
 
     /**
