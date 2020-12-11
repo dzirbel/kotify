@@ -146,11 +146,11 @@ internal object Fixtures {
 
     // map from artist ID to whether or not the test users is following the artist
     val followingArtists = listOf(
-        "5HA5aLY3jJV7eimXWkRBBp" to true,  // Epica
+        "5HA5aLY3jJV7eimXWkRBBp" to true, // Epica
         "6pRi6EIPXz4QJEOEsBaA0m" to false, // Chris Tomlin
-        "3hE8S8ohRErocpkY7uJW4a" to true,  // Within Temptation
+        "3hE8S8ohRErocpkY7uJW4a" to true, // Within Temptation
         "3YCKuqpv9nCsIhJ2v8SMix" to false, // Elevation Worship
-        "2KaW48xlLnXC2v8tvyhWsa" to true,  // Amaranthe
+        "2KaW48xlLnXC2v8tvyhWsa" to true, // Amaranthe
     )
 
     // map from user ID to whether or not the test user is following the user
