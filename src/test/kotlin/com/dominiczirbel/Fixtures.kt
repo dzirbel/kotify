@@ -2,6 +2,7 @@ package com.dominiczirbel
 
 import com.dominiczirbel.network.model.Album
 import com.dominiczirbel.network.model.Artist
+import com.dominiczirbel.network.model.Episode
 import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.network.model.FullPlaylist
@@ -66,6 +67,19 @@ data class AlbumProperties(override val id: String, override val name: String) :
             assertThat(album.popularity).isIn(0..100)
             assertThat(album.tracks.items).isNotEmpty()
         }
+    }
+}
+
+data class EpisodeProperties(
+    override val id: String,
+    override val name: String,
+    private val description: String
+) : ObjectProperties(type = "episode") {
+    fun check(episode: Episode) {
+        super.check(episode)
+
+        assertThat(episode.description).isEqualTo(description)
+        assertThat(episode.durationMs).isAtLeast(0)
     }
 }
 
@@ -216,6 +230,33 @@ internal object Fixtures {
                 AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
                 AlbumProperties("7LZNQn0nVJCEUQXfidfizI", "Plays Metallica by Four Cellos (Remastered)")
             )
+        )
+    )
+
+    val episodes = listOf(
+        EpisodeProperties(
+            id = "4D5tzjNC8WkIASQMn4NrcA",
+            name = "Why monkeys (and humans) are wired for fairness | Sarah Brosnan",
+            description = """
+                         Fairness matters ... to both people and primates. Sharing priceless footage of capuchin monkeys
+                responding to perceived injustice, primatologist Sarah Brosnan explores why humans and monkeys evolved
+                to care about equality -- and emphasizes the connection between a healthy, cooperative society and
+                everyone getting their fair share.       
+                """
+                .trimIndent()
+                .trim('\n')
+                .replace('\n', ' ')
+        ),
+        EpisodeProperties(
+            id = "4WsBDsEO8OIVUEMRE4EE6l",
+            name = "Thursday, December 10, 2020 ",
+            description = """
+                The FDA will vote on whether to clear Pfizer's COVID-19 vaccine for emergency use. Two lawsuits question
+                how Facebook got so big. Plus, lawmakers on Capitol Hill debate a COVID-19 relief package.
+                """
+                .trimIndent()
+                .replace('\n', ' ')
+                .trim()
         )
     )
 

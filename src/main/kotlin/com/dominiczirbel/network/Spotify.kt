@@ -6,6 +6,7 @@ import com.dominiczirbel.network.model.AudioFeatures
 import com.dominiczirbel.network.model.Category
 import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.FullArtist
+import com.dominiczirbel.network.model.FullEpisode
 import com.dominiczirbel.network.model.FullPlaylist
 import com.dominiczirbel.network.model.FullShow
 import com.dominiczirbel.network.model.FullTrack
@@ -55,6 +56,7 @@ object Spotify {
     private data class ArtistsModel(val artists: List<FullArtist>)
     private data class AudioFeaturesModel(val audioFeatures: List<AudioFeatures>)
     private data class CategoriesModel(val categories: Paging<Category>)
+    private data class EpisodesModel(val episodes: List<FullEpisode>)
     private data class PlaylistPagingModel(val playlists: Paging<SimplifiedPlaylist>, val message: String?)
     private data class ShowsModel(val shows: List<SimplifiedShow>)
     private data class TracksModel(val tracks: List<FullTrack>)
@@ -444,7 +446,42 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-episodes
      */
     object Episodes {
-        // TODO add episodes endpoints
+        /**
+         * Get Spotify catalog information for a single episode identified by its unique Spotify ID.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/episodes/get-an-episode/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-an-episode
+         *
+         * @param id The Spotify ID for the episode.
+         * @param market Optional. An ISO 3166-1 alpha-2 country code. If a country code is specified, only shows and
+         *  episodes that are available in that market will be returned. If a valid user access token is specified in
+         *  the request header, the country associated with the user account will take priority over this parameter.
+         *  Note: If neither market or user country are provided, the content is considered unavailable for the client.
+         *  Users can view the country that is associated with their account in the account settings.
+         */
+        suspend fun getEpisode(id: String, market: String? = null): FullEpisode {
+            return get("episodes/$id", listOf("market" to market))
+        }
+
+        /**
+         * Get Spotify catalog information for multiple episodes based on their Spotify IDs.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/episodes/get-several-episodes/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-multiple-episodes
+         *
+         * @param ids Required. A comma-separated list of the Spotify IDs for the episodes. Maximum: 50 IDs.
+         * @param market Optional. An ISO 3166-1 alpha-2 country code. If a country code is specified, only shows and
+         *  episodes that are available in that market will be returned. If a valid user access token is specified in
+         *  the request header, the country associated with the user account will take priority over this parameter.
+         *  Note: If neither market or user country are provided, the content is considered unavailable for the client.
+         *  Users can view the country that is associated with their account in the account settings.
+         */
+        suspend fun getEpisodes(ids: List<String>, market: String? = null): List<FullEpisode> {
+            return get<EpisodesModel>(
+                "episodes",
+                listOf("ids" to ids.joinToString(separator = ","), "market" to market)
+            ).episodes
+        }
     }
 
     /**
