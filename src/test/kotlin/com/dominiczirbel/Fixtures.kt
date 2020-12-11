@@ -144,6 +144,28 @@ data class TrackProperties(
 internal object Fixtures {
     val notFoundId = "a".repeat(22)
 
+    // map from artist ID to whether or not the test users is following the artist
+    val followingArtists = listOf(
+        "5HA5aLY3jJV7eimXWkRBBp" to true,  // Epica
+        "6pRi6EIPXz4QJEOEsBaA0m" to false, // Chris Tomlin
+        "3hE8S8ohRErocpkY7uJW4a" to true,  // Within Temptation
+        "3YCKuqpv9nCsIhJ2v8SMix" to false, // Elevation Worship
+        "2KaW48xlLnXC2v8tvyhWsa" to true,  // Amaranthe
+    )
+
+    // map from user ID to whether or not the test user is following the user
+    val followingUsers = listOf(
+        "luckyeights" to true,
+        "matthew.d.zirbel" to true,
+        "bobbytonelli" to false,
+    )
+
+    // map from user ID to a map from playlist ID to whether the user is following that playlist
+    val followingPlaylists = listOf(
+        "5apAth0JL9APnjo62F93RN" to mapOf("djynth" to true, "luckyeights" to false),
+        "6urDFlFQIDXPwXbfpdGUc0" to mapOf("djynth" to true, "1267916582" to true)
+    )
+
     // TODO add more
     val albums = mapOf(
         AlbumProperties("1Z5Aw68hjd9e17izcGbLSQ", "Kikelet") to listOf(

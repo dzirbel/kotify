@@ -4,6 +4,7 @@ import com.dominiczirbel.network.model.Album
 import com.dominiczirbel.network.model.AudioAnalysis
 import com.dominiczirbel.network.model.AudioFeatures
 import com.dominiczirbel.network.model.Category
+import com.dominiczirbel.network.model.CursorPaging
 import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.network.model.FullEpisode
@@ -27,6 +28,7 @@ import com.github.kittinunf.fuel.core.await
 import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.github.kittinunf.fuel.httpGet
 import com.google.gson.FieldNamingPolicy
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import java.util.Locale
 
@@ -35,25 +37,26 @@ import java.util.Locale
  * https://developer.spotify.com/documentation/web-api/reference-beta
  */
 object Spotify {
-    internal val gson = GsonBuilder()
+    val gson: Gson = GsonBuilder()
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
         .registerTypeAdapterFactory(StrictReflectiveTypeAdapterFactory()) // TODO maybe only for tests/debug builds
         .create()
 
-    private val errorDeserializer = gsonDeserializer<ErrorObject>(gson)
+    val errorDeserializer = gsonDeserializer<ErrorObject>(gson)
 
     const val FROM_TOKEN = "from_token"
-    private const val API_URL = "https://api.spotify.com/v1/"
+    const val API_URL = "https://api.spotify.com/v1/"
 
     class SpotifyError(val code: Int, message: String, cause: Throwable) :
         Throwable(message = "HTTP $code : $message", cause = cause)
 
-    private data class ErrorObject(val error: ErrorDetails)
-    private data class ErrorDetails(val status: Int, val message: String)
+    data class ErrorObject(val error: ErrorDetails)
+    data class ErrorDetails(val status: Int, val message: String)
 
     private data class AlbumsModel(val albums: List<FullAlbum>)
     private data class AlbumsPagingModel(val albums: Paging<SimplifiedAlbum>)
     private data class ArtistsModel(val artists: List<FullArtist>)
+    private data class ArtistsCursorPagingModel(val artists: CursorPaging<FullArtist>)
     private data class AudioFeaturesModel(val audioFeatures: List<AudioFeatures>)
     private data class CategoriesModel(val categories: Paging<Category>)
     private data class EpisodesModel(val episodes: List<FullEpisode>)
@@ -61,7 +64,7 @@ object Spotify {
     private data class ShowsModel(val shows: List<SimplifiedShow>)
     private data class TracksModel(val tracks: List<FullTrack>)
 
-    private suspend inline fun <reified T : Any> get(path: String, queryParams: List<Pair<String, Any?>>? = null): T {
+    suspend inline fun <reified T : Any> get(path: String, queryParams: List<Pair<String, Any?>>? = null): T {
         val token = AccessToken.Cache.getOrThrow()
 
         return try {
@@ -489,9 +492,59 @@ object Spotify {
      *
      * https://developer.spotify.com/documentation/web-api/reference/follow/
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-follow
+     *
+     * TODO PUT https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/
+     * TODO PUT https://developer.spotify.com/documentation/web-api/reference/follow/follow-playlist/
+     * TODO DELETE https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/
+     * TODO DELETE https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-playlist/
      */
     object Follow {
-        // TODO add follow endpoints
+        /**
+         * Check to see if the current user is following one or more artists or other Spotify users.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/follow/check-current-user-follows/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-check-current-user-follows
+         *
+         * @param type Required. The ID type: either artist or user.
+         * @param ids Required. A comma-separated list of the artist or the user Spotify IDs to check. For example:
+         *  ids=74ASZWbe4lXaubB36ztrGX,08td7MxkoHQkXnWAYD8d6Q. A maximum of 50 IDs can be sent in one request.
+         */
+        suspend fun isFollowing(type: String, ids: List<String>): List<Boolean> {
+            return get("me/following/contains", listOf("type" to type, "ids" to ids.joinToString(separator = ",")))
+        }
+
+        /**
+         * Check to see if one or more Spotify users are following a specified playlist.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/follow/check-user-following-playlist/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-check-if-user-follows-playlist
+         *
+         * @param playlistId The Spotify ID of the playlist.
+         * @param userIds Required. A comma-separated list of Spotify User IDs ; the ids of the users that you want to
+         *  check to see if they follow the playlist. Maximum: 5 ids.
+         */
+        suspend fun isFollowingPlaylist(playlistId: String, userIds: List<String>): List<Boolean> {
+            return get(
+                "playlists/$playlistId/followers/contains",
+                listOf("ids" to userIds.joinToString(separator = ","))
+            )
+        }
+
+        /**
+         * Get the current user’s followed artists.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/follow/get-followed/
+         * https://developer.spotify.com/documentation/web-api/reference-beta/#endpoint-get-followed
+         *
+         * @param limit Optional. The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param after Optional. The last artist ID retrieved from the previous request.
+         */
+        suspend fun getFollowedArtists(limit: Int? = null, after: String? = null): CursorPaging<FullArtist> {
+            return get<ArtistsCursorPagingModel>(
+                "me/following",
+                listOf("type" to "artist", "limit" to limit, "after" to after)
+            ).artists
+        }
     }
 
     /**
@@ -533,13 +586,13 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference/playlists/
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-playlists
      *
-     * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/add-tracks-to-playlist/
-     * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/change-playlist-details/
-     * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/create-playlist/
-     * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/remove-tracks-playlist/
-     * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/reorder-playlists-tracks/
-     * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/replace-playlists-tracks/
-     * TODO https://developer.spotify.com/documentation/web-api/reference/playlists/upload-custom-playlist-cover/
+     * TODO POST https://developer.spotify.com/documentation/web-api/reference/playlists/add-tracks-to-playlist/
+     * TODO PUT https://developer.spotify.com/documentation/web-api/reference/playlists/change-playlist-details/
+     * TODO POST https://developer.spotify.com/documentation/web-api/reference/playlists/create-playlist/
+     * TODO DELETE https://developer.spotify.com/documentation/web-api/reference/playlists/remove-tracks-playlist/
+     * TODO PUT https://developer.spotify.com/documentation/web-api/reference/playlists/reorder-playlists-tracks/
+     * TODO PUT https://developer.spotify.com/documentation/web-api/reference/playlists/replace-playlists-tracks/
+     * TODO PUT https://developer.spotify.com/documentation/web-api/reference/playlists/upload-custom-playlist-cover/
      */
     object Playlists {
         /**
