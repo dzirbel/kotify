@@ -125,7 +125,7 @@ private class StrictReflectiveTypeAdapter<T>(
             reader.beginObject()
             while (reader.hasNext()) {
                 val name = reader.nextName()
-                val field = fieldFor(name) ?: run {
+                val field = fieldFor(name) ?:
                     if (requireAllJsonFieldsUsed && (allowUnusedNulls || reader.peek() != JsonToken.NULL)) {
                         val jsonValue = gson.getAdapter(Any::class.java).read(reader)
                         throw JsonSyntaxException(
@@ -133,12 +133,9 @@ private class StrictReflectiveTypeAdapter<T>(
                                 "`$name` with value `$jsonValue`"
                         )
                     } else {
-                        null
+                        // skip past fields on JSON which have no class field when requireAllJsonFieldsUsed is false
+                        continue
                     }
-                }
-
-                // skip past fields on JSON which have no class field when requireAllJsonFieldsUsed is false
-                field ?: continue
 
                 if (!field.trySetAccessible()) {
                     throw JsonSyntaxException("Could not make $field accessible")
