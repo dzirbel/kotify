@@ -23,6 +23,7 @@ import com.dominiczirbel.network.model.SimplifiedPlaylist
 import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.oauth.AccessToken
+import com.dzirbel.gson.bijectivereflection.BijectiveReflectiveTypeAdapterFactory
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.await
 import com.github.kittinunf.fuel.gson.gsonDeserializer
@@ -39,7 +40,7 @@ import java.util.Locale
 object Spotify {
     val gson: Gson = GsonBuilder()
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-        .registerTypeAdapterFactory(StrictReflectiveTypeAdapterFactory()) // TODO maybe only for tests/debug builds
+        .registerTypeAdapterFactory(BijectiveReflectiveTypeAdapterFactory()) // TODO maybe only for tests/debug builds
         .create()
 
     val errorDeserializer = gsonDeserializer<ErrorObject>(gson)

@@ -2,6 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
+    const val bijectiveReflection = "1.0.0" // https://github.com/dzirbel/gson-bijectivereflection
     const val coroutines = "1.4.2" // https://github.com/Kotlin/kotlinx.coroutines
     const val detekt = "1.15.0-RC1" // https://github.com/detekt/detekt; also update plugin version
     const val fuel = "2.3.0" // https://github.com/kittinunf/fuel
@@ -42,6 +43,7 @@ dependencies {
     implementation("com.github.kittinunf.fuel", "fuel-gson", Versions.fuel)
     implementation("com.google.code.gson", "gson", Versions.gson)
     implementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
+    implementation("io.github.dzirbel", "gson-bijectivereflection", Versions.bijectiveReflection)
     implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
     implementation("org.jetbrains.kotlin", "kotlin-reflect", Versions.kotlinReflect)
 
