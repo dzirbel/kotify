@@ -23,7 +23,6 @@ import com.dominiczirbel.network.model.SimplifiedPlaylist
 import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.oauth.AccessToken
-import com.dzirbel.gson.bijectivereflection.BijectiveReflectiveTypeAdapterFactory
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.await
 import com.github.kittinunf.fuel.gson.gsonDeserializer
@@ -31,6 +30,7 @@ import com.github.kittinunf.fuel.httpGet
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import io.github.dzirbel.gson.bijectivereflection.BijectiveReflectiveTypeAdapterFactory
 import java.util.Locale
 
 /**

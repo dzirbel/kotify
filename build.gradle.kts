@@ -2,7 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
-    const val bijectiveReflection = "1.0.0" // https://github.com/dzirbel/gson-bijectivereflection
+    const val bijectiveReflection = "2.0.0" // https://github.com/dzirbel/gson-bijectivereflection
     const val coroutines = "1.4.2" // https://github.com/Kotlin/kotlinx.coroutines
     const val detekt = "1.15.0-RC1" // https://github.com/detekt/detekt; also update plugin version
     const val fuel = "2.3.0" // https://github.com/kittinunf/fuel

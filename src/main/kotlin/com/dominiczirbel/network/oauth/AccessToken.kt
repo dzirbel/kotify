@@ -1,11 +1,11 @@
 package com.dominiczirbel.network.oauth
 
 import com.dominiczirbel.network.Spotify
-import com.dzirbel.gson.bijectivereflection.BijectiveReflectiveTypeAdapterFactory
 import com.github.kittinunf.fuel.core.await
 import com.github.kittinunf.fuel.gson.gsonDeserializer
 import com.github.kittinunf.fuel.httpPost
 import com.google.gson.GsonBuilder
+import io.github.dzirbel.gson.bijectivereflection.BijectiveReflectiveTypeAdapterFactory
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileReader
