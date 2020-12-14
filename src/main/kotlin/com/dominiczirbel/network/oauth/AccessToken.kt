@@ -1,11 +1,13 @@
 package com.dominiczirbel.network.oauth
 
 import com.dominiczirbel.network.Spotify
-import com.github.kittinunf.fuel.core.await
-import com.github.kittinunf.fuel.gson.gsonDeserializer
-import com.github.kittinunf.fuel.httpPost
+import com.dominiczirbel.network.await
+import com.dominiczirbel.network.bodyFromJson
 import com.google.gson.GsonBuilder
 import io.github.dzirbel.gson.bijectivereflection.BijectiveReflectiveTypeAdapterFactory
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileReader
@@ -168,11 +170,17 @@ data class AccessToken(
          */
         private suspend fun refresh(clientId: String) {
             token?.refreshToken?.let { refreshToken ->
+                val request = Request.Builder()
+                    .post(
+                        "grant_type=refresh_token&refresh_token=$refreshToken&client_id=$clientId"
+                            .toRequestBody("application/x-www-form-urlencoded".toMediaType())
+                    )
+                    .url("https://accounts.spotify.com/api/token")
+                    .build()
+
                 // TODO error handling
-                token = "https://accounts.spotify.com/api/token".httpPost()
-                    .body("grant_type=refresh_token&refresh_token=$refreshToken&client_id=$clientId")
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .await(gsonDeserializer<AccessToken>(Spotify.gson))
+                Spotify.configuration.oauthOkHttpClient.newCall(request).await()
+                    .use { response -> response.bodyFromJson<AccessToken>(Spotify.gson) }
                     .also {
                         log("Got refreshed access token")
                         save(it)

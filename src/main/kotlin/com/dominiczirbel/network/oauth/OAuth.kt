@@ -1,11 +1,13 @@
 package com.dominiczirbel.network.oauth
 
 import com.dominiczirbel.network.Spotify
-import com.github.kittinunf.fuel.core.await
-import com.github.kittinunf.fuel.gson.gsonDeserializer
-import com.github.kittinunf.fuel.httpPost
+import com.dominiczirbel.network.await
+import com.dominiczirbel.network.bodyFromJson
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.awt.Desktop
 import java.net.URLEncoder
 import java.security.SecureRandom
@@ -68,10 +70,13 @@ class OAuth private constructor(
             "redirect_uri=${URLEncoder.encode(redirectUri, "UTF-8")}&" + // TODO don't use URLEncoder
             "code_verifier=$codeVerifier"
 
-        val accessToken: AccessToken = "https://accounts.spotify.com/api/token".httpPost()
-            .body(body)
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .await(gsonDeserializer(Spotify.gson))
+        val request = Request.Builder()
+            .post(body.toRequestBody("application/x-www-form-urlencoded".toMediaType()))
+            .url("https://accounts.spotify.com/api/token")
+            .build()
+
+        val accessToken = Spotify.configuration.oauthOkHttpClient.newCall(request).await()
+            .use { response -> response.bodyFromJson<AccessToken>(Spotify.gson) }
 
         AccessToken.Cache.put(accessToken)
 

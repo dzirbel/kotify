@@ -5,25 +5,32 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.oauth.AccessToken
 import com.dominiczirbel.ui.AuthenticationDialog
 import com.dominiczirbel.ui.MainContent
-import com.github.kittinunf.fuel.core.FuelManager
+import okhttp3.OkHttpClient
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
+@ExperimentalTime
 fun main() {
-    FuelManager.instance.addRequestInterceptor { transformer ->
-        { request ->
+    val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor { chain ->
+            val request = chain.request()
             println(">> ${request.method} ${request.url}")
-            transformer(request)
-        }
-    }
 
-    FuelManager.instance.addResponseInterceptor { transformer ->
-        { request, response ->
-            println("<< ${response.statusCode} ${request.method} ${response.url}")
-            transformer(request, response)
+            val (response, duration) = measureTimedValue { chain.proceed(request) }
+            println("<< ${response.code} ${response.request.method} ${response.request.url} in $duration")
+
+            response
         }
-    }
+        .build()
+
+    Spotify.configuration = Spotify.Configuration(
+        okHttpClient = okHttpClient,
+        oauthOkHttpClient = okHttpClient
+    )
 
     // clear non-refreshable tokens from tests
     AccessToken.Cache.requireRefreshable()

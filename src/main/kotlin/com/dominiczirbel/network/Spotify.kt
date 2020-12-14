@@ -23,14 +23,13 @@ import com.dominiczirbel.network.model.SimplifiedPlaylist
 import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.oauth.AccessToken
-import com.github.kittinunf.fuel.core.FuelError
-import com.github.kittinunf.fuel.core.await
-import com.github.kittinunf.fuel.gson.gsonDeserializer
-import com.github.kittinunf.fuel.httpGet
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import io.github.dzirbel.gson.bijectivereflection.BijectiveReflectiveTypeAdapterFactory
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.util.Locale
 
 /**
@@ -38,18 +37,22 @@ import java.util.Locale
  * https://developer.spotify.com/documentation/web-api/reference-beta
  */
 object Spotify {
+    data class Configuration(
+        val okHttpClient: OkHttpClient = OkHttpClient(),
+        val oauthOkHttpClient: OkHttpClient = OkHttpClient()
+    )
+
     val gson: Gson = GsonBuilder()
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
         .registerTypeAdapterFactory(BijectiveReflectiveTypeAdapterFactory()) // TODO maybe only for tests/debug builds
         .create()
 
-    val errorDeserializer = gsonDeserializer<ErrorObject>(gson)
+    var configuration: Configuration = Configuration()
 
     const val FROM_TOKEN = "from_token"
     const val API_URL = "https://api.spotify.com/v1/"
 
-    class SpotifyError(val code: Int, message: String, cause: Throwable) :
-        Throwable(message = "HTTP $code : $message", cause = cause)
+    class SpotifyError(val code: Int, message: String) : Throwable(message = "HTTP $code : $message")
 
     data class ErrorObject(val error: ErrorDetails)
     data class ErrorDetails(val status: Int, val message: String)
@@ -65,20 +68,35 @@ object Spotify {
     private data class ShowsModel(val shows: List<SimplifiedShow>)
     private data class TracksModel(val tracks: List<FullTrack>)
 
-    suspend inline fun <reified T : Any> get(path: String, queryParams: List<Pair<String, Any?>>? = null): T {
+    suspend inline fun <reified T : Any> get(path: String, queryParams: List<Pair<String, String?>>? = null): T {
         val token = AccessToken.Cache.getOrThrow()
 
-        return try {
-            (API_URL + path).httpGet(queryParams)
-                .header("Authorization", "${token.tokenType} ${token.accessToken}")
-                .await(gsonDeserializer(gson))
-        } catch (ex: FuelError) {
-            val message = if (ex.response.body().isConsumed()) {
-                ex.message ?: ex.response.body().toString()
-            } else {
-                errorDeserializer.deserialize(ex.response).error.message
+        val url = (API_URL + path).toHttpUrl()
+            .newBuilder()
+            .apply {
+                queryParams?.forEach { (key, value) ->
+                    value?.let { addQueryParameter(key, it) }
+                }
             }
-            throw SpotifyError(code = ex.response.statusCode, message = message, cause = ex)
+            .build()
+
+        val request = Request.Builder()
+            .get()
+            .url(url)
+            .header("Authorization", "${token.tokenType} ${token.accessToken}")
+            .build()
+
+        return configuration.okHttpClient.newCall(request).await().use { response ->
+            if (!response.isSuccessful) {
+                val message = runCatching { response.bodyFromJson<ErrorObject>(gson) }
+                    .getOrNull()
+                    ?.error
+                    ?.message
+                    ?: response.message
+                throw SpotifyError(code = response.code, message = message)
+            }
+
+            response.bodyFromJson(gson)
         }
     }
 
@@ -123,7 +141,10 @@ object Spotify {
             offset: Int? = null,
             market: String? = null
         ): Paging<SimplifiedTrack> {
-            return get("albums/$id/tracks", listOf("limit" to limit, "offset" to offset, "market" to market))
+            return get(
+                "albums/$id/tracks",
+                listOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
+            )
         }
 
         /**
@@ -208,8 +229,8 @@ object Spotify {
                 listOf(
                     "include_groups" to includeGroups?.joinToString(separator = ",") { it.name.toLowerCase(Locale.US) },
                     "country" to country,
-                    "limit" to limit,
-                    "offset" to offset
+                    "limit" to limit?.toString(),
+                    "offset" to offset?.toString()
                 )
             )
         }
@@ -287,7 +308,7 @@ object Spotify {
         ): Paging<SimplifiedPlaylist> {
             return get<PlaylistPagingModel>(
                 "browse/categories/$categoryId/playlists",
-                listOf("country" to country, "limit" to limit, "offset" to offset)
+                listOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString())
             ).playlists
         }
 
@@ -319,7 +340,12 @@ object Spotify {
         ): Paging<Category> {
             return get<CategoriesModel>(
                 "browse/categories",
-                listOf("country" to country, "locale" to locale, "limit" to limit, "offset" to offset)
+                listOf(
+                    "country" to country,
+                    "locale" to locale,
+                    "limit" to limit?.toString(),
+                    "offset" to offset?.toString()
+                )
             ).categories
         }
 
@@ -361,8 +387,8 @@ object Spotify {
                     "locale" to locale,
                     "country" to country,
                     "timestamp" to timestamp,
-                    "limit" to limit,
-                    "offset" to offset
+                    "limit" to limit?.toString(),
+                    "offset" to offset?.toString()
                 )
             ).playlists
         }
@@ -388,7 +414,7 @@ object Spotify {
         ): Paging<SimplifiedAlbum> {
             return get<AlbumsPagingModel>(
                 "browse/new-releases",
-                listOf("country" to country, "limit" to limit, "offset" to offset)
+                listOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString())
             ).albums
         }
 
@@ -433,7 +459,7 @@ object Spotify {
             return get(
                 "recommendations",
                 listOf(
-                    "limit" to limit,
+                    "limit" to limit?.toString(),
                     "market" to market,
                     "seed_artists" to seedArtists.joinToString(separator = ","),
                     "seed_genres" to seedGenres.joinToString(separator = ","),
@@ -543,7 +569,7 @@ object Spotify {
         suspend fun getFollowedArtists(limit: Int? = null, after: String? = null): CursorPaging<FullArtist> {
             return get<ArtistsCursorPagingModel>(
                 "me/following",
-                listOf("type" to "artist", "limit" to limit, "after" to after)
+                listOf("type" to "artist", "limit" to limit?.toString(), "after" to after)
             ).artists
         }
     }
@@ -598,7 +624,10 @@ object Spotify {
             offset: Int? = null,
             timeRange: TimeRange? = null
         ): Paging<FullArtist> {
-            return get("me/top/artists", listOf("limit" to limit, "offset" to offset, "time_range" to timeRange?.value))
+            return get(
+                "me/top/artists",
+                listOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value)
+            )
         }
 
         /**
@@ -628,7 +657,10 @@ object Spotify {
             offset: Int? = null,
             timeRange: TimeRange? = null
         ): Paging<FullTrack> {
-            return get("me/top/tracks", listOf("limit" to limit, "offset" to offset, "time_range" to timeRange?.value))
+            return get(
+                "me/top/tracks",
+                listOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value)
+            )
         }
     }
 
@@ -670,7 +702,7 @@ object Spotify {
          *  offset: 100.000. Use with limit to get the next set of playlists.
          */
         suspend fun getPlaylists(limit: Int? = null, offset: Int? = null): Paging<SimplifiedPlaylist> {
-            return get("me/playlists", listOf("limit" to limit, "offset" to offset))
+            return get("me/playlists", listOf("limit" to limit?.toString(), "offset" to offset?.toString()))
         }
 
         /**
@@ -684,7 +716,7 @@ object Spotify {
          *  offset: 100.000. Use with limit to get the next set of playlists.
          */
         suspend fun getPlaylists(userId: String, limit: Int? = null, offset: Int? = null): Paging<SimplifiedPlaylist> {
-            return get("users/$userId/playlists", listOf("limit" to limit, "offset" to offset))
+            return get("users/$userId/playlists", listOf("limit" to limit?.toString(), "offset" to offset?.toString()))
         }
 
         /**
@@ -780,8 +812,8 @@ object Spotify {
                 "playlists/$playlistId/tracks",
                 listOf(
                     "fields" to fields?.joinToString(separator = ","),
-                    "limit" to limit,
-                    "offset" to offset,
+                    "limit" to limit?.toString(),
+                    "offset" to offset?.toString(),
                     "market" to market,
                     "additional_types" to additionalTypes?.joinToString(separator = ",")
                 )
@@ -848,8 +880,8 @@ object Spotify {
                     "q" to q,
                     "type" to type.joinToString(separator = ","),
                     "market" to market,
-                    "limit" to limit,
-                    "offset" to offset,
+                    "limit" to limit?.toString(),
+                    "offset" to offset?.toString(),
                     "include_external" to includeExternal
                 )
             )
@@ -925,7 +957,7 @@ object Spotify {
         ): Paging<SimplifiedEpisode> {
             return get(
                 "shows/$id/episodes",
-                listOf("limit" to limit, "offset" to offset, "market" to market)
+                listOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
             )
         }
     }
