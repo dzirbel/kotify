@@ -270,15 +270,15 @@ internal object Fixtures {
                 .replace('\n', ' ')
         ),
         EpisodeProperties(
-            id = "4WsBDsEO8OIVUEMRE4EE6l",
-            name = "Thursday, December 10, 2020 ",
+            id = "61i9zd2aluBye0NiSf6NOh",
+            name = "#1581 - J. Prince",
             description = """
-                The FDA will vote on whether to clear Pfizer's COVID-19 vaccine for emergency use. Two lawsuits question
-                how Facebook got so big. Plus, lawmakers on Capitol Hill debate a COVID-19 relief package.
+                J. Prince is the CEO of Rap-A-Lot Records, author of The Art & Science of Respect, and founder of The
+                Loyalty Collection, a limited collection of fine wines. 
                 """
                 .trimIndent()
+                .trim('\n')
                 .replace('\n', ' ')
-                .trim()
         )
     )
 
