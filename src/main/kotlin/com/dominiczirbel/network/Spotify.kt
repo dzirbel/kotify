@@ -30,6 +30,8 @@ import io.github.dzirbel.gson.bijectivereflection.BijectiveReflectiveTypeAdapter
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.Locale
 
 /**
@@ -68,7 +70,55 @@ object Spotify {
     private data class ShowsModel(val shows: List<SimplifiedShow>)
     private data class TracksModel(val tracks: List<FullTrack>)
 
-    suspend inline fun <reified T : Any> get(path: String, queryParams: List<Pair<String, String?>>? = null): T {
+    suspend inline fun <reified T : Any> get(path: String, queryParams: Map<String, String?>? = null): T {
+        return request(method = "GET", path = path, queryParams = queryParams, body = null)
+    }
+
+    suspend inline fun <reified T : Any> post(
+        path: String,
+        jsonBody: Any?,
+        queryParams: Map<String, String?>? = null
+    ): T {
+        return request(
+            method = "POST",
+            path = path,
+            queryParams = queryParams,
+            body = jsonBody?.let { gson.toJson(it).toRequestBody() }
+        )
+    }
+
+    suspend inline fun <reified T : Any> put(
+        path: String,
+        jsonBody: Any?,
+        queryParams: Map<String, String?>? = null
+    ): T {
+        return request(
+            method = "PUT",
+            path = path,
+            queryParams = queryParams,
+            body = jsonBody?.let { gson.toJson(it).toRequestBody() }
+        )
+    }
+
+    suspend inline fun <reified T : Any> delete(
+        path: String,
+        jsonBody: Any?,
+        queryParams: Map<String, String?>? = null
+    ): T {
+        return request(
+            method = "DELETE",
+            path = path,
+            queryParams = queryParams,
+            body = jsonBody?.let { gson.toJson(it).toRequestBody() }
+        )
+    }
+
+    suspend inline fun <reified T : Any> request(
+        method: String,
+        path: String,
+        queryParams: Map<String, String?>? = null,
+        body: RequestBody? = null
+    ): T {
         val token = AccessToken.Cache.getOrThrow()
 
         val url = (API_URL + path).toHttpUrl()
@@ -81,7 +131,7 @@ object Spotify {
             .build()
 
         val request = Request.Builder()
-            .get()
+            .method(method, body)
             .url(url)
             .header("Authorization", "${token.tokenType} ${token.accessToken}")
             .build()
@@ -118,7 +168,7 @@ object Spotify {
          *  if you want to apply Track Relinking.
          */
         suspend fun getAlbum(id: String, market: String? = null): FullAlbum {
-            return get("albums/$id", listOf("market" to market))
+            return get("albums/$id", mapOf("market" to market))
         }
 
         /**
@@ -143,7 +193,7 @@ object Spotify {
         ): Paging<SimplifiedTrack> {
             return get(
                 "albums/$id/tracks",
-                listOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
             )
         }
 
@@ -160,7 +210,7 @@ object Spotify {
         suspend fun getAlbums(ids: List<String>, market: String? = null): List<FullAlbum> {
             return get<AlbumsModel>(
                 "albums",
-                listOf("ids" to ids.joinToString(separator = ","), "market" to market)
+                mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
             ).albums
         }
     }
@@ -191,7 +241,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs for the artists. Maximum: 50 IDs.
          */
         suspend fun getArtists(ids: List<String>): List<FullArtist> {
-            return get<ArtistsModel>("artists", listOf("ids" to ids.joinToString(separator = ","))).artists
+            return get<ArtistsModel>("artists", mapOf("ids" to ids.joinToString(separator = ","))).artists
         }
 
         /**
@@ -226,7 +276,7 @@ object Spotify {
         ): Paging<SimplifiedAlbum> {
             return get(
                 "artists/$id/albums",
-                listOf(
+                mapOf(
                     "include_groups" to includeGroups?.joinToString(separator = ",") { it.name.toLowerCase(Locale.US) },
                     "country" to country,
                     "limit" to limit?.toString(),
@@ -245,7 +295,7 @@ object Spotify {
          * @param country Required. An ISO 3166-1 alpha-2 country code or the string from_token.
          */
         suspend fun getArtistTopTracks(id: String, country: String): List<FullTrack> {
-            return get<TracksModel>("artists/$id/top-tracks", listOf("country" to country)).tracks
+            return get<TracksModel>("artists/$id/top-tracks", mapOf("country" to country)).tracks
         }
 
         /**
@@ -285,7 +335,7 @@ object Spotify {
          *  Spotify default language (American English).
          */
         suspend fun getCategory(categoryId: String, country: String? = null, locale: String? = null): Category {
-            return get("browse/categories/$categoryId", listOf("country" to country, "locale" to locale))
+            return get("browse/categories/$categoryId", mapOf("country" to country, "locale" to locale))
         }
 
         /**
@@ -308,7 +358,7 @@ object Spotify {
         ): Paging<SimplifiedPlaylist> {
             return get<PlaylistPagingModel>(
                 "browse/categories/$categoryId/playlists",
-                listOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString())
+                mapOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString())
             ).playlists
         }
 
@@ -340,7 +390,7 @@ object Spotify {
         ): Paging<Category> {
             return get<CategoriesModel>(
                 "browse/categories",
-                listOf(
+                mapOf(
                     "country" to country,
                     "locale" to locale,
                     "limit" to limit?.toString(),
@@ -383,7 +433,7 @@ object Spotify {
         ): Paging<SimplifiedPlaylist> {
             return get<PlaylistPagingModel>(
                 "browse/featured-playlists",
-                listOf(
+                mapOf(
                     "locale" to locale,
                     "country" to country,
                     "timestamp" to timestamp,
@@ -414,7 +464,7 @@ object Spotify {
         ): Paging<SimplifiedAlbum> {
             return get<AlbumsPagingModel>(
                 "browse/new-releases",
-                listOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString())
+                mapOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString())
             ).albums
         }
 
@@ -458,13 +508,13 @@ object Spotify {
         ): Recommendations {
             return get(
                 "recommendations",
-                listOf(
+                mapOf(
                     "limit" to limit?.toString(),
                     "market" to market,
                     "seed_artists" to seedArtists.joinToString(separator = ","),
                     "seed_genres" to seedGenres.joinToString(separator = ","),
                     "seed_tracks" to seedTracks.joinToString(separator = ",")
-                ).plus(tunableTrackAttributes.toList())
+                ).plus(tunableTrackAttributes)
             )
         }
     }
@@ -490,7 +540,7 @@ object Spotify {
          *  Users can view the country that is associated with their account in the account settings.
          */
         suspend fun getEpisode(id: String, market: String? = null): FullEpisode {
-            return get("episodes/$id", listOf("market" to market))
+            return get("episodes/$id", mapOf("market" to market))
         }
 
         /**
@@ -509,7 +559,7 @@ object Spotify {
         suspend fun getEpisodes(ids: List<String>, market: String? = null): List<FullEpisode> {
             return get<EpisodesModel>(
                 "episodes",
-                listOf("ids" to ids.joinToString(separator = ","), "market" to market)
+                mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
             ).episodes
         }
     }
@@ -519,11 +569,6 @@ object Spotify {
      *
      * https://developer.spotify.com/documentation/web-api/reference/follow/
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-follow
-     *
-     * TODO PUT https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/
-     * TODO PUT https://developer.spotify.com/documentation/web-api/reference/follow/follow-playlist/
-     * TODO DELETE https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/
-     * TODO DELETE https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-playlist/
      */
     object Follow {
         /**
@@ -537,7 +582,7 @@ object Spotify {
          *  ids=74ASZWbe4lXaubB36ztrGX,08td7MxkoHQkXnWAYD8d6Q. A maximum of 50 IDs can be sent in one request.
          */
         suspend fun isFollowing(type: String, ids: List<String>): List<Boolean> {
-            return get("me/following/contains", listOf("type" to type, "ids" to ids.joinToString(separator = ",")))
+            return get("me/following/contains", mapOf("type" to type, "ids" to ids.joinToString(separator = ",")))
         }
 
         /**
@@ -553,7 +598,7 @@ object Spotify {
         suspend fun isFollowingPlaylist(playlistId: String, userIds: List<String>): List<Boolean> {
             return get(
                 "playlists/$playlistId/followers/contains",
-                listOf("ids" to userIds.joinToString(separator = ","))
+                mapOf("ids" to userIds.joinToString(separator = ","))
             )
         }
 
@@ -569,8 +614,80 @@ object Spotify {
         suspend fun getFollowedArtists(limit: Int? = null, after: String? = null): CursorPaging<FullArtist> {
             return get<ArtistsCursorPagingModel>(
                 "me/following",
-                listOf("type" to "artist", "limit" to limit?.toString(), "after" to after)
+                mapOf("type" to "artist", "limit" to limit?.toString(), "after" to after)
             ).artists
+        }
+
+        /**
+         * Add the current user as a follower of one or more artists or other Spotify users.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/follow/follow-artists-users/
+         * TODO beta api
+         *
+         * TODO find a way to test
+         *
+         * @param type Required. The ID type: either artist or user.
+         * @param ids Optional. A comma-separated list of the artist or the user Spotify IDs. For example:
+         *  ids=74ASZWbe4lXaubB36ztrGX,08td7MxkoHQkXnWAYD8d6Q. A maximum of 50 IDs can be sent in one request.
+         */
+        suspend fun follow(type: String, ids: List<String>) {
+            return put(
+                "me/following",
+                jsonBody = null,
+                queryParams = mapOf("type" to type, "ids" to ids.joinToString(separator = ","))
+            )
+        }
+
+        /**
+         * Add the current user as a follower of a playlist.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/follow/follow-playlist/
+         * TODO beta api
+         *
+         * TODO find a way to test
+         *
+         * @param playlistId The Spotify ID of the playlist. Any playlist can be followed, regardless of its
+         *  public/private status, as long as you know its playlist ID.
+         * @param public Optional. Defaults to true. If true the playlist will be included in user’s public playlists,
+         *  if false it will remain private. To be able to follow playlists privately, the user must have granted the
+         *  playlist-modify-private scope.
+         */
+        suspend fun followPlaylist(playlistId: String, public: Boolean = true) {
+            return put("/playlists/$playlistId/followers", jsonBody = mapOf("public" to public))
+        }
+
+        /**
+         * Remove the current user as a follower of one or more artists or other Spotify users.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-artists-users/
+         * TODO beta api
+         *
+         * TODO find a way to test
+         *
+         * @param type Required. The ID type: either artist or user.
+         * @param ids Optional. A comma-separated list of the artist or the user Spotify IDs. For example:
+         *  ids=74ASZWbe4lXaubB36ztrGX,08td7MxkoHQkXnWAYD8d6Q. A maximum of 50 IDs can be sent in one request.
+         */
+        suspend fun unfollow(type: String, ids: List<String>) {
+            return delete(
+                "me/following",
+                jsonBody = null,
+                queryParams = mapOf("type" to type, "ids" to ids.joinToString(separator = ","))
+            )
+        }
+
+        /**
+         * Remove the current user as a follower of a playlist.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/follow/unfollow-playlist/
+         * TODO beta api
+         *
+         * TODO find a way to test
+         *
+         * @param playlistId The Spotify ID of the playlist that is to be no longer followed.
+         */
+        suspend fun unfollowPlaylist(playlistId: String) {
+            return delete("playlists/$playlistId/followers", jsonBody = null, queryParams = null)
         }
     }
 
@@ -626,7 +743,7 @@ object Spotify {
         ): Paging<FullArtist> {
             return get(
                 "me/top/artists",
-                listOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value)
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value)
             )
         }
 
@@ -659,7 +776,7 @@ object Spotify {
         ): Paging<FullTrack> {
             return get(
                 "me/top/tracks",
-                listOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value)
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value)
             )
         }
     }
@@ -702,7 +819,7 @@ object Spotify {
          *  offset: 100.000. Use with limit to get the next set of playlists.
          */
         suspend fun getPlaylists(limit: Int? = null, offset: Int? = null): Paging<SimplifiedPlaylist> {
-            return get("me/playlists", listOf("limit" to limit?.toString(), "offset" to offset?.toString()))
+            return get("me/playlists", mapOf("limit" to limit?.toString(), "offset" to offset?.toString()))
         }
 
         /**
@@ -716,7 +833,7 @@ object Spotify {
          *  offset: 100.000. Use with limit to get the next set of playlists.
          */
         suspend fun getPlaylists(userId: String, limit: Int? = null, offset: Int? = null): Paging<SimplifiedPlaylist> {
-            return get("users/$userId/playlists", listOf("limit" to limit?.toString(), "offset" to offset?.toString()))
+            return get("users/$userId/playlists", mapOf("limit" to limit?.toString(), "offset" to offset?.toString()))
         }
 
         /**
@@ -764,7 +881,7 @@ object Spotify {
         ): FullPlaylist {
             return get(
                 "playlists/$playlistId",
-                listOf(
+                mapOf(
                     "fields" to fields?.joinToString(separator = ","),
                     "market" to market,
                     "additional_types" to additionalTypes?.joinToString(separator = ",")
@@ -810,7 +927,7 @@ object Spotify {
         ): Paging<PlaylistTrack> {
             return get(
                 "playlists/$playlistId/tracks",
-                listOf(
+                mapOf(
                     "fields" to fields?.joinToString(separator = ","),
                     "limit" to limit?.toString(),
                     "offset" to offset?.toString(),
@@ -876,7 +993,7 @@ object Spotify {
         ): SearchResults {
             return get(
                 "search",
-                listOf(
+                mapOf(
                     "q" to q,
                     "type" to type.joinToString(separator = ","),
                     "market" to market,
@@ -909,7 +1026,7 @@ object Spotify {
          *  Users can view the country that is associated with their account in the account settings.
          */
         suspend fun getShow(id: String, market: String? = null): FullShow {
-            return get("shows/$id", listOf("market" to market))
+            return get("shows/$id", mapOf("market" to market))
         }
 
         /**
@@ -928,7 +1045,7 @@ object Spotify {
         suspend fun getShows(ids: List<String>, market: String? = null): List<SimplifiedShow> {
             return get<ShowsModel>(
                 "shows",
-                listOf("ids" to ids.joinToString(separator = ","), "market" to market)
+                mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
             ).shows
         }
 
@@ -957,7 +1074,7 @@ object Spotify {
         ): Paging<SimplifiedEpisode> {
             return get(
                 "shows/$id/episodes",
-                listOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
             )
         }
     }
@@ -1009,7 +1126,7 @@ object Spotify {
         suspend fun getAudioFeatures(ids: List<String>): List<AudioFeatures> {
             return get<AudioFeaturesModel>(
                 "audio-features",
-                listOf("ids" to ids.joinToString(separator = ","))
+                mapOf("ids" to ids.joinToString(separator = ","))
             ).audioFeatures
         }
 
@@ -1024,7 +1141,7 @@ object Spotify {
          *  if you want to apply Track Relinking.
          */
         suspend fun getTrack(id: String, market: String? = null): FullTrack {
-            return get("tracks/$id", listOf("market" to market))
+            return get("tracks/$id", mapOf("market" to market))
         }
 
         /**
@@ -1040,7 +1157,7 @@ object Spotify {
         suspend fun getTracks(ids: List<String>, market: String? = null): List<FullTrack> {
             return get<TracksModel>(
                 "tracks",
-                listOf("ids" to ids.joinToString(separator = ","), "market" to market)
+                mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
             ).tracks
         }
     }
