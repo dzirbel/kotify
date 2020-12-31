@@ -48,11 +48,16 @@ data class ArtistProperties(
     }
 }
 
-data class AlbumProperties(override val id: String, override val name: String) : ObjectProperties(type = "album") {
+data class AlbumProperties(
+    override val id: String,
+    override val name: String,
+    val totalTracks: Int? = null,
+    val albumType: Album.Type = Album.Type.ALBUM
+) : ObjectProperties(type = "album") {
     fun check(album: Album) {
         super.check(album)
 
-        assertThat(album.albumType).isIn(Album.Type.values().toList())
+        assertThat(album.albumType).isEqualTo(albumType)
         assertThat(album.artists).isNotEmpty()
         assertThat(album.availableMarkets).isNotNull()
         assertThat(album.externalUrls).isNotNull()
@@ -60,6 +65,7 @@ data class AlbumProperties(override val id: String, override val name: String) :
         assertThat(album.releaseDate).isNotNull()
         assertThat(album.releaseDatePrecision).isNotNull()
         assertThat(album.restrictions).isNull()
+        totalTracks?.let { assertThat(album.totalTracks).isEqualTo(it) }
 
         if (album is FullAlbum) {
             assertThat(album.genres).isNotNull()
@@ -120,7 +126,9 @@ data class TrackProperties(
     val discNumber: Int = 1,
     val explicit: Boolean = false,
     val isLocal: Boolean = false,
-    val trackNumber: Int
+    val trackNumber: Int,
+    val addedBy: String? = null,
+    val addedAt: String? = null
 ) : ObjectProperties(type = "track", hrefNull = isLocal) {
     fun check(track: Track) {
         super.check(track)
@@ -135,9 +143,11 @@ data class TrackProperties(
     }
 
     fun check(playlistTrack: PlaylistTrack) {
-        assertThat(playlistTrack.isLocal).isEqualTo(isLocal)
-        // TODO test addedAt and addedBy
         check(playlistTrack.track)
+
+        assertThat(playlistTrack.isLocal).isEqualTo(isLocal)
+        addedBy?.let { assertThat(playlistTrack.addedBy.id).isEqualTo(it) }
+        addedAt?.let { assertThat(playlistTrack.addedAt).isEqualTo(it) }
     }
 }
 
@@ -160,13 +170,12 @@ internal object Fixtures {
         "bobbytonelli" to false,
     )
 
-    // map from user ID to a map from playlist ID to whether the user is following that playlist
+    // map from playlist ID to a map from user ID to whether the user is following that playlist
     val followingPlaylists = listOf(
         "5apAth0JL9APnjo62F93RN" to mapOf("djynth" to true, "luckyeights" to false),
         "6urDFlFQIDXPwXbfpdGUc0" to mapOf("djynth" to true, "1267916582" to true)
     )
 
-    // TODO add more
     val albums = mapOf(
         AlbumProperties("1Z5Aw68hjd9e17izcGbLSQ", "Kikelet") to listOf(
             TrackProperties(
@@ -223,6 +232,81 @@ internal object Fixtures {
                 artistNames = setOf("Dalriada"),
                 trackNumber = 9
             )
+        ),
+
+        AlbumProperties("7sDOBekGFHH2KfwW0vn6Me", "Arcane Astral Aeons") to listOf(
+            TrackProperties(
+                id = "3fsWHLlp3D9CzZv6YUo3pv",
+                name = "In Styx Embrace",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 1
+            ),
+            TrackProperties(
+                id = "6mHngSw9ywDzghL8YvsDnW",
+                name = "Into the Night",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 2
+            ),
+            TrackProperties(
+                id = "52UrdP9ByyzpzdxrKOkQhm",
+                name = "Love Like Cyanide",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 3
+            ),
+            TrackProperties(
+                id = "6ety9hMPEGoOso9jm01ogh",
+                name = "Desire",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 4
+            ),
+            TrackProperties(
+                id = "1Q5zahML4WCp6I2cOHoL4E",
+                name = "Asphyxia",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 5
+            ),
+            TrackProperties(
+                id = "037N6MX5jyhu5YXpyi7id2",
+                name = "Queen of Lies",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 6
+            ),
+            TrackProperties(
+                id = "4of1AAmOGeHQ91pV8hug5S",
+                name = "Nos Heures Sombres",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 7
+            ),
+            TrackProperties(
+                id = "0lzlpdsGRbHqfyMBcGNqSy",
+                name = "The Voyage",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 8
+            ),
+            TrackProperties(
+                id = "1w4ibHOzLSQNl7bYdB5GnF",
+                name = "Aerodyne",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 9
+            ),
+            TrackProperties(
+                id = "1BLrZ3IpeiKsPUjQDWyTsB",
+                name = "The Twilight Hour",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 10
+            ),
+            TrackProperties(
+                id = "1dQTItrEzPEoWj5k3s2Bsy",
+                name = "Glowing Embers",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 11
+            ),
+            TrackProperties(
+                id = "16JomutDWxRTgzeeFTYUdW",
+                name = "Love Like Cyanide - Edit",
+                artistNames = setOf("Sirenia"),
+                trackNumber = 12
+            ),
         )
     )
 
@@ -252,6 +336,96 @@ internal object Fixtures {
                 AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
                 AlbumProperties("7LZNQn0nVJCEUQXfidfizI", "Plays Metallica by Four Cellos (Remastered)")
             )
+        ),
+
+        ArtistProperties(
+            id = "7IxOJnsT8vXhTTzb6nlPOO",
+            name = "Trees of Eternity",
+            albums = listOf(
+                AlbumProperties("6sFhi9TivgwN6XzcEYcfAy", "Hour of the Nightingale", totalTracks = 10)
+            )
+        ),
+
+        ArtistProperties(
+            id = "766wIvoqqGrjRDnExOjJls",
+            name = "Thirteen Senses",
+            albums = listOf(
+                AlbumProperties("5P7GIlX83brISe8k0XQQL1", "A Strange Encounter", totalTracks = 10),
+                AlbumProperties("148kHVSDW2cwyAnmOUnSsm", "Crystal Sounds", totalTracks = 10),
+                AlbumProperties("1v0kIX9QOYJhmbixRoWpeY", "Contact", totalTracks = 10),
+                AlbumProperties("6ua9tnBfjtFbEvlwwPePNE", "Contact", totalTracks = 11),
+                AlbumProperties("53d6xPe9mO7wVUCCPqlUqb", "The Invitation", totalTracks = 12),
+                AlbumProperties("7JSZOMOVibNSpGWSfcgqcN", "The Invitation", totalTracks = 12),
+                AlbumProperties("2taMI79KWzXO0cOV4RJx4i", "The Invitation", totalTracks = 11),
+                AlbumProperties(
+                    id = "2Ea6nI5gRsy7QXCYFihMEk",
+                    name = "Into The Fire (Acoustic)",
+                    totalTracks = 1,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties(
+                    id = "5nU3OZkQWBJnz1SijLLepR",
+                    name = "Into the Fire (Acoustic)",
+                    totalTracks = 1,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties("3dXyenZqQJOktXiLRBXU55", "Home", totalTracks = 2, albumType = Album.Type.SINGLE),
+                AlbumProperties(
+                    id = "3CcltJjnlBarLBrnbU7Dgg",
+                    name = "The Loneliest Star",
+                    totalTracks = 2,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties(
+                    id = "4gUjTWrUEcc3Dc2M1k9Jj4",
+                    name = "All The Love In Your Hands",
+                    totalTracks = 3,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties(
+                    id = "5bb11iSUgn7dYtodcW5fhW",
+                    name = "All The Love In Your Hands (Acoustic Version)",
+                    totalTracks = 1,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties(
+                    id = "7i6IV55nXu52k7dqckivO7",
+                    name = "All The Love In Your Hands (Cicada Remix Esingle)",
+                    totalTracks = 1,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties(
+                    id = "1UYhCN5SOV713pJcCBQ7Cf",
+                    name = "All The Love In Your Hands (Qattara Remix Esingle)",
+                    totalTracks = 1,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties("7ETiCkWai8cmWbVfnKCLJ6", "Follow Me", totalTracks = 3, albumType = Album.Type.SINGLE),
+                AlbumProperties(
+                    id = "75Rh0bIPEP7IJMUzpGo4os",
+                    name = "Into The Fire (Cicada Remix)",
+                    totalTracks = 1,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties(
+                    id = "14pHgW7BaEclVGKiw4xhAN",
+                    name = "Thru The Glass",
+                    totalTracks = 2,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties(
+                    id = "5Y1ybrFh0aScu26vW7HNwf",
+                    name = "Thru The Glass (On-Line Exclusive)",
+                    totalTracks = 1,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties(
+                    id = "6Qh7aqH8eZq6ttLEaLeaOK",
+                    name = "Do No Wrong",
+                    totalTracks = 2,
+                    albumType = Album.Type.SINGLE
+                ),
+            )
         )
     )
 
@@ -265,9 +439,7 @@ internal object Fixtures {
                 to care about equality -- and emphasizes the connection between a healthy, cooperative society and
                 everyone getting their fair share.       
                 """
-                .trimIndent()
-                .trim('\n')
-                .replace('\n', ' ')
+                .toSingleLine()
         ),
         EpisodeProperties(
             id = "61i9zd2aluBye0NiSf6NOh",
@@ -276,9 +448,7 @@ internal object Fixtures {
                 J. Prince is the CEO of Rap-A-Lot Records, author of The Art & Science of Respect, and founder of The
                 Loyalty Collection, a limited collection of fine wines. 
                 """
-                .trimIndent()
-                .trim('\n')
-                .replace('\n', ' ')
+                .toSingleLine()
         )
     )
 
@@ -297,7 +467,9 @@ internal object Fixtures {
                     id = "1lTqjO8itiTjspDlZ6EDtv",
                     name = "Grace (feat. Hotei)",
                     artistNames = setOf("Apocalyptica", "HOTEI"),
-                    trackNumber = 2
+                    trackNumber = 2,
+                    addedBy = "djynth",
+                    addedAt = "2020-12-06T01:18:37Z"
                 ),
                 TrackProperties(
                     id = null,
@@ -305,13 +477,17 @@ internal object Fixtures {
                     artistNames = setOf("Oratory"),
                     trackNumber = 0,
                     discNumber = 0,
-                    isLocal = true
+                    isLocal = true,
+                    addedBy = "djynth",
+                    addedAt = "2020-12-06T01:24:17Z"
                 ),
                 TrackProperties(
                     id = "0hrNeGXIsFXCzGv27hDYlz",
                     name = "Chosen Time",
                     artistNames = setOf("Jeff Loomis"),
-                    trackNumber = 8
+                    trackNumber = 8,
+                    addedBy = "djynth",
+                    addedAt = "2020-12-06T01:24:40Z"
                 )
             )
         )
@@ -327,9 +503,7 @@ internal object Fixtures {
                 physics, and everything else about life in the universe. Keep Looking Up! New episodes premiere Friday
                 nights at 7pm ET.
                 """
-                .trimIndent()
-                .replace('\n', ' ')
-                .trim()
+                .toSingleLine()
         ),
         ShowProperties(
             id = "2mTUnDkuKUkhiueKcVWoP0",
@@ -341,9 +515,7 @@ internal object Fixtures {
                 Lulu Garcia-Navarro and Scott Simon. Subscribe and listen, then support your local NPR station at
                 donate.npr.org.
                 """
-                .trimIndent()
-                .replace('\n', ' ')
-                .trim()
+                .toSingleLine()
         )
     )
 
@@ -367,6 +539,30 @@ internal object Fixtures {
             name = "Nausicaa Requiem (Nausicaa Of The Valley Of The Wind)",
             artistNames = setOf("Imaginary Flying Machines", "Neroargento", "Yoko Hallelujah"),
             trackNumber = 12
+        ),
+
+        TrackProperties(
+            id = "3Or10XF8LCimAlD8k4TmCn",
+            name = "We Believe",
+            artistNames = setOf("Red Hot Chili Peppers"),
+            trackNumber = 12,
+            discNumber = 2
+        ),
+
+        TrackProperties(
+            id = "3I4qPl71TjjB8cXT2QlRb5",
+            name = "Delusion",
+            artistNames = setOf("We Are the Catalyst"),
+            trackNumber = 1,
+            explicit = true
         )
     )
+}
+
+/**
+ * Converts this multi-line string to a single-line one, with the indents and newlines removed (and replaced with single
+ * spaces).
+ */
+private fun String.toSingleLine(): String {
+    return this.trimIndent().trim('\n').replace('\n', ' ')
 }
