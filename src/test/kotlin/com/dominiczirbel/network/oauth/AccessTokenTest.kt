@@ -176,6 +176,8 @@ internal class AccessTokenTest {
             assertThat(newToken.accessToken).isEqualTo("abc")
             assertThat(newToken.tokenType).isEqualTo("def")
             assertThat(newToken.expiresIn).isEqualTo(30)
+
+            assertThat(runBlocking { AccessToken.Cache.get() }).isEqualTo(newToken)
         }
     }
 
