@@ -46,5 +46,5 @@ inline fun <reified T> Response.bodyFromJson(gson: Gson): T {
     val body = requireNotNull(body) { "No response body" }
 
     // use TypeToken to preserve generics
-    return gson.fromJson(body.charStream(), object : TypeToken<T>() {}.type)
+    return requireNotNull(gson.fromJson(body.charStream(), object : TypeToken<T>() {}.type))
 }

@@ -183,6 +183,7 @@ data class AccessToken(
                     .use { response -> response.bodyFromJson<AccessToken>(Spotify.gson) }
                     .also {
                         log("Got refreshed access token")
+                        token = it
                         save(it)
                     }
             }

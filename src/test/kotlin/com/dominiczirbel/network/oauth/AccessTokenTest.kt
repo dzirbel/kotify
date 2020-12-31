@@ -1,19 +1,25 @@
 package com.dominiczirbel.network.oauth
 
 import com.dominiczirbel.network.Spotify
+import com.dominiczirbel.withSpotifyConfiguration
 import com.google.common.io.Files
 import com.google.common.truth.BooleanSubject
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 // TODO test requireRefreshable
-// TODO test refresh
 internal class AccessTokenTest {
     @BeforeEach
     @Suppress("unused")
@@ -126,6 +132,51 @@ internal class AccessTokenTest {
         assertThat(accessToken.tokenType).isEqualTo("def")
         assertThat(accessToken.expiresIn).isEqualTo(30)
         assertThat(accessToken.received).isEqualTo(123)
+    }
+
+    @Test
+    fun testRefresh() {
+        val tokenBody =
+            """
+            {
+                access_token: abc,
+                token_type: def,
+                expires_in: 30
+            }
+            """.trimIndent()
+
+        withSpotifyConfiguration(
+            Spotify.configuration.copy(
+                oauthOkHttpClient = OkHttpClient.Builder()
+                    .addInterceptor { chain ->
+                        Response.Builder()
+                            .code(200)
+                            .request(chain.request())
+                            .protocol(Protocol.HTTP_1_1)
+                            .message("OK")
+                            .body(tokenBody.toResponseBody("text/plain".toMediaType()))
+                            .build()
+                    }
+                    .build()
+            )
+        ) {
+            val expiredToken = AccessToken(
+                expiresIn = 10,
+                received = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(15),
+                refreshToken = "refresh"
+            )
+            assertThat(expiredToken.isExpired).isTrue()
+            AccessToken.Cache.put(expiredToken)
+
+            val newToken = runBlocking { AccessToken.Cache.get() }
+
+            assertThat(newToken).isNotNull()
+            assertThat(newToken).isNotEqualTo(expiredToken)
+            assertThat(newToken!!.isExpired).isFalse()
+            assertThat(newToken.accessToken).isEqualTo("abc")
+            assertThat(newToken.tokenType).isEqualTo("def")
+            assertThat(newToken.expiresIn).isEqualTo(30)
+        }
     }
 
     companion object {
