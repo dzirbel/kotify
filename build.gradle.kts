@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -67,6 +68,7 @@ tasks.test {
     testLogging {
         events = setOf(TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR, TestLogEvent.STANDARD_OUT)
         showStackTraces = true
+        exceptionFormat = TestExceptionFormat.FULL
     }
 }
 
