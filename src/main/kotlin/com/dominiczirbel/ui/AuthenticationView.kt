@@ -15,8 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DesktopDialogProperties
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.dominiczirbel.network.oauth.OAuth
 import kotlinx.coroutines.launch
 import java.awt.Toolkit
@@ -38,7 +38,7 @@ fun AuthenticationDialog(
     onAuthenticated: () -> Unit
 ) {
     Dialog(
-        properties = DesktopDialogProperties(
+        properties = DialogProperties(
             title = "Spotify API Authentication",
             size = IntSize(DIALOG_WIDTH, DIALOG_HEIGHT)
         ),

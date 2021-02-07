@@ -14,7 +14,7 @@ private object Versions {
 
 plugins {
     // https://kotlinlang.org/releases.html
-    kotlin("jvm") version "1.4.21"
+    kotlin("jvm") version "1.4.30"
 
     // https://github.com/detekt/detekt; also update dependency version
     id("io.gitlab.arturbosch.detekt") version "1.15.0"
@@ -23,7 +23,7 @@ plugins {
     id("name.remal.check-dependency-updates") version "1.2.2"
 
     // https://github.com/jetbrains/compose-jb
-    id("org.jetbrains.compose") version "0.2.0-build132"
+    id("org.jetbrains.compose") version "0.3.0-build150"
 }
 
 version = "0.1"

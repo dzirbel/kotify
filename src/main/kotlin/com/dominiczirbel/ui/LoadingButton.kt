@@ -4,7 +4,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonConstants
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.contentColorFor
@@ -28,12 +28,12 @@ fun LoadingButton(
         modifier = modifier.animateContentSize(),
         colors = if (loading) {
             // when loading, preserve the colors as if still enabled
-            ButtonConstants.defaultButtonColors(
+            ButtonDefaults.buttonColors(
                 disabledBackgroundColor = MaterialTheme.colors.primary,
                 disabledContentColor = contentColorFor(MaterialTheme.colors.primary)
             )
         } else {
-            ButtonConstants.defaultButtonColors()
+            ButtonDefaults.buttonColors()
         },
         onClick = onClick
     ) {
