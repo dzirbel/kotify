@@ -9,7 +9,7 @@ private object Versions {
     const val gson = "2.8.6" // https://github.com/google/gson
     const val junit = "5.7.1" // https://junit.org/junit5/
     const val kotlinReflect = "1.4.21" // https://kotlinlang.org/docs/reference/reflection.html
-    const val okhttp = "4.9.0" // https://square.github.io/okhttp/
+    const val okhttp = "4.9.1" // https://square.github.io/okhttp/
     const val truth = "1.1.2" // https://truth.dev/
 }
 
