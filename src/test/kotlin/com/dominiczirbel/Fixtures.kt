@@ -511,8 +511,8 @@ internal object Fixtures {
             description = """
                 NPR's Up First is the news you need to start your day. The three biggest stories of the day, with
                 reporting and analysis from NPR News — in 10 minutes. Available weekdays by 6 a.m. ET, with hosts Rachel
-                Martin, Noel King, David Greene and Steve Inskeep. Now available on Saturdays by 8 a.m. ET, with hosts
-                Lulu Garcia-Navarro and Scott Simon. Subscribe and listen, then support your local NPR station at
+                Martin, Noel King and Steve Inskeep. Now available on Saturdays by 8 a.m. ET, with hosts Lulu
+                Garcia-Navarro and Scott Simon. Subscribe and listen, then support your local NPR station at
                 donate.npr.org.
                 """
                 .toSingleLine()
