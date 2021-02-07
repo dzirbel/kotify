@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 private object Versions {
     const val bijectiveReflection = "2.0.0" // https://github.com/dzirbel/gson-bijectivereflection
     const val coroutines = "1.4.2" // https://github.com/Kotlin/kotlinx.coroutines
-    const val detekt = "1.15.0-RC1" // https://github.com/detekt/detekt; also update plugin version
+    const val detekt = "1.15.0" // https://github.com/detekt/detekt; also update plugin version
     const val gson = "2.8.6" // https://github.com/google/gson
     const val junit = "5.7.0" // https://junit.org/junit5/
     const val kotlinReflect = "1.4.21" // https://kotlinlang.org/docs/reference/reflection.html
@@ -18,7 +18,7 @@ plugins {
     kotlin("jvm") version "1.4.21"
 
     // https://github.com/detekt/detekt; also update dependency version
-    id("io.gitlab.arturbosch.detekt") version "1.15.0-RC1"
+    id("io.gitlab.arturbosch.detekt") version "1.15.0"
 
     // https://plugins.gradle.org/plugin/name.remal.check-dependency-updates
     id("name.remal.check-dependency-updates") version "1.1.6"
