@@ -8,7 +8,6 @@ private object Versions {
     const val detekt = "1.15.0" // https://github.com/detekt/detekt; also update plugin version
     const val gson = "2.8.6" // https://github.com/google/gson
     const val junit = "5.7.1" // https://junit.org/junit5/
-    const val kotlinReflect = "1.4.21" // https://kotlinlang.org/docs/reference/reflection.html
     const val okhttp = "4.9.1" // https://square.github.io/okhttp/
     const val truth = "1.1.2" // https://truth.dev/
 }
@@ -42,7 +41,6 @@ dependencies {
     implementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
     implementation("io.github.dzirbel", "gson-bijectivereflection", Versions.bijectiveReflection)
     implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
-    implementation("org.jetbrains.kotlin", "kotlin-reflect", Versions.kotlinReflect)
 
     testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit)
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)
