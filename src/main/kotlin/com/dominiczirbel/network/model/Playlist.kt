@@ -58,10 +58,6 @@ interface Playlist : SpotifyObject {
     val snapshotId: String
 }
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#playlist-object-simplified
- * TODO beta api
- */
 @Serializable
 data class SimplifiedPlaylist(
     override val href: String,
@@ -82,10 +78,6 @@ data class SimplifiedPlaylist(
     val tracks: PlaylistTracks?
 ) : Playlist
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#playlist-object-full
- * TODO beta api
- */
 @Serializable
 data class FullPlaylist(
     override val href: String,

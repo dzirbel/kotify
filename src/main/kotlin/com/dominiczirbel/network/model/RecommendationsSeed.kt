@@ -2,9 +2,6 @@ package com.dominiczirbel.network.model
 
 import kotlinx.serialization.Serializable
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#recommendations-seed-object
- */
 @Serializable
 data class RecommendationsSeed(
     /** The number of tracks available after min_* and max_* filters have been applied. */

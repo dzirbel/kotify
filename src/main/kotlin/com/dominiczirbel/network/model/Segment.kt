@@ -3,9 +3,6 @@ package com.dominiczirbel.network.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/#segment-object
- */
 @Serializable
 data class Segment(
     /** The starting point (in seconds) of the segment. */

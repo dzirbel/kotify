@@ -3,9 +3,6 @@ package com.dominiczirbel.network.model
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/
- */
 @Serializable
 data class AudioAnalysis(
     /**

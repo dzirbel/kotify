@@ -29,9 +29,6 @@ interface User {
     val uri: String
 }
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#user-object-public
- */
 @Serializable
 data class PublicUser(
     @SerialName("display_name") override val displayName: String? = null,
@@ -44,9 +41,6 @@ data class PublicUser(
     override val uri: String
 ) : User
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#user-object-private
- */
 @Serializable
 data class PrivateUser(
     @SerialName("display_name") override val displayName: String? = null,

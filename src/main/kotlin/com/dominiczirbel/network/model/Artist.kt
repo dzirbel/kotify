@@ -23,9 +23,6 @@ interface Artist : SpotifyObject {
     val externalUrls: ExternalUrls
 }
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#artist-object-simplified
- */
 @Serializable
 data class SimplifiedArtist(
     @SerialName("external_urls") override val externalUrls: Map<String, String>,
@@ -36,10 +33,6 @@ data class SimplifiedArtist(
     override val uri: String? = null
 ) : Artist
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#artist-object-full
- * https://developer.spotify.com/documentation/web-api/reference-beta/#object-artistobject
- */
 @Serializable
 data class FullArtist(
     @SerialName("external_urls") override val externalUrls: Map<String, String>,

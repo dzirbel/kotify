@@ -69,9 +69,6 @@ interface Episode : SpotifyObject {
     val resumePoint: ResumePoint?
 }
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#episode-object-simplified
- */
 @Serializable
 data class SimplifiedEpisode(
     override val href: String,
@@ -94,9 +91,6 @@ data class SimplifiedEpisode(
     @SerialName("resume_point") override val resumePoint: ResumePoint? = null
 ) : Episode
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#episode-object-full
- */
 @Serializable
 data class FullEpisode(
     override val href: String,

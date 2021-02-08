@@ -3,9 +3,6 @@ package com.dominiczirbel.network.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#playlist-track-object
- */
 @Serializable
 data class PlaylistTrack(
     /**

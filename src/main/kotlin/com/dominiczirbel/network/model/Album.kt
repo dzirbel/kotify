@@ -77,10 +77,6 @@ interface Album : SpotifyObject {
     }
 }
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#album-object-simplified
- * https://developer.spotify.com/documentation/web-api/reference-beta/#object-simplifiedalbumobject
- */
 @Serializable
 data class SimplifiedAlbum(
     @SerialName("album_type") override val albumType: Album.Type? = null,
@@ -106,10 +102,6 @@ data class SimplifiedAlbum(
     val albumGroup: Album.Type? = null
 ) : Album
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/object-model/#album-object-full
- * https://developer.spotify.com/documentation/web-api/reference-beta/#object-albumobject
- */
 @Serializable
 data class FullAlbum(
     @SerialName("album_type") override val albumType: Album.Type? = null,
