@@ -1,14 +1,15 @@
 package com.dominiczirbel.network.model
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 @Suppress("ComplexInterface")
 interface Album : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the album. */
-    override val href: String
+    override val href: String?
 
     /** The Spotify ID for the album. */
-    override val id: String
+    override val id: String?
 
     /** The name of the album. In case of an album takedown, the value may be an empty string. */
     override val name: String
@@ -17,10 +18,10 @@ interface Album : SpotifyObject {
     override val type: String
 
     /** The Spotify URI for the album. */
-    override val uri: String
+    override val uri: String?
 
     /** The type of the album: one of "album", "single", or "compilation". */
-    val albumType: Type
+    val albumType: Type?
 
     /**
      * The artists of the album. Each artist object includes a link in href to more detailed information about the
@@ -44,10 +45,10 @@ interface Album : SpotifyObject {
      * The date the album was first released, for example 1981. Depending on the precision, it might be shown as
      * 1981-12 or 1981-12-15.
      */
-    val releaseDate: String
+    val releaseDate: String?
 
     /** The precision with which release_date value is known: year, month, or day. */
-    val releaseDatePrecision: String
+    val releaseDatePrecision: String?
 
     /**
      * Part of the response when Track Relinking is applied, the original track is not available in the given market,
@@ -60,17 +61,18 @@ interface Album : SpotifyObject {
     /** Undocumented field. */
     val totalTracks: Int?
 
+    @Serializable
     enum class Type {
-        @SerializedName("album")
+        @SerialName("album")
         ALBUM,
 
-        @SerializedName("single")
+        @SerialName("single")
         SINGLE,
 
-        @SerializedName("appears_on")
+        @SerialName("appears_on")
         APPEARS_ON,
 
-        @SerializedName("compilation")
+        @SerialName("compilation")
         COMPILATION
     }
 }
@@ -79,46 +81,49 @@ interface Album : SpotifyObject {
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#album-object-simplified
  * https://developer.spotify.com/documentation/web-api/reference-beta/#object-simplifiedalbumobject
  */
+@Serializable
 data class SimplifiedAlbum(
-    override val albumType: Album.Type,
+    @SerialName("album_type") override val albumType: Album.Type? = null,
     override val artists: List<SimplifiedArtist>,
-    override val availableMarkets: List<String>?,
-    override val externalUrls: Map<String, String>,
-    override val href: String,
-    override val id: String,
+    @SerialName("available_markets") override val availableMarkets: List<String>? = null,
+    @SerialName("external_urls") override val externalUrls: Map<String, String>,
+    override val href: String? = null,
+    override val id: String? = null,
     override val images: List<Image>,
     override val name: String,
-    override val releaseDate: String,
-    override val releaseDatePrecision: String,
-    override val restrictions: Map<String, String>?,
-    override val totalTracks: Int?,
+    @SerialName("release_date") override val releaseDate: String? = null,
+    @SerialName("release_date_precision") override val releaseDatePrecision: String? = null,
+    override val restrictions: Map<String, String>? = null,
+    @SerialName("total_tracks") override val totalTracks: Int? = null,
     override val type: String,
-    override val uri: String,
+    override val uri: String? = null,
 
     /**
      * The field is present when getting an artist’s albums. Possible values are "album", "single", "compilation",
      * "appears_on". Compare to album_type this field represents relationship between the artist and the album.
      */
-    val albumGroup: Album.Type?
+    @SerialName("album_group")
+    val albumGroup: Album.Type? = null
 ) : Album
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#album-object-full
  * https://developer.spotify.com/documentation/web-api/reference-beta/#object-albumobject
  */
+@Serializable
 data class FullAlbum(
-    override val albumType: Album.Type,
+    @SerialName("album_type") override val albumType: Album.Type? = null,
     override val artists: List<SimplifiedArtist>,
-    override val availableMarkets: List<String>?,
-    override val externalUrls: Map<String, String>,
+    @SerialName("available_markets") override val availableMarkets: List<String>? = null,
+    @SerialName("external_urls") override val externalUrls: Map<String, String>,
     override val href: String,
     override val id: String,
     override val images: List<Image>,
     override val name: String,
-    override val releaseDate: String,
-    override val releaseDatePrecision: String,
-    override val restrictions: Map<String, String>?,
-    override val totalTracks: Int?,
+    @SerialName("release_date") override val releaseDate: String,
+    @SerialName("release_date_precision") override val releaseDatePrecision: String,
+    override val restrictions: Map<String, String>? = null,
+    @SerialName("total_tracks") override val totalTracks: Int? = null,
     override val type: String,
     override val uri: String,
 
@@ -126,6 +131,7 @@ data class FullAlbum(
     val copyrights: List<Copyright>,
 
     /** Known external IDs for the album. */
+    @SerialName("external_ids")
     val externalIds: ExternalId,
 
     /**

@@ -1,5 +1,8 @@
 package com.dominiczirbel.network.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 @Suppress("ComplexInterface")
 interface Episode : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the episode. */
@@ -69,49 +72,51 @@ interface Episode : SpotifyObject {
 /**
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#episode-object-simplified
  */
+@Serializable
 data class SimplifiedEpisode(
     override val href: String,
     override val id: String,
     override val name: String,
     override val type: String,
     override val uri: String,
-    override val audioPreviewUrl: String?,
+    @SerialName("audio_preview_url") override val audioPreviewUrl: String? = null,
     override val description: String,
-    override val durationMs: Int,
+    @SerialName("duration_ms") override val durationMs: Int,
     override val explicit: Boolean,
-    override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrls,
     override val images: List<Image>,
-    override val isExternallyHosted: Boolean,
-    override val isPlayable: Boolean,
-    override val language: String?,
+    @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean,
+    @SerialName("is_playable") override val isPlayable: Boolean,
+    override val language: String? = null,
     override val languages: List<String>,
-    override val releaseDate: String,
-    override val releaseDatePrecision: String,
-    override val resumePoint: ResumePoint?
+    @SerialName("release_date") override val releaseDate: String,
+    @SerialName("release_date_precision") override val releaseDatePrecision: String,
+    @SerialName("resume_point") override val resumePoint: ResumePoint? = null
 ) : Episode
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#episode-object-full
  */
+@Serializable
 data class FullEpisode(
     override val href: String,
     override val id: String,
     override val name: String,
     override val type: String,
     override val uri: String,
-    override val audioPreviewUrl: String?,
+    @SerialName("audio_preview_url") override val audioPreviewUrl: String? = null,
     override val description: String,
-    override val durationMs: Int,
+    @SerialName("duration_ms") override val durationMs: Int,
     override val explicit: Boolean,
-    override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrls,
     override val images: List<Image>,
-    override val isExternallyHosted: Boolean,
-    override val isPlayable: Boolean,
-    override val language: String?,
+    @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean,
+    @SerialName("is_playable") override val isPlayable: Boolean,
+    override val language: String? = null,
     override val languages: List<String>,
-    override val releaseDate: String,
-    override val releaseDatePrecision: String,
-    override val resumePoint: ResumePoint?,
+    @SerialName("release_date") override val releaseDate: String,
+    @SerialName("release_date_precision") override val releaseDatePrecision: String,
+    @SerialName("resume_point") override val resumePoint: ResumePoint? = null,
 
     /** The show on which the episode belongs. */
     val show: SimplifiedShow

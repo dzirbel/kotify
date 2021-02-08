@@ -1,8 +1,12 @@
 package com.dominiczirbel.network.model
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
+
 /**
  * https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/
  */
+@Serializable
 data class AudioAnalysis(
     /**
      * The time intervals of the bars throughout the track. A bar (or measure) is a segment of time defined as a given
@@ -17,7 +21,7 @@ data class AudioAnalysis(
     val beats: List<TimeInterval>,
 
     /** Undocumented field. */
-    val meta: Map<String, String>,
+    val meta: JsonObject,
 
     /**
      * Sections are defined by large variations in rhythm or timbre, e.g. chorus, verse, bridge, guitar solo, etc. Each
@@ -38,5 +42,5 @@ data class AudioAnalysis(
     val tatums: List<TimeInterval>,
 
     /** Undocumented field. */
-    val track: Map<String, String>?
+    val track: JsonObject? = null
 )

@@ -1,5 +1,8 @@
 package com.dominiczirbel.network.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 @Suppress("ComplexInterface")
 interface Show : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the show. */
@@ -56,21 +59,22 @@ interface Show : SpotifyObject {
 /**
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#show-object-simplified
  */
+@Serializable
 data class SimplifiedShow(
-    override val availableMarkets: List<String>,
+    @SerialName("available_markets") override val availableMarkets: List<String>,
     override val copyrights: List<Copyright>,
     override val description: String,
     override val explicit: Boolean,
-    override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrls,
     override val href: String,
     override val id: String,
     override val images: List<Image>,
-    override val isExternallyHosted: Boolean?,
+    @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean? = null,
     override val languages: List<String>,
-    override val mediaType: String,
+    @SerialName("media_type") override val mediaType: String,
     override val name: String,
     override val publisher: String,
-    override val totalEpisodes: Int,
+    @SerialName("total_episodes") override val totalEpisodes: Int,
     override val type: String,
     override val uri: String
 ) : Show
@@ -78,21 +82,22 @@ data class SimplifiedShow(
 /**
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#show-object-full
  */
+@Serializable
 data class FullShow(
-    override val availableMarkets: List<String>,
+    @SerialName("available_markets") override val availableMarkets: List<String>,
     override val copyrights: List<Copyright>,
     override val description: String,
     override val explicit: Boolean,
-    override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrls,
     override val href: String,
     override val id: String,
     override val images: List<Image>,
-    override val isExternallyHosted: Boolean?,
+    @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean? = null,
     override val languages: List<String>,
-    override val mediaType: String,
+    @SerialName("media_type") override val mediaType: String,
     override val name: String,
     override val publisher: String,
-    override val totalEpisodes: Int,
+    @SerialName("total_episodes") override val totalEpisodes: Int,
     override val type: String,
     override val uri: String,
 

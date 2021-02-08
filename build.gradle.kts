@@ -3,11 +3,10 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
-    const val bijectiveReflection = "2.0.0" // https://github.com/dzirbel/gson-bijectivereflection
     const val coroutines = "1.4.2" // https://github.com/Kotlin/kotlinx.coroutines
     const val detekt = "1.15.0" // https://github.com/detekt/detekt; also update plugin version
-    const val gson = "2.8.6" // https://github.com/google/gson
     const val junit = "5.7.1" // https://junit.org/junit5/
+    const val kotlinxSerialization = "1.0.1"
     const val okhttp = "4.9.1" // https://square.github.io/okhttp/
     const val truth = "1.1.2" // https://truth.dev/
 }
@@ -15,6 +14,9 @@ private object Versions {
 plugins {
     // https://kotlinlang.org/releases.html
     kotlin("jvm") version "1.4.30"
+
+    // https://github.com/Kotlin/kotlinx.serialization
+    kotlin("plugin.serialization") version "1.4.30"
 
     // https://github.com/detekt/detekt; also update dependency version
     id("io.gitlab.arturbosch.detekt") version "1.15.0"
@@ -37,10 +39,9 @@ repositories {
 dependencies {
     implementation(compose.desktop.currentOs)
 
-    implementation("com.google.code.gson", "gson", Versions.gson)
     implementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
-    implementation("io.github.dzirbel", "gson-bijectivereflection", Versions.bijectiveReflection)
     implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
+    implementation("org.jetbrains.kotlinx", "kotlinx-serialization-json", Versions.kotlinxSerialization)
 
     testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit)
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)
@@ -53,6 +54,7 @@ dependencies {
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.allWarningsAsErrors = true
     kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.freeCompilerArgs += "-XX:MaxMetaspaceSize=1G" // TODO remove
 }
 
 configurations.all {

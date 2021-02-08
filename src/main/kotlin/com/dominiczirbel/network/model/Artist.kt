@@ -1,11 +1,14 @@
 package com.dominiczirbel.network.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 interface Artist : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the artist. */
-    override val href: String
+    override val href: String?
 
     /** The Spotify ID for the artist. */
-    override val id: String
+    override val id: String?
 
     /** The name of the artist. */
     override val name: String
@@ -14,7 +17,7 @@ interface Artist : SpotifyObject {
     override val type: String
 
     /** The Spotify URI for the artist. */
-    override val uri: String
+    override val uri: String?
 
     /** Known external URLs for this artist. */
     val externalUrls: ExternalUrls
@@ -23,21 +26,23 @@ interface Artist : SpotifyObject {
 /**
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#artist-object-simplified
  */
+@Serializable
 data class SimplifiedArtist(
-    override val externalUrls: Map<String, String>,
-    override val href: String,
-    override val id: String,
+    @SerialName("external_urls") override val externalUrls: Map<String, String>,
+    override val href: String? = null,
+    override val id: String? = null,
     override val name: String,
     override val type: String,
-    override val uri: String
+    override val uri: String? = null
 ) : Artist
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#artist-object-full
  * https://developer.spotify.com/documentation/web-api/reference-beta/#object-artistobject
  */
+@Serializable
 data class FullArtist(
-    override val externalUrls: Map<String, String>,
+    @SerialName("external_urls") override val externalUrls: Map<String, String>,
     override val href: String,
     override val id: String,
     override val name: String,

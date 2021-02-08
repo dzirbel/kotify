@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
-class SpotifyPlaylistsTests {
+class SpotifyPlaylistsTest {
     @Test
     fun getPlaylists() {
         val playlists = runBlocking { Spotify.Playlists.getPlaylists() }

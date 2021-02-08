@@ -1,5 +1,8 @@
 package com.dominiczirbel.network.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 @Suppress("ComplexInterface")
 interface Playlist : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the playlist. */
@@ -59,6 +62,7 @@ interface Playlist : SpotifyObject {
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#playlist-object-simplified
  * TODO beta api
  */
+@Serializable
 data class SimplifiedPlaylist(
     override val href: String,
     override val id: String,
@@ -67,12 +71,12 @@ data class SimplifiedPlaylist(
     override val uri: String,
     override val collaborative: Boolean,
     override val description: String,
-    override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrls,
     override val images: List<Image>,
     override val owner: PublicUser,
-    override val primaryColor: String?,
-    override val public: Boolean?,
-    override val snapshotId: String,
+    @SerialName("primary_color") override val primaryColor: String? = null,
+    override val public: Boolean? = null,
+    @SerialName("snapshot_id") override val snapshotId: String,
 
     /** Undocumented field. */
     val tracks: PlaylistTracks?
@@ -82,6 +86,7 @@ data class SimplifiedPlaylist(
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#playlist-object-full
  * TODO beta api
  */
+@Serializable
 data class FullPlaylist(
     override val href: String,
     override val id: String,
@@ -90,12 +95,12 @@ data class FullPlaylist(
     override val uri: String,
     override val collaborative: Boolean,
     override val description: String,
-    override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrls,
     override val images: List<Image>,
     override val owner: PublicUser,
-    override val primaryColor: String?,
-    override val public: Boolean?,
-    override val snapshotId: String,
+    @SerialName("primary_color") override val primaryColor: String? = null,
+    override val public: Boolean? = null,
+    @SerialName("snapshot_id") override val snapshotId: String,
 
     /** Information about the followers of the playlist. */
     val followers: Followers,
@@ -105,6 +110,7 @@ data class FullPlaylist(
 ) : Playlist
 
 /** Undocumented model. */
+@Serializable
 data class PlaylistTracks(
     val href: String,
     val total: Int

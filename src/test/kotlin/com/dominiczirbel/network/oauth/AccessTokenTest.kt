@@ -6,6 +6,8 @@ import com.google.common.io.Files
 import com.google.common.truth.BooleanSubject
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -31,7 +33,12 @@ internal class AccessTokenTest {
     fun testIsExpired() {
         fun assertIsExpired(receivedDeltaMs: Long, expiresInS: Long): BooleanSubject {
             return assertThat(
-                AccessToken(received = System.currentTimeMillis() + receivedDeltaMs, expiresIn = expiresInS).isExpired
+                AccessToken(
+                    accessToken = "",
+                    tokenType = "",
+                    received = System.currentTimeMillis() + receivedDeltaMs,
+                    expiresIn = expiresInS
+                ).isExpired
             )
         }
 
@@ -57,14 +64,14 @@ internal class AccessTokenTest {
         assertThat(runBlocking { AccessToken.Cache.get() }).isNull()
         assertThrows<AccessToken.Cache.NoAccessTokenError> { runBlocking { AccessToken.Cache.getOrThrow() } }
 
-        val token1 = AccessToken(accessToken = "token1")
+        val token1 = AccessToken(accessToken = "token1", tokenType = "", expiresIn = 0)
         AccessToken.Cache.put(token1)
 
         assertThat(AccessToken.Cache.hasToken).isTrue()
         assertThat(runBlocking { AccessToken.Cache.get() }).isSameInstanceAs(token1)
         assertThat(runBlocking { AccessToken.Cache.getOrThrow() }).isSameInstanceAs(token1)
 
-        val token2 = AccessToken(accessToken = "token2")
+        val token2 = AccessToken(accessToken = "token2", tokenType = "", expiresIn = 0)
         AccessToken.Cache.put(token2)
 
         assertThat(AccessToken.Cache.hasToken).isTrue()
@@ -79,7 +86,7 @@ internal class AccessTokenTest {
 
     @Test
     fun testSaveLoad() {
-        val token1 = AccessToken(accessToken = "token1")
+        val token1 = AccessToken(accessToken = "token1", tokenType = "", expiresIn = 0)
         assertThat(token1.received).isGreaterThan(0)
         AccessToken.Cache.put(token1)
 
@@ -95,15 +102,14 @@ internal class AccessTokenTest {
     fun testFromJsonNoReceived() {
         val before = System.currentTimeMillis()
 
-        val accessToken = Spotify.gson.fromJson(
+        val accessToken = Json.decodeFromString<AccessToken>(
             """
             {
-                access_token: abc,
-                token_type: def,
-                expires_in: 30
+                "access_token": "abc",
+                "token_type": "def",
+                "expires_in": 30
             }
-            """.trimIndent(),
-            AccessToken::class.java
+            """
         )
 
         val after = System.currentTimeMillis()
@@ -116,16 +122,15 @@ internal class AccessTokenTest {
 
     @Test
     fun testFromJsonWithReceived() {
-        val accessToken = Spotify.gson.fromJson(
+        val accessToken = Json.decodeFromString<AccessToken>(
             """
             {
-                access_token: abc,
-                token_type: def,
-                expires_in: 30,
-                received: 123
+                "access_token": "abc",
+                "token_type": "def",
+                "expires_in": 30,
+                "received": 123
             }
-            """.trimIndent(),
-            AccessToken::class.java
+            """
         )
 
         assertThat(accessToken.accessToken).isEqualTo("abc")
@@ -139,9 +144,9 @@ internal class AccessTokenTest {
         val tokenBody =
             """
             {
-                access_token: abc,
-                token_type: def,
-                expires_in: 30
+                "access_token": "abc",
+                "token_type": "def",
+                "expires_in": 30
             }
             """.trimIndent()
 
@@ -161,6 +166,8 @@ internal class AccessTokenTest {
             )
         ) {
             val expiredToken = AccessToken(
+                accessToken = "",
+                tokenType = "",
                 expiresIn = 10,
                 received = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(15),
                 refreshToken = "refresh"

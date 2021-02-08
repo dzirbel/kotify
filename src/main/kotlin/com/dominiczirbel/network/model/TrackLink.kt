@@ -1,13 +1,17 @@
 package com.dominiczirbel.network.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * https://developer.spotify.com/documentation/web-api/reference/object-model/#track-link
  */
+@Serializable
 data class TrackLink(
     /**
      * Known external URLs for this track.
      */
-    val externalUrls: Map<String, String>,
+    @SerialName("external_urls") val externalUrls: Map<String, String>,
 
     /**
      * A link to the Web API endpoint providing full details of the track.

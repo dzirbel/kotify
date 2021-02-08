@@ -23,10 +23,10 @@ import com.dominiczirbel.network.model.SimplifiedPlaylist
 import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.oauth.AccessToken
-import com.google.gson.FieldNamingPolicy
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import io.github.dzirbel.gson.bijectivereflection.BijectiveReflectiveTypeAdapterFactory
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -44,11 +44,6 @@ object Spotify {
         val oauthOkHttpClient: OkHttpClient = OkHttpClient()
     )
 
-    val gson: Gson = GsonBuilder()
-        .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-        .registerTypeAdapterFactory(BijectiveReflectiveTypeAdapterFactory()) // TODO maybe only for tests/debug builds
-        .create()
-
     var configuration: Configuration = Configuration()
 
     const val FROM_TOKEN = "from_token"
@@ -59,15 +54,25 @@ object Spotify {
     data class ErrorObject(val error: ErrorDetails)
     data class ErrorDetails(val status: Int, val message: String)
 
+    @Serializable
     private data class AlbumsModel(val albums: List<FullAlbum>)
+    @Serializable
     private data class AlbumsPagingModel(val albums: Paging<SimplifiedAlbum>)
+    @Serializable
     private data class ArtistsModel(val artists: List<FullArtist>)
+    @Serializable
     private data class ArtistsCursorPagingModel(val artists: CursorPaging<FullArtist>)
-    private data class AudioFeaturesModel(val audioFeatures: List<AudioFeatures>)
+    @Serializable
+    private data class AudioFeaturesModel(@SerialName("audio_features") val audioFeatures: List<AudioFeatures>)
+    @Serializable
     private data class CategoriesModel(val categories: Paging<Category>)
+    @Serializable
     private data class EpisodesModel(val episodes: List<FullEpisode>)
-    private data class PlaylistPagingModel(val playlists: Paging<SimplifiedPlaylist>, val message: String?)
+    @Serializable
+    private data class PlaylistPagingModel(val playlists: Paging<SimplifiedPlaylist>, val message: String? = null)
+    @Serializable
     private data class ShowsModel(val shows: List<SimplifiedShow>)
+    @Serializable
     private data class TracksModel(val tracks: List<FullTrack>)
 
     suspend inline fun <reified T : Any> get(path: String, queryParams: Map<String, String?>? = null): T {
@@ -83,7 +88,7 @@ object Spotify {
             method = "POST",
             path = path,
             queryParams = queryParams,
-            body = jsonBody?.let { gson.toJson(it).toRequestBody() }
+            body = jsonBody?.let { Json.encodeToString(it) }?.toRequestBody()
         )
     }
 
@@ -96,7 +101,7 @@ object Spotify {
             method = "PUT",
             path = path,
             queryParams = queryParams,
-            body = jsonBody?.let { gson.toJson(it).toRequestBody() }
+            body = jsonBody?.let { Json.encodeToString(it) }?.toRequestBody()
         )
     }
 
@@ -109,7 +114,7 @@ object Spotify {
             method = "DELETE",
             path = path,
             queryParams = queryParams,
-            body = jsonBody?.let { gson.toJson(it).toRequestBody() }
+            body = jsonBody?.let { Json.encodeToString(it) }?.toRequestBody()
         )
     }
 
@@ -138,7 +143,7 @@ object Spotify {
 
         return configuration.okHttpClient.newCall(request).await().use { response ->
             if (!response.isSuccessful) {
-                val message = runCatching { response.bodyFromJson<ErrorObject>(gson) }
+                val message = runCatching { response.bodyFromJson<ErrorObject>() }
                     .getOrNull()
                     ?.error
                     ?.message
@@ -146,7 +151,7 @@ object Spotify {
                 throw SpotifyError(code = response.code, message = message)
             }
 
-            response.bodyFromJson(gson)
+            response.bodyFromJson()
         }
     }
 
@@ -946,13 +951,14 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference-beta/#category-search
      */
     object Search {
+        @Serializable
         data class SearchResults(
-            val albums: Paging<SimplifiedAlbum>?,
-            val artists: Paging<FullArtist>?,
-            val tracks: Paging<FullTrack>?,
-            val playlists: Paging<SimplifiedPlaylist>?,
-            val shows: Paging<SimplifiedShow>?,
-            val episodes: Paging<SimplifiedEpisode>?
+            val albums: Paging<SimplifiedAlbum>? = null,
+            val artists: Paging<FullArtist>? = null,
+            val tracks: Paging<FullTrack>? = null,
+            val playlists: Paging<SimplifiedPlaylist>? = null,
+            val shows: Paging<SimplifiedShow>? = null,
+            val episodes: Paging<SimplifiedEpisode>? = null
         )
 
         /**

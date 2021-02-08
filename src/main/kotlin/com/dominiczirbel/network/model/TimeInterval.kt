@@ -1,8 +1,11 @@
 package com.dominiczirbel.network.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/#time-interval-object
  */
+@Serializable
 data class TimeInterval(
     /** The starting point (in seconds) of the time interval. */
     val start: Float,

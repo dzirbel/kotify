@@ -1,8 +1,12 @@
 package com.dominiczirbel.network.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-analysis/#section-object
  */
+@Serializable
 data class Section(
     /** The starting point (in seconds) of the section. */
     val start: Float,
@@ -29,7 +33,7 @@ data class Section(
      * The confidence, from 0.0 to 1.0, of the reliability of the tempo. Some tracks contain tempo changes or sounds
      * which don’t contain tempo (like pure speech) which would correspond to a low value in this field.
      */
-    val tempoConfidence: Float,
+    @SerialName("tempo_confidence") val tempoConfidence: Float,
 
     /**
      * The estimated overall key of the section. The values in this field ranging from 0 to 11 mapping to pitches using
@@ -41,7 +45,7 @@ data class Section(
      * The confidence, from 0.0 to 1.0, of the reliability of the key. Songs with many key changes may correspond to low
      * values in this field.
      */
-    val keyConfidence: Float,
+    @SerialName("key_confidence") val keyConfidence: Float,
 
     /**
      * Indicates the modality (major or minor) of a track, the type of scale from which its melodic content is derived.
@@ -52,18 +56,18 @@ data class Section(
     val mode: Int,
 
     /** The confidence, from 0.0 to 1.0, of the reliability of the mode. */
-    val modeConfidence: Float,
+    @SerialName("mode_confidence") val modeConfidence: Float,
 
     /**
      * An estimated overall time signature of a track. The time signature (meter) is a notational convention to specify
      * how many beats are in each bar (or measure). The time signature ranges from 3 to 7 indicating time signatures of
      * "3/4", to "7/4".
      */
-    val timeSignature: Int,
+    @SerialName("time_signature") val timeSignature: Int,
 
     /**
      * The confidence, from 0.0 to 1.0, of the reliability of the time_signature. Sections with time signature changes
      * may correspond to low values in this field.
      */
-    val timeSignatureConfidence: Float
+    @SerialName("time_signature_confidence") val timeSignatureConfidence: Float
 )

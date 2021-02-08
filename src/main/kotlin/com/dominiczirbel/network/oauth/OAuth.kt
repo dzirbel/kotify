@@ -76,7 +76,7 @@ class OAuth private constructor(
             .build()
 
         val accessToken = Spotify.configuration.oauthOkHttpClient.newCall(request).await()
-            .use { response -> response.bodyFromJson<AccessToken>(Spotify.gson) }
+            .use { response -> response.bodyFromJson<AccessToken>() }
 
         AccessToken.Cache.put(accessToken)
 

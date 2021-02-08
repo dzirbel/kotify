@@ -3,8 +3,11 @@ package com.dominiczirbel.network.oauth
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.await
 import com.dominiczirbel.network.bodyFromJson
-import com.google.gson.GsonBuilder
-import io.github.dzirbel.gson.bijectivereflection.BijectiveReflectiveTypeAdapterFactory
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -31,13 +34,14 @@ import java.util.concurrent.TimeUnit
  *
  * TODO utility function to check the scopes (i.e. make sure that a given list has been granted)
  */
+@Serializable
 data class AccessToken(
-    val accessToken: String = "",
-    val tokenType: String = "",
+    @SerialName("access_token") val accessToken: String,
+    @SerialName("token_type") val tokenType: String,
     val scope: String? = null,
-    val expiresIn: Long = 0,
-    val refreshToken: String? = null,
-    @BijectiveReflectiveTypeAdapterFactory.OptionalField val received: Long = System.currentTimeMillis()
+    @SerialName("expires_in") val expiresIn: Long,
+    @SerialName("refresh_token") val refreshToken: String? = null,
+    val received: Long = System.currentTimeMillis()
 ) {
     // TODO tighten by a few seconds to account for network time
     val isExpired
@@ -60,7 +64,6 @@ data class AccessToken(
          */
         internal var log: Boolean = true
 
-        private val gson = GsonBuilder().setPrettyPrinting().create()
         private var token: AccessToken? = null
 
         /**
@@ -145,7 +148,7 @@ data class AccessToken(
          * Writes [token] to disk.
          */
         private fun save(token: AccessToken) {
-            val json = gson.toJson(token)
+            val json = Json.encodeToString(token)
             Files.write(file.toPath(), json.split('\n'))
             log("Saved access token to $file")
         }
@@ -155,7 +158,8 @@ data class AccessToken(
          */
         private fun load(): AccessToken? {
             return try {
-                FileReader(file).use { gson.fromJson(it, AccessToken::class.java) }
+                FileReader(file).use { it.readLines().joinToString(separator = "\n") }
+                    .let { Json.decodeFromString<AccessToken>(it) }
                     .also { log("Loaded access token from $file") }
             } catch (_: FileNotFoundException) {
                 null.also { log("No saved access token at $file") }
@@ -180,7 +184,7 @@ data class AccessToken(
 
                 // TODO error handling
                 Spotify.configuration.oauthOkHttpClient.newCall(request).await()
-                    .use { response -> response.bodyFromJson<AccessToken>(Spotify.gson) }
+                    .use { response -> response.bodyFromJson<AccessToken>() }
                     .also {
                         log("Got refreshed access token")
                         token = it

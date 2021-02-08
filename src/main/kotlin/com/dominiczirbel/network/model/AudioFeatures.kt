@@ -1,8 +1,12 @@
 package com.dominiczirbel.network.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
 /**
  * https://developer.spotify.com/documentation/web-api/reference/object-model/
  */
+@Serializable
 data class AudioFeatures(
     /**
      * A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track
@@ -13,7 +17,7 @@ data class AudioFeatures(
     /**
      * An HTTP URL to access the full audio analysis of this track. An access token is required to access this data.
      */
-    val analysisUrl: String,
+    @SerialName("analysis_url") val analysisUrl: String,
 
     /**
      * Danceability describes how suitable a track is for dancing based on a combination of musical elements including
@@ -23,7 +27,7 @@ data class AudioFeatures(
     val danceability: Float,
 
     /** The duration of the track in milliseconds. */
-    val durationMs: Int,
+    @SerialName("duration_ms") val durationMs: Int,
 
     /**
      * Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically,
@@ -88,10 +92,10 @@ data class AudioFeatures(
      * An estimated overall time signature of a track. The time signature (meter) is a notational convention to specify
      * how many beats are in each bar (or measure).
      */
-    val timeSignature: Int,
+    @SerialName("time_signature") val timeSignature: Int,
 
     /** A link to the Web API endpoint providing full details of the track. */
-    val trackHref: String,
+    @SerialName("track_href") val trackHref: String,
 
     /** The object type: "audio_features" */
     val type: String,
