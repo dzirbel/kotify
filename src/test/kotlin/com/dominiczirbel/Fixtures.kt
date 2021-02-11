@@ -193,6 +193,9 @@ internal object Fixtures {
         "6urDFlFQIDXPwXbfpdGUc0" to mapOf("djynth" to true, "1267916582" to true)
     )
 
+    // sublist of recommended genres for the test user
+    val recommendationGenres = listOf("metal")
+
     val albums = mapOf(
         AlbumProperties("1Z5Aw68hjd9e17izcGbLSQ", "Kikelet") to listOf(
             TrackProperties(

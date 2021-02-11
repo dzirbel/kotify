@@ -50,4 +50,11 @@ internal class SpotifyBrowseTest {
         assertThat(recommendations.seeds.isNotEmpty())
         assertThat(recommendations.tracks.isNotEmpty())
     }
+
+    @Test
+    fun getRecommendationGenres() {
+        val recommendations = runBlocking { Spotify.Browse.getRecommendationGenres() }
+        assertThat(recommendations.isNotEmpty())
+        assertThat(recommendations).containsAtLeastElementsIn(Fixtures.recommendationGenres)
+    }
 }
