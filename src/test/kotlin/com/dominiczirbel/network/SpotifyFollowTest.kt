@@ -55,17 +55,20 @@ class SpotifyFollowTest {
     @Test
     fun followAndUnfollowArtist() {
         assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
-            .containsExactly(*Fixtures.testFollowingArtists.map { false }.toTypedArray())
+            .containsExactlyElementsIn(Fixtures.testFollowingArtists.map { false })
+            .inOrder()
 
         runBlocking { Spotify.Follow.follow(type = "artist", ids = Fixtures.testFollowingArtists) }
 
         assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
-            .containsExactly(*Fixtures.testFollowingArtists.map { true }.toTypedArray())
+            .containsExactlyElementsIn(Fixtures.testFollowingArtists.map { true })
+            .inOrder()
 
         runBlocking { Spotify.Follow.unfollow(type = "artist", ids = Fixtures.testFollowingArtists) }
 
         assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
-            .containsExactly(*Fixtures.testFollowingArtists.map { false }.toTypedArray())
+            .containsExactlyElementsIn(Fixtures.testFollowingArtists.map { false })
+            .inOrder()
     }
 
     @Test
