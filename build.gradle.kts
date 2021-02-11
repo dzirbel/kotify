@@ -54,7 +54,6 @@ dependencies {
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.allWarningsAsErrors = true
     kotlinOptions.jvmTarget = "1.8"
-    kotlinOptions.freeCompilerArgs += "-XX:MaxMetaspaceSize=1G" // TODO remove
 }
 
 configurations.all {
