@@ -1,5 +1,6 @@
 package com.dominiczirbel.network.model
 
+import com.dominiczirbel.util.TypeInsensitiveEnumSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -61,19 +62,14 @@ interface Album : SpotifyObject {
     /** Undocumented field. */
     val totalTracks: Int?
 
-    @Serializable
+    @Serializable(with = Type.Serializer::class)
     enum class Type {
-        @SerialName("album")
         ALBUM,
-
-        @SerialName("single")
         SINGLE,
-
-        @SerialName("appears_on")
         APPEARS_ON,
+        COMPILATION;
 
-        @SerialName("compilation")
-        COMPILATION
+        object Serializer : TypeInsensitiveEnumSerializer<Type>(Type::class)
     }
 }
 
