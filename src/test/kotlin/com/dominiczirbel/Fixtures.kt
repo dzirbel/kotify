@@ -33,16 +33,16 @@ abstract class ObjectProperties(
 data class ArtistProperties(
     override val id: String,
     override val name: String,
-    val albums: List<AlbumProperties>
+    val albums: List<AlbumProperties>,
+    val genres: List<String> = emptyList()
 ) : ObjectProperties(type = "artist") {
     fun check(artist: Artist) {
         super.check(artist)
-        assertThat(artist.externalUrls).isNotNull()
 
         if (artist is FullArtist) {
-            assertThat(artist.followers).isNotNull()
-            assertThat(artist.genres).isNotNull()
-            assertThat(artist.images).isNotNull()
+            assertThat(artist.followers.total).isAtLeast(0)
+            assertThat(artist.genres).containsAtLeastElementsIn(genres)
+            assertThat(artist.images).isNotEmpty()
             assertThat(artist.popularity).isIn(0..100)
         }
     }
@@ -52,7 +52,8 @@ data class AlbumProperties(
     override val id: String,
     override val name: String,
     val totalTracks: Int? = null,
-    val albumType: Album.Type = Album.Type.ALBUM
+    val albumType: Album.Type = Album.Type.ALBUM,
+    val genres: List<String> = emptyList()
 ) : ObjectProperties(type = "album") {
     fun check(album: Album) {
         super.check(album)
@@ -60,18 +61,17 @@ data class AlbumProperties(
         assertThat(album.albumType).isEqualTo(albumType)
         assertThat(album.artists).isNotEmpty()
         assertThat(album.availableMarkets).isNotNull()
-        assertThat(album.externalUrls).isNotNull()
-        assertThat(album.images).isNotNull()
+        assertThat(album.images).isNotEmpty()
         assertThat(album.releaseDate).isNotNull()
         assertThat(album.releaseDatePrecision).isNotNull()
         assertThat(album.restrictions).isNull()
         totalTracks?.let { assertThat(album.totalTracks).isEqualTo(it) }
 
         if (album is FullAlbum) {
-            assertThat(album.genres).isNotNull()
-            assertThat(album.label).isNotNull()
+            assertThat(album.genres).containsAtLeastElementsIn(genres)
             assertThat(album.popularity).isIn(0..100)
             assertThat(album.tracks.items).isNotEmpty()
+            totalTracks?.let { assertThat(album.tracks.items).hasSize(it) }
         }
     }
 }
@@ -79,13 +79,20 @@ data class AlbumProperties(
 data class EpisodeProperties(
     override val id: String,
     override val name: String,
-    private val description: String
+    private val description: String,
+    private val releaseDate: String,
+    private val releaseDatePrecision: String,
+    private val languages: List<String>
 ) : ObjectProperties(type = "episode") {
     fun check(episode: Episode) {
         super.check(episode)
 
         assertThat(episode.description).isEqualTo(description)
         assertThat(episode.durationMs).isAtLeast(0)
+        assertThat(episode.releaseDate).isEqualTo(releaseDate)
+        assertThat(episode.releaseDatePrecision).isEqualTo(releaseDatePrecision)
+        assertThat(episode.languages).isEqualTo(languages)
+        assertThat(episode.isPlayable).isTrue()
     }
 }
 
@@ -93,12 +100,16 @@ data class PlaylistProperties(
     override val id: String,
     override val name: String,
     val description: String,
-    val tracks: List<TrackProperties>? = null
+    val tracks: List<TrackProperties>? = null,
+    val public: Boolean? = false,
+    val owner: String = "djynth"
 ) : ObjectProperties(type = "playlist") {
     fun check(playlist: Playlist) {
         super.check(playlist)
 
         assertThat(playlist.description).isEqualTo(description)
+        assertThat(playlist.public).isEqualTo(public)
+        assertThat(playlist.owner.displayName).isEqualTo(owner)
         if (tracks != null && playlist is FullPlaylist) {
             tracks.zip(playlist.tracks.items).forEach { (trackProperties, playlistTrack) ->
                 trackProperties.check(playlistTrack)
@@ -110,12 +121,18 @@ data class PlaylistProperties(
 data class ShowProperties(
     override val id: String,
     override val name: String,
-    val description: String
+    val description: String,
+    val explicit: Boolean = false,
+    private val languages: List<String> = listOf("en-US"),
+    private val mediaType: String = "audio"
 ) : ObjectProperties(type = "show") {
     fun check(show: Show) {
         super.check(show)
 
         assertThat(show.description).isEqualTo(description)
+        assertThat(show.explicit).isEqualTo(explicit)
+        assertThat(show.languages).isEqualTo(languages)
+        assertThat(show.mediaType).isEqualTo(mediaType)
     }
 }
 
@@ -314,6 +331,7 @@ internal object Fixtures {
         ArtistProperties(
             id = "4Lm0pUvmisUHMdoky5ch2I",
             name = "Apocalyptica",
+            genres = listOf("symphonic metal", "cello"),
             albums = listOf(
                 AlbumProperties("18Gt3lLDRHDLGoFVMGwHsN", "Plays Metallica by Four Cellos - A Live Performance"),
                 AlbumProperties("1FYyFV2BXQq34Juzb9JYYS", "Wagner Reloaded: Live in Leipzig"),
@@ -341,6 +359,7 @@ internal object Fixtures {
         ArtistProperties(
             id = "7IxOJnsT8vXhTTzb6nlPOO",
             name = "Trees of Eternity",
+            genres = listOf("atmospheric doom", "doom metal", "gaian doom", "gothic metal", "swedish doom metal"),
             albums = listOf(
                 AlbumProperties("6sFhi9TivgwN6XzcEYcfAy", "Hour of the Nightingale", totalTracks = 10)
             )
@@ -349,6 +368,7 @@ internal object Fixtures {
         ArtistProperties(
             id = "766wIvoqqGrjRDnExOjJls",
             name = "Thirteen Senses",
+            genres = listOf("cornwall indie", "piano rock"),
             albums = listOf(
                 AlbumProperties("5P7GIlX83brISe8k0XQQL1", "A Strange Encounter", totalTracks = 10),
                 AlbumProperties("148kHVSDW2cwyAnmOUnSsm", "Crystal Sounds", totalTracks = 10),
@@ -439,7 +459,10 @@ internal object Fixtures {
                 to care about equality -- and emphasizes the connection between a healthy, cooperative society and
                 everyone getting their fair share.       
                 """
-                .toSingleLine()
+                .toSingleLine(),
+            releaseDate = "2020-12-10",
+            releaseDatePrecision = "day",
+            languages = listOf("en")
         ),
         EpisodeProperties(
             id = "61i9zd2aluBye0NiSf6NOh",
@@ -448,7 +471,10 @@ internal object Fixtures {
                 J. Prince is the CEO of Rap-A-Lot Records, author of The Art & Science of Respect, and founder of The
                 Loyalty Collection, a limited collection of fine wines. 
                 """
-                .toSingleLine()
+                .toSingleLine(),
+            releaseDate = "2020-12-18",
+            releaseDatePrecision = "day",
+            languages = listOf("en-US")
         )
     )
 
@@ -456,12 +482,14 @@ internal object Fixtures {
         PlaylistProperties(
             id = "5apAth0JL9APnjo62F93RN",
             name = "Favorites",
-            description = ""
+            description = "",
+            public = true
         ),
         PlaylistProperties(
             id = "2kLnoVdQ8nNJZ0R09b6fPT",
             name = "Test Playlist",
             description = "test description",
+            public = false,
             tracks = listOf(
                 TrackProperties(
                     id = "1lTqjO8itiTjspDlZ6EDtv",
