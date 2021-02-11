@@ -2,8 +2,11 @@ package com.dominiczirbel.network.model
 
 import kotlinx.serialization.Serializable
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-recommendationseedobject
+ */
 @Serializable
-data class RecommendationsSeed(
+data class RecommendationSeed(
     /** The number of tracks available after min_* and max_* filters have been applied. */
     val afterFilteringSize: Int,
 

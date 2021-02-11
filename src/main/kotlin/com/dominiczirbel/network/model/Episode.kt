@@ -33,7 +33,7 @@ interface Episode : SpotifyObject {
     val explicit: Boolean
 
     /** External URLs for this episode. */
-    val externalUrls: ExternalUrls
+    val externalUrls: ExternalUrl
 
     /** The cover art for the episode in various sizes, widest first. */
     val images: List<Image>
@@ -69,6 +69,9 @@ interface Episode : SpotifyObject {
     val resumePoint: ResumePoint?
 }
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-simplifiedepisodeobject
+ */
 @Serializable
 data class SimplifiedEpisode(
     override val href: String,
@@ -80,7 +83,7 @@ data class SimplifiedEpisode(
     override val description: String,
     @SerialName("duration_ms") override val durationMs: Int,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val images: List<Image>,
     @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean,
     @SerialName("is_playable") override val isPlayable: Boolean,
@@ -91,6 +94,9 @@ data class SimplifiedEpisode(
     @SerialName("resume_point") override val resumePoint: ResumePoint? = null
 ) : Episode
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-episodeobject
+ */
 @Serializable
 data class FullEpisode(
     override val href: String,
@@ -102,7 +108,7 @@ data class FullEpisode(
     override val description: String,
     @SerialName("duration_ms") override val durationMs: Int,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val images: List<Image>,
     @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean,
     @SerialName("is_playable") override val isPlayable: Boolean,

@@ -2,6 +2,9 @@ package com.dominiczirbel.network.model
 
 import kotlinx.serialization.Serializable
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-pagingobject
+ */
 @Serializable
 data class Paging<T>(
     /** A link to the Web API endpoint returning the full result of the request. */
@@ -26,6 +29,9 @@ data class Paging<T>(
     val total: Int
 )
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-cursorpagingobject
+ */
 @Serializable
 data class CursorPaging<T>(
     val href: String,
@@ -36,5 +42,8 @@ data class CursorPaging<T>(
     val total: Int
 )
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-cursorobject
+ */
 @Serializable
 data class Cursor(val after: String? = null)

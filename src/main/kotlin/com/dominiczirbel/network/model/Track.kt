@@ -42,7 +42,7 @@ interface Track : SpotifyObject {
     val explicit: Boolean
 
     /** External URLs for this track. */
-    val externalUrls: ExternalUrls
+    val externalUrls: ExternalUrl
 
     /** Whether or not the track is from a local file. */
     val isLocal: Boolean
@@ -75,6 +75,9 @@ interface Track : SpotifyObject {
     val trackNumber: Int
 }
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-simplifiedtrackobject
+ */
 @Serializable
 data class SimplifiedTrack(
     override val artists: List<SimplifiedArtist>,
@@ -82,7 +85,7 @@ data class SimplifiedTrack(
     @SerialName("disc_number") override val discNumber: Int,
     @SerialName("duration_ms") override val durationMs: Long,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val href: String? = null,
     override val id: String? = null,
     @SerialName("is_local") override val isLocal: Boolean,
@@ -112,6 +115,9 @@ data class SimplifiedTrack(
     val popularity: Int? = null
 ) : Track
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-trackobject
+ */
 @Serializable
 data class FullTrack(
     override val artists: List<SimplifiedArtist>,
@@ -119,7 +125,7 @@ data class FullTrack(
     @SerialName("disc_number") override val discNumber: Int,
     @SerialName("duration_ms") override val durationMs: Long,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val href: String,
     override val id: String,
     @SerialName("is_local") override val isLocal: Boolean,

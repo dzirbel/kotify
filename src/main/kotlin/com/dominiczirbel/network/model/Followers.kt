@@ -2,6 +2,9 @@ package com.dominiczirbel.network.model
 
 import kotlinx.serialization.Serializable
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-followersobject
+ */
 @Serializable
 data class Followers(
     /**

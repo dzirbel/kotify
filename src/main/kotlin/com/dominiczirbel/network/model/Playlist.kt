@@ -30,7 +30,7 @@ interface Playlist : SpotifyObject {
     val description: String
 
     /** Known external URLs for this playlist. */
-    val externalUrls: ExternalUrls
+    val externalUrls: ExternalUrl
 
     /**
      * Images for the playlist. The array may be empty or contain up to three images. The images are returned by size in
@@ -67,7 +67,7 @@ data class SimplifiedPlaylist(
     override val uri: String,
     override val collaborative: Boolean,
     override val description: String,
-    @SerialName("external_urls") override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val images: List<Image>,
     override val owner: PublicUser,
     @SerialName("primary_color") override val primaryColor: String? = null,
@@ -87,7 +87,7 @@ data class FullPlaylist(
     override val uri: String,
     override val collaborative: Boolean,
     override val description: String,
-    @SerialName("external_urls") override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val images: List<Image>,
     override val owner: PublicUser,
     @SerialName("primary_color") override val primaryColor: String? = null,

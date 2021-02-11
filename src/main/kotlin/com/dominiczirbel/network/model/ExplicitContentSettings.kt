@@ -3,6 +3,9 @@ package com.dominiczirbel.network.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-explicitcontentsettingsobject
+ */
 @Serializable
 data class ExplicitContentSettings(
     /** When true, indicates that explicit content should not be played. */

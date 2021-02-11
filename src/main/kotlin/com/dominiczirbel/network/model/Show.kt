@@ -33,7 +33,7 @@ interface Show : SpotifyObject {
     val explicit: Boolean
 
     /** Known external URLs for this show. */
-    val externalUrls: ExternalUrls
+    val externalUrls: ExternalUrl
 
     /** The cover art for the show in various sizes, widest first. */
     val images: List<Image>
@@ -56,13 +56,16 @@ interface Show : SpotifyObject {
     val totalEpisodes: Int?
 }
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-simplifiedshowobject
+ */
 @Serializable
 data class SimplifiedShow(
     @SerialName("available_markets") override val availableMarkets: List<String>,
     override val copyrights: List<Copyright>,
     override val description: String,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val href: String,
     override val id: String,
     override val images: List<Image>,
@@ -76,13 +79,16 @@ data class SimplifiedShow(
     override val uri: String
 ) : Show
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-showobject
+ */
 @Serializable
 data class FullShow(
     @SerialName("available_markets") override val availableMarkets: List<String>,
     override val copyrights: List<Copyright>,
     override val description: String,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val href: String,
     override val id: String,
     override val images: List<Image>,

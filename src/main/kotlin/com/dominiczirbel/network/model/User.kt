@@ -8,7 +8,7 @@ interface User {
     val displayName: String?
 
     /** Known public external URLs for this user. */
-    val externalUrls: ExternalUrls
+    val externalUrls: ExternalUrl
 
     /** Information about the followers of this user. */
     val followers: Followers?
@@ -29,10 +29,13 @@ interface User {
     val uri: String
 }
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-publicuserobject
+ */
 @Serializable
 data class PublicUser(
     @SerialName("display_name") override val displayName: String? = null,
-    @SerialName("external_urls") override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val followers: Followers? = null,
     override val href: String,
     override val id: String,
@@ -41,10 +44,13 @@ data class PublicUser(
     override val uri: String
 ) : User
 
+/**
+ * https://developer.spotify.com/documentation/web-api/reference/#object-privateuserobject
+ */
 @Serializable
 data class PrivateUser(
     @SerialName("display_name") override val displayName: String? = null,
-    @SerialName("external_urls") override val externalUrls: ExternalUrls,
+    @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val followers: Followers? = null,
     override val href: String,
     override val id: String,
