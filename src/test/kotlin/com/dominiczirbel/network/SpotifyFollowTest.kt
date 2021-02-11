@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
-class SpotifyFollowsTest {
+class SpotifyFollowTest {
     @Test
     fun isFollowing() {
         val followedArtists = runBlocking {
@@ -50,6 +50,43 @@ class SpotifyFollowsTest {
         Fixtures.followingArtists.forEach { (artistId, following) ->
             assertThat(allArtists.any { it.id == artistId }).isEqualTo(following)
         }
+    }
+
+    @Test
+    fun followAndUnfollowArtist() {
+        assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
+            .containsExactly(*Fixtures.testFollowingArtists.map { false }.toTypedArray())
+
+        runBlocking { Spotify.Follow.follow(type = "artist", ids = Fixtures.testFollowingArtists) }
+
+        assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
+            .containsExactly(*Fixtures.testFollowingArtists.map { true }.toTypedArray())
+
+        runBlocking { Spotify.Follow.unfollow(type = "artist", ids = Fixtures.testFollowingArtists) }
+
+        assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
+            .containsExactly(*Fixtures.testFollowingArtists.map { false }.toTypedArray())
+    }
+
+    @Test
+    fun followAndUnfollowPlaylist() {
+        assertCurrentUserIsFollowingPlaylist(playlistId = Fixtures.testFollowingPlaylist, following = false)
+
+        runBlocking { Spotify.Follow.followPlaylist(Fixtures.testFollowingPlaylist) }
+
+        assertCurrentUserIsFollowingPlaylist(playlistId = Fixtures.testFollowingPlaylist, following = true)
+
+        runBlocking { Spotify.Follow.unfollowPlaylist(Fixtures.testFollowingPlaylist) }
+
+        assertCurrentUserIsFollowingPlaylist(playlistId = Fixtures.testFollowingPlaylist, following = false)
+    }
+
+    private fun assertCurrentUserIsFollowingPlaylist(playlistId: String, following: Boolean) {
+        assertThat(
+            runBlocking {
+                Spotify.Follow.isFollowingPlaylist(playlistId = playlistId, userIds = listOf(Fixtures.userId))
+            }
+        ).containsExactly(following)
     }
 
     companion object {

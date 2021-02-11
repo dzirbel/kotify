@@ -102,7 +102,7 @@ data class PlaylistProperties(
     val description: String,
     val tracks: List<TrackProperties>? = null,
     val public: Boolean? = false,
-    val owner: String = "djynth"
+    val owner: String = Fixtures.userDisplayName
 ) : ObjectProperties(type = "playlist") {
     fun check(playlist: Playlist) {
         super.check(playlist)
@@ -171,6 +171,9 @@ data class TrackProperties(
 internal object Fixtures {
     val notFoundId = "a".repeat(22)
 
+    const val userId = "34m1o83qloqkyzdt4z3qbveoy"
+    const val userDisplayName = "Test"
+
     // map from artist ID to whether or not the test users is following the artist
     val followingArtists = listOf(
         "5HA5aLY3jJV7eimXWkRBBp" to true, // Epica
@@ -180,10 +183,15 @@ internal object Fixtures {
         "2KaW48xlLnXC2v8tvyhWsa" to true, // Amaranthe
     )
 
+    // artists not being followed, but will be followed-and-unfollowed in tests
+    val testFollowingArtists = listOf(
+        "4kRllkt5ryNVBqFinVjBQZ", // Edenbridge
+        "01DQQFGEOzbFugH5FcVAgI", // Amberian Dawn
+    )
+
     // map from user ID to whether or not the test user is following the user
     val followingUsers = listOf(
-        "luckyeights" to true,
-        "matthew.d.zirbel" to true,
+        "djynth" to true,
         "bobbytonelli" to false,
     )
 
@@ -192,6 +200,9 @@ internal object Fixtures {
         "5apAth0JL9APnjo62F93RN" to mapOf("djynth" to true, "luckyeights" to false),
         "6urDFlFQIDXPwXbfpdGUc0" to mapOf("djynth" to true, "1267916582" to true)
     )
+
+    // a playlist not being followed, but will be followed-and-unfollowed in tests
+    const val testFollowingPlaylist = "5apAth0JL9APnjo62F93RN"
 
     // sublist of recommended genres for the test user
     val recommendationGenres = listOf("metal")
@@ -483,42 +494,43 @@ internal object Fixtures {
 
     val playlists = listOf(
         PlaylistProperties(
-            id = "5apAth0JL9APnjo62F93RN",
+            id = "7aTpaSVlycAJyeU2SocEfA",
             name = "Favorites",
             description = "",
             public = true
         ),
         PlaylistProperties(
-            id = "2kLnoVdQ8nNJZ0R09b6fPT",
+            id = "5ajl0Scpq3FuNe2dgu2bMM",
             name = "Test Playlist",
             description = "test description",
             public = false,
             tracks = listOf(
                 TrackProperties(
-                    id = "1lTqjO8itiTjspDlZ6EDtv",
-                    name = "Grace (feat. Hotei)",
-                    artistNames = setOf("Apocalyptica", "HOTEI"),
+                    id = "6gtb1Oh7qRjobkH4jfJAnj",
+                    name = "Grace",
+                    artistNames = setOf("Apocalyptica", "Hotei"),
                     trackNumber = 2,
-                    addedBy = "djynth",
-                    addedAt = "2020-12-06T01:18:37Z"
+                    addedBy = userId,
+                    addedAt = "2021-02-11T06:20:38Z"
                 ),
-                TrackProperties(
-                    id = null,
-                    name = "Beyond Earth",
-                    artistNames = setOf("Oratory"),
-                    trackNumber = 0,
-                    discNumber = 0,
-                    isLocal = true,
-                    addedBy = "djynth",
-                    addedAt = "2020-12-06T01:24:17Z"
-                ),
+                // TODO
+//                TrackProperties(
+//                    id = null,
+//                    name = "Beyond Earth",
+//                    artistNames = setOf("Oratory"),
+//                    trackNumber = 0,
+//                    discNumber = 0,
+//                    isLocal = true,
+//                    addedBy = "djynth",
+//                    addedAt = "2020-12-06T01:24:17Z"
+//                ),
                 TrackProperties(
                     id = "0hrNeGXIsFXCzGv27hDYlz",
                     name = "Chosen Time",
                     artistNames = setOf("Jeff Loomis"),
                     trackNumber = 8,
-                    addedBy = "djynth",
-                    addedAt = "2020-12-06T01:24:40Z"
+                    addedBy = userId,
+                    addedAt = "2021-02-11T06:21:41Z"
                 )
             )
         )

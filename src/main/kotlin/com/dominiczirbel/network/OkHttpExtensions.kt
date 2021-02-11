@@ -43,5 +43,11 @@ suspend fun Call.await(): Response {
 inline fun <reified T> Response.bodyFromJson(): T {
     val body = requireNotNull(body) { "No response body" }
 
+    // workaround: Json deserialization doesn't handle deserializing Unit from an empty string
+    if (T::class == Unit::class) {
+        require(body.string().isEmpty())
+        return Unit as T
+    }
+
     return Json.decodeFromString(body.string())
 }

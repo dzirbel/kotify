@@ -50,7 +50,9 @@ object Spotify {
 
     class SpotifyError(val code: Int, message: String) : Throwable(message = "HTTP $code : $message")
 
+    @Serializable
     data class ErrorObject(val error: ErrorDetails)
+    @Serializable
     data class ErrorDetails(val status: Int, val message: String)
 
     @Serializable
@@ -80,42 +82,42 @@ object Spotify {
         return request(method = "GET", path = path, queryParams = queryParams, body = null)
     }
 
-    suspend inline fun <reified T : Any> post(
+    suspend inline fun <reified In : Any?, reified Out> post(
         path: String,
-        jsonBody: Any?,
+        jsonBody: In,
         queryParams: Map<String, String?>? = null
-    ): T {
+    ): Out {
         return request(
             method = "POST",
             path = path,
             queryParams = queryParams,
-            body = jsonBody?.let { Json.encodeToString(it) }?.toRequestBody()
+            body = Json.encodeToString(jsonBody).toRequestBody()
         )
     }
 
-    suspend inline fun <reified T : Any> put(
+    suspend inline fun <reified In : Any?, reified Out> put(
         path: String,
-        jsonBody: Any?,
+        jsonBody: In,
         queryParams: Map<String, String?>? = null
-    ): T {
+    ): Out {
         return request(
             method = "PUT",
             path = path,
             queryParams = queryParams,
-            body = jsonBody?.let { Json.encodeToString(it) }?.toRequestBody()
+            body = Json.encodeToString(jsonBody).toRequestBody()
         )
     }
 
-    suspend inline fun <reified T : Any> delete(
+    suspend inline fun <reified In : Any?, reified Out> delete(
         path: String,
-        jsonBody: Any?,
+        jsonBody: In,
         queryParams: Map<String, String?>? = null
-    ): T {
+    ): Out {
         return request(
             method = "DELETE",
             path = path,
             queryParams = queryParams,
-            body = jsonBody?.let { Json.encodeToString(it) }?.toRequestBody()
+            body = Json.encodeToString(jsonBody).toRequestBody()
         )
     }
 
@@ -614,8 +616,6 @@ object Spotify {
          *
          * https://developer.spotify.com/documentation/web-api/reference/#endpoint-follow-artists-users
          *
-         * TODO find a way to test
-         *
          * @param type Required. The ID type: either artist or user.
          * @param ids Optional. A comma-separated list of the artist or the user Spotify IDs. For example:
          *  ids=74ASZWbe4lXaubB36ztrGX,08td7MxkoHQkXnWAYD8d6Q. A maximum of 50 IDs can be sent in one request.
@@ -623,8 +623,8 @@ object Spotify {
         suspend fun follow(type: String, ids: List<String>) {
             return put(
                 "me/following",
-                jsonBody = null,
-                queryParams = mapOf("type" to type, "ids" to ids.joinToString(separator = ","))
+                jsonBody = mapOf<String, String>(),
+                queryParams = mapOf("type" to type, "ids" to ids.joinToString(separator = ",")),
             )
         }
 
@@ -633,8 +633,6 @@ object Spotify {
          *
          * https://developer.spotify.com/documentation/web-api/reference/#endpoint-follow-playlist
          *
-         * TODO find a way to test
-         *
          * @param playlistId The Spotify ID of the playlist. Any playlist can be followed, regardless of its
          *  public/private status, as long as you know its playlist ID.
          * @param public Optional. Defaults to true. If true the playlist will be included in user’s public playlists,
@@ -642,15 +640,13 @@ object Spotify {
          *  playlist-modify-private scope.
          */
         suspend fun followPlaylist(playlistId: String, public: Boolean = true) {
-            return put("/playlists/$playlistId/followers", jsonBody = mapOf("public" to public))
+            return put("playlists/$playlistId/followers", jsonBody = mapOf("public" to public))
         }
 
         /**
          * Remove the current user as a follower of one or more artists or other Spotify users.
          *
          * https://developer.spotify.com/documentation/web-api/reference/#endpoint-unfollow-artists-users
-         *
-         * TODO find a way to test
          *
          * @param type Required. The ID type: either artist or user.
          * @param ids Optional. A comma-separated list of the artist or the user Spotify IDs. For example:
@@ -659,7 +655,7 @@ object Spotify {
         suspend fun unfollow(type: String, ids: List<String>) {
             return delete(
                 "me/following",
-                jsonBody = null,
+                jsonBody = mapOf<String, String>(),
                 queryParams = mapOf("type" to type, "ids" to ids.joinToString(separator = ","))
             )
         }
@@ -669,12 +665,14 @@ object Spotify {
          *
          * https://developer.spotify.com/documentation/web-api/reference/#endpoint-unfollow-playlist
          *
-         * TODO find a way to test
-         *
          * @param playlistId The Spotify ID of the playlist that is to be no longer followed.
          */
         suspend fun unfollowPlaylist(playlistId: String) {
-            return delete("playlists/$playlistId/followers", jsonBody = null, queryParams = null)
+            return delete(
+                "playlists/$playlistId/followers",
+                jsonBody = null as Map<String, String>?,
+                queryParams = null
+            )
         }
     }
 

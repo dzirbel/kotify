@@ -22,7 +22,7 @@ class SpotifyPlaylistsTest {
 
     @Test
     fun getPlaylistsByUser() {
-        val playlists = runBlocking { Spotify.Playlists.getPlaylists(userId = "djynth") }
+        val playlists = runBlocking { Spotify.Playlists.getPlaylists(userId = Fixtures.userId) }
         assertThat(playlists.items).isNotEmpty()
         Fixtures.playlists.forEach { playlistProperties ->
             val playlist = playlists.items.find { it.id == playlistProperties.id }
