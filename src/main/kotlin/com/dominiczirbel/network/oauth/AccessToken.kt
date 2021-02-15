@@ -67,6 +67,11 @@ data class AccessToken(
         private var token: AccessToken? = null
 
         /**
+         * Encode defaults in order to include [AccessToken.received].
+         */
+        private val json = Json { encodeDefaults = true }
+
+        /**
          * Determines if the cache currently has a token (either in memory or on disk, loading it if there is one on
          * disk but not in memory).
          */
@@ -148,7 +153,7 @@ data class AccessToken(
          * Writes [token] to disk.
          */
         private fun save(token: AccessToken) {
-            val json = Json.encodeToString(token)
+            val json = json.encodeToString(token)
             Files.write(file.toPath(), json.split('\n'))
             log("Saved access token to $file")
         }
@@ -159,7 +164,7 @@ data class AccessToken(
         private fun load(): AccessToken? {
             return try {
                 FileReader(file).use { it.readLines().joinToString(separator = "\n") }
-                    .let { Json.decodeFromString<AccessToken>(it) }
+                    .let { json.decodeFromString<AccessToken>(it) }
                     .also { log("Loaded access token from $file") }
             } catch (_: FileNotFoundException) {
                 null.also { log("No saved access token at $file") }

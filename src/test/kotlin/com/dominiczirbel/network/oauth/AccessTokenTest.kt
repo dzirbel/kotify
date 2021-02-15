@@ -16,6 +16,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.io.File
@@ -84,18 +85,18 @@ internal class AccessTokenTest {
         assertThrows<AccessToken.Cache.NoAccessTokenError> { runBlocking { AccessToken.Cache.getOrThrow() } }
     }
 
-    @Test
+    @RepeatedTest(5)
     fun testSaveLoad() {
         val token1 = AccessToken(accessToken = "token1", tokenType = "", expiresIn = 0)
         assertThat(token1.received).isGreaterThan(0)
         AccessToken.Cache.put(token1)
 
         AccessToken.Cache.reset()
+        Thread.sleep(5)
 
         val loadedToken = runBlocking { AccessToken.Cache.get() }
         assertThat(loadedToken).isEqualTo(token1)
         assertThat(loadedToken).isNotSameInstanceAs(token1)
-        assertThat(loadedToken?.received).isEqualTo(token1.received)
     }
 
     @Test
