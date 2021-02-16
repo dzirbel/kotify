@@ -45,7 +45,9 @@ inline fun <reified T> Response.bodyFromJson(): T {
 
     // workaround: Json deserialization doesn't handle deserializing Unit from an empty string
     if (T::class == Unit::class) {
-        require(body.string().isEmpty())
+        body.string().let { bodyString ->
+            require(bodyString.isEmpty()) { "Body deserialized to Unit was not empty: $bodyString" }
+        }
         return Unit as T
     }
 

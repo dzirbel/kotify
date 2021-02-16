@@ -27,7 +27,7 @@ interface Playlist : SpotifyObject {
     val collaborative: Boolean
 
     /** The playlist description. Only returned for modified, verified playlists, otherwise null. */
-    val description: String
+    val description: String?
 
     /** Known external URLs for this playlist. */
     val externalUrls: ExternalUrl
@@ -86,7 +86,7 @@ data class FullPlaylist(
     override val type: String,
     override val uri: String,
     override val collaborative: Boolean,
-    override val description: String,
+    override val description: String?,
     @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val images: List<Image>,
     override val owner: PublicUser,

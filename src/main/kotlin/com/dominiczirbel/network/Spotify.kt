@@ -28,10 +28,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.Base64
 import java.util.Locale
 
 /**
@@ -52,29 +54,43 @@ object Spotify {
 
     @Serializable
     data class ErrorObject(val error: ErrorDetails)
+
     @Serializable
     data class ErrorDetails(val status: Int, val message: String)
 
     @Serializable
     private data class AlbumsModel(val albums: List<FullAlbum>)
+
     @Serializable
     private data class AlbumsPagingModel(val albums: Paging<SimplifiedAlbum>)
+
     @Serializable
     private data class ArtistsModel(val artists: List<FullArtist>)
+
     @Serializable
     private data class ArtistsCursorPagingModel(val artists: CursorPaging<FullArtist>)
+
     @Serializable
     private data class AudioFeaturesModel(@SerialName("audio_features") val audioFeatures: List<AudioFeatures>)
+
     @Serializable
     private data class CategoriesModel(val categories: Paging<Category>)
+
     @Serializable
     private data class EpisodesModel(val episodes: List<FullEpisode>)
+
     @Serializable
     private data class PlaylistPagingModel(val playlists: Paging<SimplifiedPlaylist>, val message: String? = null)
+
     @Serializable
     private data class RecommendationGenresModel(val genres: List<String>)
+
     @Serializable
     private data class ShowsModel(val shows: List<SimplifiedShow>)
+
+    @Serializable
+    private data class SnaphshotId(@SerialName("snapshot_id") val snapshotId: String)
+
     @Serializable
     private data class TracksModel(val tracks: List<FullTrack>)
 
@@ -778,8 +794,6 @@ object Spotify {
      * Endpoints for retrieving information about a user’s playlists and for managing a user’s playlists.
      *
      * https://developer.spotify.com/documentation/web-api/reference/#category-playlists
-     *
-     * TODO add remaining endpoints
      */
     object Playlists {
         /**
@@ -809,6 +823,182 @@ object Spotify {
         }
 
         /**
+         * Create a playlist for a Spotify user. (The playlist will be empty until you add tracks.)
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-create-playlist
+         *
+         * @param userId The user's Spotify user ID.
+         * @param name The name for the new playlist, for example "Your Coolest Playlist" . This name does not need to
+         *  be unique; a user may have several playlists with the same name.
+         * @param public Defaults to true. If true the playlist will be public, if false it will be private. To be able
+         *  to create private playlists, the user must have granted the playlist-modify-private scope.
+         * @param collaborative Defaults to false. If true the playlist will be collaborative. Note that to create a
+         *  collaborative playlist you must also set public to false . To create collaborative playlists you must have
+         *  granted playlist-modify-private and playlist-modify-public scopes.
+         * @param description value for playlist description as displayed in Spotify Clients and in the Web API.
+         */
+        suspend fun createPlaylist(
+            userId: String,
+            name: String,
+            public: Boolean? = null,
+            collaborative: Boolean? = null,
+            description: String? = null
+        ): FullPlaylist {
+            return post(
+                "users/$userId/playlists",
+                jsonBody = mapOf(
+                    "name" to name,
+                    "public" to public?.toString(),
+                    "collaborative" to collaborative?.toString(),
+                    "description" to description
+                )
+            )
+        }
+
+        /**
+         * Change a playlist’s name and public/private state. (The user must, of course, own the playlist.)
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-change-playlist-details
+         *
+         * @param playlistId The Spotify ID for the playlist.
+         * @param name The new name for the playlist, for example "My New Playlist Title"
+         * @param public If true the playlist will be public, if false it will be private.
+         * @param collaborative If true, the playlist will become collaborative and other users will be able to modify
+         *  the playlist in their Spotify client. Note: You can only set collaborative to true on non-public playlists.
+         * @param description Value for playlist description as displayed in Spotify Clients and in the Web API.
+         */
+        suspend fun changePlaylistDetails(
+            playlistId: String,
+            name: String? = null,
+            public: Boolean? = null,
+            collaborative: Boolean? = null,
+            description: String? = null
+        ) {
+            @Serializable
+            data class Body(
+                val name: String? = null,
+                val public: Boolean? = null,
+                val collaborative: Boolean? = null,
+                val description: String? = null
+            )
+
+            return put(
+                "playlists/$playlistId",
+                jsonBody = Body(
+                    name = name,
+                    public = public,
+                    collaborative = collaborative,
+                    description = description
+                )
+            )
+        }
+
+        /**
+         * Add one or more items to a user’s playlist.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-add-tracks-to-playlist
+         *
+         * @param playlistId The Spotify ID for the playlist.
+         * @param position The position to insert the items, a zero-based index. For example, to insert the items in the
+         *  first position: position=0; to insert the items in the third position: position=2 . If omitted, the items
+         *  will be appended to the playlist. Items are added in the order they are listed in the query string or
+         *  request body.
+         * @param uris A JSON array of the Spotify URIs to add. A maximum of 100 items can be added in one request.
+         */
+        suspend fun addItemsToPlaylist(
+            playlistId: String,
+            position: Int? = null,
+            uris: List<String>
+        ): String {
+            @Serializable
+            data class Body(val position: Int? = null, val uris: List<String>)
+
+            return post<Body, SnaphshotId>(
+                "playlists/$playlistId/tracks",
+                jsonBody = Body(position = position, uris = uris)
+            ).snapshotId
+        }
+
+        /**
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-reorder-or-replace-playlists-tracks
+         *
+         * @param playlistId The Spotify ID for the playlist.
+         * @param rangeStart The position of the first item to be reordered.
+         * @param insertBefore The position where the items should be inserted. To reorder the items to the end of the
+         *  playlist, simply set insert_before to the position after the last item. Examples: To reorder the first item
+         *  to the last position in a playlist with 10 items, set range_start to 0, and insert_before to 10. To reorder
+         *  the last item in a playlist with 10 items to the start of the playlist, set range_start to 9, and
+         *  insert_before to 0.
+         * @param rangeLength The amount of items to be reordered. Defaults to 1 if not set. The range of items to be
+         *  reordered begins from the range_start position, and includes the range_length subsequent items. Example: To
+         *  move the items at index 9-10 to the start of the playlist, range_start is set to 9, and range_length is set
+         *  to 2.
+         * @param snapshotId The playlist’s snapshot ID against which you want to make the changes.
+         */
+        suspend fun reorderPlaylistItems(
+            playlistId: String,
+            rangeStart: Int? = null,
+            insertBefore: Int? = null,
+            rangeLength: Int? = null,
+            snapshotId: String? = null
+        ): String {
+            @Serializable
+            data class Body(
+                @SerialName("range_start") val rangeStart: Int? = null,
+                @SerialName("insert_before") val insertBefore: Int? = null,
+                @SerialName("range_length") val rangeLength: Int? = null,
+                @SerialName("snapshot_id") val snapshotId: String? = null
+            )
+
+            return put<Body, SnaphshotId>(
+                "playlists/$playlistId/tracks",
+                jsonBody = Body(
+                    rangeStart = rangeStart,
+                    insertBefore = insertBefore,
+                    rangeLength = rangeLength,
+                    snapshotId = snapshotId
+                )
+            ).snapshotId
+        }
+
+        /**
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-reorder-or-replace-playlists-tracks
+         *
+         * @param playlistId The Spotify ID for the playlist.
+         * @param uris A comma-separated list of Spotify URIs to set, can be track or episode URIs. A maximum of 100
+         *  items can be set in one request.
+         */
+        suspend fun replacePlaylistItems(playlistId: String, uris: List<String>): String {
+            @Serializable
+            data class Body(val uris: List<String>)
+
+            return put<Body, SnaphshotId>(
+                "playlists/$playlistId/tracks",
+                jsonBody = Body(uris = uris)
+            ).snapshotId
+        }
+
+        /**
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-remove-tracks-playlist
+         *
+         * @param playlistId The Spotify ID
+         * @param tracks An array of objects containing Spotify URIs of the tracks or episodes to remove. A maximum of
+         *  100 objects can be sent at once.
+         * @param snapshotId The playlist’s snapshot ID against which you want to make the changes. The API will
+         *  validate that the specified items exist and in the specified positions and make the changes, even if more
+         *  recent changes have been made to the playlist.
+         */
+        suspend fun removePlaylistTracks(playlistId: String, tracks: List<String>, snapshotId: String? = null): String {
+            @Serializable
+            data class Body(val uris: List<String>, val snapshotId: String? = null)
+
+            return delete<Body, SnaphshotId>(
+                "playlists/$playlistId/tracks",
+                jsonBody = Body(uris = tracks, snapshotId = snapshotId)
+            ).snapshotId
+        }
+
+        /**
          * Get the current image associated with a specific playlist.
          *
          * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-playlist-cover
@@ -817,6 +1007,23 @@ object Spotify {
          */
         suspend fun getPlaylistCoverImages(playlistId: String): List<Image> {
             return get("playlists/$playlistId/images")
+        }
+
+        /**
+         * Replace the image used to represent a specific playlist.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-upload-custom-playlist-cover
+         *
+         * @param playlistId The Spotify ID for the playlist.
+         * @param jpegImage The request should contain a Base64 encoded JPEG image data, maximum payload size is 256 KB.
+         */
+        suspend fun uploadPlaylistCoverImage(playlistId: String, jpegImage: ByteArray) {
+            return request(
+                method = "PUT",
+                path = "playlists/$playlistId/images",
+                body = Base64.getEncoder().encodeToString(jpegImage)
+                    .toRequestBody(contentType = "image/jpeg".toMediaType())
+            )
         }
 
         /**

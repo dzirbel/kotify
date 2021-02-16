@@ -95,23 +95,24 @@ class OAuth private constructor(
          * See https://developer.spotify.com/documentation/general/guides/scopes/
          */
         private val DEFAULT_SCOPES = listOf(
-            "user-read-recently-played",
-            "user-read-playback-state",
-            "user-top-read",
-            "playlist-modify-public",
-            "user-modify-playback-state",
             "playlist-modify-private",
+            "playlist-modify-public",
+            "playlist-read-collaborative",
+            "playlist-read-private",
+            "streaming",
+            "ugc-image-upload",
             "user-follow-modify",
-            "user-read-currently-playing",
             "user-follow-read",
             "user-library-modify",
-            "user-read-playback-position",
-            "playlist-read-private",
-            "user-read-email",
-            "user-read-private",
             "user-library-read",
-            "playlist-read-collaborative",
-            "streaming"
+            "user-modify-playback-state",
+            "user-read-currently-playing",
+            "user-read-email",
+            "user-read-playback-position",
+            "user-read-playback-state",
+            "user-read-private",
+            "user-read-recently-played",
+            "user-top-read",
         )
 
         /**
