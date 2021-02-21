@@ -9,9 +9,11 @@ import com.dominiczirbel.network.model.FullPlaylist
 import com.dominiczirbel.network.model.Playlist
 import com.dominiczirbel.network.model.PlaylistTrack
 import com.dominiczirbel.network.model.Show
+import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.SpotifyObject
 import com.dominiczirbel.network.model.Track
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.runBlocking
 
 abstract class ObjectProperties(
     private val type: String,
@@ -52,13 +54,13 @@ data class AlbumProperties(
     override val id: String,
     override val name: String,
     val totalTracks: Int? = null,
-    val albumType: Album.Type = Album.Type.ALBUM,
+    val albumType: Album.Type? = Album.Type.ALBUM,
     val genres: List<String> = emptyList()
 ) : ObjectProperties(type = "album") {
     fun check(album: Album) {
         super.check(album)
 
-        assertThat(album.albumType).isEqualTo(albumType)
+        albumType?.let { assertThat(album.albumType).isEqualTo(it) }
         assertThat(album.artists).isNotEmpty()
         assertThat(album.availableMarkets).isNotNull()
         assertThat(album.images).isNotEmpty()
@@ -71,7 +73,12 @@ data class AlbumProperties(
             assertThat(album.genres).containsAtLeastElementsIn(genres)
             assertThat(album.popularity).isIn(0..100)
             assertThat(album.tracks.items).isNotEmpty()
-            totalTracks?.let { assertThat(album.tracks.items).hasSize(it) }
+            totalTracks?.let {
+                assertThat(album.tracks.total).isEqualTo(totalTracks)
+
+                val allTracks = runBlocking { album.tracks.fetchAll<SimplifiedTrack>() }
+                assertThat(allTracks).hasSize(totalTracks)
+            }
         }
     }
 }
@@ -111,7 +118,8 @@ data class PlaylistProperties(
         assertThat(playlist.public).isEqualTo(public)
         assertThat(playlist.owner.displayName).isEqualTo(owner)
         if (tracks != null && playlist is FullPlaylist) {
-            tracks.zip(playlist.tracks.items).forEach { (trackProperties, playlistTrack) ->
+            val allItems = runBlocking { playlist.tracks.fetchAll<PlaylistTrack>() }
+            tracks.zip(allItems).forEach { (trackProperties, playlistTrack) ->
                 trackProperties.check(playlistTrack)
             }
         }
@@ -347,27 +355,120 @@ internal object Fixtures {
             name = "Apocalyptica",
             genres = listOf("symphonic metal", "cello"),
             albums = listOf(
-                AlbumProperties("18Gt3lLDRHDLGoFVMGwHsN", "Plays Metallica by Four Cellos - A Live Performance"),
-                AlbumProperties("1FYyFV2BXQq34Juzb9JYYS", "Wagner Reloaded: Live in Leipzig"),
                 AlbumProperties("1H3J2vxFHf0WxYUa9iklzu", "Cell-0"),
-                AlbumProperties("1rcVwAd9FXK9ONouJVeRSF", "Worlds Collide"),
-                AlbumProperties("2qBC6mNZpLTP0dheus0w3n", "Wagner Reloaded: Live in Leipzig"),
-                AlbumProperties("34RyPrb9qW7uSCLGpeLrBQ", "Shadowmaker"),
-                AlbumProperties("3SAl71qdd63DXgbhk5U9ML", "Shadowmaker - Commentary"),
-                AlbumProperties("46OuN3LtlXn4GK9qE7OzAp", "7th Symphony"),
-                AlbumProperties("4hdqEMOKD7aG2izjUOmk20", "Amplified - A Decade of Reinventing the Cello"),
-                AlbumProperties("4TwdbWtWDxgeLykyt4ExRr", "Plays Metallica by Four Cellos (Remastered)"),
-                AlbumProperties("5E9y1NhXyYvDz7VpzWffdM", "Shadowmaker - Track by Track Commentary"),
-                AlbumProperties("5fw9PyEt5p0Krd9jmQzKPT", "Shadowmaker"),
-                AlbumProperties("5jraCBpvLqFRcO2RuRAeWB", "Shadowmaker"),
+                AlbumProperties("18Gt3lLDRHDLGoFVMGwHsN", "Plays Metallica by Four Cellos - A Live Performance"),
+                AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
                 AlbumProperties("5lG9ONdudQ38vodYN0rdqf", "Plays Metallica by Four Cellos (Remastered)"),
-                AlbumProperties("5LtbqIjHM33GTDoEDiVX5M", "Shadowmaker"),
+                AlbumProperties("7LZNQn0nVJCEUQXfidfizI", "Plays Metallica by Four Cellos (Remastered)"),
+                AlbumProperties("4TwdbWtWDxgeLykyt4ExRr", "Plays Metallica by Four Cellos (Remastered)"),
+                AlbumProperties("3SAl71qdd63DXgbhk5U9ML", "Shadowmaker - Commentary"),
+                AlbumProperties("5E9y1NhXyYvDz7VpzWffdM", "Shadowmaker - Track by Track Commentary"),
+                AlbumProperties("5jraCBpvLqFRcO2RuRAeWB", "Shadowmaker"),
+                AlbumProperties("5fw9PyEt5p0Krd9jmQzKPT", "Shadowmaker"),
+                AlbumProperties("34RyPrb9qW7uSCLGpeLrBQ", "Shadowmaker"),
                 AlbumProperties("5ZkGjaVnwZ2CwlYIw1x0Rk", "Shadowmaker"),
                 AlbumProperties("6HN2EqksuJcOZg6pDnlcOl", "Shadowmaker"),
+                AlbumProperties("5LtbqIjHM33GTDoEDiVX5M", "Shadowmaker"),
+                AlbumProperties("1FYyFV2BXQq34Juzb9JYYS", "Wagner Reloaded: Live in Leipzig"),
+                AlbumProperties("2qBC6mNZpLTP0dheus0w3n", "Wagner Reloaded: Live in Leipzig"),
                 AlbumProperties("728y0VvMcIuamGmKhDpa6X", "7th Symphony"),
-                AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
-                AlbumProperties("7LZNQn0nVJCEUQXfidfizI", "Plays Metallica by Four Cellos (Remastered)")
+                AlbumProperties("46OuN3LtlXn4GK9qE7OzAp", "7th Symphony"),
+                AlbumProperties("1rcVwAd9FXK9ONouJVeRSF", "Worlds Collide"),
+                AlbumProperties("4hdqEMOKD7aG2izjUOmk20", "Amplified - A Decade of Reinventing the Cello"),
+                AlbumProperties("6jmkVl0VXRi95e2D5FLuTT", "Amplified - A Decade Of Reinventing The Cello"),
+                AlbumProperties("6gWLb5vcuUzWzPli9ubIX4", "Apocalyptica"),
+                AlbumProperties("3kVg4RGYRa4LgPICgQ621o", "Apocalyptica"),
+                AlbumProperties("3KmWBOoHbutZ085tMzCFdP", "Reflections"),
+                AlbumProperties("2x8qbkdxxRH26V3DpApgFm", "Reflections Revised"),
+                AlbumProperties("673zWtXt9kcjdDG8JTyqFl", "Reflections"),
+                AlbumProperties("2yQpD74IRHxQ7WQfucOGLM", "Reflections"),
+                AlbumProperties("31S8i6iTZi9slsfnugsPMl", "Cult"),
+                AlbumProperties("6GBRgaOq10E5yGAqJhqhMv", "Cult"),
+                AlbumProperties("2xrgIlEh2iWaxDrwJOh5Wp", "Cult"),
+                AlbumProperties("6leqa6QQESn76w64IdN9yQ", "Inquisition Symphony"),
+                AlbumProperties("6izew86bUpFcKle2S4eD3Z", "Apocalyptica Plays Metallica By Four Cellos"),
+                AlbumProperties("22wMPgeOpzduo9VK5uZa7R", "Plays Metallica by Four Cellos"),
+                AlbumProperties("2ngB7G5SEpiKmxS1cR4gNO", "Ei Vaihtoehtoo (feat. Paleface)"),
+                AlbumProperties("3W8ep9kCGVEf5TLFtRRB2T", "Talk To Me (feat. Lzzy Hale)"),
+                AlbumProperties("6dksdceqBM8roInjffIaZw", "Live Or Die (feat. Joakim Brodén)"),
+                AlbumProperties("3slBXddUn27FSk2rOB1Uy1", "Angels Calling"),
+                AlbumProperties("6nqjuNc9S9Kt94YrPNGgVv", "En Route To Mayhem"),
+                AlbumProperties("6Kl1sPJPUrdL9Z8UQ3NPS7", "Rise"),
+                AlbumProperties("7CV5jE3EVEIDg3fjOgULx9", "Ashes Of The Modern World"),
+                AlbumProperties("2bVcRvPNpHB0r6VuHi09K9", "Aquarela (Original Motion Picture Soundtrack)"),
+                AlbumProperties("1OHQIfJtUV6alMdcwVq61U", "Fields of Verdun"),
+                AlbumProperties("52S2SkEx16UR5S3PWcL5L2", "Me melkein kuoltiin"),
+                AlbumProperties("6AkHNu3TKUWJd76TIi4xjE", "Enter Sandman"),
+                AlbumProperties("2h5w6q1Iuoy0yiBwXAK51J", "Enter Sandman (Live)"),
+                AlbumProperties("0D0lCK4s2z2LNE9vpnwRkz", "Nothing Else Matters"),
+                AlbumProperties("5MwfnlrGjJrdMrNcllFQsB", "Nothing Else Matters (Live)"),
+                AlbumProperties("13BtcppTiSeizmRSwb72Eb", "The Symphony of Extremes"),
+                AlbumProperties("7bd4m5PxVAr0pm0PLlttCs", "House of Chains (Kevin Churko Mix)"),
+                AlbumProperties("1nzcsl4T2QIku2xUQs3seW", "Battery (Remastered)"),
+                AlbumProperties("42tcdx3xxBlvc8jtbZSf6z", "SIN IN JUSTICE"),
+                AlbumProperties("5nnP9BZioUrD7rfQTiNTvd", "Slow Burn"),
+                AlbumProperties("7BZF9Ddd6LyWpgaeGgki1d", "Slowburn"),
+                AlbumProperties("3qKoIXG5DcdGAXK4Z1cEX3", "Till Death Do Us Part"),
+                AlbumProperties("08ra9y1zcYQ5uHOI9rYLnh", "Till Death Do Us Part"),
+                AlbumProperties("62yU9W5w6RKG8GNRSqLRSo", "Cold Blood"),
+                AlbumProperties("5dZ0JeL1RfUYCrmTlKisup", "Cold Blood"),
+                AlbumProperties("7jEsYyn32CgQvmP24ISv6O", "Shadowmaker"),
+                AlbumProperties("50U6Kt8buJ2ubtlVziXNQS", "Shadowmaker"),
+                AlbumProperties("3LOkBwbJvPgHif5XiEWLQf", "Shadowmaker"),
+                AlbumProperties("4eCr10DErj4bSSzDH2SmrR", "Psalm (Performed by Perttu Kivilaakso)"),
+                AlbumProperties("6bi1C7G6EICqx7dpn1fzxO", "End of Me"),
+                AlbumProperties("27OFr5uKH6sInUavkkVMmH", "I Don't Care"),
+                AlbumProperties("1gOOgd8SeGiNZWJtzTZNfA", "S.O.S. (Anything but Love)"),
+                AlbumProperties("0J5JZft7fQGAqGHG4H9arD", "I'm Not Jesus"),
+                AlbumProperties("1whgSNqpUgqhFid5LLeV9l", "Oh Holy Night"),
+                AlbumProperties("7AamTlpklHzHo8Ki6mhQfK", "Oh Holy Night"),
+                AlbumProperties("69fr2Pcl9qaDIHPG2OovIS", "Funeral Songs"),
+                AlbumProperties("374PwdVlct4JejdqIfZksY", "Afscheid"),
+                AlbumProperties("3P39JR7Kqv8z6CnW5C53Ux", "REMIXES"),
+                AlbumProperties("7Jr3AHWcPDUAQx3gGFO4lD", "No Absolution"),
+                AlbumProperties("1H5k5QgsFjnMPzlXfWq8QH", "Death Stranding (Songs from the Video Game)"),
+                AlbumProperties("1ZFgVY4Op7A4oSAx2EALVj", "Into Eternity"),
+                AlbumProperties("3XdOaVUr2YMaIFw8VWAik4", "Live At Wacken 2017: 28 Years Louder Than Hell"),
+                AlbumProperties("0zoX0Nu3Fqy5dQEyGYJFF0", "Angry Birds Seasons (Original Game Soundtrack)"),
+                AlbumProperties(
+                    "5lVF8bTtiBjcA0thnWP0Rh",
+                    "Relaxing Classical Playlist: Beautiful Instrumental Music Experience"
+                ),
+                AlbumProperties("7hTh0cY5Gk4IZko0tdAlrx", "Vain elämää - kausi 7 toinen kattaus"),
+                AlbumProperties("3nXB9yTfBqkMlRQrpJygX2", "Kelpaat kelle vaan (Vain elämää kausi 7) [Apocalyptica]"),
+                AlbumProperties("6mLr5helbCIWVTGmzqluQ7", "UNDERWORLD"),
+                AlbumProperties("387Te5GFWrhNqHxmhMJEYJ", "UNDERWORLD"),
+                AlbumProperties("5DNOlPWFn0IxTFd3keOMPf", "MTV Unplugged: VAMPS"),
+                AlbumProperties("2zA5SUEocM3Jeyp6PF102h", "Moments"),
+                AlbumProperties("6lgRorpnVc7QMPx5iXtqr6", "Moments Extended Mixes"),
+                AlbumProperties("5AtL2ik9BkXfw1oXxsMlRb", "Rock Meets Classic"),
+                AlbumProperties("2jHbUdX8o1SutlRZDBMmV4", "Few Against Many"),
+                AlbumProperties("1zTOn78xdhc8CtfewE7f9M", "Few Against Many"),
+                AlbumProperties("1D2EzCuoaD8CJ7aZYfKqko", "Festival Summer 2011"),
+                AlbumProperties("1ZQ3n54DZU7aFmDbtbyLcO", "Can’t Stand The Silence"),
+                AlbumProperties("64hHYdSDATjIn1CSuZ60nv", "Truth Or Dare"),
+                AlbumProperties("5VYNuX1fPVDSe9lFmP6rh5", "Not Strong Enough"),
+                AlbumProperties("6EJQZGtgCftGiFSKHg5Usl", "Избранное: музыка из кинофильмов и сериалов"),
+                AlbumProperties(
+                    "7jWLdyYqBTqXH1PAFVL7vN",
+                    "The Midnight Meat Train (Original Motion Picture Soundtrack)"
+                ),
+                AlbumProperties("4uNzDULQ9RAy0nxGaPbCDn", "The Poison (Deluxe Version)"),
+                AlbumProperties("4gHIcZWRHEWY0TyPrS8r01", "Delikatessen"),
+                AlbumProperties("7zU9hmH9CKQ9Yf5SruqOLM", "The Poison"),
+                AlbumProperties("0gTBfbw4XVrPLiPBQFXlA3", "Land Of Darkness"),
+                AlbumProperties("5U13StzHC0FkL4pCPIdU7t", "Die Schlinge"),
+                AlbumProperties("7dHGyGv1jOupJ52rqjdgkF", "The Poison"),
+                AlbumProperties("5H43u8akWXK8JA0zEk7dLt", "The Poison"),
+                AlbumProperties("47IoCLkvmHFxxq9NntxyIi", "Бой с тенью (Оригинальный саундтрек к фильму)"),
+                AlbumProperties("58TQcPpRD9XcXhUDWF5P27", "The Poison"),
+                AlbumProperties("42QVkdlfEk9uaG0NboeKpq", "The Poison"),
+                AlbumProperties("0uLrUJVzrbHf6vcg58ooY1", "Angelzoom"),
+                AlbumProperties("19Gkms8Mb4wmoqm1a5VYys", "Metal Rock Cavalcade I"),
+                AlbumProperties("3PH0jVnduEPrwz0OOThXaq", "Die Schlinge"),
             )
+                // ignore albumType since there are so many of these
+                .map { it.copy(albumType = null) }
         ),
 
         ArtistProperties(
@@ -384,81 +485,156 @@ internal object Fixtures {
             name = "Thirteen Senses",
             genres = listOf("cornwall indie", "piano rock"),
             albums = listOf(
-                AlbumProperties("5P7GIlX83brISe8k0XQQL1", "A Strange Encounter", totalTracks = 10),
-                AlbumProperties("148kHVSDW2cwyAnmOUnSsm", "Crystal Sounds", totalTracks = 10),
-                AlbumProperties("1v0kIX9QOYJhmbixRoWpeY", "Contact", totalTracks = 10),
-                AlbumProperties("6ua9tnBfjtFbEvlwwPePNE", "Contact", totalTracks = 11),
-                AlbumProperties("53d6xPe9mO7wVUCCPqlUqb", "The Invitation", totalTracks = 12),
-                AlbumProperties("7JSZOMOVibNSpGWSfcgqcN", "The Invitation", totalTracks = 12),
-                AlbumProperties("2taMI79KWzXO0cOV4RJx4i", "The Invitation", totalTracks = 11),
                 AlbumProperties(
-                    id = "2Ea6nI5gRsy7QXCYFihMEk",
-                    name = "Into The Fire (Acoustic)",
+                    "5P7GIlX83brISe8k0XQQL1",
+                    "A Strange Encounter",
+                    totalTracks = 10,
+                    albumType = Album.Type.ALBUM
+                ),
+                AlbumProperties(
+                    "148kHVSDW2cwyAnmOUnSsm",
+                    "Crystal Sounds",
+                    totalTracks = 10,
+                    albumType = Album.Type.ALBUM
+                ),
+                AlbumProperties("1v0kIX9QOYJhmbixRoWpeY", "Contact", totalTracks = 10, albumType = Album.Type.ALBUM),
+                AlbumProperties("6ua9tnBfjtFbEvlwwPePNE", "Contact", totalTracks = 11, albumType = Album.Type.ALBUM),
+                AlbumProperties(
+                    "53d6xPe9mO7wVUCCPqlUqb",
+                    "The Invitation",
+                    totalTracks = 12,
+                    albumType = Album.Type.ALBUM
+                ),
+                AlbumProperties(
+                    "7JSZOMOVibNSpGWSfcgqcN",
+                    "The Invitation",
+                    totalTracks = 12,
+                    albumType = Album.Type.ALBUM
+                ),
+                AlbumProperties(
+                    "2taMI79KWzXO0cOV4RJx4i",
+                    "The Invitation",
+                    totalTracks = 11,
+                    albumType = Album.Type.ALBUM
+                ),
+                AlbumProperties(
+                    "2Ea6nI5gRsy7QXCYFihMEk",
+                    "Into The Fire (Acoustic)",
                     totalTracks = 1,
                     albumType = Album.Type.SINGLE
                 ),
                 AlbumProperties(
-                    id = "5nU3OZkQWBJnz1SijLLepR",
-                    name = "Into the Fire (Acoustic)",
+                    "5nU3OZkQWBJnz1SijLLepR",
+                    "Into the Fire (Acoustic)",
                     totalTracks = 1,
                     albumType = Album.Type.SINGLE
                 ),
                 AlbumProperties("3dXyenZqQJOktXiLRBXU55", "Home", totalTracks = 2, albumType = Album.Type.SINGLE),
                 AlbumProperties(
-                    id = "3CcltJjnlBarLBrnbU7Dgg",
-                    name = "The Loneliest Star",
+                    "3CcltJjnlBarLBrnbU7Dgg",
+                    "The Loneliest Star",
                     totalTracks = 2,
                     albumType = Album.Type.SINGLE
                 ),
                 AlbumProperties(
-                    id = "4gUjTWrUEcc3Dc2M1k9Jj4",
-                    name = "All The Love In Your Hands",
+                    "4gUjTWrUEcc3Dc2M1k9Jj4",
+                    "All The Love In Your Hands",
                     totalTracks = 3,
                     albumType = Album.Type.SINGLE
                 ),
                 AlbumProperties(
-                    id = "5bb11iSUgn7dYtodcW5fhW",
-                    name = "All The Love In Your Hands (Acoustic Version)",
+                    "5bb11iSUgn7dYtodcW5fhW",
+                    "All The Love In Your Hands (Acoustic Version)",
                     totalTracks = 1,
                     albumType = Album.Type.SINGLE
                 ),
                 AlbumProperties(
-                    id = "7i6IV55nXu52k7dqckivO7",
-                    name = "All The Love In Your Hands (Cicada Remix Esingle)",
+                    "7i6IV55nXu52k7dqckivO7",
+                    "All The Love In Your Hands (Cicada Remix Esingle)",
                     totalTracks = 1,
                     albumType = Album.Type.SINGLE
                 ),
                 AlbumProperties(
-                    id = "1UYhCN5SOV713pJcCBQ7Cf",
-                    name = "All The Love In Your Hands (Qattara Remix Esingle)",
+                    "1UYhCN5SOV713pJcCBQ7Cf",
+                    "All The Love In Your Hands (Qattara Remix Esingle)",
                     totalTracks = 1,
                     albumType = Album.Type.SINGLE
                 ),
                 AlbumProperties("7ETiCkWai8cmWbVfnKCLJ6", "Follow Me", totalTracks = 3, albumType = Album.Type.SINGLE),
                 AlbumProperties(
-                    id = "75Rh0bIPEP7IJMUzpGo4os",
-                    name = "Into The Fire (Cicada Remix)",
+                    "75Rh0bIPEP7IJMUzpGo4os",
+                    "Into The Fire (Cicada Remix)",
                     totalTracks = 1,
                     albumType = Album.Type.SINGLE
                 ),
                 AlbumProperties(
-                    id = "14pHgW7BaEclVGKiw4xhAN",
-                    name = "Thru The Glass",
+                    "14pHgW7BaEclVGKiw4xhAN",
+                    "Thru The Glass",
                     totalTracks = 2,
                     albumType = Album.Type.SINGLE
                 ),
                 AlbumProperties(
-                    id = "5Y1ybrFh0aScu26vW7HNwf",
-                    name = "Thru The Glass (On-Line Exclusive)",
+                    "5Y1ybrFh0aScu26vW7HNwf",
+                    "Thru The Glass (On-Line Exclusive)",
                     totalTracks = 1,
                     albumType = Album.Type.SINGLE
                 ),
                 AlbumProperties(
-                    id = "6Qh7aqH8eZq6ttLEaLeaOK",
-                    name = "Do No Wrong",
+                    "6Qh7aqH8eZq6ttLEaLeaOK",
+                    "Do No Wrong",
                     totalTracks = 2,
                     albumType = Album.Type.SINGLE
                 ),
+                AlbumProperties(
+                    "2MniZtyXdn2pr4mKzDealC",
+                    "Into The Fire",
+                    totalTracks = 3,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties(
+                    "5OLMgzmbLgt7xLS2mBaxoo",
+                    "Into The Fire",
+                    totalTracks = 1,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties(
+                    "2zi2pN4YdijE2OWEFZmkPH",
+                    "Thru The Glass",
+                    totalTracks = 3,
+                    albumType = Album.Type.SINGLE
+                ),
+                AlbumProperties(
+                    "5XLcGXPZdjtz3UkZMdJgvE",
+                    "All My Love",
+                    totalTracks = 36,
+                    albumType = Album.Type.COMPILATION
+                ),
+                AlbumProperties(
+                    "0NHF6ViRN7Bv55QVwZmfGR",
+                    "Rock Chillout",
+                    totalTracks = 31,
+                    albumType = Album.Type.COMPILATION
+                ),
+                AlbumProperties(
+                    "1TGoeK3BIRKHSOatnlHp6e",
+                    "Pure Rock Ballads",
+                    totalTracks = 18,
+                    albumType = Album.Type.COMPILATION
+                ),
+                AlbumProperties(
+                    "0fvoWtxY2mO6zgzCm9cqrj",
+                    "Bones (Original Television Soundtrack)",
+                    totalTracks = 13,
+                    albumType = Album.Type.COMPILATION
+                ),
+                AlbumProperties(
+                    "1uyjx3SQ0LOIiLsH45lq8s",
+                    "Bones - Original Television Soundtrack",
+                    totalTracks = 13,
+                    albumType = Album.Type.COMPILATION
+                ),
+                AlbumProperties("5QkqgBLXsymXJKWaagawSY", "Indie Love", totalTracks = 19, albumType = Album.Type.ALBUM),
+                AlbumProperties("3rM6kWYqHb7RW1nWWxJF41", "Twisted", totalTracks = 19, albumType = Album.Type.ALBUM),
             )
         )
     )

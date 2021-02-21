@@ -145,7 +145,7 @@ object Spotify {
     ): T {
         val token = AccessToken.Cache.getOrThrow()
 
-        val url = (API_URL + path).toHttpUrl()
+        val url = (if (path.startsWith(API_URL)) path else API_URL + path).toHttpUrl()
             .newBuilder()
             .apply {
                 queryParams?.forEach { (key, value) ->

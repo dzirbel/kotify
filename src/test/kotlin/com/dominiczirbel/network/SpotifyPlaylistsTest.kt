@@ -2,6 +2,7 @@ package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
 import com.dominiczirbel.PlaylistProperties
+import com.dominiczirbel.network.model.SimplifiedPlaylist
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -15,10 +16,11 @@ import java.nio.file.Path
 class SpotifyPlaylistsTest {
     @Test
     fun getPlaylists() {
-        val playlists = runBlocking { Spotify.Playlists.getPlaylists() }
-        assertThat(playlists.items).isNotEmpty()
+        val playlistsPaging = runBlocking { Spotify.Playlists.getPlaylists() }
+        val playlists = runBlocking { playlistsPaging.fetchAll<SimplifiedPlaylist>() }
+        assertThat(playlists).isNotEmpty()
         Fixtures.playlists.forEach { playlistProperties ->
-            val playlist = playlists.items.find { it.id == playlistProperties.id }
+            val playlist = playlists.find { it.id == playlistProperties.id }
             assertThat(playlist).isNotNull()
             playlistProperties.check(playlist!!)
         }
@@ -26,10 +28,11 @@ class SpotifyPlaylistsTest {
 
     @Test
     fun getPlaylistsByUser() {
-        val playlists = runBlocking { Spotify.Playlists.getPlaylists(userId = Fixtures.userId) }
-        assertThat(playlists.items).isNotEmpty()
+        val playlistsPaging = runBlocking { Spotify.Playlists.getPlaylists(userId = Fixtures.userId) }
+        val playlists = runBlocking { playlistsPaging.fetchAll<SimplifiedPlaylist>() }
+        assertThat(playlists).isNotEmpty()
         Fixtures.playlists.forEach { playlistProperties ->
-            val playlist = playlists.items.find { it.id == playlistProperties.id }
+            val playlist = playlists.find { it.id == playlistProperties.id }
             assertThat(playlist).isNotNull()
             playlistProperties.check(playlist!!)
         }

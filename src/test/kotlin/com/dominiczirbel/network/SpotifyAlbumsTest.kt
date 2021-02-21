@@ -2,6 +2,7 @@ package com.dominiczirbel.network
 
 import com.dominiczirbel.AlbumProperties
 import com.dominiczirbel.Fixtures
+import com.dominiczirbel.network.model.SimplifiedTrack
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -26,10 +27,11 @@ internal class SpotifyAlbumsTest {
     @ParameterizedTest
     @MethodSource("albums")
     fun getAlbumTracks(albumProperties: AlbumProperties) {
-        val tracks = runBlocking { Spotify.Albums.getAlbumTracks(albumProperties.id) }
+        val tracksPaging = runBlocking { Spotify.Albums.getAlbumTracks(albumProperties.id) }
+        val tracks = runBlocking { tracksPaging.fetchAll<SimplifiedTrack>() }
         val trackProperties = Fixtures.albums.getValue(albumProperties)
-        assertThat(tracks.items.size).isEqualTo(trackProperties.size)
-        tracks.items.zip(trackProperties).forEach { (track, trackProperties) -> trackProperties.check(track) }
+        assertThat(tracks).hasSize(trackProperties.size)
+        tracks.zip(trackProperties).forEach { (track, trackProperties) -> trackProperties.check(track) }
     }
 
     companion object {

@@ -36,19 +36,13 @@ class SpotifyFollowTest {
 
     @Test
     fun getFollowedArtists() {
-        val allArtists = mutableListOf<FullArtist>()
-        var artists = runBlocking { Spotify.Follow.getFollowedArtists(limit = 50) }
-        allArtists.addAll(artists.items)
+        val artistsPaging = runBlocking { Spotify.Follow.getFollowedArtists(limit = 50) }
+        val artists = runBlocking { artistsPaging.fetchAll<FullArtist>() }
 
-        while (artists.cursors.after != null) {
-            artists = runBlocking { Spotify.Follow.getFollowedArtists(limit = 50, after = artists.cursors.after) }
-            allArtists.addAll(artists.items)
-        }
-
-        assertThat(allArtists).isNotEmpty()
+        assertThat(artists).isNotEmpty()
 
         Fixtures.followingArtists.forEach { (artistId, following) ->
-            assertThat(allArtists.any { it.id == artistId }).isEqualTo(following)
+            assertThat(artists.any { it.id == artistId }).isEqualTo(following)
         }
     }
 

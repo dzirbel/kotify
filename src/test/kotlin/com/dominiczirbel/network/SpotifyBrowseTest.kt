@@ -8,13 +8,13 @@ import org.junit.jupiter.api.Test
 internal class SpotifyBrowseTest {
     @Test
     fun categories() {
-        val categories = runBlocking { Spotify.Browse.getCategories(country = "US") }.items
-        assertThat(categories.isNotEmpty())
+        val categories = runBlocking { Spotify.Browse.getCategories(country = "US") }
+        assertThat(categories.items.isNotEmpty())
 
         // We want to check some real categories, but they might be too unstable to store in Fixtures, so just use the
         // live results. Ideally these might be their own tests, but getting them to run after the getCategories call
         // returns is nontrivial.
-        categories.forEach { category ->
+        categories.items.forEach { category ->
             val returnedCategory = runBlocking { Spotify.Browse.getCategory(categoryId = category.id, country = "US") }
             assertThat(returnedCategory.copy(icons = emptyList())).isEqualTo(category.copy(icons = emptyList()))
 

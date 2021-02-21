@@ -2,6 +2,7 @@ package com.dominiczirbel.network
 
 import com.dominiczirbel.ArtistProperties
 import com.dominiczirbel.Fixtures
+import com.dominiczirbel.network.model.SimplifiedAlbum
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -25,9 +26,10 @@ internal class SpotifyArtistsTest {
     @ParameterizedTest
     @MethodSource("artists")
     fun getArtistAlbums(artistProperties: ArtistProperties) {
-        val albums = runBlocking { Spotify.Artists.getArtistAlbums(artistProperties.id) }
-        assertThat(albums.items).hasSize(artistProperties.albums.size)
-        albums.items
+        val albumsPaging = runBlocking { Spotify.Artists.getArtistAlbums(artistProperties.id) }
+        val albums = runBlocking { albumsPaging.fetchAll<SimplifiedAlbum>() }
+        assertThat(albums).hasSize(artistProperties.albums.size)
+        albums
             .sortedBy { it.id }
             .zip(artistProperties.albums.sortedBy { it.id })
             .forEach { (album, albumProperties) -> albumProperties.check(album) }
