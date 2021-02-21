@@ -3,7 +3,6 @@ package com.dominiczirbel.network
 import com.dominiczirbel.Fixtures
 import com.dominiczirbel.PlaylistProperties
 import com.dominiczirbel.network.model.SimplifiedPlaylist
-import com.dominiczirbel.zipWithBy
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -17,10 +16,13 @@ import java.nio.file.Path
 class SpotifyPlaylistsTest {
     @Test
     fun getPlaylists() {
-        val playlists = runBlocking { Spotify.Playlists.getPlaylists().fetchAll<SimplifiedPlaylist>()  }
+        val playlists = runBlocking { Spotify.Playlists.getPlaylists().fetchAll<SimplifiedPlaylist>() }
 
-        playlists.zipWithBy(Fixtures.playlists) { playlist, playlistProperties -> playlist.id == playlistProperties.id }
-            .forEach { (playlist, playlistProperties) -> playlistProperties.check(playlist) }
+        // don't zip since there are playlists that aren't in Fixtures
+        Fixtures.playlists.forEach { playlistProperties ->
+            val playlist = playlists.first { it.id == playlistProperties.id }
+            playlistProperties.check(playlist)
+        }
     }
 
     @Test
@@ -29,8 +31,11 @@ class SpotifyPlaylistsTest {
             Spotify.Playlists.getPlaylists(userId = Fixtures.userId).fetchAll<SimplifiedPlaylist>()
         }
 
-        playlists.zipWithBy(Fixtures.playlists) { playlist, playlistProperties -> playlist.id == playlistProperties.id }
-            .forEach { (playlist, playlistProperties) -> playlistProperties.check(playlist) }
+        // don't zip since there are playlists that aren't in Fixtures
+        Fixtures.playlists.forEach { playlistProperties ->
+            val playlist = playlists.first { it.id == playlistProperties.id }
+            playlistProperties.check(playlist)
+        }
     }
 
     @Test

@@ -203,6 +203,7 @@ data class TrackProperties(
     }
 }
 
+@Suppress("LargeClass")
 internal object Fixtures {
     val notFoundId = "a".repeat(22)
 
