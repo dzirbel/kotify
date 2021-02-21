@@ -8,6 +8,8 @@ import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.network.model.FullPlaylist
 import com.dominiczirbel.network.model.Playlist
 import com.dominiczirbel.network.model.PlaylistTrack
+import com.dominiczirbel.network.model.SavedShow
+import com.dominiczirbel.network.model.SavedTrack
 import com.dominiczirbel.network.model.Show
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.SpotifyObject
@@ -131,6 +133,8 @@ data class ShowProperties(
     override val name: String,
     val description: String,
     val explicit: Boolean = false,
+    val saved: Boolean,
+    val addedAt: String? = null,
     private val languages: List<String> = listOf("en-US"),
     private val mediaType: String = "audio"
 ) : ObjectProperties(type = "show") {
@@ -141,6 +145,12 @@ data class ShowProperties(
         assertThat(show.explicit).isEqualTo(explicit)
         assertThat(show.languages).isEqualTo(languages)
         assertThat(show.mediaType).isEqualTo(mediaType)
+    }
+
+    fun check(savedShow: SavedShow) {
+        check(savedShow.show)
+
+        addedAt?.let { assertThat(savedShow.addedAt).isEqualTo(it) }
     }
 }
 
@@ -173,6 +183,12 @@ data class TrackProperties(
         assertThat(playlistTrack.isLocal).isEqualTo(isLocal)
         addedBy?.let { assertThat(playlistTrack.addedBy.id).isEqualTo(it) }
         addedAt?.let { assertThat(playlistTrack.addedAt).isEqualTo(it) }
+    }
+
+    fun check(savedTrack: SavedTrack) {
+        check(savedTrack.track)
+
+        addedAt?.let { assertThat(savedTrack.addedAt).isEqualTo(it) }
     }
 }
 
@@ -347,6 +363,27 @@ internal object Fixtures {
                 trackNumber = 12
             ),
         )
+    )
+
+    // map from time saved to the album properties for all the user's saved albums
+    val savedAlbums = mapOf(
+        "2021-02-21T05:15:47Z" to AlbumProperties(
+            id = "7sDOBekGFHH2KfwW0vn6Me",
+            name = "Arcane Astral Aeons",
+            totalTracks = 12
+        ),
+        "2021-02-21T05:16:10Z" to AlbumProperties(
+            id = "6N2Dn0OZ8KUDLsRqdToPcc",
+            name = "The Unforgiving",
+            totalTracks = 12
+        ),
+        "2021-02-21T05:16:38Z" to AlbumProperties(id = "0KQNT6LnM05dUTr3slwnNJ", name = "Ephemeral", totalTracks = 12),
+    )
+
+    // list of IDs of albums which are not in the user's saved albums
+    val unsavedAlbums = listOf(
+        "2SD5sTAWvPIXESCBah1kiu", // We Are the Catalyst - Elevation
+        "3hW1TEeZRJ01XycQFABjj9", // Chopin - Piano Works
     )
 
     val artists = listOf(
@@ -716,6 +753,7 @@ internal object Fixtures {
         ShowProperties(
             id = "1mNsuXfG95Lf76YQeVMuo1",
             name = "StarTalk Radio",
+            saved = false,
             description = """
                 Science, pop culture and comedy collide on StarTalk Radio! Astrophysicist and Hayden Planetarium
                 director Neil deGrasse Tyson, his comic co-hosts, guest celebrities and scientists discuss astronomy,
@@ -727,6 +765,8 @@ internal object Fixtures {
         ShowProperties(
             id = "2mTUnDkuKUkhiueKcVWoP0",
             name = "Up First",
+            saved = true,
+            addedAt = "2021-02-21T06:12:22Z",
             description = """
                 NPR's Up First is the news you need to start your day. The three biggest stories of the day, with
                 reporting and analysis from NPR News — in 10 minutes. Available weekdays by 6 a.m. ET, with hosts Rachel
@@ -775,6 +815,35 @@ internal object Fixtures {
             trackNumber = 1,
             explicit = true
         )
+    )
+
+    val savedTracks = listOf(
+        TrackProperties(
+            id = "6mgsDKeO6A8vZs128vg98R",
+            name = "That's What The Wise Lady Said",
+            artistNames = setOf("Angtoria"),
+            trackNumber = 12,
+            addedAt = "2021-02-21T05:52:14Z"
+        ),
+        TrackProperties(
+            id = "16Z7RW76CpuaewB1U8H4cn",
+            name = "Wheel of Time",
+            artistNames = setOf("Blind Guardian"),
+            trackNumber = 10,
+            addedAt = "2021-02-21T05:52:57Z"
+        ),
+        TrackProperties(
+            id = "0zvWXDMgXSBoOkZ3XKPGC6",
+            name = "Greensleeves",
+            artistNames = setOf("Blackmore's Night"),
+            trackNumber = 14,
+            addedAt = "2021-02-21T05:52:35Z"
+        ),
+    )
+
+    val unsavedTracks = listOf(
+        "1T8IRUJBga0JXioJZvxjBR", // DEUTSCHLAND by Rammstein
+        "2MSgFefjK0T7Iwjvr3OKqV", // Chopin: Nocturne No. 20 in C-Sharp Minor, Op. Posth.
     )
 }
 

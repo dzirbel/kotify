@@ -17,6 +17,9 @@ import com.dominiczirbel.network.model.PlaylistTrack
 import com.dominiczirbel.network.model.PrivateUser
 import com.dominiczirbel.network.model.PublicUser
 import com.dominiczirbel.network.model.Recommendations
+import com.dominiczirbel.network.model.SavedAlbum
+import com.dominiczirbel.network.model.SavedShow
+import com.dominiczirbel.network.model.SavedTrack
 import com.dominiczirbel.network.model.SimplifiedAlbum
 import com.dominiczirbel.network.model.SimplifiedEpisode
 import com.dominiczirbel.network.model.SimplifiedPlaylist
@@ -699,7 +702,186 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference/#category-library
      */
     object Library {
-        // TODO add library endpoints
+        /**
+         * Get a list of the albums saved in the current Spotify user’s ‘Your Music’ library.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-users-saved-albums
+         *
+         * @param limit The maximum number of objects to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset The index of the first object to return. Default: 0 (i.e., the first object). Use with limit to
+         *  get the next set of objects.
+         * @param market An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter if you want
+         *  to apply Track Relinking.
+         */
+        suspend fun getSavedAlbums(
+            limit: Int? = null,
+            offset: Int? = null,
+            market: String? = null
+        ): Paging<SavedAlbum> {
+            return get(
+                "me/albums",
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
+            )
+        }
+
+        /**
+         * Save one or more albums to the current user’s ‘Your Music’ library.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-save-albums-user
+         *
+         * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
+         */
+        suspend fun saveAlbums(ids: List<String>) {
+            return put(
+                "me/albums",
+                queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
+                jsonBody = null as Unit?
+            )
+        }
+
+        /**
+         * Remove one or more albums from the current user’s ‘Your Music’ library.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-remove-albums-user
+         *
+         * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
+         */
+        suspend fun removeAlbums(ids: List<String>) {
+            return delete(
+                "me/albums",
+                queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
+                jsonBody = null as Unit?
+            )
+        }
+
+        /**
+         * Check if one or more albums is already saved in the current Spotify user’s ‘Your Music’ library.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-check-users-saved-albums
+         *
+         * @param ids A comma-separated list of the Spotify IDs for the albums. Maximum: 50 IDs.
+         */
+        suspend fun checkAlbums(ids: List<String>): List<Boolean> {
+            return get("me/albums/contains", mapOf("ids" to ids.joinToString(separator = ",")))
+        }
+
+        /**
+         * Get a list of the songs saved in the current Spotify user’s ‘Your Music’ library.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-users-saved-tracks
+         *
+         * @param limit The maximum number of objects to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset The index of the first object to return. Default: 0 (i.e., the first object). Use with limit to
+         *  get the next set of objects.
+         * @param market An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter if you want
+         *  to apply Track Relinking.
+         */
+        suspend fun getSavedTracks(
+            limit: Int? = null,
+            offset: Int? = null,
+            market: String? = null
+        ): Paging<SavedTrack> {
+            return get(
+                "me/tracks",
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
+            )
+        }
+
+        /**
+         * Save one or more tracks to the current user’s ‘Your Music’ library.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-save-tracks-user
+         *
+         * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
+         */
+        suspend fun saveTracks(ids: List<String>) {
+            return put(
+                "me/tracks",
+                queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
+                jsonBody = null as Unit?
+            )
+        }
+
+        /**
+         * Remove one or more tracks from the current user’s ‘Your Music’ library.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-remove-tracks-user
+         *
+         * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
+         */
+        suspend fun removeTracks(ids: List<String>) {
+            return delete(
+                "me/tracks",
+                queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
+                jsonBody = null as Unit?
+            )
+        }
+
+        /**
+         * Check if one or more tracks is already saved in the current Spotify user’s ‘Your Music’ library.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-check-users-saved-tracks
+         *
+         * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
+         */
+        suspend fun checkTracks(ids: List<String>): List<Boolean> {
+            return get("me/tracks/contains", mapOf("ids" to ids.joinToString(separator = ",")))
+        }
+
+        /**
+         * Get a list of shows saved in the current Spotify user’s library. Optional parameters can be used to limit the
+         * number of shows returned.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-users-saved-shows
+         *
+         * @param limit The maximum number of shows to return. Default: 20. Minimum: 1. Maximum: 50
+         * @param offset The index of the first show to return. Default: 0 (the first object). Use with limit to get the
+         *  next set of shows.
+         */
+        suspend fun getSavedShows(limit: Int? = null, offset: Int? = null): Paging<SavedShow> {
+            return get("me/shows", mapOf("limit" to limit?.toString(), "offset" to offset?.toString()))
+        }
+
+        /**
+         * Save one or more shows to current Spotify user’s library.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-save-shows-user
+         *
+         * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
+         */
+        suspend fun saveShows(ids: List<String>) {
+            return put(
+                "me/shows",
+                queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
+                jsonBody = null as Unit?
+            )
+        }
+
+        /**
+         * Delete one or more shows from current Spotify user’s library.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-remove-shows-user
+         *
+         * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
+         */
+        suspend fun removeShows(ids: List<String>) {
+            return delete(
+                "me/shows",
+                queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
+                jsonBody = null as Unit?
+            )
+        }
+
+        /**
+         * Check if one or more shows is already saved in the current Spotify user’s library.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-check-users-saved-shows
+         *
+         * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
+         */
+        suspend fun checkShows(ids: List<String>): List<Boolean> {
+            return get("me/shows/contains", mapOf("ids" to ids.joinToString(separator = ",")))
+        }
     }
 
     /**
