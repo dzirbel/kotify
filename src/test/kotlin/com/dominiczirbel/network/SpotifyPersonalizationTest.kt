@@ -10,6 +10,7 @@ class SpotifyPersonalizationTest {
     @EnumSource(Spotify.Personalization.TimeRange::class)
     fun topArtists(timeRange: Spotify.Personalization.TimeRange) {
         val artists = runBlocking { Spotify.Personalization.topArtists(timeRange = timeRange) }
+
         assertThat(artists.items).isNotEmpty()
     }
 
@@ -17,6 +18,7 @@ class SpotifyPersonalizationTest {
     @EnumSource(Spotify.Personalization.TimeRange::class)
     fun topTracks(timeRange: Spotify.Personalization.TimeRange) {
         val tracks = runBlocking { Spotify.Personalization.topTracks(timeRange = timeRange) }
+
         assertThat(tracks.items).isNotEmpty()
     }
 }

@@ -9,7 +9,8 @@ internal class SpotifyBrowseTest {
     @Test
     fun categories() {
         val categories = runBlocking { Spotify.Browse.getCategories(country = "US") }
-        assertThat(categories.items.isNotEmpty())
+
+        assertThat(categories.items).isNotEmpty()
 
         // We want to check some real categories, but they might be too unstable to store in Fixtures, so just use the
         // live results. Ideally these might be their own tests, but getting them to run after the getCategories call
@@ -29,12 +30,14 @@ internal class SpotifyBrowseTest {
     @Test
     fun getFeaturedPlaylists() {
         val playlists = runBlocking { Spotify.Browse.getFeaturedPlaylists() }
+
         assertThat(playlists.items).isNotEmpty()
     }
 
     @Test
     fun getNewReleases() {
         val albums = runBlocking { Spotify.Browse.getNewReleases() }
+
         assertThat(albums.items).isNotEmpty()
     }
 
@@ -47,14 +50,16 @@ internal class SpotifyBrowseTest {
                 seedTracks = emptyList()
             )
         }
-        assertThat(recommendations.seeds.isNotEmpty())
-        assertThat(recommendations.tracks.isNotEmpty())
+
+        assertThat(recommendations.seeds).isNotEmpty()
+        assertThat(recommendations.tracks).isNotEmpty()
     }
 
     @Test
     fun getRecommendationGenres() {
         val recommendations = runBlocking { Spotify.Browse.getRecommendationGenres() }
-        assertThat(recommendations.isNotEmpty())
+
+        assertThat(recommendations).isNotEmpty()
         assertThat(recommendations).containsAtLeastElementsIn(Fixtures.recommendationGenres)
     }
 }

@@ -12,12 +12,14 @@ class SpotifyEpisodesTest {
     @MethodSource("episodes")
     fun getEpisode(episodeProperties: EpisodeProperties) {
         val episode = runBlocking { Spotify.Episodes.getEpisode(id = episodeProperties.id) }
+
         episodeProperties.check(episode)
     }
 
     @Test
     fun getEpisodes() {
         val episodes = runBlocking { Spotify.Episodes.getEpisodes(ids = Fixtures.episodes.map { it.id }) }
+
         Fixtures.episodes.zip(episodes).forEach { (episodeProperties, episode) -> episodeProperties.check(episode) }
     }
 

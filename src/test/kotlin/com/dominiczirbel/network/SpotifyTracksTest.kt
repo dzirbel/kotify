@@ -14,12 +14,14 @@ internal class SpotifyTracksTest {
     @MethodSource("tracks")
     fun getAudioFeatures(trackProperties: TrackProperties) {
         val audioFeatures = runBlocking { Spotify.Tracks.getAudioFeatures(trackProperties.id!!) }
+
         assertThat(audioFeatures).isNotNull() // TODO more assertions
     }
 
     @Test
     fun getAudioFeatures() {
         val audioFeatures = runBlocking { Spotify.Tracks.getAudioFeatures(Fixtures.tracks.map { it.id!! }) }
+
         assertThat(audioFeatures.size).isEqualTo(Fixtures.tracks.size) // TODO more assertions
     }
 
@@ -27,13 +29,16 @@ internal class SpotifyTracksTest {
     @MethodSource("tracks")
     fun getAudioAnalysis(trackProperties: TrackProperties) {
         val audioAnalysis = runBlocking { Spotify.Tracks.getAudioAnalysis(trackProperties.id!!) }
+
         assertThat(audioAnalysis).isNotNull() // TODO more assertions
     }
 
     @ParameterizedTest
     @MethodSource("tracks")
     fun getTrack(trackProperties: TrackProperties) {
-        trackProperties.check(runBlocking { Spotify.Tracks.getTrack(trackProperties.id!!) })
+        val track = runBlocking { Spotify.Tracks.getTrack(trackProperties.id!!) }
+
+        trackProperties.check(track)
     }
 
     @Test
@@ -41,12 +46,14 @@ internal class SpotifyTracksTest {
         val error = runBlocking {
             assertThrows<Spotify.SpotifyError> { Spotify.Tracks.getTrack(Fixtures.notFoundId) }
         }
+
         assertThat(error.code).isEqualTo(404)
     }
 
     @Test
     fun getTracks() {
         val tracks = runBlocking { Spotify.Tracks.getTracks(Fixtures.tracks.map { it.id!! }) }
+
         tracks.zip(Fixtures.tracks).forEach { (track, trackProperties) -> trackProperties.check(track) }
     }
 

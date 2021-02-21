@@ -3,6 +3,7 @@ package com.dominiczirbel.network
 import com.dominiczirbel.Fixtures
 import com.dominiczirbel.PlaylistProperties
 import com.dominiczirbel.network.model.SimplifiedPlaylist
+import com.dominiczirbel.zipWithBy
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -16,26 +17,20 @@ import java.nio.file.Path
 class SpotifyPlaylistsTest {
     @Test
     fun getPlaylists() {
-        val playlistsPaging = runBlocking { Spotify.Playlists.getPlaylists() }
-        val playlists = runBlocking { playlistsPaging.fetchAll<SimplifiedPlaylist>() }
-        assertThat(playlists).isNotEmpty()
-        Fixtures.playlists.forEach { playlistProperties ->
-            val playlist = playlists.find { it.id == playlistProperties.id }
-            assertThat(playlist).isNotNull()
-            playlistProperties.check(playlist!!)
-        }
+        val playlists = runBlocking { Spotify.Playlists.getPlaylists().fetchAll<SimplifiedPlaylist>()  }
+
+        playlists.zipWithBy(Fixtures.playlists) { playlist, playlistProperties -> playlist.id == playlistProperties.id }
+            .forEach { (playlist, playlistProperties) -> playlistProperties.check(playlist) }
     }
 
     @Test
     fun getPlaylistsByUser() {
-        val playlistsPaging = runBlocking { Spotify.Playlists.getPlaylists(userId = Fixtures.userId) }
-        val playlists = runBlocking { playlistsPaging.fetchAll<SimplifiedPlaylist>() }
-        assertThat(playlists).isNotEmpty()
-        Fixtures.playlists.forEach { playlistProperties ->
-            val playlist = playlists.find { it.id == playlistProperties.id }
-            assertThat(playlist).isNotNull()
-            playlistProperties.check(playlist!!)
+        val playlists = runBlocking {
+            Spotify.Playlists.getPlaylists(userId = Fixtures.userId).fetchAll<SimplifiedPlaylist>()
         }
+
+        playlists.zipWithBy(Fixtures.playlists) { playlist, playlistProperties -> playlist.id == playlistProperties.id }
+            .forEach { (playlist, playlistProperties) -> playlistProperties.check(playlist) }
     }
 
     @Test
@@ -139,6 +134,7 @@ class SpotifyPlaylistsTest {
     fun getPlaylistCoverImages() {
         Fixtures.playlists.forEach { playlist ->
             val images = runBlocking { Spotify.Playlists.getPlaylistCoverImages(playlistId = playlist.id) }
+
             assertThat(images).isNotEmpty()
             images.forEach { image ->
                 assertThat(image.url).isNotEmpty()
@@ -176,6 +172,7 @@ class SpotifyPlaylistsTest {
     @MethodSource("playlists")
     fun getPlaylist(playlistProperties: PlaylistProperties) {
         val playlist = runBlocking { Spotify.Playlists.getPlaylist(playlistId = playlistProperties.id) }
+
         playlistProperties.check(playlist)
     }
 
@@ -183,6 +180,7 @@ class SpotifyPlaylistsTest {
     @MethodSource("playlists")
     fun getPlaylistTracks(playlistProperties: PlaylistProperties) {
         val tracks = runBlocking { Spotify.Playlists.getPlaylistTracks(playlistId = playlistProperties.id) }
+
         playlistProperties.tracks?.let {
             tracks.items.zip(playlistProperties.tracks).forEach { (playlistTrack, trackProperties) ->
                 trackProperties.check(playlistTrack)

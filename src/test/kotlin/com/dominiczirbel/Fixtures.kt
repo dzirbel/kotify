@@ -8,6 +8,7 @@ import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.network.model.FullPlaylist
 import com.dominiczirbel.network.model.Playlist
 import com.dominiczirbel.network.model.PlaylistTrack
+import com.dominiczirbel.network.model.SavedAlbum
 import com.dominiczirbel.network.model.SavedShow
 import com.dominiczirbel.network.model.SavedTrack
 import com.dominiczirbel.network.model.Show
@@ -55,6 +56,7 @@ data class ArtistProperties(
 data class AlbumProperties(
     override val id: String,
     override val name: String,
+    val addedAt: String? = null,
     val totalTracks: Int? = null,
     val albumType: Album.Type? = Album.Type.ALBUM,
     val genres: List<String> = emptyList()
@@ -82,6 +84,13 @@ data class AlbumProperties(
                 assertThat(allTracks).hasSize(totalTracks)
             }
         }
+    }
+
+    fun check(savedAlbum: SavedAlbum) {
+        check(savedAlbum.album)
+
+        assertThat(addedAt).isNotNull()
+        assertThat(savedAlbum.addedAt).isEqualTo(addedAt)
     }
 }
 
@@ -150,7 +159,8 @@ data class ShowProperties(
     fun check(savedShow: SavedShow) {
         check(savedShow.show)
 
-        addedAt?.let { assertThat(savedShow.addedAt).isEqualTo(it) }
+        assertThat(addedAt).isNotNull()
+        assertThat(savedShow.addedAt).isEqualTo(addedAt)
     }
 }
 
@@ -188,7 +198,8 @@ data class TrackProperties(
     fun check(savedTrack: SavedTrack) {
         check(savedTrack.track)
 
-        addedAt?.let { assertThat(savedTrack.addedAt).isEqualTo(it) }
+        assertThat(addedAt).isNotNull()
+        assertThat(savedTrack.addedAt).isEqualTo(addedAt)
     }
 }
 
@@ -365,19 +376,25 @@ internal object Fixtures {
         )
     )
 
-    // map from time saved to the album properties for all the user's saved albums
-    val savedAlbums = mapOf(
-        "2021-02-21T05:15:47Z" to AlbumProperties(
+    val savedAlbums = listOf(
+        AlbumProperties(
             id = "7sDOBekGFHH2KfwW0vn6Me",
             name = "Arcane Astral Aeons",
-            totalTracks = 12
+            totalTracks = 12,
+            addedAt = "2021-02-21T05:15:47Z"
         ),
-        "2021-02-21T05:16:10Z" to AlbumProperties(
+        AlbumProperties(
             id = "6N2Dn0OZ8KUDLsRqdToPcc",
             name = "The Unforgiving",
-            totalTracks = 12
+            totalTracks = 12,
+            addedAt = "2021-02-21T05:16:10Z"
         ),
-        "2021-02-21T05:16:38Z" to AlbumProperties(id = "0KQNT6LnM05dUTr3slwnNJ", name = "Ephemeral", totalTracks = 12),
+        AlbumProperties(
+            id = "0KQNT6LnM05dUTr3slwnNJ",
+            name = "Ephemeral",
+            totalTracks = 12,
+            addedAt = "2021-02-21T05:16:38Z"
+        ),
     )
 
     // list of IDs of albums which are not in the user's saved albums

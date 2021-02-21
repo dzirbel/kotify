@@ -4,39 +4,33 @@ import com.dominiczirbel.Fixtures
 import com.dominiczirbel.network.model.SavedAlbum
 import com.dominiczirbel.network.model.SavedShow
 import com.dominiczirbel.network.model.SavedTrack
+import com.dominiczirbel.zipWithBy
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 class SpotifyLibraryTest {
-    // TODO do as for tracks
     @Test
     fun getSavedAlbums() {
-        val albumsPaging = runBlocking { Spotify.Library.getSavedAlbums() }
-        val albums = runBlocking { albumsPaging.fetchAll<SavedAlbum>() }
+        val albums = runBlocking { Spotify.Library.getSavedAlbums().fetchAll<SavedAlbum>() }
 
-        assertThat(albums).hasSize(Fixtures.savedAlbums.size)
-        albums.forEach { (addedAt, album) ->
-            val albumPropertiesMap = Fixtures.savedAlbums.filterValues { it.id == album.id }
-            assertThat(albumPropertiesMap).hasSize(1)
-
-            val (expectedAddedAt, albumProperties) = albumPropertiesMap.entries.first()
-            assertThat(addedAt).isEqualTo(expectedAddedAt)
-            albumProperties.check(album)
-        }
+        albums.zipWithBy(Fixtures.savedAlbums) { savedAlbum, albumProperties ->
+            savedAlbum.album.id == albumProperties.id
+        }.forEach { (savedAlbum, albumProperties) -> albumProperties.check(savedAlbum) }
     }
 
     @Test
     fun checkAlbums() {
         // map from album ID to whether it is saved
-        val ids: List<Pair<String, Boolean>> = Fixtures.savedAlbums.values.map { it.id to true }
+        val ids: List<Pair<String, Boolean>> = Fixtures.savedAlbums.map { it.id to true }
             .plus(
                 Fixtures.albums.keys.map {
-                    it.id to Fixtures.savedAlbums.values.any { savedAlbum -> it.id == savedAlbum.id }
+                    it.id to Fixtures.savedAlbums.any { savedAlbum -> it.id == savedAlbum.id }
                 }
             )
 
         val saved = runBlocking { Spotify.Library.checkAlbums(ids.map { it.first }) }
+
         assertThat(saved).containsExactlyElementsIn(ids.map { it.second }).inOrder()
     }
 
@@ -61,13 +55,9 @@ class SpotifyLibraryTest {
         val tracksPaging = runBlocking { Spotify.Library.getSavedTracks() }
         val tracks = runBlocking { tracksPaging.fetchAll<SavedTrack>() }
 
-        assertThat(tracks).hasSize(Fixtures.savedTracks.size)
-        tracks.forEach { track ->
-            val trackProperties = requireNotNull(Fixtures.savedTracks.find { it.id == track.track.id }) {
-                "could not find track $track"
-            }
-            trackProperties.check(track)
-        }
+        tracks.zipWithBy(Fixtures.savedTracks) { savedTrack, trackProperties ->
+            savedTrack.track.id == trackProperties.id
+        }.forEach { (savedTrack, trackProperties) -> trackProperties.check(savedTrack) }
     }
 
     @Test
@@ -81,6 +71,7 @@ class SpotifyLibraryTest {
             )
 
         val saved = runBlocking { Spotify.Library.checkTracks(ids.mapNotNull { it.first }) }
+
         assertThat(saved).containsExactlyElementsIn(ids.map { it.second }).inOrder()
     }
 
@@ -133,16 +124,5 @@ class SpotifyLibraryTest {
 
         assertThat(runBlocking { Spotify.Library.checkShows(unsaved) })
             .containsExactlyElementsIn(unsaved.map { false })
-    }
-
-    // TODO use elsewhere
-    private fun <T, R> List<T>.zipWithBy(other: List<R>, matcher: (T, R) -> Boolean): List<Pair<T, R>> {
-        assertThat(this).hasSize(other.size)
-        return map { thisElement ->
-            val matching = other.filter { matcher(thisElement, it) }
-            assertThat(matching).hasSize(1)
-
-            thisElement to matching.first()
-        }
     }
 }

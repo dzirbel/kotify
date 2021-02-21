@@ -10,15 +10,20 @@ import org.junit.jupiter.params.provider.MethodSource
 
 class SpotifyFollowTest {
     @Test
-    fun isFollowing() {
+    fun isFollowingArtists() {
         val followedArtists = runBlocking {
             Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.followingArtists.map { it.first })
         }
-        assertThat(followedArtists).isEqualTo(Fixtures.followingArtists.map { it.second })
 
+        assertThat(followedArtists).isEqualTo(Fixtures.followingArtists.map { it.second })
+    }
+
+    @Test
+    fun isFollowingUsers() {
         val followedUsers = runBlocking {
             Spotify.Follow.isFollowing(type = "user", ids = Fixtures.followingUsers.map { it.first })
         }
+
         assertThat(followedUsers).isEqualTo(Fixtures.followingUsers.map { it.second })
     }
 
@@ -36,8 +41,7 @@ class SpotifyFollowTest {
 
     @Test
     fun getFollowedArtists() {
-        val artistsPaging = runBlocking { Spotify.Follow.getFollowedArtists(limit = 50) }
-        val artists = runBlocking { artistsPaging.fetchAll<FullArtist>() }
+        val artists = runBlocking { Spotify.Follow.getFollowedArtists(limit = 50).fetchAll<FullArtist>() }
 
         assertThat(artists).isNotEmpty()
 
