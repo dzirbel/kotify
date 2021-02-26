@@ -3,13 +3,11 @@ package com.dominiczirbel.network.oauth
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.await
 import com.dominiczirbel.network.bodyFromJson
+import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.awt.Desktop
-import java.net.URLEncoder
 import java.security.SecureRandom
 import java.util.Base64
 
@@ -63,15 +61,16 @@ class OAuth private constructor(
         val code = redirectedUrl.queryParameterValues("code").firstOrNull()
         requireNotNull(code) { "no code in redirect uri" }
 
-        @Suppress("BlockingMethodInNonBlockingContext")
-        val body = "client_id=$clientId&" +
-            "grant_type=authorization_code&" +
-            "code=$code&" +
-            "redirect_uri=${URLEncoder.encode(redirectUri, "UTF-8")}&" + // TODO don't use URLEncoder
-            "code_verifier=$codeVerifier"
+        val body = FormBody.Builder()
+                .add("client_id", clientId)
+                .add("grant_type", "authorization_code")
+                .add("code", code)
+                .add("redirect_uri", redirectUri)
+                .add("code_verifier", codeVerifier)
+                .build()
 
         val request = Request.Builder()
-            .post(body.toRequestBody("application/x-www-form-urlencoded".toMediaType()))
+            .post(body)
             .url("https://accounts.spotify.com/api/token")
             .build()
 
