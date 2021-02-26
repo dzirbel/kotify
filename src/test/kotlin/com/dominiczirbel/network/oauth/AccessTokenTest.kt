@@ -22,7 +22,6 @@ import org.junit.jupiter.api.assertThrows
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-// TODO test requireRefreshable
 internal class AccessTokenTest {
     @BeforeEach
     @Suppress("unused")
@@ -187,6 +186,29 @@ internal class AccessTokenTest {
 
             assertThat(runBlocking { AccessToken.Cache.get() }).isEqualTo(newToken)
         }
+    }
+
+    @Test
+    fun testRequireRefreshable() {
+        val notRefreshable = AccessToken(accessToken = "token", tokenType = "type", expiresIn = 10)
+        assertThat(notRefreshable.refreshToken).isNull()
+
+        AccessToken.Cache.put(notRefreshable)
+        assertThat(AccessToken.Cache.hasToken).isTrue()
+
+        AccessToken.Cache.requireRefreshable()
+
+        assertThat(AccessToken.Cache.hasToken).isFalse()
+
+        val refreshable = AccessToken(accessToken = "token2", tokenType = "type", expiresIn = 10, refreshToken = "refresh")
+        assertThat(refreshable.refreshToken).isNotNull()
+
+        AccessToken.Cache.put(refreshable)
+        assertThat(AccessToken.Cache.hasToken).isTrue()
+
+        AccessToken.Cache.requireRefreshable()
+
+        assertThat(AccessToken.Cache.hasToken).isTrue()
     }
 
     companion object {
