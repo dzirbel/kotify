@@ -31,7 +31,11 @@ jobs:
 
     - run: ./gradlew --no-daemon --stacktrace --console=plain check
 
-    - run: bash <(curl -s https://codecov.io/bash)
+    - name: Upload test results to codecov
+      run: bash <(curl -s https://codecov.io/bash)
+      if: ${{ always() }} # upload even if the build failed, in case it was just test failures
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Upload access_token.json to B2 (in case it was refreshed)
       run: ./b2 upload-file ${B2_BUCKET_NAME} access_token.json access_token.json
