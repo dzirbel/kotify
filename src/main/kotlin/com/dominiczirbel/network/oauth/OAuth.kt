@@ -62,12 +62,12 @@ class OAuth private constructor(
         requireNotNull(code) { "no code in redirect uri" }
 
         val body = FormBody.Builder()
-                .add("client_id", clientId)
-                .add("grant_type", "authorization_code")
-                .add("code", code)
-                .add("redirect_uri", redirectUri)
-                .add("code_verifier", codeVerifier)
-                .build()
+            .add("client_id", clientId)
+            .add("grant_type", "authorization_code")
+            .add("code", code)
+            .add("redirect_uri", redirectUri)
+            .add("code_verifier", codeVerifier)
+            .build()
 
         val request = Request.Builder()
             .post(body)
