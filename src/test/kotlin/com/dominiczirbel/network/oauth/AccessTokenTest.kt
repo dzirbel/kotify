@@ -200,7 +200,12 @@ internal class AccessTokenTest {
 
         assertThat(AccessToken.Cache.hasToken).isFalse()
 
-        val refreshable = AccessToken(accessToken = "token2", tokenType = "type", expiresIn = 10, refreshToken = "refresh")
+        val refreshable = AccessToken(
+            accessToken = "token2",
+            tokenType = "type",
+            expiresIn = 10,
+            refreshToken = "refresh"
+        )
         assertThat(refreshable.refreshToken).isNotNull()
 
         AccessToken.Cache.put(refreshable)
