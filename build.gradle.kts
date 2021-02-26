@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 private object Versions {
     const val coroutines = "1.4.2" // https://github.com/Kotlin/kotlinx.coroutines
     const val detekt = "1.15.0" // https://github.com/detekt/detekt; also update plugin version
+    const val jacoco = "0.8.6" // https://github.com/jacoco/jacoco
     const val junit = "5.7.1" // https://junit.org/junit5/
     const val kotlinxSerialization = "1.0.1"
     const val okhttp = "4.9.1" // https://square.github.io/okhttp/
@@ -26,6 +27,8 @@ plugins {
 
     // https://github.com/jetbrains/compose-jb
     id("org.jetbrains.compose") version "0.3.0-build150"
+
+    jacoco
 }
 
 version = "0.1"
@@ -64,10 +67,24 @@ configurations.all {
 
 tasks.test {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
     testLogging {
         events = setOf(TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR, TestLogEvent.STANDARD_OUT)
         showStackTraces = true
         exceptionFormat = TestExceptionFormat.FULL
+    }
+}
+
+jacoco {
+    toolVersion = Versions.jacoco
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
+    reports {
+        xml.isEnabled = true
+        csv.isEnabled = false
     }
 }
 
