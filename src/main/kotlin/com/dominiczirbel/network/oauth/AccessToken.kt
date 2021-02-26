@@ -8,9 +8,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.FormBody
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileReader
@@ -179,11 +178,14 @@ data class AccessToken(
          */
         private suspend fun refresh(clientId: String) {
             token?.refreshToken?.let { refreshToken ->
+                val body = FormBody.Builder()
+                    .add("grant_type", "refresh_token")
+                    .add("refresh_token", refreshToken)
+                    .add("client_id", clientId)
+                    .build()
+
                 val request = Request.Builder()
-                    .post(
-                        "grant_type=refresh_token&refresh_token=$refreshToken&client_id=$clientId"
-                            .toRequestBody("application/x-www-form-urlencoded".toMediaType())
-                    )
+                    .post(body)
                     .url("https://accounts.spotify.com/api/token")
                     .build()
 
