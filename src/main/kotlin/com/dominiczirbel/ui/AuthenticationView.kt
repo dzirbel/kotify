@@ -49,7 +49,6 @@ fun AuthenticationDialog(
 }
 
 @Composable
-@Suppress("LongMethod")
 fun AuthenticationView(
     onAuthenticated: () -> Unit
 ) {

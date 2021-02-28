@@ -46,10 +46,7 @@ fun main() {
                     onAuthenticated = { authenticating.value = false }
                 )
             } else {
-                MainContent(
-                    authenticating = authenticating.value,
-                    onAuthenticate = { authenticating.value = true }
-                )
+                MainContent()
             }
         }
     }

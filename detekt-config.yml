@@ -52,7 +52,7 @@ complexity:
     includeStaticDeclarations: false
     includePrivateDeclarations: false
   ComplexMethod:
-    active: true
+    active: false
     threshold: 16
     ignoreSingleWhenExpression: false
     ignoreSimpleWhenEntries: false
@@ -65,7 +65,7 @@ complexity:
     active: true
     threshold: 600
   LongMethod:
-    active: true
+    active: false
     threshold: 60
     excludes: '**/test/**'
   LongParameterList:
