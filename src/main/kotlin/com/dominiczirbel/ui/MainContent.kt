@@ -1,69 +1,31 @@
 package com.dominiczirbel.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-
-private val PADDING = 10.dp
+import com.dominiczirbel.ui.constants.Dimens
+import com.dominiczirbel.ui.constants.Theme
 
 @Suppress("MagicNumber")
 @Composable
 fun MainContent() {
-    val leftPanelState = remember { PanelState(initialSize = 300.dp, minSize = 100.dp, minContentSize = 200.dp) }
-    val rightPanelState = remember { PanelState(initialSize = 300.dp, minSize = 100.dp, minContentSize = 200.dp) }
-    val topPanelState = remember { PanelState(initialSize = 150.dp, minSize = 50.dp, minContentSize = 200.dp) }
-    val bottomPanelState = remember { PanelState(initialSize = 150.dp, minSize = 50.dp, minContentSize = 200.dp) }
+    val leftPanelState = remember { PanelState(initialSize = 500.dp, minSize = 200.dp, minContentSize = 500.dp) }
 
-    SidePanel(
-        direction = PanelDirection.LEFT,
-        state = leftPanelState,
-        panelContent = {
-            Box(modifier = Modifier.fillMaxSize().padding(PADDING).background(Color.Green)) {
-                Text("left")
+    Column(Modifier.fillMaxSize()) {
+        SidePanel(
+            modifier = Modifier.fillMaxSize().weight(1f),
+            direction = PanelDirection.LEFT,
+            state = leftPanelState,
+            panelContent = { LibraryPanel() },
+            mainContent = {
+                Text("Content", color = Theme.current.text, fontSize = Dimens.fontTitle)
             }
-        },
-        mainContent = {
-            SidePanel(
-                direction = PanelDirection.RIGHT,
-                state = rightPanelState,
-                panelContent = {
-                    Text("right", modifier = Modifier.fillMaxSize().padding(PADDING).background(Color.Red))
-                },
-                mainContent = {
-                    SidePanel(
-                        direction = PanelDirection.TOP,
-                        state = topPanelState,
-                        panelContent = {
-                            Text("top", modifier = Modifier.fillMaxSize().padding(PADDING).background(Color.Cyan))
-                        },
-                        mainContent = {
-                            SidePanel(
-                                direction = PanelDirection.BOTTOM,
-                                state = bottomPanelState,
-                                panelContent = {
-                                    Text(
-                                        "bottom",
-                                        modifier = Modifier.fillMaxSize().padding(PADDING).background(Color.Yellow)
-                                    )
-                                },
-                                mainContent = {
-                                    Text(
-                                        "content",
-                                        modifier = Modifier.fillMaxSize().padding(PADDING).background(Color.LightGray)
-                                    )
-                                }
-                            )
-                        }
-                    )
-                }
-            )
-        }
-    )
+        )
+
+        BottomPanel()
+    }
 }

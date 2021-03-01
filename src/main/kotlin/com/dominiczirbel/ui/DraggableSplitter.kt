@@ -21,7 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+import com.dominiczirbel.ui.constants.Dimens
+import com.dominiczirbel.ui.constants.Theme
 import java.awt.Cursor
 
 interface SplitterState {
@@ -29,13 +30,17 @@ interface SplitterState {
     var isResizeEnabled: Boolean
 }
 
+data class SplitterViewParams(
+    val dragTargetWidth: Dp  = Dimens.space3,
+    val lineWidth: Dp = Dimens.divider,
+    val lineColor: Color = Theme.current.dividerColor
+)
+
 @Composable
 fun DraggableSplitter(
     orientation: Orientation,
     splitterState: SplitterState,
-    @Suppress("MagicNumber") dragTargetWidth: Dp = 8.dp,
-    lineWidth: Dp = 1.dp,
-    lineColor: Color = Color.Black,
+    params: SplitterViewParams = SplitterViewParams(),
     onResize: (delta: Dp) -> Unit,
 ) = Box {
     val density = LocalDensity.current
@@ -43,8 +48,8 @@ fun DraggableSplitter(
         Modifier
             .run {
                 when (orientation) {
-                    Orientation.Vertical -> width(dragTargetWidth).fillMaxHeight()
-                    Orientation.Horizontal -> height(dragTargetWidth).fillMaxWidth()
+                    Orientation.Vertical -> width(params.dragTargetWidth).fillMaxHeight()
+                    Orientation.Horizontal -> height(params.dragTargetWidth).fillMaxWidth()
                 }
             }
             .run {
@@ -73,11 +78,11 @@ fun DraggableSplitter(
         Modifier
             .run {
                 when (orientation) {
-                    Orientation.Vertical -> width(lineWidth).fillMaxHeight()
-                    Orientation.Horizontal -> height(lineWidth).fillMaxWidth()
+                    Orientation.Vertical -> width(params.lineWidth).fillMaxHeight()
+                    Orientation.Horizontal -> height(params.lineWidth).fillMaxWidth()
                 }
             }
-            .background(lineColor)
+            .background(params.lineColor)
     )
 }
 

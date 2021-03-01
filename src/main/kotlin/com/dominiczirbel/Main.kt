@@ -1,6 +1,6 @@
 package com.dominiczirbel
 
-import androidx.compose.desktop.Window
+import androidx.compose.desktop.AppWindow
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.mutableStateOf
@@ -10,6 +10,7 @@ import com.dominiczirbel.network.oauth.AccessToken
 import com.dominiczirbel.ui.AuthenticationDialog
 import com.dominiczirbel.ui.MainContent
 import okhttp3.OkHttpClient
+import javax.swing.SwingUtilities
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -35,19 +36,22 @@ fun main() {
     // clear non-refreshable tokens from tests
     AccessToken.Cache.requireRefreshable()
 
-    @Suppress("MagicNumber")
-    Window(title = "Spotify Client") {
-        MaterialTheme {
-            val authenticating = remember { mutableStateOf<Boolean?>(!AccessToken.Cache.hasToken) }
-            if (authenticating.value == true) {
-                Text("Authenticating...")
-                AuthenticationDialog(
-                    onDismissRequest = { authenticating.value = null },
-                    onAuthenticated = { authenticating.value = false }
-                )
-            } else {
-                MainContent()
+    SwingUtilities.invokeLater {
+        AppWindow(title = "Spotify Client")
+            .apply { maximize() }
+            .show {
+                MaterialTheme {
+                    val authenticating = remember { mutableStateOf<Boolean?>(!AccessToken.Cache.hasToken) }
+                    if (authenticating.value == true) {
+                        Text("Authenticating...")
+                        AuthenticationDialog(
+                            onDismissRequest = { authenticating.value = null },
+                            onAuthenticated = { authenticating.value = false }
+                        )
+                    } else {
+                        MainContent()
+                    }
+                }
             }
-        }
     }
 }

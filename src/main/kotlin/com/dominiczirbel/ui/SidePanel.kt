@@ -1,7 +1,9 @@
 package com.dominiczirbel.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,6 +14,8 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import com.dominiczirbel.ui.constants.Dimens
+import com.dominiczirbel.ui.constants.Theme
 
 enum class PanelDirection { LEFT, RIGHT, TOP, BOTTOM }
 
@@ -55,6 +59,15 @@ fun SidePanel(
     direction: PanelDirection,
     state: PanelState,
     modifier: Modifier = Modifier.fillMaxSize(),
+    panelModifier: Modifier = Modifier
+        .fillMaxSize()
+        .background(Theme.current.panelBackground)
+        .padding(Dimens.space3),
+    contentModifier: Modifier = Modifier
+        .fillMaxSize()
+        .background(Theme.current.contentBackground)
+        .padding(Dimens.space3),
+    splitterViewParams: SplitterViewParams = SplitterViewParams(),
     panelContent: @Composable () -> Unit,
     mainContent: @Composable () -> Unit
 ) {
@@ -67,11 +80,12 @@ fun SidePanel(
     Layout(
         modifier = modifier,
         content = {
-            Box { panelContent() }
-            Box { mainContent() }
+            Box(modifier = panelModifier) { panelContent() }
+            Box(modifier = contentModifier) { mainContent() }
             DraggableSplitter(
                 orientation = splitterOrientation,
                 splitterState = state,
+                params = splitterViewParams,
                 onResize = { delta ->
                     // invert delta for right/bottom dragging
                     val adjustedDelta = when (direction) {
