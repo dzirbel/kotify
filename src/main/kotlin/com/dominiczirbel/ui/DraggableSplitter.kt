@@ -31,7 +31,7 @@ interface SplitterState {
 }
 
 data class SplitterViewParams(
-    val dragTargetWidth: Dp  = Dimens.space3,
+    val dragTargetWidth: Dp = Dimens.space3,
     val lineWidth: Dp = Dimens.divider,
     val lineColor: Color = Theme.current.dividerColor
 )
