@@ -1,8 +1,8 @@
 package com.dominiczirbel.cache
 
-import com.dominiczirbel.network.model.SpotifyObject
 import com.google.common.collect.Range
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -13,27 +13,25 @@ internal class CacheTest {
     @Serializable
     private data class SimpleObject(
         override val id: String,
-        override val name: String,
-        override val href: String? = null,
-        override val type: String = "simple",
-        override val uri: String? = null
-    ) : SpotifyObject
+        val name: String,
+    ) : CacheableObject
 
     @Serializable
-    private data class SimpleObject2(
+    private data class SimpleRecursiveObject(
         override val id: String,
-        override val name: String,
-        override val href: String? = null,
-        override val type: String = "simple",
-        override val uri: String? = null
-    ) : SpotifyObject
+        val name: String,
+        val objects: List<CacheableObject> = listOf()
+    ) : CacheableObject {
+        override val cacheableObjects: Collection<CacheableObject>
+            get() = objects
+    }
 
     private val cache = Cache(testCacheFile)
 
     @Test
     fun testEmpty() {
         assertThat(cache.getCached("id")).isNull()
-        assertThat(cache.cached).isEmpty()
+        assertThat(cache.cache).isEmpty()
         assertThat(cache.allOfType<SimpleObject>()).isEmpty()
         assertThat(cache.allOfType<Any>()).isEmpty()
     }
@@ -58,7 +56,7 @@ internal class CacheTest {
 
         cache.put("id", obj)
 
-        cache.assertContains(obj)
+        cache.assertContainsExactly(obj)
 
         assertThat(cache.invalidate("id")?.obj).isEqualTo(obj)
 
@@ -95,7 +93,7 @@ internal class CacheTest {
         val alwaysValidCache = Cache(testCacheFile, Cache.TTLStrategy.AlwaysValid)
 
         alwaysValidCache.put("id", obj)
-        alwaysValidCache.assertContains(obj)
+        alwaysValidCache.assertContainsExactly(obj)
     }
 
     @Test
@@ -104,7 +102,7 @@ internal class CacheTest {
         val neverValidCache = Cache(testCacheFile, Cache.TTLStrategy.NeverValid)
 
         neverValidCache.put("id", obj)
-        assertThat(neverValidCache.cached).isEmpty()
+        assertThat(neverValidCache.cache).isEmpty()
 
         neverValidCache.put("id", obj)
         assertThat(neverValidCache.getCached("id")).isNull()
@@ -116,40 +114,88 @@ internal class CacheTest {
         val ttlCache = Cache(testCacheFile, Cache.TTLStrategy.UniversalTTL(ttl = 5))
 
         ttlCache.put("id", obj)
-        ttlCache.assertContains(obj)
-        ttlCache.assertContains(obj)
+        ttlCache.assertContainsExactly(obj)
+        ttlCache.assertContainsExactly(obj)
 
         Thread.sleep(10)
 
-        assertThat(ttlCache.cached).isEmpty()
+        assertThat(ttlCache.cache).isEmpty()
         assertThat(ttlCache.getCached("id")).isNull()
     }
 
     @Test
     fun testTTLByClass() {
         val obj1 = SimpleObject(id = "id1", name = "object")
-        val obj2 = SimpleObject2(id = "id2", name = "object")
+        val obj2 = SimpleRecursiveObject(id = "id2", name = "object")
         val ttlCache = Cache(
             testCacheFile,
             Cache.TTLStrategy.TTLByClass(
                 mapOf(
                     SimpleObject::class to 5,
-                    SimpleObject2::class to 15
+                    SimpleRecursiveObject::class to 15
                 )
             )
         )
 
         ttlCache.put("id1", obj1)
         ttlCache.put("id2", obj2)
-        ttlCache.assertContains(obj1, obj2)
+        ttlCache.assertContainsExactly(obj1, obj2)
 
         Thread.sleep(10)
 
-        ttlCache.assertContains(obj2)
+        ttlCache.assertContainsExactly(obj2)
 
         Thread.sleep(10)
 
-        assertThat(ttlCache.cached).isEmpty()
+        assertThat(ttlCache.cache).isEmpty()
+    }
+
+    @Test
+    fun testAlwaysReplace() {
+        val obj1 = SimpleObject(id = "id", name = "obj1")
+        val obj2 = SimpleObject(id = "id", name = "obj2")
+
+        val cache = Cache(testCacheFile, replacementStrategy = Cache.ReplacementStrategy.AlwaysReplace)
+
+        cache.put("id", obj1)
+        cache.assertContainsExactly(obj1)
+
+        cache.put("id", obj2)
+        cache.assertContainsExactly(obj2)
+
+        cache.put("id", obj1)
+        cache.assertContainsExactly(obj1)
+    }
+
+    @Test
+    fun testNeverReplace() {
+        val obj1 = SimpleObject(id = "id", name = "obj1")
+        val obj2 = SimpleObject(id = "id", name = "obj2")
+
+        val cache = Cache(testCacheFile, replacementStrategy = Cache.ReplacementStrategy.NeverReplace)
+
+        cache.put("id", obj1)
+        cache.assertContainsExactly(obj1)
+
+        cache.put("id", obj2)
+        cache.assertContainsExactly(obj1)
+
+        cache.put("id", obj1)
+        cache.assertContainsExactly(obj1)
+    }
+
+    @Test
+    fun testPutRecursive() {
+        val obj1 = SimpleObject(id = "id1", name = "obj1")
+        val obj2 = SimpleObject(id = "id2", name = "obj2")
+        val obj3 = SimpleObject(id = "id3", name = "obj3")
+        val obj4 = SimpleRecursiveObject(id = "id4", name = "obj4", objects = listOf(obj1, obj2, obj3))
+        val obj5 = SimpleObject(id = "id5", name = "obj5")
+        val obj6 = SimpleRecursiveObject(id = "id6", name = "obj6")
+        val obj7 = SimpleRecursiveObject(id = "id7", name = "obj7", objects = listOf(obj4, obj5, obj6))
+
+        cache.put(obj7)
+        cache.assertContainsExactly(obj1, obj2, obj3, obj4, obj5, obj6, obj7)
     }
 
     @Test
@@ -163,27 +209,32 @@ internal class CacheTest {
 
         cache.save()
 
-        cache.assertContains(obj1, obj2)
+        cache.assertContainsExactly(obj1, obj2)
         assertThat(cache.allOfType<SimpleObject>()).containsExactly(obj1, obj2)
 
         cache.put("id3", obj3)
 
-        cache.assertContains(obj1, obj2, obj3)
+        cache.assertContainsExactly(obj1, obj2, obj3)
         assertThat(cache.allOfType<SimpleObject>()).containsExactly(obj1, obj2, obj3)
 
         cache.load()
 
-        cache.assertContains(obj1, obj2)
+        cache.assertContainsExactly(obj1, obj2)
         assertThat(cache.allOfType<SimpleObject>()).containsExactly(obj1, obj2)
     }
 
-    private fun Cache.assertContains(vararg objects: SpotifyObject) {
+    private fun Cache.assertContains(vararg objects: CacheableObject) {
         objects.forEach { obj ->
             val cached = getCached(obj.id!!)
-            assertThat(cached).isNotNull()
+            assertWithMessage("didn't contain $obj").that(cached).isNotNull()
             assertThat(cached?.id).isEqualTo(obj.id)
             assertThat(cached?.obj).isEqualTo(obj)
         }
+    }
+
+    private fun Cache.assertContainsExactly(vararg objects: CacheableObject) {
+        assertContains(*objects)
+        assertThat(cache.values.map { it.obj }).containsExactly(*objects)
     }
 
     companion object {

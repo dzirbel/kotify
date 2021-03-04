@@ -1,5 +1,6 @@
 package com.dominiczirbel.network.model
 
+import com.dominiczirbel.cache.CacheableObject
 import com.dominiczirbel.util.TypeInsensitiveEnumSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -99,7 +100,10 @@ data class SimplifiedAlbum(
      */
     @SerialName("album_group")
     val albumGroup: Album.Type? = null
-) : Album
+) : Album {
+    override val cacheableObjects: Collection<CacheableObject>
+        get() = artists
+}
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-albumobject
@@ -145,7 +149,10 @@ data class FullAlbum(
 
     /** The tracks of the album. */
     val tracks: Paging<SimplifiedTrack>
-) : Album
+) : Album {
+    override val cacheableObjects: Collection<CacheableObject>
+        get() = artists.plus(tracks.items) // TODO doesn't cache tracks beyond the first page
+}
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-savedalbumobject
@@ -161,4 +168,10 @@ data class SavedAlbum(
 
     /** Information about the album. */
     val album: FullAlbum
-)
+) : CacheableObject {
+    override val id: String?
+        get() = null
+
+    override val cacheableObjects
+        get() = setOf(album)
+}

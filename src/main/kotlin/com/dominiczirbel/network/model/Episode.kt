@@ -1,5 +1,6 @@
 package com.dominiczirbel.network.model
 
+import com.dominiczirbel.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -120,4 +121,7 @@ data class FullEpisode(
 
     /** The show on which the episode belongs. */
     val show: SimplifiedShow
-) : Episode
+) : Episode {
+    override val cacheableObjects: Collection<CacheableObject>
+        get() = setOf(show)
+}

@@ -1,5 +1,6 @@
 package com.dominiczirbel.network.model
 
+import com.dominiczirbel.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -102,7 +103,10 @@ data class FullShow(
     override val uri: String,
 
     val episodes: Paging<SimplifiedEpisode>
-) : Show
+) : Show {
+    override val cacheableObjects: Collection<CacheableObject>
+        get() = episodes.items // TODO doesn't cache episodes beyond the first page
+}
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-savedshowobject
@@ -118,4 +122,9 @@ data class SavedShow(
 
     /** Information about the show. */
     val show: SimplifiedShow
-)
+) : CacheableObject {
+    override val id: String? = null
+
+    override val cacheableObjects: Collection<CacheableObject>
+        get() = setOf(show)
+}

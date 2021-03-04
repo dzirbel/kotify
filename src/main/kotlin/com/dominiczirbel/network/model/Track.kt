@@ -1,5 +1,6 @@
 package com.dominiczirbel.network.model
 
+import com.dominiczirbel.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -113,7 +114,10 @@ data class SimplifiedTrack(
 
     /** Undocumented field. */
     val popularity: Int? = null
-) : Track
+) : Track {
+    override val cacheableObjects: Collection<CacheableObject>
+        get() = album?.let { setOf(it) } ?: emptySet()
+}
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-trackobject
@@ -158,7 +162,10 @@ data class FullTrack(
      * popularity value may lag actual popularity by a few days: the value is not updated in real time.
      */
     val popularity: Int
-) : Track
+) : Track {
+    override val cacheableObjects: Collection<CacheableObject>
+        get() = setOf(album)
+}
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-savedtrackobject
@@ -174,4 +181,9 @@ data class SavedTrack(
 
     /** Information about the track. */
     val track: FullTrack
-)
+) : CacheableObject {
+    override val id: String? = null
+
+    override val cacheableObjects: Collection<CacheableObject>
+        get() = setOf(track)
+}

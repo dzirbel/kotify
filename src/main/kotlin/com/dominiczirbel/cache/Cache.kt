@@ -26,6 +26,38 @@ import java.nio.file.Files
 import kotlin.reflect.KClass
 
 /**
+ * An object which can be added to a [Cache] which provides its own [id] and an optional set of additional
+ * [cacheableObjects] which are associated with it and should also be cached.
+ *
+ * This allows for recursive addition of objects attached to a single object, for example if fetching an album also
+ * returns a list of its tracks, the track objects can be individually cached as well.
+ *
+ * TODO don't save associated objects as part of the cache
+ */
+interface CacheableObject {
+    /**
+     * The ID of the cached object; if null it will not be cached.
+     */
+    val id: String?
+
+    /**
+     * An optional collection of associated objects which should also be cached alongside this [CacheableObject].
+     *
+     * Should NOT include this [CacheableObject].
+     */
+    val cacheableObjects: Collection<CacheableObject>
+        get() = emptySet()
+
+    /**
+     * Recursively finds all associated [CacheableObject] from this [CacheableObject] and its [cacheableObjects].
+     *
+     * Note that this will loop infinitely if there is a cycle of [CacheableObject]s, so associations must be acyclic.
+     */
+    val recursiveCacheableObjects: Collection<CacheableObject>
+        get() = cacheableObjects.flatMap { it.recursiveCacheableObjects }.plus(this)
+}
+
+/**
  * A wrapper class around a cached object [obj], with caching metadata and a custom [CacheObject.Serializer] to
  * serialize arbitrary values and store their [type] for deserialization.
  *
@@ -175,80 +207,115 @@ data class CacheObject(
  * in-memory cache) with [load].
  *
  * An optional [ttlStrategy] can limit the values in the cache to observe an arbitrary [TTLStrategy]. Once the
- * [ttlStrategy] marks an object as invalid, it will no longer appear in any of the cache accessors, e.g. [cached],
+ * [ttlStrategy] marks an object as invalid, it will no longer appear in any of the cache accessors, e.g. [cache],
  * [get], etc., but may only be removed from memory once it is attempted to be accessed.
+ *
+ * TODO thread safety
+ * TODO test replacementStrategy
  */
-class Cache(private val file: File, private val ttlStrategy: TTLStrategy? = null) {
+class Cache(
+    private val file: File,
+    private val ttlStrategy: TTLStrategy = TTLStrategy.AlwaysValid,
+    private val replacementStrategy: ReplacementStrategy = ReplacementStrategy.AlwaysReplace
+) {
     private val json = Json {
         encodeDefaults = true
         prettyPrint = true
     }
 
-    private val cache: MutableMap<String, CacheObject> = mutableMapOf()
+    private val _cache: MutableMap<String, CacheObject> = mutableMapOf()
 
     /**
-     * Gets the full set of valid, in-memory [CacheObject]s.
+     * The full set of valid, in-memory [CacheObject]s.
+     *
+     * TODO doesn't actually remove expired objects from the cache, only from the returned map
      */
-    val cached: Collection<CacheObject>
-        get() = cache.values.filter { isValid(it) }
+    val cache: Map<String, CacheObject>
+        get() = _cache.filterValues { ttlStrategy.isValid(it) }
 
     /**
      * Gets the [CacheObject] associated with [id], if it exists in the in-memory cache and is still valid according to
      * [ttlStrategy].
      */
     fun getCached(id: String): CacheObject? {
-        return cache[id]?.let { cacheObject ->
-            cacheObject.takeIf { isValid(it) } ?: null.also { cache.remove(id) }
+        return _cache[id]?.let { cacheObject ->
+            cacheObject.takeIf { ttlStrategy.isValid(it) } ?: null.also { _cache.remove(id) }
+        }
+    }
+
+    /**
+     * Writes [value] and all its [CacheableObject.recursiveCacheableObjects] to the in-memory cache, using their
+     * [CacheableObject.id].
+     *
+     * Any [CacheableObject]s with a null [CacheableObject.id] will be ignored.
+     *
+     * If a value is already cached with a certain id, it will be removed as determined by the [replacementStrategy].
+     *
+     * [cacheTime] is the time the object(s) should be considered cached; by default this is the current system time but
+     * may be an arbitrary value, e.g. to reflect a value which was fetched previously and thus may already be
+     * out-of-date.
+     */
+    fun put(value: CacheableObject, cacheTime: Long = System.currentTimeMillis()) {
+        listOf(value).plus(value.recursiveCacheableObjects).forEach { cacheableObject ->
+            cacheableObject.id?.let { id -> put(id, cacheableObject, cacheTime) }
         }
     }
 
     /**
      * Writes [value] to the in-memory cache, under the given [id].
      *
-     * Any previous value under the given [id] will be removed.
+     * If a value is already cached with the given [id], it will be removed as determined by the [replacementStrategy];
+     * if replaced (or if there was no previous cached object), true will be returned; otherwise false will be returned.
      *
      * [cacheTime] is the time the object should be considered cached; by default this is the current system time but
      * may be an arbitrary value, e.g. to reflect a value which was fetched previously and thus may already be
      * out-of-date.
-     *
-     * Note that if it immediately considered invalid by [ttlStrategy] it will not be added.
      */
-    fun put(id: String, value: Any, cacheTime: Long = System.currentTimeMillis()) {
-        val obj = CacheObject(id = id, obj = value, cacheTime = cacheTime)
-        if (isValid(obj)) {
-            cache[id] = obj
-        } else {
-            cache.remove(id)
+    fun put(id: String, value: Any, cacheTime: Long = System.currentTimeMillis()): Boolean {
+        val current = getCached(id)?.obj
+        val replace = current?.let { replacementStrategy.replace(it, value) } != false
+        if (replace) {
+            _cache[id] = CacheObject(id = id, obj = value, cacheTime = cacheTime)
         }
+
+        return replace
     }
 
     /**
      * Gets the value of type [T] in the cache for [id], or if the value for [id] does not exist or has a type other
      * than [T], fetches a new value from [remote], puts it in the cache, and returns it.
+     *
+     * Note that if the remotely-fetched value is a [CacheableObject], all of its
+     * [CacheableObject.recursiveCacheableObjects] will be added to the cache as well.
      */
     inline fun <reified T : Any> get(id: String, remote: () -> T): T {
-        return getCached(id)?.obj as? T ?: remote().also { put(id, it) }
+        return getCached(id)?.obj as? T
+            ?: remote().also { if (it is CacheableObject) put(it) else put(id, it) }
+    }
+
+    inline fun <reified T : Any> update(id: String, update: (T?) -> T): T {
+        return update(getCached(id)?.obj as? T).also { put(id, it) }
     }
 
     /**
      * Gets all the valid values in the cache of type [T].
      */
     inline fun <reified T : Any> allOfType(): List<T> {
-        return cached.mapNotNull { it.obj as? T }
+        return cache.values.mapNotNull { it.obj as? T }
     }
 
     /**
-     * Invalidates the cached value with the given [id], removing it from the cache.
+     * Invalidates the cached value with the given [id], removing it from the cache and returning it.
      */
     fun invalidate(id: String): CacheObject? {
-        return cache.remove(id)
+        return _cache.remove(id)
     }
 
     /**
      * Saves the current in-memory cache to [file] as JSON.
      */
     fun save() {
-        val content = json.encodeToString(cache.filterValues { isValid(it) })
+        val content = json.encodeToString(cache)
         Files.write(file.toPath(), content.split('\n'))
     }
 
@@ -256,16 +323,36 @@ class Cache(private val file: File, private val ttlStrategy: TTLStrategy? = null
      * Loads the saved cache from [file] and replaces all current in-memory values with its contents.
      */
     fun load() {
-        cache.clear()
-        cache.putAll(
+        _cache.clear()
+        _cache.putAll(
             FileReader(file).use { it.readLines().joinToString(separator = " ") }
                 .let { json.decodeFromString<Map<String, CacheObject>>(it) }
-                .filterValues { isValid(it) }
+                .filterValues { ttlStrategy.isValid(it) }
         )
     }
 
-    private fun isValid(obj: CacheObject): Boolean {
-        return ttlStrategy?.isValid(obj.cacheTime, obj.obj) != false
+    /**
+     * A generic strategy for determining whether new values should replace existing cached values.
+     */
+    interface ReplacementStrategy {
+        /**
+         * Determines whether the [current] object should be replaced by the [new] value.
+         */
+        fun replace(current: Any, new: Any): Boolean
+
+        /**
+         * A [TTLStrategy] which always replaces cached values.
+         */
+        object AlwaysReplace : ReplacementStrategy {
+            override fun replace(current: Any, new: Any) = true
+        }
+
+        /**
+         * A [TTLStrategy] which never replaces cached values.
+         */
+        object NeverReplace : ReplacementStrategy {
+            override fun replace(current: Any, new: Any) = false
+        }
     }
 
     /**
@@ -273,6 +360,11 @@ class Cache(private val file: File, private val ttlStrategy: TTLStrategy? = null
      * invalid after a certain amount of time in the cache.
      */
     interface TTLStrategy {
+        fun isValid(cacheObject: CacheObject): Boolean = isValid(cacheObject.cacheTime, cacheObject.obj)
+
+        /**
+         * Determines whether the given [obj], cached at [cacheTime], is still valid.
+         */
         fun isValid(cacheTime: Long, obj: Any): Boolean
 
         /**

@@ -1,5 +1,6 @@
 package com.dominiczirbel.network.model
 
+import com.dominiczirbel.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -99,7 +100,10 @@ data class FullPlaylist(
 
     /** Information about the tracks of the playlist. */
     val tracks: Paging<PlaylistTrack>
-) : Playlist
+) : Playlist {
+    override val cacheableObjects: Collection<CacheableObject>
+        get() = tracks.items.map { it.track } // TODO doesn't cache tracks beyond the first page
+}
 
 /** Undocumented model. */
 @Serializable
