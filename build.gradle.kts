@@ -14,7 +14,7 @@ private object Versions {
 
 plugins {
     // https://kotlinlang.org/releases.html
-    kotlin("jvm") version "1.4.30"
+    kotlin("jvm") version "1.4.31"
 
     // https://github.com/Kotlin/kotlinx.serialization
     kotlin("plugin.serialization") version "1.4.30"
@@ -26,7 +26,7 @@ plugins {
     id("name.remal.check-dependency-updates") version "1.2.2"
 
     // https://github.com/jetbrains/compose-jb
-    id("org.jetbrains.compose") version "0.3.0-build150"
+    id("org.jetbrains.compose") version "0.3.2"
 
     jacoco
 }
