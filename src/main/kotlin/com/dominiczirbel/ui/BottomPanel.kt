@@ -15,8 +15,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.dominiczirbel.ui.constants.Dimens
-import com.dominiczirbel.ui.constants.Theme
+import com.dominiczirbel.ui.theme.Colors
+import com.dominiczirbel.ui.theme.Dimens
 
 val ALBUM_ART_SIZE = 150.dp
 
@@ -27,13 +27,13 @@ fun BottomPanel() {
             .fillMaxWidth()
             .wrapContentHeight()
     ) {
-        Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Theme.current.dividerColor))
+        Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Colors.current.dividerColor))
 
         Row(
             Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .background(Theme.current.panelBackground)
+                .background(Colors.current.panelBackground)
                 .padding(Dimens.space3)
         ) {
             Box(Modifier.background(Color.Blue).size(ALBUM_ART_SIZE))
@@ -41,11 +41,11 @@ fun BottomPanel() {
             Spacer(Modifier.size(Dimens.space3))
 
             Column {
-                Text("Song name", color = Theme.current.text, fontSize = Dimens.fontBody)
+                Text("Song name", color = Colors.current.text, fontSize = Dimens.fontBody)
                 Spacer(Modifier.size(Dimens.space2))
-                Text("Artist name", color = Theme.current.text, fontSize = Dimens.fontBody)
+                Text("Artist name", color = Colors.current.text, fontSize = Dimens.fontBody)
                 Spacer(Modifier.size(Dimens.space2))
-                Text("Album name", color = Theme.current.text, fontSize = Dimens.fontBody)
+                Text("Album name", color = Colors.current.text, fontSize = Dimens.fontBody)
             }
         }
     }

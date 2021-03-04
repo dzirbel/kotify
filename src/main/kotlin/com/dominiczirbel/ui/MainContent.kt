@@ -1,14 +1,16 @@
 package com.dominiczirbel.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.dominiczirbel.ui.constants.Dimens
-import com.dominiczirbel.ui.constants.Theme
+import com.dominiczirbel.ui.theme.Colors
+import com.dominiczirbel.ui.theme.Dimens
 
 @Suppress("MagicNumber")
 @Composable
@@ -22,7 +24,9 @@ fun MainContent() {
             state = leftPanelState,
             panelContent = { LibraryPanel() },
             mainContent = {
-                Text("Content", color = Theme.current.text, fontSize = Dimens.fontTitle)
+                Box(modifier = Modifier.padding(Dimens.space3)) {
+                    Text("Content", color = Colors.current.text, fontSize = Dimens.fontTitle)
+                }
             }
         )
 

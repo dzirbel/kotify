@@ -3,6 +3,7 @@ package com.dominiczirbel
 import androidx.compose.desktop.AppWindow
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.darkColors
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.dominiczirbel.network.Spotify
@@ -40,7 +41,7 @@ fun main() {
         AppWindow(title = "Spotify Client")
             .apply { maximize() }
             .show {
-                MaterialTheme {
+                MaterialTheme(colors = darkColors()) {
                     val authenticating = remember { mutableStateOf<Boolean?>(!AccessToken.Cache.hasToken) }
                     if (authenticating.value == true) {
                         Text("Authenticating...")

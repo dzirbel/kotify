@@ -1,4 +1,4 @@
-package com.dominiczirbel.ui.constants
+package com.dominiczirbel.ui.theme
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -13,5 +13,5 @@ object Dimens {
     val divider = 1.dp
 
     val fontTitle = 48.sp
-    val fontBody = 24.sp
+    val fontBody = 28.sp
 }

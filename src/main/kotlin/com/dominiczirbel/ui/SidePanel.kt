@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,8 +13,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
-import com.dominiczirbel.ui.constants.Dimens
-import com.dominiczirbel.ui.constants.Theme
+import com.dominiczirbel.ui.theme.Colors
 
 enum class PanelDirection { LEFT, RIGHT, TOP, BOTTOM }
 
@@ -61,12 +59,10 @@ fun SidePanel(
     modifier: Modifier = Modifier.fillMaxSize(),
     panelModifier: Modifier = Modifier
         .fillMaxSize()
-        .background(Theme.current.panelBackground)
-        .padding(Dimens.space3),
+        .background(Colors.current.panelBackground),
     contentModifier: Modifier = Modifier
         .fillMaxSize()
-        .background(Theme.current.contentBackground)
-        .padding(Dimens.space3),
+        .background(Colors.current.contentBackground),
     splitterViewParams: SplitterViewParams = SplitterViewParams(),
     panelContent: @Composable () -> Unit,
     mainContent: @Composable () -> Unit

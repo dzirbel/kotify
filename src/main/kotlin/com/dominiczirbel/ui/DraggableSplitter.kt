@@ -21,8 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import com.dominiczirbel.ui.constants.Dimens
-import com.dominiczirbel.ui.constants.Theme
+import com.dominiczirbel.ui.theme.Dimens
+import com.dominiczirbel.ui.theme.Colors
 import java.awt.Cursor
 
 interface SplitterState {
@@ -33,7 +33,7 @@ interface SplitterState {
 data class SplitterViewParams(
     val dragTargetWidth: Dp = Dimens.space3,
     val lineWidth: Dp = Dimens.divider,
-    val lineColor: Color = Theme.current.dividerColor
+    val lineColor: Color = Colors.current.dividerColor
 )
 
 @Composable
