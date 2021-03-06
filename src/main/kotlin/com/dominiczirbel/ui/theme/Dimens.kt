@@ -14,6 +14,8 @@ object Dimens {
     val iconMedium = 64.dp
     val iconLarge = 96.dp
 
+    val scrollbarWidth = 24.dp
+
     val divider = 1.dp
 
     val fontTitle = 48.sp

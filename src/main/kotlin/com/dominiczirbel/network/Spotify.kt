@@ -53,6 +53,11 @@ object Spotify {
     const val FROM_TOKEN = "from_token"
     const val API_URL = "https://api.spotify.com/v1/"
 
+    /**
+     * The maximum number of sent/returned items for most endpoints.
+     */
+    const val MAX_LIMIT = 50
+
     class SpotifyError(val code: Int, message: String) : Throwable(message = "HTTP $code : $message")
 
     @Serializable
@@ -71,7 +76,7 @@ object Spotify {
     private data class ArtistsModel(val artists: List<FullArtist>)
 
     @Serializable
-    private data class ArtistsCursorPagingModel(val artists: CursorPaging<FullArtist>)
+    data class ArtistsCursorPagingModel(val artists: CursorPaging<FullArtist>)
 
     @Serializable
     private data class AudioFeaturesModel(@SerialName("audio_features") val audioFeatures: List<AudioFeatures>)

@@ -10,6 +10,8 @@ data class Colors(
     val panelBackground: Color,
     val contentBackground: Color,
     val dividerColor: Color,
+    val scrollBarHover: Color,
+    val scrollBarUnhover: Color,
     val text: Color,
 ) {
     companion object {
@@ -17,14 +19,9 @@ data class Colors(
             panelBackground = Color(0x42, 0x42, 0x42),
             contentBackground = Color(0x21, 0x21, 0x21),
             dividerColor = Color(0x30, 0x30, 0x30),
+            scrollBarHover = Color(0x60, 0x60, 0x60),
+            scrollBarUnhover = Color(0x50, 0x50, 0x50),
             text = Color(0xFA, 0xFA, 0xFA),
-        )
-
-        val light = Colors(
-            panelBackground = Color(0xEE, 0xEE, 0xEE),
-            contentBackground = Color(0xF5, 0xF5, 0xF5),
-            dividerColor = Color(0x06, 0x06, 0x06),
-            text = Color(0x12, 0x12, 0x12),
         )
 
         var current by mutableStateOf(dark)
@@ -34,4 +31,5 @@ data class Colors(
 /**
  * Returns a copy of this [Color] which should be used for disabled UI elements.
  */
+@Suppress("MagicNumber")
 fun Color.disabled(): Color = copy(alpha = 0.5f)

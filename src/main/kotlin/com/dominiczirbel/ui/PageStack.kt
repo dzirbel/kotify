@@ -12,16 +12,16 @@ interface Page
  * before the [currentIndex] are on the "back-stack" and pages after the [currentIndex] are on the "forward-stack". This
  * allows the user to navigate up the stack to a previous page, then forward again.
  *
- * A [PageStack] may be empty, in which case the [currentIndex] should be -1.
+ * A [PageStack] may be not be empty.
+ *
+ * TODO unit tests
  */
 class PageStack private constructor(
     val pages: List<Page>,
     val currentIndex: Int
 ) {
-    constructor(page: Page) : this(pages = listOf(page), currentIndex = 0)
-
     init {
-        require(currentIndex in pages.indices || (currentIndex == -1 && pages.isEmpty()))
+        require(currentIndex in pages.indices) { "index out of bounds: $currentIndex not in ${pages.indices}" }
     }
 
     /**
@@ -55,6 +55,8 @@ class PageStack private constructor(
      */
     val hasNext: Boolean
         get() = currentIndex < pages.lastIndex
+
+    constructor(page: Page) : this(pages = listOf(page), currentIndex = 0)
 
     /**
      * Returns a copy of this [PageStack] which represents the stack navigated to the [previous] page.

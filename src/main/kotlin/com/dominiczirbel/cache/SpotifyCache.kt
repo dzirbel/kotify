@@ -114,7 +114,7 @@ object SpotifyCache {
 
         suspend fun getSavedAlbums(): List<String> {
             return library.albums
-                ?: Spotify.Library.getSavedAlbums()
+                ?: Spotify.Library.getSavedAlbums(limit = Spotify.MAX_LIMIT)
                     .fetchAll<SavedAlbum>()
                     .map { it.album }
                     .onEach { cache.put(it) }
@@ -129,8 +129,8 @@ object SpotifyCache {
 
         suspend fun getSavedArtists(): List<String> {
             return library.artists
-                ?: Spotify.Follow.getFollowedArtists()
-                    .fetchAll<FullArtist>()
+                ?: Spotify.Follow.getFollowedArtists(limit = Spotify.MAX_LIMIT)
+                    .fetchAllCustom { Spotify.get<Spotify.ArtistsCursorPagingModel>(it).artists }
                     .onEach { cache.put(it) }
                     .map { it.id }
                     .also { artists -> updateLibrary { copy(artists = artists) } }
@@ -143,7 +143,7 @@ object SpotifyCache {
 
         suspend fun getSavedTracks(): List<String> {
             return library.tracks
-                ?: Spotify.Library.getSavedTracks()
+                ?: Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT)
                     .fetchAll<SavedTrack>()
                     .map { it.track }
                     .onEach { cache.put(it) }

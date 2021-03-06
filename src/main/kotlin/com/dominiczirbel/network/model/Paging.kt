@@ -66,7 +66,14 @@ data class Paging<T>(
      * Fetches all the items in this [Paging], i.e. its [items] and the [items] in all the [next] [Paging] objects.
      */
     suspend inline fun <reified S : T> fetchAll(): List<T> {
-        return fetchAll<Paging<S>> { paging -> paging.next?.let { Spotify.get(it) } }
+        return fetchAllCustom<S> { Spotify.get(it) }
+    }
+
+    // TODO document/clean up
+    inline fun <reified S : T> fetchAllCustom(
+        fetchNext: (String) -> Paging<S>
+    ): List<T> {
+        return fetchAll<Paging<S>> { paging -> paging.next?.let { fetchNext(it) } }
     }
 }
 
@@ -101,7 +108,14 @@ data class CursorPaging<T>(
      * objects.
      */
     suspend inline fun <reified S : T> fetchAll(): List<T> {
-        return fetchAll<CursorPaging<S>> { paging -> paging.next?.let { Spotify.get(it) } }
+        return fetchAllCustom<S> { Spotify.get(it) }
+    }
+
+    // TODO document/clean up
+    inline fun <reified S : T> fetchAllCustom(
+        fetchNext: (String) -> CursorPaging<S>
+    ): List<T> {
+        return fetchAll<CursorPaging<S>> { paging -> paging.next?.let { fetchNext(it) } }
     }
 }
 

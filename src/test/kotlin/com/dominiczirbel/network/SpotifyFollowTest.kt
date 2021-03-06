@@ -1,7 +1,6 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
-import com.dominiczirbel.network.model.FullArtist
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -41,7 +40,10 @@ class SpotifyFollowTest {
 
     @Test
     fun getFollowedArtists() {
-        val artists = runBlocking { Spotify.Follow.getFollowedArtists(limit = 50).fetchAll<FullArtist>() }
+        val artists = runBlocking {
+            Spotify.Follow.getFollowedArtists(limit = 50)
+                .fetchAllCustom { Spotify.get<Spotify.ArtistsCursorPagingModel>(it).artists }
+        }
 
         assertThat(artists).isNotEmpty()
 

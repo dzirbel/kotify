@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.theme.disabled
@@ -38,7 +37,7 @@ object TracksPage : Page {
 
 @Composable
 fun MainContent(pageStack: MutableState<PageStack>) {
-    Column(Modifier.fillMaxSize()) {
+    Column {
         Row(Modifier.fillMaxWidth().background(Colors.current.panelBackground).padding(Dimens.space2)) {
             IconButton(
                 enabled = pageStack.value.hasPrevious,
@@ -77,12 +76,11 @@ fun MainContent(pageStack: MutableState<PageStack>) {
             )
         }
 
-        Box(Modifier.fillMaxSize().padding(Dimens.space3)) {
+        Box(Modifier.fillMaxSize()) {
             when (pageStack.value.current) {
-                ArtistsPage -> Text("Artists", color = Colors.current.text, fontSize = Dimens.fontTitle)
-                AlbumsPage -> Text("Albums", color = Colors.current.text, fontSize = Dimens.fontTitle)
-                TracksPage -> Text("Tracks", color = Colors.current.text, fontSize = Dimens.fontTitle)
-                null -> Text("NULL", color = Color.Red, fontSize = Dimens.fontTitle)
+                ArtistsPage -> Artists()
+                AlbumsPage -> Albums()
+                TracksPage -> Tracks()
                 else -> error("unknown page type: ${pageStack.value.current}")
             }
         }
