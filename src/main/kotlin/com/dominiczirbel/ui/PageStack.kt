@@ -13,8 +13,6 @@ interface Page
  * allows the user to navigate up the stack to a previous page, then forward again.
  *
  * A [PageStack] may be not be empty.
- *
- * TODO unit tests
  */
 class PageStack private constructor(
     val pages: List<Page>,
