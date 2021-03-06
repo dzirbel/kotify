@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 
-// TODO use MaterialTheme directly
+// TODO use MaterialTheme directly?
 data class Colors(
     val panelBackground: Color,
     val contentBackground: Color,
@@ -30,3 +30,8 @@ data class Colors(
         var current by mutableStateOf(dark)
     }
 }
+
+/**
+ * Returns a copy of this [Color] which should be used for disabled UI elements.
+ */
+fun Color.disabled(): Color = copy(alpha = 0.5f)

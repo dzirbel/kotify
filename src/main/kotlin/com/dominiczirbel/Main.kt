@@ -9,7 +9,7 @@ import androidx.compose.runtime.remember
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.oauth.AccessToken
 import com.dominiczirbel.ui.AuthenticationDialog
-import com.dominiczirbel.ui.MainContent
+import com.dominiczirbel.ui.Root
 import okhttp3.OkHttpClient
 import javax.swing.SwingUtilities
 import kotlin.time.ExperimentalTime
@@ -50,7 +50,7 @@ fun main() {
                             onAuthenticated = { authenticating.value = false }
                         )
                     } else {
-                        MainContent()
+                        Root()
                     }
                 }
             }

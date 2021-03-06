@@ -10,6 +10,10 @@ object Dimens {
     val space4 = 32.dp
     val space5 = 64.dp
 
+    val iconSmall = 52.dp
+    val iconMedium = 64.dp
+    val iconLarge = 96.dp
+
     val divider = 1.dp
 
     val fontTitle = 48.sp
