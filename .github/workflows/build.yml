@@ -3,9 +3,6 @@ name: Build
 on:
   push:
   workflow_dispatch: # allow manual trigger
-  schedule:
-    # run daily at 12pm UTC (=4am PST)
-    - cron:  '0 12 * * *'
 
 jobs:
   build:
