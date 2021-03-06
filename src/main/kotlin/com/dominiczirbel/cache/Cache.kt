@@ -211,7 +211,6 @@ data class CacheObject(
  * [get], etc., but may only be removed from memory once it is attempted to be accessed.
  *
  * TODO thread safety
- * TODO test replacementStrategy
  */
 class Cache(
     private val file: File,
