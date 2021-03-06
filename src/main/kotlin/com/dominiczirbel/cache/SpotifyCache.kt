@@ -57,7 +57,10 @@ object SpotifyCache {
                 reified Simplified : Base,
                 reified Full : Base
                 > checkReplacement(current: Any, new: Any): Boolean? {
-                require((current is Base) xor (new is Base))
+                require(current is Base == new is Base) {
+                    "attempted to replace an object of type ${current::class.qualifiedName} with an object of " +
+                        "type ${new::class.qualifiedName}"
+                }
                 if (current is Base) {
                     return !(new is Simplified && current is Full)
                 }
