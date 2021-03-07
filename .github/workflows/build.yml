@@ -31,6 +31,7 @@ jobs:
       env:
         B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
 
+    # TODO re-enable network tests on CI (disabled for now due to rate limiting)
     - run: ./gradlew --no-daemon --stacktrace --console=plain checkLocal
 
     - name: Upload test results to codecov

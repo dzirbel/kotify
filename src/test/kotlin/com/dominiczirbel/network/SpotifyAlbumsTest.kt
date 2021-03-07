@@ -1,6 +1,6 @@
 package com.dominiczirbel.network
 
-import com.dominiczirbel.AlbumProperties
+import com.dominiczirbel.properties.AlbumProperties
 import com.dominiczirbel.Fixtures
 import com.dominiczirbel.TAG_NETWORK
 import com.dominiczirbel.network.model.SimplifiedTrack

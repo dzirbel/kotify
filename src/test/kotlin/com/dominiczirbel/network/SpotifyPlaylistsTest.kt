@@ -1,7 +1,7 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
-import com.dominiczirbel.PlaylistProperties
+import com.dominiczirbel.properties.PlaylistProperties
 import com.dominiczirbel.TAG_NETWORK
 import com.dominiczirbel.network.model.SimplifiedPlaylist
 import com.google.common.truth.Truth.assertThat

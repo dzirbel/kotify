@@ -1,7 +1,7 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
-import com.dominiczirbel.ShowProperties
+import com.dominiczirbel.properties.ShowProperties
 import com.dominiczirbel.TAG_NETWORK
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking

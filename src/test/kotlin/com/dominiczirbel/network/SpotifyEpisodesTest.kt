@@ -1,6 +1,6 @@
 package com.dominiczirbel.network
 
-import com.dominiczirbel.EpisodeProperties
+import com.dominiczirbel.properties.EpisodeProperties
 import com.dominiczirbel.Fixtures
 import com.dominiczirbel.TAG_NETWORK
 import kotlinx.coroutines.runBlocking

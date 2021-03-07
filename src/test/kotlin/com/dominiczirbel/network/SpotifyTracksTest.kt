@@ -2,7 +2,7 @@ package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
 import com.dominiczirbel.TAG_NETWORK
-import com.dominiczirbel.TrackProperties
+import com.dominiczirbel.properties.TrackProperties
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag

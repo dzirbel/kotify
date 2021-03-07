@@ -1,210 +1,15 @@
 package com.dominiczirbel
 
 import com.dominiczirbel.network.model.Album
-import com.dominiczirbel.network.model.Artist
-import com.dominiczirbel.network.model.Episode
-import com.dominiczirbel.network.model.FullAlbum
-import com.dominiczirbel.network.model.FullArtist
-import com.dominiczirbel.network.model.FullPlaylist
-import com.dominiczirbel.network.model.Playlist
-import com.dominiczirbel.network.model.PlaylistTrack
-import com.dominiczirbel.network.model.SavedAlbum
-import com.dominiczirbel.network.model.SavedShow
-import com.dominiczirbel.network.model.SavedTrack
-import com.dominiczirbel.network.model.Show
-import com.dominiczirbel.network.model.SimplifiedTrack
-import com.dominiczirbel.network.model.SpotifyObject
-import com.dominiczirbel.network.model.Track
-import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.runBlocking
-
-abstract class ObjectProperties(
-    private val type: String,
-    private val hrefNull: Boolean = false,
-    private val uriNull: Boolean = false
-) {
-    abstract val id: String?
-    abstract val name: String
-
-    protected fun check(obj: SpotifyObject) {
-        assertThat(obj.id).isEqualTo(id)
-        assertThat(obj.name).isEqualTo(name)
-        assertThat(obj.type).isEqualTo(type)
-        assertThat(obj.href).isNullIf(hrefNull)
-        assertThat(obj.uri).isNullIf(uriNull)
-    }
-}
-
-data class ArtistProperties(
-    override val id: String,
-    override val name: String,
-    val albums: List<AlbumProperties>,
-    val genres: List<String> = emptyList()
-) : ObjectProperties(type = "artist") {
-    fun check(artist: Artist) {
-        super.check(artist)
-
-        if (artist is FullArtist) {
-            assertThat(artist.followers.total).isAtLeast(0)
-            assertThat(artist.genres).containsAtLeastElementsIn(genres)
-            assertThat(artist.images).isNotEmpty()
-            assertThat(artist.popularity).isIn(0..100)
-        }
-    }
-}
-
-data class AlbumProperties(
-    override val id: String,
-    override val name: String,
-    val addedAt: String? = null,
-    val totalTracks: Int? = null,
-    val albumType: Album.Type? = Album.Type.ALBUM,
-    val genres: List<String> = emptyList()
-) : ObjectProperties(type = "album") {
-    fun check(album: Album) {
-        super.check(album)
-
-        albumType?.let { assertThat(album.albumType).isEqualTo(it) }
-        assertThat(album.artists).isNotEmpty()
-        assertThat(album.availableMarkets).isNotNull()
-        assertThat(album.images).isNotEmpty()
-        assertThat(album.releaseDate).isNotNull()
-        assertThat(album.releaseDatePrecision).isNotNull()
-        assertThat(album.restrictions).isNull()
-        totalTracks?.let { assertThat(album.totalTracks).isEqualTo(it) }
-
-        if (album is FullAlbum) {
-            assertThat(album.genres).containsAtLeastElementsIn(genres)
-            assertThat(album.popularity).isIn(0..100)
-            assertThat(album.tracks.items).isNotEmpty()
-            totalTracks?.let {
-                assertThat(album.tracks.total).isEqualTo(totalTracks)
-
-                val allTracks = runBlocking { album.tracks.fetchAll<SimplifiedTrack>() }
-                assertThat(allTracks).hasSize(totalTracks)
-            }
-        }
-    }
-
-    fun check(savedAlbum: SavedAlbum) {
-        check(savedAlbum.album)
-
-        assertThat(addedAt).isNotNull()
-        assertThat(savedAlbum.addedAt).isEqualTo(addedAt)
-    }
-}
-
-data class EpisodeProperties(
-    override val id: String,
-    override val name: String,
-    private val description: String,
-    private val releaseDate: String,
-    private val releaseDatePrecision: String,
-    private val languages: List<String>
-) : ObjectProperties(type = "episode") {
-    fun check(episode: Episode) {
-        super.check(episode)
-
-        assertThat(episode.description).isEqualTo(description)
-        assertThat(episode.durationMs).isAtLeast(0)
-        assertThat(episode.releaseDate).isEqualTo(releaseDate)
-        assertThat(episode.releaseDatePrecision).isEqualTo(releaseDatePrecision)
-        assertThat(episode.languages).isEqualTo(languages)
-        assertThat(episode.isPlayable).isTrue()
-    }
-}
-
-data class PlaylistProperties(
-    override val id: String,
-    override val name: String,
-    val description: String,
-    val tracks: List<TrackProperties>? = null,
-    val public: Boolean? = false,
-    val owner: String = Fixtures.userDisplayName
-) : ObjectProperties(type = "playlist") {
-    fun check(playlist: Playlist) {
-        super.check(playlist)
-
-        assertThat(playlist.description).isEqualTo(description)
-        assertThat(playlist.public).isEqualTo(public)
-        assertThat(playlist.owner.displayName).isEqualTo(owner)
-        if (tracks != null && playlist is FullPlaylist) {
-            val allItems = runBlocking { playlist.tracks.fetchAll<PlaylistTrack>() }
-            tracks.zip(allItems).forEach { (trackProperties, playlistTrack) ->
-                trackProperties.check(playlistTrack)
-            }
-        }
-    }
-}
-
-data class ShowProperties(
-    override val id: String,
-    override val name: String,
-    val description: String,
-    val explicit: Boolean = false,
-    val saved: Boolean,
-    val addedAt: String? = null,
-    private val languages: List<String> = listOf("en-US"),
-    private val mediaType: String = "audio"
-) : ObjectProperties(type = "show") {
-    fun check(show: Show) {
-        super.check(show)
-
-        assertThat(show.description).isEqualTo(description)
-        assertThat(show.explicit).isEqualTo(explicit)
-        assertThat(show.languages).isEqualTo(languages)
-        assertThat(show.mediaType).isEqualTo(mediaType)
-    }
-
-    fun check(savedShow: SavedShow) {
-        check(savedShow.show)
-
-        assertThat(addedAt).isNotNull()
-        assertThat(savedShow.addedAt).isEqualTo(addedAt)
-    }
-}
-
-data class TrackProperties(
-    override val id: String?,
-    override val name: String,
-    val artistNames: Set<String>,
-    val discNumber: Int = 1,
-    val explicit: Boolean = false,
-    val isLocal: Boolean = false,
-    val trackNumber: Int,
-    val addedBy: String? = null,
-    val addedAt: String? = null
-) : ObjectProperties(type = "track", hrefNull = isLocal) {
-    fun check(track: Track) {
-        super.check(track)
-
-        assertThat(track.artists.map { it.name }).containsExactlyElementsIn(artistNames)
-        assertThat(track.trackNumber).isEqualTo(trackNumber)
-        assertThat(track.discNumber).isEqualTo(discNumber)
-        assertThat(track.durationMs).isAtLeast(0)
-        assertThat(track.explicit).isEqualTo(explicit)
-        assertThat(track.isLocal).isEqualTo(isLocal)
-        assertThat(track.externalUrls).isNotNull()
-    }
-
-    fun check(playlistTrack: PlaylistTrack) {
-        check(playlistTrack.track)
-
-        assertThat(playlistTrack.isLocal).isEqualTo(isLocal)
-        addedBy?.let { assertThat(playlistTrack.addedBy.id).isEqualTo(it) }
-        addedAt?.let { assertThat(playlistTrack.addedAt).isEqualTo(it) }
-    }
-
-    fun check(savedTrack: SavedTrack) {
-        check(savedTrack.track)
-
-        assertThat(addedAt).isNotNull()
-        assertThat(savedTrack.addedAt).isEqualTo(addedAt)
-    }
-}
+import com.dominiczirbel.properties.AlbumProperties
+import com.dominiczirbel.properties.ArtistProperties
+import com.dominiczirbel.properties.EpisodeProperties
+import com.dominiczirbel.properties.PlaylistProperties
+import com.dominiczirbel.properties.ShowProperties
+import com.dominiczirbel.properties.TrackProperties
 
 @Suppress("LargeClass")
-internal object Fixtures {
+object Fixtures {
     val notFoundId = "a".repeat(22)
 
     const val userId = "34m1o83qloqkyzdt4z3qbveoy"
@@ -744,17 +549,6 @@ internal object Fixtures {
                     addedBy = userId,
                     addedAt = "2021-02-11T06:20:38Z"
                 ),
-                // TODO
-//                TrackProperties(
-//                    id = null,
-//                    name = "Beyond Earth",
-//                    artistNames = setOf("Oratory"),
-//                    trackNumber = 0,
-//                    discNumber = 0,
-//                    isLocal = true,
-//                    addedBy = "djynth",
-//                    addedAt = "2020-12-06T01:24:17Z"
-//                ),
                 TrackProperties(
                     id = "0hrNeGXIsFXCzGv27hDYlz",
                     name = "Chosen Time",
@@ -863,12 +657,12 @@ internal object Fixtures {
         "1T8IRUJBga0JXioJZvxjBR", // DEUTSCHLAND by Rammstein
         "2MSgFefjK0T7Iwjvr3OKqV", // Chopin: Nocturne No. 20 in C-Sharp Minor, Op. Posth.
     )
-}
 
-/**
- * Converts this multi-line string to a single-line one, with the indents and newlines removed (and replaced with single
- * spaces).
- */
-private fun String.toSingleLine(): String {
-    return this.trimIndent().trim('\n').replace('\n', ' ')
+    /**
+     * Converts this multi-line string to a single-line one, with the indents and newlines removed (and replaced with single
+     * spaces).
+     */
+    private fun String.toSingleLine(): String {
+        return this.trimIndent().trim('\n').replace('\n', ' ')
+    }
 }

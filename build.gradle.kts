@@ -28,6 +28,8 @@ plugins {
     // https://github.com/jetbrains/compose-jb
     id("org.jetbrains.compose") version "0.3.2"
 
+    `java-test-fixtures`
+
     jacoco
 }
 
@@ -50,6 +52,9 @@ dependencies {
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", Versions.junit)
     testImplementation("com.google.truth", "truth", Versions.truth)
+
+    testFixturesImplementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
+    testFixturesImplementation("com.google.truth", "truth", Versions.truth)
 
     detektPlugins("io.gitlab.arturbosch.detekt", "detekt-formatting", Versions.detekt)
 }
