@@ -14,6 +14,7 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.buildSerialDescriptor
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.decodeStructure
@@ -138,7 +139,7 @@ data class CacheObject(
             require(objClass.java.typeName == value.type)
             val objSerializer = objClass.serializer()
 
-            encoder.encodeStructure(descriptor) {
+            encoder.encode {
                 encodeStringElement(descriptor, 0, value.id)
                 encodeLongElement(descriptor, 1, value.cacheTime)
                 encodeStringElement(descriptor, 2, value.type)
@@ -152,7 +153,7 @@ data class CacheObject(
         @ExperimentalSerializationApi
         @InternalSerializationApi
         override fun deserialize(decoder: Decoder): CacheObject {
-            return decoder.decodeStructure(descriptor) {
+            return decoder.decode {
                 var id: String? = null
                 var cacheTime: Long? = null
                 var type: String? = null
@@ -193,6 +194,33 @@ data class CacheObject(
                     obj = requireNotNull(obj) { "never deserialized obj" }
                 )
             }
+        }
+
+        /**
+         * Encodes the structure described by [descriptor].
+         *
+         * Avoids using [Encoder.encodeStructure] since it swallows exceptions in [block] if the
+         * [CompositeEncoder.endStructure] calls also throws an error, which it typically does if [block] fails.
+         */
+        @ExperimentalSerializationApi
+        @InternalSerializationApi
+        private fun Encoder.encode(block: CompositeEncoder.() -> Unit) {
+            val composite = beginStructure(descriptor)
+            composite.block()
+            composite.endStructure(descriptor)
+        }
+
+        /**
+         * Decodes the structure described by [descriptor].
+         *
+         * Avoids using [Decoder.decodeStructure] since it swallows exceptions in [block] if the
+         * [CompositeDecoder.endStructure] calls also throws an error, which it typically does if [block] fails.
+         */
+        @ExperimentalSerializationApi
+        @InternalSerializationApi
+        private fun <T> Decoder.decode(block: CompositeDecoder.() -> T): T {
+            val composite = beginStructure(descriptor)
+            return composite.block().also { composite.endStructure(descriptor) }
         }
     }
 }
