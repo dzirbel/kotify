@@ -24,9 +24,11 @@ import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.network.model.User
+import kotlinx.serialization.Serializable
 import java.io.File
 
 object SpotifyCache {
+    @Serializable
     private data class Library(
         val albums: List<String>? = null,
         val artists: List<String>? = null,
@@ -35,6 +37,8 @@ object SpotifyCache {
 
     private val cache = Cache(
         file = File("cache.json"),
+
+        saveOnUpdate = true,
 
         ttlStrategy = Cache.TTLStrategy.AlwaysValid,
 
@@ -89,6 +93,13 @@ object SpotifyCache {
         set(value) {
             cache.put(LIBRARY_KEY, value)
         }
+
+    /**
+     * Loads the cache from disk, overwriting any values currently in memory.
+     */
+    fun load() {
+        cache.load()
+    }
 
     /**
      * A convenience function which applies [update] to [Library]; this primarily exists to conveniently avoid calling

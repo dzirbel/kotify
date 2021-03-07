@@ -6,6 +6,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.darkColors
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.oauth.AccessToken
 import com.dominiczirbel.ui.AuthenticationDialog
@@ -36,6 +37,8 @@ fun main() {
 
     // clear non-refreshable tokens from tests
     AccessToken.Cache.requireRefreshable()
+
+    SpotifyCache.load()
 
     SwingUtilities.invokeLater {
         AppWindow(title = "Spotify Client")

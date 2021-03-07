@@ -211,9 +211,11 @@ data class CacheObject(
  * [get], etc., but may only be removed from memory once it is attempted to be accessed.
  *
  * TODO thread safety
+ * TODO test saveOnUpdate
  */
 class Cache(
     private val file: File,
+    private val saveOnUpdate: Boolean = false,
     private val ttlStrategy: TTLStrategy = TTLStrategy.AlwaysValid,
     private val replacementStrategy: ReplacementStrategy = ReplacementStrategy.AlwaysReplace
 ) {
@@ -223,6 +225,8 @@ class Cache(
     }
 
     private val _cache: MutableMap<String, CacheObject> = mutableMapOf()
+
+    private var lastSaveHash: Int? = null
 
     /**
      * The full set of valid, in-memory [CacheObject]s.
@@ -238,7 +242,7 @@ class Cache(
      */
     fun getCached(id: String): CacheObject? {
         return _cache[id]?.let { cacheObject ->
-            cacheObject.takeIf { ttlStrategy.isValid(it) } ?: null.also { _cache.remove(id) }
+            cacheObject.takeIf { ttlStrategy.isValid(it) } ?: null.also { invalidate(id) }
         }
     }
 
@@ -275,6 +279,7 @@ class Cache(
         val replace = current?.let { replacementStrategy.replace(it, value) } != false
         if (replace) {
             _cache[id] = CacheObject(id = id, obj = value, cacheTime = cacheTime)
+            onUpdate()
         }
 
         return replace
@@ -307,27 +312,42 @@ class Cache(
      * Invalidates the cached value with the given [id], removing it from the cache and returning it.
      */
     fun invalidate(id: String): CacheObject? {
-        return _cache.remove(id)
+        return _cache.remove(id).also { onUpdate() }
     }
 
     /**
      * Saves the current in-memory cache to [file] as JSON.
      */
-    fun save() {
-        val content = json.encodeToString(cache)
-        Files.write(file.toPath(), content.split('\n'))
+    fun save(force: Boolean = false) {
+        if (force || _cache.hashCode() != lastSaveHash) {
+            val content = json.encodeToString(cache)
+            Files.write(file.toPath(), content.split('\n'))
+            lastSaveHash = _cache.hashCode()
+        }
     }
 
     /**
      * Loads the saved cache from [file] and replaces all current in-memory values with its contents.
+     *
+     * Simply clears the cache if the file does not exist.
      */
     fun load() {
         _cache.clear()
-        _cache.putAll(
-            FileReader(file).use { it.readLines().joinToString(separator = " ") }
-                .let { json.decodeFromString<Map<String, CacheObject>>(it) }
-                .filterValues { ttlStrategy.isValid(it) }
-        )
+        if (file.canRead()) {
+            _cache.putAll(
+                FileReader(file)
+                    .use { it.readLines().joinToString(separator = " ") }
+                    .let { json.decodeFromString<Map<String, CacheObject>>(it) }
+                    .filterValues { ttlStrategy.isValid(it) }
+            )
+        }
+        lastSaveHash = _cache.hashCode()
+    }
+
+    private fun onUpdate() {
+        if (saveOnUpdate) {
+            save()
+        }
     }
 
     /**

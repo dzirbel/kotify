@@ -90,7 +90,7 @@ internal class CacheTest {
     @Test
     fun testTTLAlwaysValid() {
         val obj = SimpleObject(id = "id", name = "object")
-        val alwaysValidCache = Cache(testCacheFile, Cache.TTLStrategy.AlwaysValid)
+        val alwaysValidCache = Cache(testCacheFile, ttlStrategy = Cache.TTLStrategy.AlwaysValid)
 
         alwaysValidCache.put("id", obj)
         alwaysValidCache.assertContainsExactly(obj)
@@ -99,7 +99,7 @@ internal class CacheTest {
     @Test
     fun testTTLNeverValid() {
         val obj = SimpleObject(id = "id", name = "object")
-        val neverValidCache = Cache(testCacheFile, Cache.TTLStrategy.NeverValid)
+        val neverValidCache = Cache(testCacheFile, ttlStrategy = Cache.TTLStrategy.NeverValid)
 
         neverValidCache.put("id", obj)
         assertThat(neverValidCache.cache).isEmpty()
@@ -111,7 +111,7 @@ internal class CacheTest {
     @Test
     fun testUniversalTTL() {
         val obj = SimpleObject(id = "id", name = "object")
-        val ttlCache = Cache(testCacheFile, Cache.TTLStrategy.UniversalTTL(ttl = 5))
+        val ttlCache = Cache(testCacheFile, ttlStrategy = Cache.TTLStrategy.UniversalTTL(ttl = 5))
 
         ttlCache.put("id", obj)
         ttlCache.assertContainsExactly(obj)
@@ -129,7 +129,7 @@ internal class CacheTest {
         val obj2 = SimpleRecursiveObject(id = "id2", name = "object")
         val ttlCache = Cache(
             testCacheFile,
-            Cache.TTLStrategy.TTLByClass(
+            ttlStrategy = Cache.TTLStrategy.TTLByClass(
                 mapOf(
                     SimpleObject::class to 5,
                     SimpleRecursiveObject::class to 15
