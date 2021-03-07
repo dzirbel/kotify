@@ -102,9 +102,29 @@ data class CacheObject(
         id = id,
         cacheTime = cacheTime,
         type = obj::class.java.typeName,
-        classHash = obj::class.hashCode(),
+        classHash = obj::class.hashFields(),
         obj = obj
     )
+
+    companion object {
+        /**
+         * Creates a hash of the fields and methods of this [KClass], to verify that the fields are the same when
+         * deserializing as when they were serialized.
+         *
+         * Note that neither [KClass] nor [Class] provides a [hashCode] with these semantics, so this custom
+         * implementation is necessary.
+         */
+        private fun KClass<*>.hashFields(): Int {
+            val fields = java.fields
+                .map { field -> field.name + field.type.canonicalName }
+                .sorted()
+            val methods = java.methods
+                .map { method -> method.name + method.parameters.joinToString { it.name + it.type.canonicalName } }
+                .sorted()
+
+            return fields.hashCode() + (13 * methods.hashCode())
+        }
+    }
 
     /**
      * A custom [KSerializer] which uses [type] to deserialize [obj] to the appropriate class.
@@ -171,7 +191,9 @@ data class CacheObject(
                             requireNotNull(classHash) { "attempting to deserialize obj before classHash" }
 
                             val cls = Class.forName(type).kotlin
-                            if (cls.hashCode() != classHash) {
+                            if (cls.hashFields() != classHash) {
+                                // TODO find a way to catch this and remove it from the cache instead of failing to
+                                //  deserialize
                                 throw ClassHashChangedException(
                                     originalHash = classHash,
                                     deserializedHash = cls.hashCode(),
