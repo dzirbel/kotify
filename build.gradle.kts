@@ -53,6 +53,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", Versions.junit)
     testImplementation("com.google.truth", "truth", Versions.truth)
 
+    testFixturesImplementation(compose.desktop.currentOs)
     testFixturesImplementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
     testFixturesImplementation("com.google.truth", "truth", Versions.truth)
 

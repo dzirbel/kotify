@@ -1,9 +1,9 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
-import com.dominiczirbel.properties.PlaylistProperties
 import com.dominiczirbel.TAG_NETWORK
 import com.dominiczirbel.network.model.SimplifiedPlaylist
+import com.dominiczirbel.properties.PlaylistProperties
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -190,7 +190,7 @@ class SpotifyPlaylistsTest {
         val tracks = runBlocking { Spotify.Playlists.getPlaylistTracks(playlistId = playlistProperties.id) }
 
         playlistProperties.tracks?.let {
-            tracks.items.zip(playlistProperties.tracks).forEach { (playlistTrack, trackProperties) ->
+            tracks.items.zip(it).forEach { (playlistTrack, trackProperties) ->
                 trackProperties.check(playlistTrack)
             }
         }
