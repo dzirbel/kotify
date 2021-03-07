@@ -2,17 +2,20 @@ package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
 import com.dominiczirbel.PlaylistProperties
+import com.dominiczirbel.TAG_NETWORK
 import com.dominiczirbel.network.model.SimplifiedPlaylist
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
 import java.nio.file.Path
 
+@Tag(TAG_NETWORK)
 class SpotifyPlaylistsTest {
     @Test
     fun getPlaylists() {

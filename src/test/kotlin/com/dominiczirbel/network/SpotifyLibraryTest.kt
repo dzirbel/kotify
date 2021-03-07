@@ -1,14 +1,17 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
+import com.dominiczirbel.TAG_NETWORK
 import com.dominiczirbel.network.model.SavedAlbum
 import com.dominiczirbel.network.model.SavedShow
 import com.dominiczirbel.network.model.SavedTrack
 import com.dominiczirbel.zipWithBy
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
+@Tag(TAG_NETWORK)
 class SpotifyLibraryTest {
     @Test
     fun getSavedAlbums() {

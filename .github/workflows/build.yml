@@ -31,7 +31,7 @@ jobs:
       env:
         B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
 
-    - run: ./gradlew --no-daemon --stacktrace --console=plain check
+    - run: ./gradlew --no-daemon --stacktrace --console=plain checkLocal
 
     - name: Upload test results to codecov
       run: bash <(curl -s https://codecov.io/bash)

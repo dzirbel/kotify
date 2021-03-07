@@ -1,14 +1,17 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
+import com.dominiczirbel.TAG_NETWORK
 import com.dominiczirbel.TrackProperties
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
+@Tag(TAG_NETWORK)
 internal class SpotifyTracksTest {
     @ParameterizedTest
     @MethodSource("tracks")

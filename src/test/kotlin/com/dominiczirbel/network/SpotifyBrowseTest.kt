@@ -1,10 +1,13 @@
 package com.dominiczirbel.network
 
 import com.dominiczirbel.Fixtures
+import com.dominiczirbel.TAG_NETWORK
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
+@Tag(TAG_NETWORK)
 internal class SpotifyBrowseTest {
     @Test
     fun categories() {

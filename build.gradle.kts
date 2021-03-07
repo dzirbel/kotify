@@ -65,8 +65,17 @@ configurations.all {
     }
 }
 
+tasks.create<Test>("testLocal") {
+    useJUnitPlatform {
+        excludeTags("network")
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.withType<Test>().configureEach {
     finalizedBy(tasks.jacocoTestReport)
     testLogging {
         events = setOf(TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR, TestLogEvent.STANDARD_OUT)
@@ -80,12 +89,15 @@ jacoco {
 }
 
 tasks.jacocoTestReport {
-    dependsOn(tasks.test)
-
     reports {
         xml.isEnabled = true
         csv.isEnabled = false
     }
+}
+
+tasks.create<Task>("checkLocal") {
+    dependsOn("detekt")
+    dependsOn("testLocal")
 }
 
 detekt {
