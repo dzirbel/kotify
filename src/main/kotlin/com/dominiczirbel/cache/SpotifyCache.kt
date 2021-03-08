@@ -30,6 +30,7 @@ import java.io.File
 object SpotifyCache {
     @Serializable
     private data class Library(
+        val currentUser: String? = null,
         val albums: List<String>? = null,
         val artists: List<String>? = null,
         val tracks: List<String>? = null
@@ -160,6 +161,21 @@ object SpotifyCache {
                     .also { cache.putAll(it) }
                     .map { it.id }
                     .also { tracks -> updateLibrary { copy(tracks = tracks) } }
+        }
+    }
+
+    object UsersProfile {
+        suspend fun getCurrentUser(): PrivateUser {
+            val id = library.currentUser
+                ?: Spotify.UsersProfile.getCurrentUser()
+                    .also { cache.put(it) }
+                    .also { user -> updateLibrary { copy(currentUser = user.id) } }
+                    .id
+
+            return cache.get(id) {
+                Spotify.UsersProfile.getCurrentUser()
+                    .also { user -> updateLibrary { copy(currentUser = user.id) } }
+            }
         }
     }
 }

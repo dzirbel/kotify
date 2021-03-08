@@ -1,9 +1,13 @@
 package com.dominiczirbel.network.model
 
+import com.dominiczirbel.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-interface User {
+interface User : CacheableObject {
+    /** The Spotify user ID for this user. */
+    override val id: String
+
     /** The name displayed on the user’s profile. null if not available. */
     val displayName: String?
 
@@ -15,9 +19,6 @@ interface User {
 
     /** A link to the Web API endpoint for this user. */
     val href: String
-
-    /** The Spotify user ID for this user. */
-    val id: String
 
     /** The user’s profile image. */
     val images: List<Image>?

@@ -4,18 +4,20 @@ import androidx.compose.desktop.AppWindow
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.darkColors
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.oauth.AccessToken
 import com.dominiczirbel.ui.AuthenticationDialog
 import com.dominiczirbel.ui.Root
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import okhttp3.OkHttpClient
 import javax.swing.SwingUtilities
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
+@FlowPreview
+@ExperimentalCoroutinesApi
 @ExperimentalTime
 fun main() {
     val okHttpClient = OkHttpClient.Builder()
@@ -45,12 +47,13 @@ fun main() {
             .apply { maximize() }
             .show {
                 MaterialTheme(colors = darkColors()) {
-                    val authenticating = remember { mutableStateOf<Boolean?>(!AccessToken.Cache.hasToken) }
-                    if (authenticating.value == true) {
+                    val accessToken = AccessToken.Cache.state()
+
+                    if (accessToken.value == null) {
                         Text("Authenticating...")
                         AuthenticationDialog(
-                            onDismissRequest = { authenticating.value = null },
-                            onAuthenticated = { authenticating.value = false }
+                            onDismissRequest = { },
+                            onAuthenticated = { }
                         )
                     } else {
                         Root()
