@@ -107,7 +107,7 @@ tasks.create<Task>("checkLocal") {
 }
 
 detekt {
-    input = files("src/main/kotlin", "src/test/kotlin")
+    input = files("src")
     config = files("detekt-config.yml")
 }
 

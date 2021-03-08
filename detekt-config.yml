@@ -67,7 +67,7 @@ complexity:
   LongMethod:
     active: false
     threshold: 60
-    excludes: '**/test/**'
+    excludes: ['**/test/**', '**/testFixtures/**']
   LongParameterList:
     active: true
     functionThreshold: 10
@@ -88,14 +88,14 @@ complexity:
     active: true
   StringLiteralDuplication:
     active: false
-    excludes: ['**/test/**']
+    excludes: ['**/test/**', '**/testFixtures/**']
     threshold: 3
     ignoreAnnotation: true
     excludeStringsWithLessThan5Characters: true
     ignoreStringsRegex: '$^'
   TooManyFunctions:
     active: true
-    excludes: ['**/test/**']
+    excludes: ['**/test/**', '**/testFixtures/**']
     thresholdInFiles: 25
     thresholdInClasses: 25
     thresholdInInterfaces: 10
@@ -156,7 +156,7 @@ exceptions:
     methodNames: [toString, hashCode, equals, finalize]
   InstanceOfCheckForException:
     active: true
-    excludes: ['**/test/**']
+    excludes: ['**/test/**', '**/testFixtures/**']
   NotImplementedDeclaration:
     active: true
   PrintStackTrace:
@@ -188,7 +188,7 @@ exceptions:
     active: true
   TooGenericExceptionCaught:
     active: true
-    excludes: '**/test/**'
+    excludes: ['**/test/**', '**/testFixtures/**']
     exceptionNames:
       - ArrayIndexOutOfBoundsException
       - Error
@@ -446,7 +446,7 @@ potential-bugs:
     active: true
   LateinitUsage:
     active: false
-    excludes: ['**/test/**']
+    excludes: ['**/test/**', '**/testFixtures/**']
     excludeAnnotatedProperties: []
     ignoreOnClassesPattern: ''
   MapGetWithNotNullAssertionOperator:
@@ -529,7 +529,7 @@ style:
     maxJumpCount: 1
   MagicNumber:
     active: true
-    excludes: ['**/test/**']
+    excludes: ['**/test/**', '**/testFixtures/**']
     ignoreNumbers: ['-1', '0', '1', '2']
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: true

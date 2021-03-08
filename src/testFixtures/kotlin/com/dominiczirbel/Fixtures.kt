@@ -659,8 +659,8 @@ object Fixtures {
     )
 
     /**
-     * Converts this multi-line string to a single-line one, with the indents and newlines removed (and replaced with single
-     * spaces).
+     * Converts this multi-line string to a single-line one, with the indents and newlines removed (and replaced with
+     * single spaces).
      */
     private fun String.toSingleLine(): String {
         return this.trimIndent().trim('\n').replace('\n', ' ')
