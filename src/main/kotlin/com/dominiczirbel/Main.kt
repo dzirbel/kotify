@@ -9,15 +9,11 @@ import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.oauth.AccessToken
 import com.dominiczirbel.ui.AuthenticationDialog
 import com.dominiczirbel.ui.Root
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import okhttp3.OkHttpClient
 import javax.swing.SwingUtilities
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
-@FlowPreview
-@ExperimentalCoroutinesApi
 @ExperimentalTime
 fun main() {
     val okHttpClient = OkHttpClient.Builder()

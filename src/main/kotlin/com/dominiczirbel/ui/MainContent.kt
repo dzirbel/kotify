@@ -32,7 +32,6 @@ import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.theme.disabled
 import com.dominiczirbel.ui.util.RemoteState
 import com.dominiczirbel.ui.util.mutate
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 object ArtistsPage : Page {
     override fun toString() = "artists"
@@ -46,7 +45,6 @@ object TracksPage : Page {
     override fun toString() = "tracks"
 }
 
-@ExperimentalCoroutinesApi
 @Composable
 fun MainContent(pageStack: MutableState<PageStack>) {
     Column {
@@ -107,7 +105,6 @@ fun MainContent(pageStack: MutableState<PageStack>) {
     }
 }
 
-@ExperimentalCoroutinesApi
 @Composable
 private fun DebugMenuHeader() {
     val currentUserState = RemoteState.of { SpotifyCache.UsersProfile.getCurrentUser() }

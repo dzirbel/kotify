@@ -16,14 +16,10 @@ import com.dominiczirbel.network.model.PrivateUser
 import com.dominiczirbel.network.oauth.AccessToken
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import java.time.Instant
 
 private val MAX_WIDTH = 1_000.dp
 
-@FlowPreview
-@ExperimentalCoroutinesApi
 @Composable
 fun DebugMenu(user: PrivateUser) {
     val token = AccessToken.Cache.state().value

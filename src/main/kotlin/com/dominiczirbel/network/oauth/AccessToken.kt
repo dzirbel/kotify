@@ -6,8 +6,6 @@ import androidx.compose.runtime.collectAsState
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.await
 import com.dominiczirbel.network.bodyFromJson
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.runBlocking
@@ -60,7 +58,6 @@ data class AccessToken(
      * This is used to manage access tokens, typically granted by [OAuth], and allows storing the current token and
      * refreshing it when it is expired.
      */
-    @ExperimentalCoroutinesApi
     object Cache {
         /**
          * The file at which the access token is saved, relative to the current working directory.
@@ -166,7 +163,6 @@ data class AccessToken(
         /**
          * Returns a live [State] of the current [AccessToken] in the cache.
          */
-        @FlowPreview
         @Composable
         fun state(): State<AccessToken?> {
             return channel.asFlow().collectAsState(getFromCache())
