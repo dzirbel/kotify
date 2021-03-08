@@ -3,7 +3,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
-    const val coroutines = "1.4.2" // https://github.com/Kotlin/kotlinx.coroutines
+    const val coroutines = "1.4.3" // https://github.com/Kotlin/kotlinx.coroutines
     const val detekt = "1.15.0" // https://github.com/detekt/detekt; also update plugin version
     const val jacoco = "0.8.6" // https://github.com/jacoco/jacoco
     const val junit = "5.7.1" // https://junit.org/junit5/
