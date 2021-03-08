@@ -17,8 +17,6 @@ import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.encoding.decodeStructure
-import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import java.io.File
@@ -33,7 +31,7 @@ import kotlin.reflect.KClass
  * This allows for recursive addition of objects attached to a single object, for example if fetching an album also
  * returns a list of its tracks, the track objects can be individually cached as well.
  *
- * TODO don't save associated objects as part of the cache
+ * TODO don't save associated objects as part of the cache? (but we need to re-associate them when loading)
  */
 interface CacheableObject {
     /**
@@ -107,6 +105,8 @@ data class CacheObject(
     )
 
     companion object {
+        private val hashes: MutableMap<KClass<*>, Int> = mutableMapOf()
+
         /**
          * Creates a hash of the fields and methods of this [KClass], to verify that the fields are the same when
          * deserializing as when they were serialized.
@@ -115,14 +115,17 @@ data class CacheObject(
          * implementation is necessary.
          */
         private fun KClass<*>.hashFields(): Int {
-            val fields = java.fields
-                .map { field -> field.name + field.type.canonicalName }
-                .sorted()
-            val methods = java.methods
-                .map { method -> method.name + method.parameters.joinToString { it.name + it.type.canonicalName } }
-                .sorted()
+            return hashes.getOrPut(this) {
+                val fields = java.fields
+                    .map { field -> field.name + field.type.canonicalName }
+                    .sorted()
+                val methods = java.methods
+                    .map { method -> method.name + method.parameters.joinToString { it.name + it.type.canonicalName } }
+                    .sorted()
 
-            return fields.hashCode() + (13 * methods.hashCode())
+                @Suppress("UnnecessaryParentheses", "MagicNumber")
+                fields.hashCode() + (13 * methods.hashCode())
+            }
         }
     }
 
@@ -221,7 +224,7 @@ data class CacheObject(
         /**
          * Encodes the structure described by [descriptor].
          *
-         * Avoids using [Encoder.encodeStructure] since it swallows exceptions in [block] if the
+         * Avoids using [kotlinx.serialization.encoding.encodeStructure] since it swallows exceptions in [block] if the
          * [CompositeEncoder.endStructure] calls also throws an error, which it typically does if [block] fails.
          */
         @ExperimentalSerializationApi
@@ -235,7 +238,7 @@ data class CacheObject(
         /**
          * Decodes the structure described by [descriptor].
          *
-         * Avoids using [Decoder.decodeStructure] since it swallows exceptions in [block] if the
+         * Avoids using [kotlinx.serialization.encoding.decodeStructure] since it swallows exceptions in [block] if the
          * [CompositeDecoder.endStructure] calls also throws an error, which it typically does if [block] fails.
          */
         @ExperimentalSerializationApi
@@ -259,19 +262,15 @@ data class CacheObject(
  * An optional [ttlStrategy] can limit the values in the cache to observe an arbitrary [TTLStrategy]. Once the
  * [ttlStrategy] marks an object as invalid, it will no longer appear in any of the cache accessors, e.g. [cache],
  * [get], etc., but may only be removed from memory once it is attempted to be accessed.
- *
- * TODO thread safety
- * TODO test saveOnUpdate
  */
 class Cache(
     private val file: File,
-    private val saveOnUpdate: Boolean = false,
+    val saveOnChange: Boolean = false,
     private val ttlStrategy: TTLStrategy = TTLStrategy.AlwaysValid,
     private val replacementStrategy: ReplacementStrategy = ReplacementStrategy.AlwaysReplace
 ) {
     private val json = Json {
         encodeDefaults = true
-        prettyPrint = true
     }
 
     private val _cache: MutableMap<String, CacheObject> = mutableMapOf()
@@ -280,37 +279,64 @@ class Cache(
 
     /**
      * The full set of valid, in-memory [CacheObject]s.
-     *
-     * TODO doesn't actually remove expired objects from the cache, only from the returned map
      */
     val cache: Map<String, CacheObject>
-        get() = _cache.filterValues { ttlStrategy.isValid(it) }
+        get() = synchronized(_cache) { removeExpired() }
 
     /**
      * Gets the [CacheObject] associated with [id], if it exists in the in-memory cache and is still valid according to
      * [ttlStrategy].
+     *
+     * If the value is expired according to [ttlStrategy] null is returned and it is removed from the in-memory cache,
+     * but it is _not_ saved to disk, regardless of [saveOnChange]. Such writes to disk would almost always be
+     * unnecessary and too costly.
      */
     fun getCached(id: String): CacheObject? {
-        return _cache[id]?.let { cacheObject ->
-            cacheObject.takeIf { ttlStrategy.isValid(it) } ?: null.also { invalidate(id) }
-        }
+        return synchronized(_cache) { getCachedInternal(id) }
     }
 
     /**
      * Writes [value] and all its [CacheableObject.recursiveCacheableObjects] to the in-memory cache, using their
-     * [CacheableObject.id].
-     *
-     * Any [CacheableObject]s with a null [CacheableObject.id] will be ignored.
+     * [CacheableObject.id]s, returning true if any values were added or changed in the cache.
      *
      * If a value is already cached with a certain id, it will be removed as determined by the [replacementStrategy].
      *
      * [cacheTime] is the time the object(s) should be considered cached; by default this is the current system time but
      * may be an arbitrary value, e.g. to reflect a value which was fetched previously and thus may already be
      * out-of-date.
+     *
+     * If [saveOnChange] is true (defaulting to [Cache.saveOnChange]) and any values were added or changed in the cache,
+     * [save] will be called.
      */
-    fun put(value: CacheableObject, cacheTime: Long = System.currentTimeMillis()) {
-        listOf(value).plus(value.recursiveCacheableObjects).forEach { cacheableObject ->
-            cacheableObject.id?.let { id -> put(id, cacheableObject, cacheTime) }
+    fun put(
+        value: CacheableObject,
+        cacheTime: Long = System.currentTimeMillis(),
+        saveOnChange: Boolean = this.saveOnChange
+    ): Boolean {
+        return synchronized(_cache) {
+            val change = putInternal(value, cacheTime)
+            saveInternal(shouldSave = saveOnChange && change)
+            change
+        }
+    }
+
+    /**
+     * Writes all the [values] (and all their recursive [CacheableObject.recursiveCacheableObjects]) to the in-memory
+     * cache, using their [CacheableObject.id]s, returning true if any values were added or changed in the cache.
+     *
+     * If a value is already cached with a certain id, it will be removed as determined by the [replacementStrategy].
+     *
+     * If [saveOnChange] is true (defaulting to [Cache.saveOnChange]) and any values were added or changed in the cache,
+     * [save] will be called.
+     */
+    fun putAll(values: Iterable<CacheableObject>, saveOnChange: Boolean = this.saveOnChange): Boolean {
+        return synchronized(_cache) {
+            var change = false
+            values.forEach {
+                change = putInternal(it) || change
+            }
+            saveInternal(shouldSave = change && saveOnChange)
+            change
         }
     }
 
@@ -323,32 +349,39 @@ class Cache(
      * [cacheTime] is the time the object should be considered cached; by default this is the current system time but
      * may be an arbitrary value, e.g. to reflect a value which was fetched previously and thus may already be
      * out-of-date.
+     *
+     * If [saveOnChange] is true (defaulting to [Cache.saveOnChange]) and the value was written to the cache, the
+     * in-memory cache will be written to disk.
      */
-    fun put(id: String, value: Any, cacheTime: Long = System.currentTimeMillis()): Boolean {
-        val current = getCached(id)?.obj
-        val replace = current?.let { replacementStrategy.replace(it, value) } != false
-        if (replace) {
-            _cache[id] = CacheObject(id = id, obj = value, cacheTime = cacheTime)
-            onUpdate()
+    fun put(
+        id: String,
+        value: Any,
+        cacheTime: Long = System.currentTimeMillis(),
+        saveOnChange: Boolean = this.saveOnChange
+    ): Boolean {
+        return synchronized(_cache) {
+            val change = putInternal(id = id, value = value, cacheTime = cacheTime)
+            saveInternal(shouldSave = change && saveOnChange)
+            change
         }
-
-        return replace
     }
 
     /**
      * Gets the value of type [T] in the cache for [id], or if the value for [id] does not exist or has a type other
      * than [T], fetches a new value from [remote], puts it in the cache, and returns it.
      *
-     * Note that if the remotely-fetched value is a [CacheableObject], all of its
-     * [CacheableObject.recursiveCacheableObjects] will be added to the cache as well.
+     * If the remotely-fetched value is a [CacheableObject], all of its [CacheableObject.recursiveCacheableObjects] will
+     * be added to the cache as well.
      */
-    inline fun <reified T : Any> get(id: String, remote: () -> T): T {
+    inline fun <reified T : Any> get(id: String, saveOnChange: Boolean = this.saveOnChange, remote: () -> T): T {
         return getCached(id)?.obj as? T
-            ?: remote().also { if (it is CacheableObject) put(it) else put(id, it) }
-    }
-
-    inline fun <reified T : Any> update(id: String, update: (T?) -> T): T {
-        return update(getCached(id)?.obj as? T).also { put(id, it) }
+            ?: remote().also {
+                if (it is CacheableObject) {
+                    put(it, saveOnChange = saveOnChange)
+                } else {
+                    put(id, it, saveOnChange = saveOnChange)
+                }
+            }
     }
 
     /**
@@ -360,19 +393,24 @@ class Cache(
 
     /**
      * Invalidates the cached value with the given [id], removing it from the cache and returning it.
+     *
+     * If there was a cached value to invalidate and [saveOnChange] is true (defaulting to [Cache.saveOnChange]), the
+     * cache will be written to disk.
      */
-    fun invalidate(id: String): CacheObject? {
-        return _cache.remove(id).also { onUpdate() }
+    fun invalidate(id: String, saveOnChange: Boolean = this.saveOnChange): CacheObject? {
+        return synchronized(_cache) {
+            _cache.remove(id)?.also { saveInternal(shouldSave = saveOnChange) }
+        }
     }
 
     /**
-     * Saves the current in-memory cache to [file] as JSON.
+     * Writes the current in-memory cache to [file] as JSON, removing any values that have expired according to
+     * [ttlStrategy].
      */
-    fun save(force: Boolean = false) {
-        if (force || _cache.hashCode() != lastSaveHash) {
-            val content = json.encodeToString(cache)
-            Files.write(file.toPath(), content.split('\n'))
-            lastSaveHash = _cache.hashCode()
+    fun save() {
+        synchronized(_cache) {
+            removeExpired()
+            saveInternal(shouldSave = true)
         }
     }
 
@@ -382,21 +420,107 @@ class Cache(
      * Simply clears the cache if the file does not exist.
      */
     fun load() {
-        _cache.clear()
-        if (file.canRead()) {
-            _cache.putAll(
-                FileReader(file)
-                    .use { it.readLines().joinToString(separator = " ") }
-                    .let { json.decodeFromString<Map<String, CacheObject>>(it) }
-                    .filterValues { ttlStrategy.isValid(it) }
-            )
+        synchronized(_cache) {
+            _cache.clear()
+            if (file.canRead()) {
+                _cache.putAll(
+                    FileReader(file)
+                        .use { it.readLines().joinToString(separator = " ") }
+                        .let { json.decodeFromString<Map<String, CacheObject>>(it) }
+                        .filterValues { ttlStrategy.isValid(it) }
+                )
+            }
+            lastSaveHash = _cache.hashCode()
         }
-        lastSaveHash = _cache.hashCode()
     }
 
-    private fun onUpdate() {
-        if (saveOnUpdate) {
-            save()
+    /**
+     * Removes values from [_cache] which are expired according to [ttlStrategy], and returns a copy of [_cache] with
+     * the expired values removed.
+     *
+     * Must be externally synchronized on [_cache].
+     */
+    private fun removeExpired(): Map<String, CacheObject> {
+        val filtered = mutableMapOf<String, CacheObject>()
+        var anyFiltered = false
+        for (entry in _cache) {
+            if (ttlStrategy.isValid(entry.value)) {
+                filtered[entry.key] = entry.value
+            } else {
+                anyFiltered = true
+            }
+        }
+
+        if (anyFiltered) {
+            _cache.clear()
+            _cache.putAll(filtered)
+        }
+
+        return filtered
+    }
+
+    /**
+     * Gets the cached value under [id], returning null and removing it from the in-memory cache if it is expired
+     * according to [ttlStrategy].
+     *
+     * Must be externally synchronized on [_cache].
+     */
+    private fun getCachedInternal(id: String): CacheObject? {
+        return _cache[id]?.let { cacheObject ->
+            cacheObject.takeIf { ttlStrategy.isValid(it) } ?: null.also { _cache.remove(id) }
+        }
+    }
+
+    /**
+     * Puts [value] in the in-memory cache under [id] if the [replacementStrategy] allows it, returning true if the
+     * value was added or changed.
+     *
+     * Must be externally synchronized on [_cache].
+     */
+    private fun putInternal(
+        id: String,
+        value: Any,
+        cacheTime: Long = System.currentTimeMillis()
+    ): Boolean {
+        val current = getCachedInternal(id)?.obj
+        val replace = current?.let { replacementStrategy.replace(it, value) } != false
+        if (replace) {
+            _cache[id] = CacheObject(id = id, obj = value, cacheTime = cacheTime)
+        }
+
+        return replace
+    }
+
+    /**
+     * Puts [value] and all its [CacheableObject.recursiveCacheableObjects] in the in-memory cache if the
+     * [replacementStrategy] allows it, returning true if any value was added or changed.
+     *
+     * Must be externally synchronized on [_cache].
+     */
+    private fun putInternal(value: CacheableObject, cacheTime: Long = System.currentTimeMillis()): Boolean {
+        var change = false
+        listOf(value).plus(value.recursiveCacheableObjects).forEach { cacheableObject ->
+            cacheableObject.id?.let { id ->
+                change = putInternal(id = id, value = cacheableObject, cacheTime = cacheTime) || change
+            }
+        }
+        return change
+    }
+
+    /**
+     * Writes the current in-memory cache to [file] as JSON if [shouldSave] is true (and it has changed since the last
+     * save/load).
+     *
+     * Must be externally synchronized on [_cache].
+     */
+    private fun saveInternal(shouldSave: Boolean) {
+        if (shouldSave) {
+            val currentHash = _cache.hashCode()
+            if (currentHash != lastSaveHash) {
+                val content = json.encodeToString(_cache)
+                Files.writeString(file.toPath(), content)
+                lastSaveHash = currentHash
+            }
         }
     }
 

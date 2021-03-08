@@ -38,7 +38,7 @@ object SpotifyCache {
     private val cache = Cache(
         file = File("cache.json"),
 
-        saveOnUpdate = true,
+        saveOnChange = true,
 
         ttlStrategy = Cache.TTLStrategy.AlwaysValid,
 
@@ -128,7 +128,7 @@ object SpotifyCache {
                 ?: Spotify.Library.getSavedAlbums(limit = Spotify.MAX_LIMIT)
                     .fetchAll<SavedAlbum>()
                     .map { it.album }
-                    .onEach { cache.put(it) }
+                    .also { cache.putAll(it) }
                     .map { it.id }
                     .also { albums -> updateLibrary { copy(albums = albums) } }
         }
@@ -142,7 +142,7 @@ object SpotifyCache {
             return library.artists
                 ?: Spotify.Follow.getFollowedArtists(limit = Spotify.MAX_LIMIT)
                     .fetchAllCustom { Spotify.get<Spotify.ArtistsCursorPagingModel>(it).artists }
-                    .onEach { cache.put(it) }
+                    .also { cache.putAll(it) }
                     .map { it.id }
                     .also { artists -> updateLibrary { copy(artists = artists) } }
         }
@@ -157,7 +157,7 @@ object SpotifyCache {
                 ?: Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT)
                     .fetchAll<SavedTrack>()
                     .map { it.track }
-                    .onEach { cache.put(it) }
+                    .also { cache.putAll(it) }
                     .map { it.id }
                     .also { tracks -> updateLibrary { copy(tracks = tracks) } }
         }

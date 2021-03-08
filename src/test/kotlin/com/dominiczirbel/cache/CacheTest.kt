@@ -9,6 +9,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
 
+// TODO test saveOnChange
+// TODO test concurrency
 internal class CacheTest {
     @Serializable
     private data class SimpleObject(
@@ -41,7 +43,8 @@ internal class CacheTest {
         val obj = SimpleObject(id = "id", name = "object")
 
         assertThat(cache.getCached("id")).isNull()
-        cache.put("id", obj)
+
+        assertThat(cache.put("id", obj)).isTrue()
 
         val cachedObject = requireNotNull(cache.getCached("id"))
         assertThat(cachedObject.obj).isSameInstanceAs(obj)
@@ -74,15 +77,15 @@ internal class CacheTest {
         assertThat(calls).isEqualTo(0)
         assertThat(cache.allOfType<SimpleObject>()).isEmpty()
 
-        assertThat(cache.get("id1", ::getObj1)).isEqualTo(obj1)
+        assertThat(cache.get("id1", remote = ::getObj1)).isEqualTo(obj1)
         assertThat(calls).isEqualTo(1)
-        assertThat(cache.get("id1", ::getObj1)).isEqualTo(obj1)
+        assertThat(cache.get("id1", remote = ::getObj1)).isEqualTo(obj1)
         assertThat(calls).isEqualTo(1)
-        assertThat(cache.get("id1", ::getObj2)).isEqualTo(obj1)
+        assertThat(cache.get("id1", remote = ::getObj2)).isEqualTo(obj1)
         assertThat(calls).isEqualTo(1)
         assertThat(cache.allOfType<SimpleObject>()).containsExactly(obj1)
 
-        assertThat(cache.get("id2", ::getObj2)).isEqualTo(obj2)
+        assertThat(cache.get("id2", remote = ::getObj2)).isEqualTo(obj2)
         assertThat(calls).isEqualTo(2)
         assertThat(cache.allOfType<SimpleObject>()).containsExactly(obj1, obj2)
     }
