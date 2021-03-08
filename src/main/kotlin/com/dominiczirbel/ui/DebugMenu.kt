@@ -20,7 +20,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import java.time.Instant
 
-private val MAX_WIDTH = 1000.dp
+private val MAX_WIDTH = 1_000.dp
 
 @FlowPreview
 @ExperimentalCoroutinesApi
