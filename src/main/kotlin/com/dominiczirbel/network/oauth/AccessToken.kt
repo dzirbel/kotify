@@ -162,6 +162,8 @@ data class AccessToken(
 
         /**
          * Returns a live [State] of the current [AccessToken] in the cache.
+         *
+         * TODO only expose the Flow (and remember{} it)
          */
         @Composable
         fun state(): State<AccessToken?> {
