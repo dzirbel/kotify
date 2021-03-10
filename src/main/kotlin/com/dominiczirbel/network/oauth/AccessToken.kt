@@ -61,6 +61,8 @@ data class AccessToken(
     object Cache {
         /**
          * The file at which the access token is saved, relative to the current working directory.
+         *
+         * TODO move to cache dir
          */
         internal val file = File("access_token.json")
 

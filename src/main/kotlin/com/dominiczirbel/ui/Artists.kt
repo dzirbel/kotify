@@ -21,10 +21,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.cache.SpotifyCache
+import com.dominiczirbel.cache.SpotifyImageCache
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
-import com.dominiczirbel.ui.util.LoadImage
 import com.dominiczirbel.ui.util.RemoteState
+import com.dominiczirbel.ui.util.callbackAsState
 
 private val IMAGE_SIZE = 400.dp
 private val CELL_ROUNDING = 16.dp
@@ -51,7 +52,9 @@ fun BoxScope.Artists() {
                 verticalCellAlignment = Alignment.Top
             ) { artist ->
                 Column(Modifier.clip(RoundedCornerShape(CELL_ROUNDING)).clickable { }.padding(Dimens.space3)) {
-                    val imageState = artist.images.firstOrNull()?.let { LoadImage(url = it.url) }
+                    val imageState = artist.images.firstOrNull()?.url?.let { url ->
+                        callbackAsState(key = url) { SpotifyImageCache.get(url = url) }
+                    }
                     val imageBitmap = imageState?.value
 
                     // TODO extract to a common LoadedImage function and use a better placeholder

@@ -2,5 +2,5 @@
 /.idea/
 /build/
 access_token.json
-cache.json
+/cache/
 b2.properties

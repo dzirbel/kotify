@@ -36,8 +36,17 @@ object SpotifyCache {
         val tracks: List<String>? = null
     )
 
+    /**
+     * The base directory for all cache files.
+     */
+    val CACHE_DIR by lazy {
+        File("cache")
+            .also { it.mkdirs() }
+            .also { require(it.isDirectory) { "could not create cache directory $it" } }
+    }
+
     private val cache = Cache(
-        file = File("cache.json"),
+        file = CACHE_DIR.resolve("cache.json"),
 
         saveOnChange = true,
 
