@@ -23,6 +23,8 @@ import java.io.File
 import java.io.FileReader
 import java.nio.file.Files
 import kotlin.reflect.KClass
+import kotlin.time.Duration
+import kotlin.time.measureTime
 
 /**
  * An object which can be added to a [Cache] which provides its own [id] and an optional set of additional
@@ -250,6 +252,20 @@ data class CacheObject(
     }
 }
 
+sealed class CacheEvent {
+    abstract val cache: Cache
+
+    data class Load(override val cache: Cache, val duration: Duration, val file: File) : CacheEvent()
+    data class Save(override val cache: Cache, val duration: Duration, val file: File) : CacheEvent()
+    data class Dump(override val cache: Cache) : CacheEvent()
+    data class Hit(override val cache: Cache, val id: String, val value: CacheObject) : CacheEvent()
+    data class Miss(override val cache: Cache, val id: String) : CacheEvent()
+    data class Update(override val cache: Cache, val id: String, val previous: CacheObject?, val new: CacheObject) :
+        CacheEvent()
+
+    data class Invalidate(override val cache: Cache, val id: String, val value: CacheObject) : CacheEvent()
+}
+
 /**
  * A generic, JSON-based local disk cache for arbitrary objects.
  *
@@ -262,12 +278,15 @@ data class CacheObject(
  * An optional [ttlStrategy] can limit the values in the cache to observe an arbitrary [TTLStrategy]. Once the
  * [ttlStrategy] marks an object as invalid, it will no longer appear in any of the cache accessors, e.g. [cache],
  * [get], etc., but may only be removed from memory once it is attempted to be accessed.
+ *
+ * [eventHandler] will be invoked whenever this [Cache] processes a [CacheEvent].
  */
 class Cache(
     private val file: File,
     val saveOnChange: Boolean = false,
     private val ttlStrategy: TTLStrategy = TTLStrategy.AlwaysValid,
-    private val replacementStrategy: ReplacementStrategy = ReplacementStrategy.AlwaysReplace
+    private val replacementStrategy: ReplacementStrategy = ReplacementStrategy.AlwaysReplace,
+    private val eventHandler: (List<CacheEvent>) -> Unit = { }
 ) {
     private val json = Json {
         encodeDefaults = true
@@ -277,11 +296,13 @@ class Cache(
 
     private var lastSaveHash: Int? = null
 
+    private val cacheEventQueue = mutableListOf<CacheEvent>()
+
     /**
      * The full set of valid, in-memory [CacheObject]s.
      */
     val cache: Map<String, CacheObject>
-        get() = synchronized(_cache) { removeExpired() }
+        get() = synchronized(_cache) { removeExpired() }.also { eventHandler(listOf(CacheEvent.Dump(this))) }
 
     /**
      * Gets the [CacheObject] associated with [id], if it exists in the in-memory cache and is still valid according to
@@ -292,7 +313,7 @@ class Cache(
      * unnecessary and too costly.
      */
     fun getCached(id: String): CacheObject? {
-        return synchronized(_cache) { getCachedInternal(id) }
+        return synchronized(_cache) { getCachedInternal(id) }.also { flushCacheEvents() }
     }
 
     /**
@@ -317,7 +338,7 @@ class Cache(
             val change = putInternal(value, cacheTime)
             saveInternal(shouldSave = saveOnChange && change)
             change
-        }
+        }.also { flushCacheEvents() }
     }
 
     /**
@@ -337,7 +358,7 @@ class Cache(
             }
             saveInternal(shouldSave = change && saveOnChange)
             change
-        }
+        }.also { flushCacheEvents() }
     }
 
     /**
@@ -363,7 +384,7 @@ class Cache(
             val change = putInternal(id = id, value = value, cacheTime = cacheTime)
             saveInternal(shouldSave = change && saveOnChange)
             change
-        }
+        }.also { flushCacheEvents() }
     }
 
     /**
@@ -399,8 +420,10 @@ class Cache(
      */
     fun invalidate(id: String, saveOnChange: Boolean = this.saveOnChange): CacheObject? {
         return synchronized(_cache) {
-            _cache.remove(id)?.also { saveInternal(shouldSave = saveOnChange) }
-        }
+            _cache.remove(id)
+                ?.also { queueCacheEvent(CacheEvent.Invalidate(cache = this, id = id, value = it)) }
+                ?.also { saveInternal(shouldSave = saveOnChange) }
+        }?.also { flushCacheEvents() }
     }
 
     /**
@@ -412,6 +435,7 @@ class Cache(
             removeExpired()
             saveInternal(shouldSave = true)
         }
+        flushCacheEvents()
     }
 
     /**
@@ -420,17 +444,24 @@ class Cache(
      * Simply clears the cache if the file does not exist.
      */
     fun load() {
+        var duration: Duration? = null
         synchronized(_cache) {
             _cache.clear()
             if (file.canRead()) {
-                _cache.putAll(
-                    FileReader(file)
-                        .use { it.readLines().joinToString(separator = " ") }
-                        .let { json.decodeFromString<Map<String, CacheObject>>(it) }
-                        .filterValues { ttlStrategy.isValid(it) }
-                )
+                duration = measureTime {
+                    _cache.putAll(
+                        FileReader(file)
+                            .use { it.readLines().joinToString(separator = " ") }
+                            .let { json.decodeFromString<Map<String, CacheObject>>(it) }
+                            .filterValues { ttlStrategy.isValid(it) }
+                    )
+                }
             }
             lastSaveHash = _cache.hashCode()
+        }
+
+        duration?.let {
+            eventHandler(listOf(CacheEvent.Load(cache = this, duration = it, file = file)))
         }
     }
 
@@ -463,11 +494,18 @@ class Cache(
      * Gets the cached value under [id], returning null and removing it from the in-memory cache if it is expired
      * according to [ttlStrategy].
      *
-     * Must be externally synchronized on [_cache].
+     * Must be externally synchronized on [_cache] and usages should call [flushCacheEvents].
      */
     private fun getCachedInternal(id: String): CacheObject? {
-        return _cache[id]?.let { cacheObject ->
-            cacheObject.takeIf { ttlStrategy.isValid(it) } ?: null.also { _cache.remove(id) }
+        val value = _cache[id]
+        if (value == null) {
+            queueCacheEvent(CacheEvent.Miss(this, id))
+        }
+
+        return value?.let { cacheObject ->
+            cacheObject.takeIf { ttlStrategy.isValid(it) }
+                ?.also { queueCacheEvent(CacheEvent.Hit(cache = this, id = id, value = it)) }
+                ?: null.also { _cache.remove(id) }
         }
     }
 
@@ -475,7 +513,7 @@ class Cache(
      * Puts [value] in the in-memory cache under [id] if the [replacementStrategy] allows it, returning true if the
      * value was added or changed.
      *
-     * Must be externally synchronized on [_cache].
+     * Must be externally synchronized on [_cache] and usages should call [flushCacheEvents].
      */
     private fun putInternal(
         id: String,
@@ -485,7 +523,11 @@ class Cache(
         val current = getCachedInternal(id)?.obj
         val replace = current?.let { replacementStrategy.replace(it, value) } != false
         if (replace) {
-            _cache[id] = CacheObject(id = id, obj = value, cacheTime = cacheTime)
+            val previous = _cache[id]
+            val new = CacheObject(id = id, obj = value, cacheTime = cacheTime)
+            _cache[id] = new
+
+            queueCacheEvent(CacheEvent.Update(this, id, previous = previous, new = new))
         }
 
         return replace
@@ -495,7 +537,7 @@ class Cache(
      * Puts [value] and all its [CacheableObject.recursiveCacheableObjects] in the in-memory cache if the
      * [replacementStrategy] allows it, returning true if any value was added or changed.
      *
-     * Must be externally synchronized on [_cache].
+     * Must be externally synchronized on [_cache] and usages should call [flushCacheEvents].
      */
     private fun putInternal(value: CacheableObject, cacheTime: Long = System.currentTimeMillis()): Boolean {
         var change = false
@@ -511,16 +553,42 @@ class Cache(
      * Writes the current in-memory cache to [file] as JSON if [shouldSave] is true (and it has changed since the last
      * save/load).
      *
-     * Must be externally synchronized on [_cache].
+     * Must be externally synchronized on [_cache] and usages should call [flushCacheEvents].
      */
     private fun saveInternal(shouldSave: Boolean) {
         if (shouldSave) {
             val currentHash = _cache.hashCode()
             if (currentHash != lastSaveHash) {
-                val content = json.encodeToString(_cache)
-                Files.writeString(file.toPath(), content)
+                val duration = measureTime {
+                    val content = json.encodeToString(_cache)
+                    Files.writeString(file.toPath(), content)
+                }
+
+                queueCacheEvent(CacheEvent.Save(cache = this, duration = duration, file = file))
                 lastSaveHash = currentHash
             }
+        }
+    }
+
+    /**
+     * Queues [event] to the [cacheEventQueue], to be later flushed by [flushCacheEvents].
+     *
+     * This avoids calling the [eventHandler] in performance-critical sections of code (i.e. sections which are
+     * synchronized on the cache object) and allows batching events for cases where many operations happen at once.
+     */
+    private fun queueCacheEvent(event: CacheEvent) {
+        synchronized(cacheEventQueue) {
+            cacheEventQueue.add(event)
+        }
+    }
+
+    /**
+     * Calls the [eventHandler] for each event in the [cacheEventQueue] and clears it.
+     */
+    private fun flushCacheEvents() {
+        synchronized(cacheEventQueue) {
+            eventHandler(cacheEventQueue.toList())
+            cacheEventQueue.clear()
         }
     }
 

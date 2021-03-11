@@ -1,16 +1,10 @@
 package com.dominiczirbel.ui
 
-import androidx.compose.foundation.ScrollbarStyleAmbient
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -65,23 +59,11 @@ fun <T : Any> BoxScope.ScrollingPage(state: RemoteState<T>, content: @Composable
                 )
             }
 
-        is RemoteState.Success -> {
-            val scrollState = rememberScrollState(0)
-            Row {
-                Box(Modifier.verticalScroll(scrollState).weight(1f).padding(Dimens.space4)) {
+        is RemoteState.Success ->
+            VerticalScroll {
+                Box(Modifier.padding(Dimens.space4)) {
                     content(state.data)
                 }
-
-                VerticalScrollbar(
-                    modifier = Modifier.align(Alignment.CenterVertically),
-                    adapter = rememberScrollbarAdapter(scrollState),
-                    style = ScrollbarStyleAmbient.current.copy(
-                        thickness = Dimens.scrollbarWidth,
-                        hoverColor = Colors.current.scrollBarHover,
-                        unhoverColor = Colors.current.scrollBarUnhover
-                    )
-                )
             }
-        }
     }
 }

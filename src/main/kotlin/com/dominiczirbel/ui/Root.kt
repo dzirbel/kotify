@@ -12,17 +12,25 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun Root() {
     val leftPanelState = remember { PanelState(initialSize = 500.dp, minSize = 200.dp, minContentSize = 500.dp) }
+    val rightPanelState = remember { PanelState(initialSize = 800.dp, minSize = 250.dp, minContentSize = 500.dp) }
     val pageStack = remember { mutableStateOf(PageStack(ArtistsPage)) }
 
-    Column {
-        SidePanel(
-            modifier = Modifier.fillMaxHeight().weight(1f),
-            direction = PanelDirection.LEFT,
-            state = leftPanelState,
-            panelContent = { LibraryPanel(pageStack = pageStack) },
-            mainContent = { MainContent(pageStack = pageStack) }
-        )
+    SidePanel(
+        direction = PanelDirection.RIGHT,
+        state = rightPanelState,
+        panelContent = { DebugPanel() },
+        mainContent = {
+            Column {
+                SidePanel(
+                    modifier = Modifier.fillMaxHeight().weight(1f),
+                    direction = PanelDirection.LEFT,
+                    state = leftPanelState,
+                    panelContent = { LibraryPanel(pageStack = pageStack) },
+                    mainContent = { MainContent(pageStack = pageStack) }
+                )
 
-        BottomPanel()
-    }
+                BottomPanel()
+            }
+        }
+    )
 }

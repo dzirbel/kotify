@@ -1,5 +1,6 @@
 package com.dominiczirbel.cache
 
+import com.dominiczirbel.Logger
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.model.Album
 import com.dominiczirbel.network.model.Artist
@@ -51,6 +52,8 @@ object SpotifyCache {
         saveOnChange = true,
 
         ttlStrategy = Cache.TTLStrategy.AlwaysValid,
+
+        eventHandler = Logger.Cache::handleCacheEvents,
 
         // TODO handle case where simplified object has been updated, but full is now out of date
         replacementStrategy = object : Cache.ReplacementStrategy {

@@ -11,21 +11,12 @@ import com.dominiczirbel.ui.AuthenticationDialog
 import com.dominiczirbel.ui.Root
 import okhttp3.OkHttpClient
 import javax.swing.SwingUtilities
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTimedValue
 
-@ExperimentalTime
 fun main() {
+    Logger.logToConsole = true
+
     val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            val request = chain.request()
-            println(">> ${request.method} ${request.url}")
-
-            val (response, duration) = measureTimedValue { chain.proceed(request) }
-            println("<< ${response.code} ${response.request.method} ${response.request.url} in $duration")
-
-            response
-        }
+        .addInterceptor(Logger.Network::intercept)
         .build()
 
     Spotify.configuration = Spotify.Configuration(
