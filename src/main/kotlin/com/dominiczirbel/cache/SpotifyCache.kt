@@ -36,7 +36,8 @@ object SpotifyCache {
         val currentUser: String? = null,
         val albums: List<String>? = null,
         val artists: List<String>? = null,
-        val tracks: List<String>? = null
+        val tracks: List<String>? = null,
+        val artistAlbumMap: Map<String, List<String>> = emptyMap()
     )
 
     /**
@@ -104,6 +105,7 @@ object SpotifyCache {
     )
 
     private const val LIBRARY_KEY = "spotify-cache-library"
+//    private const val ARTIST_ALBUM_MAP_KEY = "artist-albums"
 
     private var library: Library
         get() = cache.getCached(LIBRARY_KEY)?.obj as? Library ?: Library()
@@ -170,6 +172,19 @@ object SpotifyCache {
     object Artists {
         suspend fun getArtist(id: String): Artist = cache.get<Artist>(id) { Spotify.Artists.getArtist(id) }
         suspend fun getFullArtist(id: String): FullArtist = cache.get(id) { Spotify.Artists.getArtist(id) }
+
+        suspend fun getArtistAlbums(artistId: String): List<Album> {
+            return library.artistAlbumMap[artistId]
+                ?.map { Albums.getAlbum(it) }
+                ?: Spotify.Artists.getArtistAlbums(id = artistId)
+                    .fetchAll<SimplifiedAlbum>()
+                    .also { cache.putAll(it) }
+                    .also { albums ->
+                        updateLibrary {
+                            copy(artistAlbumMap = artistAlbumMap.plus(artistId to albums.map { requireNotNull(it.id) }))
+                        }
+                    }
+        }
 
         suspend fun getSavedArtists(): List<String> {
             return library.artists

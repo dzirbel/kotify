@@ -37,6 +37,10 @@ object ArtistsPage : Page {
     override fun toString() = "artists"
 }
 
+data class ArtistPage(val artistId: String) : Page {
+    override fun toString() = "artist($artistId)"
+}
+
 object AlbumsPage : Page {
     override fun toString() = "albums"
 }
@@ -95,10 +99,11 @@ fun MainContent(pageStack: MutableState<PageStack>) {
         }
 
         Box(Modifier.fillMaxSize().weight(1f)) {
-            when (pageStack.value.current) {
-                ArtistsPage -> Artists()
+            when (val current = pageStack.value.current) {
+                ArtistsPage -> Artists(pageStack)
                 AlbumsPage -> Albums()
                 TracksPage -> Tracks()
+                is ArtistPage -> Artist(current)
                 else -> error("unknown page type: ${pageStack.value.current}")
             }
         }

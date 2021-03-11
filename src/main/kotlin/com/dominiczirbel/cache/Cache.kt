@@ -430,6 +430,12 @@ class Cache(
             }
     }
 
+    inline fun <reified T : Any> update(id: String, update: (T?) -> T): T {
+        return update(getCached(id)?.obj as? T).also {
+            put(id = id, value = it)
+        }
+    }
+
     /**
      * Gets all the valid values in the cache of type [T].
      */
