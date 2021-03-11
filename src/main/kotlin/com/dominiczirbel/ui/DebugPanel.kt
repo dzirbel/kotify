@@ -12,11 +12,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -24,6 +28,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -31,9 +36,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import com.dominiczirbel.Logger
+import com.dominiczirbel.cache.SpotifyCache
+import com.dominiczirbel.cache.SpotifyImageCache
+import com.dominiczirbel.network.DelayInterceptor
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.collectAsStateSwitchable
+import com.dominiczirbel.util.formatByteSize
 import kotlinx.coroutines.flow.map
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -50,6 +59,7 @@ private const val MAX_EVENTS = 500
 @Composable
 fun DebugPanel() {
     val tabState = remember { mutableStateOf(DebugTab.values().first()) }
+    val tab = tabState.value
 
     Column {
         Column(Modifier.fillMaxHeight().weight(1f)) {
@@ -61,13 +71,21 @@ fun DebugPanel() {
 
             Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
-            EventList(tabState.value.log)
+            Column(Modifier.fillMaxWidth().background(Colors.current.contentBackground).padding(Dimens.space3)) {
+                when (tab) {
+                    DebugTab.NETWORK -> NetworkOptions()
+                    DebugTab.CACHE -> CacheOptions()
+                    DebugTab.IMAGE_CACHE -> ImageCacheOptions()
+                }
+            }
+
+            EventList(tab.log)
         }
 
         Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
         TextButton(
-            onClick = { tabState.value.log.clear() },
+            onClick = { tab.log.clear() },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(0)
         ) {
@@ -154,5 +172,87 @@ private fun EventList(log: Logger) {
                 Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
             }
         }
+    }
+}
+
+@Composable
+private fun NetworkOptions() {
+    val delay = remember { mutableStateOf(DelayInterceptor.delayMs.toString()) }
+    val appliedDelay = remember { mutableStateOf(true) }
+
+    // TODO ideally we might reset to the actual delay value on un-focus
+    OutlinedTextField(
+        modifier = Modifier.fillMaxWidth(),
+        value = delay.value,
+        singleLine = true,
+        textStyle = LocalTextStyle.current.copy(
+            fontSize = Dimens.fontBody
+        ),
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            textColor = Colors.current.text
+        ),
+        isError = !appliedDelay.value,
+        onValueChange = { value ->
+            delay.value = value
+
+            value.toLongOrNull()
+                ?.also { DelayInterceptor.delayMs = it }
+                .also { appliedDelay.value = it != null }
+        },
+        label = {
+            Text("Network delay (ms)", fontSize = Dimens.fontCaption)
+        }
+    )
+}
+
+@Composable
+private fun CacheOptions() {
+    val size = SpotifyCache.sizeFlow.collectAsState(SpotifyCache.size)
+    val sizeOnDisk = SpotifyCache.sizeOnDiskFlow.collectAsState(SpotifyCache.sizeOnDisk)
+    val sizeOnDiskFormatted = remember(sizeOnDisk.value) { formatByteSize(sizeOnDisk.value) }
+
+    Text(
+        text = "${size.value} cached objects; $sizeOnDiskFormatted on disk",
+        fontSize = Dimens.fontBody,
+        color = Colors.current.text
+    )
+
+    Spacer(Modifier.height(Dimens.space2))
+
+    Button(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = { SpotifyCache.clear() }
+    ) {
+        Text(
+            text = "Clear cache",
+            fontSize = Dimens.fontBody,
+            color = Colors.current.text
+        )
+    }
+}
+
+@Composable
+private fun ImageCacheOptions() {
+    val count = SpotifyImageCache.countFlow.collectAsState(SpotifyImageCache.count)
+    val totalSize = SpotifyImageCache.totalSizeFlow.collectAsState(SpotifyImageCache.totalSize)
+    val totalSizeFormatted = remember(totalSize.value) { formatByteSize(totalSize.value.toLong()) }
+
+    Text(
+        text = "${count.value} cached images; $totalSizeFormatted on disk",
+        fontSize = Dimens.fontBody,
+        color = Colors.current.text
+    )
+
+    Spacer(Modifier.height(Dimens.space2))
+
+    Button(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = { SpotifyImageCache.clear() }
+    ) {
+        Text(
+            text = "Clear image cache",
+            fontSize = Dimens.fontBody,
+            color = Colors.current.text
+        )
     }
 }

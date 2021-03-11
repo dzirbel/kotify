@@ -5,6 +5,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import com.dominiczirbel.Logger
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.await
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.sendBlocking
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jetbrains.skija.Image
@@ -30,6 +35,21 @@ object SpotifyImageCache {
         SpotifyCache.CACHE_DIR.resolve("images")
             .also { it.mkdirs() }
             .also { require(it.isDirectory) { "could not create image cache directory $it" } }
+    }
+
+    val count: Int
+        get() = IMAGES_DIR.list()?.size ?: 0
+
+    val totalSize: Int
+        get() = IMAGES_DIR.listFiles()?.sumBy { it.length().toInt() } ?: 0
+
+    private val writeChannel = BroadcastChannel<Unit>(5)
+    val countFlow = writeChannel.asFlow().map { count }.distinctUntilChanged()
+    val totalSizeFlow = writeChannel.asFlow().map { totalSize }.distinctUntilChanged()
+
+    fun clear() {
+        IMAGES_DIR.deleteRecursively()
+        writeChannel.sendBlocking(Unit)
     }
 
     /**
@@ -70,7 +90,10 @@ object SpotifyImageCache {
                 val image = Image.makeFromEncoded(bytes).asImageBitmap()
                 val fetchDuration = fetchStart.elapsedNow()
 
-                val writeDuration = cacheFile?.let { measureTime { cacheFile.writeBytes(bytes) } }
+                IMAGES_DIR.mkdirs()
+                val writeDuration = cacheFile
+                    ?.let { measureTime { cacheFile.writeBytes(bytes) } }
+                    ?.also { writeChannel.send(Unit) }
 
                 Logger.ImageCache.handleImageCacheEvent(
                     ImageCacheEvent.Fetch(

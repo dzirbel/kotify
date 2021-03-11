@@ -1,0 +1,18 @@
+package com.dominiczirbel.network
+
+import com.dominiczirbel.network.DelayInterceptor.delayMs
+import okhttp3.Interceptor
+import okhttp3.Response
+
+/**
+ * A simple [Interceptor] which adds [delayMs] delay to each request.
+ */
+object DelayInterceptor : Interceptor {
+    var delayMs: Long = 0L
+
+    override fun intercept(chain: Interceptor.Chain): Response {
+        Thread.sleep(delayMs)
+
+        return chain.proceed(chain.request())
+    }
+}

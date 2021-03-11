@@ -25,6 +25,8 @@ import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.network.model.User
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import java.io.File
 
@@ -46,8 +48,10 @@ object SpotifyCache {
             .also { require(it.isDirectory) { "could not create cache directory $it" } }
     }
 
+    private val cacheFile = CACHE_DIR.resolve("cache.json")
+
     private val cache = Cache(
-        file = CACHE_DIR.resolve("cache.json"),
+        file = cacheFile,
 
         saveOnChange = true,
 
@@ -107,6 +111,15 @@ object SpotifyCache {
             cache.put(LIBRARY_KEY, value)
         }
 
+    val size: Int
+        get() = cache.size
+    val sizeFlow: Flow<Int> = cache.sizeFlow
+
+    val sizeOnDisk: Long
+        get() = cacheFile.length()
+
+    val sizeOnDiskFlow: Flow<Long> = cache.saveFlow.map { sizeOnDisk }
+
     /**
      * Loads the cache from disk, overwriting any values currently in memory.
      */
@@ -120,6 +133,13 @@ object SpotifyCache {
      */
     private fun updateLibrary(update: Library.() -> Library) {
         library = update(library)
+    }
+
+    /**
+     * Clears the cache, both in-memory and on disk.
+     */
+    fun clear() {
+        cache.clear()
     }
 
     object Albums {

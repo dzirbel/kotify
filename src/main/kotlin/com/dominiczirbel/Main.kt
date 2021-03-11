@@ -5,6 +5,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.darkColors
 import com.dominiczirbel.cache.SpotifyCache
+import com.dominiczirbel.network.DelayInterceptor
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.oauth.AccessToken
 import com.dominiczirbel.ui.AuthenticationDialog
@@ -16,6 +17,7 @@ fun main() {
     Logger.logToConsole = true
 
     val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(DelayInterceptor)
         .addInterceptor(Logger.Network::intercept)
         .build()
 

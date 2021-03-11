@@ -1,6 +1,11 @@
 package com.dominiczirbel.cache
 
 import com.dominiczirbel.cache.Cache.TTLStrategy
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.sendBlocking
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -258,6 +263,7 @@ sealed class CacheEvent {
     data class Load(override val cache: Cache, val duration: Duration, val file: File) : CacheEvent()
     data class Save(override val cache: Cache, val duration: Duration, val file: File) : CacheEvent()
     data class Dump(override val cache: Cache) : CacheEvent()
+    data class Clear(override val cache: Cache) : CacheEvent()
     data class Hit(override val cache: Cache, val id: String, val value: CacheObject) : CacheEvent()
     data class Miss(override val cache: Cache, val id: String) : CacheEvent()
     data class Update(override val cache: Cache, val id: String, val previous: CacheObject?, val new: CacheObject) :
@@ -303,6 +309,25 @@ class Cache(
      */
     val cache: Map<String, CacheObject>
         get() = synchronized(_cache) { removeExpired() }.also { eventHandler(listOf(CacheEvent.Dump(this))) }
+
+    /**
+     * The number of objects in the cache.
+     */
+    val size: Int
+        get() = synchronized(_cache) { _cache.size }
+
+    private val sizeChannel = BroadcastChannel<Int>(5)
+    private val saveChannel = BroadcastChannel<Unit>(5)
+
+    /**
+     * A [Flow] which emits the cache's current [size] each time it has changed.
+     */
+    val sizeFlow: Flow<Int> = sizeChannel.asFlow().distinctUntilChanged()
+
+    /**
+     * A [Flow] which emits [Unit] whenever the cache is saved to disk.
+     */
+    val saveFlow: Flow<Unit> = saveChannel.asFlow()
 
     /**
      * Gets the [CacheObject] associated with [id], if it exists in the in-memory cache and is still valid according to
@@ -424,6 +449,18 @@ class Cache(
                 ?.also { queueCacheEvent(CacheEvent.Invalidate(cache = this, id = id, value = it)) }
                 ?.also { saveInternal(shouldSave = saveOnChange) }
         }?.also { flushCacheEvents() }
+    }
+
+    /**
+     * Clears the cache, both in-memory and on disk.
+     */
+    fun clear() {
+        synchronized(_cache) {
+            _cache.clear()
+            queueCacheEvent(CacheEvent.Clear(this))
+            saveInternal(shouldSave = true)
+        }
+        flushCacheEvents()
     }
 
     /**
@@ -586,9 +623,18 @@ class Cache(
      * Calls the [eventHandler] for each event in the [cacheEventQueue] and clears it.
      */
     private fun flushCacheEvents() {
+        val saved: Boolean
         synchronized(cacheEventQueue) {
+            saved = cacheEventQueue.any { it is CacheEvent.Save }
             eventHandler(cacheEventQueue.toList())
             cacheEventQueue.clear()
+        }
+
+        // TODO blocking
+        sizeChannel.sendBlocking(size)
+
+        if (saved) {
+            saveChannel.sendBlocking(Unit)
         }
     }
 

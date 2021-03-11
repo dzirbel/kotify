@@ -101,6 +101,7 @@ sealed class Logger(private val tag: String) {
                     is CacheEvent.Load -> "LOAD from ${cacheEvent.file} in ${cacheEvent.duration}"
                     is CacheEvent.Save -> "SAVE to ${cacheEvent.file} in ${cacheEvent.duration}"
                     is CacheEvent.Dump -> "DUMP"
+                    is CacheEvent.Clear -> "CLEAR"
                     is CacheEvent.Hit -> {
                         val nameSuffix = (cacheEvent.value.obj as? SpotifyObject)?.name?.let { " ($it)" }.orEmpty()
                         "HIT ${cacheEvent.id}: ${cacheEvent.value.type}" + nameSuffix
@@ -115,6 +116,7 @@ sealed class Logger(private val tag: String) {
 
                 val type = when (cacheEvent) {
                     is CacheEvent.Dump -> Event.Type.INFO
+                    is CacheEvent.Clear -> Event.Type.WARNING
                     is CacheEvent.Hit -> Event.Type.SUCCESS
                     is CacheEvent.Invalidate -> Event.Type.INFO
                     is CacheEvent.Load -> Event.Type.INFO
