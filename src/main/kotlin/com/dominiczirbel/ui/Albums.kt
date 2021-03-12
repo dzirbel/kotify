@@ -9,7 +9,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.dominiczirbel.cache.SpotifyCache
-import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 
@@ -21,14 +20,13 @@ fun BoxScope.Albums() {
 
     ScrollingPage(state) { albums ->
         Column {
-            Text("Albums", color = Colors.current.text, fontSize = Dimens.fontTitle)
+            Text("Albums", fontSize = Dimens.fontTitle)
 
             Spacer(Modifier.height(Dimens.space3))
 
             albums.forEach { album ->
                 Text(
                     text = album.name,
-                    color = Colors.current.text,
                     fontSize = Dimens.fontBody,
                     modifier = Modifier.padding(vertical = Dimens.space2)
                 )

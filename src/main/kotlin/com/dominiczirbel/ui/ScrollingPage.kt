@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -17,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
-import com.dominiczirbel.ui.theme.disabled
 import com.dominiczirbel.ui.util.RemoteState
 
 private val ICON_SIZE = 200.dp
@@ -34,7 +34,7 @@ fun <T : Any> BoxScope.ScrollingPage(state: RemoteState<T>, content: @Composable
                 imageVector = Icons.Default.Refresh,
                 contentDescription = "Loading",
                 modifier = Modifier.size(ICON_SIZE).align(Alignment.Center),
-                tint = Colors.current.text.disabled()
+                tint = Colors.current.text.copy(alpha = LocalContentAlpha.current)
             )
 
         is RemoteState.Error ->

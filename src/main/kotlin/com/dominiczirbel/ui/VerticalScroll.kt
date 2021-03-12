@@ -12,7 +12,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 
 /**
@@ -28,11 +27,7 @@ fun VerticalScroll(scrollState: ScrollState = rememberScrollState(0), content: @
         VerticalScrollbar(
             modifier = Modifier.align(Alignment.CenterVertically),
             adapter = rememberScrollbarAdapter(scrollState),
-            style = ScrollbarStyleAmbient.current.copy(
-                thickness = Dimens.scrollbarWidth,
-                hoverColor = Colors.current.scrollBarHover,
-                unhoverColor = Colors.current.scrollBarUnhover
-            )
+            style = ScrollbarStyleAmbient.current.copy(thickness = Dimens.scrollbarWidth)
         )
     }
 }

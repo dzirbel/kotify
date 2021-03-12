@@ -18,6 +18,7 @@ object Dimens {
 
     val divider = 1.dp
 
+    // TODO integrate into material theme
     val fontTitle = 48.sp
     val fontBody = 28.sp
     val fontCaption = 20.sp

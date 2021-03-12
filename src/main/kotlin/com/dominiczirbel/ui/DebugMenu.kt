@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.network.model.PrivateUser
 import com.dominiczirbel.network.oauth.AccessToken
-import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import java.time.Instant
 
@@ -32,7 +31,6 @@ fun DebugMenu(user: PrivateUser) {
     Column(Modifier.padding(Dimens.space3).widthIn(max = MAX_WIDTH)) {
         Text(
             text = "Authenticated as ${user.displayName} [${user.id}]",
-            color = Colors.current.text,
             fontSize = Dimens.fontBody
         )
 
@@ -40,7 +38,6 @@ fun DebugMenu(user: PrivateUser) {
 
         Text(
             text = "Access token: ${token?.accessToken}",
-            color = Colors.current.text,
             fontSize = Dimens.fontBody
         )
 
@@ -48,7 +45,6 @@ fun DebugMenu(user: PrivateUser) {
 
         Text(
             text = "Refreshable: ${token?.refreshToken != null}",
-            color = Colors.current.text,
             fontSize = Dimens.fontBody
         )
 
@@ -56,7 +52,6 @@ fun DebugMenu(user: PrivateUser) {
 
         Text(
             text = "${scopes?.size} scopes: ${token?.scope}",
-            color = Colors.current.text,
             fontSize = Dimens.fontBody
         )
 
@@ -64,7 +59,6 @@ fun DebugMenu(user: PrivateUser) {
 
         Text(
             text = "Received at $receivedInstant; expires at $expiresInstant",
-            color = Colors.current.text,
             fontSize = Dimens.fontBody
         )
 
@@ -76,7 +70,6 @@ fun DebugMenu(user: PrivateUser) {
         ) {
             Text(
                 text = "Sign out",
-                color = Colors.current.text,
                 fontSize = Dimens.fontBody
             )
         }

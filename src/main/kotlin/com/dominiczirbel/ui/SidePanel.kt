@@ -59,10 +59,10 @@ fun SidePanel(
     modifier: Modifier = Modifier.fillMaxSize(),
     panelModifier: Modifier = Modifier
         .fillMaxSize()
-        .background(Colors.current.panelBackground),
+        .background(Colors.current.surface2),
     contentModifier: Modifier = Modifier
         .fillMaxSize()
-        .background(Colors.current.contentBackground),
+        .background(Colors.current.surface3),
     splitterViewParams: SplitterViewParams = SplitterViewParams(),
     panelContent: @Composable () -> Unit,
     mainContent: @Composable () -> Unit

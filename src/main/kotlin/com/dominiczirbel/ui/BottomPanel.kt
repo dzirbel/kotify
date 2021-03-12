@@ -33,7 +33,7 @@ fun BottomPanel() {
             Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .background(Colors.current.panelBackground)
+                .background(Colors.current.surface2)
                 .padding(Dimens.space3)
         ) {
             Box(Modifier.background(Color.Blue).size(ALBUM_ART_SIZE))
@@ -41,11 +41,11 @@ fun BottomPanel() {
             Spacer(Modifier.size(Dimens.space3))
 
             Column {
-                Text("Song name", color = Colors.current.text, fontSize = Dimens.fontBody)
+                Text("Song name", fontSize = Dimens.fontBody)
                 Spacer(Modifier.size(Dimens.space2))
-                Text("Artist name", color = Colors.current.text, fontSize = Dimens.fontBody)
+                Text("Artist name", fontSize = Dimens.fontBody)
                 Spacer(Modifier.size(Dimens.space2))
-                Text("Album name", color = Colors.current.text, fontSize = Dimens.fontBody)
+                Text("Album name", fontSize = Dimens.fontBody)
             }
         }
     }

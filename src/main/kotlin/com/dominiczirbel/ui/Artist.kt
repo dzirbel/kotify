@@ -16,7 +16,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.cache.SpotifyCache
-import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 
@@ -35,7 +34,7 @@ fun BoxScope.Artist(page: ArtistPage) {
 
     ScrollingPage(state) { (artist, albums) ->
         Column {
-            Text(artist.name, color = Colors.current.text, fontSize = Dimens.fontTitle)
+            Text(artist.name, fontSize = Dimens.fontTitle)
 
             Spacer(Modifier.height(Dimens.space3))
 
@@ -60,7 +59,6 @@ fun BoxScope.Artist(page: ArtistPage) {
 
                     Text(
                         text = album.name,
-                        color = Colors.current.text,
                         fontSize = Dimens.fontBody,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.align(Alignment.CenterHorizontally).widthIn(max = IMAGE_SIZE)

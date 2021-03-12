@@ -11,16 +11,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
-import androidx.compose.material.TextButton
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -71,7 +67,7 @@ fun DebugPanel() {
 
             Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
-            Column(Modifier.fillMaxWidth().background(Colors.current.contentBackground).padding(Dimens.space3)) {
+            Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
                 when (tab) {
                     DebugTab.NETWORK -> NetworkOptions()
                     DebugTab.CACHE -> CacheOptions()
@@ -84,14 +80,12 @@ fun DebugPanel() {
 
         Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
-        TextButton(
+        SimpleTextButton(
             onClick = { tab.log.clear() },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(0)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(
                 text = "Clear log",
-                color = Colors.current.text,
                 fontSize = Dimens.fontBody
             )
         }
@@ -100,21 +94,13 @@ fun DebugPanel() {
 
 @Composable
 private fun RowScope.TabButton(tab: DebugTab, state: MutableState<DebugTab>) {
-    TextButton(
+    SimpleTextButton(
         onClick = { state.value = tab },
         modifier = Modifier.fillMaxWidth().weight(1f),
-        shape = RoundedCornerShape(0),
-        colors = if (state.value == tab) {
-            ButtonDefaults.textButtonColors(
-                backgroundColor = MaterialTheme.colors.primary
-            )
-        } else {
-            ButtonDefaults.textButtonColors()
-        }
+        backgroundColor = if (state.value == tab) MaterialTheme.colors.primary else Color.Transparent
     ) {
         Text(
             text = tab.tabName,
-            color = Colors.current.text,
             fontSize = Dimens.fontBody
         )
     }
@@ -151,7 +137,6 @@ private fun EventList(log: Logger) {
 
                     Text(
                         text = event.message,
-                        color = Colors.current.text,
                         fontSize = Dimens.fontBody,
                         fontFamily = FontFamily.Monospace,
                     )
@@ -161,7 +146,6 @@ private fun EventList(log: Logger) {
 
                 Text(
                     text = eventTimeFormat.format(Date(event.time)),
-                    color = Colors.current.text,
                     fontSize = Dimens.fontCaption,
                     fontFamily = FontFamily.Monospace,
                     modifier = Modifier.padding(Dimens.space2).align(Alignment.End)
@@ -188,9 +172,6 @@ private fun NetworkOptions() {
         textStyle = LocalTextStyle.current.copy(
             fontSize = Dimens.fontBody
         ),
-        colors = TextFieldDefaults.outlinedTextFieldColors(
-            textColor = Colors.current.text
-        ),
         isError = !appliedDelay.value,
         onValueChange = { value ->
             delay.value = value
@@ -213,8 +194,7 @@ private fun CacheOptions() {
 
     Text(
         text = "${size.value} cached objects; $sizeOnDiskFormatted on disk",
-        fontSize = Dimens.fontBody,
-        color = Colors.current.text
+        fontSize = Dimens.fontBody
     )
 
     Spacer(Modifier.height(Dimens.space2))
@@ -225,8 +205,7 @@ private fun CacheOptions() {
     ) {
         Text(
             text = "Clear cache",
-            fontSize = Dimens.fontBody,
-            color = Colors.current.text
+            fontSize = Dimens.fontBody
         )
     }
 }
@@ -239,8 +218,7 @@ private fun ImageCacheOptions() {
 
     Text(
         text = "${count.value} cached images; $totalSizeFormatted on disk",
-        fontSize = Dimens.fontBody,
-        color = Colors.current.text
+        fontSize = Dimens.fontBody
     )
 
     Spacer(Modifier.height(Dimens.space2))
@@ -251,8 +229,7 @@ private fun ImageCacheOptions() {
     ) {
         Text(
             text = "Clear image cache",
-            fontSize = Dimens.fontBody,
-            color = Colors.current.text
+            fontSize = Dimens.fontBody
         )
     }
 }

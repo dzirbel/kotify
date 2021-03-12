@@ -9,7 +9,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.dominiczirbel.cache.SpotifyCache
-import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 
@@ -21,14 +20,13 @@ fun BoxScope.Tracks() {
 
     ScrollingPage(state) { tracks ->
         Column {
-            Text("Tracks", color = Colors.current.text, fontSize = Dimens.fontTitle)
+            Text("Tracks", fontSize = Dimens.fontTitle)
 
             Spacer(Modifier.height(Dimens.space3))
 
             tracks.forEach { track ->
                 Text(
                     text = track.name,
-                    color = Colors.current.text,
                     fontSize = Dimens.fontBody,
                     modifier = Modifier.padding(vertical = Dimens.space2)
                 )
