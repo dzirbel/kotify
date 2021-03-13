@@ -1,7 +1,7 @@
 package com.dominiczirbel.network.model
 
 import com.dominiczirbel.cache.CacheableObject
-import com.dominiczirbel.util.TypeInsensitiveEnumSerializer
+import com.dominiczirbel.util.CaseInsensitiveEnumSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -70,7 +70,7 @@ interface Album : SpotifyObject {
         APPEARS_ON,
         COMPILATION;
 
-        object Serializer : TypeInsensitiveEnumSerializer<Type>(Type::class)
+        object Serializer : CaseInsensitiveEnumSerializer<Type>(Type::class)
     }
 }
 

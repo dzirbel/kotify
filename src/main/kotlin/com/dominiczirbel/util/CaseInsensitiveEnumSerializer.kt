@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
  * The default serializer requires that the decoded value matches the enum value's name (or its SerialName) exactly, and
  * so it cannot handle cases where the JSON value may be sometimes uppercase and sometimes lowercase.
  */
-abstract class TypeInsensitiveEnumSerializer<E : Enum<E>>(private val enumClass: KClass<E>) : KSerializer<E> {
+abstract class CaseInsensitiveEnumSerializer<E : Enum<E>>(private val enumClass: KClass<E>) : KSerializer<E> {
     override val descriptor = PrimitiveSerialDescriptor(enumClass.simpleName.orEmpty(), PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: E) {
