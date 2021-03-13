@@ -105,7 +105,6 @@ object SpotifyCache {
     )
 
     private const val LIBRARY_KEY = "spotify-cache-library"
-//    private const val ARTIST_ALBUM_MAP_KEY = "artist-albums"
 
     private var library: Library
         get() = cache.getCached(LIBRARY_KEY)?.obj as? Library ?: Library()
