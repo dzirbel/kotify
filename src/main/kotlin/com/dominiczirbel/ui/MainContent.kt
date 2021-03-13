@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.Icon
@@ -65,7 +66,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
                     Icon(
                         imageVector = Icons.Filled.KeyboardArrowLeft,
                         contentDescription = "Back",
-                        modifier = Modifier.requiredSize(Dimens.iconMedium)
+                        modifier = Modifier.size(Dimens.iconMedium)
                     )
                 }
 
@@ -76,14 +77,13 @@ fun MainContent(pageStack: MutableState<PageStack>) {
                     Icon(
                         imageVector = Icons.Filled.KeyboardArrowRight,
                         contentDescription = "Next",
-                        modifier = Modifier.requiredSize(Dimens.iconMedium)
+                        modifier = Modifier.size(Dimens.iconMedium)
                     )
                 }
 
                 Text(
                     text = "Stack: [${pageStack.value.pages.joinToString(separator = ", ")}] | " +
                         "current: ${pageStack.value.currentIndex}",
-                    fontSize = Dimens.fontBody,
                     modifier = Modifier.align(Alignment.CenterVertically)
                 )
             }
@@ -121,7 +121,7 @@ private fun DebugMenuHeader() {
             Icon(
                 imageVector = if (isLight) Icons.Filled.Star else Icons.Outlined.Star,
                 contentDescription = null,
-                modifier = Modifier.requiredSize(Dimens.iconMedium)
+                modifier = Modifier.size(Dimens.iconMedium)
             )
         }
 
@@ -133,7 +133,7 @@ private fun DebugMenuHeader() {
         ) {
             Text(
                 text = "Authenticated as $username",
-                fontSize = Dimens.fontBody,
+                maxLines = 1,
                 modifier = Modifier.align(Alignment.CenterVertically)
             )
 

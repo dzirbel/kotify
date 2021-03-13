@@ -47,7 +47,7 @@ fun BoxScope.Artist(page: ArtistPage) {
                 Column(
                     Modifier
                         .clip(RoundedCornerShape(CELL_ROUNDING))
-                        .clickable { /* TODO */ }
+                        .clickable { /* TODO go to album page */ }
                         .padding(Dimens.space3)
                 ) {
                     LoadedImage(
@@ -59,7 +59,6 @@ fun BoxScope.Artist(page: ArtistPage) {
 
                     Text(
                         text = album.name,
-                        fontSize = Dimens.fontBody,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.align(Alignment.CenterHorizontally).widthIn(max = IMAGE_SIZE)
                     )

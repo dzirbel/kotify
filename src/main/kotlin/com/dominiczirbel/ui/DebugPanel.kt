@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
-import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
@@ -84,10 +83,7 @@ fun DebugPanel() {
             onClick = { tab.log.clear() },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = "Clear log",
-                fontSize = Dimens.fontBody
-            )
+            Text("Clear log")
         }
     }
 }
@@ -99,10 +95,7 @@ private fun RowScope.TabButton(tab: DebugTab, state: MutableState<DebugTab>) {
         modifier = Modifier.fillMaxWidth().weight(1f),
         backgroundColor = if (state.value == tab) MaterialTheme.colors.primary else Color.Transparent
     ) {
-        Text(
-            text = tab.tabName,
-            fontSize = Dimens.fontBody
-        )
+        Text(tab.tabName)
     }
 }
 
@@ -129,7 +122,7 @@ private fun EventList(log: Logger) {
                             Logger.Event.Type.INFO -> Colors.current.text
                             Logger.Event.Type.SUCCESS -> Color.Green
                             Logger.Event.Type.WARNING -> Color.Yellow
-                            Logger.Event.Type.ERROR -> Color.Red
+                            Logger.Event.Type.ERROR -> Colors.current.error
                         }
                     )
 
@@ -137,7 +130,6 @@ private fun EventList(log: Logger) {
 
                     Text(
                         text = event.message,
-                        fontSize = Dimens.fontBody,
                         fontFamily = FontFamily.Monospace,
                     )
                 }
@@ -169,9 +161,6 @@ private fun NetworkOptions() {
         modifier = Modifier.fillMaxWidth(),
         value = delay.value,
         singleLine = true,
-        textStyle = LocalTextStyle.current.copy(
-            fontSize = Dimens.fontBody
-        ),
         isError = !appliedDelay.value,
         onValueChange = { value ->
             delay.value = value
@@ -192,10 +181,7 @@ private fun CacheOptions() {
     val sizeOnDisk = SpotifyCache.sizeOnDiskFlow.collectAsState(SpotifyCache.sizeOnDisk)
     val sizeOnDiskFormatted = remember(sizeOnDisk.value) { formatByteSize(sizeOnDisk.value) }
 
-    Text(
-        text = "${size.value} cached objects; $sizeOnDiskFormatted on disk",
-        fontSize = Dimens.fontBody
-    )
+    Text("${size.value} cached objects; $sizeOnDiskFormatted on disk")
 
     Spacer(Modifier.height(Dimens.space2))
 
@@ -203,10 +189,7 @@ private fun CacheOptions() {
         modifier = Modifier.fillMaxWidth(),
         onClick = { SpotifyCache.clear() }
     ) {
-        Text(
-            text = "Clear cache",
-            fontSize = Dimens.fontBody
-        )
+        Text("Clear cache")
     }
 }
 
@@ -216,10 +199,7 @@ private fun ImageCacheOptions() {
     val totalSize = SpotifyImageCache.totalSizeFlow.collectAsState(SpotifyImageCache.totalSize)
     val totalSizeFormatted = remember(totalSize.value) { formatByteSize(totalSize.value.toLong()) }
 
-    Text(
-        text = "${count.value} cached images; $totalSizeFormatted on disk",
-        fontSize = Dimens.fontBody
-    )
+    Text("${count.value} cached images; $totalSizeFormatted on disk")
 
     Spacer(Modifier.height(Dimens.space2))
 
@@ -227,9 +207,6 @@ private fun ImageCacheOptions() {
         modifier = Modifier.fillMaxWidth(),
         onClick = { SpotifyImageCache.clear() }
     ) {
-        Text(
-            text = "Clear image cache",
-            fontSize = Dimens.fontBody
-        )
+        Text("Clear image cache")
     }
 }

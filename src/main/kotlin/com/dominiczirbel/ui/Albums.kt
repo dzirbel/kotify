@@ -27,7 +27,6 @@ fun BoxScope.Albums() {
             albums.forEach { album ->
                 Text(
                     text = album.name,
-                    fontSize = Dimens.fontBody,
                     modifier = Modifier.padding(vertical = Dimens.space2)
                 )
             }

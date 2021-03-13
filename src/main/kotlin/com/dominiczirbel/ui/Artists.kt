@@ -59,7 +59,6 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
 
                     Text(
                         text = artist.name,
-                        fontSize = Dimens.fontBody,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.align(Alignment.CenterHorizontally).widthIn(max = IMAGE_SIZE)
                     )

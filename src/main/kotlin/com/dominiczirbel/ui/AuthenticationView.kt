@@ -1,7 +1,10 @@
 package com.dominiczirbel.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
@@ -14,10 +17,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.dominiczirbel.network.oauth.OAuth
+import com.dominiczirbel.ui.theme.Colors
+import com.dominiczirbel.ui.theme.Dimens
 import kotlinx.coroutines.launch
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -28,7 +32,6 @@ data class AuthenticationViewModel(
     val redirectUri: String = ""
 )
 
-private val PADDING = 5.dp
 private const val DIALOG_WIDTH = 400
 private const val DIALOG_HEIGHT = 400
 
@@ -44,7 +47,9 @@ fun AuthenticationDialog(
         ),
         onDismissRequest = onDismissRequest
     ) {
-        AuthenticationView(onAuthenticated = onAuthenticated)
+        Box(Modifier.fillMaxSize().background(Colors.current.surface2)) {
+            AuthenticationView(onAuthenticated = onAuthenticated)
+        }
     }
 }
 
@@ -55,7 +60,10 @@ fun AuthenticationView(
     val viewModel = remember { mutableStateOf(AuthenticationViewModel()) }
     val coroutineScope = rememberCoroutineScope()
 
-    Column(modifier = Modifier.padding(PADDING), verticalArrangement = Arrangement.spacedBy(PADDING, Alignment.Top)) {
+    Column(
+        modifier = Modifier.padding(Dimens.space2),
+        verticalArrangement = Arrangement.spacedBy(Dimens.space2, Alignment.Top)
+    ) {
         val oauthState = viewModel.value.oauthState
         if (oauthState != null) {
             Text("Flow in progress")

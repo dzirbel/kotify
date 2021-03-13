@@ -41,11 +41,11 @@ fun BottomPanel() {
             Spacer(Modifier.size(Dimens.space3))
 
             Column {
-                Text("Song name", fontSize = Dimens.fontBody)
+                Text("Song name")
                 Spacer(Modifier.size(Dimens.space2))
-                Text("Artist name", fontSize = Dimens.fontBody)
+                Text("Artist name")
                 Spacer(Modifier.size(Dimens.space2))
-                Text("Album name", fontSize = Dimens.fontBody)
+                Text("Album name")
             }
         }
     }

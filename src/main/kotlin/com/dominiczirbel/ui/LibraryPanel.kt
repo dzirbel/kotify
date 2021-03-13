@@ -52,7 +52,6 @@ private fun MaxWidthButton(text: String, selected: Boolean, onClick: () -> Unit)
     ) {
         Text(
             text = text,
-            fontSize = Dimens.fontBody,
             modifier = Modifier.fillMaxWidth(),
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
         )

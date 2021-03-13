@@ -1,7 +1,6 @@
 package com.dominiczirbel.ui
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.ScrollbarStyleAmbient
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -12,7 +11,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dominiczirbel.ui.theme.Dimens
 
 /**
  * Adds a simple vertical scrollbar to [content], which is placed in a [Column] with a [VerticalScrollbar] to the right.
@@ -26,8 +24,7 @@ fun VerticalScroll(scrollState: ScrollState = rememberScrollState(0), content: @
 
         VerticalScrollbar(
             modifier = Modifier.align(Alignment.CenterVertically),
-            adapter = rememberScrollbarAdapter(scrollState),
-            style = ScrollbarStyleAmbient.current.copy(thickness = Dimens.scrollbarWidth)
+            adapter = rememberScrollbarAdapter(scrollState)
         )
     }
 }

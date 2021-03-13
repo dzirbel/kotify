@@ -29,38 +29,23 @@ fun DebugMenu(user: PrivateUser) {
     val expiresInstant = remember(token) { token?.expiresIn?.let { receivedInstant?.plusSeconds(it) } }
 
     Column(Modifier.padding(Dimens.space3).widthIn(max = MAX_WIDTH)) {
-        Text(
-            text = "Authenticated as ${user.displayName} [${user.id}]",
-            fontSize = Dimens.fontBody
-        )
+        Text("Authenticated as ${user.displayName} [${user.id}]")
 
         Spacer(Modifier.height(Dimens.space2))
 
-        Text(
-            text = "Access token: ${token?.accessToken}",
-            fontSize = Dimens.fontBody
-        )
+        Text("Access token: ${token?.accessToken}")
 
         Spacer(Modifier.height(Dimens.space2))
 
-        Text(
-            text = "Refreshable: ${token?.refreshToken != null}",
-            fontSize = Dimens.fontBody
-        )
+        Text("Refreshable: ${token?.refreshToken != null}")
 
         Spacer(Modifier.height(Dimens.space2))
 
-        Text(
-            text = "${scopes?.size} scopes: ${token?.scope}",
-            fontSize = Dimens.fontBody
-        )
+        Text("${scopes?.size} scopes: ${token?.scope}")
 
         Spacer(Modifier.height(Dimens.space2))
 
-        Text(
-            text = "Received at $receivedInstant; expires at $expiresInstant",
-            fontSize = Dimens.fontBody
-        )
+        Text("Received at $receivedInstant; expires at $expiresInstant")
 
         Spacer(Modifier.height(Dimens.space3))
 
@@ -68,10 +53,7 @@ fun DebugMenu(user: PrivateUser) {
             modifier = Modifier.align(Alignment.CenterHorizontally),
             onClick = { AccessToken.Cache.clear() },
         ) {
-            Text(
-                text = "Sign out",
-                fontSize = Dimens.fontBody
-            )
+            Text("Sign out")
         }
     }
 }

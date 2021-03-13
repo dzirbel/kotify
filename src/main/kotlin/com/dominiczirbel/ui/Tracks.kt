@@ -27,7 +27,6 @@ fun BoxScope.Tracks() {
             tracks.forEach { track ->
                 Text(
                     text = track.name,
-                    fontSize = Dimens.fontBody,
                     modifier = Modifier.padding(vertical = Dimens.space2)
                 )
             }
