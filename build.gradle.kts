@@ -1,5 +1,7 @@
+
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
@@ -116,6 +118,11 @@ detekt {
 
 compose.desktop {
     application {
+        // workaround for https://github.com/JetBrains/compose-jb/issues/188
+        if (OperatingSystem.current().isLinux) {
+            jvmArgs("-Dsun.java2d.uiScale=2.0")
+        }
+
         mainClass = "com.dominiczirbel.MainKt"
     }
 }

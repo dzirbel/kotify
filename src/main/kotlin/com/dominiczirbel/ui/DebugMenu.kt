@@ -17,7 +17,7 @@ import com.dominiczirbel.network.oauth.AccessToken
 import com.dominiczirbel.ui.theme.Dimens
 import java.time.Instant
 
-private val MAX_WIDTH = 1_000.dp
+private val MAX_WIDTH = 500.dp
 
 @Composable
 fun DebugMenu(user: PrivateUser) {

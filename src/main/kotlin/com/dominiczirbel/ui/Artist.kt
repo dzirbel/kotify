@@ -19,8 +19,8 @@ import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 
-private val IMAGE_SIZE = 400.dp
-private val CELL_ROUNDING = 16.dp
+private val IMAGE_SIZE = 200.dp
+private val CELL_ROUNDING = 8.dp
 
 @Composable
 fun BoxScope.Artist(page: ArtistPage) {

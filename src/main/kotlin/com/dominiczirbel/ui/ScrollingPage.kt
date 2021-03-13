@@ -20,7 +20,7 @@ import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 
-private val ICON_SIZE = 200.dp
+private val ICON_SIZE = 100.dp
 
 /**
  * Convenience wrapper for the common case where a [RemoteState] should be contained in a vertical scrolling box, and

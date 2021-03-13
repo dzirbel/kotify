@@ -11,8 +11,8 @@ import androidx.compose.ui.unit.dp
 @Suppress("MagicNumber")
 @Composable
 fun Root() {
-    val leftPanelState = remember { PanelState(initialSize = 500.dp, minSize = 200.dp, minContentSize = 500.dp) }
-    val rightPanelState = remember { PanelState(initialSize = 800.dp, minSize = 250.dp, minContentSize = 500.dp) }
+    val leftPanelState = remember { PanelState(initialSize = 250.dp, minSize = 100.dp, minContentSize = 250.dp) }
+    val rightPanelState = remember { PanelState(initialSize = 400.dp, minSize = 125.dp, minContentSize = 250.dp) }
     val pageStack = remember { mutableStateOf(PageStack(ArtistsPage)) }
 
     SidePanel(

@@ -12,8 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-private val LOADING_STROKE_WIDTH = 2.dp
-private val LOADING_SIZE = 16.dp
+private val LOADING_STROKE_WIDTH = 1.dp
+private val LOADING_SIZE = 8.dp
 
 @Composable
 fun LoadingButton(

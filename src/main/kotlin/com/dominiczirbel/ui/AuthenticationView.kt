@@ -28,7 +28,7 @@ data class AuthenticationViewModel(
     val redirectUri: String = ""
 )
 
-private val PADDING = 10.dp
+private val PADDING = 5.dp
 private const val DIALOG_WIDTH = 400
 private const val DIALOG_HEIGHT = 400
 

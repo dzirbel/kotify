@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 
-val ALBUM_ART_SIZE = 150.dp
+val ALBUM_ART_SIZE = 75.dp
 
 @Composable
 fun BottomPanel() {

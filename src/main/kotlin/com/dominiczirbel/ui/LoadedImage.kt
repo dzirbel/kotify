@@ -13,8 +13,8 @@ import androidx.compose.ui.unit.dp
 import com.dominiczirbel.cache.SpotifyImageCache
 import com.dominiczirbel.ui.util.callbackAsState
 
-private val IMAGE_SIZE = 400.dp
-private val IMAGE_ROUNDING = 8.dp
+private val IMAGE_SIZE = 200.dp
+private val IMAGE_ROUNDING = 4.dp
 
 @Composable
 fun LoadedImage(url: String?, modifier: Modifier = Modifier, contentDescription: String? = null) {
