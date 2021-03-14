@@ -140,24 +140,19 @@ sealed class Logger(private val tag: String) {
         fun handleImageCacheEvent(imageCacheEvent: ImageCacheEvent) {
             log {
                 val message = when (imageCacheEvent) {
-                    is ImageCacheEvent.Hit ->
-                        "HIT ${imageCacheEvent.url} at ${imageCacheEvent.cacheFile} " +
-                            "(loaded file in ${imageCacheEvent.loadDuration})"
-                    is ImageCacheEvent.Miss -> "MISS ${imageCacheEvent.url}"
-                    is ImageCacheEvent.Fetch -> {
-                        val writeSuffix = imageCacheEvent.cacheFile?.let { cacheFile ->
-                            imageCacheEvent.writeDuration?.let { writeDuration ->
-                                " (written to $cacheFile in $writeDuration)"
-                            }
-                        }.orEmpty()
-                        "FETCH ${imageCacheEvent.url} in ${imageCacheEvent.fetchDuration}" + writeSuffix
-                    }
+                    is ImageCacheEvent.InMemory -> "IN-MEMORY ${imageCacheEvent.url}"
+                    is ImageCacheEvent.OnDisk ->
+                        "ON-DISK ${imageCacheEvent.url} as ${imageCacheEvent.cacheFile} " +
+                            "(loaded file in ${imageCacheEvent.duration})"
+                    is ImageCacheEvent.Fetch ->
+                        "MISS ${imageCacheEvent.url} in ${imageCacheEvent.duration}" +
+                            imageCacheEvent.cacheFile?.let { " (saved to $it)" }
                 }
 
                 val type = when (imageCacheEvent) {
-                    is ImageCacheEvent.Fetch -> Event.Type.INFO
-                    is ImageCacheEvent.Hit -> Event.Type.SUCCESS
-                    is ImageCacheEvent.Miss -> Event.Type.WARNING
+                    is ImageCacheEvent.InMemory -> Event.Type.SUCCESS
+                    is ImageCacheEvent.OnDisk -> Event.Type.INFO
+                    is ImageCacheEvent.Fetch -> Event.Type.WARNING
                 }
 
                 listOf(Event(message = message, type = type))

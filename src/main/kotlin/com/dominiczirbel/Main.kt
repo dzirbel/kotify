@@ -19,7 +19,7 @@ import okhttp3.OkHttpClient
 import javax.swing.SwingUtilities
 
 fun main() {
-    Logger.logToConsole = true
+    Logger.logToConsole = false
 
     val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(DelayInterceptor)

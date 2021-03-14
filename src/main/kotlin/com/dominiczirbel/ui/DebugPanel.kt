@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -197,11 +196,12 @@ private fun CacheOptions() {
 
 @Composable
 private fun ImageCacheOptions() {
-    val count = SpotifyImageCache.countFlow.collectAsState(SpotifyImageCache.count)
-    val totalSize = SpotifyImageCache.totalSizeFlow.collectAsState(SpotifyImageCache.totalSize)
-    val totalSizeFormatted = remember(totalSize.value) { formatByteSize(totalSize.value.toLong()) }
+    val inMemoryCount = SpotifyImageCache.state.inMemoryCount
+    val diskCount = SpotifyImageCache.state.diskCount
+    val totalDiskSize = SpotifyImageCache.state.totalDiskSize
+    val totalSizeFormatted = remember(totalDiskSize) { formatByteSize(totalDiskSize.toLong()) }
 
-    Text("${count.value} cached images; $totalSizeFormatted on disk")
+    Text("$inMemoryCount images cached in memory; $diskCount cached on disk for a total of $totalSizeFormatted on disk")
 
     Spacer(Modifier.height(Dimens.space2))
 
