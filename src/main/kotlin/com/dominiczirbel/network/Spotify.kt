@@ -692,6 +692,7 @@ object Spotify {
          * @param playlistId The Spotify ID of the playlist that is to be no longer followed.
          */
         suspend fun unfollowPlaylist(playlistId: String) {
+            @Suppress("CastToNullableType")
             return delete(
                 "playlists/$playlistId/followers",
                 jsonBody = null as Map<String, String>?,
@@ -737,6 +738,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun saveAlbums(ids: List<String>) {
+            @Suppress("CastToNullableType")
             return put(
                 "me/albums",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
@@ -752,6 +754,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun removeAlbums(ids: List<String>) {
+            @Suppress("CastToNullableType")
             return delete(
                 "me/albums",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
@@ -800,6 +803,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun saveTracks(ids: List<String>) {
+            @Suppress("CastToNullableType")
             return put(
                 "me/tracks",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
@@ -815,6 +819,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun removeTracks(ids: List<String>) {
+            @Suppress("CastToNullableType")
             return delete(
                 "me/tracks",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
@@ -855,6 +860,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun saveShows(ids: List<String>) {
+            @Suppress("CastToNullableType")
             return put(
                 "me/shows",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
@@ -870,6 +876,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun removeShows(ids: List<String>) {
+            @Suppress("CastToNullableType")
             return delete(
                 "me/shows",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),

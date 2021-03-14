@@ -98,8 +98,10 @@ class SpotifyPlaylistsTest {
         assertThat(reorderedPlaylist.tracks.total).isEqualTo(Fixtures.tracks.size)
         assertThat(reorderedPlaylist.tracks.items.size).isEqualTo(Fixtures.tracks.size)
         val reorderedTracks = Fixtures.tracks.toMutableList()
-        val track1 = reorderedTracks.removeAt(1) // B
-        val track2 = reorderedTracks.removeAt(1) // C
+        // B
+        val track1 = reorderedTracks.removeAt(1)
+        // C
+        val track2 = reorderedTracks.removeAt(1)
         reorderedTracks.add(2, track1)
         reorderedTracks.add(3, track2)
         reorderedPlaylist.tracks.items.zip(reorderedTracks).forEach { (track, trackProperties) ->

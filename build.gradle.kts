@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
     const val coroutines = "1.4.3" // https://github.com/Kotlin/kotlinx.coroutines
-    const val detekt = "1.15.0" // https://github.com/detekt/detekt; also update plugin version
+    const val detekt = "1.16.0" // https://github.com/detekt/detekt; also update plugin version
     const val jacoco = "0.8.6" // https://github.com/jacoco/jacoco
     const val junit = "5.7.1" // https://junit.org/junit5/
     const val kotlinxSerialization = "1.0.1" // https://github.com/Kotlin/kotlinx.serialization
@@ -22,7 +22,7 @@ plugins {
     kotlin("plugin.serialization") version "1.4.31"
 
     // https://github.com/detekt/detekt; also update dependency version
-    id("io.gitlab.arturbosch.detekt") version "1.15.0"
+    id("io.gitlab.arturbosch.detekt") version "1.16.0"
 
     // https://plugins.gradle.org/plugin/name.remal.check-dependency-updates
     id("name.remal.check-dependency-updates") version "1.2.2"

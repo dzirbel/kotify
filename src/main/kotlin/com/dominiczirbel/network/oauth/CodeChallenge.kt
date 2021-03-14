@@ -19,6 +19,7 @@ import java.util.Base64
 class CodeChallenge private constructor(val verifier: String, val challenge: String) {
     companion object {
         private val encoder = Base64.getUrlEncoder().withoutPadding()
+
         // number of bytes in the verifier buffer; 32 bytes -> 43 characters
         private const val VERIFIER_BUFFER_SIZE = 32
 
