@@ -1,5 +1,7 @@
 package com.dominiczirbel.ui
 
+import com.dominiczirbel.ui.common.Page
+import com.dominiczirbel.ui.common.PageStack
 import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.Test
 

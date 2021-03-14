@@ -1,4 +1,4 @@
-package com.dominiczirbel.ui
+package com.dominiczirbel.ui.common
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope

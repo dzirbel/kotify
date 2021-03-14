@@ -29,6 +29,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dominiczirbel.cache.SpotifyCache
+import com.dominiczirbel.ui.common.Page
+import com.dominiczirbel.ui.common.PageStack
+import com.dominiczirbel.ui.common.SimpleTextButton
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
@@ -88,7 +91,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
                 )
             }
 
-            DebugMenuHeader()
+            AuthenticationMenuHeader()
         }
 
         Box(Modifier.fillMaxSize().weight(1f)) {
@@ -104,7 +107,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
 }
 
 @Composable
-private fun DebugMenuHeader() {
+private fun AuthenticationMenuHeader() {
     val currentUserState = RemoteState.of { SpotifyCache.UsersProfile.getCurrentUser() }
     val currentUser = (currentUserState as? RemoteState.Success)?.data
     val username = currentUser?.displayName ?: "<loading>"
@@ -150,7 +153,7 @@ private fun DebugMenuHeader() {
                     expanded = expandedState.value,
                     onDismissRequest = { expandedState.value = false }
                 ) {
-                    DebugMenu(user = currentUser)
+                    AuthenticationMenu(user = currentUser)
                 }
             }
         }

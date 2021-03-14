@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import com.dominiczirbel.ui.common.PageStack
+import com.dominiczirbel.ui.common.SimpleTextButton
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.mutate
 

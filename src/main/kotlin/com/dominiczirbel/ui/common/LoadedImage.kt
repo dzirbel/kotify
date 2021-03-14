@@ -1,4 +1,4 @@
-package com.dominiczirbel.ui
+package com.dominiczirbel.ui.common
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

@@ -1,4 +1,4 @@
-package com.dominiczirbel.ui
+package com.dominiczirbel.ui.common
 
 /**
  * A marker interface for pages in a [PageStack].

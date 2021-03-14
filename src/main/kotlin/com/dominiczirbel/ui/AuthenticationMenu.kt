@@ -20,7 +20,7 @@ import java.time.Instant
 private val MAX_WIDTH = 500.dp
 
 @Composable
-fun DebugMenu(user: PrivateUser) {
+fun AuthenticationMenu(user: PrivateUser) {
     val token = AccessToken.Cache.token
     // val token = AccessToken.Cache.tokenFlow.collectAsState(AccessToken.Cache.getFromCache()).value
 

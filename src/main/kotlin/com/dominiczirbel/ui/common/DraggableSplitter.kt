@@ -1,4 +1,4 @@
-package com.dominiczirbel.ui
+package com.dominiczirbel.ui.common
 
 import androidx.compose.desktop.LocalAppWindow
 import androidx.compose.foundation.background
@@ -21,8 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.theme.Colors
+import com.dominiczirbel.ui.theme.Dimens
 import java.awt.Cursor
 
 interface SplitterState {

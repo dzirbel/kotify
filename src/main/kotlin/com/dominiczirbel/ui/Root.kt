@@ -7,6 +7,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.dominiczirbel.ui.common.PageStack
+import com.dominiczirbel.ui.common.PanelDirection
+import com.dominiczirbel.ui.common.PanelState
+import com.dominiczirbel.ui.common.SidePanel
 
 @Suppress("MagicNumber")
 @Composable
