@@ -36,7 +36,7 @@ fun <E> Grid(
     columns: Int? = null,
     elementContent: @Composable (E) -> Unit
 ) {
-    require(elements.isNotEmpty())
+    require(elements.isNotEmpty()) // TODO allow empty
     require(columns == null || columns > 0)
 
     Layout(

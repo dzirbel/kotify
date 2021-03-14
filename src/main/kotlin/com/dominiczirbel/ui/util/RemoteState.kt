@@ -7,7 +7,12 @@ import com.dominiczirbel.ui.util.RemoteState.Error
 import com.dominiczirbel.ui.util.RemoteState.Loading
 import com.dominiczirbel.ui.util.RemoteState.Success
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -36,16 +41,22 @@ sealed class RemoteState<T : Any> {
          *
          * Successive calls to this function will return updated states, as the remote may have completed/errored. The
          * remote call is [remember]ed, so only the first call in a recomposition will trigger loading.
+         *
+         * The [remote] call can be re-fetched by emitting an [Unit] from the given [sharedFlow].
          */
         @Composable
-        fun <T : Any> of(context: CoroutineContext = Dispatchers.IO, remote: suspend () -> T): RemoteState<T> {
-            val flow = remember {
-                flow {
-                    emit(runCatching { remote() }.map { Success(it) }.getOrElse { Error(it) })
-                }
-            }
-
-            return flow.collectAsState(initial = Loading(), context = context).value
+        fun <T : Any> of(
+            sharedFlow: MutableSharedFlow<Unit> = MutableSharedFlow(),
+            context: CoroutineContext = Dispatchers.IO,
+            remote: suspend () -> T
+        ): RemoteState<T> {
+            return remember {
+                sharedFlow
+                    .onStart { emit(Unit) }
+                    .flatMapLatest { flowOf(remote()) }
+                    .map { Success(it) }
+                    .catch { Error<T>(it) }
+            }.collectAsState(initial = Loading(), context = context).value
         }
     }
 }

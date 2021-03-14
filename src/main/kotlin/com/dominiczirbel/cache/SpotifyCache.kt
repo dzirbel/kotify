@@ -148,6 +148,14 @@ object SpotifyCache {
         cache.clear()
     }
 
+    fun invalidate(id: String) {
+        cache.invalidate(id)
+    }
+
+    fun lastUpdated(id: String): Long? {
+        return cache.getCached(id)?.cacheTime
+    }
+
     object Albums {
         suspend fun getAlbum(id: String): Album = cache.get<Album>(id) { Spotify.Albums.getAlbum(id) }
         suspend fun getFullAlbum(id: String): FullAlbum = cache.get(id) { Spotify.Albums.getAlbum(id) }
