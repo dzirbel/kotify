@@ -1,5 +1,8 @@
 package com.dominiczirbel.cache
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.dominiczirbel.Logger
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.model.Album
@@ -25,8 +28,8 @@ import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.network.model.User
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import java.io.File
 
@@ -38,7 +41,9 @@ object SpotifyCache {
         val artists: List<String>? = null,
         val tracks: List<String>? = null,
         val artistAlbumMap: Map<String, List<String>> = emptyMap()
-    )
+    ) : CacheableObject {
+        override val id = LIBRARY_KEY
+    }
 
     /**
      * The base directory for all cache files.
@@ -59,6 +64,8 @@ object SpotifyCache {
         ttlStrategy = Cache.TTLStrategy.AlwaysValid,
 
         eventHandler = Logger.Cache::handleCacheEvents,
+
+        onSave = ::onSave,
 
         // TODO handle case where simplified object has been updated, but full is now out of date
         replacementStrategy = object : Cache.ReplacementStrategy {
@@ -106,34 +113,32 @@ object SpotifyCache {
 
     private const val LIBRARY_KEY = "spotify-cache-library"
 
-    private var library: Library
+    // TODO store local copy to avoid hitting the cache
+    private val library: Library
         get() = cache.getCached(LIBRARY_KEY)?.obj as? Library ?: Library()
-        set(value) {
-            cache.put(LIBRARY_KEY, value)
-        }
 
     val size: Int
         get() = cache.size
-    val sizeFlow: Flow<Int> = cache.sizeFlow
 
-    val sizeOnDisk: Long
-        get() = cacheFile.length()
+    var sizeOnDisk by mutableStateOf(0L)
+        private set
 
-    val sizeOnDiskFlow: Flow<Long> = cache.saveFlow.map { sizeOnDisk }
+    init {
+        // trigger initializing sizeOnDisk in the background
+        onSave()
+    }
+
+    private fun onSave() {
+        GlobalScope.launch {
+            sizeOnDisk = cacheFile.length()
+        }
+    }
 
     /**
      * Loads the cache from disk, overwriting any values currently in memory.
      */
     fun load() {
         cache.load()
-    }
-
-    /**
-     * A convenience function which applies [update] to [Library]; this primarily exists to conveniently avoid calling
-     * the [library] getter twice.
-     */
-    private fun updateLibrary(update: Library.() -> Library) {
-        library = update(library)
     }
 
     /**
@@ -149,12 +154,18 @@ object SpotifyCache {
 
         suspend fun saveAlbum(id: String) {
             Spotify.Library.saveAlbums(listOf(id))
-                .also { updateLibrary { copy(albums = albums?.plus(id)) } }
+                .also {
+                    val library = library
+                    cache.put(library.copy(albums = library.albums?.plus(id)))
+                }
         }
 
         suspend fun unsaveAlbum(id: String) {
             Spotify.Library.removeAlbums(listOf(id))
-                .also { updateLibrary { copy(albums = albums?.minus(id)) } }
+                .also {
+                    val library = library
+                    cache.put(library.copy(albums = library.albums?.minus(id)))
+                }
         }
 
         suspend fun getSavedAlbums(): List<String> {
@@ -162,9 +173,12 @@ object SpotifyCache {
                 ?: Spotify.Library.getSavedAlbums(limit = Spotify.MAX_LIMIT)
                     .fetchAll<SavedAlbum>()
                     .map { it.album }
-                    .also { cache.putAll(it) }
-                    .map { it.id }
-                    .also { albums -> updateLibrary { copy(albums = albums) } }
+                    .let { albums ->
+                        val albumIds = albums.map { it.id }
+                        cache.putAll(albums.plus(library.copy(albums = albumIds)))
+
+                        albumIds
+                    }
         }
     }
 
@@ -177,11 +191,11 @@ object SpotifyCache {
                 ?.map { Albums.getAlbum(it) }
                 ?: Spotify.Artists.getArtistAlbums(id = artistId)
                     .fetchAll<SimplifiedAlbum>()
-                    .also { cache.putAll(it) }
                     .also { albums ->
-                        updateLibrary {
-                            copy(artistAlbumMap = artistAlbumMap.plus(artistId to albums.map { requireNotNull(it.id) }))
-                        }
+                        val albumIds = albums.map { requireNotNull(it.id) }
+                        val library = library
+                        val artistAlbumMap = library.artistAlbumMap.plus(artistId to albumIds)
+                        cache.putAll(albums.plus(library.copy(artistAlbumMap = artistAlbumMap)))
                     }
         }
 
@@ -189,9 +203,12 @@ object SpotifyCache {
             return library.artists
                 ?: Spotify.Follow.getFollowedArtists(limit = Spotify.MAX_LIMIT)
                     .fetchAllCustom { Spotify.get<Spotify.ArtistsCursorPagingModel>(it).artists }
-                    .also { cache.putAll(it) }
-                    .map { it.id }
-                    .also { artists -> updateLibrary { copy(artists = artists) } }
+                    .let { artists ->
+                        val artistIds = artists.map { it.id }
+                        cache.putAll(artists.plus(library.copy(artists = artistIds)))
+
+                        artistIds
+                    }
         }
     }
 
@@ -204,9 +221,12 @@ object SpotifyCache {
                 ?: Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT)
                     .fetchAll<SavedTrack>()
                     .map { it.track }
-                    .also { cache.putAll(it) }
-                    .map { it.id }
-                    .also { tracks -> updateLibrary { copy(tracks = tracks) } }
+                    .let { tracks ->
+                        val trackIds = tracks.map { it.id }
+                        cache.putAll(tracks.plus(library.copy(tracks = trackIds)))
+
+                        trackIds
+                    }
         }
     }
 
@@ -214,13 +234,21 @@ object SpotifyCache {
         suspend fun getCurrentUser(): PrivateUser {
             val id = library.currentUser
                 ?: Spotify.UsersProfile.getCurrentUser()
-                    .also { cache.put(it) }
-                    .also { user -> updateLibrary { copy(currentUser = user.id) } }
+                    .also { user ->
+                        cache.putAll(
+                            listOf(user, library.copy(currentUser = user.id))
+                        )
+                    }
                     .id
 
             return cache.get(id) {
                 Spotify.UsersProfile.getCurrentUser()
-                    .also { user -> updateLibrary { copy(currentUser = user.id) } }
+                    .also { user ->
+                        val library = library
+                        if (user.id != library.currentUser) {
+                            cache.put(library.copy(currentUser = user.id))
+                        }
+                    }
             }
         }
     }

@@ -1,11 +1,9 @@
 package com.dominiczirbel.cache
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.dominiczirbel.cache.Cache.TTLStrategy
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.sendBlocking
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -292,7 +290,8 @@ class Cache(
     val saveOnChange: Boolean = false,
     private val ttlStrategy: TTLStrategy = TTLStrategy.AlwaysValid,
     private val replacementStrategy: ReplacementStrategy = ReplacementStrategy.AlwaysReplace,
-    private val eventHandler: (List<CacheEvent>) -> Unit = { }
+    private val eventHandler: (List<CacheEvent>) -> Unit = { },
+    private val onSave: () -> Unit = { }
 ) {
     private val json = Json {
         encodeDefaults = true
@@ -310,24 +309,8 @@ class Cache(
     val cache: Map<String, CacheObject>
         get() = synchronized(_cache) { removeExpired() }.also { eventHandler(listOf(CacheEvent.Dump(this))) }
 
-    /**
-     * The number of objects in the cache.
-     */
-    val size: Int
-        get() = synchronized(_cache) { _cache.size }
-
-    private val sizeChannel = BroadcastChannel<Int>(5)
-    private val saveChannel = BroadcastChannel<Unit>(5)
-
-    /**
-     * A [Flow] which emits the cache's current [size] each time it has changed.
-     */
-    val sizeFlow: Flow<Int> = sizeChannel.asFlow().distinctUntilChanged()
-
-    /**
-     * A [Flow] which emits [Unit] whenever the cache is saved to disk.
-     */
-    val saveFlow: Flow<Unit> = saveChannel.asFlow()
+    var size by mutableStateOf(0)
+        private set
 
     /**
      * Gets the [CacheObject] associated with [id], if it exists in the in-memory cache and is still valid according to
@@ -428,12 +411,6 @@ class Cache(
                     put(id, it, saveOnChange = saveOnChange)
                 }
             }
-    }
-
-    inline fun <reified T : Any> update(id: String, update: (T?) -> T): T {
-        return update(getCached(id)?.obj as? T).also {
-            put(id = id, value = it)
-        }
     }
 
     /**
@@ -602,6 +579,7 @@ class Cache(
         if (shouldSave) {
             val currentHash = _cache.hashCode()
             if (currentHash != lastSaveHash) {
+                // TODO move out of synchronized block
                 val duration = measureTime {
                     val content = json.encodeToString(_cache)
                     Files.writeString(file.toPath(), content)
@@ -631,16 +609,16 @@ class Cache(
     private fun flushCacheEvents() {
         val saved: Boolean
         synchronized(cacheEventQueue) {
+            // TODO performance
             saved = cacheEventQueue.any { it is CacheEvent.Save }
             eventHandler(cacheEventQueue.toList())
             cacheEventQueue.clear()
         }
 
-        // TODO blocking
-        sizeChannel.sendBlocking(size)
+        size = _cache.size
 
         if (saved) {
-            saveChannel.sendBlocking(Unit)
+            onSave()
         }
     }
 

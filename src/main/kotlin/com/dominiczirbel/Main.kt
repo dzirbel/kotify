@@ -3,6 +3,7 @@ package com.dominiczirbel
 import androidx.compose.desktop.AppWindow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,10 +42,10 @@ fun main() {
             .show {
                 Colors.current.applyColors {
                     Dimens.applyDimens {
-                        val accessToken = AccessToken.Cache.state()
-
-                        if (accessToken.value == null) {
-                            Box(Modifier.background(Colors.current.surface2)) {
+                        if (AccessToken.Cache.hasToken) {
+                            Root()
+                        } else {
+                            Box(Modifier.background(Colors.current.surface2).fillMaxSize()) {
                                 Text(
                                     modifier = Modifier.align(Alignment.Center),
                                     text = "Authenticating..."
@@ -55,8 +56,6 @@ fun main() {
                                     onAuthenticated = { }
                                 )
                             }
-                        } else {
-                            Root()
                         }
                     }
                 }

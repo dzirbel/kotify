@@ -177,11 +177,11 @@ private fun NetworkOptions() {
 
 @Composable
 private fun CacheOptions() {
-    val size = SpotifyCache.sizeFlow.collectAsState(SpotifyCache.size)
-    val sizeOnDisk = SpotifyCache.sizeOnDiskFlow.collectAsState(SpotifyCache.sizeOnDisk)
-    val sizeOnDiskFormatted = remember(sizeOnDisk.value) { formatByteSize(sizeOnDisk.value) }
+    val size = SpotifyCache.size
+    val sizeOnDisk = SpotifyCache.sizeOnDisk
+    val sizeOnDiskFormatted = remember(sizeOnDisk) { formatByteSize(sizeOnDisk) }
 
-    Text("${size.value} cached objects; $sizeOnDiskFormatted on disk")
+    Text("$size cached objects; $sizeOnDiskFormatted on disk")
 
     Spacer(Modifier.height(Dimens.space2))
 

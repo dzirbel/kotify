@@ -1,14 +1,9 @@
 package com.dominiczirbel.network.oauth
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.await
 import com.dominiczirbel.network.bodyFromJson
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -71,32 +66,38 @@ data class AccessToken(
          */
         internal var log: Boolean = true
 
-        private var token: AccessToken? = null
-            set(value) {
-                runBlocking { channel.send(value) }
-                field = value
-            }
-
         /**
          * Encode defaults in order to include [AccessToken.received].
          */
         private val json = Json { encodeDefaults = true }
+
+        private val tokenState = mutableStateOf(load())
+
+        /**
+         * The currently cached token, loading it from disk if there is not one in memory.
+         *
+         * This token is backed by a [androidx.compose.runtime.MutableState], so reads and writes to it will trigger
+         * recompositions.
+         */
+        var token: AccessToken?
+            get() = tokenState.value ?: load().also { tokenState.value = it }
+            private set(value) {
+                tokenState.value = value
+            }
 
         /**
          * Determines if the cache currently has a token (either in memory or on disk, loading it if there is one on
          * disk but not in memory).
          */
         val hasToken: Boolean
-            get() = getFromCache() != null
-
-        private val channel = BroadcastChannel<AccessToken?>(1)
+            get() = token != null
 
         /**
          * Requires that the currently cached token has a [AccessToken.refreshToken], i.e. that it came from an
          * authorization code flow. If there is a non-refreshable access token, it is [clear]ed.
          */
         fun requireRefreshable() {
-            if (getFromCache()?.refreshToken == null) {
+            if (token?.refreshToken == null) {
                 log("Current token is not refreshable, clearing")
                 clear()
             }
@@ -119,14 +120,14 @@ data class AccessToken(
          * [AccessToken] is fetched based on the old [AccessToken.refreshToken]) and the new token is returned.
          */
         suspend fun get(clientId: String = OAuth.DEFAULT_CLIENT_ID, refresh: Boolean = true): AccessToken? {
-            val token = getFromCache() ?: return null
+            val token = token ?: return null
 
             if (refresh && token.isExpired) {
                 log("Current access token is expired; refreshing")
                 refresh(clientId)
             }
 
-            return getFromCache()
+            return this.token
         }
 
         /**
@@ -153,23 +154,6 @@ data class AccessToken(
          */
         internal fun reset() {
             token = null
-        }
-
-        /**
-         * Returns the currently cached token, loading it from disk if there is not one in memory.
-         */
-        fun getFromCache(): AccessToken? {
-            return token ?: load().also { token = it }
-        }
-
-        /**
-         * Returns a live [State] of the current [AccessToken] in the cache.
-         *
-         * TODO only expose the Flow (and remember{} it)
-         */
-        @Composable
-        fun state(): State<AccessToken?> {
-            return channel.asFlow().collectAsState(getFromCache())
         }
 
         /**

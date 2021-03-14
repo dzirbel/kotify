@@ -45,7 +45,6 @@ sealed class Logger(private val tag: String) {
     protected fun log(events: List<Event>) {
         this.events.addAll(events)
 
-        @Suppress("GlobalCoroutineUsage") // TODO global coroutine usage
         GlobalScope.launch {
             eventsChannel.send(this@Logger.events.toList())
         }
@@ -60,7 +59,6 @@ sealed class Logger(private val tag: String) {
     fun clear() {
         events.clear()
 
-        @Suppress("GlobalCoroutineUsage") // TODO global coroutine usage
         GlobalScope.launch {
             eventsChannel.send(this@Logger.events.toList())
         }
