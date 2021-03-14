@@ -103,9 +103,9 @@ private fun RowScope.TabButton(tab: DebugTab, state: MutableState<DebugTab>) {
 
 @Composable
 private fun EventList(log: Logger) {
-    val events = log.events()
-        .map { it.reversed().take(MAX_EVENTS) }
-        .collectAsStateSwitchable(initial = { log.events.reversed().take(MAX_EVENTS) }, key = log)
+    val events = log.eventsFlow
+        .map { it.take(MAX_EVENTS) }
+        .collectAsStateSwitchable(initial = { log.events.take(MAX_EVENTS) }, key = log)
 
     VerticalScroll {
         events.value.forEachIndexed { index, event ->
