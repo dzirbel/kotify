@@ -41,49 +41,51 @@ fun DraggableSplitter(
     orientation: Orientation,
     splitterState: SplitterState,
     params: SplitterViewParams = SplitterViewParams(),
-    onResize: (delta: Dp) -> Unit,
-) = Box {
-    val density = LocalDensity.current
-    Box(
-        Modifier
-            .run {
-                when (orientation) {
-                    Orientation.Vertical -> width(params.dragTargetWidth).fillMaxHeight()
-                    Orientation.Horizontal -> height(params.dragTargetWidth).fillMaxWidth()
+    onResize: (delta: Dp) -> Unit
+) {
+    Box {
+        val density = LocalDensity.current
+        Box(
+            Modifier
+                .run {
+                    when (orientation) {
+                        Orientation.Vertical -> width(params.dragTargetWidth).fillMaxHeight()
+                        Orientation.Horizontal -> height(params.dragTargetWidth).fillMaxWidth()
+                    }
                 }
-            }
-            .run {
-                if (splitterState.isResizeEnabled) {
-                    this.draggable(
-                        state = rememberDraggableState {
-                            with(density) {
-                                onResize(it.toDp())
-                            }
-                        },
-                        orientation = when (orientation) {
-                            Orientation.Horizontal -> Orientation.Vertical
-                            Orientation.Vertical -> Orientation.Horizontal
-                        },
-                        startDragImmediately = true,
-                        onDragStarted = { splitterState.isResizing = true },
-                        onDragStopped = { splitterState.isResizing = false }
-                    ).draggingCursor(orientation = orientation)
-                } else {
-                    this
+                .run {
+                    if (splitterState.isResizeEnabled) {
+                        this.draggable(
+                            state = rememberDraggableState {
+                                with(density) {
+                                    onResize(it.toDp())
+                                }
+                            },
+                            orientation = when (orientation) {
+                                Orientation.Horizontal -> Orientation.Vertical
+                                Orientation.Vertical -> Orientation.Horizontal
+                            },
+                            startDragImmediately = true,
+                            onDragStarted = { splitterState.isResizing = true },
+                            onDragStopped = { splitterState.isResizing = false }
+                        ).draggingCursor(orientation = orientation)
+                    } else {
+                        this
+                    }
                 }
-            }
-    )
+        )
 
-    Box(
-        Modifier
-            .run {
-                when (orientation) {
-                    Orientation.Vertical -> width(params.lineWidth).fillMaxHeight()
-                    Orientation.Horizontal -> height(params.lineWidth).fillMaxWidth()
+        Box(
+            Modifier
+                .run {
+                    when (orientation) {
+                        Orientation.Vertical -> width(params.lineWidth).fillMaxHeight()
+                        Orientation.Horizontal -> height(params.lineWidth).fillMaxWidth()
+                    }
                 }
-            }
-            .background(params.lineColor)
-    )
+                .background(params.lineColor)
+        )
+    }
 }
 
 private fun Modifier.draggingCursor(orientation: Orientation): Modifier {
