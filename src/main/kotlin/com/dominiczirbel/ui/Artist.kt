@@ -33,19 +33,16 @@ import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.ui.common.Grid
 import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.SimpleTextButton
+import com.dominiczirbel.ui.common.liveRelativeDateText
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
-import java.text.SimpleDateFormat
 
 private val IMAGE_SIZE = 200.dp
 private val CELL_ROUNDING = 8.dp
-
-// TODO use "x ago" format instead of absolute
-private val lastUpdateFormat = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
 
 private data class State(
     val artist: FullArtist,
@@ -94,10 +91,11 @@ fun BoxScope.Artist(page: ArtistPage) {
                         refreshing.value = true
                     }
                 ) {
-                    val lastUpdatedFormatted = remember(state.lastUpdated) {
-                        lastUpdateFormat.format(state.lastUpdated)
-                    }
-                    Text("Last updated $lastUpdatedFormatted")
+                    Text(
+                        text = state.lastUpdated?.let { lastUpdated ->
+                            liveRelativeDateText(timestamp = lastUpdated, format = { "Last updated $it" })
+                        } ?: "Never updated"
+                    )
 
                     Spacer(Modifier.width(Dimens.space2))
 

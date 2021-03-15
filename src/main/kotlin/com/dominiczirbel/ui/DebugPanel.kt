@@ -39,9 +39,8 @@ import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.collectAsStateSwitchable
 import com.dominiczirbel.util.formatByteSize
+import com.dominiczirbel.util.formatDateTime
 import kotlinx.coroutines.flow.map
-import java.text.SimpleDateFormat
-import java.util.Date
 
 private enum class DebugTab(val tabName: String, val log: Logger) {
     NETWORK("Network", Logger.Network),
@@ -49,7 +48,6 @@ private enum class DebugTab(val tabName: String, val log: Logger) {
     IMAGE_CACHE("Image Cache", Logger.ImageCache)
 }
 
-private val eventTimeFormat = SimpleDateFormat("HH:mm:ss.SSSS")
 private const val MAX_EVENTS = 500
 
 @Composable
@@ -138,7 +136,7 @@ private fun EventList(log: Logger) {
                 Spacer(Modifier.height(Dimens.space1))
 
                 Text(
-                    text = eventTimeFormat.format(Date(event.time)),
+                    text = remember(event.time) { formatDateTime(event.time, includeMillis = true) },
                     fontSize = Dimens.fontCaption,
                     fontFamily = FontFamily.Monospace,
                     modifier = Modifier.padding(Dimens.space2).align(Alignment.End)
