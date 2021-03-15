@@ -9,15 +9,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,12 +25,10 @@ import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.Album
 import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.ui.common.Grid
+import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.LoadedImage
-import com.dominiczirbel.ui.common.SimpleTextButton
-import com.dominiczirbel.ui.common.liveRelativeDateText
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
@@ -44,35 +36,54 @@ import kotlinx.coroutines.runBlocking
 private val IMAGE_SIZE = 200.dp
 private val CELL_ROUNDING = 8.dp
 
-private data class State(
+private data class ArtistState(
     val artist: FullArtist,
+    val artistUpdated: Long?,
     val artistAlbums: List<Album>,
-    val lastUpdated: Long?
+    val artistAlbumsUpdated: Long?
 )
 
-private suspend fun fetch(scope: CoroutineScope, artistId: String): State {
-    val artist = scope.async { SpotifyCache.Artists.getFullArtist(id = artistId) }
-    val artistAlbums = scope.async { SpotifyCache.Artists.getArtistAlbums(artistId = artistId) }
-
-    return State(
-        artist = artist.await(),
-        artistAlbums = artistAlbums.await(),
-
-        // TODO could be different for the artist albums
-        lastUpdated = SpotifyCache.lastUpdated(id = artistId)
-    )
-}
+data class UpdateEvent(val refreshArtist: Boolean, val refreshArtistAlbums: Boolean)
 
 @Composable
 fun BoxScope.Artist(page: ArtistPage) {
-    val refreshing = remember { mutableStateOf(false) }
+    val refreshingArtist = remember { mutableStateOf(false) }
+    val refreshingArtistAlbums = remember { mutableStateOf(false) }
 
-    val sharedFlow = remember { MutableSharedFlow<Unit>() }
+    val sharedFlow = remember { MutableSharedFlow<UpdateEvent>() }
     val scope = rememberCoroutineScope()
-    val remoteState = RemoteState.of(sharedFlow = sharedFlow) {
-        fetch(scope = scope, artistId = page.artistId).also {
-            refreshing.value = false
+    val remoteState = RemoteState.of(
+        sharedFlow = sharedFlow,
+        initial = UpdateEvent(
+            refreshArtist = true,
+            refreshArtistAlbums = true
+        )
+    ) { previousState: ArtistState?, event: UpdateEvent ->
+        val deferredArtist = if (event.refreshArtist || previousState == null) {
+            scope.async { SpotifyCache.Artists.getFullArtist(id = page.artistId) }
+                .also { it.invokeOnCompletion { refreshingArtist.value = false } }
+        } else {
+            scope.async { previousState.artist }
         }
+
+        val deferredArtistAlbums = if (event.refreshArtistAlbums || previousState == null) {
+            scope.async { SpotifyCache.Artists.getArtistAlbums(artistId = page.artistId) }
+                .also { it.invokeOnCompletion { refreshingArtistAlbums.value = false } }
+        } else {
+            scope.async { previousState.artistAlbums }
+        }
+
+        val artist = deferredArtist.await()
+        val artistAlbums = deferredArtistAlbums.await()
+
+        ArtistState(
+            artist = artist,
+            artistAlbums = artistAlbums,
+            artistUpdated = SpotifyCache.lastUpdated(artist.id),
+            artistAlbumsUpdated = SpotifyCache.lastUpdated(
+                SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = artist.id)
+            )
+        )
     }
 
     ScrollingPage(remoteState) { state ->
@@ -83,31 +94,36 @@ fun BoxScope.Artist(page: ArtistPage) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(artist.name, fontSize = Dimens.fontTitle)
 
-                SimpleTextButton(
-                    enabled = !refreshing.value,
-                    onClick = {
-                        SpotifyCache.invalidate(id = page.artistId)
-                        runBlocking { sharedFlow.emit(Unit) }
-                        refreshing.value = true
-                    }
-                ) {
-                    Text(
-                        text = state.lastUpdated?.let { lastUpdated ->
-                            liveRelativeDateText(timestamp = lastUpdated, format = { "Last updated $it" })
-                        } ?: "Never updated"
+                Column {
+                    InvalidateButton(
+                        modifier = Modifier.align(Alignment.End),
+                        refreshing = refreshingArtist,
+                        updated = state.artistUpdated,
+                        updatedFormat = { "Artist last updated $it" },
+                        updatedFallback = "Artist never updated",
+                        onClick = {
+                            SpotifyCache.invalidate(page.artistId)
+                            runBlocking {
+                                sharedFlow.emit(UpdateEvent(refreshArtist = true, refreshArtistAlbums = false))
+                            }
+                        }
                     )
 
-                    Spacer(Modifier.width(Dimens.space2))
-
-                    if (refreshing.value) {
-                        CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
-                    } else {
-                        Icon(
-                            imageVector = Icons.Filled.Refresh,
-                            contentDescription = "Refresh",
-                            modifier = Modifier.size(Dimens.iconMedium)
-                        )
-                    }
+                    InvalidateButton(
+                        modifier = Modifier.align(Alignment.End),
+                        refreshing = refreshingArtistAlbums,
+                        updated = state.artistAlbumsUpdated,
+                        updatedFormat = { "Albums last updated $it" },
+                        updatedFallback = "Albums never updated",
+                        onClick = {
+                            SpotifyCache.invalidate(
+                                SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = page.artistId)
+                            )
+                            runBlocking {
+                                sharedFlow.emit(UpdateEvent(refreshArtist = false, refreshArtistAlbums = true))
+                            }
+                        }
+                    )
                 }
             }
 

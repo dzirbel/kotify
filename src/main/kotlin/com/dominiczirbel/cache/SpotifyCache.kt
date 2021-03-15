@@ -34,15 +34,45 @@ import kotlinx.serialization.Serializable
 import java.io.File
 
 object SpotifyCache {
-    @Serializable
-    private data class Library(
-        val currentUser: String? = null,
-        val albums: List<String>? = null,
-        val artists: List<String>? = null,
-        val tracks: List<String>? = null,
-        val artistAlbumMap: Map<String, List<String>> = emptyMap()
-    ) : CacheableObject {
-        override val id = LIBRARY_KEY
+    object GlobalObjects {
+        const val CURRENT_USER_ID = "current-user"
+
+        @Serializable
+        data class SavedAlbums(val ids: List<String>) : CacheableObject {
+            override val id = ID
+
+            companion object {
+                const val ID = "saved-albums"
+            }
+        }
+
+        @Serializable
+        data class SavedArtists(val ids: List<String>) : CacheableObject {
+            override val id = ID
+
+            companion object {
+                const val ID = "saved-artists"
+            }
+        }
+
+        @Serializable
+        data class SavedTracks(val ids: List<String>) : CacheableObject {
+            override val id = ID
+
+            companion object {
+                const val ID = "saved-tracks"
+            }
+        }
+
+        @Serializable
+        data class ArtistAlbums(val artistId: String, val albumIds: List<String>) : CacheableObject {
+            override val id
+                get() = idFor(artistId)
+
+            companion object {
+                fun idFor(artistId: String) = "artist-albums-$artistId"
+            }
+        }
     }
 
     /**
@@ -111,12 +141,6 @@ object SpotifyCache {
         }
     )
 
-    private const val LIBRARY_KEY = "spotify-cache-library"
-
-    // TODO store local copy to avoid hitting the cache
-    private val library: Library
-        get() = cache.getCached(LIBRARY_KEY)?.obj as? Library ?: Library()
-
     val size: Int
         get() = cache.size
 
@@ -162,31 +186,28 @@ object SpotifyCache {
 
         suspend fun saveAlbum(id: String) {
             Spotify.Library.saveAlbums(listOf(id))
-                .also {
-                    val library = library
-                    cache.put(library.copy(albums = library.albums?.plus(id)))
-                }
+
+            cache.getCached(GlobalObjects.SavedAlbums.ID)?.let { albums ->
+                val savedAlbums = albums.obj as GlobalObjects.SavedAlbums
+                cache.put(savedAlbums.copy(ids = savedAlbums.ids.plus(id)))
+            }
         }
 
         suspend fun unsaveAlbum(id: String) {
             Spotify.Library.removeAlbums(listOf(id))
-                .also {
-                    val library = library
-                    cache.put(library.copy(albums = library.albums?.minus(id)))
-                }
+
+            cache.getCached(GlobalObjects.SavedAlbums.ID)?.let { albums ->
+                val savedAlbums = albums.obj as GlobalObjects.SavedAlbums
+                cache.put(savedAlbums.copy(ids = savedAlbums.ids.minus(id)))
+            }
         }
 
         suspend fun getSavedAlbums(): List<String> {
-            return library.albums
-                ?: Spotify.Library.getSavedAlbums(limit = Spotify.MAX_LIMIT)
-                    .fetchAll<SavedAlbum>()
-                    .map { it.album }
-                    .let { albums ->
-                        val albumIds = albums.map { it.id }
-                        cache.putAll(albums.plus(library.copy(albums = albumIds)))
-
-                        albumIds
-                    }
+            return cache.get(GlobalObjects.SavedAlbums.ID) {
+                val albums = Spotify.Library.getSavedAlbums(limit = Spotify.MAX_LIMIT).fetchAll<SavedAlbum>()
+                cache.putAll(albums)
+                GlobalObjects.SavedAlbums(ids = albums.map { it.album.id })
+            }.ids
         }
     }
 
@@ -195,28 +216,23 @@ object SpotifyCache {
         suspend fun getFullArtist(id: String): FullArtist = cache.get(id) { Spotify.Artists.getArtist(id) }
 
         suspend fun getArtistAlbums(artistId: String): List<Album> {
-            return library.artistAlbumMap[artistId]
-                ?.map { Albums.getAlbum(it) }
-                ?: Spotify.Artists.getArtistAlbums(id = artistId)
-                    .fetchAll<SimplifiedAlbum>()
-                    .also { albums ->
-                        val albumIds = albums.map { requireNotNull(it.id) }
-                        val library = library
-                        val artistAlbumMap = library.artistAlbumMap.plus(artistId to albumIds)
-                        cache.putAll(albums.plus(library.copy(artistAlbumMap = artistAlbumMap)))
-                    }
+            val albumIds = cache.get(GlobalObjects.ArtistAlbums.idFor(artistId = artistId)) {
+                val albums = Spotify.Artists.getArtistAlbums(id = artistId).fetchAll<SimplifiedAlbum>()
+                GlobalObjects.ArtistAlbums(artistId = artistId, albumIds = albums.map { requireNotNull(it.id) })
+            }.albumIds
+
+            // hits the cache even if the albums were just fetched above
+            // TODO batch in a cache.getAll for performance
+            return albumIds.map { Albums.getAlbum(it) }
         }
 
         suspend fun getSavedArtists(): List<String> {
-            return library.artists
-                ?: Spotify.Follow.getFollowedArtists(limit = Spotify.MAX_LIMIT)
+            return cache.get(GlobalObjects.SavedArtists.ID) {
+                val artists = Spotify.Follow.getFollowedArtists(limit = Spotify.MAX_LIMIT)
                     .fetchAllCustom { Spotify.get<Spotify.ArtistsCursorPagingModel>(it).artists }
-                    .let { artists ->
-                        val artistIds = artists.map { it.id }
-                        cache.putAll(artists.plus(library.copy(artists = artistIds)))
-
-                        artistIds
-                    }
+                cache.putAll(artists)
+                GlobalObjects.SavedArtists(ids = artists.map { it.id })
+            }.ids
         }
     }
 
@@ -225,38 +241,20 @@ object SpotifyCache {
         suspend fun getFullTrack(id: String): FullTrack = cache.get(id) { Spotify.Tracks.getTrack(id) }
 
         suspend fun getSavedTracks(): List<String> {
-            return library.tracks
-                ?: Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT)
-                    .fetchAll<SavedTrack>()
-                    .map { it.track }
-                    .let { tracks ->
-                        val trackIds = tracks.map { it.id }
-                        cache.putAll(tracks.plus(library.copy(tracks = trackIds)))
-
-                        trackIds
-                    }
+            return cache.get(GlobalObjects.SavedTracks.ID) {
+                val tracks = Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT).fetchAll<SavedTrack>()
+                cache.putAll(tracks)
+                GlobalObjects.SavedTracks(ids = tracks.map { it.track.id })
+            }.ids
         }
     }
 
     object UsersProfile {
         suspend fun getCurrentUser(): PrivateUser {
-            val id = library.currentUser
-                ?: Spotify.UsersProfile.getCurrentUser()
-                    .also { user ->
-                        cache.putAll(
-                            listOf(user, library.copy(currentUser = user.id))
-                        )
-                    }
-                    .id
-
-            return cache.get(id) {
-                Spotify.UsersProfile.getCurrentUser()
-                    .also { user ->
-                        val library = library
-                        if (user.id != library.currentUser) {
-                            cache.put(library.copy(currentUser = user.id))
-                        }
-                    }
+            return cache.get(GlobalObjects.CURRENT_USER_ID) {
+                // caches the user object twice: once under CURRENT_USER_ID, once under its own ID
+                // this is mostly harmless and allows lookups by either ID
+                Spotify.UsersProfile.getCurrentUser().also { cache.put(GlobalObjects.CURRENT_USER_ID, it) }
             }
         }
     }
