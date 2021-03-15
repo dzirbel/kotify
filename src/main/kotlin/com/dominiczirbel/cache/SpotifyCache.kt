@@ -189,6 +189,8 @@ object SpotifyCache {
 
             cache.getCached(GlobalObjects.SavedAlbums.ID)?.let { albums ->
                 val savedAlbums = albums.obj as GlobalObjects.SavedAlbums
+
+                // TODO don't update cache time (or find a different mechanism for last-fetched-from-network-time?)
                 cache.put(savedAlbums.copy(ids = savedAlbums.ids.plus(id)))
             }
         }
@@ -198,6 +200,8 @@ object SpotifyCache {
 
             cache.getCached(GlobalObjects.SavedAlbums.ID)?.let { albums ->
                 val savedAlbums = albums.obj as GlobalObjects.SavedAlbums
+
+                // TODO don't update cache time (or find a different mechanism for last-fetched-from-network-time?)
                 cache.put(savedAlbums.copy(ids = savedAlbums.ids.minus(id)))
             }
         }
