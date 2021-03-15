@@ -1,8 +1,10 @@
 package com.dominiczirbel.util
 
 import com.google.common.truth.Truth.assertThat
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
 internal class StringUtilsTest {
@@ -41,6 +43,13 @@ internal class StringUtilsTest {
     }
 
     companion object {
+        @BeforeAll
+        @JvmStatic
+        @Suppress("unused")
+        fun setup() {
+            TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"))
+        }
+
         @JvmStatic
         @Suppress("unused")
         fun formatByteSize(): List<ByteSizeCase> {
