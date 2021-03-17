@@ -13,6 +13,9 @@ import com.dominiczirbel.network.model.FullShow
 import com.dominiczirbel.network.model.FullTrack
 import com.dominiczirbel.network.model.Image
 import com.dominiczirbel.network.model.Paging
+import com.dominiczirbel.network.model.PlayHistoryObject
+import com.dominiczirbel.network.model.Playback
+import com.dominiczirbel.network.model.PlaybackDevice
 import com.dominiczirbel.network.model.PlaylistTrack
 import com.dominiczirbel.network.model.PrivateUser
 import com.dominiczirbel.network.model.PublicUser
@@ -25,6 +28,7 @@ import com.dominiczirbel.network.model.SimplifiedEpisode
 import com.dominiczirbel.network.model.SimplifiedPlaylist
 import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
+import com.dominiczirbel.network.model.TrackPlayback
 import com.dominiczirbel.network.oauth.AccessToken
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -102,7 +106,7 @@ object Spotify {
     @Serializable
     private data class TracksModel(val tracks: List<FullTrack>)
 
-    suspend inline fun <reified T : Any> get(path: String, queryParams: Map<String, String?>? = null): T {
+    suspend inline fun <reified T : Any?> get(path: String, queryParams: Map<String, String?>? = null): T {
         return request(method = "GET", path = path, queryParams = queryParams, body = null)
     }
 
@@ -981,7 +985,282 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference/#category-player
      */
     object Player {
-        // TODO add player endpoints
+        /**
+         * Get information about the user's current playback state, including track or episode, progress, and active
+         * device.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-information-about-the-users-
+         * current-playback
+         *
+         * @param market An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter if you want
+         *  to apply Track Relinking.
+         * @param additionalTypes A comma-separated list of item types that your client supports besides the default
+         *  track type. Valid types are: track and episode. An unsupported type in the response is expected to be
+         *  represented as null value in the item field. Note: This parameter was introduced to allow existing clients
+         *  to maintain their current behaviour and might be deprecated in the future. In addition to providing this
+         *  parameter, make sure that your client properly handles cases of new
+         */
+        suspend fun getCurrentPlayback(market: String? = null, additionalTypes: List<String>? = null): Playback? {
+            return get(
+                "me/player",
+                mapOf("market" to market, "additional_types" to additionalTypes?.joinToString(separator = ","))
+            )
+        }
+
+        /**
+         * Transfer playback to a new device and determine if it should start playing.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-transfer-a-users-playback
+         *
+         * @param deviceIds A JSON array containing the ID of the device on which playback should be
+         *  started/transferred. For example:{device_ids:["74ASZWbe4lXaubB36ztrGX"]}
+         *  Note: Although an array is accepted, only a single device_id is currently supported. Supplying more than one
+         *  will return 400 Bad Request
+         * @param play true: ensure playback happens on new device. false or not provided: keep the current playback
+         *  state.
+         */
+        suspend fun transferPlayback(deviceIds: List<String>, play: String? = null) {
+            return put(
+                "me/player",
+                jsonBody = mapOf("device_ids" to deviceIds, "play" to play)
+            )
+        }
+
+        /**
+         * Get information about a user’s available devices.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-a-users-available-devices
+         */
+        suspend fun getAvailableDevices(): List<PlaybackDevice> {
+            return get("me/player/devices")
+        }
+
+        /**
+         * Get the object currently being played on the user’s Spotify account.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-the-users-currently-playing-track
+         *
+         * @param market An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter if you want
+         *  to apply Track Relinking.
+         * @param additionalTypes A comma-separated list of item types that your client supports besides the default
+         *  track type. Valid types are: track and episode. An unsupported type in the response is expected to be
+         *  represented as null value in the item field. Note: This parameter was introduced to allow existing clients
+         *  to maintain their current behaviour and might be deprecated in the future. In addition to providing this
+         *  parameter, make sure that your client properly handles cases of new types in the future by checking against
+         *  the currently_playing_type field.
+         */
+        suspend fun getCurrentlyPlayingTrack(
+            market: String? = null,
+            additionalTypes: List<String>? = null
+        ): TrackPlayback? {
+            return get(
+                "me/player/currently-playing",
+                mapOf("market" to market, "additional_types" to additionalTypes?.joinToString(separator = ","))
+            )
+        }
+
+        /**
+         * Start a new context or resume current playback on the user’s active device.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-start-a-users-playback
+         *
+         * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
+         *  device is the target.
+         * @param contextUri string
+         * @param uris Array of URIs
+         * @param offset object
+         * @param positionMs integer
+         */
+        suspend fun startPlayback(
+            deviceId: String? = null,
+            contextUri: String? = null,
+            uris: List<String>? = null,
+            offset: Any? = null,
+            positionMs: Int? = null
+        ) {
+            return put(
+                "me/player/play",
+                jsonBody = mapOf(
+                    "context_uri" to contextUri,
+                    "uris" to uris,
+                    "offset" to offset,
+                    "position_ms" to positionMs
+                ),
+                queryParams = mapOf("device_id" to deviceId)
+            )
+        }
+
+        /**
+         * Pause playback on the user’s account.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-pause-a-users-playback
+         *
+         * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
+         *  device is the target.
+         */
+        suspend fun pausePlayback(deviceId: String? = null) {
+            @Suppress("CastToNullableType")
+            return put(
+                "me/player/pause",
+                jsonBody = null as Unit?,
+                queryParams = mapOf("device_id" to deviceId)
+            )
+        }
+
+        /**
+         * Skips to next track in the user’s queue.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-skip-users-playback-to-next-track
+         *
+         * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
+         *  device is the target.
+         */
+        suspend fun skipToNext(deviceId: String? = null) {
+            @Suppress("CastToNullableType")
+            return post(
+                "me/player/next",
+                jsonBody = null as Unit?,
+                queryParams = mapOf("device_id" to deviceId)
+            )
+        }
+
+        /**
+         * Skips to previous track in the user’s queue.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-skip-users-playback-to-previous-track
+         *
+         * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
+         *  device is the target.
+         */
+        suspend fun skipToPrevious(deviceId: String? = null) {
+            @Suppress("CastToNullableType")
+            return post(
+                "me/player/previous",
+                jsonBody = null as Unit?,
+                queryParams = mapOf("device_id" to deviceId)
+            )
+        }
+
+        /**
+         * Seeks to the given position in the user’s currently playing track.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-seek-to-position-in-currently-
+         * playing-track
+         *
+         * @param positionMs The position in milliseconds to seek to. Must be a positive number. Passing in a position
+         *  that is greater than the length of the track will cause the player to start playing the next song.
+         * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
+         *  device is the target.
+         */
+        suspend fun seekToPosition(positionMs: Int, deviceId: String? = null) {
+            @Suppress("CastToNullableType")
+            return put(
+                "me/player/seek",
+                jsonBody = null as Unit?,
+                queryParams = mapOf("position_ms" to positionMs.toString(), "device_id" to deviceId)
+            )
+        }
+
+        /**
+         * Set the repeat mode for the user’s playback. Options are repeat-track, repeat-context, and off.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-set-repeat-mode-on-users-playback
+         *
+         * @param state track, context or off.
+         *  track will repeat the current track.
+         *  context will repeat the current context.
+         *  off will turn repeat off.
+         * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
+         *  device is the target.
+         */
+        suspend fun setRepeatMode(state: String, deviceId: String? = null) {
+            @Suppress("CastToNullableType")
+            return put(
+                "me/player/repeat",
+                jsonBody = null as Unit?,
+                queryParams = mapOf("state" to state, "device_id" to deviceId)
+            )
+        }
+
+        /**
+         * Set the volume for the user’s current playback device.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-set-volume-for-users-playback
+         *
+         * @param volumePercent The volume to set. Must be a value from 0 to 100 inclusive.
+         * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
+         *  device is the target.
+         */
+        suspend fun setVolume(volumePercent: Int, deviceId: String? = null) {
+            @Suppress("CastToNullableType")
+            return put(
+                "me/player/volume",
+                jsonBody = null as Unit?,
+                queryParams = mapOf("volume_percent" to volumePercent.toString(), "device_id" to deviceId)
+            )
+        }
+
+        /**
+         * Toggle shuffle on or off for user’s playback.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-toggle-shuffle-for-users-playback
+         *
+         * @param state true : Shuffle user’s playback. false : Do not shuffle user’s playback.
+         * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
+         *  device is the target.
+         */
+        suspend fun toggleShuffle(state: Boolean, deviceId: String? = null) {
+            @Suppress("CastToNullableType")
+            return put(
+                "me/player/shuffle",
+                jsonBody = null as Unit?,
+                queryParams = mapOf("state" to state.toString(), "device_id" to deviceId)
+            )
+        }
+
+        /**
+         * Get tracks from the current user’s recently played tracks. Note: Currently doesn't support podcast episodes.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-recently-played
+         *
+         * @param limit The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param after A Unix timestamp in milliseconds. Returns all items after (but not including) this cursor
+         *  position. If after is specified, before must not be specified.
+         * @param before A Unix timestamp in milliseconds. Returns all items before (but not including) this cursor
+         *  position. If before is specified, after must not be specified.
+         */
+        suspend fun getRecentlyPlayedTracks(
+            limit: Int? = null,
+            after: Long? = null,
+            before: Long? = null
+        ): CursorPaging<PlayHistoryObject> {
+            return get(
+                "me/player/recently-played",
+                queryParams = mapOf(
+                    "limit" to limit?.toString(),
+                    "after" to after?.toString(),
+                    "before" to before?.toString()
+                )
+            )
+        }
+
+        /**
+         * Add an item to the end of the user’s current playback queue.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-add-to-queue
+         *
+         * @param uri The uri of the item to add to the queue. Must be a track or an episode uri.
+         * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
+         *  device is the target.
+         */
+        suspend fun addItemToQueue(uri: String, deviceId: String? = null) {
+            @Suppress("CastToNullableType")
+            return post(
+                "me/player/queue",
+                jsonBody = null as Unit?,
+                queryParams = mapOf("uri" to uri, "device_id" to deviceId)
+            )
+        }
     }
 
     /**
