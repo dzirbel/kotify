@@ -325,6 +325,16 @@ class Cache(
     }
 
     /**
+     * Gets the [CacheObject] associated with each [ids], if it exists in the in-memory cache and is still valid
+     * according to [ttlStrategy].
+     */
+    fun getAllCached(ids: List<String>): List<CacheObject?> {
+        return synchronized(_cache) {
+            ids.map { id -> getCachedInternal(id) }
+        }.also { flushCacheEvents() }
+    }
+
+    /**
      * Writes [value] and all its [CacheableObject.recursiveCacheableObjects] to the in-memory cache, using their
      * [CacheableObject.id]s, returning true if any values were added or changed in the cache.
      *
@@ -411,6 +421,29 @@ class Cache(
                     put(id, it, saveOnChange = saveOnChange)
                 }
             }
+    }
+
+    /**
+     * Gets all the values of type [T] in the cache for each of [ids], or if the value for an ID does not exist or has a
+     * type other than [T], fetches a new value for it from [remote], puts it and all its
+     * [CacheableObject.recursiveCacheableObjects] in the cache, and returns it.
+     */
+    inline fun <reified T : CacheableObject> getAll(
+        ids: List<String>,
+        saveOnChange: Boolean = this.saveOnChange,
+        remote: (String) -> T
+    ): List<T> {
+        val newObjects = mutableSetOf<T>()
+
+        // TODO remote calls in parallel
+        return getAllCached(ids = ids)
+            .mapIndexed { index, cacheObject ->
+                cacheObject?.obj as? T
+                    ?: remote(ids[index]).also {
+                        newObjects.add(it)
+                    }
+            }
+            .also { putAll(newObjects, saveOnChange = saveOnChange) }
     }
 
     /**

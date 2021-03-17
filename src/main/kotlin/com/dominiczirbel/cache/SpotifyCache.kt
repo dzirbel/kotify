@@ -225,9 +225,7 @@ object SpotifyCache {
                 GlobalObjects.ArtistAlbums(artistId = artistId, albumIds = albums.map { requireNotNull(it.id) })
             }.albumIds
 
-            // hits the cache even if the albums were just fetched above
-            // TODO batch in a cache.getAll for performance
-            return albumIds.map { Albums.getAlbum(it) }
+            return cache.getAll(ids = albumIds) { id -> Spotify.Albums.getAlbum(id) }
         }
 
         suspend fun getSavedArtists(): List<String> {
