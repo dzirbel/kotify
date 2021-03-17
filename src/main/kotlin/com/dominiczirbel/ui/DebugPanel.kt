@@ -33,11 +33,14 @@ import com.dominiczirbel.Logger
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.cache.SpotifyImageCache
 import com.dominiczirbel.network.DelayInterceptor
+import com.dominiczirbel.network.Spotify
+import com.dominiczirbel.ui.common.CheckboxWithLabel
 import com.dominiczirbel.ui.common.SimpleTextButton
 import com.dominiczirbel.ui.common.VerticalScroll
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.collectAsStateSwitchable
+import com.dominiczirbel.ui.util.mutate
 import com.dominiczirbel.util.formatByteSize
 import com.dominiczirbel.util.formatDateTime
 import kotlinx.coroutines.flow.map
@@ -50,36 +53,40 @@ private enum class DebugTab(val tabName: String, val log: Logger) {
 
 private const val MAX_EVENTS = 500
 
+private data class DebugState(
+    val tab: DebugTab = DebugTab.values().first(),
+    val filterApi: Boolean = false
+)
+
 @Composable
 fun DebugPanel() {
-    val tabState = remember { mutableStateOf(DebugTab.values().first()) }
-    val tab = tabState.value
+    val debugState = remember { mutableStateOf(DebugState()) }
 
     Column {
         Column(Modifier.fillMaxHeight().weight(1f)) {
             Row(Modifier.fillMaxWidth()) {
                 DebugTab.values().forEach { tab ->
-                    TabButton(tab = tab, state = tabState)
+                    TabButton(tab = tab, state = debugState)
                 }
             }
 
             Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
             Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
-                when (tab) {
-                    DebugTab.NETWORK -> NetworkOptions()
+                when (debugState.value.tab) {
+                    DebugTab.NETWORK -> NetworkOptions(debugState = debugState)
                     DebugTab.CACHE -> CacheOptions()
                     DebugTab.IMAGE_CACHE -> ImageCacheOptions()
                 }
             }
 
-            EventList(tab.log)
+            EventList(debugState.value)
         }
 
         Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
         SimpleTextButton(
-            onClick = { tab.log.clear() },
+            onClick = { debugState.value.tab.log.clear() },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Clear log")
@@ -88,21 +95,32 @@ fun DebugPanel() {
 }
 
 @Composable
-private fun RowScope.TabButton(tab: DebugTab, state: MutableState<DebugTab>) {
+private fun RowScope.TabButton(tab: DebugTab, state: MutableState<DebugState>) {
     SimpleTextButton(
-        onClick = { state.value = tab },
+        onClick = { state.mutate { copy(tab = tab) } },
         modifier = Modifier.fillMaxWidth().weight(1f),
-        backgroundColor = if (state.value == tab) MaterialTheme.colors.primary else Color.Transparent
+        backgroundColor = if (state.value.tab == tab) MaterialTheme.colors.primary else Color.Transparent
     ) {
         Text(tab.tabName)
     }
 }
 
 @Composable
-private fun EventList(log: Logger) {
+private fun EventList(debugState: DebugState) {
+    val filter = { event: Logger.Event ->
+        when {
+            debugState.tab == DebugTab.NETWORK && debugState.filterApi -> event.message.contains(Spotify.API_URL)
+            else -> true
+        }
+    }
+
+    val log = debugState.tab.log
     val events = log.eventsFlow
-        .map { it.take(MAX_EVENTS) }
-        .collectAsStateSwitchable(initial = { log.events.take(MAX_EVENTS) }, key = log)
+        .map { it.filter(filter).take(MAX_EVENTS) }
+        .collectAsStateSwitchable(
+            initial = { log.events.filter(filter).take(MAX_EVENTS) },
+            key = debugState
+        )
 
     VerticalScroll {
         events.value.forEachIndexed { index, event ->
@@ -151,9 +169,18 @@ private fun EventList(log: Logger) {
 }
 
 @Composable
-private fun NetworkOptions() {
+private fun NetworkOptions(debugState: MutableState<DebugState>) {
     val delay = remember { mutableStateOf(DelayInterceptor.delayMs.toString()) }
     val appliedDelay = remember { mutableStateOf(true) }
+
+    CheckboxWithLabel(
+        modifier = Modifier.fillMaxWidth(),
+        checked = debugState.value.filterApi,
+        onCheckedChange = { debugState.mutate { copy(filterApi = it) } },
+        label = { Text("API calls only") }
+    )
+
+    Spacer(Modifier.height(Dimens.space2))
 
     // TODO ideally we might reset to the actual delay value on un-focus
     OutlinedTextField(
