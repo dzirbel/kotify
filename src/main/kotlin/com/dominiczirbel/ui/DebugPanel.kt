@@ -108,9 +108,10 @@ private fun RowScope.TabButton(tab: DebugTab, state: MutableState<DebugState>) {
 @Composable
 private fun EventList(debugState: DebugState) {
     val filter = { event: Logger.Event ->
-        when {
-            debugState.tab == DebugTab.NETWORK && debugState.filterApi -> event.message.contains(Spotify.API_URL)
-            else -> true
+        if (debugState.tab == DebugTab.NETWORK && debugState.filterApi) {
+            event.message.contains(Spotify.API_URL)
+        } else {
+            true
         }
     }
 
