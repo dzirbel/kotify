@@ -26,14 +26,12 @@ data class Playback(
 @Serializable
 data class TrackPlayback(
     val timestamp: Long,
-    val device: PlaybackDevice,
     @SerialName("progress_ms") val processMs: Int,
     @SerialName("is_playing") val isPlaying: Boolean,
     @SerialName("currently_playing_type") val currentlyPlayingType: String,
     val item: FullTrack,
-    @SerialName("shuffle_state") val shuffleState: Boolean,
-    @SerialName("repeat_state") val repeatState: String,
-    val context: PlaybackContext
+    val context: PlaybackContext,
+    val actions: JsonObject? = null
 )
 
 /**

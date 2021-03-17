@@ -19,25 +19,25 @@ import kotlin.coroutines.CoroutineContext
  * A common wrapper around [androidx.compose.runtime.MutableState], which allows easy asynchronous loading of state and
  * common wrappers for [Loading], [Error], and [Success] conditions.
  */
-sealed class RemoteState<T : Any> {
+sealed class RemoteState<T : Any?> {
     /**
      * The initial [RemoteState] where the remote call has not yet returned.
      */
-    class Loading<T : Any> : RemoteState<T>()
+    class Loading<T : Any?> : RemoteState<T>()
 
     /**
      * A [RemoteState] triggered when the remote call threw a [throwable] exception.
      */
-    class Error<T : Any>(val throwable: Throwable) : RemoteState<T>()
+    class Error<T : Any?>(val throwable: Throwable) : RemoteState<T>()
 
     /**
      * The [RemoteState] when the remote call has successfully returned with [data].
      */
-    class Success<T : Any>(val data: T) : RemoteState<T>()
+    class Success<T : Any?>(val data: T) : RemoteState<T>()
 
     companion object {
         @Composable
-        fun <T : Any> of(
+        fun <T : Any?> of(
             sharedFlow: MutableSharedFlow<Unit> = MutableSharedFlow(),
             context: CoroutineContext = Dispatchers.IO,
             remote: suspend () -> T
@@ -59,7 +59,7 @@ sealed class RemoteState<T : Any> {
          * The [remote] call can be re-fetched by emitting an [Unit] from the given [sharedFlow].
          */
         @Composable
-        fun <T : Any, R : Any> of(
+        fun <T : Any?, R : Any> of(
             sharedFlow: MutableSharedFlow<R> = MutableSharedFlow(),
             initial: R,
             context: CoroutineContext = Dispatchers.IO,
@@ -72,7 +72,10 @@ sealed class RemoteState<T : Any> {
                     .scan(null) { acc: T?, value: R -> remote(acc, value) }
                     .mapNotNull { it }
                     .map<T, RemoteState<T>> { Success(it) }
-                    .catch { emit(Error(it)) }
+                    .catch {
+                        it.printStackTrace()
+                        emit(Error(it))
+                    }
             }.collectAsState(initial = Loading(), context = context).value
         }
     }

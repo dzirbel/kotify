@@ -1,5 +1,6 @@
 package com.dominiczirbel.ui.common
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -14,29 +15,21 @@ import androidx.compose.ui.Modifier
 import com.dominiczirbel.ui.theme.Dimens
 
 @Composable
-fun InvalidateButton(
+fun RefreshButton(
     modifier: Modifier = Modifier,
     refreshing: MutableState<Boolean>,
-    updated: Long?,
-    updatedFormat: (String) -> String = { "Last updated $it" },
-    updatedFallback: String = "Never updated",
     onClick: () -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     SimpleTextButton(
         modifier = modifier,
         enabled = !refreshing.value,
         onClick = {
-            onClick()
             refreshing.value = true
+            onClick()
         }
     ) {
-        Text(
-            text = updated?.let {
-                liveRelativeDateText(timestamp = updated, format = updatedFormat)
-            } ?: updatedFallback
-        )
-
-        Spacer(Modifier.width(Dimens.space2))
+        content()
 
         if (refreshing.value) {
             CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
@@ -47,5 +40,29 @@ fun InvalidateButton(
                 modifier = Modifier.size(Dimens.iconMedium)
             )
         }
+    }
+}
+
+@Composable
+fun InvalidateButton(
+    modifier: Modifier = Modifier,
+    refreshing: MutableState<Boolean>,
+    updated: Long?,
+    updatedFormat: (String) -> String = { "Last updated $it" },
+    updatedFallback: String = "Never updated",
+    onClick: () -> Unit,
+) {
+    RefreshButton(
+        modifier = modifier,
+        refreshing = refreshing,
+        onClick = onClick
+    ) {
+        Text(
+            text = updated?.let {
+                liveRelativeDateText(timestamp = updated, format = updatedFormat)
+            } ?: updatedFallback
+        )
+
+        Spacer(Modifier.width(Dimens.space2))
     }
 }

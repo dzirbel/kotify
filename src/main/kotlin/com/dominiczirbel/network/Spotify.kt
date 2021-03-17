@@ -30,6 +30,7 @@ import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.TrackPlayback
 import com.dominiczirbel.network.oauth.AccessToken
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -1020,10 +1021,13 @@ object Spotify {
          *  state.
          */
         suspend fun transferPlayback(deviceIds: List<String>, play: String? = null) {
-            return put(
-                "me/player",
-                jsonBody = mapOf("device_ids" to deviceIds, "play" to play)
+            @Serializable
+            data class Body(
+                @SerialName("device_ids") val deviceIds: List<String>,
+                val play: String? = null
             )
+
+            return put("me/player", jsonBody = Body(deviceIds = deviceIds, play = play))
         }
 
         /**
@@ -1078,14 +1082,19 @@ object Spotify {
             offset: Any? = null,
             positionMs: Int? = null
         ) {
+            @Serializable
+            data class Body(
+                @SerialName("context_uri") val contextUri: String? = null,
+                @SerialName("uris") val uris: List<String>? = null,
+                @Contextual
+                @SerialName("offset")
+                val offset: Any? = null,
+                @SerialName("position_ms") val positionMs: Int? = null
+            )
+
             return put(
                 "me/player/play",
-                jsonBody = mapOf(
-                    "context_uri" to contextUri,
-                    "uris" to uris,
-                    "offset" to offset,
-                    "position_ms" to positionMs
-                ),
+                jsonBody = Body(contextUri = contextUri, uris = uris, offset = offset, positionMs = positionMs),
                 queryParams = mapOf("device_id" to deviceId)
             )
         }
