@@ -1,5 +1,6 @@
 package com.dominiczirbel.ui
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -53,40 +55,58 @@ private enum class DebugTab(val tabName: String, val log: Logger) {
 
 private const val MAX_EVENTS = 500
 
-private data class DebugState(
-    val tab: DebugTab = DebugTab.values().first(),
-    val filterApi: Boolean = false
+private data class NetworkSettings(
+    val filterApi: Boolean = false,
+    val filterIncoming: Boolean = false,
+    val filterOutgoing: Boolean = false
+)
+
+private data class CacheSettings(
+    val includeLoad: Boolean = true,
+    val includeSave: Boolean = true,
+    val includeDump: Boolean = true,
+    val includeClear: Boolean = true,
+    val includeHit: Boolean = true,
+    val includeMiss: Boolean = true,
+    val includePut: Boolean = true,
+    val includeInvalidate: Boolean = true
+)
+
+private data class ImageCacheSettings(
+    val includeInMemory: Boolean = true,
+    val includeOnDisk: Boolean = true,
+    val includeMiss: Boolean = true
 )
 
 @Composable
 fun DebugPanel() {
-    val debugState = remember { mutableStateOf(DebugState()) }
+    val tab = remember { mutableStateOf(DebugTab.values().first()) }
+    val networkSettings = remember { mutableStateOf(NetworkSettings()) }
+    val cacheSettings = remember { mutableStateOf(CacheSettings()) }
+    val imageCacheSettings = remember { mutableStateOf(ImageCacheSettings()) }
+    val scrollStates = DebugTab.values().associate { it to rememberScrollState(0) }
 
     Column {
         Column(Modifier.fillMaxHeight().weight(1f)) {
             Row(Modifier.fillMaxWidth()) {
-                DebugTab.values().forEach { tab ->
-                    TabButton(tab = tab, state = debugState)
+                DebugTab.values().forEach {
+                    TabButton(tab = it, currentTab = tab)
                 }
             }
 
             Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
-            Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
-                when (debugState.value.tab) {
-                    DebugTab.NETWORK -> NetworkOptions(debugState = debugState)
-                    DebugTab.CACHE -> CacheOptions()
-                    DebugTab.IMAGE_CACHE -> ImageCacheOptions()
-                }
+            when (tab.value) {
+                DebugTab.NETWORK -> NetworkTab(networkSettings, scrollStates.getValue(tab.value))
+                DebugTab.CACHE -> CacheTab(cacheSettings, scrollStates.getValue(tab.value))
+                DebugTab.IMAGE_CACHE -> ImageCacheTab(imageCacheSettings, scrollStates.getValue(tab.value))
             }
-
-            EventList(debugState.value)
         }
 
         Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
         SimpleTextButton(
-            onClick = { debugState.value.tab.log.clear() },
+            onClick = { tab.value.log.clear() },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Clear log")
@@ -95,36 +115,267 @@ fun DebugPanel() {
 }
 
 @Composable
-private fun RowScope.TabButton(tab: DebugTab, state: MutableState<DebugState>) {
+private fun RowScope.TabButton(tab: DebugTab, currentTab: MutableState<DebugTab>) {
     SimpleTextButton(
-        onClick = { state.mutate { copy(tab = tab) } },
+        onClick = { currentTab.value = tab },
         modifier = Modifier.fillMaxWidth().weight(1f),
-        backgroundColor = if (state.value.tab == tab) MaterialTheme.colors.primary else Color.Transparent
+        backgroundColor = if (currentTab.value == tab) MaterialTheme.colors.primary else Color.Transparent
     ) {
         Text(tab.tabName)
     }
 }
 
 @Composable
-private fun EventList(debugState: DebugState) {
-    val filter = { event: Logger.Event ->
-        if (debugState.tab == DebugTab.NETWORK && debugState.filterApi) {
-            event.message.contains(Spotify.API_URL)
-        } else {
-            true
-        }
-    }
+private fun NetworkTab(networkSettings: MutableState<NetworkSettings>, scrollState: ScrollState) {
+    Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
+        val delay = remember { mutableStateOf(DelayInterceptor.delayMs.toString()) }
+        val appliedDelay = remember { mutableStateOf(true) }
 
-    val log = debugState.tab.log
-    val events = log.eventsFlow
-        .map { it.filter(filter).take(MAX_EVENTS) }
-        .collectAsStateSwitchable(
-            initial = { log.events.filter(filter).take(MAX_EVENTS) },
-            key = debugState
+        // TODO ideally we might reset to the actual delay value on un-focus
+        OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = delay.value,
+            singleLine = true,
+            isError = !appliedDelay.value,
+            onValueChange = { value ->
+                delay.value = value
+
+                value.toLongOrNull()
+                    ?.also { DelayInterceptor.delayMs = it }
+                    .also { appliedDelay.value = it != null }
+            },
+            label = {
+                Text("Network delay (ms)", fontSize = Dimens.fontCaption)
+            }
         )
 
-    VerticalScroll {
-        events.value.forEachIndexed { index, event ->
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = networkSettings.value.filterApi,
+            onCheckedChange = { networkSettings.mutate { copy(filterApi = it) } },
+            label = { Text("Spotify API calls only") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = networkSettings.value.filterIncoming,
+            onCheckedChange = { networkSettings.mutate { copy(filterIncoming = it) } },
+            label = { Text("Incoming responses only") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = networkSettings.value.filterOutgoing,
+            onCheckedChange = { networkSettings.mutate { copy(filterOutgoing = it) } },
+            label = { Text("Outgoing requests only") }
+        )
+    }
+
+    EventList(log = Logger.Network, key = networkSettings.value, scrollState = scrollState) { event ->
+        var allow = true
+
+        if (networkSettings.value.filterApi) {
+            allow = allow && event.message.contains(Spotify.API_URL)
+        }
+
+        if (networkSettings.value.filterIncoming) {
+            allow = allow && event.message.startsWith("<< ")
+        }
+
+        if (networkSettings.value.filterOutgoing) {
+            allow = allow && event.message.startsWith(">> ")
+        }
+
+        allow
+    }
+}
+
+@Composable
+private fun CacheTab(cacheSettings: MutableState<CacheSettings>, scrollState: ScrollState) {
+    Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
+        val size = SpotifyCache.size
+        val sizeOnDisk = SpotifyCache.sizeOnDisk
+        val sizeOnDiskFormatted = remember(sizeOnDisk) { formatByteSize(sizeOnDisk) }
+
+        Text("$size cached objects; $sizeOnDiskFormatted on disk")
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { SpotifyCache.clear() }
+        ) {
+            Text("Clear cache")
+        }
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = cacheSettings.value.includeLoad,
+            onCheckedChange = { cacheSettings.mutate { copy(includeLoad = it) } },
+            label = { Text("Include LOAD events") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = cacheSettings.value.includeSave,
+            onCheckedChange = { cacheSettings.mutate { copy(includeSave = it) } },
+            label = { Text("Include SAVE events") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = cacheSettings.value.includeDump,
+            onCheckedChange = { cacheSettings.mutate { copy(includeDump = it) } },
+            label = { Text("Include DUMP events") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = cacheSettings.value.includeClear,
+            onCheckedChange = { cacheSettings.mutate { copy(includeClear = it) } },
+            label = { Text("Include CLEAR events") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = cacheSettings.value.includeHit,
+            onCheckedChange = { cacheSettings.mutate { copy(includeHit = it) } },
+            label = { Text("Include HIT events") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = cacheSettings.value.includeMiss,
+            onCheckedChange = { cacheSettings.mutate { copy(includeMiss = it) } },
+            label = { Text("Include MISS events") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = cacheSettings.value.includePut,
+            onCheckedChange = { cacheSettings.mutate { copy(includePut = it) } },
+            label = { Text("Include PUT events") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = cacheSettings.value.includeInvalidate,
+            onCheckedChange = { cacheSettings.mutate { copy(includeInvalidate = it) } },
+            label = { Text("Include INVALIDATE events") }
+        )
+    }
+
+    EventList(log = Logger.Cache, key = cacheSettings.value, scrollState = scrollState) { event ->
+        when {
+            event.message.startsWith("LOAD") -> cacheSettings.value.includeLoad
+            event.message.startsWith("SAVE") -> cacheSettings.value.includeSave
+            event.message.startsWith("DUMP") -> cacheSettings.value.includeDump
+            event.message.startsWith("CLEAR") -> cacheSettings.value.includeClear
+            event.message.startsWith("HIT") -> cacheSettings.value.includeHit
+            event.message.startsWith("MISS") -> cacheSettings.value.includeMiss
+            event.message.startsWith("PUT") -> cacheSettings.value.includePut
+            event.message.startsWith("INVALIDATE") -> cacheSettings.value.includeInvalidate
+            else -> true
+        }
+    }
+}
+
+@Composable
+private fun ImageCacheTab(imageCacheSettings: MutableState<ImageCacheSettings>, scrollState: ScrollState) {
+    Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
+        val inMemoryCount = SpotifyImageCache.state.inMemoryCount
+        val diskCount = SpotifyImageCache.state.diskCount
+        val totalDiskSize = SpotifyImageCache.state.totalDiskSize
+        val totalSizeFormatted = remember(totalDiskSize) { formatByteSize(totalDiskSize.toLong()) }
+
+        Text(
+            "$inMemoryCount images cached in memory; " +
+                "$diskCount cached on disk for a total of $totalSizeFormatted on disk"
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { SpotifyImageCache.clear() }
+        ) {
+            Text("Clear image cache")
+        }
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = imageCacheSettings.value.includeInMemory,
+            onCheckedChange = { imageCacheSettings.mutate { copy(includeInMemory = it) } },
+            label = { Text("Include IN-MEMORY events") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = imageCacheSettings.value.includeOnDisk,
+            onCheckedChange = { imageCacheSettings.mutate { copy(includeOnDisk = it) } },
+            label = { Text("Include ON-DISK events") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = imageCacheSettings.value.includeMiss,
+            onCheckedChange = { imageCacheSettings.mutate { copy(includeMiss = it) } },
+            label = { Text("Include MISS events") }
+        )
+    }
+
+    EventList(log = Logger.ImageCache, key = imageCacheSettings.value, scrollState = scrollState) { event ->
+        when {
+            event.message.startsWith("IN-MEMORY") -> imageCacheSettings.value.includeInMemory
+            event.message.startsWith("ON-DISK") -> imageCacheSettings.value.includeOnDisk
+            event.message.startsWith("MISS") -> imageCacheSettings.value.includeMiss
+            else -> true
+        }
+    }
+}
+
+@Composable
+private fun EventList(
+    log: Logger,
+    key: Any,
+    scrollState: ScrollState = rememberScrollState(0),
+    filter: (Logger.Event) -> Boolean = { true }
+) {
+    val events = log.eventsFlow
+        .map { it.filter(filter).take(MAX_EVENTS) }
+        .collectAsStateSwitchable(initial = { log.events.filter(filter).take(MAX_EVENTS) }, key = key)
+        .value
+
+    VerticalScroll(scrollState = scrollState) {
+        events.forEachIndexed { index, event ->
             Column(Modifier.padding(Dimens.space2).fillMaxWidth()) {
                 Row {
                     Icon(
@@ -162,79 +413,9 @@ private fun EventList(debugState: DebugState) {
                 )
             }
 
-            if (index != events.value.lastIndex) {
+            if (index != events.lastIndex) {
                 Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
             }
         }
-    }
-}
-
-@Composable
-private fun NetworkOptions(debugState: MutableState<DebugState>) {
-    val delay = remember { mutableStateOf(DelayInterceptor.delayMs.toString()) }
-    val appliedDelay = remember { mutableStateOf(true) }
-
-    CheckboxWithLabel(
-        modifier = Modifier.fillMaxWidth(),
-        checked = debugState.value.filterApi,
-        onCheckedChange = { debugState.mutate { copy(filterApi = it) } },
-        label = { Text("API calls only") }
-    )
-
-    Spacer(Modifier.height(Dimens.space2))
-
-    // TODO ideally we might reset to the actual delay value on un-focus
-    OutlinedTextField(
-        modifier = Modifier.fillMaxWidth(),
-        value = delay.value,
-        singleLine = true,
-        isError = !appliedDelay.value,
-        onValueChange = { value ->
-            delay.value = value
-
-            value.toLongOrNull()
-                ?.also { DelayInterceptor.delayMs = it }
-                .also { appliedDelay.value = it != null }
-        },
-        label = {
-            Text("Network delay (ms)", fontSize = Dimens.fontCaption)
-        }
-    )
-}
-
-@Composable
-private fun CacheOptions() {
-    val size = SpotifyCache.size
-    val sizeOnDisk = SpotifyCache.sizeOnDisk
-    val sizeOnDiskFormatted = remember(sizeOnDisk) { formatByteSize(sizeOnDisk) }
-
-    Text("$size cached objects; $sizeOnDiskFormatted on disk")
-
-    Spacer(Modifier.height(Dimens.space2))
-
-    Button(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { SpotifyCache.clear() }
-    ) {
-        Text("Clear cache")
-    }
-}
-
-@Composable
-private fun ImageCacheOptions() {
-    val inMemoryCount = SpotifyImageCache.state.inMemoryCount
-    val diskCount = SpotifyImageCache.state.diskCount
-    val totalDiskSize = SpotifyImageCache.state.totalDiskSize
-    val totalSizeFormatted = remember(totalDiskSize) { formatByteSize(totalDiskSize.toLong()) }
-
-    Text("$inMemoryCount images cached in memory; $diskCount cached on disk for a total of $totalSizeFormatted on disk")
-
-    Spacer(Modifier.height(Dimens.space2))
-
-    Button(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { SpotifyImageCache.clear() }
-    ) {
-        Text("Clear image cache")
     }
 }
