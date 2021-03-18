@@ -29,6 +29,7 @@ import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.network.model.User
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import java.io.File
@@ -225,7 +226,7 @@ object SpotifyCache {
                 GlobalObjects.ArtistAlbums(artistId = artistId, albumIds = albums.map { requireNotNull(it.id) })
             }.albumIds
 
-            return cache.getAll(ids = albumIds) { id -> Spotify.Albums.getAlbum(id) }
+            return cache.getAll(ids = albumIds) { id -> GlobalScope.async { Spotify.Albums.getAlbum(id) } }
         }
 
         suspend fun getSavedArtists(): List<String> {

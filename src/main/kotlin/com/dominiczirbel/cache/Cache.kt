@@ -4,6 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.dominiczirbel.cache.Cache.TTLStrategy
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -255,6 +257,7 @@ data class CacheObject(
     }
 }
 
+// TODO add batched get and put events
 sealed class CacheEvent {
     abstract val cache: Cache
 
@@ -431,16 +434,24 @@ class Cache(
     inline fun <reified T : CacheableObject> getAll(
         ids: List<String>,
         saveOnChange: Boolean = this.saveOnChange,
-        remote: (String) -> T
+        remote: (String) -> Deferred<T>
     ): List<T> {
-        val newObjects = mutableSetOf<T>()
+        val cached: List<CacheObject?> = getAllCached(ids = ids)
+        check(cached.size == ids.size)
 
-        // TODO remote calls in parallel
-        return getAllCached(ids = ids)
+        val jobs = mutableMapOf<Int, Deferred<T>>()
+        cached.forEachIndexed { index, cacheObject ->
+            if (cacheObject == null) {
+                jobs[index] = remote(ids[index])
+            }
+        }
+
+        val newObjects = mutableSetOf<T>()
+        return cached
             .mapIndexed { index, cacheObject ->
                 cacheObject?.obj as? T
-                    ?: remote(ids[index]).also {
-                        newObjects.add(it)
+                    ?: runBlocking {
+                        jobs.getValue(index).await().also { newObjects.add(it) }
                     }
             }
             .also { putAll(newObjects, saveOnChange = saveOnChange) }

@@ -29,6 +29,7 @@ import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
@@ -60,17 +61,17 @@ fun BoxScope.Artist(page: ArtistPage) {
         )
     ) { previousState: ArtistState?, event: UpdateEvent ->
         val deferredArtist = if (event.refreshArtist || previousState == null) {
-            scope.async { SpotifyCache.Artists.getFullArtist(id = page.artistId) }
+            scope.async(Dispatchers.IO) { SpotifyCache.Artists.getFullArtist(id = page.artistId) }
                 .also { it.invokeOnCompletion { refreshingArtist.value = false } }
         } else {
-            scope.async { previousState.artist }
+            scope.async(Dispatchers.IO) { previousState.artist }
         }
 
         val deferredArtistAlbums = if (event.refreshArtistAlbums || previousState == null) {
-            scope.async { SpotifyCache.Artists.getArtistAlbums(artistId = page.artistId) }
+            scope.async(Dispatchers.IO) { SpotifyCache.Artists.getArtistAlbums(artistId = page.artistId) }
                 .also { it.invokeOnCompletion { refreshingArtistAlbums.value = false } }
         } else {
-            scope.async { previousState.artistAlbums }
+            scope.async(Dispatchers.IO) { previousState.artistAlbums }
         }
 
         val artist = deferredArtist.await()
