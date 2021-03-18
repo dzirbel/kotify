@@ -51,5 +51,6 @@ inline fun <reified T> Response.bodyFromJson(): T {
         return Unit as T
     }
 
-    return Json.decodeFromString(body.string())
+    // may throw NPE if T is not non-nullable
+    return body.string().takeIf { it.isNotEmpty() }?.let { Json.decodeFromString<T>(it) } as T
 }
