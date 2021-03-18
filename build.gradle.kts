@@ -56,6 +56,7 @@ dependencies {
     testImplementation("com.google.truth", "truth", Versions.truth)
 
     testFixturesImplementation(compose.desktop.currentOs)
+    testFixturesImplementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
     testFixturesImplementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
     testFixturesImplementation("com.google.truth", "truth", Versions.truth)
 

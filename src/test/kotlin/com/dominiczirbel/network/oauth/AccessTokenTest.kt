@@ -1,5 +1,6 @@
 package com.dominiczirbel.network.oauth
 
+import com.dominiczirbel.MockRequestInterceptor
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.withSpotifyConfiguration
 import com.google.common.io.Files
@@ -9,9 +10,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -152,17 +150,9 @@ internal class AccessTokenTest {
 
         withSpotifyConfiguration(
             Spotify.configuration.copy(
-                oauthOkHttpClient = OkHttpClient.Builder()
-                    .addInterceptor { chain ->
-                        Response.Builder()
-                            .code(200)
-                            .request(chain.request())
-                            .protocol(Protocol.HTTP_1_1)
-                            .message("OK")
-                            .body(tokenBody.toResponseBody("text/plain".toMediaType()))
-                            .build()
-                    }
-                    .build()
+                oauthOkHttpClient = MockRequestInterceptor(
+                    responseBody = tokenBody.toResponseBody("text/plain".toMediaType())
+                ).client,
             )
         ) {
             val expiredToken = AccessToken(

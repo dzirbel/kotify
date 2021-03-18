@@ -57,11 +57,17 @@ object SpotifyImageCache {
 
     private var totalCompleted = AtomicInteger()
 
+    /**
+     * The current [State] of the cache.
+     */
     var state by mutableStateOf(State())
         private set
 
-    fun clear() {
-        GlobalScope.launch {
+    /**
+     * Clears the in-memory and disk cache.
+     */
+    fun clear(scope: CoroutineScope = GlobalScope) {
+        scope.launch {
             imageJobs.clear()
             totalCompleted.set(0)
             IMAGES_DIR.deleteRecursively()
@@ -69,6 +75,18 @@ object SpotifyImageCache {
         }
     }
 
+    /**
+     * Resets the in-memory cache, for use from unit tests.
+     */
+    internal fun testReset() {
+        imageJobs.clear()
+        totalCompleted.set(0)
+        state = State()
+    }
+
+    /**
+     * Fetches the [ImageBitmap] from the given [url] or cache.
+     */
     suspend fun get(
         url: String,
         scope: CoroutineScope = GlobalScope,
@@ -80,26 +98,29 @@ object SpotifyImageCache {
                 val (cacheFile, image) = result
 
                 if (image != null) {
-                    image.also {
-                        Logger.ImageCache.handleImageCacheEvent(
-                            ImageCacheEvent.OnDisk(url = url, duration = duration, cacheFile = cacheFile!!)
-                        )
-                    }
+                    totalCompleted.incrementAndGet()
+                    Logger.ImageCache.handleImageCacheEvent(
+                        ImageCacheEvent.OnDisk(url = url, duration = duration, cacheFile = cacheFile!!)
+                    )
+
+                    image
                 } else {
                     val (image2, duration2) = measureTimedValue {
                         fromRemote(url = url, cacheFile = cacheFile, client = client)
                     }
 
                     image2?.also {
+                        totalCompleted.incrementAndGet()
                         Logger.ImageCache.handleImageCacheEvent(
                             ImageCacheEvent.Fetch(url = url, duration = duration2, cacheFile = cacheFile)
                         )
                     }
                 }
-            }.also {
-                it.invokeOnCompletion {
-                    totalCompleted.incrementAndGet()
-                    state = State()
+            }.also { deferred ->
+                deferred.invokeOnCompletion { error ->
+                    if (error == null) {
+                        state = State()
+                    }
                 }
             }
         }
@@ -128,12 +149,12 @@ object SpotifyImageCache {
     private suspend fun fromRemote(url: String, cacheFile: File?, client: OkHttpClient): ImageBitmap? {
         val request = Request.Builder().url(url).build()
 
-        // TODO error handling
         return client.newCall(request).await()
             .use { response ->
-                // TODO blocking method call
+                @Suppress("BlockingMethodInNonBlockingContext")
                 response.body?.bytes()
             }
+            ?.takeIf { bytes -> bytes.isNotEmpty() }
             ?.let { bytes ->
                 val image = Image.makeFromEncoded(bytes).asImageBitmap()
 
