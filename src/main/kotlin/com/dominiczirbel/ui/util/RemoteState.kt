@@ -1,7 +1,6 @@
 package com.dominiczirbel.ui.util
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import com.dominiczirbel.ui.util.RemoteState.Error
 import com.dominiczirbel.ui.util.RemoteState.Loading
@@ -39,12 +38,14 @@ sealed class RemoteState<T : Any?> {
         @Composable
         fun <T : Any?> of(
             sharedFlow: MutableSharedFlow<Unit> = MutableSharedFlow(),
+            key: Any? = null,
             context: CoroutineContext = Dispatchers.IO,
             remote: suspend () -> T
         ): RemoteState<T> {
             return of(
                 sharedFlow = sharedFlow,
                 initial = Unit,
+                key = key,
                 context = context,
                 remote = { _, _ -> remote() }
             )
@@ -62,10 +63,11 @@ sealed class RemoteState<T : Any?> {
         fun <T : Any?, R : Any> of(
             sharedFlow: MutableSharedFlow<R> = MutableSharedFlow(),
             initial: R,
+            key: Any? = null,
             context: CoroutineContext = Dispatchers.IO,
             remote: suspend (T?, R) -> T
         ): RemoteState<T> {
-            return remember {
+            return remember(key) {
                 sharedFlow
                     .onStart { emit(initial) }
                     // TODO doesn't switch to latest if there are multiple queued events
@@ -76,7 +78,7 @@ sealed class RemoteState<T : Any?> {
                         it.printStackTrace()
                         emit(Error(it))
                     }
-            }.collectAsState(initial = Loading(), context = context).value
+            }.collectAsStateSwitchable(initial = { Loading() }, context = context, key = key).value
         }
     }
 }

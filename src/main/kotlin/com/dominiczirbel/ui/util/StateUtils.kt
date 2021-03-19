@@ -56,7 +56,7 @@ fun <T> callbackAsState(context: CoroutineContext = Dispatchers.IO, key: Any, ca
 @Composable
 fun <T> Flow<T>.collectAsStateSwitchable(
     initial: () -> T,
-    key: Any,
+    key: Any?,
     context: CoroutineContext = EmptyCoroutineContext
 ): State<T> {
     // copied from internal compose code

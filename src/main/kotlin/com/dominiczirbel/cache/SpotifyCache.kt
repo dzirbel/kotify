@@ -57,6 +57,15 @@ object SpotifyCache {
         }
 
         @Serializable
+        data class SavedPlaylists(val ids: List<String>) : CacheableObject {
+            override val id = ID
+
+            companion object {
+                const val ID = "saved-playlists"
+            }
+        }
+
+        @Serializable
         data class SavedTracks(val ids: List<String>) : CacheableObject {
             override val id = ID
 
@@ -235,6 +244,20 @@ object SpotifyCache {
                     .fetchAllCustom { Spotify.get<Spotify.ArtistsCursorPagingModel>(it).artists }
                 cache.putAll(artists)
                 GlobalObjects.SavedArtists(ids = artists.map { it.id })
+            }.ids
+        }
+    }
+
+    object Playlists {
+        suspend fun getPlaylist(id: String): Playlist = cache.get<Playlist>(id) { Spotify.Playlists.getPlaylist(id) }
+        suspend fun getFullPlaylist(id: String): FullPlaylist = cache.get(id) { Spotify.Playlists.getPlaylist(id) }
+
+        suspend fun getSavedPlaylists(): List<String> {
+            return cache.get(GlobalObjects.SavedPlaylists.ID) {
+                val playlists = Spotify.Playlists.getPlaylists(limit = Spotify.MAX_LIMIT)
+                    .fetchAll<SimplifiedPlaylist>()
+                cache.putAll(playlists)
+                GlobalObjects.SavedPlaylists(ids = playlists.map { it.id })
             }.ids
         }
     }

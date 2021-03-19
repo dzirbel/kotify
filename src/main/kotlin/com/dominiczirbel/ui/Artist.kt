@@ -55,6 +55,7 @@ fun BoxScope.Artist(page: ArtistPage) {
     val scope = rememberCoroutineScope()
     val remoteState = RemoteState.of(
         sharedFlow = sharedFlow,
+        key = page,
         initial = UpdateEvent(
             refreshArtist = true,
             refreshArtistAlbums = true
