@@ -28,12 +28,18 @@ private val ERROR_ICON_SIZE = 100.dp
  * handles loading/error states.
  */
 @Composable
-fun <T : Any> BoxScope.ScrollingPage(state: RemoteState<T>, content: @Composable (T) -> Unit) {
-    when (state) {
-        is RemoteState.Loading ->
+fun <T : Any> BoxScope.ScrollingPage(
+    state: RemoteState<T>,
+    isLoading: (T) -> Boolean = { false },
+    isError: (T) -> Boolean = { false },
+    content: @Composable (T) -> Unit
+) {
+    @Suppress("UnnecessaryParentheses")
+    when {
+        state is RemoteState.Loading || (state is RemoteState.Success && isLoading(state.data)) ->
             CircularProgressIndicator(Modifier.size(LOADING_INDICATOR_SIZE).align(Alignment.Center))
 
-        is RemoteState.Error ->
+        state is RemoteState.Error || (state is RemoteState.Success && isError(state.data)) ->
             Column(Modifier.align(Alignment.Center)) {
                 Icon(
                     imageVector = Icons.Default.Warning,
@@ -42,24 +48,28 @@ fun <T : Any> BoxScope.ScrollingPage(state: RemoteState<T>, content: @Composable
                     tint = Colors.current.error
                 )
 
-                Text(
-                    text = "Encountered an error: ${state.throwable.message}",
-                    color = Colors.current.error,
-                    fontSize = Dimens.fontTitle
-                )
+                if (state is RemoteState.Error) {
+                    Text(
+                        text = "Encountered an error: ${state.throwable.message}",
+                        color = Colors.current.error,
+                        fontSize = Dimens.fontTitle
+                    )
 
-                Text(
-                    text = state.throwable.stackTraceToString(),
-                    color = Colors.current.error,
-                    fontFamily = FontFamily.Monospace
-                )
+                    Text(
+                        text = state.throwable.stackTraceToString(),
+                        color = Colors.current.error,
+                        fontFamily = FontFamily.Monospace
+                    )
+                }
             }
 
-        is RemoteState.Success ->
+        else -> {
+            require(state is RemoteState.Success)
             VerticalScroll {
                 Box(Modifier.padding(Dimens.space4)) {
                     content(state.data)
                 }
             }
+        }
     }
 }

@@ -8,7 +8,6 @@ import com.dominiczirbel.ui.util.RemoteState.Success
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
@@ -72,8 +71,7 @@ sealed class RemoteState<T : Any?> {
                     .onStart { emit(initial) }
                     // TODO doesn't switch to latest if there are multiple queued events
                     .scan(null) { acc: T?, value: R -> remote(acc, value) }
-                    .mapNotNull { it }
-                    .map<T, RemoteState<T>> { Success(it) }
+                    .mapNotNull<T?, RemoteState<T>> { it?.let { Success(it) } }
                     .catch {
                         it.printStackTrace()
                         emit(Error(it))
