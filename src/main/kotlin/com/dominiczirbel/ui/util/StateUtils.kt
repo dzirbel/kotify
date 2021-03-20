@@ -57,7 +57,7 @@ fun <T> callbackAsState(context: CoroutineContext = Dispatchers.IO, key: Any, ca
 fun <T> Flow<T>.collectAsStateSwitchable(
     initial: () -> T,
     key: Any?,
-    context: CoroutineContext = EmptyCoroutineContext
+    context: CoroutineContext = Dispatchers.IO
 ): State<T> {
     // copied from internal compose code
     class ProduceStateScopeImpl<T>(state: MutableState<T>, override val coroutineContext: CoroutineContext) :
