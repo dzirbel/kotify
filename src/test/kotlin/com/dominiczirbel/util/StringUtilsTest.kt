@@ -83,13 +83,13 @@ internal class StringUtilsTest {
             return listOf(
                 FormatDateTimeCase(
                     timestamp = 1_615_772_944_610,
-                    formatted = "2021-03-14 18:49:04.0610",
+                    formatted = "2021-03-14 18:49:04.610",
                     includeDate = true,
                     includeMillis = true
                 ),
                 FormatDateTimeCase(
                     timestamp = 1_615_772_944_610,
-                    formatted = "18:49:04.0610",
+                    formatted = "18:49:04.610",
                     includeDate = false,
                     includeMillis = true
                 ),

@@ -8,9 +8,9 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 private val dateTimeFormat = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
-private val dateTimeFormatMillis = SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSSS")
+private val dateTimeFormatMillis = SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS")
 private val dateTimeFormatNoDate = SimpleDateFormat("HH:mm:ss")
-private val dateTimeFormatNoDateMillis = SimpleDateFormat("HH:mm:ss.SSSS")
+private val dateTimeFormatNoDateMillis = SimpleDateFormat("HH:mm:ss.SSS")
 
 /**
  * Returns a human-readable format of the given file size in bytes.
