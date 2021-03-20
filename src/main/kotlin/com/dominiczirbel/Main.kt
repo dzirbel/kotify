@@ -22,8 +22,8 @@ fun main() {
     Logger.logToConsole = false
 
     val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor(DelayInterceptor)
         .addInterceptor(Logger.Network::intercept)
+        .addInterceptor(DelayInterceptor)
         .build()
 
     Spotify.configuration = Spotify.Configuration(

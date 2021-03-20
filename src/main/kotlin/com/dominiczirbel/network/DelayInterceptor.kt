@@ -11,7 +11,9 @@ object DelayInterceptor : Interceptor {
     var delayMs: Long = 0L
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        Thread.sleep(delayMs)
+        if (delayMs > 0) {
+            Thread.sleep(delayMs)
+        }
 
         return chain.proceed(chain.request())
     }
