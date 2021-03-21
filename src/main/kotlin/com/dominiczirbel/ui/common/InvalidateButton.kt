@@ -17,21 +17,18 @@ import com.dominiczirbel.ui.theme.Dimens
 @Composable
 fun RefreshButton(
     modifier: Modifier = Modifier,
-    refreshing: MutableState<Boolean>,
+    refreshing: Boolean,
     onClick: () -> Unit,
     content: @Composable RowScope.() -> Unit
 ) {
     SimpleTextButton(
         modifier = modifier,
-        enabled = !refreshing.value,
-        onClick = {
-            refreshing.value = true
-            onClick()
-        }
+        enabled = !refreshing,
+        onClick = onClick
     ) {
         content()
 
-        if (refreshing.value) {
+        if (refreshing) {
             CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
         } else {
             Icon(
@@ -54,8 +51,11 @@ fun InvalidateButton(
 ) {
     RefreshButton(
         modifier = modifier,
-        refreshing = refreshing,
-        onClick = onClick
+        refreshing = refreshing.value,
+        onClick = {
+            refreshing.value = true
+            onClick()
+        }
     ) {
         Text(
             text = updated?.let {

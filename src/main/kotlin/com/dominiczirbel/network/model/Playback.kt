@@ -17,7 +17,8 @@ data class Playback(
     val item: JsonObject,
     @SerialName("shuffle_state") val shuffleState: Boolean,
     @SerialName("repeat_state") val repeatState: String,
-    val context: PlaybackContext
+    val context: PlaybackContext,
+    val actions: JsonObject? = null
 )
 
 /**
