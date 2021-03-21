@@ -1,6 +1,7 @@
 package com.dominiczirbel.network
 
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Call
@@ -52,5 +53,12 @@ inline fun <reified T> Response.bodyFromJson(): T {
     }
 
     // may throw NPE if T is not non-nullable
-    return body.string().takeIf { it.isNotEmpty() }?.let { Json.decodeFromString<T>(it) } as T
+    return body.string().takeIf { it.isNotEmpty() }?.let { bodyString ->
+        try {
+            Json.decodeFromString<T>(bodyString)
+        } catch (ex: SerializationException) {
+            // the default message is not very helpful
+            throw Throwable(message = "Error deserializing ${T::class} from:\n\n$bodyString\n", cause = ex)
+        }
+    } as T
 }
