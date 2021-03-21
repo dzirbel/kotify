@@ -235,7 +235,7 @@ object SpotifyCache {
                 GlobalObjects.ArtistAlbums(artistId = artistId, albumIds = albums.map { requireNotNull(it.id) })
             }.albumIds
 
-            return cache.getAll(ids = albumIds) { id -> GlobalScope.async { Spotify.Albums.getAlbum(id) } }
+            return cache.getAll<Album>(ids = albumIds) { id -> GlobalScope.async { Spotify.Albums.getAlbum(id) } }
         }
 
         suspend fun getSavedArtists(): List<String> {

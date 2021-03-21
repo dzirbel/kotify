@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.dominiczirbel.cache.Cache.TTLStrategy
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -431,7 +430,7 @@ class Cache(
      * type other than [T], fetches a new value for it from [remote], puts it and all its
      * [CacheableObject.recursiveCacheableObjects] in the cache, and returns it.
      */
-    inline fun <reified T : CacheableObject> getAll(
+    suspend inline fun <reified T : CacheableObject> getAll(
         ids: List<String>,
         saveOnChange: Boolean = this.saveOnChange,
         remote: (String) -> Deferred<T>
@@ -441,7 +440,7 @@ class Cache(
 
         val jobs = mutableMapOf<Int, Deferred<T>>()
         cached.forEachIndexed { index, cacheObject ->
-            if (cacheObject == null) {
+            if (cacheObject?.obj !is T) {
                 jobs[index] = remote(ids[index])
             }
         }
@@ -450,9 +449,7 @@ class Cache(
         return cached
             .mapIndexed { index, cacheObject ->
                 cacheObject?.obj as? T
-                    ?: runBlocking {
-                        jobs.getValue(index).await().also { newObjects.add(it) }
-                    }
+                    ?: jobs.getValue(index).await().also { newObjects.add(it) }
             }
             .also { putAll(newObjects, saveOnChange = saveOnChange) }
     }
