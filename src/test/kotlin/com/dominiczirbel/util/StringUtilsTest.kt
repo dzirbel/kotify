@@ -6,6 +6,9 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 internal class StringUtilsTest {
     data class ByteSizeCase(val bytes: Long, val formatted: String)
@@ -17,6 +20,8 @@ internal class StringUtilsTest {
     )
 
     data class FormatTimeRelativeCase(val timestamp: Long, val now: Long, val formatted: String)
+
+    data class FormatDurationCase(val duration: Duration, val formatted: String)
 
     @ParameterizedTest
     @MethodSource
@@ -40,6 +45,12 @@ internal class StringUtilsTest {
     @MethodSource
     fun formatTimeRelative(case: FormatTimeRelativeCase) {
         assertThat(formatTimeRelative(timestamp = case.timestamp, now = case.now)).isEqualTo(case.formatted)
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    fun formatDuration(case: FormatDurationCase) {
+        assertThat(formatDuration(durationMs = case.duration.toLongMilliseconds())).isEqualTo(case.formatted)
     }
 
     companion object {
@@ -165,6 +176,25 @@ internal class StringUtilsTest {
                     timestamp = base,
                     now = base - TimeUnit.DAYS.toMillis(100),
                     formatted = "in 100 days"
+                ),
+            )
+        }
+
+        @JvmStatic
+        @Suppress("unused")
+        fun formatDuration(): List<FormatDurationCase> {
+            return listOf(
+                FormatDurationCase(duration = 0.toDuration(DurationUnit.SECONDS), formatted = "0:00"),
+                FormatDurationCase(duration = 1.toDuration(DurationUnit.SECONDS), formatted = "0:01"),
+                FormatDurationCase(duration = 2.toDuration(DurationUnit.SECONDS), formatted = "0:02"),
+                FormatDurationCase(duration = 2.toDuration(DurationUnit.MINUTES), formatted = "2:00"),
+                FormatDurationCase(
+                    duration = 2.toDuration(DurationUnit.MINUTES).plus(30.toDuration(DurationUnit.SECONDS)),
+                    formatted = "2:30"
+                ),
+                FormatDurationCase(
+                    duration = 2.toDuration(DurationUnit.HOURS),
+                    formatted = "2:00:00"
                 ),
             )
         }

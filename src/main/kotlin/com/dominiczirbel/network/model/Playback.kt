@@ -27,7 +27,7 @@ data class Playback(
 @Serializable
 data class TrackPlayback(
     val timestamp: Long,
-    @SerialName("progress_ms") val processMs: Int,
+    @SerialName("progress_ms") val progressMs: Long,
     @SerialName("is_playing") val isPlaying: Boolean,
     @SerialName("currently_playing_type") val currentlyPlayingType: String,
     val item: FullTrack,

@@ -96,3 +96,18 @@ fun formatTimeRelativeWithUnit(timestamp: Long, now: Long = System.currentTimeMi
 fun formatTimeRelative(timestamp: Long, now: Long = System.currentTimeMillis()): String {
     return formatTimeRelativeWithUnit(timestamp = timestamp, now = now).first
 }
+
+/**
+ * Returns a duration format of the given [durationMs], e.g. "3:14" for 3 minutes and 14 seconds.
+ */
+fun formatDuration(durationMs: Long): String {
+    val hours = TimeUnit.MILLISECONDS.toHours(durationMs)
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(durationMs) % 60
+    val seconds = TimeUnit.MILLISECONDS.toSeconds(durationMs) % 60
+
+    val hoursString = if (hours > 0) "$hours:" else ""
+    val minutesString = if (hours > 0) minutes.toString().padStart(length = 2, padChar = '0') else minutes.toString()
+    val secondsString = seconds.toString().padStart(length = 2, padChar = '0')
+
+    return "$hoursString$minutesString:$secondsString"
+}

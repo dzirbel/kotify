@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentAlpha
@@ -18,10 +21,12 @@ import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.svgResource
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.network.Spotify
@@ -32,7 +37,10 @@ import com.dominiczirbel.ui.common.RefreshButton
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
+import com.dominiczirbel.util.formatDuration
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flow
@@ -40,8 +48,11 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.TimeUnit
 
 val ALBUM_ART_SIZE = 75.dp
+val TRACK_PROGRESS_WIDTH = 1_000.dp
+val TRACK_PROGRESS_HEIGHT = 4.dp
 
 private class BottomPanelPresenter : Presenter<
     BottomPanelPresenter.State,
@@ -91,6 +102,7 @@ private class BottomPanelPresenter : Presenter<
     }
 }
 
+// TODO auto-update track playback at the (expected) end of the song
 @Composable
 fun BottomPanel() {
     val presenter = remember { BottomPanelPresenter() }
@@ -107,9 +119,14 @@ fun BottomPanel() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // TODO control/progress jump around when the size of the PlayerState changes
             PlayerState(state = state)
 
-            PlayerControls(remoteState = state, events = presenter.events)
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceEvenly) {
+                PlayerControls(remoteState = state, events = presenter.events)
+
+                TrackProgress(state = (state as? RemoteState.Success)?.data?.trackPlayback)
+            }
 
             RefreshButton(
                 refreshing = (state as? RemoteState.Success)
@@ -300,5 +317,58 @@ private fun PlayerControls(
                 contentDescription = "Repeat"
             )
         }
+    }
+}
+
+@Composable
+fun TrackProgress(state: TrackPlayback?) {
+    val progressState = state?.let {
+        remember(state) {
+            flow {
+                val start = System.nanoTime()
+                while (true) {
+                    val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+                    emit(state.progressMs + elapsedMs)
+                    delay(TimeUnit.SECONDS.toMillis(1))
+                }
+            }
+        }.collectAsState(initial = state.progressMs, context = Dispatchers.IO)
+    }
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = progressState?.value?.coerceAtMost(state.item.durationMs)?.let { formatDuration(it) }.orEmpty(),
+            fontSize = Dimens.fontCaption
+        )
+
+        Spacer(Modifier.width(Dimens.space3))
+
+        val shape = RoundedCornerShape(TRACK_PROGRESS_HEIGHT / 2)
+        Box(
+            Modifier
+                .size(width = TRACK_PROGRESS_WIDTH, height = TRACK_PROGRESS_HEIGHT)
+                .clip(shape)
+                .background(Colors.current.surface1)
+        ) {
+            // TODO animate more smoothly
+            progressState?.value?.let { currentProgress ->
+                val widthFraction = currentProgress.toFloat() / state.item.durationMs
+
+                Box(
+                    Modifier
+                        .fillMaxWidth(fraction = widthFraction.coerceAtMost(1f))
+                        .fillMaxHeight()
+                        .clip(shape)
+                        .background(Colors.current.text)
+                )
+            }
+        }
+
+        Spacer(Modifier.width(Dimens.space3))
+
+        Text(
+            text = remember(state?.item?.durationMs) { state?.item?.durationMs?.let { formatDuration(it) }.orEmpty() },
+            fontSize = Dimens.fontCaption
+        )
     }
 }
