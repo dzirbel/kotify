@@ -100,6 +100,7 @@ fun formatTimeRelative(timestamp: Long, now: Long = System.currentTimeMillis()):
 /**
  * Returns a duration format of the given [durationMs], e.g. "3:14" for 3 minutes and 14 seconds.
  */
+@Suppress("MagicNumber")
 fun formatDuration(durationMs: Long): String {
     val hours = TimeUnit.MILLISECONDS.toHours(durationMs)
     val minutes = TimeUnit.MILLISECONDS.toMinutes(durationMs) % 60
