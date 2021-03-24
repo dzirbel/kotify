@@ -6,34 +6,33 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.svgResource
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.model.Playback
 import com.dominiczirbel.network.model.TrackPlayback
 import com.dominiczirbel.ui.common.LoadedImage
-import com.dominiczirbel.ui.common.RefreshButton
+import com.dominiczirbel.ui.common.SeekableSlider
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
@@ -43,6 +42,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
@@ -54,6 +55,8 @@ val ALBUM_ART_SIZE = 75.dp
 val TRACK_PROGRESS_WIDTH = 1_000.dp
 val TRACK_PROGRESS_HEIGHT = 4.dp
 
+// TODO sometimes on skip/etc the immediate call to playback returns outdated info, from before the skip/etc has been
+//  applied - keep making calls until the playback is updated?
 private class BottomPanelPresenter : Presenter<
     BottomPanelPresenter.State,
     BottomPanelPresenter.Event,
@@ -78,11 +81,29 @@ private class BottomPanelPresenter : Presenter<
 
     override val initialState: State = State()
 
+    override fun reactTo(events: Flow<Event>): Flow<Result> {
+        return merge(
+            events.filter { it is Event.Load }.flatMapLatest(transform = ::reactTo),
+            super.reactTo(events.filter { it !is Event.Load })
+        )
+    }
+
     override fun reactTo(event: Event): Flow<Result> {
         return when (event) {
             is Event.Load -> merge(
-                flow { emit(Result.TrackPlaybackLoaded(Spotify.Player.getCurrentlyPlayingTrack())) },
-                flow { emit(Result.PlaybackLoaded(Spotify.Player.getCurrentPlayback())) }
+                flow { emit(Result.PlaybackLoaded(Spotify.Player.getCurrentPlayback())) },
+                flow {
+                    val trackPlayback = Spotify.Player.getCurrentlyPlayingTrack()
+                    emit(Result.TrackPlaybackLoaded(trackPlayback))
+
+                    if (trackPlayback != null && trackPlayback.isPlaying) {
+                        val millisLeft = trackPlayback.item.durationMs - trackPlayback.progressMs
+
+                        delay(millisLeft + REFRESH_BUFFER_MS)
+
+                        events.emit(Event.Load())
+                    }
+                }
             ).onStart { emit(Result.Loading()) }
         }
     }
@@ -100,9 +121,16 @@ private class BottomPanelPresenter : Presenter<
             )
         }
     }
+
+    companion object {
+        /**
+         * A buffer in milliseconds after the current track is expected to end before fetching the next playback object,
+         * to account for network time, etc.
+         */
+        private const val REFRESH_BUFFER_MS = 500
+    }
 }
 
-// TODO auto-update track playback at the (expected) end of the song
 @Composable
 fun BottomPanel() {
     val presenter = remember { BottomPanelPresenter() }
@@ -128,15 +156,26 @@ fun BottomPanel() {
                 TrackProgress(state = (state as? RemoteState.Success)?.data?.trackPlayback)
             }
 
-            RefreshButton(
-                refreshing = (state as? RemoteState.Success)
-                    ?.data
-                    ?.let { it.loadingPlayback || it.loadingTrackPlayback } == true,
+            val refreshing = (state as? RemoteState.Success)
+                ?.data
+                ?.let { it.loadingPlayback || it.loadingTrackPlayback } == true
+
+            IconButton(
+                enabled = !refreshing,
                 onClick = {
                     runBlocking { presenter.events.emit(BottomPanelPresenter.Event.Load()) }
-                },
-                content = { }
-            )
+                }
+            ) {
+                if (refreshing) {
+                    CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.Refresh,
+                        contentDescription = "Refresh",
+                        modifier = Modifier.size(Dimens.iconMedium)
+                    )
+                }
+            }
         }
     }
 }
@@ -322,53 +361,38 @@ private fun PlayerControls(
 
 @Composable
 fun TrackProgress(state: TrackPlayback?) {
-    val progressState = state?.let {
-        remember(state) {
-            flow {
-                val start = System.nanoTime()
-                while (true) {
-                    val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
-                    emit(state.progressMs + elapsedMs)
-                    delay(TimeUnit.SECONDS.toMillis(1))
+    if (state == null) {
+        SeekableSlider(progress = null)
+    } else {
+        val progressState = if (state.isPlaying) {
+            remember(state) {
+                flow {
+                    val start = System.nanoTime()
+                    while (true) {
+                        val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+                        emit(state.progressMs + elapsedMs)
+                        delay(TimeUnit.SECONDS.toMillis(1))
+                    }
                 }
-            }
-        }.collectAsState(initial = state.progressMs, context = Dispatchers.IO)
-    }
-
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = progressState?.value?.coerceAtMost(state.item.durationMs)?.let { formatDuration(it) }.orEmpty(),
-            fontSize = Dimens.fontCaption
-        )
-
-        Spacer(Modifier.width(Dimens.space3))
-
-        val shape = RoundedCornerShape(TRACK_PROGRESS_HEIGHT / 2)
-        Box(
-            Modifier
-                .size(width = TRACK_PROGRESS_WIDTH, height = TRACK_PROGRESS_HEIGHT)
-                .clip(shape)
-                .background(Colors.current.surface1)
-        ) {
-            // TODO animate more smoothly
-            progressState?.value?.let { currentProgress ->
-                val widthFraction = currentProgress.toFloat() / state.item.durationMs
-
-                Box(
-                    Modifier
-                        .fillMaxWidth(fraction = widthFraction.coerceAtMost(1f))
-                        .fillMaxHeight()
-                        .clip(shape)
-                        .background(Colors.current.text)
-                )
-            }
+            }.collectAsState(initial = state.progressMs, context = Dispatchers.IO)
+        } else {
+            mutableStateOf(state.progressMs)
         }
 
-        Spacer(Modifier.width(Dimens.space3))
+        // TODO animate progress more smoothly
+        val progress = progressState.value.coerceAtMost(state.item.durationMs)
 
-        Text(
-            text = remember(state?.item?.durationMs) { state?.item?.durationMs?.let { formatDuration(it) }.orEmpty() },
-            fontSize = Dimens.fontCaption
+        SeekableSlider(
+            progress = progress.let { progress.toFloat() / state.item.durationMs },
+            leftContent = {
+                Text(text = formatDuration(progress), fontSize = Dimens.fontCaption)
+            },
+            rightContent = {
+                Text(
+                    text = remember(state.item.durationMs) { state.item.durationMs.let { formatDuration(it) } },
+                    fontSize = Dimens.fontCaption
+                )
+            }
         )
     }
 }

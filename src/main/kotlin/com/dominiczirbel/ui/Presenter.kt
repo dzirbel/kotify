@@ -31,7 +31,7 @@ abstract class Presenter<State, Event, Result>(
                 .onStart {
                     startingEvents.forEach { emit(it) }
                 }
-                .flatMapMerge(transform = ::reactTo)
+                .let { reactTo(it) }
                 .scan(initialState) { state, result ->
                     apply(state, result)
                 }
@@ -44,6 +44,10 @@ abstract class Presenter<State, Event, Result>(
         }
             .collectAsStateSwitchable(initial = { RemoteState.Loading() }, context = context, key = key)
             .value
+    }
+
+    open fun reactTo(events: Flow<Event>): Flow<Result> {
+        return events.flatMapMerge(transform = ::reactTo)
     }
 
     abstract fun reactTo(event: Event): Flow<Result>
