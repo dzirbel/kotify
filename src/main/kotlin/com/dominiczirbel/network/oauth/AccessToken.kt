@@ -5,6 +5,9 @@ import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.await
 import com.dominiczirbel.network.bodyFromJson
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -74,6 +77,8 @@ data class AccessToken(
 
         private val tokenState = mutableStateOf(load())
 
+        private var refreshJob: Job? = null
+
         /**
          * The currently cached token, loading it from disk if there is not one in memory.
          *
@@ -120,10 +125,10 @@ data class AccessToken(
          * If the cached token has expired and has a [AccessToken.refreshToken], it is refreshed (i.e. a new
          * [AccessToken] is fetched based on the old [AccessToken.refreshToken]) and the new token is returned.
          */
-        suspend fun get(clientId: String = OAuth.DEFAULT_CLIENT_ID, refresh: Boolean = true): AccessToken? {
+        suspend fun get(clientId: String = OAuth.DEFAULT_CLIENT_ID): AccessToken? {
             val token = token ?: return null
 
-            if (refresh && token.isExpired) {
+            if (token.isExpired) {
                 log("Current access token is expired; refreshing")
                 refresh(clientId)
             }
@@ -186,7 +191,7 @@ data class AccessToken(
          * If successful, the new access token is immediately available in-memory and written to disk.
          */
         private suspend fun refresh(clientId: String) {
-            token?.refreshToken?.let { refreshToken ->
+            suspend fun fetchRefresh(refreshToken: String, clientId: String) {
                 val body = FormBody.Builder()
                     .add("grant_type", "refresh_token")
                     .add("refresh_token", refreshToken)
@@ -198,14 +203,30 @@ data class AccessToken(
                     .url("https://accounts.spotify.com/api/token")
                     .build()
 
-                // TODO error handling
-                Spotify.configuration.oauthOkHttpClient.newCall(request).await()
-                    .use { response -> response.bodyFromJson<AccessToken>() }
-                    .also {
-                        log("Got refreshed access token")
-                        token = it
-                        save(it)
-                    }
+                val token = try {
+                    Spotify.configuration.oauthOkHttpClient.newCall(request).await()
+                        .use { response -> response.bodyFromJson<AccessToken>() }
+                } catch (_: Throwable) {
+                    clear()
+                    null
+                }
+
+                token?.let {
+                    log("Got refreshed access token")
+                    this.token = it
+                    save(it)
+                }
+            }
+
+            token?.refreshToken?.let { refreshToken ->
+                val job = synchronized(this) {
+                    refreshJob ?: GlobalScope.async {
+                        fetchRefresh(refreshToken = refreshToken, clientId = clientId)
+                        refreshJob = null
+                    }.also { refreshJob = it }
+                }
+
+                job.join()
             }
         }
 

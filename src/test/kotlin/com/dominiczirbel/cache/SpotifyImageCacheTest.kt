@@ -10,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
@@ -36,14 +37,14 @@ internal class SpotifyImageCacheTest {
         assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(1)
     }
 
-    @Test
+    @RepeatedTest(3)
     fun testRemoteConcurrent() {
         interceptor.responseBody = testImageBytes.toResponseBody(contentType = "image/jpeg".toMediaType())
-        interceptor.delayMs = 200
+        interceptor.delayMs = 100
 
         val image1Deferred = GlobalScope.async { getImage() }
         val image2Deferred = GlobalScope.async {
-            delay(100)
+            delay(50)
             getImage()
         }
 
