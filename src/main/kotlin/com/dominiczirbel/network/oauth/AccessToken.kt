@@ -1,6 +1,7 @@
 package com.dominiczirbel.network.oauth
 
 import androidx.compose.runtime.mutableStateOf
+import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.await
 import com.dominiczirbel.network.bodyFromJson
@@ -11,7 +12,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.Request
-import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileReader
 import java.nio.file.Files
@@ -56,10 +56,8 @@ data class AccessToken(
     object Cache {
         /**
          * The file at which the access token is saved, relative to the current working directory.
-         *
-         * TODO move to cache dir
          */
-        internal val file = File("access_token.json")
+        internal val file = SpotifyCache.CACHE_DIR.resolve("access_token.json")
 
         /**
          * Whether to log access token updates to the console; used to disable logging when testing the cache directly.
@@ -69,7 +67,10 @@ data class AccessToken(
         /**
          * Encode defaults in order to include [AccessToken.received].
          */
-        private val json = Json { encodeDefaults = true }
+        private val json = Json {
+            encodeDefaults = true
+            prettyPrint = true
+        }
 
         private val tokenState = mutableStateOf(load())
 
