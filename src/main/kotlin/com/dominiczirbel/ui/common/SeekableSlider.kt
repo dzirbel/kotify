@@ -28,15 +28,14 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import kotlin.math.roundToInt
 
-private val TRACK_PROGRESS_WIDTH = 1_000.dp
-private val TRACK_PROGRESS_HEIGHT = 4.dp
-private val ROUNDED_CORNER_SHAPE = RoundedCornerShape(TRACK_PROGRESS_HEIGHT / 2)
-private val SEEK_TARGET_SIZE = 12.dp
+val DEFAULT_SLIDER_HEIGHT = 4.dp
+val DEFAULT_SEEK_TARGET_SIZE = 12.dp
 
 /**
  * A horizontal slider which displays a [progress] state and can be seeked by dragging or clicking.
@@ -55,6 +54,9 @@ private val SEEK_TARGET_SIZE = 12.dp
 @Suppress("UnnecessaryParentheses")
 fun SeekableSlider(
     progress: Float?,
+    sliderWidth: Dp? = null,
+    sliderHeight: Dp = DEFAULT_SLIDER_HEIGHT,
+    seekTargetSize: Dp = DEFAULT_SEEK_TARGET_SIZE,
     dragKey: Any? = null,
     leftContent: (@Composable () -> Unit)? = null,
     rightContent: (@Composable () -> Unit)? = null,
@@ -86,6 +88,7 @@ fun SeekableSlider(
 
         val padding = Dimens.space3
         val paddingPx = with(LocalDensity.current) { padding.toPx() }
+        val roundedCornerShape = RoundedCornerShape(sliderHeight / 2)
         Box(
             Modifier
                 .pointerMoveFilter(
@@ -108,13 +111,13 @@ fun SeekableSlider(
                     onSeek(seekPercent)
                 }
                 .padding(padding)
-                .size(width = TRACK_PROGRESS_WIDTH, height = TRACK_PROGRESS_HEIGHT)
+                .size(width = sliderWidth ?: Dp.Unspecified, height = sliderHeight)
         ) {
             // the background of the slider bar, representing the maximum progress
             Box(
                 Modifier
                     .fillMaxSize()
-                    .clip(ROUNDED_CORNER_SHAPE)
+                    .clip(roundedCornerShape)
                     .background(Colors.current.surface1)
             )
 
@@ -125,7 +128,7 @@ fun SeekableSlider(
                         Box(
                             Modifier
                                 .fillMaxWidth(fraction = progress)
-                                .clip(ROUNDED_CORNER_SHAPE)
+                                .clip(roundedCornerShape)
                                 .background(if (hoverState.value) MaterialTheme.colors.primary else Colors.current.text)
                         )
 
@@ -133,7 +136,7 @@ fun SeekableSlider(
                             // a draggable circle for seeking
                             Box(
                                 Modifier
-                                    .size(SEEK_TARGET_SIZE)
+                                    .size(seekTargetSize)
                                     .clip(CircleShape)
                                     .background(Colors.current.text)
                                     .draggable(

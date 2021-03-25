@@ -1036,7 +1036,10 @@ object Spotify {
          * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-a-users-available-devices
          */
         suspend fun getAvailableDevices(): List<PlaybackDevice> {
-            return get("me/player/devices")
+            @Serializable
+            data class Response(val devices: List<PlaybackDevice>)
+
+            return get<Response>("me/player/devices").devices
         }
 
         /**

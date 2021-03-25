@@ -30,6 +30,7 @@ import androidx.compose.ui.res.svgResource
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.model.Playback
+import com.dominiczirbel.network.model.PlaybackDevice
 import com.dominiczirbel.network.model.TrackPlayback
 import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.SeekableSlider
@@ -52,30 +53,51 @@ import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
-val ALBUM_ART_SIZE = 75.dp
+private val ALBUM_ART_SIZE = 75.dp
+private val TRACK_SLIDER_WIDTH = 1_000.dp
+private val VOLUME_SLIDER_WIDTH = 100.dp
 
 // TODO sometimes on skip/etc the immediate call to playback returns outdated info, from before the skip/etc has been
 //  applied - keep making calls until the playback is updated?
 private class BottomPanelPresenter : Presenter<
     BottomPanelPresenter.State,
     BottomPanelPresenter.Event,
-    BottomPanelPresenter.Result>(startingEvents = listOf(Event.Load())) {
+    BottomPanelPresenter.Result>(startingEvents = listOf(Event.Load.all)) {
 
     data class State(
         val loadingPlayback: Boolean = false,
         val playback: Playback? = null,
         val loadingTrackPlayback: Boolean = false,
-        val trackPlayback: TrackPlayback? = null
+        val trackPlayback: TrackPlayback? = null,
+        val loadingDevices: Boolean = false,
+        val devices: List<PlaybackDevice>? = null
     )
 
     sealed class Event {
-        data class Load(val loadPlayback: Boolean = true, val loadTrackPlayback: Boolean = true) : Event()
+        data class Load(
+            val loadPlayback: Boolean,
+            val loadTrackPlayback: Boolean,
+            val loadDevices: Boolean
+        ) : Event() {
+            companion object {
+                val playback = Load(loadPlayback = true, loadTrackPlayback = false, loadDevices = false)
+                val trackPlayback = Load(loadPlayback = false, loadTrackPlayback = true, loadDevices = false)
+                val devices = Load(loadPlayback = false, loadTrackPlayback = false, loadDevices = true)
+                val all = Load(loadPlayback = true, loadTrackPlayback = true, loadDevices = true)
+            }
+        }
     }
 
     sealed class Result {
-        data class Loading(val loadingPlayback: Boolean = true, val loadingTrackPlayback: Boolean = true) : Result()
+        data class Loading(
+            val loadingPlayback: Boolean,
+            val loadingTrackPlayback: Boolean,
+            val loadingDevices: Boolean
+        ) : Result()
+
         data class PlaybackLoaded(val playback: Playback?) : Result()
         data class TrackPlaybackLoaded(val trackPlayback: TrackPlayback?) : Result()
+        data class DevicesLoaded(val devices: List<PlaybackDevice>) : Result()
     }
 
     override val initialState: State = State()
@@ -90,20 +112,39 @@ private class BottomPanelPresenter : Presenter<
     override fun reactTo(event: Event): Flow<Result> {
         return when (event) {
             is Event.Load -> merge(
-                flow { emit(Result.PlaybackLoaded(Spotify.Player.getCurrentPlayback())) },
                 flow {
-                    val trackPlayback = Spotify.Player.getCurrentlyPlayingTrack()
-                    emit(Result.TrackPlaybackLoaded(trackPlayback))
+                    if (event.loadPlayback) {
+                        emit(Result.PlaybackLoaded(Spotify.Player.getCurrentPlayback()))
+                    }
+                },
+                flow {
+                    if (event.loadDevices) {
+                        emit(Result.DevicesLoaded(Spotify.Player.getAvailableDevices()))
+                    }
+                },
+                flow {
+                    if (event.loadTrackPlayback) {
+                        val trackPlayback = Spotify.Player.getCurrentlyPlayingTrack()
+                        emit(Result.TrackPlaybackLoaded(trackPlayback))
 
-                    if (trackPlayback != null && trackPlayback.isPlaying) {
-                        val millisLeft = trackPlayback.item.durationMs - trackPlayback.progressMs
+                        if (trackPlayback != null && trackPlayback.isPlaying) {
+                            val millisLeft = trackPlayback.item.durationMs - trackPlayback.progressMs
 
-                        delay(millisLeft + REFRESH_BUFFER_MS)
+                            delay(millisLeft + REFRESH_BUFFER_MS)
 
-                        events.emit(Event.Load())
+                            events.emit(Event.Load(loadTrackPlayback = true, loadPlayback = true, loadDevices = false))
+                        }
                     }
                 }
-            ).onStart { emit(Result.Loading()) }
+            ).onStart {
+                emit(
+                    Result.Loading(
+                        loadingPlayback = event.loadPlayback,
+                        loadingTrackPlayback = event.loadTrackPlayback,
+                        loadingDevices = event.loadDevices
+                    )
+                )
+            }
         }
     }
 
@@ -111,12 +152,17 @@ private class BottomPanelPresenter : Presenter<
         return when (result) {
             is Result.Loading -> state.copy(
                 loadingPlayback = state.loadingPlayback || result.loadingPlayback,
-                loadingTrackPlayback = state.loadingTrackPlayback || result.loadingTrackPlayback
+                loadingTrackPlayback = state.loadingTrackPlayback || result.loadingTrackPlayback,
+                loadingDevices = state.loadingDevices || result.loadingDevices
             )
             is Result.PlaybackLoaded -> state.copy(playback = result.playback, loadingPlayback = false)
             is Result.TrackPlaybackLoaded -> state.copy(
                 trackPlayback = result.trackPlayback,
                 loadingTrackPlayback = false
+            )
+            is Result.DevicesLoaded -> state.copy(
+                devices = result.devices,
+                loadingDevices = false
             )
         }
     }
@@ -157,22 +203,49 @@ fun BottomPanel() {
 
             val refreshing = (state as? RemoteState.Success)
                 ?.data
-                ?.let { it.loadingPlayback || it.loadingTrackPlayback } == true
+                ?.let { it.loadingPlayback || it.loadingTrackPlayback || it.loadingDevices } == true
 
-            IconButton(
-                enabled = !refreshing,
-                onClick = {
-                    runBlocking { presenter.events.emit(BottomPanelPresenter.Event.Load()) }
-                }
-            ) {
-                if (refreshing) {
-                    CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
-                } else {
-                    Icon(
-                        imageVector = Icons.Filled.Refresh,
-                        contentDescription = "Refresh",
-                        modifier = Modifier.size(Dimens.iconMedium)
-                    )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // TODO volume slider often buggy - might be fetching device state before new volume has been applied
+                val devices = (state as? RemoteState.Success)?.data?.devices
+                val currentDevice = devices?.firstOrNull()
+                SeekableSlider(
+                    progress = @Suppress("MagicNumber") currentDevice?.volumePercent?.let { it.toFloat() / 100 },
+                    dragKey = currentDevice,
+                    sliderWidth = VOLUME_SLIDER_WIDTH,
+                    leftContent = {
+                        Icon(
+                            painter = svgResource("volume-up.svg"),
+                            contentDescription = "Volume"
+                        )
+                    },
+                    onSeek = { seekPercent ->
+                        // TODO use coroutine scope context
+                        GlobalScope.launch {
+                            Spotify.Player.setVolume(
+                                volumePercent = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
+                            )
+
+                            presenter.events.emit(BottomPanelPresenter.Event.Load.devices)
+                        }
+                    }
+                )
+
+                IconButton(
+                    enabled = !refreshing,
+                    onClick = {
+                        runBlocking { presenter.events.emit(BottomPanelPresenter.Event.Load.all) }
+                    }
+                ) {
+                    if (refreshing) {
+                        CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.Refresh,
+                            contentDescription = "Refresh",
+                            modifier = Modifier.size(Dimens.iconMedium)
+                        )
+                    }
                 }
             }
         }
@@ -231,7 +304,7 @@ private fun PlayerControls(
                 GlobalScope.launch {
                     Spotify.Player.toggleShuffle(state = !shuffling!!)
 
-                    events.emit(BottomPanelPresenter.Event.Load(loadPlayback = true, loadTrackPlayback = false))
+                    events.emit(BottomPanelPresenter.Event.Load.playback)
 
                     togglingShuffle.value = false
                 }
@@ -259,7 +332,7 @@ private fun PlayerControls(
                 GlobalScope.launch {
                     Spotify.Player.skipToPrevious()
 
-                    events.emit(BottomPanelPresenter.Event.Load(loadPlayback = true, loadTrackPlayback = false))
+                    events.emit(BottomPanelPresenter.Event.Load.trackPlayback)
 
                     skippingPrevious.value = false
                 }
@@ -286,7 +359,7 @@ private fun PlayerControls(
                         Spotify.Player.startPlayback()
                     }
 
-                    events.emit(BottomPanelPresenter.Event.Load(loadPlayback = true, loadTrackPlayback = false))
+                    events.emit(BottomPanelPresenter.Event.Load.playback)
 
                     togglingPlayback.value = false
                 }
@@ -309,7 +382,7 @@ private fun PlayerControls(
                 GlobalScope.launch {
                     Spotify.Player.skipToNext()
 
-                    events.emit(BottomPanelPresenter.Event.Load(loadPlayback = true, loadTrackPlayback = false))
+                    events.emit(BottomPanelPresenter.Event.Load.trackPlayback)
 
                     skippingNext.value = false
                 }
@@ -338,7 +411,7 @@ private fun PlayerControls(
                         }
                     )
 
-                    events.emit(BottomPanelPresenter.Event.Load(loadPlayback = true, loadTrackPlayback = false))
+                    events.emit(BottomPanelPresenter.Event.Load.playback)
 
                     togglingRepeat.value = false
                 }
@@ -384,6 +457,7 @@ private fun TrackProgress(state: TrackPlayback?, events: MutableSharedFlow<Botto
         SeekableSlider(
             progress = progress.let { progress.toFloat() / state.item.durationMs },
             dragKey = state,
+            sliderWidth = TRACK_SLIDER_WIDTH,
             leftContent = {
                 Text(text = formatDuration(progress), fontSize = Dimens.fontCaption)
             },
@@ -400,7 +474,7 @@ private fun TrackProgress(state: TrackPlayback?, events: MutableSharedFlow<Botto
                         positionMs = (seekPercent * state.item.durationMs).roundToInt()
                     )
 
-                    events.emit(BottomPanelPresenter.Event.Load(loadPlayback = true, loadTrackPlayback = false))
+                    events.emit(BottomPanelPresenter.Event.Load.playback)
                 }
             }
         )
