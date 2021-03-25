@@ -50,10 +50,9 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 val ALBUM_ART_SIZE = 75.dp
-val TRACK_PROGRESS_WIDTH = 1_000.dp
-val TRACK_PROGRESS_HEIGHT = 4.dp
 
 // TODO sometimes on skip/etc the immediate call to playback returns outdated info, from before the skip/etc has been
 //  applied - keep making calls until the playback is updated?
@@ -153,7 +152,7 @@ fun BottomPanel() {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceEvenly) {
                 PlayerControls(remoteState = state, events = presenter.events)
 
-                TrackProgress(state = (state as? RemoteState.Success)?.data?.trackPlayback)
+                TrackProgress(state = (state as? RemoteState.Success)?.data?.trackPlayback, events = presenter.events)
             }
 
             val refreshing = (state as? RemoteState.Success)
@@ -360,7 +359,7 @@ private fun PlayerControls(
 }
 
 @Composable
-fun TrackProgress(state: TrackPlayback?) {
+private fun TrackProgress(state: TrackPlayback?, events: MutableSharedFlow<BottomPanelPresenter.Event>) {
     if (state == null) {
         SeekableSlider(progress = null)
     } else {
@@ -384,6 +383,7 @@ fun TrackProgress(state: TrackPlayback?) {
 
         SeekableSlider(
             progress = progress.let { progress.toFloat() / state.item.durationMs },
+            dragKey = state,
             leftContent = {
                 Text(text = formatDuration(progress), fontSize = Dimens.fontCaption)
             },
@@ -392,6 +392,16 @@ fun TrackProgress(state: TrackPlayback?) {
                     text = remember(state.item.durationMs) { state.item.durationMs.let { formatDuration(it) } },
                     fontSize = Dimens.fontCaption
                 )
+            },
+            onSeek = { seekPercent ->
+                // TODO use coroutine scope context
+                GlobalScope.launch {
+                    Spotify.Player.seekToPosition(
+                        positionMs = (seekPercent * state.item.durationMs).roundToInt()
+                    )
+
+                    events.emit(BottomPanelPresenter.Event.Load(loadPlayback = true, loadTrackPlayback = false))
+                }
             }
         )
     }
