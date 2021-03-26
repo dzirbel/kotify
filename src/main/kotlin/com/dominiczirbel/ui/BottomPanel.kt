@@ -434,7 +434,7 @@ private fun PlayerControls(
 @Composable
 private fun TrackProgress(state: TrackPlayback?, events: MutableSharedFlow<BottomPanelPresenter.Event>) {
     if (state == null) {
-        SeekableSlider(progress = null)
+        SeekableSlider(progress = null, sliderWidth = TRACK_SLIDER_WIDTH)
     } else {
         val progressState = if (state.isPlaying) {
             remember(state) {
