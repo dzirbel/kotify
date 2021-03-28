@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dominiczirbel.cache.SpotifyCache
+import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.Page
 import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.common.SimpleTextButton
@@ -139,8 +140,15 @@ private fun AuthenticationMenuHeader() {
             enabled = currentUser != null,
             onClick = { expandedState.value = !expandedState.value }
         ) {
+            LoadedImage(
+                url = currentUser?.images?.firstOrNull()?.url,
+                modifier = Modifier.size(Dimens.iconMedium)
+            )
+
+            Spacer(Modifier.width(Dimens.space2))
+
             Text(
-                text = "Authenticated as $username",
+                text = username,
                 maxLines = 1,
                 modifier = Modifier.align(Alignment.CenterVertically)
             )
