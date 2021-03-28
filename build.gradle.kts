@@ -10,6 +10,8 @@ private object Versions {
     const val jacoco = "0.8.6" // https://github.com/jacoco/jacoco
     const val junit = "5.7.1" // https://junit.org/junit5/
     const val kotlinxSerialization = "1.0.1" // https://github.com/Kotlin/kotlinx.serialization
+    const val slf4j = "1.7.30" // http://www.slf4j.org/
+    const val ktor = "1.5.2" // https://ktor.io/changelog/
     const val okhttp = "4.9.1" // https://square.github.io/okhttp/
     const val truth = "1.1.2" // https://truth.dev/
 }
@@ -47,13 +49,16 @@ dependencies {
     implementation(compose.desktop.currentOs)
 
     implementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
+    implementation("io.ktor", "ktor-server-netty", Versions.ktor)
     implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
     implementation("org.jetbrains.kotlinx", "kotlinx-serialization-json", Versions.kotlinxSerialization)
+    implementation("org.slf4j", "slf4j-nop", Versions.slf4j)
 
     testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit)
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", Versions.junit)
     testImplementation("com.google.truth", "truth", Versions.truth)
+    testImplementation("io.ktor", "ktor-server-tests", Versions.ktor)
 
     testFixturesImplementation(compose.desktop.currentOs)
     testFixturesImplementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
