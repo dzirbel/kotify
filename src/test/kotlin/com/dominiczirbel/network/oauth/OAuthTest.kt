@@ -19,7 +19,7 @@ internal class OAuthTest {
         val random = SecureRandom.getInstance("SHA1PRNG").also { it.setSeed("seed".toByteArray()) }
         val url = OAuth.authorizationUrl(
             clientId = "myClientId",
-            scopes = listOf("scope1", "another_scope"),
+            scopes = setOf("scope1", "another_scope"),
             redirectUri = "http://example.com/my/redirect",
             codeChallenge = CodeChallenge.generate(random),
             state = "my_state"

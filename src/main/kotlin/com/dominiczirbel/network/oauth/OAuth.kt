@@ -1,15 +1,16 @@
 package com.dominiczirbel.network.oauth
 
+import androidx.compose.runtime.mutableStateOf
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.await
 import com.dominiczirbel.network.bodyFromJson
+import com.dominiczirbel.ui.util.openInBrowser
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
-import java.awt.Desktop
 import java.security.SecureRandom
 import java.util.Base64
 
@@ -26,26 +27,36 @@ class OAuth private constructor(
     private val redirectUri: String,
     val authorizationUrl: HttpUrl
 ) {
-    private var consumed: Boolean = false
+    val inProgress = mutableStateOf(true)
+    val error = mutableStateOf<Throwable?>(null)
 
     private val server: LocalOAuthServer = LocalOAuthServer(
         state = state,
-        onSuccess = ::onSuccess,
-        onError = { consume() },
-        onMismatchedState = { consume() }
+        callback = { result ->
+            if (result is LocalOAuthServer.Result.Success) {
+                @Suppress("TooGenericExceptionCaught")
+                try {
+                    onSuccess(code = result.code)
+                    finish()
+                } catch (ex: Throwable) {
+                    error.value = ex
+                }
+            } else {
+                finish()
+            }
+        }
     ).start()
 
     /**
      * Marks this [OAuth] flow as complete and stops its [server], throwing an [IllegalStateException] if it was already
      * consumed.
      */
-    private fun consume() {
-        try {
-            synchronized(this) {
-                check(!consumed) { "already consumed" }
-                consumed = true
-            }
-        } finally {
+    private fun finish() {
+        val wasInProgress = synchronized(this) {
+            inProgress.value.also { inProgress.value = false }
+        }
+
+        if (wasInProgress) {
             // run async to avoid deadlock (since in onSuccess() we're still processing a request)
             GlobalScope.launch {
                 runCatching { server.stop() }
@@ -57,7 +68,7 @@ class OAuth private constructor(
      * Cancels this [OAuth] flow, preventing it from being completed and stopping its embedded [server].
      */
     fun cancel() {
-        consume()
+        finish()
     }
 
     suspend fun onManualRedirect(url: String) {
@@ -68,8 +79,6 @@ class OAuth private constructor(
      * Invoked when a redirect was successfully captured by the [server], with a authorization [code].
      */
     private suspend fun onSuccess(code: String) {
-        consume()
-
         val body = FormBody.Builder()
             .add("client_id", clientId)
             .add("grant_type", "authorization_code")
@@ -100,7 +109,7 @@ class OAuth private constructor(
          *
          * See https://developer.spotify.com/documentation/general/guides/scopes/
          */
-        val ALL_SCOPES = listOf(
+        val ALL_SCOPES = setOf(
             "app-remote-control", // only for Android/iOS
             "playlist-modify-private",
             "playlist-modify-public",
@@ -127,7 +136,7 @@ class OAuth private constructor(
          *
          * See https://developer.spotify.com/documentation/general/guides/scopes/
          */
-        val DEFAULT_SCOPES = ALL_SCOPES.minus("app-remote-control").minus("streaming")
+        val DEFAULT_SCOPES = ALL_SCOPES.minus("app-remote-control").minus("streaming").toSet()
 
         // number of bytes in the state buffer; 16 bytes -> 22 characters
         private const val STATE_BUFFER_SIZE = 16
@@ -138,19 +147,19 @@ class OAuth private constructor(
          *
          * This generates a [CodeChallenge] and state, which are used to create a [authorizationUrl], which is opened in
          * the user's web browser (failing silently if that operation is not supported). The returned [OAuth] object
-         * contains information about the authorization request flow, in particular to finish the authorization grant
-         * via [onRedirect] when the user completes the flow and accepts/denies the permission request.
+         * contains information about the authorization request flow, in particular it starts a [LocalOAuthServer] to
+         * capture redirects and has callbacks to complete the flow.
          */
         fun start(
             clientId: String = DEFAULT_CLIENT_ID,
-            scopes: List<String> = DEFAULT_SCOPES,
+            scopes: Set<String> = DEFAULT_SCOPES,
             port: Int = LocalOAuthServer.DEFAULT_PORT
         ): OAuth {
             val state = generateState()
             val codeChallenge = CodeChallenge.generate()
 
-            // MUST be registered for the client on spotify's developer dashboard
-            // TODO add a couple fallback ports in case the default one is taken
+            // TODO add a couple fallback ports in case the default one is taken? (must be whitelisted in the Spotify
+            //  developer dashboard)
             val redirectUri = LocalOAuthServer.redirectUrl(port = port)
 
             val authorizationUrl = authorizationUrl(
@@ -161,7 +170,7 @@ class OAuth private constructor(
                 state = state
             )
 
-            redirectTo(authorizationUrl)
+            openInBrowser(authorizationUrl)
 
             return OAuth(
                 state = state,
@@ -192,7 +201,7 @@ class OAuth private constructor(
          */
         internal fun authorizationUrl(
             clientId: String,
-            scopes: List<String>,
+            scopes: Set<String>,
             redirectUri: String,
             codeChallenge: CodeChallenge,
             state: String
@@ -207,17 +216,6 @@ class OAuth private constructor(
                 .addQueryParameter("state", state)
                 .addQueryParameter("scope", scopes.joinToString(separator = " "))
                 .build()
-        }
-
-        /**
-         * Attempts to open the given [url] in the user's browser.
-         */
-        private fun redirectTo(url: HttpUrl) {
-            // TODO improve error handling, try other ways, etc
-            val result = runCatching { Desktop.getDesktop().browse(url.toUri()) }
-            if (result.isFailure) {
-                println("Failed to open $url")
-            }
         }
     }
 }
