@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -16,6 +15,7 @@ import androidx.compose.ui.Modifier
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.ui.common.InvalidateButton
+import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -62,12 +62,10 @@ fun BoxScope.Tracks() {
 
             Spacer(Modifier.height(Dimens.space3))
 
-            tracksState.tracks.forEach { track ->
-                Text(
-                    text = track.name,
-                    modifier = Modifier.padding(vertical = Dimens.space2)
-                )
-            }
+            Table(
+                columns = StandardTrackColumns,
+                items = tracksState.tracks
+            )
         }
     }
 }
