@@ -43,7 +43,7 @@ abstract class ColumnByString<T>(
 
     @Composable
     override fun header() {
-        Text(text = header, fontWeight = FontWeight.Bold, modifier = Modifier.padding(padding))
+        standardHeader(header = header, padding = padding)
     }
 
     @Composable
@@ -113,7 +113,8 @@ interface Column<T> {
 
     /**
      * Compares two elements in the column, returning a negative number if [first] should be placed before [second] and
-     * a positive number if [second] should be placed before [first]. Should never return zero.
+     * a positive number if [second] should be placed before [first], and 0 if another comparison should be used to
+     * tiebreak.
      */
     fun compare(first: T, firstIndex: Int, second: T, secondIndex: Int): Int
 
@@ -128,6 +129,14 @@ interface Column<T> {
      */
     @Composable
     fun item(item: T, index: Int)
+
+    /**
+     * The standard table header with a text [header].
+     */
+    @Composable
+    fun standardHeader(header: String, padding: PaddingValues = PaddingValues(Dimens.space3)) {
+        Text(text = header, fontWeight = FontWeight.Bold, modifier = Modifier.padding(padding))
+    }
 
     /**
      * Creates a new [Column] from this [Column] with the same values, but mapped with [mapper]. This is convenient for
