@@ -28,7 +28,7 @@ import kotlin.math.roundToInt
 abstract class ColumnByString<T>(
     val header: String,
     override val width: ColumnWidth,
-    val padding: PaddingValues = PaddingValues(Dimens.space2),
+    val padding: PaddingValues = PaddingValues(Dimens.space3),
     override val horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     override val verticalAlignment: Alignment.Vertical = Alignment.Top
 ) : Column<T> {
