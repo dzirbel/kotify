@@ -85,9 +85,15 @@ private class PlaylistPresenter(private val playlistId: String) : Presenter<
 }
 
 private object AddedAtColumn : ColumnByString<PlaylistTrack>(header = "Added", width = ColumnWidth.Fill()) {
+    private val PlaylistTrack.addedAtTimestamp
+        get() = Instant.parse(addedAt.orEmpty()).toEpochMilli()
+
     override fun toString(item: PlaylistTrack, index: Int): String {
-        val timestamp = Instant.parse(item.addedAt.orEmpty()).toEpochMilli()
-        return formatDateTime(timestamp = timestamp, includeTime = false)
+        return formatDateTime(timestamp = item.addedAtTimestamp, includeTime = false)
+    }
+
+    override fun compare(first: PlaylistTrack, firstIndex: Int, second: PlaylistTrack, secondIndex: Int): Int {
+        return first.addedAtTimestamp.compareTo(second.addedAtTimestamp)
     }
 }
 

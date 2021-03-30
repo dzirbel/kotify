@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -20,6 +21,7 @@ import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.ui.common.Column
 import com.dominiczirbel.ui.common.ColumnByString
 import com.dominiczirbel.ui.common.ColumnWidth
+import com.dominiczirbel.ui.common.Sort
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.util.formatDuration
@@ -53,22 +55,33 @@ object DurationColumn : ColumnByString<Track>(
     horizontalAlignment = Alignment.End
 ) {
     override fun toString(item: Track, index: Int) = formatDuration(item.durationMs)
+
+    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+        return first.durationMs.compareTo(second.durationMs)
+    }
 }
 
 object TrackNumberColumn : ColumnByString<Track>(header = "#", width = ColumnWidth.Fill()) {
     override fun toString(item: Track, index: Int) = item.trackNumber.toString()
+
+    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+        return first.trackNumber.compareTo(second.trackNumber)
+    }
 }
 
-object PopularityColumn : Column<Track> {
+object PopularityColumn : Column<Track>() {
     override val width: ColumnWidth = ColumnWidth.Fill()
     override val horizontalAlignment = Alignment.End
 
     // TODO make the column width match the header rather than hardcoding
     private val WIDTH = 70.dp
 
+    private val Track.popularity: Int?
+        get() = (this as? FullTrack)?.popularity ?: (this as? SimplifiedTrack)?.popularity
+
     @Composable
-    override fun header() {
-        standardHeader(header = "Popularity")
+    override fun header(sort: MutableState<Sort?>) {
+        standardHeader(sort = sort, header = "Popularity")
     }
 
     @Composable
@@ -86,6 +99,7 @@ object PopularityColumn : Column<Track> {
                 .border(width = 1.dp, color = color)
         ) {
             Box(
+                @Suppress("MagicNumber")
                 Modifier
                     .background(color)
                     .fillMaxHeight()
@@ -105,7 +119,4 @@ object PopularityColumn : Column<Track> {
             else -> 0
         }
     }
-
-    private val Track.popularity: Int?
-        get() = (this as? FullTrack)?.popularity ?: (this as? SimplifiedTrack)?.popularity
 }

@@ -4,10 +4,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -28,22 +38,23 @@ import kotlin.math.roundToInt
 abstract class ColumnByString<T>(
     val header: String,
     override val width: ColumnWidth,
-    val padding: PaddingValues = PaddingValues(Dimens.space3),
+    val padding: Dp = Dimens.space3,
+    val sortable: Boolean = true,
     override val horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     override val verticalAlignment: Alignment.Vertical = Alignment.Top
-) : Column<T> {
+) : Column<T>() {
     /**
      * Renders the content of the given [item] as the returned string.
      */
     abstract fun toString(item: T, index: Int): String
 
     override fun compare(first: T, firstIndex: Int, second: T, secondIndex: Int): Int {
-        return toString(first, firstIndex).compareTo(toString(second, secondIndex))
+        return toString(first, firstIndex).compareTo(toString(second, secondIndex), ignoreCase = true)
     }
 
     @Composable
-    override fun header() {
-        standardHeader(header = header, padding = padding)
+    override fun header(sort: MutableState<Sort?>) {
+        standardHeader(sort = sort, header = header, padding = padding, sortable = sortable)
     }
 
     @Composable
@@ -52,7 +63,7 @@ abstract class ColumnByString<T>(
     }
 }
 
-object IndexColumn : ColumnByString<PlaylistTrack>(header = "#", width = ColumnWidth.Fill()) {
+object IndexColumn : ColumnByString<PlaylistTrack>(header = "#", width = ColumnWidth.Fill(), sortable = false) {
     override fun toString(item: PlaylistTrack, index: Int) = (index + 1).toString()
 }
 
@@ -78,64 +89,99 @@ sealed class ColumnWidth {
     class Weighted(val weight: Float) : ColumnWidth()
 }
 
+enum class Sort { IN_ORDER, REVERSE_ORDER }
+
 /**
  * Represents a single column in a [Table].
  */
-interface Column<T> {
+abstract class Column<T> {
     /**
      * The policy by which the width of the column is measured.
      */
-    val width: ColumnWidth
+    abstract val width: ColumnWidth
 
     /**
      * The way that items in this [Column] are aligned horizontally within their cell.
      */
-    val horizontalAlignment: Alignment.Horizontal
-        get() = Alignment.Start
+    open val horizontalAlignment: Alignment.Horizontal = Alignment.Start
 
     /**
      * The way that the header of this [Column] is aligned horizontally within its cell.
      */
-    val headerHorizontalAlignment: Alignment.Horizontal
-        get() = Alignment.Start
+    open val headerHorizontalAlignment: Alignment.Horizontal = Alignment.Start
 
     /**
      * The way that items in this [Column] are aligned vertically within their cell.
      */
-    val verticalAlignment: Alignment.Vertical
-        get() = Alignment.Top
+    open val verticalAlignment: Alignment.Vertical = Alignment.Top
 
     /**
      * The way that the header of this [Column] is aligned vertically within its cell.
      */
-    val headerVerticalAlignment: Alignment.Vertical
-        get() = Alignment.Bottom
+    open val headerVerticalAlignment: Alignment.Vertical = Alignment.Bottom
 
     /**
      * Compares two elements in the column, returning a negative number if [first] should be placed before [second] and
      * a positive number if [second] should be placed before [first], and 0 if another comparison should be used to
      * tiebreak.
      */
-    fun compare(first: T, firstIndex: Int, second: T, secondIndex: Int): Int
+    abstract fun compare(first: T, firstIndex: Int, second: T, secondIndex: Int): Int
 
     /**
      * The content for the header of this column.
      */
     @Composable
-    fun header()
+    abstract fun header(sort: MutableState<Sort?>)
 
     /**
      * The content for the given [item] at the given [index].
      */
     @Composable
-    fun item(item: T, index: Int)
+    abstract fun item(item: T, index: Int)
 
     /**
      * The standard table header with a text [header].
      */
     @Composable
-    fun standardHeader(header: String, padding: PaddingValues = PaddingValues(Dimens.space3)) {
-        Text(text = header, fontWeight = FontWeight.Bold, modifier = Modifier.padding(padding))
+    fun standardHeader(
+        sort: MutableState<Sort?>,
+        header: String,
+        sortable: Boolean = true,
+        padding: Dp = Dimens.space3
+    ) {
+        if (sortable) {
+            SimpleTextButton(
+                contentPadding = PaddingValues(start = 0.dp, top = 0.dp, bottom = 0.dp, end = padding),
+                onClick = {
+                    sort.value = when (sort.value) {
+                        Sort.IN_ORDER -> Sort.REVERSE_ORDER
+                        Sort.REVERSE_ORDER -> null
+                        null -> Sort.IN_ORDER
+                    }
+                }
+            ) {
+                Text(
+                    text = header,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = padding, top = padding, bottom = padding, end = padding / 2)
+                )
+
+                val icon = when (sort.value) {
+                    Sort.IN_ORDER -> Icons.Default.KeyboardArrowUp
+                    Sort.REVERSE_ORDER -> Icons.Default.KeyboardArrowDown
+                    null -> Icons.Default.KeyboardArrowUp
+                }
+
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(Dimens.iconSmall),
+                    tint = if (sort.value == null) Color.Companion.Transparent else MaterialTheme.colors.primary
+                )
+            }
+        } else {
+            Text(text = header, fontWeight = FontWeight.Bold, modifier = Modifier.padding(padding))
+        }
     }
 
     /**
@@ -144,7 +190,7 @@ interface Column<T> {
      */
     fun <R> mapped(mapper: (R) -> T): Column<R> {
         val base = this
-        return object : Column<R> {
+        return object : Column<R>() {
             override val width = base.width
             override val horizontalAlignment = base.horizontalAlignment
             override val headerHorizontalAlignment = base.headerHorizontalAlignment
@@ -161,8 +207,8 @@ interface Column<T> {
             }
 
             @Composable
-            override fun header() {
-                base.header()
+            override fun header(sort: MutableState<Sort?>) {
+                base.header(sort)
             }
 
             @Composable
@@ -192,18 +238,59 @@ fun <T> Table(
     val numRows = items.size + if (includeHeader) 1 else 0
     val numDividers = numRows - 1
 
+    val sortState = remember { mutableStateOf<Pair<Column<T>, Sort>?>(null) }
+
+    val (originalIndexes, sortedItems) = remember(sortState.value) {
+        val indexed = sortState.value?.let { (column, sort) ->
+            items
+                .withIndex()
+                .sortedWith { (firstIndex, first), (secondIndex, second) ->
+                    val columnCompare = column.compare(
+                        first = first,
+                        firstIndex = firstIndex,
+                        second = second,
+                        secondIndex = secondIndex
+                    )
+
+                    val inOrder = columnCompare.takeIf { it != 0 }
+                        ?: firstIndex.compareTo(secondIndex)
+
+                    when (sort) {
+                        Sort.IN_ORDER -> inOrder
+                        Sort.REVERSE_ORDER -> -inOrder
+                    }
+                }
+        } ?: items.withIndex()
+
+        Pair(indexed.map { it.index }, indexed.map { it.value })
+    }
+
     Layout(
         modifier = modifier,
         content = {
             if (includeHeader) {
                 columns.forEach { column ->
-                    column.header()
+                    column.header(
+                        sort = remember(column) {
+                            object : MutableState<Sort?> {
+                                override var value: Sort?
+                                    get() = if (sortState.value?.first == column) sortState.value?.second else null
+                                    set(value) {
+                                        sortState.value = value?.let { Pair(column, it) }
+                                    }
+
+                                override fun component1(): Sort? = value
+
+                                override fun component2(): (Sort?) -> Unit = { value = it }
+                            }
+                        }
+                    )
                 }
             }
 
-            items.forEachIndexed { index, item ->
+            sortedItems.forEachIndexed { index, item ->
                 columns.forEach { column ->
-                    column.item(item, index)
+                    column.item(item, originalIndexes[index])
                 }
             }
 
