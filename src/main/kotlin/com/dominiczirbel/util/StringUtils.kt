@@ -3,14 +3,14 @@ package com.dominiczirbel.util
 import java.lang.Long.signum
 import java.text.SimpleDateFormat
 import java.text.StringCharacterIterator
-import java.util.Date
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
-private val dateTimeFormat = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
-private val dateTimeFormatMillis = SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS")
-private val dateTimeFormatNoDate = SimpleDateFormat("HH:mm:ss")
-private val dateTimeFormatNoDateMillis = SimpleDateFormat("HH:mm:ss.SSS")
+private val formatDateTimeMillis = SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS")
+private val formatDateTime = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
+private val formatDate = SimpleDateFormat("YYYY-MM-dd")
+private val formatTime = SimpleDateFormat("HH:mm:ss")
+private val formatTimeMillis = SimpleDateFormat("HH:mm:ss.SSS")
 
 /**
  * Returns a human-readable format of the given file size in bytes.
@@ -37,13 +37,24 @@ fun formatByteSize(bytes: Long): String {
 /**
  * Returns an absolute format of the given [timestamp], e.g. "2021-01-01 12:34:56".
  */
-fun formatDateTime(timestamp: Long, includeDate: Boolean = true, includeMillis: Boolean = false): String {
-    return when {
-        includeDate && !includeMillis -> dateTimeFormat.format(Date(timestamp))
-        includeDate && includeMillis -> dateTimeFormatMillis.format(Date(timestamp))
-        !includeDate && !includeMillis -> dateTimeFormatNoDate.format(Date(timestamp))
-        else -> dateTimeFormatNoDateMillis.format(Date(timestamp))
+fun formatDateTime(
+    timestamp: Long,
+    includeDate: Boolean = true,
+    includeTime: Boolean = true,
+    includeMillis: Boolean = false
+): String {
+    val format = when {
+        includeDate && includeTime && includeMillis -> formatDateTimeMillis
+        includeDate && includeTime && !includeMillis -> formatDateTime
+        includeDate && !includeTime && includeMillis -> error("unsupported: cannot include millis without time")
+        !includeDate && includeTime && includeMillis -> formatTimeMillis
+        includeDate && !includeTime && !includeMillis -> formatDate
+        !includeDate && includeTime && !includeMillis -> formatTime
+        !includeDate && !includeTime && includeMillis -> error("unsupported: cannot include only millis")
+        else -> error("unsupported: must include some field")
     }
+
+    return format.format(timestamp)
 }
 
 /**

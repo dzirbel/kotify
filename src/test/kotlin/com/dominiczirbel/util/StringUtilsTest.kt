@@ -16,6 +16,7 @@ internal class StringUtilsTest {
         val timestamp: Long,
         val formatted: String,
         val includeDate: Boolean,
+        val includeTime: Boolean,
         val includeMillis: Boolean
     )
 
@@ -36,6 +37,7 @@ internal class StringUtilsTest {
             formatDateTime(
                 timestamp = case.timestamp,
                 includeDate = case.includeDate,
+                includeTime = case.includeTime,
                 includeMillis = case.includeMillis
             )
         ).isEqualTo(case.formatted)
@@ -96,24 +98,35 @@ internal class StringUtilsTest {
                     timestamp = 1_615_772_944_610,
                     formatted = "2021-03-14 18:49:04.610",
                     includeDate = true,
+                    includeTime = true,
                     includeMillis = true
                 ),
                 FormatDateTimeCase(
                     timestamp = 1_615_772_944_610,
                     formatted = "18:49:04.610",
                     includeDate = false,
+                    includeTime = true,
                     includeMillis = true
                 ),
                 FormatDateTimeCase(
                     timestamp = 1_615_772_944_610,
                     formatted = "2021-03-14 18:49:04",
                     includeDate = true,
+                    includeTime = true,
                     includeMillis = false
                 ),
                 FormatDateTimeCase(
                     timestamp = 1_615_772_944_610,
                     formatted = "18:49:04",
                     includeDate = false,
+                    includeTime = true,
+                    includeMillis = false
+                ),
+                FormatDateTimeCase(
+                    timestamp = 1_615_772_944_610,
+                    formatted = "2021-03-14",
+                    includeDate = true,
+                    includeTime = false,
                     includeMillis = false
                 )
             )

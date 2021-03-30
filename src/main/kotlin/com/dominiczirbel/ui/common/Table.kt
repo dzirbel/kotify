@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import com.dominiczirbel.network.model.PlaylistTrack
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import kotlin.math.roundToInt
@@ -49,6 +50,10 @@ abstract class ColumnByString<T>(
     override fun item(item: T, index: Int) {
         Text(text = toString(item, index), modifier = Modifier.padding(padding))
     }
+}
+
+object IndexColumn : ColumnByString<PlaylistTrack>(header = "#", width = ColumnWidth.Fill()) {
+    override fun toString(item: PlaylistTrack, index: Int) = (index + 1).toString()
 }
 
 /**

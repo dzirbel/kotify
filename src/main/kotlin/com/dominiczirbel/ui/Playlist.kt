@@ -20,12 +20,15 @@ import com.dominiczirbel.network.model.FullPlaylist
 import com.dominiczirbel.network.model.PlaylistTrack
 import com.dominiczirbel.ui.common.ColumnByString
 import com.dominiczirbel.ui.common.ColumnWidth
+import com.dominiczirbel.ui.common.IndexColumn
 import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
+import com.dominiczirbel.util.formatDateTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
+import java.time.Instant
 
 private class PlaylistPresenter(private val playlistId: String) : Presenter<
     PlaylistPresenter.State,
@@ -81,6 +84,24 @@ private class PlaylistPresenter(private val playlistId: String) : Presenter<
     }
 }
 
+private object AddedAtColumn : ColumnByString<PlaylistTrack>(header = "Added", width = ColumnWidth.Fill()) {
+    override fun toString(item: PlaylistTrack, index: Int): String {
+        val timestamp = Instant.parse(item.addedAt.orEmpty()).toEpochMilli()
+        return formatDateTime(timestamp = timestamp, includeTime = false)
+    }
+}
+
+private val PlaylistColumns = StandardTrackColumns
+    .minus(TrackNumberColumn)
+    .map { column -> column.mapped<PlaylistTrack> { it.track } }
+    .toMutableList()
+    .apply {
+        add(0, IndexColumn)
+
+        @Suppress("MagicNumber")
+        add(4, AddedAtColumn)
+    }
+
 @Composable
 fun BoxScope.Playlist(page: PlaylistPage) {
     val presenter = remember(page) { PlaylistPresenter(playlistId = page.playlistId) }
@@ -127,29 +148,7 @@ fun BoxScope.Playlist(page: PlaylistPage) {
             if (tracks == null) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
-                Table(
-                    columns = StandardTrackColumns
-                        .minus(TrackNumberColumn)
-                        .map { column -> column.mapped<PlaylistTrack> { it.track } }
-                        .toMutableList()
-                        .apply {
-                            add(
-                                0,
-                                object : ColumnByString<PlaylistTrack>(header = "#", width = ColumnWidth.Fill()) {
-                                    override fun toString(item: PlaylistTrack, index: Int) = (index + 1).toString()
-                                }
-                            )
-
-                            @Suppress("MagicNumber")
-                            add(
-                                4,
-                                object : ColumnByString<PlaylistTrack>(header = "Added", width = ColumnWidth.Fill()) {
-                                    override fun toString(item: PlaylistTrack, index: Int) = item.addedAt.orEmpty()
-                                }
-                            )
-                        },
-                    items = tracks
-                )
+                Table(columns = PlaylistColumns, items = tracks)
             }
         }
     }
