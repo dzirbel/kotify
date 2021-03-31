@@ -55,7 +55,7 @@ fun BoxScope.Albums() {
         )
     }
 
-    ScrollingPage(state) { albumsState ->
+    ScrollingPage(remoteState = state) { albumsState ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Albums", fontSize = Dimens.fontTitle)

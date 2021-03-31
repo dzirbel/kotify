@@ -43,7 +43,7 @@ fun BoxScope.Tracks() {
         )
     }
 
-    ScrollingPage(state) { tracksState ->
+    ScrollingPage(remoteState = state) { tracksState ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Tracks", fontSize = Dimens.fontTitle)

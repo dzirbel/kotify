@@ -54,6 +54,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx", "kotlinx-serialization-json", Versions.kotlinxSerialization)
     implementation("org.slf4j", "slf4j-nop", Versions.slf4j)
 
+    testImplementation("org.jetbrains.kotlinx", "kotlinx-coroutines-test", Versions.coroutines)
     testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit)
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", Versions.junit)

@@ -58,7 +58,7 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
         )
     }
 
-    ScrollingPage(state) { artistsState ->
+    ScrollingPage(remoteState = state) { artistsState ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Artists", fontSize = Dimens.fontTitle)

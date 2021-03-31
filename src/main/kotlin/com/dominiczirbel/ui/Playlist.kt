@@ -24,62 +24,55 @@ import com.dominiczirbel.ui.common.IndexColumn
 import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
+import com.dominiczirbel.ui.util.RemoteState
 import com.dominiczirbel.util.formatDateTime
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
 import java.time.Instant
 
-private class PlaylistPresenter(private val playlistId: String) : Presenter<
-    PlaylistPresenter.State,
-    PlaylistPresenter.Event,
-    PlaylistPresenter.Result>(key = playlistId, startingEvents = listOf(Event.Load)) {
+private class PlaylistPresenter(private val playlistId: String) :
+    Presenter<RemoteState<PlaylistPresenter.State>, PlaylistPresenter.Event>(
+        key = playlistId,
+        eventMergeStrategy = EventMergeStrategy.LATEST,
+        startingEvents = listOf(Event.Load(invalidate = false)),
+        initialState = RemoteState.Loading()
+    ) {
 
     data class State(
-        val refreshingPlaylist: Boolean = false,
-        val playlist: FullPlaylist? = null,
-        val tracks: List<PlaylistTrack>? = null,
-        val playlistUpdated: Long? = null
+        val refreshing: Boolean,
+        val playlist: FullPlaylist,
+        val tracks: List<PlaylistTrack>?,
+        val playlistUpdated: Long?
     )
 
     sealed class Event {
-        object Load : Event()
+        data class Load(val invalidate: Boolean) : Event()
     }
 
-    sealed class Result {
-        object LoadStart : Result()
-        class PlaylistLoaded(val playlist: FullPlaylist, val playlistUpdated: Long?) : Result()
-        class TracksLoaded(val tracks: List<PlaylistTrack>) : Result()
-    }
-
-    override val initialState = State()
-
-    override fun reactTo(event: Event): Flow<Result> {
+    override suspend fun reactTo(event: Event) {
         return when (event) {
-            Event.Load -> flow {
-                emit(Result.LoadStart)
+            is Event.Load -> {
+                mutateRemoteState { it.copy(refreshing = true) }
+
+                if (event.invalidate) {
+                    SpotifyCache.invalidate(id = playlistId)
+                }
 
                 val playlist = SpotifyCache.Playlists.getFullPlaylist(id = playlistId)
-                val playlistUpdated = SpotifyCache.lastUpdated(id = playlistId)
 
-                emit(Result.PlaylistLoaded(playlist = playlist, playlistUpdated = playlistUpdated))
+                mutateState {
+                    RemoteState.Success(
+                        State(
+                            refreshing = false,
+                            playlist = playlist,
+                            playlistUpdated = SpotifyCache.lastUpdated(id = playlistId),
+                            tracks = null
+                        )
+                    )
+                }
 
                 val tracks = playlist.tracks.fetchAll<PlaylistTrack>()
 
-                emit(Result.TracksLoaded(tracks = tracks))
+                mutateRemoteState { it.copy(tracks = tracks) }
             }
-        }
-    }
-
-    override fun apply(state: State, result: Result): State {
-        return when (result) {
-            is Result.LoadStart -> state.copy(refreshingPlaylist = true)
-            is Result.PlaylistLoaded -> state.copy(
-                playlist = result.playlist,
-                playlistUpdated = result.playlistUpdated,
-                refreshingPlaylist = false
-            )
-            is Result.TracksLoaded -> state.copy(tracks = result.tracks)
         }
     }
 }
@@ -112,11 +105,8 @@ private val PlaylistColumns = StandardTrackColumns
 fun BoxScope.Playlist(page: PlaylistPage) {
     val presenter = remember(page) { PlaylistPresenter(playlistId = page.playlistId) }
 
-    ScrollingPage(
-        state = presenter.state(),
-        isLoading = { it.playlist == null }
-    ) { playlistState ->
-        val playlist = playlistState.playlist!!
+    ScrollingPage(remoteState = presenter.state()) { state ->
+        val playlist = state.playlist
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -133,12 +123,9 @@ fun BoxScope.Playlist(page: PlaylistPage) {
 
                 Column {
                     InvalidateButton(
-                        refreshing = mutableStateOf(playlistState.refreshingPlaylist),
-                        updated = playlistState.playlistUpdated,
-                        onClick = {
-                            SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedArtists.ID)
-                            runBlocking { presenter.events.emit(PlaylistPresenter.Event.Load) }
-                        }
+                        refreshing = mutableStateOf(state.refreshing),
+                        updated = state.playlistUpdated,
+                        onClick = { presenter.emitEvent(PlaylistPresenter.Event.Load(invalidate = true)) }
                     )
                 }
             }
@@ -150,7 +137,7 @@ fun BoxScope.Playlist(page: PlaylistPage) {
 
             Spacer(Modifier.height(Dimens.space3))
 
-            val tracks = playlistState.tracks
+            val tracks = state.tracks
             if (tracks == null) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {

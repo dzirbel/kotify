@@ -36,18 +36,12 @@ import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.SeekableSlider
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
-import com.dominiczirbel.ui.util.RemoteState
 import com.dominiczirbel.util.formatDuration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
@@ -59,10 +53,12 @@ private val VOLUME_SLIDER_WIDTH = 100.dp
 
 // TODO sometimes on skip/etc the immediate call to playback returns outdated info, from before the skip/etc has been
 //  applied - keep making calls until the playback is updated?
-private class BottomPanelPresenter : Presenter<
-    BottomPanelPresenter.State,
-    BottomPanelPresenter.Event,
-    BottomPanelPresenter.Result>(startingEvents = listOf(Event.Load.all)) {
+private class BottomPanelPresenter :
+    Presenter<BottomPanelPresenter.State, BottomPanelPresenter.Event>(
+        startingEvents = listOf(Event.Load.all),
+        eventMergeStrategy = EventMergeStrategy.LATEST,
+        initialState = State()
+    ) {
 
     data class State(
         val loadingPlayback: Boolean = false,
@@ -88,44 +84,44 @@ private class BottomPanelPresenter : Presenter<
         }
     }
 
-    sealed class Result {
-        data class Loading(
-            val loadingPlayback: Boolean,
-            val loadingTrackPlayback: Boolean,
-            val loadingDevices: Boolean
-        ) : Result()
+    override suspend fun reactTo(event: Event) {
+        when (event) {
+            is Event.Load -> {
+                mutateState {
+                    it.copy(
+                        loadingPlayback = event.loadPlayback,
+                        loadingTrackPlayback = event.loadTrackPlayback,
+                        loadingDevices = event.loadDevices
+                    )
+                }
 
-        data class PlaybackLoaded(val playback: Playback?) : Result()
-        data class TrackPlaybackLoaded(val trackPlayback: TrackPlayback?) : Result()
-        data class DevicesLoaded(val devices: List<PlaybackDevice>) : Result()
-    }
-
-    override val initialState: State = State()
-
-    override fun reactTo(events: Flow<Event>): Flow<Result> {
-        return merge(
-            events.filter { it is Event.Load }.flatMapLatest(transform = ::reactTo),
-            super.reactTo(events.filter { it !is Event.Load })
-        )
-    }
-
-    override fun reactTo(event: Event): Flow<Result> {
-        return when (event) {
-            is Event.Load -> merge(
-                flow {
-                    if (event.loadPlayback) {
-                        emit(Result.PlaybackLoaded(Spotify.Player.getCurrentPlayback()))
+                if (event.loadTrackPlayback) {
+                    // TODO scope
+                    GlobalScope.launch {
+                        val playback = Spotify.Player.getCurrentPlayback()
+                        mutateState {
+                            it.copy(playback = playback, loadingPlayback = false)
+                        }
                     }
-                },
-                flow {
-                    if (event.loadDevices) {
-                        emit(Result.DevicesLoaded(Spotify.Player.getAvailableDevices()))
+                }
+
+                if (event.loadDevices) {
+                    // TODO scope
+                    GlobalScope.launch {
+                        val devices = Spotify.Player.getAvailableDevices()
+                        mutateState {
+                            it.copy(devices = devices, loadingDevices = false)
+                        }
                     }
-                },
-                flow {
-                    if (event.loadTrackPlayback) {
+                }
+
+                if (event.loadTrackPlayback) {
+                    // TODO scope
+                    GlobalScope.launch {
                         val trackPlayback = Spotify.Player.getCurrentlyPlayingTrack()
-                        emit(Result.TrackPlaybackLoaded(trackPlayback))
+                        mutateState {
+                            it.copy(trackPlayback = trackPlayback, loadingTrackPlayback = false)
+                        }
 
                         if (trackPlayback != null && trackPlayback.isPlaying) {
                             val millisLeft = trackPlayback.item.durationMs - trackPlayback.progressMs
@@ -136,34 +132,7 @@ private class BottomPanelPresenter : Presenter<
                         }
                     }
                 }
-            ).onStart {
-                emit(
-                    Result.Loading(
-                        loadingPlayback = event.loadPlayback,
-                        loadingTrackPlayback = event.loadTrackPlayback,
-                        loadingDevices = event.loadDevices
-                    )
-                )
             }
-        }
-    }
-
-    override fun apply(state: State, result: Result): State {
-        return when (result) {
-            is Result.Loading -> state.copy(
-                loadingPlayback = state.loadingPlayback || result.loadingPlayback,
-                loadingTrackPlayback = state.loadingTrackPlayback || result.loadingTrackPlayback,
-                loadingDevices = state.loadingDevices || result.loadingDevices
-            )
-            is Result.PlaybackLoaded -> state.copy(playback = result.playback, loadingPlayback = false)
-            is Result.TrackPlaybackLoaded -> state.copy(
-                trackPlayback = result.trackPlayback,
-                loadingTrackPlayback = false
-            )
-            is Result.DevicesLoaded -> state.copy(
-                devices = result.devices,
-                loadingDevices = false
-            )
         }
     }
 
@@ -196,18 +165,16 @@ fun BottomPanel() {
             PlayerState(state = state)
 
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceEvenly) {
-                PlayerControls(remoteState = state, events = presenter.events)
+                PlayerControls(state = state, events = presenter.events)
 
-                TrackProgress(state = (state as? RemoteState.Success)?.data?.trackPlayback, events = presenter.events)
+                TrackProgress(state = state.trackPlayback, events = presenter.events)
             }
 
-            val refreshing = (state as? RemoteState.Success)
-                ?.data
-                ?.let { it.loadingPlayback || it.loadingTrackPlayback || it.loadingDevices } == true
+            val refreshing = state.loadingDevices || state.loadingPlayback || state.loadingTrackPlayback
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // TODO volume slider often buggy - might be fetching device state before new volume has been applied
-                val devices = (state as? RemoteState.Success)?.data?.devices
+                val devices = state.devices
                 val currentDevice = devices?.firstOrNull()
                 SeekableSlider(
                     progress = @Suppress("MagicNumber") currentDevice?.volumePercent?.let { it.toFloat() / 100 },
@@ -253,28 +220,24 @@ fun BottomPanel() {
 }
 
 @Composable
-private fun PlayerState(state: RemoteState<BottomPanelPresenter.State>) {
+private fun PlayerState(state: BottomPanelPresenter.State) {
     Row {
-        if (state is RemoteState.Error) {
-            Text("Error: ${state.throwable.message}", color = Colors.current.error)
-        } else {
-            val track = (state as? RemoteState.Success)?.data?.trackPlayback?.item
+        val track = state.trackPlayback?.item
 
-            LoadedImage(
-                url = track?.album?.images?.firstOrNull()?.url,
-                size = ALBUM_ART_SIZE
-            )
+        LoadedImage(
+            url = track?.album?.images?.firstOrNull()?.url,
+            size = ALBUM_ART_SIZE
+        )
 
-            Spacer(Modifier.size(Dimens.space3))
+        Spacer(Modifier.size(Dimens.space3))
 
-            track?.let {
-                Column {
-                    Text(track.name)
-                    Spacer(Modifier.size(Dimens.space2))
-                    Text(track.artists.joinToString { it.name })
-                    Spacer(Modifier.size(Dimens.space2))
-                    Text(track.album.name)
-                }
+        track?.let {
+            Column {
+                Text(track.name)
+                Spacer(Modifier.size(Dimens.space2))
+                Text(track.artists.joinToString { it.name })
+                Spacer(Modifier.size(Dimens.space2))
+                Text(track.album.name)
             }
         }
     }
@@ -282,16 +245,14 @@ private fun PlayerState(state: RemoteState<BottomPanelPresenter.State>) {
 
 @Composable
 private fun PlayerControls(
-    remoteState: RemoteState<BottomPanelPresenter.State>,
+    state: BottomPanelPresenter.State,
     events: MutableSharedFlow<BottomPanelPresenter.Event>
 ) {
-    val state = (remoteState as? RemoteState.Success)?.data
+    val controlsEnabled = !state.loadingPlayback && state.playback != null
 
-    val controlsEnabled = state?.loadingPlayback == false && state.playback != null
-
-    val playing = state?.playback?.isPlaying
-    val shuffling = state?.playback?.shuffleState
-    val repeatState = state?.playback?.repeatState
+    val playing = state.playback?.isPlaying
+    val shuffling = state.playback?.shuffleState
+    val repeatState = state.playback?.repeatState
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         val togglingShuffle = remember { mutableStateOf(false) }

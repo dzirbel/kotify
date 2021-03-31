@@ -91,7 +91,7 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
         )
     }
 
-    ScrollingPage(remoteState) { state ->
+    ScrollingPage(remoteState = remoteState) { state ->
         val artist = state.artist
         val albums = state.artistAlbums
 

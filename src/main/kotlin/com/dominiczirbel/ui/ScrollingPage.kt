@@ -29,17 +29,11 @@ private val ERROR_ICON_SIZE = 100.dp
  */
 @Composable
 fun <T : Any> BoxScope.ScrollingPage(
-    state: RemoteState<T>,
-    isLoading: (T) -> Boolean = { false },
-    isError: (T) -> Boolean = { false },
+    remoteState: RemoteState<T>,
     content: @Composable (T) -> Unit
 ) {
-    @Suppress("UnnecessaryParentheses")
-    when {
-        state is RemoteState.Loading || (state is RemoteState.Success && isLoading(state.data)) ->
-            CircularProgressIndicator(Modifier.size(LOADING_INDICATOR_SIZE).align(Alignment.Center))
-
-        state is RemoteState.Error || (state is RemoteState.Success && isError(state.data)) ->
+    when (remoteState) {
+        is RemoteState.Error ->
             Column(Modifier.align(Alignment.Center)) {
                 Icon(
                     imageVector = Icons.Default.Warning,
@@ -48,27 +42,25 @@ fun <T : Any> BoxScope.ScrollingPage(
                     tint = Colors.current.error
                 )
 
-                if (state is RemoteState.Error) {
-                    Text(
-                        text = "Encountered an error: ${state.throwable.message}",
-                        color = Colors.current.error,
-                        fontSize = Dimens.fontTitle
-                    )
+                Text(
+                    text = "Encountered an error: ${remoteState.throwable.message}",
+                    color = Colors.current.error,
+                    fontSize = Dimens.fontTitle
+                )
 
-                    Text(
-                        text = state.throwable.stackTraceToString(),
-                        color = Colors.current.error,
-                        fontFamily = FontFamily.Monospace
-                    )
-                }
+                Text(
+                    text = remoteState.throwable.stackTraceToString(),
+                    color = Colors.current.error,
+                    fontFamily = FontFamily.Monospace
+                )
             }
 
-        else -> {
-            require(state is RemoteState.Success)
-            VerticalScroll {
-                Box(Modifier.padding(Dimens.space4)) {
-                    content(state.data)
-                }
+        is RemoteState.Loading ->
+            CircularProgressIndicator(Modifier.size(LOADING_INDICATOR_SIZE).align(Alignment.Center))
+
+        is RemoteState.Success -> VerticalScroll {
+            Box(Modifier.padding(Dimens.space4)) {
+                content(remoteState.data)
             }
         }
     }

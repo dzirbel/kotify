@@ -1,55 +1,86 @@
 package com.dominiczirbel.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import com.dominiczirbel.ui.util.RemoteState
-import com.dominiczirbel.ui.util.collectAsStateSwitchable
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
-abstract class Presenter<State, Event, Result>(
+abstract class Presenter<State, Event>(
     private val key: Any? = null,
-    private val ignoreInitialState: Boolean = true,
-    private val startingEvents: List<Event> = emptyList()
+    private val eventMergeStrategy: EventMergeStrategy = EventMergeStrategy.MERGE,
+    private val startingEvents: List<Event>? = null,
+    initialState: State
 ) {
-    abstract val initialState: State
+    enum class EventMergeStrategy { LATEST, MERGE }
+
+    private val stateFlow = MutableStateFlow(initialState)
+
+    private lateinit var scope: CoroutineScope
 
     val events = MutableSharedFlow<Event>()
 
+    // generally only used for testing; Composable usages should use state()
+    val state: State
+        get() = stateFlow.value
+
+    fun emitEvent(event: Event) {
+        scope.launch { events.emit(event) }
+    }
+
+    suspend fun open(startingEvents: List<Event>? = this.startingEvents) {
+        reactTo(
+            if (startingEvents == null) {
+                events
+            } else {
+                events.onStart { startingEvents.forEach { emit(it) } }
+            }
+        )
+    }
+
     @Composable
-    fun state(context: CoroutineContext = Dispatchers.IO): RemoteState<State> {
-        return remember(key) {
-            events
-                .onStart {
-                    startingEvents.forEach { emit(it) }
-                }
-                .let { reactTo(it) }
-                .scan(initialState) { state, result ->
-                    apply(state, result)
-                }
-                .let { if (ignoreInitialState) it.drop(1) else it }
-                .map<State, RemoteState<State>> { RemoteState.Success(it) }
-                .catch {
-                    it.printStackTrace()
-                    emit(RemoteState.Error(it))
-                }
+    fun state(context: CoroutineContext = Dispatchers.IO, startingEvents: List<Event>? = this.startingEvents): State {
+        scope = rememberCoroutineScope { context }
+        remember(key) {
+            scope.launch {
+                open(startingEvents = startingEvents)
+            }
         }
-            .collectAsStateSwitchable(initial = { RemoteState.Loading() }, context = context, key = key)
-            .value
+
+        return stateFlow.collectAsState(context = context).value
     }
 
-    open fun reactTo(events: Flow<Event>): Flow<Result> {
-        return events.flatMapMerge(transform = ::reactTo)
+    protected fun mutateState(transform: (State) -> State?) {
+        transform(stateFlow.value)?.let { stateFlow.value = it }
     }
 
-    abstract fun reactTo(event: Event): Flow<Result>
-    abstract fun apply(state: State, result: Result): State
+    open suspend fun reactTo(events: Flow<Event>) {
+        return when (eventMergeStrategy) {
+            EventMergeStrategy.LATEST -> events.collectLatest { reactTo(it) }
+            EventMergeStrategy.MERGE -> events.flatMapMerge { flow<Unit> { reactTo(it) } }.collect()
+        }
+    }
+
+    abstract suspend fun reactTo(event: Event)
+
+    @Suppress("unused") // false positive for receiver parameter: state parameter is different
+    fun <T> Presenter<RemoteState<T>, *>.mutateRemoteState(default: T? = null, transform: (T) -> T?) {
+        mutateState { remoteState ->
+            ((remoteState as? RemoteState.Success)?.data ?: default)
+                ?.let(transform)
+                ?.let { RemoteState.Success(it) }
+        }
+    }
 }
