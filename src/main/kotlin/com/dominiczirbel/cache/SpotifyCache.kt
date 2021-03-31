@@ -266,6 +266,13 @@ object SpotifyCache {
         suspend fun getTrack(id: String): Track = cache.get<Track>(id) { Spotify.Tracks.getTrack(id) }
         suspend fun getFullTrack(id: String): FullTrack = cache.get(id) { Spotify.Tracks.getTrack(id) }
 
+        suspend fun getFullTracks(ids: List<String>): List<FullTrack> {
+            // TODO batch in getTracks()
+            return cache.getAll(ids = ids) { id ->
+                GlobalScope.async { Spotify.Tracks.getTrack(id = id) }
+            }
+        }
+
         suspend fun getSavedTracks(): List<String> {
             return cache.get(GlobalObjects.SavedTracks.ID) {
                 val tracks = Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT).fetchAll<SavedTrack>()

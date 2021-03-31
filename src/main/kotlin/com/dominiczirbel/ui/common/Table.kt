@@ -240,7 +240,7 @@ fun <T> Table(
 
     val sortState = remember { mutableStateOf<Pair<Column<T>, Sort>?>(null) }
 
-    val (originalIndexes, sortedItems) = remember(sortState.value) {
+    val (originalIndexes, sortedItems) = remember(sortState.value, items) {
         val indexed = sortState.value?.let { (column, sort) ->
             items
                 .withIndex()

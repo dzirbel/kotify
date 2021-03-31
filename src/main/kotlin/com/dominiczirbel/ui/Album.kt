@@ -15,51 +15,97 @@ import androidx.compose.ui.Modifier
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.SimplifiedTrack
+import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
-import com.dominiczirbel.ui.util.RemoteState
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 
-private data class AlbumState(
-    val album: FullAlbum,
-    val tracks: List<SimplifiedTrack>,
-    val albumUpdated: Long?
-)
+private class AlbumPresenter(private val albumId: String) : Presenter<
+    AlbumPresenter.State,
+    AlbumPresenter.Event,
+    AlbumPresenter.Result>(key = albumId, startingEvents = listOf(Event.Load)) {
+
+    data class State(
+        val loading: Boolean = false,
+        val album: FullAlbum? = null,
+        val tracks: List<Track>? = null,
+        val albumUpdated: Long? = null
+    )
+
+    sealed class Event {
+        object Load : Event()
+    }
+
+    sealed class Result {
+        object LoadStart : Result()
+        class AlbumLoaded(val album: FullAlbum, val albumUpdated: Long?, val tracks: List<SimplifiedTrack>) : Result()
+        class TracksLoaded(val tracks: List<Track>) : Result()
+    }
+
+    override val initialState = State()
+
+    override fun reactTo(event: Event): Flow<Result> {
+        return when (event) {
+            Event.Load -> flow {
+                emit(Result.LoadStart)
+
+                val album = SpotifyCache.Albums.getFullAlbum(albumId)
+                val tracks = album.tracks.fetchAll<SimplifiedTrack>()
+
+                emit(
+                    Result.AlbumLoaded(
+                        album = album,
+                        tracks = tracks,
+                        albumUpdated = SpotifyCache.lastUpdated(id = albumId)
+                    )
+                )
+
+                val fullTracks = SpotifyCache.Tracks.getFullTracks(ids = tracks.map { it.id!! })
+                emit(Result.TracksLoaded(tracks = fullTracks))
+            }
+        }
+    }
+
+    override fun apply(state: State, result: Result): State {
+        return when (result) {
+            Result.LoadStart -> state.copy(loading = true)
+            is Result.AlbumLoaded -> state.copy(
+                loading = false,
+                album = result.album,
+                tracks = result.tracks,
+                albumUpdated = result.albumUpdated
+            )
+            is Result.TracksLoaded -> state.copy(tracks = result.tracks)
+        }
+    }
+}
 
 private val AlbumTrackColumns = StandardTrackColumns.minus(AlbumColumn)
 
 @Composable
 fun BoxScope.Album(page: AlbumPage) {
-    val refreshing = remember { mutableStateOf(false) }
+    val presenter = remember(page) { AlbumPresenter(albumId = page.albumId) }
 
-    val sharedFlow = remember { MutableSharedFlow<Unit>() }
-    val remoteState = RemoteState.of(sharedFlow = sharedFlow, key = page) {
-        val album = SpotifyCache.Albums.getFullAlbum(page.albumId)
-        val tracks = album.tracks.fetchAll<SimplifiedTrack>()
-
-        AlbumState(
-            album = album,
-            tracks = tracks,
-            albumUpdated = SpotifyCache.lastUpdated(id = page.albumId)
-        )
-    }
-
-    ScrollingPage(remoteState) { state ->
-        val album = state.album
+    ScrollingPage(
+        state = presenter.state(),
+        isLoading = { it.album == null }
+    ) { state ->
+        val album = state.album!!
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(album.name, fontSize = Dimens.fontTitle)
 
                 InvalidateButton(
-                    refreshing = refreshing,
+                    refreshing = mutableStateOf(state.loading),
                     updated = state.albumUpdated,
                     updatedFormat = { "Album last updated $it" },
                     updatedFallback = "Album never updated",
                     onClick = {
                         SpotifyCache.invalidate(page.albumId)
-                        runBlocking { sharedFlow.emit(Unit) }
+                        runBlocking { presenter.events.emit(AlbumPresenter.Event.Load) }
                     }
                 )
             }
@@ -68,7 +114,7 @@ fun BoxScope.Album(page: AlbumPage) {
 
             Table(
                 columns = AlbumTrackColumns,
-                items = state.tracks
+                items = state.tracks!!
             )
         }
     }
