@@ -50,6 +50,10 @@ object AlbumsPage : Page {
     override fun toString() = "albums"
 }
 
+data class AlbumPage(val albumId: String) : Page {
+    override fun toString() = "album($albumId)"
+}
+
 data class PlaylistPage(val playlistId: String) : Page {
     override fun toString() = "playlist($playlistId)"
 }
@@ -104,7 +108,8 @@ fun MainContent(pageStack: MutableState<PageStack>) {
                 ArtistsPage -> Artists(pageStack)
                 AlbumsPage -> Albums()
                 TracksPage -> Tracks()
-                is ArtistPage -> Artist(current)
+                is AlbumPage -> Album(current)
+                is ArtistPage -> Artist(pageStack, current)
                 is PlaylistPage -> Playlist(current)
                 else -> error("unknown page type: ${pageStack.value.current}")
             }

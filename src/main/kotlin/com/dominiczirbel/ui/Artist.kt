@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -27,8 +28,10 @@ import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.ui.common.Grid
 import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.LoadedImage
+import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
+import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -47,7 +50,7 @@ private data class ArtistState(
 data class UpdateEvent(val refreshArtist: Boolean, val refreshArtistAlbums: Boolean)
 
 @Composable
-fun BoxScope.Artist(page: ArtistPage) {
+fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
     val refreshingArtist = remember { mutableStateOf(false) }
     val refreshingArtistAlbums = remember { mutableStateOf(false) }
 
@@ -140,7 +143,7 @@ fun BoxScope.Artist(page: ArtistPage) {
                 Column(
                     Modifier
                         .clip(RoundedCornerShape(CELL_ROUNDING))
-                        .clickable { /* TODO go to album page */ }
+                        .clickable { pageStack.mutate { to(AlbumPage(albumId = album.id!!)) } }
                         .padding(Dimens.space3)
                 ) {
                     LoadedImage(
