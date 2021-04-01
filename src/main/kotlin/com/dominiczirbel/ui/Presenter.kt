@@ -63,7 +63,7 @@ abstract class Presenter<State, Event>(
     }
 
     protected fun mutateState(transform: (State) -> State?) {
-        transform(stateFlow.value)?.let { stateFlow.value = it }
+        transform(state)?.let { stateFlow.value = it }
     }
 
     open suspend fun reactTo(events: Flow<Event>) {

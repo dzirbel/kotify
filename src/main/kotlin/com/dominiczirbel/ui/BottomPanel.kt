@@ -41,6 +41,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -59,6 +60,14 @@ private class BottomPanelPresenter :
         eventMergeStrategy = EventMergeStrategy.LATEST,
         initialState = State()
     ) {
+
+    init {
+        GlobalScope.launch {
+            Player.playEvents.collect {
+                events.emit(Event.Load(loadPlayback = true, loadTrackPlayback = true, loadDevices = false))
+            }
+        }
+    }
 
     data class State(
         val loadingPlayback: Boolean = false,
@@ -95,10 +104,13 @@ private class BottomPanelPresenter :
                     )
                 }
 
-                if (event.loadTrackPlayback) {
+                if (event.loadPlayback) {
                     // TODO scope
                     GlobalScope.launch {
                         val playback = Spotify.Player.getCurrentPlayback()
+
+                        Player.playable.value = playback?.device != null
+
                         mutateState {
                             it.copy(playback = playback, loadingPlayback = false)
                         }
@@ -119,16 +131,31 @@ private class BottomPanelPresenter :
                     // TODO scope
                     GlobalScope.launch {
                         val trackPlayback = Spotify.Player.getCurrentlyPlayingTrack()
-                        mutateState {
-                            it.copy(trackPlayback = trackPlayback, loadingTrackPlayback = false)
-                        }
+                        if (trackPlayback == null) {
+                            mutateState { it.copy(loadingTrackPlayback = false, trackPlayback = null) }
+                        } else {
+                            if (trackPlayback.item == null) {
+                                // try again until we get a valid track
+                                delay(REFRESH_BUFFER_MS)
+                                events.emit(
+                                    Event.Load(loadTrackPlayback = true, loadPlayback = false, loadDevices = false)
+                                )
+                            } else {
+                                mutateState {
+                                    it.copy(trackPlayback = trackPlayback, loadingTrackPlayback = false)
+                                }
 
-                        if (trackPlayback != null && trackPlayback.isPlaying) {
-                            val millisLeft = trackPlayback.item.durationMs - trackPlayback.progressMs
+                                // refresh after the current track is expected to end
+                                if (trackPlayback.isPlaying) {
+                                    val millisLeft = trackPlayback.item.durationMs - trackPlayback.progressMs
 
-                            delay(millisLeft + REFRESH_BUFFER_MS)
+                                    delay(millisLeft + REFRESH_BUFFER_MS)
 
-                            events.emit(Event.Load(loadTrackPlayback = true, loadPlayback = true, loadDevices = false))
+                                    events.emit(
+                                        Event.Load(loadTrackPlayback = true, loadPlayback = true, loadDevices = false)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -141,7 +168,7 @@ private class BottomPanelPresenter :
          * A buffer in milliseconds after the current track is expected to end before fetching the next playback object,
          * to account for network time, etc.
          */
-        private const val REFRESH_BUFFER_MS = 500
+        private const val REFRESH_BUFFER_MS = 500L
     }
 }
 
@@ -412,11 +439,13 @@ private fun TrackProgress(state: TrackPlayback?, events: MutableSharedFlow<Botto
             mutableStateOf(state.progressMs)
         }
 
+        val track = state.item!!
+
         // TODO animate progress more smoothly
-        val progress = progressState.value.coerceAtMost(state.item.durationMs)
+        val progress = progressState.value.coerceAtMost(track.durationMs)
 
         SeekableSlider(
-            progress = progress.let { progress.toFloat() / state.item.durationMs },
+            progress = progress.let { progress.toFloat() / track.durationMs },
             dragKey = state,
             sliderWidth = TRACK_SLIDER_WIDTH,
             leftContent = {
@@ -424,7 +453,7 @@ private fun TrackProgress(state: TrackPlayback?, events: MutableSharedFlow<Botto
             },
             rightContent = {
                 Text(
-                    text = remember(state.item.durationMs) { state.item.durationMs.let { formatDuration(it) } },
+                    text = remember(track.durationMs) { formatDuration(track.durationMs) },
                     fontSize = Dimens.fontCaption
                 )
             },
@@ -432,7 +461,7 @@ private fun TrackProgress(state: TrackPlayback?, events: MutableSharedFlow<Botto
                 // TODO use coroutine scope context
                 GlobalScope.launch {
                     Spotify.Player.seekToPosition(
-                        positionMs = (seekPercent * state.item.durationMs).roundToInt()
+                        positionMs = (seekPercent * track.durationMs).roundToInt()
                     )
 
                     events.emit(BottomPanelPresenter.Event.Load.playback)

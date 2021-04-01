@@ -14,7 +14,7 @@ data class Playback(
     @SerialName("progress_ms") val processMs: Int,
     @SerialName("is_playing") val isPlaying: Boolean,
     @SerialName("currently_playing_type") val currentlyPlayingType: String,
-    val item: JsonObject,
+    val item: JsonObject?,
     @SerialName("shuffle_state") val shuffleState: Boolean,
     @SerialName("repeat_state") val repeatState: String,
     val context: PlaybackContext,
@@ -30,7 +30,7 @@ data class TrackPlayback(
     @SerialName("progress_ms") val progressMs: Long,
     @SerialName("is_playing") val isPlaying: Boolean,
     @SerialName("currently_playing_type") val currentlyPlayingType: String,
-    val item: FullTrack,
+    val item: FullTrack?,
     val context: PlaybackContext,
     val actions: JsonObject? = null
 )

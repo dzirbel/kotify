@@ -9,8 +9,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -19,7 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.svgResource
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.FullArtist
@@ -82,26 +85,43 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
                 horizontalSpacing = Dimens.space2,
                 verticalSpacing = Dimens.space3,
                 verticalCellAlignment = Alignment.Top
-            ) { artist ->
-                Column(
-                    Modifier
-                        .clip(RoundedCornerShape(CELL_ROUNDING))
-                        .clickable { pageStack.mutate { to(ArtistPage(artistId = artist.id)) } }
-                        .padding(Dimens.space3)
-                ) {
-                    LoadedImage(
-                        url = artist.images.firstOrNull()?.url,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
+            ) { artist -> ArtistCell(artist, pageStack) }
+        }
+    }
+}
 
-                    Spacer(Modifier.height(Dimens.space2))
+@Composable
+private fun ArtistCell(artist: FullArtist, pageStack: MutableState<PageStack>) {
+    Column(
+        Modifier
+            .clip(RoundedCornerShape(CELL_ROUNDING))
+            .clickable { pageStack.mutate { to(ArtistPage(artistId = artist.id)) } }
+            .padding(Dimens.space3)
+    ) {
+        LoadedImage(
+            url = artist.images.firstOrNull()?.url,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
 
-                    Text(
-                        text = artist.name,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.align(Alignment.CenterHorizontally).widthIn(max = IMAGE_SIZE)
-                    )
-                }
+        Spacer(Modifier.height(Dimens.space3))
+
+        Row(
+            Modifier.widthIn(max = IMAGE_SIZE),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = artist.name, modifier = Modifier.weight(1f))
+
+            IconButton(
+                enabled = Player.playable.value,
+                modifier = Modifier.size(Dimens.iconSmall),
+                onClick = { Player.play(contextUri = artist.uri) }
+            ) {
+                Icon(
+                    painter = svgResource("play-circle-outline.svg"),
+                    modifier = Modifier.size(Dimens.iconSmall),
+                    contentDescription = "Play"
+                )
             }
         }
     }
