@@ -106,7 +106,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
         Box(Modifier.fillMaxSize().weight(1f)) {
             when (val current = pageStack.value.current) {
                 ArtistsPage -> Artists(pageStack)
-                AlbumsPage -> Albums()
+                AlbumsPage -> Albums(pageStack)
                 TracksPage -> Tracks()
                 is AlbumPage -> Album(current)
                 is ArtistPage -> Artist(pageStack, current)
