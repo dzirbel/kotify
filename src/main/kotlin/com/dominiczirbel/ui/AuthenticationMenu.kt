@@ -22,7 +22,6 @@ private val MAX_WIDTH = 500.dp
 @Composable
 fun AuthenticationMenu(user: PrivateUser) {
     val token = AccessToken.Cache.token
-    // val token = AccessToken.Cache.tokenFlow.collectAsState(AccessToken.Cache.getFromCache()).value
 
     // TODO move this logic elsewhere
     val scopes = remember(token) { token?.scope?.split(' ')?.toList() }
