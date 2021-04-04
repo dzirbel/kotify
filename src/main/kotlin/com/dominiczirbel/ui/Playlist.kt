@@ -48,7 +48,7 @@ private class PlaylistPresenter(private val playlistId: String) :
     }
 
     override suspend fun reactTo(event: Event) {
-        return when (event) {
+        when (event) {
             is Event.Load -> {
                 mutateRemoteState { it.copy(refreshing = true) }
 

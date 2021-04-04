@@ -32,66 +32,111 @@ import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 import com.dominiczirbel.ui.util.mutate
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.runBlocking
 
 private val IMAGE_SIZE = 200.dp
 private val CELL_ROUNDING = 8.dp
 
-private data class ArtistState(
-    val artist: FullArtist,
-    val artistUpdated: Long?,
-    val artistAlbums: List<Album>,
-    val artistAlbumsUpdated: Long?
-)
+private class ArtistPresenter(private val artistId: String, private val scope: CoroutineScope) :
+    Presenter<RemoteState<ArtistPresenter.State>, ArtistPresenter.Event>(
+        key = artistId,
+        eventMergeStrategy = EventMergeStrategy.LATEST,
+        startingEvents = listOf(
+            Event.Load(
+                refreshArtist = true,
+                refreshArtistAlbums = true,
+                invalidateArtist = false,
+                invalidateArtistAlbums = false
+            )
+        ),
+        initialState = RemoteState.Loading()
+    ) {
 
-data class UpdateEvent(val refreshArtist: Boolean, val refreshArtistAlbums: Boolean)
+    data class State(
+        val artist: FullArtist,
+        val artistUpdated: Long?,
+        val refreshingArtist: Boolean,
+        val artistAlbums: List<Album>,
+        val artistAlbumsUpdated: Long?,
+        val refreshingArtistAlbums: Boolean
+    )
+
+    sealed class Event {
+        data class Load(
+            val refreshArtist: Boolean,
+            val refreshArtistAlbums: Boolean,
+            val invalidateArtist: Boolean,
+            val invalidateArtistAlbums: Boolean
+        ) : Event()
+    }
+
+    override suspend fun reactTo(event: Event) {
+        when (event) {
+            is Event.Load -> {
+                mutateRemoteState {
+                    it.copy(
+                        refreshingArtist = event.refreshArtist,
+                        refreshingArtistAlbums = event.refreshArtistAlbums
+                    )
+                }
+
+                if (event.invalidateArtist) {
+                    SpotifyCache.invalidate(id = artistId)
+                }
+
+                if (event.invalidateArtistAlbums) {
+                    SpotifyCache.invalidate(
+                        SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = artistId)
+                    )
+                }
+
+                val deferredArtist = if (event.refreshArtist) {
+                    scope.async(Dispatchers.IO) {
+                        SpotifyCache.Artists.getFullArtist(id = artistId)
+                    }
+                } else {
+                    null
+                }
+
+                val deferredArtistAlbums = if (event.refreshArtistAlbums) {
+                    scope.async(Dispatchers.IO) {
+                        SpotifyCache.Artists.getArtistAlbums(artistId = artistId)
+                    }
+                } else {
+                    null
+                }
+
+                val artist = deferredArtist?.await()
+                val artistAlbums = deferredArtistAlbums?.await()
+
+                mutateState { currentRemoteState ->
+                    val currentState = (currentRemoteState as? RemoteState.Success)?.data
+                    RemoteState.Success(
+                        data = State(
+                            artist = artist ?: currentState?.artist ?: error(""),
+                            artistUpdated = artist?.id?.let { SpotifyCache.lastUpdated(it) },
+                            refreshingArtist = false,
+                            artistAlbums = artistAlbums ?: currentState?.artistAlbums ?: error(""),
+                            artistAlbumsUpdated = SpotifyCache.lastUpdated(
+                                SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = artistId)
+                            ),
+                            refreshingArtistAlbums = false
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
-    val refreshingArtist = remember { mutableStateOf(false) }
-    val refreshingArtistAlbums = remember { mutableStateOf(false) }
-
-    val sharedFlow = remember { MutableSharedFlow<UpdateEvent>() }
     val scope = rememberCoroutineScope()
-    val remoteState = RemoteState.of(
-        sharedFlow = sharedFlow,
-        key = page,
-        initial = UpdateEvent(
-            refreshArtist = true,
-            refreshArtistAlbums = true
-        )
-    ) { previousState: ArtistState?, event: UpdateEvent ->
-        val deferredArtist = if (event.refreshArtist || previousState == null) {
-            scope.async(Dispatchers.IO) { SpotifyCache.Artists.getFullArtist(id = page.artistId) }
-                .also { it.invokeOnCompletion { refreshingArtist.value = false } }
-        } else {
-            scope.async(Dispatchers.IO) { previousState.artist }
-        }
+    val presenter = remember(page) { ArtistPresenter(artistId = page.artistId, scope = scope) }
 
-        val deferredArtistAlbums = if (event.refreshArtistAlbums || previousState == null) {
-            scope.async(Dispatchers.IO) { SpotifyCache.Artists.getArtistAlbums(artistId = page.artistId) }
-                .also { it.invokeOnCompletion { refreshingArtistAlbums.value = false } }
-        } else {
-            scope.async(Dispatchers.IO) { previousState.artistAlbums }
-        }
-
-        val artist = deferredArtist.await()
-        val artistAlbums = deferredArtistAlbums.await()
-
-        ArtistState(
-            artist = artist,
-            artistAlbums = artistAlbums,
-            artistUpdated = SpotifyCache.lastUpdated(artist.id),
-            artistAlbumsUpdated = SpotifyCache.lastUpdated(
-                SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = artist.id)
-            )
-        )
-    }
-
-    ScrollingPage(remoteState = remoteState) { state ->
+    ScrollingPage(remoteState = presenter.state()) { state ->
         val artist = state.artist
         val albums = state.artistAlbums
 
@@ -102,31 +147,37 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
                 Column {
                     InvalidateButton(
                         modifier = Modifier.align(Alignment.End),
-                        refreshing = refreshingArtist,
+                        refreshing = mutableStateOf(state.refreshingArtist),
                         updated = state.artistUpdated,
                         updatedFormat = { "Artist last updated $it" },
                         updatedFallback = "Artist never updated",
                         onClick = {
-                            SpotifyCache.invalidate(page.artistId)
-                            runBlocking {
-                                sharedFlow.emit(UpdateEvent(refreshArtist = true, refreshArtistAlbums = false))
-                            }
+                            presenter.emitEvent(
+                                ArtistPresenter.Event.Load(
+                                    refreshArtist = true,
+                                    invalidateArtist = true,
+                                    refreshArtistAlbums = false,
+                                    invalidateArtistAlbums = false
+                                )
+                            )
                         }
                     )
 
                     InvalidateButton(
                         modifier = Modifier.align(Alignment.End),
-                        refreshing = refreshingArtistAlbums,
+                        refreshing = mutableStateOf(state.refreshingArtistAlbums),
                         updated = state.artistAlbumsUpdated,
                         updatedFormat = { "Albums last updated $it" },
                         updatedFallback = "Albums never updated",
                         onClick = {
-                            SpotifyCache.invalidate(
-                                SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = page.artistId)
+                            presenter.emitEvent(
+                                ArtistPresenter.Event.Load(
+                                    refreshArtist = false,
+                                    invalidateArtist = false,
+                                    refreshArtistAlbums = true,
+                                    invalidateArtistAlbums = true
+                                )
                             )
-                            runBlocking {
-                                sharedFlow.emit(UpdateEvent(refreshArtist = false, refreshArtistAlbums = true))
-                            }
                         }
                     )
                 }
