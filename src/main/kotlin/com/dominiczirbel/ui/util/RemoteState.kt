@@ -26,12 +26,12 @@ sealed class RemoteState<T : Any?> {
     /**
      * A [RemoteState] triggered when the remote call threw a [throwable] exception.
      */
-    class Error<T : Any?>(val throwable: Throwable) : RemoteState<T>()
+    data class Error<T : Any?>(val throwable: Throwable) : RemoteState<T>()
 
     /**
      * The [RemoteState] when the remote call has successfully returned with [data].
      */
-    class Success<T : Any?>(val data: T) : RemoteState<T>()
+    data class Success<T : Any?>(val data: T) : RemoteState<T>()
 
     companion object {
         @Composable
