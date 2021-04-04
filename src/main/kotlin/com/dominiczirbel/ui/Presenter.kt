@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
@@ -47,6 +48,7 @@ abstract class Presenter<State, Event>(
             } else {
                 events.onStart { startingEvents.forEach { emit(it) } }
             }
+                .onEach { println("[${this::class.simpleName}] Event -> $it") }
         )
     }
 
@@ -63,7 +65,12 @@ abstract class Presenter<State, Event>(
     }
 
     protected fun mutateState(transform: (State) -> State?) {
-        transform(state)?.let { stateFlow.value = it }
+        synchronized(this) {
+            transform(state)?.let {
+                stateFlow.value = it
+                    .also { println("[${this::class.simpleName}] State -> $it") }
+            }
+        }
     }
 
     open suspend fun reactTo(events: Flow<Event>) {
