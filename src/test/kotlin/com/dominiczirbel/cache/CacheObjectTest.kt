@@ -44,7 +44,7 @@ internal class CacheObjectTest {
             return listOf(
                 "abc",
                 TestObject(field = "field", x = 123),
-                listOf(1, 2, 3)
+                arrayOf(1, 2, 3)
             )
         }
     }
