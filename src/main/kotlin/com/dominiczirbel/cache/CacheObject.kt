@@ -33,6 +33,11 @@ data class CacheObject(
     val id: String,
 
     /**
+     * The data being cached.
+     */
+    val obj: Any,
+
+    /**
      * The time the object was cached.
      */
     val cacheTime: Long = System.currentTimeMillis(),
@@ -42,7 +47,7 @@ data class CacheObject(
      *
      * This is used to determine the class to be deserialized at runtime.
      */
-    val type: String,
+    val type: String = obj::class.java.typeName,
 
     /**
      * A hash of the [obj]'s class, i.e. [java.lang.Class.hashCode].
@@ -50,21 +55,8 @@ data class CacheObject(
      * This is used to verify that the underlying class is the same at deserialization time as it was at serialization
      * time; if they conflict a [CacheObject.Serializer.ClassHashChangedException] will be thrown.
      */
-    val classHash: Int,
-
-    /**
-     * The data being cached.
-     */
-    val obj: Any
+    val classHash: Int = obj::class.hashFields()
 ) {
-    constructor(id: String, obj: Any, cacheTime: Long = System.currentTimeMillis()) : this(
-        id = id,
-        cacheTime = cacheTime,
-        type = obj::class.java.typeName,
-        classHash = obj::class.hashFields(),
-        obj = obj
-    )
-
     companion object {
         private val hashes: MutableMap<KClass<*>, Int> = mutableMapOf()
 
