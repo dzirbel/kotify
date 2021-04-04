@@ -240,7 +240,8 @@ fun <T> Table(
 
     val sortState = remember { mutableStateOf<Pair<Column<T>, Sort>?>(null) }
 
-    val (originalIndexes, sortedItems) = remember(sortState.value, items) {
+    // map from original row index to its index when sorted
+    val sortedIndexMap = remember(sortState.value, items) {
         val indexed = sortState.value?.let { (column, sort) ->
             items
                 .withIndex()
@@ -260,9 +261,14 @@ fun <T> Table(
                         Sort.REVERSE_ORDER -> -inOrder
                     }
                 }
-        } ?: items.withIndex()
+                .map { it.index }
+        } ?: items.indices
 
-        Pair(indexed.map { it.index }, indexed.map { it.value })
+        if (includeHeader) {
+            listOf(0).plus(indexed.map { it + 1 })
+        } else {
+            indexed
+        }
     }
 
     Layout(
@@ -288,9 +294,9 @@ fun <T> Table(
                 }
             }
 
-            sortedItems.forEachIndexed { index, item ->
+            items.forEachIndexed { index, item ->
                 columns.forEach { column ->
-                    column.item(item, originalIndexes[index])
+                    column.item(item, index)
                 }
             }
 
@@ -302,15 +308,15 @@ fun <T> Table(
             val gridMeasurables = measurables.dropLast(numDividers)
             val dividerMeasurables = measurables.takeLast(numDividers)
 
-            // index -> the indexes of the measurables/placeables for the items in each row
-            val indexesForRow: List<IntRange> = (0 until numRows).map { row ->
+            // row index -> the indexes of the measurables/placeables for the items in each row
+            val indexesForRow: List<IntRange> = sortedIndexMap.map { row ->
                 (row * numCols) until ((row + 1) * numCols)
             }
 
             check(indexesForRow.size == numRows)
             indexesForRow.forEach { check(it.count() == numCols) }
 
-            // index -> the indexes of the measurables/placeables for the items in each column
+            // column index -> the indexes of the measurables/placeables for the items in each column
             val indexesForCol: List<List<Int>> = (0 until numCols).map { col ->
                 List(numRows) { row -> col + (numCols * row) }
             }
@@ -402,10 +408,12 @@ fun <T> Table(
             layout(constraints.maxWidth, totalHeight) {
                 var y = 0
                 var rowIndex = 0
-                placeables.toList().chunked(size = numCols) { row ->
+
+                indexesForRow.forEach { rowIndexes ->
                     var col = 0
                     var x = 0
-                    row.forEach { placeable ->
+                    rowIndexes.forEach { rowIndex ->
+                        val placeable = placeables[rowIndex]
                         val horizontalAlignment = if (rowIndex == 0 && includeHeader) {
                             columns[col].headerHorizontalAlignment
                         } else {
