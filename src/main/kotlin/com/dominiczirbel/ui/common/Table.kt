@@ -412,8 +412,8 @@ fun <T> Table(
                 indexesForRow.forEach { rowIndexes ->
                     var col = 0
                     var x = 0
-                    rowIndexes.forEach { rowIndex ->
-                        val placeable = placeables[rowIndex]
+                    rowIndexes.forEach { placeableIndex ->
+                        val placeable = placeables[placeableIndex]
                         val horizontalAlignment = if (rowIndex == 0 && includeHeader) {
                             columns[col].headerHorizontalAlignment
                         } else {
