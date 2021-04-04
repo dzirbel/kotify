@@ -18,10 +18,10 @@ private object Versions {
 
 plugins {
     // https://kotlinlang.org/releases.html
-    kotlin("jvm") version "1.4.32"
+    kotlin("jvm") version "1.4.31"
 
     // https://github.com/Kotlin/kotlinx.serialization
-    kotlin("plugin.serialization") version "1.4.32"
+    kotlin("plugin.serialization") version "1.4.31"
 
     // https://github.com/detekt/detekt; also update dependency version
     id("io.gitlab.arturbosch.detekt") version "1.16.0"
