@@ -17,16 +17,15 @@ import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
-import com.dominiczirbel.ui.util.RemoteState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
 private class TracksPresenter(scope: CoroutineScope) :
-    Presenter<RemoteState<TracksPresenter.State>, TracksPresenter.Event>(
+    Presenter<TracksPresenter.State?, TracksPresenter.Event>(
         scope = scope,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load(invalidate = false)),
-        initialState = RemoteState.Loading()
+        initialState = null
     ) {
 
     data class State(
@@ -42,7 +41,7 @@ private class TracksPresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateRemoteState { it.copy(refreshing = true) }
+                mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
                     SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedTracks.ID)
@@ -53,12 +52,10 @@ private class TracksPresenter(scope: CoroutineScope) :
                     .sortedBy { it.name }
 
                 mutateState {
-                    RemoteState.Success(
-                        State(
-                            refreshing = false,
-                            tracks = tracks,
-                            tracksUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedTracks.ID)
-                        )
+                    State(
+                        refreshing = false,
+                        tracks = tracks,
+                        tracksUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedTracks.ID)
                     )
                 }
             }
@@ -71,7 +68,7 @@ fun BoxScope.Tracks() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { TracksPresenter(scope = scope) }
 
-    ScrollingPage(remoteState = presenter.state()) { state ->
+    ScrollingPage(state = { presenter.state() }) { state ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Tracks", fontSize = Dimens.fontTitle)

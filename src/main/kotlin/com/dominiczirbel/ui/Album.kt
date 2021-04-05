@@ -19,16 +19,15 @@ import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
-import com.dominiczirbel.ui.util.RemoteState
 import kotlinx.coroutines.CoroutineScope
 
 private class AlbumPresenter(private val albumId: String, scope: CoroutineScope) :
-    Presenter<RemoteState<AlbumPresenter.State>, AlbumPresenter.Event>(
+    Presenter<AlbumPresenter.State?, AlbumPresenter.Event>(
         scope = scope,
         key = albumId,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load(invalidate = false)),
-        initialState = RemoteState.Loading()
+        initialState = null
     ) {
 
     data class State(
@@ -45,7 +44,7 @@ private class AlbumPresenter(private val albumId: String, scope: CoroutineScope)
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateRemoteState { it.copy(refreshing = true) }
+                mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
                     SpotifyCache.invalidate(id = albumId)
@@ -55,19 +54,17 @@ private class AlbumPresenter(private val albumId: String, scope: CoroutineScope)
                 val tracks = album.tracks.fetchAll<SimplifiedTrack>()
 
                 mutateState {
-                    RemoteState.Success(
-                        State(
-                            refreshing = false,
-                            album = album,
-                            tracks = tracks,
-                            albumUpdated = SpotifyCache.lastUpdated(id = albumId)
-                        )
+                    State(
+                        refreshing = false,
+                        album = album,
+                        tracks = tracks,
+                        albumUpdated = SpotifyCache.lastUpdated(id = albumId)
                     )
                 }
 
                 val fullTracks = SpotifyCache.Tracks.getFullTracks(ids = tracks.map { it.id!! }, scope = scope)
 
-                mutateRemoteState { it.copy(tracks = fullTracks) }
+                mutateState { it?.copy(tracks = fullTracks) }
             }
         }
     }
@@ -80,7 +77,7 @@ fun BoxScope.Album(page: AlbumPage) {
     val scope = rememberCoroutineScope()
     val presenter = remember(page) { AlbumPresenter(albumId = page.albumId, scope = scope) }
 
-    ScrollingPage(remoteState = presenter.state()) { state ->
+    ScrollingPage(state = { presenter.state() }) { state ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(state.album.name, fontSize = Dimens.fontTitle)

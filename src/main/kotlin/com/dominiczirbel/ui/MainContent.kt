@@ -37,7 +37,6 @@ import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.common.SimpleTextButton
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
-import com.dominiczirbel.ui.util.RemoteState
 import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -67,11 +66,11 @@ object TracksPage : Page {
 }
 
 private class AuthenticationMenuPresenter(scope: CoroutineScope) :
-    Presenter<RemoteState<PrivateUser>, AuthenticationMenuPresenter.Event>(
+    Presenter<PrivateUser?, AuthenticationMenuPresenter.Event>(
         scope = scope,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load),
-        initialState = RemoteState.Loading()
+        initialState = null
     ) {
 
     sealed class Event {
@@ -83,9 +82,7 @@ private class AuthenticationMenuPresenter(scope: CoroutineScope) :
             is Event.Load -> {
                 val user = SpotifyCache.UsersProfile.getCurrentUser()
 
-                mutateState {
-                    RemoteState.Success(user)
-                }
+                mutateState { user }
             }
         }
     }
@@ -150,7 +147,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
 private fun AuthenticationMenuHeader() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { AuthenticationMenuPresenter(scope = scope) }
-    val currentUser = (presenter.state() as? RemoteState.Success)?.data
+    val currentUser = presenter.state()
 
     val username = currentUser?.displayName ?: "<loading>"
     val expandedState = remember { mutableStateOf(false) }

@@ -80,3 +80,25 @@ fun <T> Flow<T>.collectAsStateSwitchable(
     }
     return result
 }
+
+/**
+ * Handles the three possible states of [state]: an exception is thrown, in which case [onError] is invoked with the
+ * exception; null is returned, in which case [onLoading] is invoked; or a non-null [T] is returned in which case
+ * [onSuccess] with the value.
+ */
+@Composable
+fun <T> HandleState(
+    state: @Composable () -> T?,
+    onError: @Composable (Throwable) -> Unit,
+    onLoading: @Composable () -> Unit,
+    onSuccess: @Composable (T) -> Unit
+) {
+    val result = runCatching { state() }
+    val throwable = result.exceptionOrNull()
+
+    if (throwable == null) {
+        result.getOrNull()?.let { onSuccess(it) } ?: onLoading()
+    } else {
+        onError(throwable)
+    }
+}

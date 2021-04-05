@@ -25,17 +25,17 @@ import com.dominiczirbel.ui.common.SimpleTextButton
 import com.dominiczirbel.ui.common.VerticalScroll
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
-import com.dominiczirbel.ui.util.RemoteState
+import com.dominiczirbel.ui.util.HandleState
 import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
 private class LibraryPresenter(scope: CoroutineScope) :
-    Presenter<RemoteState<LibraryPresenter.State>, LibraryPresenter.Event>(
+    Presenter<LibraryPresenter.State?, LibraryPresenter.Event>(
         scope = scope,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load),
-        initialState = RemoteState.Loading()
+        initialState = null
     ) {
 
     data class State(val refreshing: Boolean, val playlists: List<Playlist>)
@@ -47,17 +47,15 @@ private class LibraryPresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             Event.Load -> {
-                mutateRemoteState { it.copy(refreshing = true) }
+                mutateState { it?.copy(refreshing = true) }
 
                 val playlists = SpotifyCache.Playlists.getSavedPlaylists()
                     .map { SpotifyCache.Playlists.getPlaylist(it) }
 
                 mutateState {
-                    RemoteState.Success(
-                        State(
-                            refreshing = false,
-                            playlists = playlists
-                        )
+                    State(
+                        refreshing = false,
+                        playlists = playlists
                     )
                 }
             }
@@ -105,22 +103,23 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
             text = "Playlists"
         )
 
-        when (val state = presenter.state()) {
-            is RemoteState.Error ->
+        HandleState(
+            state = { presenter.state() },
+            onError = {
                 Icon(
                     imageVector = Icons.Default.Warning,
                     contentDescription = null,
                     modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally),
                     tint = Colors.current.error
                 )
-
-            is RemoteState.Loading ->
+            },
+            onLoading = {
                 CircularProgressIndicator(
                     modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally)
                 )
-
-            is RemoteState.Success ->
-                state.data.playlists.forEach { playlist ->
+            },
+            onSuccess = { state ->
+                state.playlists.forEach { playlist ->
                     MaxWidthButton(
                         text = playlist.name,
                         contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
@@ -128,7 +127,8 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
                         onClick = { pageStack.mutate { to(PlaylistPage(playlistId = playlist.id)) } }
                     )
                 }
-        }
+            }
+        )
     }
 }
 

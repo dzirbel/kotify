@@ -18,22 +18,16 @@ import androidx.compose.ui.unit.dp
 import com.dominiczirbel.ui.common.VerticalScroll
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
-import com.dominiczirbel.ui.util.RemoteState
+import com.dominiczirbel.ui.util.HandleState
 
 private val LOADING_INDICATOR_SIZE = 60.dp
 private val ERROR_ICON_SIZE = 100.dp
 
-/**
- * Convenience wrapper for the common case where a [RemoteState] should be contained in a vertical scrolling box, and
- * handles loading/error states.
- */
 @Composable
-fun <T : Any> BoxScope.ScrollingPage(
-    remoteState: RemoteState<T>,
-    content: @Composable (T) -> Unit
-) {
-    when (remoteState) {
-        is RemoteState.Error ->
+fun <T : Any> BoxScope.ScrollingPage(state: @Composable () -> T?, content: @Composable (T) -> Unit) {
+    HandleState(
+        state = state,
+        onError = { throwable ->
             Column(Modifier.align(Alignment.Center)) {
                 Icon(
                     imageVector = Icons.Default.Warning,
@@ -43,25 +37,27 @@ fun <T : Any> BoxScope.ScrollingPage(
                 )
 
                 Text(
-                    text = "Encountered an error: ${remoteState.throwable.message}",
+                    text = "Encountered an error: ${throwable.message}",
                     color = Colors.current.error,
                     fontSize = Dimens.fontTitle
                 )
 
                 Text(
-                    text = remoteState.throwable.stackTraceToString(),
+                    text = throwable.stackTraceToString(),
                     color = Colors.current.error,
                     fontFamily = FontFamily.Monospace
                 )
             }
-
-        is RemoteState.Loading ->
+        },
+        onLoading = {
             CircularProgressIndicator(Modifier.size(LOADING_INDICATOR_SIZE).align(Alignment.Center))
-
-        is RemoteState.Success -> VerticalScroll {
-            Box(Modifier.padding(Dimens.space4)) {
-                content(remoteState.data)
+        },
+        onSuccess = {
+            VerticalScroll {
+                Box(Modifier.padding(Dimens.space4)) {
+                    content(it)
+                }
             }
         }
-    }
+    )
 }

@@ -3,7 +3,6 @@ package com.dominiczirbel.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
-import com.dominiczirbel.ui.util.RemoteState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -78,13 +77,4 @@ abstract class Presenter<State, Event>(
     }
 
     abstract suspend fun reactTo(event: Event)
-
-    @Suppress("unused") // false positive for receiver parameter: state parameter is different
-    fun <T> Presenter<RemoteState<T>, *>.mutateRemoteState(default: T? = null, transform: (T) -> T?) {
-        mutateState { remoteState ->
-            ((remoteState as? RemoteState.Success)?.data ?: default)
-                ?.let(transform)
-                ?.let { RemoteState.Success(it) }
-        }
-    }
 }

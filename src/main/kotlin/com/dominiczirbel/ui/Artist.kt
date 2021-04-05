@@ -29,7 +29,6 @@ import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.theme.Dimens
-import com.dominiczirbel.ui.util.RemoteState
 import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +38,7 @@ private val IMAGE_SIZE = 200.dp
 private val CELL_ROUNDING = 8.dp
 
 private class ArtistPresenter(private val artistId: String, scope: CoroutineScope) :
-    Presenter<RemoteState<ArtistPresenter.State>, ArtistPresenter.Event>(
+    Presenter<ArtistPresenter.State?, ArtistPresenter.Event>(
         scope = scope,
         key = artistId,
         eventMergeStrategy = EventMergeStrategy.LATEST,
@@ -51,7 +50,7 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
                 invalidateArtistAlbums = false
             )
         ),
-        initialState = RemoteState.Loading()
+        initialState = null
     ) {
 
     data class State(
@@ -75,8 +74,8 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateRemoteState {
-                    it.copy(
+                mutateState {
+                    it?.copy(
                         refreshingArtist = event.refreshArtist,
                         refreshingArtistAlbums = event.refreshArtistAlbums
                     )
@@ -111,19 +110,16 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
                 val artist = deferredArtist?.await()
                 val artistAlbums = deferredArtistAlbums?.await()
 
-                mutateState { currentRemoteState ->
-                    val currentState = (currentRemoteState as? RemoteState.Success)?.data
-                    RemoteState.Success(
-                        data = State(
-                            artist = artist ?: currentState?.artist ?: error(""),
-                            artistUpdated = artist?.id?.let { SpotifyCache.lastUpdated(it) },
-                            refreshingArtist = false,
-                            artistAlbums = artistAlbums ?: currentState?.artistAlbums ?: error(""),
-                            artistAlbumsUpdated = SpotifyCache.lastUpdated(
-                                SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = artistId)
-                            ),
-                            refreshingArtistAlbums = false
-                        )
+                mutateState {
+                    State(
+                        artist = artist ?: it?.artist ?: error(""),
+                        artistUpdated = artist?.id?.let { SpotifyCache.lastUpdated(it) },
+                        refreshingArtist = false,
+                        artistAlbums = checkNotNull(artistAlbums ?: it?.artistAlbums),
+                        artistAlbumsUpdated = SpotifyCache.lastUpdated(
+                            SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = artistId)
+                        ),
+                        refreshingArtistAlbums = false
                     )
                 }
             }
@@ -136,7 +132,7 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember(page) { ArtistPresenter(artistId = page.artistId, scope = scope) }
 
-    ScrollingPage(remoteState = presenter.state()) { state ->
+    ScrollingPage(state = { presenter.state() }) { state ->
         val artist = state.artist
         val albums = state.artistAlbums
 

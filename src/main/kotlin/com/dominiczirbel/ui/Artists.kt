@@ -31,7 +31,6 @@ import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.theme.Dimens
-import com.dominiczirbel.ui.util.RemoteState
 import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,11 +39,11 @@ private val IMAGE_SIZE = 200.dp
 private val CELL_ROUNDING = 8.dp
 
 private class ArtistsPresenter(scope: CoroutineScope) :
-    Presenter<RemoteState<ArtistsPresenter.State>, ArtistsPresenter.Event>(
+    Presenter<ArtistsPresenter.State?, ArtistsPresenter.Event>(
         scope = scope,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load(invalidate = false)),
-        initialState = RemoteState.Loading()
+        initialState = null
     ) {
 
     data class State(
@@ -60,7 +59,7 @@ private class ArtistsPresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateRemoteState { it.copy(refreshing = true) }
+                mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
                     SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedArtists.ID)
@@ -71,12 +70,10 @@ private class ArtistsPresenter(scope: CoroutineScope) :
                     .sortedBy { it.name }
 
                 mutateState {
-                    RemoteState.Success(
-                        State(
-                            refreshing = false,
-                            artists = artists,
-                            artistsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedArtists.ID)
-                        )
+                    State(
+                        refreshing = false,
+                        artists = artists,
+                        artistsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedArtists.ID)
                     )
                 }
             }
@@ -89,7 +86,7 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { ArtistsPresenter(scope = scope) }
 
-    ScrollingPage(remoteState = presenter.state()) { state ->
+    ScrollingPage(state = { presenter.state() }) { state ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Artists", fontSize = Dimens.fontTitle)
