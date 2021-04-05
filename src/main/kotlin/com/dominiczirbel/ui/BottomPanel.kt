@@ -41,7 +41,6 @@ import com.dominiczirbel.util.formatDuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -65,7 +64,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
     init {
         scope.launch {
             Player.playEvents.collect {
-                events.emit(Event.Load(loadPlayback = true, loadTrackPlayback = true, loadDevices = false))
+                emit(Event.Load(loadPlayback = true, loadTrackPlayback = true, loadDevices = false))
             }
         }
     }
@@ -135,7 +134,8 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                             if (trackPlayback.item == null) {
                                 // try again until we get a valid track
                                 delay(REFRESH_BUFFER_MS)
-                                events.emit(
+
+                                emit(
                                     Event.Load(loadTrackPlayback = true, loadPlayback = false, loadDevices = false)
                                 )
                             } else {
@@ -149,7 +149,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 
                                     delay(millisLeft + REFRESH_BUFFER_MS)
 
-                                    events.emit(
+                                    emit(
                                         Event.Load(loadTrackPlayback = true, loadPlayback = true, loadDevices = false)
                                     )
                                 }
@@ -191,9 +191,9 @@ fun BottomPanel() {
             PlayerState(state = state)
 
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceEvenly) {
-                PlayerControls(state = state, events = presenter.events)
+                PlayerControls(state = state, presenter = presenter)
 
-                TrackProgress(state = state.trackPlayback, events = presenter.events)
+                TrackProgress(state = state.trackPlayback, presenter = presenter)
             }
 
             val refreshing = state.loadingDevices || state.loadingPlayback || state.loadingTrackPlayback
@@ -213,12 +213,13 @@ fun BottomPanel() {
                         )
                     },
                     onSeek = { seekPercent ->
+                        // TODO move to presenter
                         scope.launch {
                             Spotify.Player.setVolume(
                                 volumePercent = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
                             )
 
-                            presenter.events.emit(BottomPanelPresenter.Event.Load.devices)
+                            presenter.emit(BottomPanelPresenter.Event.Load.devices)
                         }
                     }
                 )
@@ -226,7 +227,7 @@ fun BottomPanel() {
                 IconButton(
                     enabled = !refreshing,
                     onClick = {
-                        presenter.emitEvent(BottomPanelPresenter.Event.Load.all)
+                        presenter.emitAsync(BottomPanelPresenter.Event.Load.all)
                     }
                 ) {
                     if (refreshing) {
@@ -270,10 +271,7 @@ private fun PlayerState(state: BottomPanelPresenter.State) {
 }
 
 @Composable
-private fun PlayerControls(
-    state: BottomPanelPresenter.State,
-    events: MutableSharedFlow<BottomPanelPresenter.Event>
-) {
+private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
     val scope = rememberCoroutineScope()
 
     val controlsEnabled = !state.loadingPlayback && state.playback != null
@@ -289,10 +287,11 @@ private fun PlayerControls(
             onClick = {
                 togglingShuffle.value = true
 
+                // TODO move to presenter
                 scope.launch {
                     Spotify.Player.toggleShuffle(state = !shuffling!!)
 
-                    events.emit(BottomPanelPresenter.Event.Load.playback)
+                    presenter.emit(BottomPanelPresenter.Event.Load.playback)
 
                     togglingShuffle.value = false
                 }
@@ -316,10 +315,11 @@ private fun PlayerControls(
             onClick = {
                 skippingPrevious.value = true
 
+                // TODO move to presenter
                 scope.launch {
                     Spotify.Player.skipToPrevious()
 
-                    events.emit(BottomPanelPresenter.Event.Load.trackPlayback)
+                    presenter.emit(BottomPanelPresenter.Event.Load.trackPlayback)
 
                     skippingPrevious.value = false
                 }
@@ -338,6 +338,7 @@ private fun PlayerControls(
             onClick = {
                 togglingPlayback.value = true
 
+                // TODO move to presenter
                 scope.launch {
                     if (playing!!) {
                         Spotify.Player.pausePlayback()
@@ -345,7 +346,7 @@ private fun PlayerControls(
                         Spotify.Player.startPlayback()
                     }
 
-                    events.emit(BottomPanelPresenter.Event.Load.playback)
+                    presenter.emit(BottomPanelPresenter.Event.Load.playback)
 
                     togglingPlayback.value = false
                 }
@@ -364,10 +365,11 @@ private fun PlayerControls(
             onClick = {
                 skippingNext.value = true
 
+                // TODO move to presenter
                 scope.launch {
                     Spotify.Player.skipToNext()
 
-                    events.emit(BottomPanelPresenter.Event.Load.trackPlayback)
+                    presenter.emit(BottomPanelPresenter.Event.Load.trackPlayback)
 
                     skippingNext.value = false
                 }
@@ -386,6 +388,7 @@ private fun PlayerControls(
             onClick = {
                 togglingRepeat.value = true
 
+                // TODO move to presenter
                 scope.launch {
                     Spotify.Player.setRepeatMode(
                         state = when (repeatState) {
@@ -395,7 +398,7 @@ private fun PlayerControls(
                         }
                     )
 
-                    events.emit(BottomPanelPresenter.Event.Load.playback)
+                    presenter.emit(BottomPanelPresenter.Event.Load.playback)
 
                     togglingRepeat.value = false
                 }
@@ -416,7 +419,7 @@ private fun PlayerControls(
 }
 
 @Composable
-private fun TrackProgress(state: TrackPlayback?, events: MutableSharedFlow<BottomPanelPresenter.Event>) {
+private fun TrackProgress(state: TrackPlayback?, presenter: BottomPanelPresenter) {
     if (state == null) {
         SeekableSlider(progress = null, sliderWidth = TRACK_SLIDER_WIDTH)
     } else {
@@ -455,12 +458,13 @@ private fun TrackProgress(state: TrackPlayback?, events: MutableSharedFlow<Botto
                 )
             },
             onSeek = { seekPercent ->
+                // TODO move to presenter
                 scope.launch {
                     Spotify.Player.seekToPosition(
                         positionMs = (seekPercent * track.durationMs).roundToInt()
                     )
 
-                    events.emit(BottomPanelPresenter.Event.Load.playback)
+                    presenter.emit(BottomPanelPresenter.Event.Load.playback)
                 }
             }
         )

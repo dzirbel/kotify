@@ -95,7 +95,7 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
                     InvalidateButton(
                         refreshing = state.refreshing,
                         updated = state.artistsUpdated,
-                        onClick = { presenter.emitEvent(ArtistsPresenter.Event.Load(invalidate = true)) }
+                        onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) }
                     )
                 }
             }

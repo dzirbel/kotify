@@ -77,7 +77,7 @@ fun BoxScope.Tracks() {
                     InvalidateButton(
                         refreshing = state.refreshing,
                         updated = state.tracksUpdated,
-                        onClick = { presenter.emitEvent(TracksPresenter.Event.Load(invalidate = true)) }
+                        onClick = { presenter.emitAsync(TracksPresenter.Event.Load(invalidate = true)) }
                     )
                 }
             }

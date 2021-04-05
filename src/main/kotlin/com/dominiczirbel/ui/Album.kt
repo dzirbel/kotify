@@ -87,7 +87,7 @@ fun BoxScope.Album(page: AlbumPage) {
                     updated = state.albumUpdated,
                     updatedFormat = { "Album last updated $it" },
                     updatedFallback = "Album never updated",
-                    onClick = { presenter.emitEvent(AlbumPresenter.Event.Load(invalidate = true)) }
+                    onClick = { presenter.emitAsync(AlbumPresenter.Event.Load(invalidate = true)) }
                 )
             }
 

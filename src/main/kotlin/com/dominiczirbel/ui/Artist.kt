@@ -148,7 +148,7 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
                         updatedFormat = { "Artist last updated $it" },
                         updatedFallback = "Artist never updated",
                         onClick = {
-                            presenter.emitEvent(
+                            presenter.emitAsync(
                                 ArtistPresenter.Event.Load(
                                     refreshArtist = true,
                                     invalidateArtist = true,
@@ -166,7 +166,7 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
                         updatedFormat = { "Albums last updated $it" },
                         updatedFallback = "Albums never updated",
                         onClick = {
-                            presenter.emitEvent(
+                            presenter.emitAsync(
                                 ArtistPresenter.Event.Load(
                                     refreshArtist = false,
                                     invalidateArtist = false,

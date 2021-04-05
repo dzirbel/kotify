@@ -92,7 +92,7 @@ fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
                     InvalidateButton(
                         refreshing = state.refreshing,
                         updated = state.albumsUpdated,
-                        onClick = { presenter.emitEvent(AlbumsPresenter.Event.Load(invalidate = true)) }
+                        onClick = { presenter.emitAsync(AlbumsPresenter.Event.Load(invalidate = true)) }
                     )
                 }
             }

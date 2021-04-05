@@ -126,7 +126,7 @@ fun BoxScope.Playlist(page: PlaylistPage) {
                     InvalidateButton(
                         refreshing = state.refreshing,
                         updated = state.playlistUpdated,
-                        onClick = { presenter.emitEvent(PlaylistPresenter.Event.Load(invalidate = true)) }
+                        onClick = { presenter.emitAsync(PlaylistPresenter.Event.Load(invalidate = true)) }
                     )
                 }
             }
