@@ -7,11 +7,11 @@ import androidx.compose.runtime.ProduceStateScope
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -20,30 +20,24 @@ import kotlin.coroutines.EmptyCoroutineContext
 /**
  * Collects the [callback] value as a [State], initially null, which is assigned a value when [callback] returns.
  *
- * The result of [callback] is [remember]ed and only called once as long as the caller is in the composition.
- */
-@Composable
-fun <T> callbackAsState(context: CoroutineContext = Dispatchers.IO, callback: suspend () -> T?): State<T?> {
-    return remember {
-        flow {
-            callback()?.let { emit(it) }
-        }
-    }.collectAsState(initial = null, context = context)
-}
-
-/**
- * Collects the [callback] value as a [State], initially null, which is assigned a value when [callback] returns.
- *
  * The result of [callback] is [remember]ed as long as [key] is unchanged and only called once as long as the caller is
  * in the composition.
  */
 @Composable
-fun <T> callbackAsState(context: CoroutineContext = Dispatchers.IO, key: Any, callback: suspend () -> T?): State<T?> {
-    return remember(key) {
-        flow {
-            callback()?.let { emit(it) }
+fun <T> callbackAsState(
+    context: CoroutineContext = EmptyCoroutineContext,
+    key: Any,
+    callback: suspend () -> T?
+): State<T?> {
+    return produceState(initialValue = null, key1 = key) {
+        if (context == EmptyCoroutineContext) {
+            callback()?.let { this@produceState.value = it }
+        } else {
+            withContext(context) {
+                callback()?.let { this@produceState.value = it }
+            }
         }
-    }.collectAsState(initial = null, context = context)
+    }
 }
 
 /**

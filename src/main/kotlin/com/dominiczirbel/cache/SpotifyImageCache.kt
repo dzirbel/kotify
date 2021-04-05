@@ -19,6 +19,8 @@ import org.jetbrains.skija.Image
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
@@ -89,11 +91,12 @@ object SpotifyImageCache {
      */
     suspend fun get(
         url: String,
-        scope: CoroutineScope = GlobalScope,
+        scope: CoroutineScope,
+        context: CoroutineContext = EmptyCoroutineContext,
         client: OkHttpClient = Spotify.configuration.okHttpClient
     ): ImageBitmap? {
         val deferred = imageJobs.getOrPut(url) {
-            scope.async {
+            scope.async(context = context) {
                 val (result, duration) = measureTimedValue { fromFileCache(url) }
                 val (cacheFile, image) = result
 

@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -39,8 +38,9 @@ import kotlinx.coroutines.async
 private val IMAGE_SIZE = 200.dp
 private val CELL_ROUNDING = 8.dp
 
-private class ArtistPresenter(private val artistId: String, private val scope: CoroutineScope) :
+private class ArtistPresenter(private val artistId: String, scope: CoroutineScope) :
     Presenter<RemoteState<ArtistPresenter.State>, ArtistPresenter.Event>(
+        scope = scope,
         key = artistId,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(
@@ -102,7 +102,7 @@ private class ArtistPresenter(private val artistId: String, private val scope: C
 
                 val deferredArtistAlbums = if (event.refreshArtistAlbums) {
                     scope.async(Dispatchers.IO) {
-                        SpotifyCache.Artists.getArtistAlbums(artistId = artistId)
+                        SpotifyCache.Artists.getArtistAlbums(artistId = artistId, scope = scope)
                     }
                 } else {
                     null
@@ -133,7 +133,7 @@ private class ArtistPresenter(private val artistId: String, private val scope: C
 
 @Composable
 fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
-    val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember(page) { ArtistPresenter(artistId = page.artistId, scope = scope) }
 
     ScrollingPage(remoteState = presenter.state()) { state ->
@@ -147,7 +147,7 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
                 Column {
                     InvalidateButton(
                         modifier = Modifier.align(Alignment.End),
-                        refreshing = mutableStateOf(state.refreshingArtist),
+                        refreshing = state.refreshingArtist,
                         updated = state.artistUpdated,
                         updatedFormat = { "Artist last updated $it" },
                         updatedFallback = "Artist never updated",
@@ -165,7 +165,7 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
 
                     InvalidateButton(
                         modifier = Modifier.align(Alignment.End),
-                        refreshing = mutableStateOf(state.refreshingArtistAlbums),
+                        refreshing = state.refreshingArtistAlbums,
                         updated = state.artistAlbumsUpdated,
                         updatedFormat = { "Albums last updated $it" },
                         updatedFallback = "Albums never updated",
@@ -199,7 +199,8 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
                 ) {
                     LoadedImage(
                         url = album.images.firstOrNull()?.url,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        scope = scope
                     )
 
                     Spacer(Modifier.height(Dimens.space2))

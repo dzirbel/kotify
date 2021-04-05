@@ -1,6 +1,7 @@
 package com.dominiczirbel.ui
 
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestCoroutineScope
@@ -18,6 +19,7 @@ internal class PresenterTest {
     ) : Presenter<State, Event>(
         eventMergeStrategy = eventMergeStrategy,
         startingEvents = startingEvents,
+        scope = GlobalScope,
         initialState = State("initial")
     ) {
 

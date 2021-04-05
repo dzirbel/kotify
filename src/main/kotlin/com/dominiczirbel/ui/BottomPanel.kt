@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.svgResource
@@ -37,14 +38,13 @@ import com.dominiczirbel.ui.common.SeekableSlider
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.util.formatDuration
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
@@ -54,15 +54,16 @@ private val VOLUME_SLIDER_WIDTH = 100.dp
 
 // TODO sometimes on skip/etc the immediate call to playback returns outdated info, from before the skip/etc has been
 //  applied - keep making calls until the playback is updated?
-private class BottomPanelPresenter :
+private class BottomPanelPresenter(scope: CoroutineScope) :
     Presenter<BottomPanelPresenter.State, BottomPanelPresenter.Event>(
+        scope = scope,
         startingEvents = listOf(Event.Load.all),
         eventMergeStrategy = EventMergeStrategy.LATEST,
         initialState = State()
     ) {
 
     init {
-        GlobalScope.launch {
+        scope.launch {
             Player.playEvents.collect {
                 events.emit(Event.Load(loadPlayback = true, loadTrackPlayback = true, loadDevices = false))
             }
@@ -105,8 +106,7 @@ private class BottomPanelPresenter :
                 }
 
                 if (event.loadPlayback) {
-                    // TODO scope
-                    GlobalScope.launch {
+                    scope.launch {
                         val playback = Spotify.Player.getCurrentPlayback()
 
                         Player.playable.value = playback?.device != null
@@ -118,8 +118,7 @@ private class BottomPanelPresenter :
                 }
 
                 if (event.loadDevices) {
-                    // TODO scope
-                    GlobalScope.launch {
+                    scope.launch {
                         val devices = Spotify.Player.getAvailableDevices()
                         mutateState {
                             it.copy(devices = devices, loadingDevices = false)
@@ -128,8 +127,7 @@ private class BottomPanelPresenter :
                 }
 
                 if (event.loadTrackPlayback) {
-                    // TODO scope
-                    GlobalScope.launch {
+                    scope.launch {
                         val trackPlayback = Spotify.Player.getCurrentlyPlayingTrack()
                         if (trackPlayback == null) {
                             mutateState { it.copy(loadingTrackPlayback = false, trackPlayback = null) }
@@ -174,7 +172,8 @@ private class BottomPanelPresenter :
 
 @Composable
 fun BottomPanel() {
-    val presenter = remember { BottomPanelPresenter() }
+    val scope = rememberCoroutineScope()
+    val presenter = remember { BottomPanelPresenter(scope) }
     val state = presenter.state()
 
     Column(Modifier.fillMaxWidth().wrapContentHeight()) {
@@ -214,8 +213,7 @@ fun BottomPanel() {
                         )
                     },
                     onSeek = { seekPercent ->
-                        // TODO use coroutine scope context
-                        GlobalScope.launch {
+                        scope.launch {
                             Spotify.Player.setVolume(
                                 volumePercent = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
                             )
@@ -228,7 +226,7 @@ fun BottomPanel() {
                 IconButton(
                     enabled = !refreshing,
                     onClick = {
-                        runBlocking { presenter.events.emit(BottomPanelPresenter.Event.Load.all) }
+                        presenter.emitEvent(BottomPanelPresenter.Event.Load.all)
                     }
                 ) {
                     if (refreshing) {
@@ -253,7 +251,8 @@ private fun PlayerState(state: BottomPanelPresenter.State) {
 
         LoadedImage(
             url = track?.album?.images?.firstOrNull()?.url,
-            size = ALBUM_ART_SIZE
+            size = ALBUM_ART_SIZE,
+            scope = rememberCoroutineScope()
         )
 
         Spacer(Modifier.size(Dimens.space3))
@@ -275,6 +274,8 @@ private fun PlayerControls(
     state: BottomPanelPresenter.State,
     events: MutableSharedFlow<BottomPanelPresenter.Event>
 ) {
+    val scope = rememberCoroutineScope()
+
     val controlsEnabled = !state.loadingPlayback && state.playback != null
 
     val playing = state.playback?.isPlaying
@@ -288,8 +289,7 @@ private fun PlayerControls(
             onClick = {
                 togglingShuffle.value = true
 
-                // TODO use coroutine scope context
-                GlobalScope.launch {
+                scope.launch {
                     Spotify.Player.toggleShuffle(state = !shuffling!!)
 
                     events.emit(BottomPanelPresenter.Event.Load.playback)
@@ -316,8 +316,7 @@ private fun PlayerControls(
             onClick = {
                 skippingPrevious.value = true
 
-                // TODO use coroutine scope context
-                GlobalScope.launch {
+                scope.launch {
                     Spotify.Player.skipToPrevious()
 
                     events.emit(BottomPanelPresenter.Event.Load.trackPlayback)
@@ -339,8 +338,7 @@ private fun PlayerControls(
             onClick = {
                 togglingPlayback.value = true
 
-                // TODO use coroutine scope context
-                GlobalScope.launch {
+                scope.launch {
                     if (playing!!) {
                         Spotify.Player.pausePlayback()
                     } else {
@@ -366,8 +364,7 @@ private fun PlayerControls(
             onClick = {
                 skippingNext.value = true
 
-                // TODO use coroutine scope context
-                GlobalScope.launch {
+                scope.launch {
                     Spotify.Player.skipToNext()
 
                     events.emit(BottomPanelPresenter.Event.Load.trackPlayback)
@@ -389,8 +386,7 @@ private fun PlayerControls(
             onClick = {
                 togglingRepeat.value = true
 
-                // TODO use coroutine scope context
-                GlobalScope.launch {
+                scope.launch {
                     Spotify.Player.setRepeatMode(
                         state = when (repeatState) {
                             "track" -> "off"
@@ -424,6 +420,7 @@ private fun TrackProgress(state: TrackPlayback?, events: MutableSharedFlow<Botto
     if (state == null) {
         SeekableSlider(progress = null, sliderWidth = TRACK_SLIDER_WIDTH)
     } else {
+        val scope = rememberCoroutineScope()
         val progressState = if (state.isPlaying) {
             remember(state) {
                 flow {
@@ -458,8 +455,7 @@ private fun TrackProgress(state: TrackPlayback?, events: MutableSharedFlow<Botto
                 )
             },
             onSeek = { seekPercent ->
-                // TODO use coroutine scope context
-                GlobalScope.launch {
+                scope.launch {
                     Spotify.Player.seekToPosition(
                         positionMs = (seekPercent * track.durationMs).roundToInt()
                     )

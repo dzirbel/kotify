@@ -26,9 +26,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dominiczirbel.cache.SpotifyCache
+import com.dominiczirbel.network.model.PrivateUser
 import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.Page
 import com.dominiczirbel.ui.common.PageStack
@@ -37,6 +39,8 @@ import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 import com.dominiczirbel.ui.util.mutate
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 object ArtistsPage : Page {
     override fun toString() = "artists"
@@ -60,6 +64,31 @@ data class PlaylistPage(val playlistId: String) : Page {
 
 object TracksPage : Page {
     override fun toString() = "tracks"
+}
+
+private class AuthenticationMenuPresenter(scope: CoroutineScope) :
+    Presenter<RemoteState<PrivateUser>, AuthenticationMenuPresenter.Event>(
+        scope = scope,
+        eventMergeStrategy = EventMergeStrategy.LATEST,
+        startingEvents = listOf(Event.Load),
+        initialState = RemoteState.Loading()
+    ) {
+
+    sealed class Event {
+        object Load : Event()
+    }
+
+    override suspend fun reactTo(event: Event) {
+        when (event) {
+            is Event.Load -> {
+                val user = SpotifyCache.UsersProfile.getCurrentUser()
+
+                mutateState {
+                    RemoteState.Success(user)
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -119,8 +148,10 @@ fun MainContent(pageStack: MutableState<PageStack>) {
 
 @Composable
 private fun AuthenticationMenuHeader() {
-    val currentUserState = RemoteState.of { SpotifyCache.UsersProfile.getCurrentUser() }
-    val currentUser = (currentUserState as? RemoteState.Success)?.data
+    val scope = rememberCoroutineScope { Dispatchers.IO }
+    val presenter = remember { AuthenticationMenuPresenter(scope = scope) }
+    val currentUser = (presenter.state() as? RemoteState.Success)?.data
+
     val username = currentUser?.displayName ?: "<loading>"
     val expandedState = remember { mutableStateOf(false) }
 
@@ -147,7 +178,8 @@ private fun AuthenticationMenuHeader() {
         ) {
             LoadedImage(
                 url = currentUser?.images?.firstOrNull()?.url,
-                modifier = Modifier.size(Dimens.iconMedium)
+                modifier = Modifier.size(Dimens.iconMedium),
+                scope = rememberCoroutineScope()
             )
 
             Spacer(Modifier.width(Dimens.space2))

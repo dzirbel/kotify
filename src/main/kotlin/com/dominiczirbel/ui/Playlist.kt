@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dominiczirbel.cache.SpotifyCache
@@ -26,10 +26,13 @@ import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 import com.dominiczirbel.util.formatDateTime
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import java.time.Instant
 
-private class PlaylistPresenter(private val playlistId: String) :
+private class PlaylistPresenter(private val playlistId: String, scope: CoroutineScope) :
     Presenter<RemoteState<PlaylistPresenter.State>, PlaylistPresenter.Event>(
+        scope = scope,
         key = playlistId,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load(invalidate = false)),
@@ -103,7 +106,8 @@ private val PlaylistColumns = StandardTrackColumns
 
 @Composable
 fun BoxScope.Playlist(page: PlaylistPage) {
-    val presenter = remember(page) { PlaylistPresenter(playlistId = page.playlistId) }
+    val scope = rememberCoroutineScope { Dispatchers.IO }
+    val presenter = remember(page) { PlaylistPresenter(playlistId = page.playlistId, scope = scope) }
 
     ScrollingPage(remoteState = presenter.state()) { state ->
         val playlist = state.playlist
@@ -123,7 +127,7 @@ fun BoxScope.Playlist(page: PlaylistPage) {
 
                 Column {
                     InvalidateButton(
-                        refreshing = mutableStateOf(state.refreshing),
+                        refreshing = state.refreshing,
                         updated = state.playlistUpdated,
                         onClick = { presenter.emitEvent(PlaylistPresenter.Event.Load(invalidate = true)) }
                     )

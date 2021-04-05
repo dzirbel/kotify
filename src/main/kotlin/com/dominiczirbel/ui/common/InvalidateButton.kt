@@ -10,7 +10,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import com.dominiczirbel.ui.theme.Dimens
 
@@ -43,7 +42,7 @@ fun RefreshButton(
 @Composable
 fun InvalidateButton(
     modifier: Modifier = Modifier,
-    refreshing: MutableState<Boolean>,
+    refreshing: Boolean,
     updated: Long?,
     updatedFormat: (String) -> String = { "Last updated $it" },
     updatedFallback: String = "Never updated",
@@ -51,11 +50,8 @@ fun InvalidateButton(
 ) {
     RefreshButton(
         modifier = modifier,
-        refreshing = refreshing.value,
-        onClick = {
-            refreshing.value = true
-            onClick()
-        }
+        refreshing = refreshing,
+        onClick = { onClick() }
     ) {
         Text(
             text = updated?.let {

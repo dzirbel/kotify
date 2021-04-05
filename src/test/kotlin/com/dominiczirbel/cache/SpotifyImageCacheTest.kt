@@ -3,7 +3,6 @@ package com.dominiczirbel.cache
 import androidx.compose.ui.graphics.ImageBitmap
 import com.dominiczirbel.MockRequestInterceptor
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -42,14 +41,19 @@ internal class SpotifyImageCacheTest {
         interceptor.responseBody = testImageBytes.toResponseBody(contentType = "image/jpeg".toMediaType())
         interceptor.delayMs = 100
 
-        val image1Deferred = GlobalScope.async { getImage() }
-        val image2Deferred = GlobalScope.async {
-            delay(50)
-            getImage()
-        }
+        val image1: ImageBitmap?
+        val image2: ImageBitmap?
 
-        val image1 = runBlocking { image1Deferred.await() }
-        val image2 = runBlocking { image2Deferred.await() }
+        runBlocking {
+            val image1Deferred = async { getImage() }
+            val image2Deferred = async {
+                delay(50)
+                getImage()
+            }
+
+            image1 = image1Deferred.await()
+            image2 = image2Deferred.await()
+        }
 
         assertThat(image1).isNotNull()
         assertThat(image2).isNotNull()

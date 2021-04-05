@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.FullAlbum
@@ -20,12 +20,15 @@ import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
+import kotlinx.coroutines.CoroutineScope
 
-private class AlbumPresenter(private val albumId: String) :
+private class AlbumPresenter(private val albumId: String, scope: CoroutineScope) :
     Presenter<RemoteState<AlbumPresenter.State>, AlbumPresenter.Event>(
+        scope = scope,
+        key = albumId,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load(invalidate = false)),
-        initialState = RemoteState.Loading(),
+        initialState = RemoteState.Loading()
     ) {
 
     data class State(
@@ -62,7 +65,7 @@ private class AlbumPresenter(private val albumId: String) :
                     )
                 }
 
-                val fullTracks = SpotifyCache.Tracks.getFullTracks(ids = tracks.map { it.id!! })
+                val fullTracks = SpotifyCache.Tracks.getFullTracks(ids = tracks.map { it.id!! }, scope = scope)
 
                 mutateRemoteState { it.copy(tracks = fullTracks) }
             }
@@ -74,7 +77,8 @@ private val AlbumTrackColumns = StandardTrackColumns.minus(AlbumColumn)
 
 @Composable
 fun BoxScope.Album(page: AlbumPage) {
-    val presenter = remember(page) { AlbumPresenter(albumId = page.albumId) }
+    val scope = rememberCoroutineScope()
+    val presenter = remember(page) { AlbumPresenter(albumId = page.albumId, scope = scope) }
 
     ScrollingPage(remoteState = presenter.state()) { state ->
         Column {
@@ -82,7 +86,7 @@ fun BoxScope.Album(page: AlbumPage) {
                 Text(state.album.name, fontSize = Dimens.fontTitle)
 
                 InvalidateButton(
-                    refreshing = mutableStateOf(state.refreshing),
+                    refreshing = state.refreshing,
                     updated = state.albumUpdated,
                     updatedFormat = { "Album last updated $it" },
                     updatedFallback = "Album never updated",

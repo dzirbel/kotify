@@ -28,6 +28,7 @@ import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.network.model.User
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -229,13 +230,13 @@ object SpotifyCache {
         suspend fun getArtist(id: String): Artist = cache.get<Artist>(id) { Spotify.Artists.getArtist(id) }
         suspend fun getFullArtist(id: String): FullArtist = cache.get(id) { Spotify.Artists.getArtist(id) }
 
-        suspend fun getArtistAlbums(artistId: String): List<Album> {
+        suspend fun getArtistAlbums(artistId: String, scope: CoroutineScope): List<Album> {
             val albumIds = cache.get(GlobalObjects.ArtistAlbums.idFor(artistId = artistId)) {
                 val albums = Spotify.Artists.getArtistAlbums(id = artistId).fetchAll<SimplifiedAlbum>()
                 GlobalObjects.ArtistAlbums(artistId = artistId, albumIds = albums.map { requireNotNull(it.id) })
             }.albumIds
 
-            return cache.getAll<Album>(ids = albumIds) { id -> GlobalScope.async { Spotify.Albums.getAlbum(id) } }
+            return cache.getAll<Album>(ids = albumIds) { id -> scope.async { Spotify.Albums.getAlbum(id) } }
         }
 
         suspend fun getSavedArtists(): List<String> {
@@ -266,10 +267,10 @@ object SpotifyCache {
         suspend fun getTrack(id: String): Track = cache.get<Track>(id) { Spotify.Tracks.getTrack(id) }
         suspend fun getFullTrack(id: String): FullTrack = cache.get(id) { Spotify.Tracks.getTrack(id) }
 
-        suspend fun getFullTracks(ids: List<String>): List<FullTrack> {
+        suspend fun getFullTracks(ids: List<String>, scope: CoroutineScope): List<FullTrack> {
             // TODO batch in getTracks()
             return cache.getAll(ids = ids) { id ->
-                GlobalScope.async { Spotify.Tracks.getTrack(id = id) }
+                scope.async { Spotify.Tracks.getTrack(id = id) }
             }
         }
 

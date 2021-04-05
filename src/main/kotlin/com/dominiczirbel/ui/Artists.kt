@@ -17,8 +17,8 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,47 +33,72 @@ import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 import com.dominiczirbel.ui.util.mutate
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 private val IMAGE_SIZE = 200.dp
 private val CELL_ROUNDING = 8.dp
 
-private data class ArtistsState(
-    val artists: List<FullArtist>,
-    val artistsUpdated: Long?
-)
+private class ArtistsPresenter(scope: CoroutineScope) :
+    Presenter<RemoteState<ArtistsPresenter.State>, ArtistsPresenter.Event>(
+        scope = scope,
+        eventMergeStrategy = EventMergeStrategy.LATEST,
+        startingEvents = listOf(Event.Load(invalidate = false)),
+        initialState = RemoteState.Loading()
+    ) {
+
+    data class State(
+        val refreshing: Boolean,
+        val artists: List<FullArtist>,
+        val artistsUpdated: Long?
+    )
+
+    sealed class Event {
+        data class Load(val invalidate: Boolean) : Event()
+    }
+
+    override suspend fun reactTo(event: Event) {
+        when (event) {
+            is Event.Load -> {
+                mutateRemoteState { it.copy(refreshing = true) }
+
+                if (event.invalidate) {
+                    SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedArtists.ID)
+                }
+
+                val artists = SpotifyCache.Artists.getSavedArtists()
+                    .map { SpotifyCache.Artists.getFullArtist(it) }
+                    .sortedBy { it.name }
+
+                mutateState {
+                    RemoteState.Success(
+                        State(
+                            refreshing = false,
+                            artists = artists,
+                            artistsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedArtists.ID)
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
-    val refreshing = remember { mutableStateOf(false) }
-    val sharedFlow = remember { MutableSharedFlow<Unit>() }
-    val state = RemoteState.of(sharedFlow = sharedFlow) {
-        val artists = SpotifyCache.Artists.getSavedArtists()
-            .map { SpotifyCache.Artists.getFullArtist(it) }
-            .sortedBy { it.name }
+    val scope = rememberCoroutineScope { Dispatchers.IO }
+    val presenter = remember { ArtistsPresenter(scope = scope) }
 
-        refreshing.value = false
-
-        ArtistsState(
-            artists = artists,
-            artistsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedArtists.ID)
-        )
-    }
-
-    ScrollingPage(remoteState = state) { artistsState ->
+    ScrollingPage(remoteState = presenter.state()) { state ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Artists", fontSize = Dimens.fontTitle)
 
                 Column {
                     InvalidateButton(
-                        refreshing = refreshing,
-                        updated = artistsState.artistsUpdated,
-                        onClick = {
-                            SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedArtists.ID)
-                            runBlocking { sharedFlow.emit(Unit) }
-                        }
+                        refreshing = state.refreshing,
+                        updated = state.artistsUpdated,
+                        onClick = { presenter.emitEvent(ArtistsPresenter.Event.Load(invalidate = true)) }
                     )
                 }
             }
@@ -81,7 +106,7 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
             Spacer(Modifier.height(Dimens.space3))
 
             Grid(
-                elements = artistsState.artists,
+                elements = state.artists,
                 horizontalSpacing = Dimens.space2,
                 verticalSpacing = Dimens.space3,
                 verticalCellAlignment = Alignment.Top

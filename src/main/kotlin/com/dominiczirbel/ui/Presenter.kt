@@ -3,10 +3,8 @@ package com.dominiczirbel.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import com.dominiczirbel.ui.util.RemoteState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,8 +16,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 abstract class Presenter<State, Event>(
+    protected val scope: CoroutineScope,
     private val key: Any? = null,
     private val eventMergeStrategy: EventMergeStrategy = EventMergeStrategy.MERGE,
     private val startingEvents: List<Event>? = null,
@@ -28,8 +28,6 @@ abstract class Presenter<State, Event>(
     enum class EventMergeStrategy { LATEST, MERGE }
 
     private val stateFlow = MutableStateFlow(initialState)
-
-    private lateinit var scope: CoroutineScope
 
     val events = MutableSharedFlow<Event>()
 
@@ -53,10 +51,9 @@ abstract class Presenter<State, Event>(
     }
 
     @Composable
-    fun state(context: CoroutineContext = Dispatchers.IO, startingEvents: List<Event>? = this.startingEvents): State {
-        scope = rememberCoroutineScope { context }
+    fun state(context: CoroutineContext = EmptyCoroutineContext): State {
         remember(key) {
-            scope.launch {
+            scope.launch(context = context) {
                 open(startingEvents = startingEvents)
             }
         }

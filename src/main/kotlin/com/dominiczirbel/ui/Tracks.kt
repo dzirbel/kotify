@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.Track
@@ -18,44 +18,69 @@ import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
-private data class TracksState(
-    val tracks: List<Track>,
-    val tracksUpdated: Long?
-)
+private class TracksPresenter(scope: CoroutineScope) :
+    Presenter<RemoteState<TracksPresenter.State>, TracksPresenter.Event>(
+        scope = scope,
+        eventMergeStrategy = EventMergeStrategy.LATEST,
+        startingEvents = listOf(Event.Load(invalidate = false)),
+        initialState = RemoteState.Loading()
+    ) {
+
+    data class State(
+        val refreshing: Boolean,
+        val tracks: List<Track>,
+        val tracksUpdated: Long?
+    )
+
+    sealed class Event {
+        data class Load(val invalidate: Boolean) : Event()
+    }
+
+    override suspend fun reactTo(event: Event) {
+        when (event) {
+            is Event.Load -> {
+                mutateRemoteState { it.copy(refreshing = true) }
+
+                if (event.invalidate) {
+                    SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedTracks.ID)
+                }
+
+                val tracks = SpotifyCache.Tracks.getSavedTracks()
+                    .map { SpotifyCache.Tracks.getTrack(it) }
+                    .sortedBy { it.name }
+
+                mutateState {
+                    RemoteState.Success(
+                        State(
+                            refreshing = false,
+                            tracks = tracks,
+                            tracksUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedTracks.ID)
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun BoxScope.Tracks() {
-    val refreshing = remember { mutableStateOf(false) }
-    val sharedFlow = remember { MutableSharedFlow<Unit>() }
-    val state = RemoteState.of(sharedFlow = sharedFlow) {
-        val tracks = SpotifyCache.Tracks.getSavedTracks()
-            .map { SpotifyCache.Tracks.getTrack(it) }
-            .sortedBy { it.name }
+    val scope = rememberCoroutineScope { Dispatchers.IO }
+    val presenter = remember { TracksPresenter(scope = scope) }
 
-        refreshing.value = false
-
-        TracksState(
-            tracks = tracks,
-            tracksUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedTracks.ID)
-        )
-    }
-
-    ScrollingPage(remoteState = state) { tracksState ->
+    ScrollingPage(remoteState = presenter.state()) { state ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Tracks", fontSize = Dimens.fontTitle)
 
                 Column {
                     InvalidateButton(
-                        refreshing = refreshing,
-                        updated = tracksState.tracksUpdated,
-                        onClick = {
-                            SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedTracks.ID)
-                            runBlocking { sharedFlow.emit(Unit) }
-                        }
+                        refreshing = state.refreshing,
+                        updated = state.tracksUpdated,
+                        onClick = { presenter.emitEvent(TracksPresenter.Event.Load(invalidate = true)) }
                     )
                 }
             }
@@ -64,7 +89,7 @@ fun BoxScope.Tracks() {
 
             Table(
                 columns = StandardTrackColumns,
-                items = tracksState.tracks
+                items = state.tracks
             )
         }
     }

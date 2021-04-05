@@ -14,8 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,47 +30,72 @@ import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.RemoteState
 import com.dominiczirbel.ui.util.mutate
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 private val IMAGE_SIZE = 200.dp
 private val CELL_ROUNDING = 8.dp
 
-private data class AlbumsState(
-    val albums: List<Album>,
-    val albumsUpdated: Long?
-)
+private class AlbumsPresenter(scope: CoroutineScope) :
+    Presenter<RemoteState<AlbumsPresenter.State>, AlbumsPresenter.Event>(
+        scope = scope,
+        eventMergeStrategy = EventMergeStrategy.LATEST,
+        startingEvents = listOf(Event.Load(invalidate = false)),
+        initialState = RemoteState.Loading()
+    ) {
+
+    data class State(
+        val refreshing: Boolean,
+        val albums: List<Album>,
+        val albumsUpdated: Long?
+    )
+
+    sealed class Event {
+        data class Load(val invalidate: Boolean) : Event()
+    }
+
+    override suspend fun reactTo(event: Event) {
+        when (event) {
+            is Event.Load -> {
+                mutateRemoteState { it.copy(refreshing = true) }
+
+                if (event.invalidate) {
+                    SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedAlbums.ID)
+                }
+
+                val albums = SpotifyCache.Albums.getSavedAlbums()
+                    .map { SpotifyCache.Albums.getAlbum(it) }
+                    .sortedBy { it.name }
+
+                mutateState {
+                    RemoteState.Success(
+                        State(
+                            refreshing = false,
+                            albums = albums,
+                            albumsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedAlbums.ID)
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
-    val refreshing = remember { mutableStateOf(false) }
-    val sharedFlow = remember { MutableSharedFlow<Unit>() }
-    val state = RemoteState.of(sharedFlow = sharedFlow) {
-        val albums = SpotifyCache.Albums.getSavedAlbums()
-            .map { SpotifyCache.Albums.getAlbum(it) }
-            .sortedBy { it.name }
+    val scope = rememberCoroutineScope { Dispatchers.IO }
+    val presenter = remember { AlbumsPresenter(scope = scope) }
 
-        refreshing.value = false
-
-        AlbumsState(
-            albums = albums,
-            albumsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedAlbums.ID)
-        )
-    }
-
-    ScrollingPage(remoteState = state) { albumsState ->
+    ScrollingPage(remoteState = presenter.state()) { state ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Albums", fontSize = Dimens.fontTitle)
 
                 Column {
                     InvalidateButton(
-                        refreshing = refreshing,
-                        updated = albumsState.albumsUpdated,
-                        onClick = {
-                            SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedAlbums.ID)
-                            runBlocking { sharedFlow.emit(Unit) }
-                        }
+                        refreshing = state.refreshing,
+                        updated = state.albumsUpdated,
+                        onClick = { presenter.emitEvent(AlbumsPresenter.Event.Load(invalidate = true)) }
                     )
                 }
             }
@@ -78,7 +103,7 @@ fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
             Spacer(Modifier.height(Dimens.space3))
 
             Grid(
-                elements = albumsState.albums,
+                elements = state.albums,
                 horizontalSpacing = Dimens.space2,
                 verticalSpacing = Dimens.space3,
                 verticalCellAlignment = Alignment.Top
