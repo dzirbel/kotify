@@ -22,25 +22,33 @@ import com.dominiczirbel.ui.common.Column
 import com.dominiczirbel.ui.common.ColumnByString
 import com.dominiczirbel.ui.common.ColumnWidth
 import com.dominiczirbel.ui.common.LinkedText
+import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.common.Sort
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
+import com.dominiczirbel.ui.util.mutate
 import com.dominiczirbel.util.formatDuration
 
-val StandardTrackColumns = listOf(
-    TrackNumberColumn,
-    NameColumn,
-    ArtistColumn,
-    AlbumColumn,
-    DurationColumn,
-    PopularityColumn
-)
+fun trackColumns(
+    pageStack: MutableState<PageStack>,
+    includeTrackNumber: Boolean = true,
+    includeAlbum: Boolean = true
+): List<Column<Track>> {
+    return listOfNotNull(
+        TrackNumberColumn.takeIf { includeTrackNumber },
+        NameColumn,
+        ArtistColumn(pageStack),
+        AlbumColumn.takeIf { includeAlbum },
+        DurationColumn,
+        PopularityColumn
+    )
+}
 
 object NameColumn : ColumnByString<Track>(header = "Title", width = ColumnWidth.Weighted(weight = 1f)) {
     override fun toString(item: Track, index: Int) = item.name
 }
 
-object ArtistColumn : Column<Track>() {
+class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Track>() {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
@@ -57,8 +65,7 @@ object ArtistColumn : Column<Track>() {
         LinkedText(
             modifier = Modifier.padding(Dimens.space3),
             onClickLink = { artistId ->
-                val page = ArtistPage(artistId = artistId)
-                println("go to $page") // TODO navigate
+                pageStack.mutate { to(ArtistPage(artistId = artistId)) }
             }
         ) {
             item.artists.forEachIndexed { index, artist ->

@@ -87,7 +87,7 @@ fun BoxScope.Tracks(pageStack: MutableState<PageStack>) {
             Spacer(Modifier.height(Dimens.space3))
 
             Table(
-                columns = StandardTrackColumns,
+                columns = trackColumns(pageStack),
                 items = state.tracks
             )
         }

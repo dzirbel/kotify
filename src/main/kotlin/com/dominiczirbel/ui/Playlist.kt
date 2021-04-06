@@ -92,17 +92,6 @@ private object AddedAtColumn : ColumnByString<PlaylistTrack>(header = "Added", w
     }
 }
 
-private val PlaylistColumns = StandardTrackColumns
-    .minus(TrackNumberColumn)
-    .map { column -> column.mapped<PlaylistTrack> { it.track } }
-    .toMutableList()
-    .apply {
-        add(0, IndexColumn)
-
-        @Suppress("MagicNumber")
-        add(4, AddedAtColumn)
-    }
-
 @Composable
 fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
@@ -144,7 +133,19 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
             if (tracks == null) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
-                Table(columns = PlaylistColumns, items = tracks)
+                val columns = remember(pageStack) {
+                    trackColumns(pageStack, includeTrackNumber = false)
+                        .map { column -> column.mapped<PlaylistTrack> { it.track } }
+                        .toMutableList()
+                        .apply {
+                            add(0, IndexColumn)
+
+                            @Suppress("MagicNumber")
+                            add(4, AddedAtColumn)
+                        }
+                }
+
+                Table(columns = columns, items = tracks)
             }
         }
     }

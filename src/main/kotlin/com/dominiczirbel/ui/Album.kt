@@ -72,8 +72,6 @@ private class AlbumPresenter(private val albumId: String, scope: CoroutineScope)
     }
 }
 
-private val AlbumTrackColumns = StandardTrackColumns.minus(AlbumColumn)
-
 @Composable
 fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
     val scope = rememberCoroutineScope()
@@ -96,7 +94,7 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
             Spacer(Modifier.height(Dimens.space3))
 
             Table(
-                columns = AlbumTrackColumns,
+                columns = trackColumns(pageStack, includeAlbum = false),
                 items = state.tracks
             )
         }
