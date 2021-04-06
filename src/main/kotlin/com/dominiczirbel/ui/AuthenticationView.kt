@@ -40,8 +40,8 @@ import androidx.compose.ui.unit.dp
 import com.dominiczirbel.network.oauth.LocalOAuthServer
 import com.dominiczirbel.network.oauth.OAuth
 import com.dominiczirbel.ui.common.CheckboxWithLabel
+import com.dominiczirbel.ui.common.HyperlinkSpanStyle
 import com.dominiczirbel.ui.common.LinkedText
-import com.dominiczirbel.ui.common.LinkedTextBuilder
 import com.dominiczirbel.ui.common.SimpleTextButton
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
@@ -151,19 +151,13 @@ fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
             }
         )
 
-        Text(
-            LinkedTextBuilder()
-                .append(
-                    "The Spotify application client ID to authenticate with, through which API requests are made. " +
-                        "See the "
-                )
-                .appendLink(
-                    text = "docs",
-                    url = "https://developer.spotify.com/documentation/general/guides/app-settings/"
-                )
-                .append(" for details.")
-                .build()
-        )
+        LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle(), hoveredSpanStyle = HyperlinkSpanStyle()) {
+            text(
+                "The Spotify application client ID to authenticate with, through which API requests are made. See the "
+            )
+            link(text = "docs", link = "https://developer.spotify.com/documentation/general/guides/app-settings/")
+            text(" for details.")
+        }
 
         Spacer(Modifier.height(Dimens.space3))
 
@@ -211,16 +205,14 @@ fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
             }
         }
 
-        LinkedText(
-            LinkedTextBuilder()
-                .append(
-                    "The authentication scopes that this application requests; if some are not granted parts of the " +
-                        "application may not work. See the "
-                )
-                .appendLink(text = "docs", url = "https://developer.spotify.com/documentation/general/guides/scopes/")
-                .append(" for details.")
-                .build()
-        )
+        LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle(), hoveredSpanStyle = HyperlinkSpanStyle()) {
+            text(
+                "The authentication scopes that this application requests; if some are not granted parts of the " +
+                    "application may not work. See the "
+            )
+            link(text = "docs", link = "https://developer.spotify.com/documentation/general/guides/scopes/")
+            text(" for details.")
+        }
 
         for (scope in OAuth.ALL_SCOPES) {
             val checked = scope in state.value.scopes

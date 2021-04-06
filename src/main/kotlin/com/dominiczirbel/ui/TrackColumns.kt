@@ -22,7 +22,6 @@ import com.dominiczirbel.ui.common.Column
 import com.dominiczirbel.ui.common.ColumnByString
 import com.dominiczirbel.ui.common.ColumnWidth
 import com.dominiczirbel.ui.common.LinkedText
-import com.dominiczirbel.ui.common.LinkedTextBuilder
 import com.dominiczirbel.ui.common.Sort
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
@@ -55,28 +54,22 @@ object ArtistColumn : Column<Track>() {
 
     @Composable
     override fun item(item: Track, index: Int) {
-        val builder = LinkedTextBuilder(color = Colors.current.text)
-
-        item.artists.forEachIndexed { artistIndex, artist ->
-            artist.id?.let { id ->
-                builder.appendLink(text = artist.name, url = id)
-            } ?: builder.append(text = artist.name)
-
-            if (artistIndex != item.artists.lastIndex) {
-                builder.append(text = ", ")
-            }
-        }
-
-        // TODO underline only when hovering
         LinkedText(
-            text = builder.build(),
             modifier = Modifier.padding(Dimens.space3),
-            onClick = { artistId ->
-                val page = ArtistPage(artistId = checkNotNull(artistId))
-
+            onClickLink = { artistId ->
+                val page = ArtistPage(artistId = artistId)
                 println("go to $page") // TODO navigate
             }
-        )
+        ) {
+            item.artists.forEachIndexed { index, artist ->
+                artist.id?.let {
+                    link(text = artist.name, link = artist.id)
+                    if (index != item.artists.lastIndex) {
+                        text(", ")
+                    }
+                }
+            }
+        }
     }
 }
 
