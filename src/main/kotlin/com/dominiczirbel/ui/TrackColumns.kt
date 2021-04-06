@@ -21,6 +21,8 @@ import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.ui.common.Column
 import com.dominiczirbel.ui.common.ColumnByString
 import com.dominiczirbel.ui.common.ColumnWidth
+import com.dominiczirbel.ui.common.LinkedText
+import com.dominiczirbel.ui.common.LinkedTextBuilder
 import com.dominiczirbel.ui.common.Sort
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
@@ -39,8 +41,43 @@ object NameColumn : ColumnByString<Track>(header = "Title", width = ColumnWidth.
     override fun toString(item: Track, index: Int) = item.name
 }
 
-object ArtistColumn : ColumnByString<Track>(header = "Artist", width = ColumnWidth.Weighted(weight = 1f)) {
-    override fun toString(item: Track, index: Int) = item.artists.joinToString { artist -> artist.name }
+object ArtistColumn : Column<Track>() {
+    override val width = ColumnWidth.Weighted(weight = 1f)
+
+    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+        return first.artists.joinToString().compareTo(second.artists.joinToString())
+    }
+
+    @Composable
+    override fun header(sort: MutableState<Sort?>) {
+        standardHeader(sort = sort, header = "Artist")
+    }
+
+    @Composable
+    override fun item(item: Track, index: Int) {
+        val builder = LinkedTextBuilder(color = Colors.current.text)
+
+        item.artists.forEachIndexed { artistIndex, artist ->
+            artist.id?.let { id ->
+                builder.appendLink(text = artist.name, url = id)
+            } ?: builder.append(text = artist.name)
+
+            if (artistIndex != item.artists.lastIndex) {
+                builder.append(text = ", ")
+            }
+        }
+
+        // TODO underline only when hovering
+        LinkedText(
+            text = builder.build(),
+            modifier = Modifier.padding(Dimens.space3),
+            onClick = { artistId ->
+                val page = ArtistPage(artistId = checkNotNull(artistId))
+
+                println("go to $page") // TODO navigate
+            }
+        )
+    }
 }
 
 object AlbumColumn : ColumnByString<Track>(header = "Album", width = ColumnWidth.Weighted(weight = 1f)) {
