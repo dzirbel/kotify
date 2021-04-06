@@ -382,7 +382,7 @@ fun <T> Table(
 
                     indexesForCol[colIndex].forEach { index ->
                         placeables[index] = gridMeasurables[index].measure(
-                            Constraints(maxWidth = colWidth.roundToInt())
+                            Constraints(maxWidth = colWidth.roundToInt().coerceAtLeast(0))
                         )
                     }
                 }
