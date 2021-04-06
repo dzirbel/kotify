@@ -147,6 +147,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
 private fun AuthenticationMenuHeader() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { AuthenticationMenuPresenter(scope = scope) }
+
     val currentUser = presenter.state().safeState // TODO proper error handling
 
     val username = currentUser?.displayName ?: "<loading>"

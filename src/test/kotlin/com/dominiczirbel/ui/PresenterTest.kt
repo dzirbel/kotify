@@ -100,13 +100,15 @@ internal class PresenterTest {
     }
 
     @Test
+    @Suppress("TooGenericExceptionThrown")
     fun testAsyncException() {
         wrapPresenterOpen(TestPresenter()) { presenter ->
             coroutineScope {
                 presenter.emit(
-                    Event(param = "1", block = {
-                        throw Throwable()
-                    })
+                    Event(
+                        param = "1",
+                        block = { throw Throwable() }
+                    )
                 )
 
                 assertThrows<Throwable> { presenter.testState.stateOrThrow }
@@ -115,11 +117,14 @@ internal class PresenterTest {
                 assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 1"))
 
                 presenter.emit(
-                    Event(param = "1", block = {
-                        coroutineScope {
-                            launch { throw Throwable() }
+                    Event(
+                        param = "1",
+                        block = {
+                            coroutineScope {
+                                launch { throw Throwable() }
+                            }
                         }
-                    })
+                    )
                 )
 
                 assertThrows<Throwable> { presenter.testState.stateOrThrow }
