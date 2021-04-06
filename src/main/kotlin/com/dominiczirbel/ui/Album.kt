@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.ui.common.InvalidateButton
+import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
 import kotlinx.coroutines.CoroutineScope
@@ -73,11 +75,11 @@ private class AlbumPresenter(private val albumId: String, scope: CoroutineScope)
 private val AlbumTrackColumns = StandardTrackColumns.minus(AlbumColumn)
 
 @Composable
-fun BoxScope.Album(page: AlbumPage) {
+fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
     val scope = rememberCoroutineScope()
     val presenter = remember(page) { AlbumPresenter(albumId = page.albumId, scope = scope) }
 
-    ScrollingPage(state = { presenter.state() }) { state ->
+    ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(state.album.name, fontSize = Dimens.fontTitle)

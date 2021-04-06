@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -22,6 +23,7 @@ import com.dominiczirbel.ui.common.ColumnByString
 import com.dominiczirbel.ui.common.ColumnWidth
 import com.dominiczirbel.ui.common.IndexColumn
 import com.dominiczirbel.ui.common.InvalidateButton
+import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.util.formatDateTime
@@ -102,11 +104,11 @@ private val PlaylistColumns = StandardTrackColumns
     }
 
 @Composable
-fun BoxScope.Playlist(page: PlaylistPage) {
+fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember(page) { PlaylistPresenter(playlistId = page.playlistId, scope = scope) }
 
-    ScrollingPage(state = { presenter.state() }) { state ->
+    ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
         val playlist = state.playlist
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

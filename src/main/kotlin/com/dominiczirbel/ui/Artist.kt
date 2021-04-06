@@ -132,7 +132,7 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember(page) { ArtistPresenter(artistId = page.artistId, scope = scope) }
 
-    ScrollingPage(state = { presenter.state() }) { state ->
+    ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
         val artist = state.artist
         val albums = state.artistAlbums
 

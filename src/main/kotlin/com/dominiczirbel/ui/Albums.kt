@@ -83,7 +83,7 @@ fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { AlbumsPresenter(scope = scope) }
 
-    ScrollingPage(state = { presenter.state() }) { state ->
+    ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Albums", fontSize = Dimens.fontTitle)

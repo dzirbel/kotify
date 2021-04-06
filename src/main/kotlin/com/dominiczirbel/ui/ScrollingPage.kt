@@ -1,5 +1,6 @@
 package com.dominiczirbel.ui
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -24,7 +25,11 @@ private val LOADING_INDICATOR_SIZE = 60.dp
 private val ERROR_ICON_SIZE = 100.dp
 
 @Composable
-fun <T : Any> BoxScope.ScrollingPage(state: @Composable () -> T?, content: @Composable (T) -> Unit) {
+fun <T : Any> BoxScope.ScrollingPage(
+    scrollState: ScrollState,
+    state: @Composable () -> T?,
+    content: @Composable (T) -> Unit
+) {
     HandleState(
         state = state,
         onError = { throwable ->
@@ -53,7 +58,7 @@ fun <T : Any> BoxScope.ScrollingPage(state: @Composable () -> T?, content: @Comp
             CircularProgressIndicator(Modifier.size(LOADING_INDICATOR_SIZE).align(Alignment.Center))
         },
         onSuccess = {
-            VerticalScroll {
+            VerticalScroll(scrollState = scrollState) {
                 Box(Modifier.padding(Dimens.space4)) {
                     content(it)
                 }

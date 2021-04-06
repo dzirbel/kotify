@@ -133,10 +133,10 @@ fun MainContent(pageStack: MutableState<PageStack>) {
             when (val current = pageStack.value.current) {
                 ArtistsPage -> Artists(pageStack)
                 AlbumsPage -> Albums(pageStack)
-                TracksPage -> Tracks()
-                is AlbumPage -> Album(current)
+                TracksPage -> Tracks(pageStack)
+                is AlbumPage -> Album(pageStack, current)
                 is ArtistPage -> Artist(pageStack, current)
-                is PlaylistPage -> Playlist(current)
+                is PlaylistPage -> Playlist(pageStack, current)
                 else -> error("unknown page type: ${pageStack.value.current}")
             }
         }
