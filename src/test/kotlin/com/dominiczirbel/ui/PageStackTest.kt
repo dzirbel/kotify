@@ -14,7 +14,7 @@ internal class PageStackTest {
         val stack = PageStack(TestPage(1))
 
         assertThat(stack.currentIndex).isEqualTo(0)
-        assertThat(stack.pages).containsExactly(page)
+        assertThat(stack.pages).asList().containsExactly(page)
         assertThat(stack.current).isEqualTo(page)
         assertThat(stack.previous).isNull()
         assertThat(stack.hasPrevious).isFalse()

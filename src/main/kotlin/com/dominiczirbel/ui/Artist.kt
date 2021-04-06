@@ -33,6 +33,7 @@ import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 private val IMAGE_SIZE = 200.dp
 private val CELL_ROUNDING = 8.dp
@@ -91,24 +92,33 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
                     )
                 }
 
-                val deferredArtist = if (event.refreshArtist) {
-                    scope.async(Dispatchers.IO) {
-                        SpotifyCache.Artists.getFullArtist(id = artistId)
-                    }
-                } else {
-                    null
-                }
+                val artist: FullArtist?
+                val artistAlbums: List<Album>?
 
-                val deferredArtistAlbums = if (event.refreshArtistAlbums) {
-                    scope.async(Dispatchers.IO) {
-                        SpotifyCache.Artists.getArtistAlbums(artistId = artistId, scope = scope)
+                coroutineScope {
+                    val deferredArtist = if (event.refreshArtist) {
+                        async(Dispatchers.IO) {
+                            println("getting full artist")
+                            SpotifyCache.Artists.getFullArtist(id = artistId)
+                                .also { println("got full artist") }
+                        }
+                    } else {
+                        null
                     }
-                } else {
-                    null
-                }
 
-                val artist = deferredArtist?.await()
-                val artistAlbums = deferredArtistAlbums?.await()
+                    val deferredArtistAlbums = if (event.refreshArtistAlbums) {
+                        async(Dispatchers.IO) {
+                            println("getting artist albums")
+                            SpotifyCache.Artists.getArtistAlbums(artistId = artistId, scope = scope)
+                                .also { println("got artist albums") }
+                        }
+                    } else {
+                        null
+                    }
+
+                    artist = deferredArtist?.await()
+                    artistAlbums = deferredArtistAlbums?.await()
+                }
 
                 mutateState {
                     State(

@@ -13,7 +13,12 @@ import org.junit.jupiter.api.assertThrows
 
 internal class PresenterTest {
     private data class State(val field: String)
-    private data class Event(val param: String, val delay: Long? = null, val throwable: Throwable? = null)
+    private data class Event(
+        val param: String,
+        val delay: Long? = null,
+        val throwable: Throwable? = null,
+        val block: (suspend () -> Unit)? = null
+    )
 
     private class TestPresenter(
         eventMergeStrategy: EventMergeStrategy = EventMergeStrategy.MERGE,
@@ -32,6 +37,8 @@ internal class PresenterTest {
             event.delay?.let { delay(it) }
 
             event.throwable?.let { throw it }
+
+            event.block?.invoke()
 
             mutateState {
                 it.copy(field = "${it.field} | ${event.param}")
@@ -89,6 +96,34 @@ internal class PresenterTest {
 
             coroutineScope { presenter.emit(Event(param = "4")) }
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 2 | 4"))
+        }
+    }
+
+    @Test
+    fun testAsyncException() {
+        wrapPresenterOpen(TestPresenter()) { presenter ->
+            coroutineScope {
+                presenter.emit(
+                    Event(param = "1", block = {
+                        throw Throwable()
+                    })
+                )
+
+                assertThrows<Throwable> { presenter.testState.stateOrThrow }
+
+                presenter.emit(Event(param = "1"))
+                assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 1"))
+
+                presenter.emit(
+                    Event(param = "1", block = {
+                        coroutineScope {
+                            launch { throw Throwable() }
+                        }
+                    })
+                )
+
+                assertThrows<Throwable> { presenter.testState.stateOrThrow }
+            }
         }
     }
 
