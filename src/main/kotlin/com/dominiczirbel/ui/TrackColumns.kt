@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.network.model.FullTrack
+import com.dominiczirbel.network.model.SimplifiedAlbum
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.ui.common.Column
@@ -38,7 +39,7 @@ fun trackColumns(
         TrackNumberColumn.takeIf { includeTrackNumber },
         NameColumn,
         ArtistColumn(pageStack),
-        AlbumColumn.takeIf { includeAlbum },
+        AlbumColumn(pageStack).takeIf { includeAlbum },
         DurationColumn,
         PopularityColumn
     )
@@ -80,9 +81,35 @@ class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Trac
     }
 }
 
-object AlbumColumn : ColumnByString<Track>(header = "Album", width = ColumnWidth.Weighted(weight = 1f)) {
-    override fun toString(item: Track, index: Int): String {
-        return ((item as? FullTrack)?.album ?: (item as? SimplifiedTrack)?.album)?.name.orEmpty()
+class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track>() {
+    override val width = ColumnWidth.Weighted(weight = 1f)
+
+    private val Track.album: SimplifiedAlbum?
+        get() = (this as? FullTrack)?.album ?: (this as? SimplifiedTrack)?.album
+
+    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+        return first.album?.name.orEmpty().compareTo(second.album?.name.orEmpty())
+    }
+
+    @Composable
+    override fun header(sort: MutableState<Sort?>) {
+        standardHeader(sort = sort, header = "Album")
+    }
+
+    @Composable
+    override fun item(item: Track, index: Int) {
+        LinkedText(
+            modifier = Modifier.padding(Dimens.space3),
+            onClickLink = { albumId ->
+                pageStack.mutate { to(AlbumPage(albumId = albumId)) }
+            }
+        ) {
+            item.album?.let { album ->
+                album.id?.let {
+                    link(text = album.name, link = album.id)
+                }
+            }
+        }
     }
 }
 
