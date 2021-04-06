@@ -25,9 +25,9 @@ private val LOADING_INDICATOR_SIZE = 60.dp
 private val ERROR_ICON_SIZE = 100.dp
 
 @Composable
-fun <T : Any> BoxScope.ScrollingPage(
+fun <T> BoxScope.ScrollingPage(
     scrollState: ScrollState,
-    state: @Composable () -> T?,
+    state: @Composable () -> Presenter.StateOrError<T?>,
     content: @Composable (T) -> Unit
 ) {
     HandleState(

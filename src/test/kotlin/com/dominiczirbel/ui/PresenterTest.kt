@@ -17,11 +17,9 @@ internal class PresenterTest {
 
     private class TestPresenter(
         eventMergeStrategy: EventMergeStrategy = EventMergeStrategy.MERGE,
-        errorStrategy: ErrorStrategy = ErrorStrategy.THROW,
         startingEvents: List<Event>? = null
     ) : Presenter<State, Event>(
         eventMergeStrategy = eventMergeStrategy,
-        errorStrategy = errorStrategy,
         startingEvents = startingEvents,
         scope = GlobalScope,
         initialState = State("initial")
@@ -65,106 +63,88 @@ internal class PresenterTest {
                 presenter.emit(Event("e1"))
             }
         ) { presenter ->
-            assertThat(presenter.state).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
         }
     }
 
     @Test
     fun testStartingEvents() {
         wrapPresenterOpen(TestPresenter(startingEvents = listOf(Event("e1"), Event("e2")))) { presenter ->
-            assertThat(presenter.state).isEqualTo(State("initial | e1 | e2"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1 | e2"))
         }
     }
 
     @Test
-    fun testExceptionThrow() {
+    fun testException() {
         val throwable = Throwable()
-        wrapPresenterOpen(TestPresenter(errorStrategy = Presenter.ErrorStrategy.THROW)) { presenter ->
+        wrapPresenterOpen(TestPresenter()) { presenter ->
             coroutineScope { presenter.emit(Event(param = "1", throwable = throwable)) }
-            assertThrows<Throwable> { presenter.state }
+            assertThrows<Throwable> { presenter.testState.stateOrThrow }
 
             coroutineScope { presenter.emit(Event(param = "2")) }
-            assertThat(presenter.state).isEqualTo(State("initial | 2"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 2"))
 
             coroutineScope { presenter.emit(Event(param = "3", throwable = throwable)) }
-            assertThrows<Throwable> { presenter.state }
+            assertThrows<Throwable> { presenter.testState.stateOrThrow }
 
             coroutineScope { presenter.emit(Event(param = "4")) }
-            assertThat(presenter.state).isEqualTo(State("initial | 2 | 4"))
-        }
-    }
-
-    @Test
-    fun testExceptionIgnore() {
-        val throwable = Throwable()
-        wrapPresenterOpen(TestPresenter(errorStrategy = Presenter.ErrorStrategy.IGNORE)) { presenter ->
-            coroutineScope { presenter.emit(Event(param = "1", throwable = throwable)) }
-            assertThat(presenter.state).isEqualTo(State("initial"))
-
-            coroutineScope { presenter.emit(Event(param = "2")) }
-            assertThat(presenter.state).isEqualTo(State("initial | 2"))
-
-            coroutineScope { presenter.emit(Event(param = "3", throwable = throwable)) }
-            assertThat(presenter.state).isEqualTo(State("initial | 2"))
-
-            coroutineScope { presenter.emit(Event(param = "4")) }
-            assertThat(presenter.state).isEqualTo(State("initial | 2 | 4"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 2 | 4"))
         }
     }
 
     @RepeatedTest(10)
     fun testMerge() {
         wrapPresenterOpen(TestPresenter(eventMergeStrategy = Presenter.EventMergeStrategy.MERGE)) { presenter ->
-            assertThat(presenter.state).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
 
             launch { presenter.emit(Event("e1", delay = 10)) }
 
-            assertThat(presenter.state).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
             delay(5)
-            assertThat(presenter.state).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
             delay(10)
-            assertThat(presenter.state).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
 
             launch { presenter.emit(Event("e2", delay = 10)) }
             launch { presenter.emit(Event("e3", delay = 50)) }
 
-            assertThat(presenter.state).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
             delay(5)
-            assertThat(presenter.state).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
             delay(10)
-            assertThat(presenter.state).isEqualTo(State("initial | e1 | e2"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1 | e2"))
             delay(20)
-            assertThat(presenter.state).isEqualTo(State("initial | e1 | e2"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1 | e2"))
             delay(20)
-            assertThat(presenter.state).isEqualTo(State("initial | e1 | e2 | e3"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1 | e2 | e3"))
         }
     }
 
     @RepeatedTest(10)
     fun testLatest() {
         wrapPresenterOpen(TestPresenter(eventMergeStrategy = Presenter.EventMergeStrategy.LATEST)) { presenter ->
-            assertThat(presenter.state).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
 
             launch { presenter.emit(Event("e1", delay = 10)) }
 
-            assertThat(presenter.state).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
             delay(5)
-            assertThat(presenter.state).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
             delay(10)
-            assertThat(presenter.state).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
 
             launch { presenter.emit(Event("e2", delay = 10)) }
             launch { presenter.emit(Event("e3", delay = 50)) }
 
-            assertThat(presenter.state).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
             delay(5)
-            assertThat(presenter.state).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
             delay(10)
-            assertThat(presenter.state).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
             delay(20)
-            assertThat(presenter.state).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
             delay(20)
-            assertThat(presenter.state).isEqualTo(State("initial | e1 | e3"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1 | e3"))
         }
     }
 }

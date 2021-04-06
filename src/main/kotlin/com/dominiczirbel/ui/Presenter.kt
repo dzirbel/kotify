@@ -53,11 +53,6 @@ abstract class Presenter<State, Event> constructor(
     private val eventMergeStrategy: EventMergeStrategy = EventMergeStrategy.MERGE,
 
     /**
-     * The strategy by which to handle errors in the event stream, i.e. exceptions thrown by [reactTo].
-     */
-    private val errorStrategy: ErrorStrategy = ErrorStrategy.THROW,
-
-    /**
      * An optional list of events which should be emitted at the beginning of the event flow, e.g. to load content.
      */
     private val startingEvents: List<Event>? = null
@@ -79,35 +74,44 @@ abstract class Presenter<State, Event> constructor(
     }
 
     /**
-     * Determines how errors in the event flow are handled.
+     * Represents a state of the view or an error.
      */
-    enum class ErrorStrategy {
+    sealed class StateOrError<State> {
         /**
-         * Exceptions thrown in the event flow (e.g. by [reactTo]) are re-thrown by [state].
+         * Gets the last non-error [State].
          */
-        THROW,
+        abstract val safeState: State
 
         /**
-         * Exceptions thrown in the event flow (e.g. by [reactTo]) are ignored and the last successful state is returned
-         * by [state].
+         * Gets the current [State], throwing an exception if it is an error state.
          */
-        IGNORE
+        abstract val stateOrThrow: State
+
+        /**
+         * Represents a successful view [state].
+         */
+        data class State<State>(val state: State) : StateOrError<State>() {
+            override val safeState: State = state
+            override val stateOrThrow: State = state
+        }
+
+        /**
+         * Represents an error case, with both the last non-error successful state [lastState] and the [throwable] that
+         * that caused the current error.
+         */
+        data class Error<State>(val lastState: State, val throwable: Throwable) : StateOrError<State>() {
+            override val safeState: State = lastState
+
+            override val stateOrThrow: State
+                get() = throw throwable
+        }
     }
 
     /**
-     * Gets the current [State] of the presenter, possibly throwing an exception depending on [errorStrategy].
-     *
-     * Only returns a meaningful value if [open] has been called (and is still running) and is generally only used for
-     * testing; most usages should use the [state] composable function instead.
+     * Exposes the current state for tests, where the composable [state] cannot be called.
      */
-    val state: State
-        get() = stateFlow.value.getState(errorStrategy)
-
-    /**
-     * The last non-error state; will never throw an exception.
-     */
-    private val lastState: State
-        get() = stateFlow.value.getState(ErrorStrategy.IGNORE)
+    internal val testState: StateOrError<State>
+        get() = stateFlow.value
 
     /**
      * A [MutableStateFlow] which exposes the current state (via the [StateOrError] wrapper, possibly wrapping an
@@ -142,7 +146,7 @@ abstract class Presenter<State, Event> constructor(
                 log("Error -> $throwable")
 
                 synchronized(this) {
-                    stateFlow.value = StateOrError.Error(lastState = lastState, throwable = throwable)
+                    stateFlow.value = StateOrError.Error(lastState = stateFlow.value.safeState, throwable = throwable)
                 }
 
                 emitAll(flow(null))
@@ -157,7 +161,7 @@ abstract class Presenter<State, Event> constructor(
      * Typically only used from tests, most usages should call [state] instead, which opens the presenter and collects
      * its state as a composition-aware state.
      */
-    suspend fun open() {
+    internal suspend fun open() {
         flow().collect()
     }
 
@@ -166,14 +170,14 @@ abstract class Presenter<State, Event> constructor(
      * called in a composition and returns a composition-aware state.
      */
     @Composable
-    fun state(context: CoroutineContext = EmptyCoroutineContext): State {
+    fun state(context: CoroutineContext = EmptyCoroutineContext): StateOrError<State> {
         remember(key) {
             scope.launch(context = context) {
                 open()
             }
         }
 
-        return stateFlow.collectAsState(context = context).value.getState(errorStrategy)
+        return stateFlow.collectAsState(context = context).value
     }
 
     /**
@@ -202,7 +206,7 @@ abstract class Presenter<State, Event> constructor(
      */
     protected fun mutateState(transform: (State) -> State?) {
         synchronized(this) {
-            transform(lastState)?.let { transformed ->
+            transform(stateFlow.value.safeState)?.let { transformed ->
                 log("State -> $transformed")
                 stateFlow.value = State(transformed)
             }
@@ -211,7 +215,7 @@ abstract class Presenter<State, Event> constructor(
 
     /**
      * Handles the given [event], typically by mutating the current state via [mutateState] after making remote calls,
-     * etc. May throw exceptions, which will be handled according to the [errorStrategy].
+     * etc. May throw exceptions, which will be wrapped as [StateOrError.Error]s.
      */
     abstract suspend fun reactTo(event: Event)
 
@@ -220,36 +224,5 @@ abstract class Presenter<State, Event> constructor(
      */
     protected open fun log(message: String) {
         println("[$logTag] $message")
-    }
-
-    /**
-     * Represents a state of the view or an error.
-     */
-    private sealed class StateOrError<State> {
-        /**
-         * Gets the state according to the given [errorStrategy]. May throw an exception rather than returning a [State]
-         * depending on the [errorStrategy].
-         */
-        abstract fun getState(errorStrategy: ErrorStrategy): State
-
-        /**
-         * Represents a successful view [state].
-         */
-        data class State<State>(val state: State) : StateOrError<State>() {
-            override fun getState(errorStrategy: ErrorStrategy) = state
-        }
-
-        /**
-         * Represents an error case, with both the last non-error successful state [lastState] and the [throwable] that
-         * that caused the current error.
-         */
-        data class Error<State>(val lastState: State, val throwable: Throwable) : StateOrError<State>() {
-            override fun getState(errorStrategy: ErrorStrategy): State {
-                return when (errorStrategy) {
-                    ErrorStrategy.THROW -> throw throwable
-                    ErrorStrategy.IGNORE -> lastState
-                }
-            }
-        }
     }
 }

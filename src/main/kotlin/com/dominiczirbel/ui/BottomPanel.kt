@@ -174,7 +174,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 fun BottomPanel() {
     val scope = rememberCoroutineScope()
     val presenter = remember { BottomPanelPresenter(scope) }
-    val state = presenter.state()
+    val state = presenter.state().safeState // TODO proper error handling
 
     Column(Modifier.fillMaxWidth().wrapContentHeight()) {
         Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Colors.current.dividerColor))

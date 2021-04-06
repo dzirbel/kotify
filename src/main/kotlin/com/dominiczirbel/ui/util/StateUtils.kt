@@ -9,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import com.dominiczirbel.ui.Presenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
@@ -88,17 +89,15 @@ fun <T> Flow<T>.collectAsStateSwitchable(
  */
 @Composable
 fun <T> HandleState(
-    state: @Composable () -> T?,
+    state: @Composable () -> Presenter.StateOrError<T?>,
     onError: @Composable (Throwable) -> Unit,
     onLoading: @Composable () -> Unit,
     onSuccess: @Composable (T) -> Unit
 ) {
-    val result = runCatching { state() }
-    val throwable = result.exceptionOrNull()
-
-    if (throwable == null) {
-        result.getOrNull()?.let { onSuccess(it) } ?: onLoading()
-    } else {
-        onError(throwable)
+    when (val stateOrError = state()) {
+        is Presenter.StateOrError.Error -> onError(stateOrError.throwable)
+        is Presenter.StateOrError.State -> {
+            stateOrError.state?.let { onSuccess(it) } ?: onLoading()
+        }
     }
 }
