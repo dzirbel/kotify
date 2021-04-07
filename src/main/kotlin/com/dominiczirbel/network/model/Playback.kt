@@ -11,10 +11,10 @@ import kotlinx.serialization.json.JsonObject
 data class Playback(
     val timestamp: Long,
     val device: PlaybackDevice,
-    @SerialName("progress_ms") val processMs: Int,
+    @SerialName("progress_ms") val progressMs: Long,
     @SerialName("is_playing") val isPlaying: Boolean,
     @SerialName("currently_playing_type") val currentlyPlayingType: String,
-    val item: JsonObject?,
+    val item: FullTrack?,
     @SerialName("shuffle_state") val shuffleState: Boolean,
     @SerialName("repeat_state") val repeatState: String,
     val context: PlaybackContext,
