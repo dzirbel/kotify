@@ -34,7 +34,6 @@ class OAuth private constructor(
         state = state,
         callback = { result ->
             if (result is LocalOAuthServer.Result.Success) {
-                @Suppress("TooGenericExceptionCaught")
                 try {
                     onSuccess(code = result.code)
                     finish()

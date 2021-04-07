@@ -2,7 +2,10 @@ package com.dominiczirbel.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.dominiczirbel.ui.Presenter.StateOrError.State
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -129,6 +132,11 @@ abstract class Presenter<State, Event> constructor(
     private val logTag by lazy { this::class.simpleName }
 
     /**
+     * A list of accumulated errors from the event stream.
+     */
+    var errors by mutableStateOf(emptyList<Throwable>())
+
+    /**
      * The core event [Flow], which includes emitting [startingEvents], reacting to events according to the
      * [eventMergeStrategy] with [reactTo], and catching errors.
      *
@@ -202,15 +210,20 @@ abstract class Presenter<State, Event> constructor(
         }
 
         synchronized(this) {
-            transform(stateFlow.value.safeState)?.let { transformed ->
-                log("State -> $transformed")
-                stateFlow.value = State(transformed)
-            }
+            val lastState = stateFlow.value.safeState
+            transform(lastState)
+                ?.takeIf { it != lastState }
+                ?.let { transformed ->
+                    log("State -> $transformed")
+                    stateFlow.value = State(transformed)
+                }
         }
     }
 
     protected fun onError(throwable: Throwable) {
         log("Error -> $throwable")
+
+        errors = errors.plus(throwable)
 
         synchronized(this) {
             stateFlow.value = StateOrError.Error(lastState = stateFlow.value.safeState, throwable = throwable)

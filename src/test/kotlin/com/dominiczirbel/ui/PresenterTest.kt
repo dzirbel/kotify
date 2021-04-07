@@ -88,19 +88,25 @@ internal class PresenterTest {
     fun testException(eventMergeStrategy: Presenter.EventMergeStrategy) {
         val throwable = Throwable()
         wrapPresenterOpen(TestPresenter(eventMergeStrategy = eventMergeStrategy)) { presenter ->
+            assertThat(presenter.errors).isEmpty()
+
             coroutineScope { presenter.emit(Event(param = "1", throwable = throwable)) }
             assertThrows<Throwable> { presenter.testState.stateOrThrow }
             assertThat(presenter.testState.safeState).isEqualTo(State("initial"))
+            assertThat(presenter.errors).hasSize(1)
 
             coroutineScope { presenter.emit(Event(param = "2")) }
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 2"))
+            assertThat(presenter.errors).hasSize(1)
 
             coroutineScope { presenter.emit(Event(param = "3", throwable = throwable)) }
             assertThrows<Throwable> { presenter.testState.stateOrThrow }
             assertThat(presenter.testState.safeState).isEqualTo(State("initial | 2"))
+            assertThat(presenter.errors).hasSize(2)
 
             coroutineScope { presenter.emit(Event(param = "4")) }
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 2 | 4"))
+            assertThat(presenter.errors).hasSize(2)
         }
     }
 

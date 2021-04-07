@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.DropdownMenu
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentAlpha
@@ -20,8 +21,10 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -35,6 +38,7 @@ import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.SeekableSlider
+import com.dominiczirbel.ui.common.SimpleTextButton
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.util.formatDuration
@@ -130,7 +134,12 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
             Event.LoadDevices -> {
                 mutateState { it.copy(loadingDevices = true) }
 
-                val devices = runCatching { Spotify.Player.getAvailableDevices() }.getOrNull()
+                val devices = try {
+                    Spotify.Player.getAvailableDevices()
+                } catch (ex: Throwable) {
+                    mutateState { it.copy(loadingDevices = false) }
+                    throw ex
+                }
 
                 mutateState { it.copy(devices = devices, loadingDevices = false) }
             }
@@ -138,7 +147,12 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
             Event.LoadPlayback -> {
                 mutateState { it.copy(loadingPlayback = true) }
 
-                val playback = runCatching { Spotify.Player.getCurrentPlayback() }.getOrNull()
+                val playback = try {
+                    Spotify.Player.getCurrentPlayback()
+                } catch (ex: Throwable) {
+                    mutateState { it.copy(loadingPlayback = false) }
+                    throw ex
+                }
 
                 Player.playable.value = playback?.device != null
 
@@ -161,7 +175,12 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                     it.copy(loadingTrackPlayback = true)
                 }
 
-                val trackPlayback = runCatching { Spotify.Player.getCurrentlyPlayingTrack() }.getOrNull()
+                val trackPlayback = try {
+                    Spotify.Player.getCurrentlyPlayingTrack()
+                } catch (ex: Throwable) {
+                    mutateState { it.copy(loadingTrackPlayback = false) }
+                    throw ex
+                }
 
                 when {
                     trackPlayback == null ->
@@ -208,83 +227,79 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
             Event.Play -> {
                 mutateState { it.copy(togglingPlayback = true) }
 
-                val result = runCatching { Spotify.Player.startPlayback() }
-                if (result.isSuccess) {
+                try {
+                    Spotify.Player.startPlayback()
                     emit(Event.LoadPlayback)
                     emit(Event.LoadTrackPlayback())
+                } finally {
+                    mutateState { it.copy(togglingPlayback = false) }
                 }
-
-                mutateState { it.copy(togglingPlayback = false) }
             }
 
             Event.Pause -> {
                 mutateState { it.copy(togglingPlayback = true) }
 
-                val result = runCatching { Spotify.Player.pausePlayback() }
-                if (result.isSuccess) {
+                try {
+                    Spotify.Player.pausePlayback()
                     emit(Event.LoadPlayback)
                     emit(Event.LoadTrackPlayback())
+                } finally {
+                    mutateState { it.copy(togglingPlayback = false) }
                 }
-
-                mutateState { it.copy(togglingPlayback = false) }
             }
 
             Event.SkipNext -> {
                 mutateState { it.copy(skippingNext = true) }
 
-                val result = runCatching { Spotify.Player.skipToNext() }
-                if (result.isSuccess) {
+                try {
+                    Spotify.Player.skipToNext()
                     emit(Event.LoadTrackPlayback(untilTrackChange = true))
+                } finally {
+                    mutateState { it.copy(skippingNext = false) }
                 }
-
-                mutateState { it.copy(skippingNext = false) }
             }
 
             Event.SkipPrevious -> {
                 mutateState { it.copy(skippingPrevious = true) }
 
-                val result = runCatching { Spotify.Player.skipToPrevious() }
-                if (result.isSuccess) {
+                try {
+                    Spotify.Player.skipToPrevious()
                     emit(Event.LoadTrackPlayback(untilTrackChange = true))
+                } finally {
+                    mutateState { it.copy(skippingPrevious = false) }
                 }
-
-                mutateState { it.copy(skippingPrevious = false) }
             }
 
             is Event.ToggleShuffle -> {
                 mutateState { it.copy(togglingShuffle = true) }
 
-                val result = runCatching { Spotify.Player.toggleShuffle(state = event.shuffle) }
-                if (result.isSuccess) {
+                try {
+                    Spotify.Player.toggleShuffle(state = event.shuffle)
                     emit(Event.LoadPlayback)
+                } finally {
+                    mutateState { it.copy(togglingShuffle = false) }
                 }
-
-                mutateState { it.copy(togglingShuffle = false) }
             }
 
             is Event.SetRepeat -> {
                 mutateState { it.copy(togglingRepeat = true) }
 
-                val result = runCatching { Spotify.Player.setRepeatMode(state = event.repeatState) }
-                if (result.isSuccess) {
+                try {
+                    Spotify.Player.setRepeatMode(state = event.repeatState)
                     emit(Event.LoadPlayback)
+                } finally {
+                    mutateState { it.copy(togglingRepeat = false) }
                 }
-
-                mutateState { it.copy(togglingRepeat = false) }
             }
 
             is Event.SetVolume -> {
-                val result = runCatching { Spotify.Player.setVolume(volumePercent = event.volume) }
-                if (result.isSuccess) {
-                    emit(Event.LoadDevices)
-                }
+                Spotify.Player.setVolume(volumePercent = event.volume)
+                emit(Event.LoadDevices)
             }
 
             is Event.SeekTo -> {
-                val result = runCatching { Spotify.Player.seekToPosition(positionMs = event.positionMs) }
-                if (result.isSuccess) {
-                    emit(Event.LoadPlayback)
-                }
+                Spotify.Player.seekToPosition(positionMs = event.positionMs)
+                emit(Event.LoadPlayback)
             }
         }
     }
@@ -303,7 +318,7 @@ fun BottomPanel() {
     val scope = rememberCoroutineScope()
     val presenter = remember { BottomPanelPresenter(scope) }
 
-    val state = presenter.state().safeState // TODO proper error handling
+    val state = presenter.state().safeState
 
     Column(Modifier.fillMaxWidth().wrapContentHeight()) {
         Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Colors.current.dividerColor))
@@ -325,49 +340,7 @@ fun BottomPanel() {
                 TrackProgress(state = state, presenter = presenter)
             }
 
-            val refreshing = state.loadingDevices || state.loadingPlayback || state.loadingTrackPlayback
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // TODO volume slider often buggy - might be fetching device state before new volume has been applied
-                val devices = state.devices
-                val currentDevice = devices?.firstOrNull()
-                SeekableSlider(
-                    progress = @Suppress("MagicNumber") currentDevice?.volumePercent?.let { it.toFloat() / 100 },
-                    dragKey = currentDevice,
-                    sliderWidth = VOLUME_SLIDER_WIDTH,
-                    leftContent = {
-                        Icon(
-                            painter = svgResource("volume-up.svg"),
-                            contentDescription = "Volume"
-                        )
-                    },
-                    onSeek = { seekPercent ->
-                        val volume = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
-                        presenter.emitAsync(BottomPanelPresenter.Event.SetVolume(volume))
-                    }
-                )
-
-                IconButton(
-                    enabled = !refreshing,
-                    onClick = {
-                        presenter.emitAsync(
-                            BottomPanelPresenter.Event.LoadDevices,
-                            BottomPanelPresenter.Event.LoadPlayback,
-                            BottomPanelPresenter.Event.LoadTrackPlayback()
-                        )
-                    }
-                ) {
-                    if (refreshing) {
-                        CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
-                    } else {
-                        Icon(
-                            imageVector = Icons.Filled.Refresh,
-                            contentDescription = "Refresh",
-                            modifier = Modifier.size(Dimens.iconMedium)
-                        )
-                    }
-                }
-            }
+            PlaybackControls(state = state, presenter = presenter)
         }
     }
 }
@@ -402,21 +375,21 @@ private fun PlayerState(state: BottomPanelPresenter.State) {
 private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
     val controlsEnabled = !state.loadingPlayback
 
-    val playing = state.playbackIsPlaying
-    val shuffling = state.playbackShuffleState
+    val playing = state.playbackIsPlaying == true
+    val shuffling = state.playbackShuffleState == true
     val repeatState = state.playbackRepeatState
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(
             enabled = controlsEnabled && !state.togglingShuffle,
             onClick = {
-                presenter.emitAsync(BottomPanelPresenter.Event.ToggleShuffle(shuffle = !shuffling!!))
+                presenter.emitAsync(BottomPanelPresenter.Event.ToggleShuffle(shuffle = !shuffling))
             }
         ) {
             Icon(
                 painter = svgResource("shuffle.svg"),
                 modifier = Modifier.size(Dimens.iconSmall),
-                tint = if (shuffling == true) {
+                tint = if (shuffling) {
                     MaterialTheme.colors.primary.copy(alpha = LocalContentAlpha.current)
                 } else {
                     LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
@@ -442,7 +415,7 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
             enabled = controlsEnabled && !state.togglingPlayback,
             onClick = {
                 presenter.emitAsync(
-                    if (playing!!) {
+                    if (playing) {
                         BottomPanelPresenter.Event.Pause
                     } else {
                         BottomPanelPresenter.Event.Play
@@ -451,9 +424,9 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
             }
         ) {
             Icon(
-                painter = svgResource(if (playing == false) "play-circle-outline.svg" else "pause-circle-outline.svg"),
+                painter = svgResource(if (playing) "pause-circle-outline.svg" else "play-circle-outline.svg"),
                 modifier = Modifier.size(Dimens.iconMedium),
-                contentDescription = if (playing == false) "Play" else "Pause"
+                contentDescription = if (playing) "Pause" else "Play"
             )
         }
 
@@ -539,5 +512,94 @@ private fun TrackProgress(state: BottomPanelPresenter.State, presenter: BottomPa
                 presenter.emitAsync(BottomPanelPresenter.Event.SeekTo(positionMs = positionMs))
             }
         )
+    }
+}
+
+@Composable
+private fun PlaybackControls(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
+    Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.End) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // TODO volume slider often buggy - might be fetching device state before new volume has been applied
+            val devices = state.devices
+            val currentDevice = devices?.firstOrNull()
+            SeekableSlider(
+                progress = @Suppress("MagicNumber") currentDevice?.volumePercent?.let { it.toFloat() / 100 },
+                dragKey = currentDevice,
+                sliderWidth = VOLUME_SLIDER_WIDTH,
+                leftContent = {
+                    Icon(
+                        painter = svgResource("volume-up.svg"),
+                        contentDescription = "Volume"
+                    )
+                },
+                onSeek = { seekPercent ->
+                    val volume = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
+                    presenter.emitAsync(BottomPanelPresenter.Event.SetVolume(volume))
+                }
+            )
+
+            val refreshing = state.loadingDevices || state.loadingPlayback || state.loadingTrackPlayback
+            IconButton(
+                enabled = !refreshing,
+                onClick = {
+                    presenter.emitAsync(
+                        BottomPanelPresenter.Event.LoadDevices,
+                        BottomPanelPresenter.Event.LoadPlayback,
+                        BottomPanelPresenter.Event.LoadTrackPlayback()
+                    )
+                }
+            ) {
+                if (refreshing) {
+                    CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.Refresh,
+                        contentDescription = "Refresh",
+                        modifier = Modifier.size(Dimens.iconMedium)
+                    )
+                }
+            }
+
+            val errors = presenter.errors
+            if (errors.isNotEmpty()) {
+                val errorsExpanded = remember { mutableStateOf(false) }
+                IconButton(
+                    onClick = { errorsExpanded.value = !errorsExpanded.value }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Warning,
+                        contentDescription = "Refresh",
+                        modifier = Modifier.size(Dimens.iconMedium),
+                        tint = Colors.current.error
+                    )
+
+                    DropdownMenu(
+                        expanded = errorsExpanded.value,
+                        onDismissRequest = { errorsExpanded.value = false }
+                    ) {
+                        errors.forEach { throwable ->
+                            Text(
+                                modifier = Modifier.padding(Dimens.space3),
+                                text = "${throwable::class.simpleName} | ${throwable.message}"
+                            )
+
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(Dimens.divider)
+                                    .background(Colors.current.dividerColor)
+                            )
+                        }
+
+                        SimpleTextButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { presenter.errors = emptyList() }
+                        ) {
+                            Text("Clear")
+                        }
+                    }
+                }
+            }
+        }
     }
 }
