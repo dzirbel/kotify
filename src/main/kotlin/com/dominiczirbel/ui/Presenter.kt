@@ -11,11 +11,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -136,19 +136,9 @@ abstract class Presenter<State, Event> constructor(
         return events
             .onStart { startingEvents?.forEach { emit(it) } }
             .onEach { log("Event -> $it") }
-            .let { flow ->
-                when (eventMergeStrategy) {
-                    EventMergeStrategy.LATEST -> flow.flatMapLatest { flow<Event> { reactTo(it) } }
-                    EventMergeStrategy.MERGE -> flow.flatMapMerge { flow { reactTo(it) } }
-                }
-            }
-            .catch { throwable ->
-                log("Error -> $throwable")
-
-                synchronized(this) {
-                    stateFlow.value = StateOrError.Error(lastState = stateFlow.value.safeState, throwable = throwable)
-                }
-
+            .let { flow -> reactTo(flow) }
+            .catch {
+                onError(it)
                 emitAll(flow(null))
             }
     }
@@ -189,10 +179,10 @@ abstract class Presenter<State, Event> constructor(
     }
 
     /**
-     * Emits the given [event] on a new coroutine spawned from this presenter's [scope], and returns immediately.
+     * Emits the given [events] on a new coroutine spawned from this presenter's [scope], and returns immediately.
      */
-    fun emitAsync(event: Event, context: CoroutineContext = EmptyCoroutineContext) {
-        scope.launch(context = context) { emit(event) }
+    fun emitAsync(vararg events: Event, context: CoroutineContext = EmptyCoroutineContext) {
+        scope.launch(context = context) { events.forEach { emit(it) } }
     }
 
     /**
@@ -209,6 +199,23 @@ abstract class Presenter<State, Event> constructor(
             transform(stateFlow.value.safeState)?.let { transformed ->
                 log("State -> $transformed")
                 stateFlow.value = State(transformed)
+            }
+        }
+    }
+
+    protected fun onError(throwable: Throwable) {
+        log("Error -> $throwable")
+
+        synchronized(this) {
+            stateFlow.value = StateOrError.Error(lastState = stateFlow.value.safeState, throwable = throwable)
+        }
+    }
+
+    open fun reactTo(events: Flow<Event>): Flow<Event> {
+        return when (eventMergeStrategy) {
+            EventMergeStrategy.LATEST -> events.transformLatest { reactTo(it) }
+            EventMergeStrategy.MERGE -> events.flatMapMerge {
+                flow<Event> { reactTo(it) }.catch { onError(it) }
             }
         }
     }

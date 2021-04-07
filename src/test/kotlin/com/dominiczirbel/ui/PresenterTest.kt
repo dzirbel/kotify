@@ -10,6 +10,8 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 
 internal class PresenterTest {
     private data class State(val field: String)
@@ -81,28 +83,32 @@ internal class PresenterTest {
         }
     }
 
-    @Test
-    fun testException() {
+    @ParameterizedTest
+    @EnumSource(Presenter.EventMergeStrategy::class)
+    fun testException(eventMergeStrategy: Presenter.EventMergeStrategy) {
         val throwable = Throwable()
-        wrapPresenterOpen(TestPresenter()) { presenter ->
+        wrapPresenterOpen(TestPresenter(eventMergeStrategy = eventMergeStrategy)) { presenter ->
             coroutineScope { presenter.emit(Event(param = "1", throwable = throwable)) }
             assertThrows<Throwable> { presenter.testState.stateOrThrow }
+            assertThat(presenter.testState.safeState).isEqualTo(State("initial"))
 
             coroutineScope { presenter.emit(Event(param = "2")) }
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 2"))
 
             coroutineScope { presenter.emit(Event(param = "3", throwable = throwable)) }
             assertThrows<Throwable> { presenter.testState.stateOrThrow }
+            assertThat(presenter.testState.safeState).isEqualTo(State("initial | 2"))
 
             coroutineScope { presenter.emit(Event(param = "4")) }
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 2 | 4"))
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(Presenter.EventMergeStrategy::class)
     @Suppress("TooGenericExceptionThrown")
-    fun testAsyncException() {
-        wrapPresenterOpen(TestPresenter()) { presenter ->
+    fun testAsyncException(eventMergeStrategy: Presenter.EventMergeStrategy) {
+        wrapPresenterOpen(TestPresenter(eventMergeStrategy = eventMergeStrategy)) { presenter ->
             coroutineScope {
                 presenter.emit(
                     Event(
