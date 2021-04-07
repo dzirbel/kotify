@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -195,6 +197,10 @@ abstract class Presenter<State, Event> constructor(
      * writer of the state.
      */
     protected fun mutateState(transform: (State) -> State?) {
+        contract {
+            callsInPlace(transform, InvocationKind.EXACTLY_ONCE)
+        }
+
         synchronized(this) {
             transform(stateFlow.value.safeState)?.let { transformed ->
                 log("State -> $transformed")

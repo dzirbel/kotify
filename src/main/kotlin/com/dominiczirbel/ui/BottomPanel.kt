@@ -56,12 +56,10 @@ private val ALBUM_ART_SIZE = 75.dp
 private val TRACK_SLIDER_WIDTH = 1_000.dp
 private val VOLUME_SLIDER_WIDTH = 100.dp
 
-// TODO sometimes on skip/etc the immediate call to playback returns outdated info, from before the skip/etc has been
-//  applied - keep making calls until the playback is updated?
 private class BottomPanelPresenter(scope: CoroutineScope) :
     Presenter<BottomPanelPresenter.State, BottomPanelPresenter.Event>(
         scope = scope,
-        startingEvents = listOf(Event.LoadDevices, Event.LoadPlayback, Event.LoadTrackPlayback),
+        startingEvents = listOf(Event.LoadDevices, Event.LoadPlayback, Event.LoadTrackPlayback()),
         eventMergeStrategy = EventMergeStrategy.LATEST,
         initialState = State()
     ) {
@@ -70,7 +68,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
         scope.launch {
             Player.playEvents.collect {
                 emit(Event.LoadPlayback)
-                emit(Event.LoadTrackPlayback)
+                emit(Event.LoadTrackPlayback())
             }
         }
     }
@@ -97,7 +95,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
     sealed class Event {
         object LoadDevices : Event()
         object LoadPlayback : Event()
-        object LoadTrackPlayback : Event()
+        class LoadTrackPlayback(val untilTrackChange: Boolean = false) : Event()
 
         object Play : Event()
         object Pause : Event()
@@ -154,22 +152,36 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                 }
             }
 
-            Event.LoadTrackPlayback -> {
-                mutateState { it.copy(loadingTrackPlayback = true) }
+            is Event.LoadTrackPlayback -> {
+                val currentTrack: Track?
+                mutateState {
+                    currentTrack = it.playbackTrack
+                    it.copy(loadingTrackPlayback = true)
+                }
 
                 val trackPlayback = runCatching { Spotify.Player.getCurrentlyPlayingTrack() }.getOrNull()
 
-                if (trackPlayback == null) {
-                    mutateState {
-                        it.copy(loadingTrackPlayback = false, playbackTrack = null)
-                    }
-                } else {
-                    if (trackPlayback.item == null) {
+                when {
+                    trackPlayback == null ->
+                        mutateState {
+                            it.copy(loadingTrackPlayback = false, playbackTrack = null)
+                        }
+
+                    trackPlayback.item == null -> {
                         // try again until we get a valid track
                         delay(REFRESH_BUFFER_MS)
 
-                        emit(Event.LoadTrackPlayback)
-                    } else {
+                        emit(Event.LoadTrackPlayback(untilTrackChange = event.untilTrackChange))
+                    }
+
+                    event.untilTrackChange && trackPlayback.item == currentTrack -> {
+                        // try again until the track changes
+                        delay(REFRESH_BUFFER_MS)
+
+                        emit(Event.LoadTrackPlayback(untilTrackChange = true))
+                    }
+
+                    else -> {
                         mutateState {
                             it.copy(
                                 playbackTrack = trackPlayback.item,
@@ -185,7 +197,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 
                             delay(millisLeft + REFRESH_BUFFER_MS)
 
-                            emit(Event.LoadTrackPlayback)
+                            emit(Event.LoadTrackPlayback())
                         }
                     }
                 }
@@ -197,7 +209,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                 val result = runCatching { Spotify.Player.startPlayback() }
                 if (result.isSuccess) {
                     emit(Event.LoadPlayback)
-                    emit(Event.LoadTrackPlayback)
+                    emit(Event.LoadTrackPlayback())
                 }
 
                 mutateState { it.copy(togglingPlayback = false) }
@@ -209,7 +221,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                 val result = runCatching { Spotify.Player.pausePlayback() }
                 if (result.isSuccess) {
                     emit(Event.LoadPlayback)
-                    emit(Event.LoadTrackPlayback)
+                    emit(Event.LoadTrackPlayback())
                 }
 
                 mutateState { it.copy(togglingPlayback = false) }
@@ -220,7 +232,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 
                 val result = runCatching { Spotify.Player.skipToNext() }
                 if (result.isSuccess) {
-                    emit(Event.LoadTrackPlayback)
+                    emit(Event.LoadTrackPlayback(untilTrackChange = true))
                 }
 
                 mutateState { it.copy(skippingNext = false) }
@@ -231,7 +243,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 
                 val result = runCatching { Spotify.Player.skipToPrevious() }
                 if (result.isSuccess) {
-                    emit(Event.LoadTrackPlayback)
+                    emit(Event.LoadTrackPlayback(untilTrackChange = true))
                 }
 
                 mutateState { it.copy(skippingPrevious = false) }
@@ -339,7 +351,7 @@ fun BottomPanel() {
                         presenter.emitAsync(
                             BottomPanelPresenter.Event.LoadDevices,
                             BottomPanelPresenter.Event.LoadPlayback,
-                            BottomPanelPresenter.Event.LoadTrackPlayback
+                            BottomPanelPresenter.Event.LoadTrackPlayback()
                         )
                     }
                 ) {
