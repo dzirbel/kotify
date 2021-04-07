@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -55,6 +54,9 @@ import kotlin.math.roundToInt
 private val ALBUM_ART_SIZE = 75.dp
 private val TRACK_SLIDER_WIDTH = 1_000.dp
 private val VOLUME_SLIDER_WIDTH = 100.dp
+
+// time in milliseconds between updating the track progress slider
+private const val PROGRESS_SLIDER_UPDATE_DELAY_MS = 50L
 
 private class BottomPanelPresenter(scope: CoroutineScope) :
     Presenter<BottomPanelPresenter.State, BottomPanelPresenter.Event>(
@@ -499,32 +501,32 @@ private fun TrackProgress(state: BottomPanelPresenter.State, presenter: BottomPa
     if (state.playbackIsPlaying == null || state.playbackProgressMs == null || state.playbackTrack == null) {
         SeekableSlider(progress = null, sliderWidth = TRACK_SLIDER_WIDTH)
     } else {
-        val progressState = if (state.playbackIsPlaying) {
+        val track = state.playbackTrack
+
+        val progress = if (state.playbackIsPlaying) {
             remember(state) {
                 flow {
                     val start = System.nanoTime()
                     while (true) {
                         val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toInt()
                         emit(state.playbackProgressMs + elapsedMs)
-                        delay(TimeUnit.SECONDS.toMillis(1))
+                        delay(PROGRESS_SLIDER_UPDATE_DELAY_MS)
                     }
                 }
-            }.collectAsState(initial = state.playbackProgressMs, context = Dispatchers.IO)
+            }
+                .collectAsState(initial = state.playbackProgressMs, context = Dispatchers.IO)
+                .value
+                .coerceAtMost(track.durationMs)
         } else {
-            mutableStateOf(state.playbackProgressMs)
+            state.playbackProgressMs
         }
-
-        val track = state.playbackTrack
-
-        // TODO animate progress more smoothly
-        val progress = progressState.value.coerceAtMost(track.durationMs)
 
         SeekableSlider(
             progress = progress.let { progress.toFloat() / track.durationMs },
             dragKey = state,
             sliderWidth = TRACK_SLIDER_WIDTH,
             leftContent = {
-                Text(text = formatDuration(progress), fontSize = Dimens.fontCaption)
+                Text(text = remember(progress) { formatDuration(progress) }, fontSize = Dimens.fontCaption)
             },
             rightContent = {
                 Text(
