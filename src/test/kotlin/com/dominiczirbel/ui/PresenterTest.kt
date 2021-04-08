@@ -34,6 +34,7 @@ internal class PresenterTest {
 
         // no-op logging for testing
         override fun log(message: String) {}
+        override fun logException(throwable: Throwable) {}
 
         override suspend fun reactTo(event: Event) {
             event.delay?.let { delay(it) }

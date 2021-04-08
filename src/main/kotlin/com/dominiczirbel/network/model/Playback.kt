@@ -17,7 +17,7 @@ data class Playback(
     val item: FullTrack?,
     @SerialName("shuffle_state") val shuffleState: Boolean,
     @SerialName("repeat_state") val repeatState: String,
-    val context: PlaybackContext,
+    val context: PlaybackContext?,
     val actions: JsonObject? = null
 )
 
@@ -31,7 +31,7 @@ data class TrackPlayback(
     @SerialName("is_playing") val isPlaying: Boolean,
     @SerialName("currently_playing_type") val currentlyPlayingType: String,
     val item: FullTrack?,
-    val context: PlaybackContext,
+    val context: PlaybackContext?,
     val actions: JsonObject? = null
 )
 

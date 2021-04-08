@@ -116,7 +116,7 @@ abstract class Presenter<State, Event> constructor(
      * Exposes the current state for tests, where the composable [state] cannot be called.
      */
     internal val testState: StateOrError<State>
-        get() = stateFlow.value
+        get() = synchronized(this) { stateFlow.value }
 
     /**
      * A [MutableStateFlow] which exposes the current state (via the [StateOrError] wrapper, possibly wrapping an
@@ -222,6 +222,7 @@ abstract class Presenter<State, Event> constructor(
 
     protected fun onError(throwable: Throwable) {
         log("Error -> $throwable")
+        logException(throwable)
 
         errors = errors.plus(throwable)
 
@@ -250,5 +251,9 @@ abstract class Presenter<State, Event> constructor(
      */
     protected open fun log(message: String) {
         println("[$logTag] $message")
+    }
+
+    protected open fun logException(throwable: Throwable) {
+        throwable.printStackTrace()
     }
 }

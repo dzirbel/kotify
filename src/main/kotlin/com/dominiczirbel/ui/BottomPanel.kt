@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentAlpha
@@ -29,8 +32,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.svgResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.model.FullTrack
 import com.dominiczirbel.network.model.PlaybackDevice
@@ -53,6 +59,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 private val ALBUM_ART_SIZE = 75.dp
@@ -85,23 +92,29 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
         val playbackIsPlaying: Boolean? = null,
         val playbackShuffleState: Boolean? = null,
         val playbackRepeatState: String? = null,
+        val playbackCurrentDevice: PlaybackDevice? = null,
+
+        val selectedDevice: PlaybackDevice? = null,
         val devices: List<PlaybackDevice>? = null,
 
-        val loadingPlayback: Boolean = false,
-        val loadingTrackPlayback: Boolean = false,
-        val loadingDevices: Boolean = false,
+        val loadingPlayback: Boolean = true,
+        val loadingTrackPlayback: Boolean = true,
+        val loadingDevices: Boolean = true,
 
         val togglingShuffle: Boolean = false,
         val togglingRepeat: Boolean = false,
         val togglingPlayback: Boolean = false,
         val skippingPrevious: Boolean = false,
         val skippingNext: Boolean = false
-    )
+    ) {
+        val currentDevice: PlaybackDevice?
+            get() = selectedDevice ?: playbackCurrentDevice ?: devices?.firstOrNull()
+    }
 
     sealed class Event {
         object LoadDevices : Event()
         object LoadPlayback : Event()
-        class LoadTrackPlayback(val untilTrackChange: Boolean = false) : Event()
+        class LoadTrackPlayback(val untilTrackChange: Boolean = false, val retries: Int = 5) : Event()
 
         object Play : Event()
         object Pause : Event()
@@ -111,13 +124,15 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
         class SetRepeat(val repeatState: String) : Event()
         class SetVolume(val volume: Int) : Event()
         class SeekTo(val positionMs: Int) : Event()
+
+        class SelectDevice(val device: PlaybackDevice) : Event()
     }
 
     override fun reactTo(events: Flow<Event>): Flow<Event> {
         return merge(
-            events.filterIsInstance<Event.LoadDevices>().transformLatest<Event, Event> { reactTo(it) },
-            events.filterIsInstance<Event.LoadPlayback>().transformLatest<Event, Event> { reactTo(it) },
-            events.filterIsInstance<Event.LoadTrackPlayback>().transformLatest<Event, Event> { reactTo(it) },
+            events.filterIsInstance<Event.LoadDevices>().transformLatest { reactTo(it) },
+            events.filterIsInstance<Event.LoadPlayback>().transformLatest { reactTo(it) },
+            events.filterIsInstance<Event.LoadTrackPlayback>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.Play>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.Pause>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.SkipNext>().transformLatest { reactTo(it) },
@@ -126,6 +141,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
             events.filterIsInstance<Event.SetRepeat>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.SetVolume>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.SeekTo>().transformLatest { reactTo(it) },
+            events.filterIsInstance<Event.SelectDevice>().transformLatest { reactTo(it) },
         )
     }
 
@@ -141,20 +157,23 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                     throw ex
                 }
 
-                mutateState { it.copy(devices = devices, loadingDevices = false) }
+                Player.playable.value = devices.isNotEmpty()
+
+                mutateState {
+                    it.copy(devices = devices, loadingDevices = false)
+                }
             }
 
             Event.LoadPlayback -> {
                 mutateState { it.copy(loadingPlayback = true) }
 
                 val playback = try {
+                    // TODO sometimes returns before playback state has changed when pausing/resuming
                     Spotify.Player.getCurrentPlayback()
                 } catch (ex: Throwable) {
                     mutateState { it.copy(loadingPlayback = false) }
                     throw ex
                 }
-
-                Player.playable.value = playback?.device != null
 
                 mutateState {
                     it.copy(
@@ -163,6 +182,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                         playbackIsPlaying = playback?.isPlaying ?: it.playbackIsPlaying,
                         playbackShuffleState = playback?.shuffleState ?: it.playbackShuffleState,
                         playbackRepeatState = playback?.repeatState ?: it.playbackRepeatState,
+                        playbackCurrentDevice = playback?.device,
                         loadingPlayback = false
                     )
                 }
@@ -189,17 +209,30 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                         }
 
                     trackPlayback.item == null -> {
-                        // try again until we get a valid track
-                        delay(REFRESH_BUFFER_MS)
+                        if (event.retries > 0) {
+                            // try again until we get a valid track
+                            delay(REFRESH_BUFFER_MS)
 
-                        emit(Event.LoadTrackPlayback(untilTrackChange = event.untilTrackChange))
+                            emit(
+                                Event.LoadTrackPlayback(
+                                    untilTrackChange = event.untilTrackChange,
+                                    retries = event.retries - 1
+                                )
+                            )
+                        } else {
+                            mutateState { it.copy(loadingTrackPlayback = false) }
+                        }
                     }
 
                     event.untilTrackChange && trackPlayback.item == currentTrack -> {
-                        // try again until the track changes
-                        delay(REFRESH_BUFFER_MS)
+                        if (event.retries > 0) {
+                            // try again until the track changes
+                            delay(REFRESH_BUFFER_MS)
 
-                        emit(Event.LoadTrackPlayback(untilTrackChange = true))
+                            emit(Event.LoadTrackPlayback(untilTrackChange = true, retries = event.retries - 1))
+                        } else {
+                            mutateState { it.copy(loadingTrackPlayback = false) }
+                        }
                     }
 
                     else -> {
@@ -225,10 +258,14 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             Event.Play -> {
-                mutateState { it.copy(togglingPlayback = true) }
+                val deviceId: String
+                mutateState {
+                    deviceId = requireNotNull(it.currentDevice?.id) { "no device" }
+                    it.copy(togglingPlayback = true)
+                }
 
                 try {
-                    Spotify.Player.startPlayback()
+                    Spotify.Player.startPlayback(deviceId = deviceId)
                     emit(Event.LoadPlayback)
                     emit(Event.LoadTrackPlayback())
                 } finally {
@@ -237,10 +274,14 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             Event.Pause -> {
-                mutateState { it.copy(togglingPlayback = true) }
+                val deviceId: String
+                mutateState {
+                    deviceId = requireNotNull(it.currentDevice?.id) { "no device" }
+                    it.copy(togglingPlayback = true)
+                }
 
                 try {
-                    Spotify.Player.pausePlayback()
+                    Spotify.Player.pausePlayback(deviceId = deviceId)
                     emit(Event.LoadPlayback)
                     emit(Event.LoadTrackPlayback())
                 } finally {
@@ -249,10 +290,14 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             Event.SkipNext -> {
-                mutateState { it.copy(skippingNext = true) }
+                val deviceId: String
+                mutateState {
+                    deviceId = requireNotNull(it.currentDevice?.id) { "no device" }
+                    it.copy(skippingNext = true)
+                }
 
                 try {
-                    Spotify.Player.skipToNext()
+                    Spotify.Player.skipToNext(deviceId = deviceId)
                     emit(Event.LoadTrackPlayback(untilTrackChange = true))
                 } finally {
                     mutateState { it.copy(skippingNext = false) }
@@ -260,10 +305,14 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             Event.SkipPrevious -> {
-                mutateState { it.copy(skippingPrevious = true) }
+                val deviceId: String
+                mutateState {
+                    deviceId = requireNotNull(it.currentDevice?.id) { "no device" }
+                    it.copy(skippingPrevious = true)
+                }
 
                 try {
-                    Spotify.Player.skipToPrevious()
+                    Spotify.Player.skipToPrevious(deviceId = deviceId)
                     emit(Event.LoadTrackPlayback(untilTrackChange = true))
                 } finally {
                     mutateState { it.copy(skippingPrevious = false) }
@@ -271,10 +320,14 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             is Event.ToggleShuffle -> {
-                mutateState { it.copy(togglingShuffle = true) }
+                val deviceId: String
+                mutateState {
+                    deviceId = requireNotNull(it.currentDevice?.id) { "no device" }
+                    it.copy(togglingShuffle = true)
+                }
 
                 try {
-                    Spotify.Player.toggleShuffle(state = event.shuffle)
+                    Spotify.Player.toggleShuffle(deviceId = deviceId, state = event.shuffle)
                     emit(Event.LoadPlayback)
                 } finally {
                     mutateState { it.copy(togglingShuffle = false) }
@@ -282,10 +335,14 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             is Event.SetRepeat -> {
-                mutateState { it.copy(togglingRepeat = true) }
+                val deviceId: String
+                mutateState {
+                    deviceId = requireNotNull(it.currentDevice?.id) { "no device" }
+                    it.copy(togglingRepeat = true)
+                }
 
                 try {
-                    Spotify.Player.setRepeatMode(state = event.repeatState)
+                    Spotify.Player.setRepeatMode(deviceId = deviceId, state = event.repeatState)
                     emit(Event.LoadPlayback)
                 } finally {
                     mutateState { it.copy(togglingRepeat = false) }
@@ -293,13 +350,40 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             is Event.SetVolume -> {
-                Spotify.Player.setVolume(volumePercent = event.volume)
+                val deviceId: String
+                mutateState {
+                    deviceId = requireNotNull(it.currentDevice?.id) { "no device" }
+                    it
+                }
+
+                Spotify.Player.setVolume(deviceId = deviceId, volumePercent = event.volume)
                 emit(Event.LoadDevices)
             }
 
             is Event.SeekTo -> {
-                Spotify.Player.seekToPosition(positionMs = event.positionMs)
+                val deviceId: String
+                mutateState {
+                    deviceId = requireNotNull(it.currentDevice?.id) { "no device" }
+                    it
+                }
+
+                Spotify.Player.seekToPosition(deviceId = deviceId, positionMs = event.positionMs)
                 emit(Event.LoadPlayback)
+            }
+
+            is Event.SelectDevice -> {
+                val previousSelectedDevice: PlaybackDevice?
+                mutateState {
+                    previousSelectedDevice = it.selectedDevice
+                    it.copy(selectedDevice = event.device)
+                }
+
+                try {
+                    Spotify.Player.transferPlayback(deviceIds = listOf(event.device.id))
+                } catch (ex: Throwable) {
+                    mutateState { it.copy(selectedDevice = previousSelectedDevice) }
+                    throw ex
+                }
             }
         }
     }
@@ -601,5 +685,101 @@ private fun PlaybackControls(state: BottomPanelPresenter.State, presenter: Botto
                 }
             }
         }
+
+        val devices = state.devices
+        val currentDevice = state.currentDevice
+        val dropdownEnabled = devices != null && devices.size > 1
+        val dropdownExpanded = remember { mutableStateOf(false) }
+
+        SimpleTextButton(
+            enabled = dropdownEnabled,
+            onClick = { dropdownExpanded.value = !dropdownExpanded.value }
+        ) {
+            Icon(
+                painter = svgResource(state.currentDevice.iconName),
+                modifier = Modifier.size(Dimens.iconSmall),
+                contentDescription = null
+            )
+
+            Spacer(Modifier.width(Dimens.space3))
+
+            val text = when {
+                devices == null && state.loadingDevices -> "Loading devices..."
+                devices == null -> "Error loading devices"
+                devices.isEmpty() -> "No devices"
+                currentDevice != null -> currentDevice.name
+                else -> error("impossible")
+            }
+
+            Text(text)
+
+            if (dropdownEnabled) {
+                devices!!
+
+                Spacer(Modifier.width(Dimens.space3))
+
+                // use a custom layout in order to match width with height, which doesn't seem to be possible any other
+                // way (e.g. aspectRatio() modifier)
+                Layout(
+                    modifier = Modifier.background(color = MaterialTheme.colors.primary, shape = CircleShape),
+                    content = {
+                        Text(
+                            text = devices.size.toString(),
+                            color = Colors.current.textOnSurface,
+                            textAlign = TextAlign.Center,
+                            letterSpacing = 0.sp // hack - ideally wouldn't be necessary
+                        )
+                    },
+                    measurePolicy = { measurables, constraints ->
+                        check(measurables.size == 1)
+
+                        val placeable = measurables[0].measure(constraints)
+                        val size = max(placeable.width, placeable.height)
+
+                        layout(width = size, height = size) {
+                            // center vertically and horizontally
+                            placeable.place(
+                                x = (size - placeable.width) / 2,
+                                y = (size - placeable.height) / 2
+                            )
+                        }
+                    }
+                )
+
+                DropdownMenu(
+                    expanded = dropdownExpanded.value,
+                    onDismissRequest = { dropdownExpanded.value = false }
+                ) {
+                    devices.forEach { device ->
+                        DropdownMenuItem(
+                            onClick = {
+                                presenter.emitAsync(BottomPanelPresenter.Event.SelectDevice(device = device))
+                                dropdownExpanded.value = false
+                            }
+                        ) {
+                            Icon(
+                                painter = svgResource(device.iconName),
+                                modifier = Modifier.size(Dimens.iconSmall),
+                                contentDescription = null
+                            )
+
+                            Spacer(Modifier.width(Dimens.space2))
+
+                            Text(device.name)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
+
+private val PlaybackDevice?.iconName: String
+    get() {
+        if (this == null) return "devices-other.svg"
+        return when {
+            type.equals("computer", ignoreCase = true) -> "computer.svg"
+            type.equals("smartphone", ignoreCase = true) -> "smartphone.svg"
+            else -> "devices-other.svg"
+        }
+    }
