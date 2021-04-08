@@ -99,13 +99,13 @@ fun SidePanel(
 
             val minContentSize = state.minContentSize?.let { with(density) { it.roundToPx() } } ?: 0
             val panelSizePx = with(density) { state.size.roundToPx() }
-                .coerceAtLeast(0)
                 .coerceAtMost(
                     when (splitterOrientation) {
                         Orientation.Horizontal -> constraints.maxHeight - minContentSize
                         Orientation.Vertical -> constraints.maxWidth - minContentSize
                     }
                 )
+                .coerceAtLeast(0)
             val panelPlaceable = measurables[0].measure(
                 when (splitterOrientation) {
                     Orientation.Horizontal -> constraints.copy(minHeight = panelSizePx, maxHeight = panelSizePx)

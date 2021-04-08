@@ -59,6 +59,7 @@ fun <E> Grid(
             val minColumns = columns ?: 1
             val elementConstraints = Constraints(
                 maxWidth = (((constraints.maxWidth - horizontalSpacingPx) / minColumns) - horizontalSpacingPx).toInt()
+                    .coerceAtLeast(0)
             )
 
             var maxElementWidth = 0 // find max element width while measuring to avoid an extra loop
@@ -75,7 +76,7 @@ fun <E> Grid(
             // after the last column) divided by the column width including its spacing; then taking the floor to
             // truncate any "fractional column"
             val cols = columns
-                ?: floor((constraints.maxWidth - horizontalSpacingPx) / columnWidthWithSpacing).toInt()
+                ?: floor((constraints.maxWidth - horizontalSpacingPx) / columnWidthWithSpacing).toInt().coerceAtLeast(1)
 
             // now we need to account for that "fractional column" by adding some "extra" to each column spacing,
             // distributed among each spacing (note: we cannot add this extra to the columns rather than the spacing

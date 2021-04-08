@@ -33,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.svgResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -63,8 +64,12 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 private val ALBUM_ART_SIZE = 75.dp
-private val TRACK_SLIDER_WIDTH = 1_000.dp
+private val MIN_TRACK_PLAYBACK_WIDTH = ALBUM_ART_SIZE + 75.dp
+private val MAX_TRACK_PROGRESS_WIDTH = 1000.dp
 private val VOLUME_SLIDER_WIDTH = 100.dp
+
+private const val SIDE_CONTROLS_WEIGHT = 0.25f
+private const val CENTER_CONTROLS_WEIGHT = 0.5f
 
 // time in milliseconds between updating the track progress slider
 private const val PROGRESS_SLIDER_UPDATE_DELAY_MS = 50L
@@ -407,25 +412,97 @@ fun BottomPanel() {
     Column(Modifier.fillMaxWidth().wrapContentHeight()) {
         Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Colors.current.dividerColor))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Colors.current.surface2)
-                .padding(Dimens.space3),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // TODO control/progress jump around when the size of the PlayerState changes
-            PlayerState(state = state)
+        val layoutDirection = LocalLayoutDirection.current
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceEvenly) {
-                PlayerControls(state = state, presenter = presenter)
+        Layout(
+            modifier = Modifier.background(Colors.current.surface2).padding(Dimens.space3),
+            content = {
+                Column {
+                    PlayerState(state = state)
+                }
 
-                TrackProgress(state = state, presenter = presenter)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    PlayerControls(state = state, presenter = presenter)
+
+                    TrackProgress(state = state, presenter = presenter)
+                }
+
+                Column(verticalArrangement = Arrangement.Center) {
+                    VolumeControls(state = state, presenter = presenter)
+
+                    DeviceControls(state = state, presenter = presenter)
+                }
+            },
+            measurePolicy = @Suppress("UnnecessaryParentheses") { measurables, constraints ->
+                @Suppress("MagicNumber")
+                check(measurables.size == 3)
+
+                val totalWidth = constraints.maxWidth
+
+                val left = measurables[0]
+                val center = measurables[1]
+                val right = measurables[2]
+
+                // base widths according to the weights
+                val sideWidthBase = (totalWidth * SIDE_CONTROLS_WEIGHT).roundToInt()
+                val centerWidthBase = (totalWidth * CENTER_CONTROLS_WEIGHT).roundToInt()
+
+                // width constraint constants
+                val maxCenterWidth = MAX_TRACK_PROGRESS_WIDTH.roundToPx()
+                val minLeftWidth = MIN_TRACK_PLAYBACK_WIDTH.roundToPx()
+
+                // allocate any extra space due to the maxCenterWidth to the sides
+                val sideExtra = ((totalWidth - maxCenterWidth - (sideWidthBase * 2)) / 2)
+                    .coerceAtLeast(0)
+
+                // left width calculated first with the highest priority
+                val leftWidth = (sideWidthBase + sideExtra).coerceAtLeast(minLeftWidth)
+
+                // right width calculated next with the second priority, giving space to left if necessary
+                val rightWidth = (sideWidthBase + sideExtra).coerceAtMost(totalWidth - leftWidth).coerceAtLeast(0)
+
+                // center width calculated last, gives any possible space to left/right
+                val centerWidth = centerWidthBase
+                    .coerceAtMost(maxCenterWidth)
+                    .coerceAtMost(totalWidth - leftWidth - rightWidth)
+                    .coerceAtLeast(0)
+
+                val leftPlaceable = left.measure(constraints.copy(minWidth = leftWidth, maxWidth = leftWidth))
+                val centerPlaceable = center.measure(constraints.copy(minWidth = centerWidth, maxWidth = centerWidth))
+                val rightPlaceable = right.measure(constraints.copy(maxWidth = rightWidth))
+
+                val maxHeight = maxOf(leftPlaceable.height, centerPlaceable.height, rightPlaceable.height)
+
+                layout(width = totalWidth, height = maxHeight) {
+                    leftPlaceable.place(
+                        x = Alignment.Start.align(
+                            size = leftPlaceable.width,
+                            space = leftWidth,
+                            layoutDirection = layoutDirection
+                        ),
+                        y = Alignment.CenterVertically.align(size = leftPlaceable.height, space = maxHeight)
+                    )
+
+                    centerPlaceable.place(
+                        x = leftWidth + Alignment.CenterHorizontally.align(
+                            size = centerPlaceable.width,
+                            space = centerWidth,
+                            layoutDirection = layoutDirection
+                        ),
+                        y = Alignment.CenterVertically.align(size = centerPlaceable.height, space = maxHeight)
+                    )
+
+                    rightPlaceable.place(
+                        x = leftWidth + centerWidth + Alignment.End.align(
+                            size = rightPlaceable.width,
+                            space = rightWidth,
+                            layoutDirection = layoutDirection
+                        ),
+                        y = Alignment.CenterVertically.align(size = rightPlaceable.height, space = maxHeight)
+                    )
+                }
             }
-
-            PlaybackControls(state = state, presenter = presenter)
-        }
+        )
     }
 }
 
@@ -556,7 +633,7 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
 @Composable
 private fun TrackProgress(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
     if (state.playbackIsPlaying == null || state.playbackProgressMs == null || state.playbackTrack == null) {
-        SeekableSlider(progress = null, sliderWidth = TRACK_SLIDER_WIDTH)
+        SeekableSlider(progress = null)
     } else {
         val track = state.playbackTrack
 
@@ -581,7 +658,6 @@ private fun TrackProgress(state: BottomPanelPresenter.State, presenter: BottomPa
         SeekableSlider(
             progress = progress.let { progress.toFloat() / track.durationMs },
             dragKey = state,
-            sliderWidth = TRACK_SLIDER_WIDTH,
             leftContent = {
                 Text(text = remember(progress) { formatDuration(progress) }, fontSize = Dimens.fontCaption)
             },
@@ -600,173 +676,174 @@ private fun TrackProgress(state: BottomPanelPresenter.State, presenter: BottomPa
 }
 
 @Composable
-private fun PlaybackControls(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
-    Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.End) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // TODO volume slider often buggy - might be fetching device state before new volume has been applied
-            val devices = state.devices
-            val currentDevice = devices?.firstOrNull()
-            SeekableSlider(
-                progress = @Suppress("MagicNumber") currentDevice?.volumePercent?.let { it.toFloat() / 100 },
-                dragKey = currentDevice,
-                sliderWidth = VOLUME_SLIDER_WIDTH,
-                leftContent = {
-                    Icon(
-                        painter = svgResource("volume-up.svg"),
-                        contentDescription = "Volume"
-                    )
-                },
-                onSeek = { seekPercent ->
-                    val volume = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
-                    presenter.emitAsync(BottomPanelPresenter.Event.SetVolume(volume))
-                }
-            )
-
-            val refreshing = state.loadingDevices || state.loadingPlayback || state.loadingTrackPlayback
-            IconButton(
-                enabled = !refreshing,
-                onClick = {
-                    presenter.emitAsync(
-                        BottomPanelPresenter.Event.LoadDevices,
-                        BottomPanelPresenter.Event.LoadPlayback,
-                        BottomPanelPresenter.Event.LoadTrackPlayback()
-                    )
-                }
-            ) {
-                if (refreshing) {
-                    CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
-                } else {
-                    Icon(
-                        imageVector = Icons.Filled.Refresh,
-                        contentDescription = "Refresh",
-                        modifier = Modifier.size(Dimens.iconMedium)
-                    )
-                }
+private fun VolumeControls(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        // TODO volume slider often buggy - might be fetching device state before new volume has been applied
+        val devices = state.devices
+        val currentDevice = devices?.firstOrNull()
+        SeekableSlider(
+            progress = @Suppress("MagicNumber") currentDevice?.volumePercent?.let { it.toFloat() / 100 },
+            dragKey = currentDevice,
+            sliderWidth = VOLUME_SLIDER_WIDTH,
+            leftContent = {
+                Icon(
+                    painter = svgResource("volume-up.svg"),
+                    contentDescription = "Volume"
+                )
+            },
+            onSeek = { seekPercent ->
+                val volume = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
+                presenter.emitAsync(BottomPanelPresenter.Event.SetVolume(volume))
             }
+        )
 
-            val errors = presenter.errors
-            if (errors.isNotEmpty()) {
-                val errorsExpanded = remember { mutableStateOf(false) }
-                IconButton(
-                    onClick = { errorsExpanded.value = !errorsExpanded.value }
+        val refreshing = state.loadingDevices || state.loadingPlayback || state.loadingTrackPlayback
+        IconButton(
+            enabled = !refreshing,
+            onClick = {
+                presenter.emitAsync(
+                    BottomPanelPresenter.Event.LoadDevices,
+                    BottomPanelPresenter.Event.LoadPlayback,
+                    BottomPanelPresenter.Event.LoadTrackPlayback()
+                )
+            }
+        ) {
+            if (refreshing) {
+                CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.Refresh,
+                    contentDescription = "Refresh",
+                    modifier = Modifier.size(Dimens.iconMedium)
+                )
+            }
+        }
+
+        val errors = presenter.errors
+        if (errors.isNotEmpty()) {
+            val errorsExpanded = remember { mutableStateOf(false) }
+            IconButton(
+                onClick = { errorsExpanded.value = !errorsExpanded.value }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Warning,
+                    contentDescription = "Refresh",
+                    modifier = Modifier.size(Dimens.iconMedium),
+                    tint = Colors.current.error
+                )
+
+                DropdownMenu(
+                    expanded = errorsExpanded.value,
+                    onDismissRequest = { errorsExpanded.value = false }
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Warning,
-                        contentDescription = "Refresh",
-                        modifier = Modifier.size(Dimens.iconMedium),
-                        tint = Colors.current.error
-                    )
+                    errors.forEach { throwable ->
+                        Text(
+                            modifier = Modifier.padding(Dimens.space3),
+                            text = "${throwable::class.simpleName} | ${throwable.message}"
+                        )
 
-                    DropdownMenu(
-                        expanded = errorsExpanded.value,
-                        onDismissRequest = { errorsExpanded.value = false }
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(Dimens.divider)
+                                .background(Colors.current.dividerColor)
+                        )
+                    }
+
+                    SimpleTextButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { presenter.errors = emptyList() }
                     ) {
-                        errors.forEach { throwable ->
-                            Text(
-                                modifier = Modifier.padding(Dimens.space3),
-                                text = "${throwable::class.simpleName} | ${throwable.message}"
-                            )
-
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(Dimens.divider)
-                                    .background(Colors.current.dividerColor)
-                            )
-                        }
-
-                        SimpleTextButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = { presenter.errors = emptyList() }
-                        ) {
-                            Text("Clear")
-                        }
+                        Text("Clear")
                     }
                 }
             }
         }
+    }
+}
 
-        val devices = state.devices
-        val currentDevice = state.currentDevice
-        val dropdownEnabled = devices != null && devices.size > 1
-        val dropdownExpanded = remember { mutableStateOf(false) }
+@Composable
+private fun DeviceControls(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
+    val devices = state.devices
+    val currentDevice = state.currentDevice
+    val dropdownEnabled = devices != null && devices.size > 1
+    val dropdownExpanded = remember { mutableStateOf(false) }
 
-        SimpleTextButton(
-            enabled = dropdownEnabled,
-            onClick = { dropdownExpanded.value = !dropdownExpanded.value }
-        ) {
-            Icon(
-                painter = svgResource(state.currentDevice.iconName),
-                modifier = Modifier.size(Dimens.iconSmall),
-                contentDescription = null
-            )
+    SimpleTextButton(
+        enabled = dropdownEnabled,
+        onClick = { dropdownExpanded.value = !dropdownExpanded.value }
+    ) {
+        Icon(
+            painter = svgResource(state.currentDevice.iconName),
+            modifier = Modifier.size(Dimens.iconSmall),
+            contentDescription = null
+        )
+
+        Spacer(Modifier.width(Dimens.space3))
+
+        val text = when {
+            devices == null && state.loadingDevices -> "Loading devices..."
+            devices == null -> "Error loading devices"
+            devices.isEmpty() -> "No devices"
+            currentDevice != null -> currentDevice.name
+            else -> error("impossible")
+        }
+
+        Text(text)
+
+        if (dropdownEnabled) {
+            devices!!
 
             Spacer(Modifier.width(Dimens.space3))
 
-            val text = when {
-                devices == null && state.loadingDevices -> "Loading devices..."
-                devices == null -> "Error loading devices"
-                devices.isEmpty() -> "No devices"
-                currentDevice != null -> currentDevice.name
-                else -> error("impossible")
-            }
+            // use a custom layout in order to match width with height, which doesn't seem to be possible any other
+            // way (e.g. aspectRatio() modifier)
+            Layout(
+                modifier = Modifier.background(color = MaterialTheme.colors.primary, shape = CircleShape),
+                content = {
+                    Text(
+                        text = devices.size.toString(),
+                        color = Colors.current.textOnSurface,
+                        textAlign = TextAlign.Center,
+                        letterSpacing = 0.sp // hack - ideally wouldn't be necessary
+                    )
+                },
+                measurePolicy = { measurables, constraints ->
+                    check(measurables.size == 1)
 
-            Text(text)
+                    val placeable = measurables[0].measure(constraints)
+                    val size = max(placeable.width, placeable.height)
 
-            if (dropdownEnabled) {
-                devices!!
-
-                Spacer(Modifier.width(Dimens.space3))
-
-                // use a custom layout in order to match width with height, which doesn't seem to be possible any other
-                // way (e.g. aspectRatio() modifier)
-                Layout(
-                    modifier = Modifier.background(color = MaterialTheme.colors.primary, shape = CircleShape),
-                    content = {
-                        Text(
-                            text = devices.size.toString(),
-                            color = Colors.current.textOnSurface,
-                            textAlign = TextAlign.Center,
-                            letterSpacing = 0.sp // hack - ideally wouldn't be necessary
+                    layout(width = size, height = size) {
+                        // center vertically and horizontally
+                        placeable.place(
+                            x = (size - placeable.width) / 2,
+                            y = (size - placeable.height) / 2
                         )
-                    },
-                    measurePolicy = { measurables, constraints ->
-                        check(measurables.size == 1)
-
-                        val placeable = measurables[0].measure(constraints)
-                        val size = max(placeable.width, placeable.height)
-
-                        layout(width = size, height = size) {
-                            // center vertically and horizontally
-                            placeable.place(
-                                x = (size - placeable.width) / 2,
-                                y = (size - placeable.height) / 2
-                            )
-                        }
                     }
-                )
+                }
+            )
 
-                DropdownMenu(
-                    expanded = dropdownExpanded.value,
-                    onDismissRequest = { dropdownExpanded.value = false }
-                ) {
-                    devices.forEach { device ->
-                        DropdownMenuItem(
-                            onClick = {
-                                presenter.emitAsync(BottomPanelPresenter.Event.SelectDevice(device = device))
-                                dropdownExpanded.value = false
-                            }
-                        ) {
-                            Icon(
-                                painter = svgResource(device.iconName),
-                                modifier = Modifier.size(Dimens.iconSmall),
-                                contentDescription = null
-                            )
-
-                            Spacer(Modifier.width(Dimens.space2))
-
-                            Text(device.name)
+            DropdownMenu(
+                expanded = dropdownExpanded.value,
+                onDismissRequest = { dropdownExpanded.value = false }
+            ) {
+                devices.forEach { device ->
+                    DropdownMenuItem(
+                        onClick = {
+                            presenter.emitAsync(BottomPanelPresenter.Event.SelectDevice(device = device))
+                            dropdownExpanded.value = false
                         }
+                    ) {
+                        Icon(
+                            painter = svgResource(device.iconName),
+                            modifier = Modifier.size(Dimens.iconSmall),
+                            contentDescription = null
+                        )
+
+                        Spacer(Modifier.width(Dimens.space2))
+
+                        Text(device.name)
                     }
                 }
             }

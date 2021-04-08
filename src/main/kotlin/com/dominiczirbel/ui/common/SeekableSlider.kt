@@ -82,6 +82,7 @@ fun SeekableSlider(
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         leftContent?.let {
+            Spacer(Modifier.width(Dimens.space2))
             it()
             Spacer(Modifier.width(Dimens.space2))
         }
@@ -112,6 +113,9 @@ fun SeekableSlider(
                 }
                 .padding(padding)
                 .size(width = sliderWidth ?: Dp.Unspecified, height = sliderHeight)
+                .let {
+                    if (sliderWidth == null) it.weight(1f) else it
+                }
         ) {
             // the background of the slider bar, representing the maximum progress
             Box(
@@ -193,6 +197,7 @@ fun SeekableSlider(
         rightContent?.let {
             Spacer(Modifier.width(Dimens.space2))
             it()
+            Spacer(Modifier.width(Dimens.space2))
         }
     }
 }
