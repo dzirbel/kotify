@@ -77,7 +77,7 @@ private const val PROGRESS_SLIDER_UPDATE_DELAY_MS = 50L
 private class BottomPanelPresenter(scope: CoroutineScope) :
     Presenter<BottomPanelPresenter.State, BottomPanelPresenter.Event>(
         scope = scope,
-        startingEvents = listOf(Event.LoadDevices, Event.LoadPlayback, Event.LoadTrackPlayback()),
+        startingEvents = listOf(Event.LoadDevices, Event.LoadPlayback(), Event.LoadTrackPlayback()),
         eventMergeStrategy = EventMergeStrategy.LATEST,
         initialState = State()
     ) {
@@ -85,7 +85,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
     init {
         scope.launch {
             Player.playEvents.collect {
-                emit(Event.LoadPlayback)
+                emit(Event.LoadPlayback())
                 emit(Event.LoadTrackPlayback())
             }
         }
@@ -118,7 +118,13 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 
     sealed class Event {
         object LoadDevices : Event()
-        object LoadPlayback : Event()
+        data class LoadPlayback(
+            val untilIsPlayingChange: Boolean = false,
+            val untilShuffleStateChange: Boolean = false,
+            val untilRepeatStateChange: Boolean = false,
+            val retries: Int = 5
+        ) : Event()
+
         class LoadTrackPlayback(val untilTrackChange: Boolean = false, val retries: Int = 5) : Event()
 
         object Play : Event()
@@ -169,27 +175,59 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                 }
             }
 
-            Event.LoadPlayback -> {
-                mutateState { it.copy(loadingPlayback = true) }
+            is Event.LoadPlayback -> {
+                val previousIsPlaying: Boolean?
+                val previousRepeatState: String?
+                val previousShuffleState: Boolean?
+                mutateState {
+                    previousIsPlaying = it.playbackIsPlaying
+                    previousRepeatState = it.playbackRepeatState
+                    previousShuffleState = it.playbackShuffleState
+
+                    it.copy(loadingPlayback = true)
+                }
 
                 val playback = try {
-                    // TODO sometimes returns before playback state has changed when pausing/resuming
                     Spotify.Player.getCurrentPlayback()
                 } catch (ex: Throwable) {
                     mutateState { it.copy(loadingPlayback = false) }
                     throw ex
                 }
 
-                mutateState {
-                    it.copy(
-                        playbackTrack = playback?.item ?: it.playbackTrack,
-                        playbackProgressMs = playback?.progressMs ?: it.playbackProgressMs,
-                        playbackIsPlaying = playback?.isPlaying ?: it.playbackIsPlaying,
-                        playbackShuffleState = playback?.shuffleState ?: it.playbackShuffleState,
-                        playbackRepeatState = playback?.repeatState ?: it.playbackRepeatState,
-                        playbackCurrentDevice = playback?.device,
-                        loadingPlayback = false
-                    )
+                when {
+                    playback == null -> mutateState { it.copy(loadingPlayback = false) }
+
+                    event.untilIsPlayingChange && event.retries > 0 && playback.isPlaying == previousIsPlaying -> {
+                        // try again until the playing state changes
+                        delay(REFRESH_BUFFER_MS)
+                        emit(event.copy(retries = event.retries - 1))
+                    }
+
+                    event.untilRepeatStateChange && event.retries > 0 &&
+                        playback.repeatState == previousRepeatState -> {
+                        // try again until the repeat state changes
+                        delay(REFRESH_BUFFER_MS)
+                        emit(event.copy(retries = event.retries - 1))
+                    }
+
+                    event.untilShuffleStateChange && event.retries > 0 &&
+                        playback.shuffleState == previousShuffleState -> {
+                        // try again until the shuffle state changes
+                        delay(REFRESH_BUFFER_MS)
+                        emit(event.copy(retries = event.retries - 1))
+                    }
+
+                    else -> mutateState {
+                        it.copy(
+                            playbackTrack = playback.item ?: it.playbackTrack,
+                            playbackProgressMs = playback.progressMs,
+                            playbackIsPlaying = playback.isPlaying,
+                            playbackShuffleState = playback.shuffleState,
+                            playbackRepeatState = playback.repeatState,
+                            playbackCurrentDevice = playback.device,
+                            loadingPlayback = false
+                        )
+                    }
                 }
             }
 
@@ -271,8 +309,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 
                 try {
                     Spotify.Player.startPlayback(deviceId = deviceId)
-                    emit(Event.LoadPlayback)
-                    emit(Event.LoadTrackPlayback())
+                    emit(Event.LoadPlayback(untilIsPlayingChange = true))
                 } finally {
                     mutateState { it.copy(togglingPlayback = false) }
                 }
@@ -287,8 +324,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 
                 try {
                     Spotify.Player.pausePlayback(deviceId = deviceId)
-                    emit(Event.LoadPlayback)
-                    emit(Event.LoadTrackPlayback())
+                    emit(Event.LoadPlayback(untilIsPlayingChange = true))
                 } finally {
                     mutateState { it.copy(togglingPlayback = false) }
                 }
@@ -333,7 +369,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 
                 try {
                     Spotify.Player.toggleShuffle(deviceId = deviceId, state = event.shuffle)
-                    emit(Event.LoadPlayback)
+                    emit(Event.LoadPlayback(untilShuffleStateChange = true))
                 } finally {
                     mutateState { it.copy(togglingShuffle = false) }
                 }
@@ -348,7 +384,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 
                 try {
                     Spotify.Player.setRepeatMode(deviceId = deviceId, state = event.repeatState)
-                    emit(Event.LoadPlayback)
+                    emit(Event.LoadPlayback(untilRepeatStateChange = true))
                 } finally {
                     mutateState { it.copy(togglingRepeat = false) }
                 }
@@ -373,7 +409,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                 }
 
                 Spotify.Player.seekToPosition(deviceId = deviceId, positionMs = event.positionMs)
-                emit(Event.LoadPlayback)
+                emit(Event.LoadPlayback())
             }
 
             is Event.SelectDevice -> {
@@ -703,7 +739,7 @@ private fun VolumeControls(state: BottomPanelPresenter.State, presenter: BottomP
             onClick = {
                 presenter.emitAsync(
                     BottomPanelPresenter.Event.LoadDevices,
-                    BottomPanelPresenter.Event.LoadPlayback,
+                    BottomPanelPresenter.Event.LoadPlayback(),
                     BottomPanelPresenter.Event.LoadTrackPlayback()
                 )
             }
