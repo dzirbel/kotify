@@ -232,7 +232,10 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                     throw ex
                 }
 
-                playback?.let { Player.playbackContext.value = it.context }
+                playback?.let {
+                    Player.isPlaying.value = it.isPlaying
+                    Player.playbackContext.value = it.context
+                }
                 playback?.item?.let { track ->
                     Player.currentTrack.value = track
                     SpotifyCache.put(track)
@@ -289,7 +292,10 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                     throw ex
                 }
 
-                trackPlayback?.let { Player.playbackContext.value = it.context }
+                trackPlayback?.let {
+                    Player.isPlaying.value = it.isPlaying
+                    Player.playbackContext.value = it.context
+                }
                 trackPlayback?.item?.let { track ->
                     Player.currentTrack.value = track
                     SpotifyCache.put(track)

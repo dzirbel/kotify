@@ -30,6 +30,11 @@ object Player {
     val playbackContext = mutableStateOf<PlaybackContext?>(null)
 
     /**
+     * A [androidx.compose.runtime.MutableState] of whether the playback is currently playing.
+     */
+    val isPlaying = mutableStateOf(false)
+
+    /**
      * A [androidx.compose.runtime.MutableState] of the currently playing [FullTrack].
      */
     val currentTrack = mutableStateOf<FullTrack?>(null)
@@ -48,10 +53,30 @@ object Player {
     /**
      * Plays from the given [contextUri], returning true if this is possible (i.e. [playable] is true) or false if not.
      */
-    fun play(contextUri: String, scope: CoroutineScope = GlobalScope): Boolean {
+    fun play(contextUri: String, resumeIfSameContext: Boolean = true, scope: CoroutineScope = GlobalScope): Boolean {
         currentDevice.value?.let { device ->
             scope.launch {
-                Spotify.Player.startPlayback(contextUri = contextUri, deviceId = device.id)
+                Spotify.Player.startPlayback(
+                    contextUri = contextUri
+                        .takeUnless { resumeIfSameContext && playbackContext.value?.uri == contextUri },
+                    deviceId = device.id
+                )
+
+                _playEvents.emit(Unit)
+            }
+            return true
+        }
+
+        return false
+    }
+
+    /**
+     * Pauses the current playback, returning true if this is possible (i.e. [playable] is true) or false if not.
+     */
+    fun pause(scope: CoroutineScope = GlobalScope): Boolean {
+        currentDevice.value?.let { device ->
+            scope.launch {
+                Spotify.Player.pausePlayback(deviceId = device.id)
 
                 _playEvents.emit(Unit)
             }

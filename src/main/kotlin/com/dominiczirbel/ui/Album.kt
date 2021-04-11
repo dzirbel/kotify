@@ -7,21 +7,30 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.svgResource
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.FullAlbum
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.Track
 import com.dominiczirbel.ui.common.InvalidateButton
+import com.dominiczirbel.ui.common.LinkedText
+import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
+import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
+import java.util.concurrent.TimeUnit
 
 private class AlbumPresenter(private val albumId: String, scope: CoroutineScope) :
     Presenter<AlbumPresenter.State?, AlbumPresenter.Event>(
@@ -80,7 +89,59 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
     ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(state.album.name, fontSize = Dimens.fontTitle)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    LoadedImage(url = state.album.images.firstOrNull()?.url)
+
+                    Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+                        Text(state.album.name, fontSize = Dimens.fontTitle)
+
+                        Spacer(Modifier)
+
+                        LinkedText(
+                            onClickLink = { artistId ->
+                                pageStack.mutate { to(ArtistPage(artistId = artistId)) }
+                            }
+                        ) {
+                            text("By ")
+
+                            state.album.artists.forEachIndexed { index, artist ->
+                                link(text = artist.name, link = artist.id)
+
+                                if (index != state.album.artists.lastIndex) {
+                                    text(", ")
+                                }
+                            }
+                        }
+
+                        Text(state.album.releaseDate)
+
+                        val totalDurationMins = remember(state.tracks) {
+                            TimeUnit.MILLISECONDS.toMinutes(state.tracks.sumBy { it.durationMs.toInt() }.toLong())
+                        }
+
+                        Text("${state.album.tracks.total} songs, $totalDurationMins min")
+
+                        val playing = Player.isPlaying.value && Player.playbackContext.value?.uri == state.album.uri
+                        IconButton(
+                            enabled = Player.playable,
+                            modifier = Modifier.size(Dimens.iconMedium),
+                            onClick = {
+                                if (playing) Player.pause() else Player.play(contextUri = state.album.uri)
+                            }
+                        ) {
+                            Icon(
+                                painter = svgResource(
+                                    if (playing) "pause-circle-outline.svg" else "play-circle-outline.svg"
+                                ),
+                                modifier = Modifier.size(Dimens.iconMedium),
+                                contentDescription = "Play"
+                            )
+                        }
+                    }
+                }
 
                 InvalidateButton(
                     refreshing = state.refreshing,
