@@ -1,6 +1,7 @@
 package com.dominiczirbel.ui
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -8,9 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -37,20 +40,24 @@ private class LibraryPresenter(scope: CoroutineScope) :
     Presenter<LibraryPresenter.State?, LibraryPresenter.Event>(
         scope = scope,
         eventMergeStrategy = EventMergeStrategy.LATEST,
-        startingEvents = listOf(Event.Load),
+        startingEvents = listOf(Event.LoadPlaylists()),
         initialState = null
     ) {
 
     data class State(val refreshing: Boolean, val playlists: List<Playlist>)
 
     sealed class Event {
-        object Load : Event()
+        class LoadPlaylists(val invalidate: Boolean = false) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
         when (event) {
-            Event.Load -> {
+            is Event.LoadPlaylists -> {
                 mutateState { it?.copy(refreshing = true) }
+
+                if (event.invalidate) {
+                    SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedPlaylists.ID)
+                }
 
                 val playlists = SpotifyCache.Playlists.getSavedPlaylists()
                     .map { SpotifyCache.Playlists.getPlaylist(it) }
@@ -100,14 +107,33 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
 
         Spacer(Modifier.height(Dimens.space3))
 
-        Text(
-            modifier = Modifier.fillMaxWidth().padding(Dimens.space3),
-            fontSize = Dimens.fontTitle,
-            text = "Playlists"
-        )
+        val stateOrError = presenter.state()
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                modifier = Modifier.weight(1f).padding(Dimens.space3),
+                fontSize = Dimens.fontTitle,
+                text = "Playlists"
+            )
+
+            val refreshing = stateOrError.safeState?.refreshing == true
+            IconButton(
+                enabled = !refreshing,
+                onClick = { presenter.emitAsync(LibraryPresenter.Event.LoadPlaylists(invalidate = true)) }
+            ) {
+                if (refreshing) {
+                    CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.Refresh,
+                        contentDescription = "Refresh",
+                        modifier = Modifier.size(Dimens.iconMedium)
+                    )
+                }
+            }
+        }
 
         HandleState(
-            state = { presenter.state() },
+            state = { stateOrError },
             onError = {
                 Icon(
                     imageVector = Icons.Default.Warning,
