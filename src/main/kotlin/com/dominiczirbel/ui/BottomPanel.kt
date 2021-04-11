@@ -41,6 +41,7 @@ import androidx.compose.ui.res.svgResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.model.FullTrack
 import com.dominiczirbel.network.model.PlaybackDevice
@@ -232,7 +233,10 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                 }
 
                 playback?.let { Player.playbackContext.value = it.context }
-                playback?.item?.let { Player.currentTrack.value = it }
+                playback?.item?.let { track ->
+                    Player.currentTrack.value = track
+                    SpotifyCache.put(track)
+                }
 
                 when {
                     playback == null -> mutateState { it.copy(loadingPlayback = false) }
@@ -286,7 +290,10 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                 }
 
                 trackPlayback?.let { Player.playbackContext.value = it.context }
-                trackPlayback?.item?.let { Player.currentTrack.value = it }
+                trackPlayback?.item?.let { track ->
+                    Player.currentTrack.value = track
+                    SpotifyCache.put(track)
+                }
 
                 when {
                     trackPlayback == null ->

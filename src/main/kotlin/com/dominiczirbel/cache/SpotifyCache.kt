@@ -191,6 +191,10 @@ object SpotifyCache {
         return cache.getCached(id)?.cacheTime
     }
 
+    fun put(obj: CacheableObject) {
+        cache.put(obj)
+    }
+
     object Albums {
         suspend fun getAlbum(id: String): Album = cache.get<Album>(id) { Spotify.Albums.getAlbum(id) }
         suspend fun getFullAlbum(id: String): FullAlbum = cache.get(id) { Spotify.Albums.getAlbum(id) }
