@@ -756,7 +756,6 @@ private fun TrackProgress(state: BottomPanelPresenter.State, presenter: BottomPa
 @Composable
 private fun VolumeControls(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        // TODO volume slider often buggy - might be fetching device state before new volume has been applied
         val devices = state.devices
         val currentDevice = devices?.firstOrNull()
 
