@@ -189,6 +189,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                     null
                 }
 
+                @Suppress("ComplexCondition")
                 if (event.untilVolumeChange &&
                     event.retries > 0 &&
                     expectedChangeDevice != null &&
