@@ -63,6 +63,7 @@ fun HyperlinkSpanStyle() = SpanStyle(color = MaterialTheme.colors.primary, textD
 @Composable
 fun LinkedText(
     modifier: Modifier = Modifier,
+    key: Any? = null,
     style: TextStyle = LocalTextStyle.current,
     unhoveredSpanStyle: SpanStyle = SpanStyle(),
     hoveredSpanStyle: SpanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
@@ -76,7 +77,7 @@ fun LinkedText(
     val hoverState = remember { mutableStateOf(Pair<Int?, String?>(null, null)) }
 
     // TODO maybe optimize if unhoveredSpanStyle and hoveredSpanStyle are the same
-    val text = remember(hoverState.value) {
+    val text = remember(hoverState.value, key) {
         LinkElementBuilder(
             hoveredOffset = hoverState.value.first,
             unhoveredSpanStyle = unhoveredSpanStyle,

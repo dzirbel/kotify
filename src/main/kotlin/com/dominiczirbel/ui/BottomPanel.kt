@@ -610,6 +610,7 @@ private fun CurrentTrack(track: Track?, pageStack: MutableState<PageStack>) {
                 Spacer(Modifier.height(Dimens.space3))
 
                 LinkedText(
+                    key = track.artists,
                     style = LocalTextStyle.current.copy(fontSize = Dimens.fontSmall),
                     onClickLink = { artistId ->
                         pageStack.mutate { to(ArtistPage(artistId = artistId)) }
@@ -628,6 +629,7 @@ private fun CurrentTrack(track: Track?, pageStack: MutableState<PageStack>) {
 
                 if (album != null) {
                     LinkedText(
+                        key = album,
                         style = LocalTextStyle.current.copy(fontSize = Dimens.fontSmall),
                         onClickLink = { albumId ->
                             pageStack.mutate { to(AlbumPage(albumId = albumId)) }
