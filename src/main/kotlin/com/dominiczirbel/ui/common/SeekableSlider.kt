@@ -1,11 +1,9 @@
 package com.dominiczirbel.ui.common
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -101,16 +99,21 @@ fun SeekableSlider(
                         true
                     }
                 )
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    val maxWidth = barWidth.value
-                    val adjustedX = hoverLocation.value.coerceAtLeast(0f).coerceAtMost(maxWidth.toFloat())
-                    val seekPercent = adjustedX / maxWidth
-                    drag.value = adjustedX - (progressOverride.value!! * maxWidth)
-                    onSeek(seekPercent)
-                }
+                // hack: pointerMoveFilter is not called on drag events (pointer move with mouse down), so we listen for
+                // those manually with draggable(). We also don't need clickable() since regular clicks are captured by
+                // onDragStopped
+                .draggable(
+                    state = rememberDraggableState { hoverLocation.value += it },
+                    orientation = Orientation.Horizontal,
+                    startDragImmediately = true,
+                    onDragStopped = {
+                        val maxWidth = barWidth.value
+                        val adjustedX = hoverLocation.value.coerceAtLeast(0f).coerceAtMost(maxWidth.toFloat())
+                        val seekPercent = adjustedX / maxWidth
+                        drag.value = adjustedX - (progressOverride.value!! * maxWidth)
+                        onSeek(seekPercent)
+                    }
+                )
                 .padding(padding)
                 .size(width = sliderWidth ?: Dp.Unspecified, height = sliderHeight)
                 .let {
