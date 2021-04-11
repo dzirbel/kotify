@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -18,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.svgResource
-import androidx.compose.ui.unit.dp
 import com.dominiczirbel.network.model.FullTrack
 import com.dominiczirbel.network.model.SimplifiedAlbum
 import com.dominiczirbel.network.model.SimplifiedTrack
@@ -169,11 +167,8 @@ object TrackNumberColumn : ColumnByString<Track>(header = "#", width = ColumnWid
 }
 
 object PopularityColumn : Column<Track>() {
-    override val width: ColumnWidth = ColumnWidth.Fill()
+    override val width: ColumnWidth = ColumnWidth.MatchHeader
     override val horizontalAlignment = Alignment.End
-
-    // TODO make the column width match the header rather than hardcoding
-    private val WIDTH = 70.dp
 
     private val Track.popularity: Int?
         get() = (this as? FullTrack)?.popularity ?: (this as? SimplifiedTrack)?.popularity
@@ -194,8 +189,8 @@ object PopularityColumn : Column<Track>() {
                 .padding(Dimens.space3)
                 .background(Colors.current.surface2)
                 .height(height)
-                .width(WIDTH)
-                .border(width = 1.dp, color = color)
+                .fillMaxWidth()
+                .border(width = Dimens.divider, color = color)
         ) {
             Box(
                 @Suppress("MagicNumber")

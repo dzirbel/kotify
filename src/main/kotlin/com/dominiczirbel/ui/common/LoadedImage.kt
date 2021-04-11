@@ -11,19 +11,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.dominiczirbel.cache.SpotifyImageCache
+import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.callbackAsState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
-private val IMAGE_SIZE = 200.dp
-private val IMAGE_ROUNDING = 4.dp
-
 @Composable
 fun LoadedImage(
     url: String?,
-    size: Dp = IMAGE_SIZE,
+    size: Dp = Dimens.contentImage,
     modifier: Modifier = Modifier,
     scope: CoroutineScope = rememberCoroutineScope { Dispatchers.IO },
     contentDescription: String? = null
@@ -35,7 +32,7 @@ fun LoadedImage(
 
     val imageModifier = modifier
         .size(size)
-        .clip(RoundedCornerShape(IMAGE_ROUNDING))
+        .clip(RoundedCornerShape(Dimens.cornerSize))
 
     if (imageBitmap == null) {
         Box(imageModifier.background(Color.LightGray))

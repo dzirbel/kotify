@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.svgResource
-import androidx.compose.ui.unit.dp
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.FullArtist
 import com.dominiczirbel.ui.common.Grid
@@ -36,9 +35,6 @@ import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-
-private val IMAGE_SIZE = 200.dp
-private val CELL_ROUNDING = 8.dp
 
 private class ArtistsPresenter(scope: CoroutineScope) :
     Presenter<ArtistsPresenter.State?, ArtistsPresenter.Event>(
@@ -118,7 +114,7 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
 private fun ArtistCell(artist: FullArtist, pageStack: MutableState<PageStack>) {
     Column(
         Modifier
-            .clip(RoundedCornerShape(CELL_ROUNDING))
+            .clip(RoundedCornerShape(Dimens.cornerSize))
             .clickable { pageStack.mutate { to(ArtistPage(artistId = artist.id)) } }
             .padding(Dimens.space3)
     ) {
@@ -130,7 +126,7 @@ private fun ArtistCell(artist: FullArtist, pageStack: MutableState<PageStack>) {
         Spacer(Modifier.height(Dimens.space3))
 
         Row(
-            Modifier.widthIn(max = IMAGE_SIZE),
+            Modifier.widthIn(max = Dimens.contentImage),
             horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
             verticalAlignment = Alignment.CenterVertically
         ) {

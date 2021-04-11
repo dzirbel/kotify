@@ -15,14 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.dp
 import com.dominiczirbel.ui.common.VerticalScroll
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.HandleState
-
-private val LOADING_INDICATOR_SIZE = 60.dp
-private val ERROR_ICON_SIZE = 100.dp
 
 @Composable
 fun <T> BoxScope.ScrollingPage(
@@ -37,7 +33,7 @@ fun <T> BoxScope.ScrollingPage(
                 Icon(
                     imageVector = Icons.Default.Warning,
                     contentDescription = "Error",
-                    modifier = Modifier.size(ERROR_ICON_SIZE).align(Alignment.CenterHorizontally),
+                    modifier = Modifier.size(Dimens.iconHuge).align(Alignment.CenterHorizontally),
                     tint = Colors.current.error
                 )
 
@@ -55,7 +51,7 @@ fun <T> BoxScope.ScrollingPage(
             }
         },
         onLoading = {
-            CircularProgressIndicator(Modifier.size(LOADING_INDICATOR_SIZE).align(Alignment.Center))
+            CircularProgressIndicator(Modifier.size(Dimens.iconHuge).align(Alignment.Center))
         },
         onSuccess = {
             VerticalScroll(scrollState = scrollState) {

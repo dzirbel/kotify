@@ -25,7 +25,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import com.dominiczirbel.network.model.PlaylistTrack
 import com.dominiczirbel.ui.theme.Colors
@@ -87,6 +86,11 @@ sealed class ColumnWidth {
      * remaining width is split between the weighted columns by their [weight].
      */
     class Weighted(val weight: Float) : ColumnWidth()
+
+    /**
+     * A column whose header determines the width of the column.
+     */
+    object MatchHeader : ColumnWidth()
 }
 
 enum class Sort { IN_ORDER, REVERSE_ORDER }
@@ -151,7 +155,7 @@ abstract class Column<T> {
     ) {
         if (sortable) {
             SimpleTextButton(
-                contentPadding = PaddingValues(start = 0.dp, top = 0.dp, bottom = 0.dp, end = padding),
+                contentPadding = PaddingValues(end = padding),
                 onClick = {
                     sort.value = when (sort.value) {
                         Sort.IN_ORDER -> Sort.REVERSE_ORDER
@@ -331,7 +335,7 @@ fun <T> Table(
             // index of placeable is the same as the index of the measurable
             val placeables: Array<Placeable?> = arrayOfNulls(gridMeasurables.size)
 
-            // 1: first measure the fixed columns
+            // 1: first measure the fixed columns and those determined by header width
             columnWidths.forEachIndexed { colIndex, columnSize ->
                 if (columnSize is ColumnWidth.Fixed) {
                     val width = columnSize.width.toPx()
@@ -341,6 +345,22 @@ fun <T> Table(
                     indexesForCol[colIndex].forEach { index ->
                         placeables[index] = gridMeasurables[index].measure(
                             Constraints.fixedWidth(width = width.roundToInt())
+                        )
+                    }
+                } else if (columnSize is ColumnWidth.MatchHeader) {
+                    check(includeHeader) { "cannot use ${ColumnWidth.MatchHeader} without a header" }
+
+                    val headerIndex = indexesForCol[colIndex].first()
+                    val headerPlaceable = gridMeasurables[headerIndex].measure(Constraints())
+                    placeables[headerIndex] = headerPlaceable
+                    val width = headerPlaceable.width
+
+                    colWidths[colIndex] = width.toFloat()
+                    remainingWidth -= width
+
+                    indexesForCol[colIndex].drop(1).forEach { index ->
+                        placeables[index] = gridMeasurables[index].measure(
+                            Constraints.fixedWidth(width = width)
                         )
                     }
                 }
@@ -401,7 +421,7 @@ fun <T> Table(
 
             val dividerPlaceables = dividerMeasurables.map { dividerMeasurable ->
                 dividerMeasurable.measure(
-                    Constraints.fixed(width = constraints.maxWidth, height = 1.dp.roundToPx())
+                    Constraints.fixed(width = constraints.maxWidth, height = Dimens.divider.roundToPx())
                 ).also { totalHeight += it.height }
             }
 

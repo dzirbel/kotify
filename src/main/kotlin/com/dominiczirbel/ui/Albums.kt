@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.Album
 import com.dominiczirbel.ui.common.Grid
@@ -31,9 +30,6 @@ import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-
-private val IMAGE_SIZE = 200.dp
-private val CELL_ROUNDING = 8.dp
 
 private class AlbumsPresenter(scope: CoroutineScope) :
     Presenter<AlbumsPresenter.State?, AlbumsPresenter.Event>(
@@ -107,7 +103,7 @@ fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
             ) { album ->
                 Column(
                     Modifier
-                        .clip(RoundedCornerShape(CELL_ROUNDING))
+                        .clip(RoundedCornerShape(Dimens.cornerSize))
                         .clickable { pageStack.mutate { to(AlbumPage(albumId = album.id!!)) } }
                         .padding(Dimens.space3)
                 ) {
@@ -121,7 +117,7 @@ fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
                     Text(
                         text = album.name,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.align(Alignment.CenterHorizontally).widthIn(max = IMAGE_SIZE)
+                        modifier = Modifier.align(Alignment.CenterHorizontally).widthIn(max = Dimens.contentImage)
                     )
                 }
             }
