@@ -629,12 +629,8 @@ private fun CurrentTrack(track: Track?, pageStack: MutableState<PageStack>) {
                         pageStack.mutate { to(ArtistPage(artistId = artistId)) }
                     }
                 ) {
-                    track.artists.forEachIndexed { index, artist ->
+                    list(track.artists) { artist ->
                         link(text = artist.name, link = artist.id)
-
-                        if (index != track.artists.lastIndex) {
-                            text(", ")
-                        }
                     }
                 }
 

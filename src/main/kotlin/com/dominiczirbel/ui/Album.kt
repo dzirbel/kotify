@@ -106,13 +106,8 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
                             }
                         ) {
                             text("By ")
-
-                            state.album.artists.forEachIndexed { index, artist ->
+                            list(state.album.artists) { artist ->
                                 link(text = artist.name, link = artist.id)
-
-                                if (index != state.album.artists.lastIndex) {
-                                    text(", ")
-                                }
                             }
                         }
 

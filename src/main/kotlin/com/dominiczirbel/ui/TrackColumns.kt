@@ -102,13 +102,8 @@ class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Trac
                 pageStack.mutate { to(ArtistPage(artistId = artistId)) }
             }
         ) {
-            item.artists.forEachIndexed { index, artist ->
-                artist.id?.let {
-                    link(text = artist.name, link = artist.id)
-                    if (index != item.artists.lastIndex) {
-                        text(", ")
-                    }
-                }
+            list(item.artists) { artist ->
+                link(text = artist.name, link = artist.id)
             }
         }
     }
@@ -138,9 +133,7 @@ class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track
             }
         ) {
             item.album?.let { album ->
-                album.id?.let {
-                    link(text = album.name, link = album.id)
-                }
+                link(text = album.name, link = album.id)
             }
         }
     }

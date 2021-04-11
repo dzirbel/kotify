@@ -45,6 +45,20 @@ interface LinkElementScope {
      * If [link] is null, this is equivalent to [text].
      */
     fun link(text: String, link: String?)
+
+    /**
+     * Appends [elements] as a [separator]-joined list (where the separate is plain [text]), invoking [onElement] to
+     * generate the link element(s) for each value of [elements].
+     */
+    fun <T> list(elements: List<T>, separator: String = ", ", onElement: LinkElementScope.(T) -> Unit) {
+        elements.forEachIndexed { index, element ->
+            onElement(element)
+
+            if (index != elements.lastIndex) {
+                text(separator)
+            }
+        }
+    }
 }
 
 /**
