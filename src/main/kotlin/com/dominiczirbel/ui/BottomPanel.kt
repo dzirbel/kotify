@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
@@ -20,12 +21,14 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,11 +46,14 @@ import com.dominiczirbel.network.model.FullTrack
 import com.dominiczirbel.network.model.PlaybackDevice
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.Track
+import com.dominiczirbel.ui.common.LinkedText
 import com.dominiczirbel.ui.common.LoadedImage
+import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.common.SeekableSlider
 import com.dominiczirbel.ui.common.SimpleTextButton
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
+import com.dominiczirbel.ui.util.mutate
 import com.dominiczirbel.util.formatDuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -480,7 +486,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 }
 
 @Composable
-fun BottomPanel() {
+fun BottomPanel(pageStack: MutableState<PageStack>) {
     val scope = rememberCoroutineScope()
     val presenter = remember { BottomPanelPresenter(scope) }
 
@@ -495,7 +501,7 @@ fun BottomPanel() {
             modifier = Modifier.background(Colors.current.surface2).padding(Dimens.space3),
             content = {
                 Column {
-                    PlayerState(state = state)
+                    CurrentTrack(track = state.playbackTrack, pageStack = pageStack)
                 }
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -584,9 +590,8 @@ fun BottomPanel() {
 }
 
 @Composable
-private fun PlayerState(state: BottomPanelPresenter.State) {
-    Row {
-        val track = state.playbackTrack
+private fun CurrentTrack(track: Track?, pageStack: MutableState<PageStack>) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space4)) {
         val album = (track as? FullTrack)?.album ?: (track as? SimplifiedTrack)?.album
 
         LoadedImage(
@@ -595,15 +600,42 @@ private fun PlayerState(state: BottomPanelPresenter.State) {
             scope = rememberCoroutineScope()
         )
 
-        Spacer(Modifier.size(Dimens.space3))
-
         track?.let {
-            Column {
+            Column(
+                modifier = Modifier.sizeIn(minHeight = ALBUM_ART_SIZE),
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(track.name)
-                Spacer(Modifier.size(Dimens.space2))
-                Text(track.artists.joinToString { it.name })
-                Spacer(Modifier.size(Dimens.space2))
-                Text(album?.name.orEmpty())
+
+                Spacer(Modifier.height(Dimens.space3))
+
+                LinkedText(
+                    style = LocalTextStyle.current.copy(fontSize = Dimens.fontSmall),
+                    onClickLink = { artistId ->
+                        pageStack.mutate { to(ArtistPage(artistId = artistId)) }
+                    }
+                ) {
+                    track.artists.forEachIndexed { index, artist ->
+                        link(text = artist.name, link = artist.id)
+
+                        if (index != track.artists.lastIndex) {
+                            text(", ")
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(Dimens.space2))
+
+                if (album != null) {
+                    LinkedText(
+                        style = LocalTextStyle.current.copy(fontSize = Dimens.fontSmall),
+                        onClickLink = { albumId ->
+                            pageStack.mutate { to(AlbumPage(albumId = albumId)) }
+                        }
+                    ) {
+                        link(text = album.name, link = album.id)
+                    }
+                }
             }
         }
     }

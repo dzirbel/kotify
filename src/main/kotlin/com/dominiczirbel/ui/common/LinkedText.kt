@@ -41,8 +41,10 @@ interface LinkElementScope {
     /**
      * Appends a linked text, with the given visible [text] and annotated [link] (typically a URL but can be a generic
      * string).
+     *
+     * If [link] is null, this is equivalent to [text].
      */
-    fun link(text: String, link: String)
+    fun link(text: String, link: String?)
 }
 
 /**
@@ -138,7 +140,12 @@ private class LinkElementBuilder(
         currentOffset += text.length
     }
 
-    override fun link(text: String, link: String) {
+    override fun link(text: String, link: String?) {
+        if (link == null) {
+            text(text = text)
+            return
+        }
+
         val endOffset = currentOffset + text.length
         val isHovered = hoveredOffset in currentOffset until endOffset
         val spanStyle = if (isHovered) hoveredSpanStyle else unhoveredSpanStyle

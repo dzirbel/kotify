@@ -25,6 +25,7 @@ object Dimens {
 
     val fontTitle = 24.sp
     val fontBody = 14.sp
+    val fontSmall = 12.sp
     val fontCaption = 10.sp
 
     @Composable

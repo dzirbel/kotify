@@ -35,7 +35,7 @@ fun Root() {
                         mainContent = { MainContent(pageStack = pageStack) }
                     )
 
-                    BottomPanel()
+                    BottomPanel(pageStack = pageStack)
                 }
             }
         )
