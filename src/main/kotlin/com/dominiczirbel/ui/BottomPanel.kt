@@ -56,6 +56,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
@@ -77,7 +78,7 @@ private const val PROGRESS_SLIDER_UPDATE_DELAY_MS = 50L
 private class BottomPanelPresenter(scope: CoroutineScope) :
     Presenter<BottomPanelPresenter.State, BottomPanelPresenter.Event>(
         scope = scope,
-        startingEvents = listOf(Event.LoadDevices, Event.LoadPlayback(), Event.LoadTrackPlayback()),
+        startingEvents = listOf(Event.LoadDevices(), Event.LoadPlayback(), Event.LoadTrackPlayback()),
         eventMergeStrategy = EventMergeStrategy.LATEST,
         initialState = State()
     ) {
@@ -117,7 +118,12 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
     }
 
     sealed class Event {
-        object LoadDevices : Event()
+        data class LoadDevices(
+            val untilVolumeChange: Boolean = false,
+            val untilVolumeChangeDeviceId: String? = null,
+            val retries: Int = 5
+        ) : Event()
+
         data class LoadPlayback(
             val untilIsPlayingChange: Boolean = false,
             val untilShuffleStateChange: Boolean = false,
@@ -158,8 +164,17 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 
     override suspend fun reactTo(event: Event) {
         when (event) {
-            Event.LoadDevices -> {
-                mutateState { it.copy(loadingDevices = true) }
+            is Event.LoadDevices -> {
+                val previousVolume: Int?
+                mutateState {
+                    previousVolume = if (event.untilVolumeChangeDeviceId != null) {
+                        it.devices?.find { device -> device.id == event.untilVolumeChangeDeviceId }?.volumePercent
+                    } else {
+                        null
+                    }
+
+                    it.copy(loadingDevices = true)
+                }
 
                 val devices = try {
                     Spotify.Player.getAvailableDevices()
@@ -170,8 +185,22 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
 
                 Player.playable.value = devices.isNotEmpty()
 
-                mutateState {
-                    it.copy(devices = devices, loadingDevices = false)
+                val expectedChangeDevice = if (event.untilVolumeChangeDeviceId != null) {
+                    devices.find { it.id == event.untilVolumeChangeDeviceId }
+                } else {
+                    null
+                }
+
+                if (event.untilVolumeChange &&
+                    event.retries > 0 &&
+                    expectedChangeDevice != null &&
+                    expectedChangeDevice.volumePercent == previousVolume
+                ) {
+                    emit(event.copy(retries = event.retries - 1))
+                } else {
+                    mutateState {
+                        it.copy(devices = devices, loadingDevices = false)
+                    }
                 }
             }
 
@@ -398,7 +427,7 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                 }
 
                 Spotify.Player.setVolume(deviceId = deviceId, volumePercent = event.volume)
-                emit(Event.LoadDevices)
+                emit(Event.LoadDevices(untilVolumeChange = true, untilVolumeChangeDeviceId = deviceId))
             }
 
             is Event.SeekTo -> {
@@ -409,6 +438,10 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                 }
 
                 Spotify.Player.seekToPosition(deviceId = deviceId, positionMs = event.positionMs)
+
+                // hack: wait a bit to ensure we have a load after the seek has come into effect, otherwise sometimes
+                // the next playback load still has the old position
+                delay(REFRESH_BUFFER_MS)
                 emit(Event.LoadPlayback())
             }
 
@@ -673,26 +706,34 @@ private fun TrackProgress(state: BottomPanelPresenter.State, presenter: BottomPa
     } else {
         val track = state.playbackTrack
 
-        val progress = if (state.playbackIsPlaying) {
-            remember(state) {
-                flow {
-                    val start = System.nanoTime()
-                    while (true) {
-                        val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toInt()
-                        emit(state.playbackProgressMs + elapsedMs)
-                        delay(PROGRESS_SLIDER_UPDATE_DELAY_MS)
+        // save the last manual seek position, which is used when playback is loading to avoid jumps
+        val seekProgress = remember(state.playbackProgressMs, state.playbackIsPlaying) { mutableStateOf<Int?>(null) }
+
+        val currentSeekProgress = seekProgress.value
+        val progress = if ((state.loadingPlayback || state.togglingPlayback) && currentSeekProgress != null) {
+            currentSeekProgress.toLong()
+        } else {
+            remember(state.playbackProgressMs, state.playbackIsPlaying) {
+                if (state.playbackIsPlaying) {
+                    flow {
+                        val start = System.nanoTime()
+                        while (true) {
+                            val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toInt()
+                            emit(state.playbackProgressMs + elapsedMs)
+                            delay(PROGRESS_SLIDER_UPDATE_DELAY_MS)
+                        }
                     }
+                } else {
+                    flowOf(state.playbackProgressMs)
                 }
             }
-                .collectAsState(initial = state.playbackProgressMs, context = Dispatchers.IO)
+                .collectAsState(initial = state.playbackProgressMs, context = Dispatchers.Default)
                 .value
                 .coerceAtMost(track.durationMs)
-        } else {
-            state.playbackProgressMs
         }
 
         SeekableSlider(
-            progress = progress.let { progress.toFloat() / track.durationMs },
+            progress = progress.toFloat() / track.durationMs,
             dragKey = state,
             leftContent = {
                 Text(text = remember(progress) { formatDuration(progress) }, fontSize = Dimens.fontCaption)
@@ -705,6 +746,7 @@ private fun TrackProgress(state: BottomPanelPresenter.State, presenter: BottomPa
             },
             onSeek = { seekPercent ->
                 val positionMs = (seekPercent * track.durationMs).roundToInt()
+                seekProgress.value = positionMs
                 presenter.emitAsync(BottomPanelPresenter.Event.SeekTo(positionMs = positionMs))
             }
         )
@@ -717,8 +759,18 @@ private fun VolumeControls(state: BottomPanelPresenter.State, presenter: BottomP
         // TODO volume slider often buggy - might be fetching device state before new volume has been applied
         val devices = state.devices
         val currentDevice = devices?.firstOrNull()
+
+        val seekVolume = remember(currentDevice?.volumePercent) { mutableStateOf<Int?>(null) }
+
+        val currentSeekVolume = seekVolume.value
+        val volume = if (state.loadingPlayback && currentSeekVolume != null) {
+            currentSeekVolume
+        } else {
+            currentDevice?.volumePercent
+        }
+
         SeekableSlider(
-            progress = @Suppress("MagicNumber") currentDevice?.volumePercent?.let { it.toFloat() / 100 },
+            progress = @Suppress("MagicNumber") volume?.let { it.toFloat() / 100 },
             dragKey = currentDevice,
             sliderWidth = VOLUME_SLIDER_WIDTH,
             leftContent = {
@@ -728,8 +780,9 @@ private fun VolumeControls(state: BottomPanelPresenter.State, presenter: BottomP
                 )
             },
             onSeek = { seekPercent ->
-                val volume = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
-                presenter.emitAsync(BottomPanelPresenter.Event.SetVolume(volume))
+                val volumeInt = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
+                seekVolume.value = volumeInt
+                presenter.emitAsync(BottomPanelPresenter.Event.SetVolume(volumeInt))
             }
         )
 
@@ -738,7 +791,7 @@ private fun VolumeControls(state: BottomPanelPresenter.State, presenter: BottomP
             enabled = !refreshing,
             onClick = {
                 presenter.emitAsync(
-                    BottomPanelPresenter.Event.LoadDevices,
+                    BottomPanelPresenter.Event.LoadDevices(),
                     BottomPanelPresenter.Event.LoadPlayback(),
                     BottomPanelPresenter.Event.LoadTrackPlayback()
                 )
