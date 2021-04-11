@@ -7,13 +7,17 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.ContentAlpha
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.svgResource
 import androidx.compose.ui.unit.dp
 import com.dominiczirbel.network.model.FullTrack
 import com.dominiczirbel.network.model.SimplifiedAlbum
@@ -36,6 +40,7 @@ fun trackColumns(
     includeAlbum: Boolean = true
 ): List<Column<Track>> {
     return listOfNotNull(
+        PlayingColumn,
         TrackNumberColumn.takeIf { includeTrackNumber },
         NameColumn,
         ArtistColumn(pageStack),
@@ -43,6 +48,36 @@ fun trackColumns(
         DurationColumn,
         PopularityColumn
     )
+}
+
+object PlayingColumn : Column<Track>() {
+    override val width = ColumnWidth.Fill()
+
+    override val verticalAlignment = Alignment.CenterVertically
+
+    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+        error("cannot compare by playing state")
+    }
+
+    @Composable
+    override fun header(sort: MutableState<Sort?>) {
+        Box(Modifier)
+    }
+
+    @Composable
+    override fun item(item: Track, index: Int) {
+        if (Player.currentTrack.value?.id == item.id) {
+            val fontSizeDp = with(LocalDensity.current) { Dimens.fontBody.toDp() }
+            Icon(
+                painter = svgResource("volume-up.svg"),
+                contentDescription = "Playing",
+                tint = MaterialTheme.colors.primary,
+                modifier = Modifier.padding(horizontal = Dimens.space2).size(fontSizeDp)
+            )
+        } else {
+            Box(Modifier)
+        }
+    }
 }
 
 object NameColumn : ColumnByString<Track>(header = "Title", width = ColumnWidth.Weighted(weight = 1f)) {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -17,6 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.svgResource
 import androidx.compose.ui.text.font.FontWeight
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.Playlist
@@ -119,16 +122,36 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
                 )
             },
             onSuccess = { state ->
-                state.playlists.forEach { playlist ->
-                    MaxWidthButton(
-                        text = playlist.name,
-                        contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
-                        selected = pageStack.value.current == PlaylistPage(playlistId = playlist.id),
-                        onClick = { pageStack.mutate { to(PlaylistPage(playlistId = playlist.id)) } }
-                    )
-                }
+                state.playlists.forEach { playlist -> PlaylistItem(playlist, pageStack) }
             }
         )
+    }
+}
+
+@Composable
+private fun PlaylistItem(playlist: Playlist, pageStack: MutableState<PageStack>) {
+    val selected = pageStack.value.current == PlaylistPage(playlistId = playlist.id)
+
+    SimpleTextButton(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
+        onClick = { pageStack.mutate { to(PlaylistPage(playlistId = playlist.id)) } }
+    ) {
+        Text(
+            text = playlist.name,
+            modifier = Modifier.weight(1f),
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+        )
+
+        if (Player.playbackContext.value?.uri == playlist.uri) {
+            val sizeDp = with(LocalDensity.current) { Dimens.fontBody.toDp() }
+            Icon(
+                painter = svgResource("volume-up.svg"),
+                contentDescription = "Volume",
+                tint = MaterialTheme.colors.primary,
+                modifier = Modifier.size(sizeDp)
+            )
+        }
     }
 }
 

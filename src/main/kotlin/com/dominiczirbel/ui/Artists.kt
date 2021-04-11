@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -30,6 +31,7 @@ import com.dominiczirbel.ui.common.Grid
 import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.PageStack
+import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
@@ -135,14 +137,16 @@ private fun ArtistCell(artist: FullArtist, pageStack: MutableState<PageStack>) {
             Text(text = artist.name, modifier = Modifier.weight(1f))
 
             IconButton(
-                enabled = Player.playable.value,
+                enabled = Player.playable,
                 modifier = Modifier.size(Dimens.iconSmall),
                 onClick = { Player.play(contextUri = artist.uri) }
             ) {
+                val playing = Player.playbackContext.value?.uri == artist.uri
                 Icon(
                     painter = svgResource("play-circle-outline.svg"),
                     modifier = Modifier.size(Dimens.iconSmall),
-                    contentDescription = "Play"
+                    contentDescription = "Play",
+                    tint = if (playing) MaterialTheme.colors.primary else Colors.current.text
                 )
             }
         }

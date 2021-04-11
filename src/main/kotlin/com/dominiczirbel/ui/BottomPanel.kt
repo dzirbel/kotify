@@ -183,8 +183,6 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                     throw ex
                 }
 
-                Player.playable.value = devices.isNotEmpty()
-
                 val expectedChangeDevice = if (event.untilVolumeChangeDeviceId != null) {
                     devices.find { it.id == event.untilVolumeChangeDeviceId }
                 } else {
@@ -198,9 +196,12 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                 ) {
                     emit(event.copy(retries = event.retries - 1))
                 } else {
+                    val currentDevice: PlaybackDevice?
                     mutateState {
                         it.copy(devices = devices, loadingDevices = false)
+                            .also { newState -> currentDevice = newState.currentDevice }
                     }
+                    Player.currentDevice.value = currentDevice
                 }
             }
 
@@ -222,6 +223,9 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                     mutateState { it.copy(loadingPlayback = false) }
                     throw ex
                 }
+
+                playback?.let { Player.playbackContext.value = it.context }
+                playback?.item?.let { Player.currentTrack.value = it }
 
                 when {
                     playback == null -> mutateState { it.copy(loadingPlayback = false) }
@@ -273,6 +277,9 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
                     mutateState { it.copy(loadingTrackPlayback = false) }
                     throw ex
                 }
+
+                trackPlayback?.let { Player.playbackContext.value = it.context }
+                trackPlayback?.item?.let { Player.currentTrack.value = it }
 
                 when {
                     trackPlayback == null ->
