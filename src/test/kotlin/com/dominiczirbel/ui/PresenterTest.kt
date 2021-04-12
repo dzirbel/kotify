@@ -1,7 +1,7 @@
 package com.dominiczirbel.ui
 
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -13,6 +13,29 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 
+/**
+ * Wraps the common setup for testing a [Presenter].
+ */
+fun <S, E, P : Presenter<S, E>> testPresenter(
+    createPresenter: CoroutineScope.() -> P,
+    beforeOpen: (suspend (P) -> Unit)? = null,
+    block: suspend TestCoroutineScope.(P) -> Unit
+) {
+    runBlockingTest {
+        val presenter = createPresenter()
+
+        beforeOpen?.invoke(presenter)
+
+        val job = launch { presenter.open() }
+
+        block(presenter)
+
+        presenter.close()
+
+        job.cancel()
+    }
+}
+
 internal class PresenterTest {
     private data class State(val field: String)
     private data class Event(
@@ -23,12 +46,13 @@ internal class PresenterTest {
     )
 
     private class TestPresenter(
+        scope: CoroutineScope,
         eventMergeStrategy: EventMergeStrategy = EventMergeStrategy.MERGE,
         startingEvents: List<Event>? = null
     ) : Presenter<State, Event>(
         eventMergeStrategy = eventMergeStrategy,
         startingEvents = startingEvents,
-        scope = GlobalScope,
+        scope = scope,
         initialState = State("initial")
     ) {
 
@@ -49,26 +73,10 @@ internal class PresenterTest {
         }
     }
 
-    private fun wrapPresenterOpen(
-        presenter: TestPresenter,
-        beforeOpen: (suspend (TestPresenter) -> Unit)? = null,
-        block: suspend TestCoroutineScope.(TestPresenter) -> Unit
-    ) {
-        runBlockingTest {
-            beforeOpen?.invoke(presenter)
-
-            val job = launch { presenter.open() }
-
-            block(presenter)
-
-            job.cancel()
-        }
-    }
-
     @Test
     fun testEventBeforeOpen() {
-        wrapPresenterOpen(
-            presenter = TestPresenter(),
+        testPresenter(
+            createPresenter = { TestPresenter(this) },
             beforeOpen = { presenter ->
                 presenter.emit(Event("e1"))
             }
@@ -79,7 +87,7 @@ internal class PresenterTest {
 
     @Test
     fun testStartingEvents() {
-        wrapPresenterOpen(TestPresenter(startingEvents = listOf(Event("e1"), Event("e2")))) { presenter ->
+        testPresenter({ TestPresenter(scope = this, startingEvents = listOf(Event("e1"), Event("e2"))) }) { presenter ->
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1 | e2"))
         }
     }
@@ -88,7 +96,7 @@ internal class PresenterTest {
     @EnumSource(Presenter.EventMergeStrategy::class)
     fun testException(eventMergeStrategy: Presenter.EventMergeStrategy) {
         val throwable = Throwable()
-        wrapPresenterOpen(TestPresenter(eventMergeStrategy = eventMergeStrategy)) { presenter ->
+        testPresenter({ TestPresenter(scope = this, eventMergeStrategy = eventMergeStrategy) }) { presenter ->
             assertThat(presenter.errors).isEmpty()
 
             coroutineScope { presenter.emit(Event(param = "1", throwable = throwable)) }
@@ -115,7 +123,7 @@ internal class PresenterTest {
     @EnumSource(Presenter.EventMergeStrategy::class)
     @Suppress("TooGenericExceptionThrown")
     fun testAsyncException(eventMergeStrategy: Presenter.EventMergeStrategy) {
-        wrapPresenterOpen(TestPresenter(eventMergeStrategy = eventMergeStrategy)) { presenter ->
+        testPresenter({ TestPresenter(scope = this, eventMergeStrategy = eventMergeStrategy) }) { presenter ->
             coroutineScope {
                 presenter.emit(
                     Event(
@@ -147,7 +155,9 @@ internal class PresenterTest {
 
     @RepeatedTest(10)
     fun testMerge() {
-        wrapPresenterOpen(TestPresenter(eventMergeStrategy = Presenter.EventMergeStrategy.MERGE)) { presenter ->
+        testPresenter(
+            { TestPresenter(scope = this, eventMergeStrategy = Presenter.EventMergeStrategy.MERGE) }
+        ) { presenter ->
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
 
             launch { presenter.emit(Event("e1", delay = 10)) }
@@ -175,7 +185,9 @@ internal class PresenterTest {
 
     @RepeatedTest(10)
     fun testLatest() {
-        wrapPresenterOpen(TestPresenter(eventMergeStrategy = Presenter.EventMergeStrategy.LATEST)) { presenter ->
+        testPresenter(
+            { TestPresenter(scope = this, eventMergeStrategy = Presenter.EventMergeStrategy.LATEST) }
+        ) { presenter ->
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
 
             launch { presenter.emit(Event("e1", delay = 10)) }

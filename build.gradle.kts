@@ -11,6 +11,7 @@ private object Versions {
     const val kotlinxSerialization = "1.0.1" // https://github.com/Kotlin/kotlinx.serialization
     const val slf4j = "1.7.30" // http://www.slf4j.org/
     const val ktor = "1.5.2" // https://ktor.io/changelog/
+    const val mockk = "1.11.0" // https://mockk.io/
     const val okhttp = "4.9.1" // https://square.github.io/okhttp/
     const val truth = "1.1.2" // https://truth.dev/
 }
@@ -59,6 +60,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", Versions.junit)
     testImplementation("com.google.truth", "truth", Versions.truth)
     testImplementation("io.ktor", "ktor-server-tests", Versions.ktor)
+    testImplementation("io.mockk", "mockk", Versions.mockk)
 
     testFixturesImplementation(compose.desktop.currentOs)
     testFixturesImplementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)

@@ -55,6 +55,7 @@ import com.dominiczirbel.ui.util.mutate
 import com.dominiczirbel.util.formatDuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
@@ -79,7 +80,7 @@ private const val CENTER_CONTROLS_WEIGHT = 0.5f
 // time in milliseconds between updating the track progress slider
 private const val PROGRESS_SLIDER_UPDATE_DELAY_MS = 50L
 
-private class BottomPanelPresenter(scope: CoroutineScope) :
+internal class BottomPanelPresenter(scope: CoroutineScope) :
     Presenter<BottomPanelPresenter.State, BottomPanelPresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.LoadDevices(), Event.LoadPlayback(), Event.LoadTrackPlayback()),
@@ -87,13 +88,19 @@ private class BottomPanelPresenter(scope: CoroutineScope) :
         initialState = State()
     ) {
 
+    private val job: Job
+
     init {
-        scope.launch {
+        job = scope.launch {
             Player.playEvents.collect {
                 emit(Event.LoadPlayback())
                 emit(Event.LoadTrackPlayback())
             }
         }
+    }
+
+    override fun close() {
+        job.cancel()
     }
 
     data class State(

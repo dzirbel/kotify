@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
+import java.io.Closeable
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.coroutines.CoroutineContext
@@ -61,7 +62,7 @@ abstract class Presenter<State, Event> constructor(
      * An optional list of events which should be emitted at the beginning of the event flow, e.g. to load content.
      */
     private val startingEvents: List<Event>? = null
-) {
+) : Closeable {
     /**
      * Determines how concurrent events are merged, i.e. when a new event is emitted before the previous event was fully
      * processed.
@@ -166,6 +167,13 @@ abstract class Presenter<State, Event> constructor(
     }
 
     /**
+     * Closes the presenter, cleaning up (i.e. cancelling) any background jobs on its [scope].
+     *
+     * Typically only used to cleanup from tests.
+     */
+    override fun close() {}
+
+    /**
      * Listens and handles events for this presenter and returns its current state. This function is appropriate to be
      * called in a composition and returns a composition-aware state.
      */
@@ -192,6 +200,7 @@ abstract class Presenter<State, Event> constructor(
      * Emits the given [events] on a new coroutine spawned from this presenter's [scope], and returns immediately.
      */
     fun emitAsync(vararg events: Event, context: CoroutineContext = EmptyCoroutineContext) {
+        println("emitting ${events.contentToString()}")
         scope.launch(context = context) { events.forEach { emit(it) } }
     }
 
