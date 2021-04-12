@@ -151,7 +151,7 @@ fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
             }
         )
 
-        LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle(), hoveredSpanStyle = HyperlinkSpanStyle()) {
+        LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle, hoveredSpanStyle = HyperlinkSpanStyle) {
             text(
                 "The Spotify application client ID to authenticate with, through which API requests are made. See the "
             )
@@ -205,7 +205,7 @@ fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
             }
         }
 
-        LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle(), hoveredSpanStyle = HyperlinkSpanStyle()) {
+        LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle, hoveredSpanStyle = HyperlinkSpanStyle) {
             text(
                 "The authentication scopes that this application requests; if some are not granted parts of the " +
                     "application may not work. See the "

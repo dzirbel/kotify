@@ -2,6 +2,7 @@ package com.dominiczirbel.ui.theme
 
 import androidx.compose.foundation.ScrollbarStyleAmbient
 import androidx.compose.foundation.defaultScrollbarStyle
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
@@ -51,6 +52,19 @@ enum class Colors(
         scrollBarUnhover = Color(0x78, 0x78, 0x78),
         materialColors = lightColors()
     );
+
+    val primary: Color
+        get() = materialColors.primary
+
+    /**
+     * Gets a highlight-aware color, i.e. [primary] if [highlight] is true and [otherwise] if not.
+     *
+     * Also applies the alpha from [LocalContentAlpha].
+     */
+    @Composable
+    fun highlighted(highlight: Boolean, otherwise: Color = LocalContentColor.current): Color {
+        return (if (highlight) primary else otherwise).copy(alpha = LocalContentAlpha.current)
+    }
 
     /**
      * Applies this set of [Colors] to the given [content].

@@ -19,10 +19,7 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.LocalContentColor
 import androidx.compose.material.LocalTextStyle
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -670,11 +667,7 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
             Icon(
                 painter = svgResource("shuffle.svg"),
                 modifier = Modifier.size(Dimens.iconSmall),
-                tint = if (shuffling) {
-                    MaterialTheme.colors.primary.copy(alpha = LocalContentAlpha.current)
-                } else {
-                    LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
-                },
+                tint = Colors.current.highlighted(highlight = shuffling),
                 contentDescription = "Shuffle"
             )
         }
@@ -738,11 +731,7 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
         ) {
             Icon(
                 painter = svgResource(if (repeatState == "track") "repeat-one.svg" else "repeat.svg"),
-                tint = if (repeatState == "track" || repeatState == "context") {
-                    MaterialTheme.colors.primary.copy(alpha = LocalContentAlpha.current)
-                } else {
-                    LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
-                },
+                tint = Colors.current.highlighted(highlight = repeatState == "track" || repeatState == "context"),
                 modifier = Modifier.size(Dimens.iconSmall),
                 contentDescription = "Repeat"
             )
@@ -938,7 +927,7 @@ private fun DeviceControls(state: BottomPanelPresenter.State, presenter: BottomP
             // use a custom layout in order to match width with height, which doesn't seem to be possible any other
             // way (e.g. aspectRatio() modifier)
             Layout(
-                modifier = Modifier.background(color = MaterialTheme.colors.primary, shape = CircleShape),
+                modifier = Modifier.background(color = Colors.current.primary, shape = CircleShape),
                 content = {
                     Text(
                         text = devices.size.toString(),

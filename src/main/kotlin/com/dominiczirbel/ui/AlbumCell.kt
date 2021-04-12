@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -60,7 +59,7 @@ fun AlbumCell(album: Album, pageStack: MutableState<PageStack>) {
                         painter = svgResource("play-circle-outline.svg"),
                         modifier = Modifier.size(Dimens.iconSmall),
                         contentDescription = "Play",
-                        tint = if (playing) MaterialTheme.colors.primary else Colors.current.text
+                        tint = Colors.current.highlighted(highlight = playing)
                     )
                 }
             }

@@ -6,7 +6,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.LocalTextStyle
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,6 +20,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
+import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.util.openInBrowser
 import java.awt.Cursor
 
@@ -62,11 +62,10 @@ interface LinkElementScope {
 }
 
 /**
- * A common [SpanStyle] which corresponds to the common URL hyperlink style, underlined and colored according to
- * [MaterialTheme].
+ * A common [SpanStyle] which corresponds to the common URL hyperlink style, underlined and colored with
+ * [Colors.primary].
  */
-@Composable
-fun HyperlinkSpanStyle() = SpanStyle(color = MaterialTheme.colors.primary, textDecoration = TextDecoration.Underline)
+val HyperlinkSpanStyle = SpanStyle(color = Colors.current.primary, textDecoration = TextDecoration.Underline)
 
 /**
  * Displays text build by [elements] with embedded links, allowing styling the links based on the hover state of the

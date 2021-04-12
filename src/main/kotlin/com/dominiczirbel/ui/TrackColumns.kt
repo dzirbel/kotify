@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
@@ -69,7 +68,7 @@ object PlayingColumn : Column<Track>() {
             Icon(
                 painter = svgResource("volume-up.svg"),
                 contentDescription = "Playing",
-                tint = MaterialTheme.colors.primary,
+                tint = Colors.current.primary,
                 modifier = Modifier.padding(horizontal = Dimens.space2).size(fontSizeDp)
             )
         } else {

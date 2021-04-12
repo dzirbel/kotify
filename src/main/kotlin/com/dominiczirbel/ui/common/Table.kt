@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -180,7 +179,7 @@ abstract class Column<T> {
                     imageVector = icon,
                     contentDescription = null,
                     modifier = Modifier.size(Dimens.iconSmall),
-                    tint = if (sort.value == null) Color.Companion.Transparent else MaterialTheme.colors.primary
+                    tint = Colors.current.highlighted(sort.value != null, otherwise = Color.Transparent)
                 )
             }
         } else {

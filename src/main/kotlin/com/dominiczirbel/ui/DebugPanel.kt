@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -119,7 +118,7 @@ private fun RowScope.TabButton(tab: DebugTab, currentTab: MutableState<DebugTab>
     SimpleTextButton(
         onClick = { currentTab.value = tab },
         modifier = Modifier.fillMaxWidth().weight(1f),
-        backgroundColor = if (currentTab.value == tab) MaterialTheme.colors.primary else Color.Transparent
+        backgroundColor = if (currentTab.value == tab) Colors.current.primary else Color.Transparent
     ) {
         Text(tab.tabName)
     }

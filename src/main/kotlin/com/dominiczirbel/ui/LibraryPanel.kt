@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -174,7 +173,7 @@ private fun PlaylistItem(playlist: Playlist, pageStack: MutableState<PageStack>)
             Icon(
                 painter = svgResource("volume-up.svg"),
                 contentDescription = "Volume",
-                tint = MaterialTheme.colors.primary,
+                tint = Colors.current.primary,
                 modifier = Modifier.size(sizeDp)
             )
         }

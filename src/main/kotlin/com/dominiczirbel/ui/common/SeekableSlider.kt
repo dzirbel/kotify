@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -136,7 +135,7 @@ fun SeekableSlider(
                             Modifier
                                 .fillMaxWidth(fraction = progress)
                                 .clip(roundedCornerShape)
-                                .background(if (hoverState.value) MaterialTheme.colors.primary else Colors.current.text)
+                                .background(Colors.current.highlighted(highlight = hoverState.value))
                         )
 
                         if (hoverState.value) {
