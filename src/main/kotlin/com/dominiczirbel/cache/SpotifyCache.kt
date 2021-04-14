@@ -104,9 +104,13 @@ object SpotifyCache {
 
         ttlStrategy = CacheTTLStrategy.AlwaysValid,
 
-        eventHandler = Logger.Cache::handleCacheEvents,
+        eventHandler = { events ->
+            if (events.any { it is CacheEvent.Save }) {
+                onSave()
+            }
 
-        onSave = ::onSave,
+            Logger.Cache.handleCacheEvents(events)
+        },
 
         // TODO handle case where simplified object has been updated, but full is now out of date
         replacementStrategy = object : CacheReplacementStrategy {

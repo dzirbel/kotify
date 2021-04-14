@@ -7,18 +7,20 @@ import kotlin.reflect.KClass
  * invalid after a certain amount of time in the cache.
  */
 interface CacheTTLStrategy {
-    fun isValid(cacheObject: CacheObject): Boolean = isValid(cacheObject.cacheTime, cacheObject.obj)
+    fun isValid(cacheObject: CacheObject, currentTime: Long): Boolean {
+        return isValid(cacheTime = cacheObject.cacheTime, currentTime = currentTime, obj = cacheObject.obj)
+    }
 
     /**
      * Determines whether the given [obj], cached at [cacheTime], is still valid.
      */
-    fun isValid(cacheTime: Long, obj: Any): Boolean
+    fun isValid(cacheTime: Long, currentTime: Long, obj: Any): Boolean
 
     /**
      * A [CacheTTLStrategy] which always marks cache elements as valid, so they will never be evicted.
      */
     object AlwaysValid : CacheTTLStrategy {
-        override fun isValid(cacheTime: Long, obj: Any) = true
+        override fun isValid(cacheTime: Long, currentTime: Long, obj: Any) = true
     }
 
     /**
@@ -26,7 +28,7 @@ interface CacheTTLStrategy {
      * source. This is equivalent to not having a cache.
      */
     object NeverValid : CacheTTLStrategy {
-        override fun isValid(cacheTime: Long, obj: Any) = false
+        override fun isValid(cacheTime: Long, currentTime: Long, obj: Any) = false
     }
 
     /**
@@ -34,8 +36,8 @@ interface CacheTTLStrategy {
      * milliseconds will be evicted.
      */
     class UniversalTTL(private val ttl: Long) : CacheTTLStrategy {
-        override fun isValid(cacheTime: Long, obj: Any): Boolean {
-            return cacheTime + ttl >= System.currentTimeMillis()
+        override fun isValid(cacheTime: Long, currentTime: Long, obj: Any): Boolean {
+            return cacheTime + ttl >= currentTime
         }
     }
 
@@ -50,11 +52,11 @@ interface CacheTTLStrategy {
         private val classMap: Map<KClass<*>, Long>,
         private val defaultTTL: Long? = null
     ) : CacheTTLStrategy {
-        override fun isValid(cacheTime: Long, obj: Any): Boolean {
+        override fun isValid(cacheTime: Long, currentTime: Long, obj: Any): Boolean {
             val ttl = classMap[obj::class] ?: defaultTTL
             requireNotNull(ttl) { "no TTL for class ${obj::class}" }
 
-            return cacheTime + ttl >= System.currentTimeMillis()
+            return cacheTime + ttl >= currentTime
         }
     }
 }
