@@ -59,7 +59,6 @@ dependencies {
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", Versions.junit)
     testImplementation("com.google.truth", "truth", Versions.truth)
-    testImplementation("io.ktor", "ktor-server-tests", Versions.ktor)
     testImplementation("io.mockk", "mockk", Versions.mockk)
 
     testFixturesImplementation(compose.desktop.currentOs)
