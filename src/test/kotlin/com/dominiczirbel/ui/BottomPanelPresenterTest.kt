@@ -14,12 +14,28 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.unmockkAll
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 // TODO finish testing
 internal class BottomPanelPresenterTest {
+    private val currentDeviceState: MutableState<PlaybackDevice?> = mockk {
+        every { value = any() } just Runs
+    }
+
+    @BeforeEach
+    fun setup() {
+        unmockkAll()
+        mockkObject(Spotify.Player, SpotifyCache, Player)
+        every { Player.currentDevice } returns currentDeviceState
+
+        coEvery { Spotify.Player.getAvailableDevices() } returns emptyList()
+        coEvery { Spotify.Player.getCurrentPlayback() } returns null
+        coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returns null
+    }
+
     @AfterEach
     fun finish() {
         confirmVerified(Spotify.Player)
@@ -33,7 +49,7 @@ internal class BottomPanelPresenterTest {
         testPresenter(
             createPresenter = ::BottomPanelPresenter,
             beforeOpen = { presenter ->
-                assertThat(presenter.testState.stateOrThrow).isEqualTo(BottomPanelPresenter.State())
+                assertThat(presenter.testState.stateOrThrow).isEqualTo(loadingState)
             }
         ) {
             verifyOpenCalls()
@@ -51,14 +67,7 @@ internal class BottomPanelPresenterTest {
 
             presenter.emit(BottomPanelPresenter.Event.LoadDevices())
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(
-                BottomPanelPresenter.State().copy(
-                    loadingPlayback = false,
-                    loadingTrackPlayback = false,
-                    loadingDevices = false,
-                    devices = listOf(device1, device2)
-                )
-            )
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.copy(devices = listOf(device1, device2)))
 
             coVerify {
                 Spotify.Player.getAvailableDevices()
@@ -68,7 +77,37 @@ internal class BottomPanelPresenterTest {
         }
     }
 
-    private fun verifyOpenCalls() {
+    @Test
+    fun loadDevicesUntilVolumeChange() {
+        val device: PlaybackDevice = mockk {
+            every { id } returns "device_id"
+            every { volumePercent } returnsMany listOf(20, 20, 20, 30)
+        }
+        coEvery { Spotify.Player.getAvailableDevices() } returns listOf(device)
+        testPresenter(::BottomPanelPresenter) { presenter ->
+            verifyOpenCalls(device = device)
+
+            presenter.emit(
+                BottomPanelPresenter.Event.LoadDevices(
+                    untilVolumeChange = true,
+                    untilVolumeChangeDeviceId = "device_id"
+                )
+            )
+
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.copy(devices = listOf(device)))
+
+            coVerify(exactly = 3) {
+                Spotify.Player.getAvailableDevices()
+            }
+
+            coVerify {
+                Player.currentDevice
+                currentDeviceState.value = device
+            }
+        }
+    }
+
+    private fun verifyOpenCalls(device: PlaybackDevice? = null) {
         coVerifyAll {
             Spotify.Player.getAvailableDevices()
             Spotify.Player.getCurrentPlayback()
@@ -76,25 +115,16 @@ internal class BottomPanelPresenterTest {
 
             Player.playEvents
             Player.currentDevice
-            currentDeviceState.value = null
+            currentDeviceState.value = device
         }
     }
 
     companion object {
-        private val currentDeviceState: MutableState<PlaybackDevice?> = mockk {
-            every { value = any() } just Runs
-        }
-
-        @BeforeAll
-        @JvmStatic
-        @Suppress("unused")
-        fun setup() {
-            mockkObject(Spotify.Player, SpotifyCache, Player)
-            every { Player.currentDevice } returns currentDeviceState
-
-            coEvery { Spotify.Player.getAvailableDevices() } returns emptyList()
-            coEvery { Spotify.Player.getCurrentPlayback() } returns null
-            coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returns null
-        }
+        private val loadingState = BottomPanelPresenter.State()
+        private val loadedState = BottomPanelPresenter.State().copy(
+            loadingPlayback = false,
+            loadingTrackPlayback = false,
+            loadingDevices = false
+        )
     }
 }
