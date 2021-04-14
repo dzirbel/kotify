@@ -18,10 +18,10 @@ private object Versions {
 
 plugins {
     // https://kotlinlang.org/releases.html
-    kotlin("jvm") version "1.4.31"
+    kotlin("jvm") version "1.4.32"
 
     // https://github.com/Kotlin/kotlinx.serialization
-    kotlin("plugin.serialization") version "1.4.31"
+    kotlin("plugin.serialization") version "1.4.32"
 
     // https://github.com/detekt/detekt; also update dependency version
     id("io.gitlab.arturbosch.detekt") version "1.16.0"
@@ -30,7 +30,7 @@ plugins {
     id("name.remal.check-dependency-updates") version "1.3.0"
 
     // https://github.com/jetbrains/compose-jb
-    id("org.jetbrains.compose") version "0.4.0-build176"
+    id("org.jetbrains.compose") version "0.4.0-build182"
 
     `java-test-fixtures`
 
