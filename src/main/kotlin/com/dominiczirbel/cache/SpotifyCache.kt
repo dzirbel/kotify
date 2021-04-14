@@ -102,14 +102,14 @@ object SpotifyCache {
 
         saveOnChange = true,
 
-        ttlStrategy = Cache.TTLStrategy.AlwaysValid,
+        ttlStrategy = CacheTTLStrategy.AlwaysValid,
 
         eventHandler = Logger.Cache::handleCacheEvents,
 
         onSave = ::onSave,
 
         // TODO handle case where simplified object has been updated, but full is now out of date
-        replacementStrategy = object : Cache.ReplacementStrategy {
+        replacementStrategy = object : CacheReplacementStrategy {
             /**
              * Checks that an inferior [Simplified] type will not replace a superior [Full] type, returning a non-null
              * value when both [current] and [new] are [Base].

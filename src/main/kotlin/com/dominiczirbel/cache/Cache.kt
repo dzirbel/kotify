@@ -3,7 +3,6 @@ package com.dominiczirbel.cache
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.dominiczirbel.cache.Cache.TTLStrategy
 import kotlinx.coroutines.Deferred
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -11,7 +10,6 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileReader
 import java.nio.file.Files
-import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.measureTime
 
@@ -24,7 +22,7 @@ import kotlin.time.measureTime
  * Objects are cached in-memory with no limit, and can be saved to [file] with [save] or loaded from disk (replacing the
  * in-memory cache) with [load].
  *
- * An optional [ttlStrategy] can limit the values in the cache to observe an arbitrary [TTLStrategy]. Once the
+ * An optional [ttlStrategy] can limit the values in the cache to observe an arbitrary [CacheTTLStrategy]. Once the
  * [ttlStrategy] marks an object as invalid, it will no longer appear in any of the cache accessors, e.g. [cache],
  * [get], etc., but may only be removed from memory once it is attempted to be accessed.
  *
@@ -33,8 +31,8 @@ import kotlin.time.measureTime
 class Cache(
     private val file: File,
     val saveOnChange: Boolean = false,
-    private val ttlStrategy: TTLStrategy = TTLStrategy.AlwaysValid,
-    private val replacementStrategy: ReplacementStrategy = ReplacementStrategy.AlwaysReplace,
+    private val ttlStrategy: CacheTTLStrategy = CacheTTLStrategy.AlwaysValid,
+    private val replacementStrategy: CacheReplacementStrategy = CacheReplacementStrategy.AlwaysReplace,
     private val eventHandler: (List<CacheEvent>) -> Unit = { },
     private val onSave: () -> Unit = { }
 ) {
@@ -403,87 +401,6 @@ class Cache(
 
         if (saved) {
             onSave()
-        }
-    }
-
-    /**
-     * A generic strategy for determining whether new values should replace existing cached values.
-     */
-    interface ReplacementStrategy {
-        /**
-         * Determines whether the [current] object should be replaced by the [new] value.
-         */
-        fun replace(current: Any, new: Any): Boolean
-
-        /**
-         * A [TTLStrategy] which always replaces cached values.
-         */
-        object AlwaysReplace : ReplacementStrategy {
-            override fun replace(current: Any, new: Any) = true
-        }
-
-        /**
-         * A [TTLStrategy] which never replaces cached values.
-         */
-        object NeverReplace : ReplacementStrategy {
-            override fun replace(current: Any, new: Any) = false
-        }
-    }
-
-    /**
-     * A generic strategy for determining whether cached values are still valid; typically cached values may become
-     * invalid after a certain amount of time in the cache.
-     */
-    interface TTLStrategy {
-        fun isValid(cacheObject: CacheObject): Boolean = isValid(cacheObject.cacheTime, cacheObject.obj)
-
-        /**
-         * Determines whether the given [obj], cached at [cacheTime], is still valid.
-         */
-        fun isValid(cacheTime: Long, obj: Any): Boolean
-
-        /**
-         * A [TTLStrategy] which always marks cache elements as valid, so they will never be evicted.
-         */
-        object AlwaysValid : TTLStrategy {
-            override fun isValid(cacheTime: Long, obj: Any) = true
-        }
-
-        /**
-         * A [TTLStrategy] which never marks cache elements as valid, so they will always be fetched from a remote
-         * source. This is equivalent to not having a cache.
-         */
-        object NeverValid : TTLStrategy {
-            override fun isValid(cacheTime: Long, obj: Any) = false
-        }
-
-        /**
-         * A [TTLStrategy] with a [ttl] applied to all cache elements; elements in teh cache for more that [ttl]
-         * milliseconds will be evicted.
-         */
-        class UniversalTTL(private val ttl: Long) : TTLStrategy {
-            override fun isValid(cacheTime: Long, obj: Any): Boolean {
-                return cacheTime + ttl >= System.currentTimeMillis()
-            }
-        }
-
-        /**
-         * A [TTLStrategy] with a TTL applied class-by-class to cache elements, so elements of certain classes may
-         * persist longer in the cache than elements of other classes.
-         *
-         * [defaultTTL] is used for elements of classes that are not in [classMap]; if null and a cached element is not
-         * in [classMap], an exception will be thrown.
-         */
-        class TTLByClass(
-            private val classMap: Map<KClass<*>, Long>,
-            private val defaultTTL: Long? = null
-        ) : TTLStrategy {
-            override fun isValid(cacheTime: Long, obj: Any): Boolean {
-                val ttl = classMap[obj::class] ?: defaultTTL
-                requireNotNull(ttl) { "no TTL for class ${obj::class}" }
-
-                return cacheTime + ttl >= System.currentTimeMillis()
-            }
         }
     }
 }
