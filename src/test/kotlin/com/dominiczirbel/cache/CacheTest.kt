@@ -73,10 +73,7 @@ internal class CacheTest {
 
         timeOverride = 123
         assertThat(cache.put("id", obj)).isTrue()
-        assertEvents(
-            CacheEvent.Miss(cache = cache, id = "id"),
-            CacheEvent.Update(cache = cache, id = "id", previous = null, new = cacheObject)
-        )
+        assertEvents(CacheEvent.Update(cache = cache, id = "id", previous = null, new = cacheObject))
 
         cache.assertContainsExactly(obj)
         events.clear()
@@ -255,7 +252,7 @@ internal class CacheTest {
 
     @Test
     fun testSaveAndLoad() {
-        val cache = createCache()
+        val cache = createCache(saveOnChange = false)
         val obj1 = SimpleObject(id = "id1", name = "obj1")
         val obj2 = SimpleObject(id = "id2", name = "obj2")
         val obj3 = SimpleObject(id = "id3", name = "obj3")
@@ -285,6 +282,9 @@ internal class CacheTest {
         cache.put(obj)
         cache.assertContainsExactly(obj)
 
+        // wait for async write to finish
+        Thread.sleep(100)
+
         cache.load()
         if (saveOnChange) cache.assertContainsExactly(obj) else cache.assertContainsExactly()
     }
@@ -297,6 +297,9 @@ internal class CacheTest {
 
         cache.get("id2") { obj }
         cache.assertContainsExactly(obj)
+
+        // wait for async write to finish
+        Thread.sleep(100)
 
         cache.load()
         if (saveOnChange) cache.assertContainsExactly(obj) else cache.assertContainsExactly()
