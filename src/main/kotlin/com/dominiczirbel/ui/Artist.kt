@@ -86,9 +86,7 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
                 coroutineScope {
                     val deferredArtist = if (event.refreshArtist) {
                         async(Dispatchers.IO) {
-                            println("getting full artist")
                             SpotifyCache.Artists.getFullArtist(id = artistId)
-                                .also { println("got full artist") }
                         }
                     } else {
                         null
@@ -96,9 +94,7 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
 
                     val deferredArtistAlbums = if (event.refreshArtistAlbums) {
                         async(Dispatchers.IO) {
-                            println("getting artist albums")
-                            SpotifyCache.Artists.getArtistAlbums(artistId = artistId, scope = scope)
-                                .also { println("got artist albums") }
+                            SpotifyCache.Artists.getArtistAlbums(artistId = artistId)
                         }
                     } else {
                         null

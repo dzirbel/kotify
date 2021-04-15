@@ -128,6 +128,29 @@ internal class CacheTest {
     }
 
     @Test
+    fun testGetAll() {
+        val cache = createCache()
+
+        cache.put(SimpleObject(id = "id1", name = "name1"))
+        cache.put(SimpleRecursiveObject(id = "id2", name = "name2"))
+
+        val results = cache.getAll(ids = listOf("id1", "id2", "id3")) { missingIds ->
+            // id2 is missing because it is of the wrong type
+            assertThat(missingIds).containsExactly("id2", "id3").inOrder()
+
+            missingIds.map { id ->
+                SimpleObject(id = id, name = "name for $id")
+            }
+        }
+
+        assertThat(results).containsExactly(
+            SimpleObject(id = "id1", name = "name1"),
+            SimpleObject(id = "id2", name = "name for id2"),
+            SimpleObject(id = "id3", name = "name for id3")
+        ).inOrder()
+    }
+
+    @Test
     fun testTTLAlwaysValid() {
         val cache = createCache(ttlStrategy = CacheTTLStrategy.AlwaysValid)
         val obj = SimpleObject(id = "id", name = "object")

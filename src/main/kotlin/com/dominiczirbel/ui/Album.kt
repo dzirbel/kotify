@@ -73,7 +73,7 @@ private class AlbumPresenter(private val albumId: String, scope: CoroutineScope)
                     )
                 }
 
-                val fullTracks = SpotifyCache.Tracks.getFullTracks(ids = tracks.map { it.id!! }, scope = scope)
+                val fullTracks = SpotifyCache.Tracks.getFullTracks(ids = tracks.map { it.id!! })
 
                 mutateState { it?.copy(tracks = fullTracks) }
             }

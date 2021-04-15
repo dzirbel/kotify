@@ -3,7 +3,8 @@ package com.dominiczirbel.cache
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.Deferred
+import com.dominiczirbel.util.zipEach
+import com.dominiczirbel.util.zipToMap
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
@@ -119,6 +120,10 @@ class Cache(
             }
     }
 
+    inline fun <reified T> getCachedValue(id: String): T? {
+        return getCached(id)?.obj as? T
+    }
+
     /**
      * Gets the [CacheObject] associated with each [ids], if it exists in the in-memory cache and is still valid
      * according to [ttlStrategy].
@@ -209,13 +214,15 @@ class Cache(
         val cacheMap = cache.modify { cacheMap ->
             values.forEach { (id, value) ->
                 val current = cacheMap.getIfValid(id)?.obj
-                val replace = current?.let { replacementStrategy.replace(current, value) } != false
-                if (replace) {
-                    val previous = cacheMap[id]
-                    val new = CacheObject(id = id, obj = value, cacheTime = cacheTime)
-                    cacheMap[id] = new
+                if (value != current) {
+                    val replace = current?.let { replacementStrategy.replace(current, value) } != false
+                    if (replace) {
+                        val previous = cacheMap[id]
+                        val new = CacheObject(id = id, obj = value, cacheTime = cacheTime)
+                        cacheMap[id] = new
 
-                    updates[id] = Pair(previous, new)
+                        updates[id] = Pair(previous, new)
+                    }
                 }
             }
 
@@ -257,34 +264,41 @@ class Cache(
     }
 
     /**
-     * Gets all the values of type [T] in the cache for each of [ids], or if the value for an ID does not exist or has a
-     * type other than [T], fetches a new value for it from [remote], puts it and all its
-     * [CacheableObject.recursiveCacheableObjects] in the cache, and returns it.
+     * Gets all the values of type [T] in the cache for each of [ids].
      *
-     * TODO allow batching the remote calls (e.g. for batched endpoints)
+     * [remote] will be called with [ids] which do not have a cached value of type [T]; it should return a list of the
+     * [T] values associated with each ID. These values will be added to the cache and returned along with the cached
+     * values, associated by the given [ids] list.
      */
-    suspend inline fun <reified T : CacheableObject> getAll(
+    inline fun <reified T : CacheableObject> getAll(
         ids: List<String>,
         saveOnChange: Boolean = this.saveOnChange,
-        remote: (String) -> Deferred<T>
+        remote: (List<String>) -> List<T>
     ): List<T> {
         val cached: List<CacheObject?> = getCached(ids = ids)
         check(cached.size == ids.size)
 
-        val jobs = mutableMapOf<Int, Deferred<T>>()
-        cached.forEachIndexed { index, cacheObject ->
+        // if we have all the objects cached no need to call remote
+        if (cached.all { it?.obj as? T != null }) {
+            return cached.map { it?.obj as T }
+        }
+
+        val missingIds = mutableListOf<String>()
+        cached.zipEach(ids) { cacheObject, id ->
             if (cacheObject?.obj !is T) {
-                jobs[index] = remote(ids[index])
+                missingIds.add(id)
             }
         }
 
-        val newObjects = mutableSetOf<T>()
-        return cached
-            .mapIndexed { index, cacheObject ->
-                cacheObject?.obj as? T
-                    ?: jobs.getValue(index).await().also { newObjects.add(it) }
-            }
-            .also { putAll(newObjects, saveOnChange = saveOnChange) }
+        val missingObjects: List<T> = remote(missingIds)
+
+        putAll(missingObjects, saveOnChange = saveOnChange)
+
+        val missingObjectsById: Map<String, T> = missingIds.zipToMap(missingObjects)
+
+        return cached.zip(ids) { cacheObject, id ->
+            cacheObject?.obj as? T ?: missingObjectsById.getValue(id)
+        }
     }
 
     /**
