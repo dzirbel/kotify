@@ -87,6 +87,13 @@ object SpotifyImageCache {
     }
 
     /**
+     * Immediately returns the in-memory cached [ImageBitmap] for [url], if these is one.
+     */
+    fun getInMemory(url: String): ImageBitmap? {
+        return imageJobs[url]?.getCompleted()
+    }
+
+    /**
      * Fetches the [ImageBitmap] from the given [url] or cache.
      */
     suspend fun get(
