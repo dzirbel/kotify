@@ -131,6 +131,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
                         pageStack.value.pages.forEachIndexed { index, page ->
                             DropdownMenuItem(
                                 onClick = {
+                                    historyExpanded.value = false
                                     pageStack.mutate { toIndex(index) }
                                 },
                                 enabled = index != pageStack.value.currentIndex
