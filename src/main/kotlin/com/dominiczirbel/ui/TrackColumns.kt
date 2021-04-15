@@ -97,6 +97,7 @@ class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Trac
     override fun item(item: Track, index: Int) {
         LinkedText(
             modifier = Modifier.padding(Dimens.space3),
+            key = item,
             onClickLink = { artistId ->
                 pageStack.mutate { to(ArtistPage(artistId = artistId)) }
             }
@@ -127,6 +128,7 @@ class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track
     override fun item(item: Track, index: Int) {
         LinkedText(
             modifier = Modifier.padding(Dimens.space3),
+            key = item,
             onClickLink = { albumId ->
                 pageStack.mutate { to(AlbumPage(albumId = albumId)) }
             }
