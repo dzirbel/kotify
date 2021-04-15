@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.dominiczirbel.Logger
 import com.dominiczirbel.ui.Presenter.StateOrError.State
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +33,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * The presenter continually listens for [events] and processes them via [reactTo], which calls [mutateState] to update
  * the view [state].
  */
-abstract class Presenter<State, Event> constructor(
+abstract class Presenter<State, Event : Any> constructor(
     /**
      * The [CoroutineScope] under which this presenter operates, typically bound to the UI's point in the composition
      * (i.e. from [androidx.compose.runtime.rememberCoroutineScope]).
@@ -130,8 +131,6 @@ abstract class Presenter<State, Event> constructor(
 
     private val events = MutableSharedFlow<Event>()
 
-    private val logTag by lazy { this::class.simpleName }
-
     /**
      * A list of accumulated errors from the event stream.
      */
@@ -146,7 +145,7 @@ abstract class Presenter<State, Event> constructor(
     private fun flow(startingEvents: List<Event>? = this.startingEvents): Flow<Event> {
         return events
             .onStart { startingEvents?.forEach { emit(it) } }
-            .onEach { log("Event -> $it") }
+            .onEach { Logger.UI.handleEvent(presenter = this, event = it) }
             .let { flow -> reactTo(flow) }
             .catch {
                 onError(it)
@@ -200,7 +199,6 @@ abstract class Presenter<State, Event> constructor(
      * Emits the given [events] on a new coroutine spawned from this presenter's [scope], and returns immediately.
      */
     fun emitAsync(vararg events: Event, context: CoroutineContext = EmptyCoroutineContext) {
-        println("emitting ${events.contentToString()}")
         scope.launch(context = context) { events.forEach { emit(it) } }
     }
 
@@ -223,15 +221,14 @@ abstract class Presenter<State, Event> constructor(
             transform(lastState)
                 ?.takeIf { it != lastState }
                 ?.let { transformed ->
-                    log("State -> $transformed")
+                    Logger.UI.handleState(presenter = this, state = transformed)
                     stateFlow.value = State(transformed)
                 }
         }
     }
 
-    protected fun onError(throwable: Throwable) {
-        log("Error -> $throwable")
-        logException(throwable)
+    private fun onError(throwable: Throwable) {
+        Logger.UI.handleError(presenter = this, throwable = throwable)
 
         errors = errors.plus(throwable)
 
@@ -254,15 +251,4 @@ abstract class Presenter<State, Event> constructor(
      * etc. May throw exceptions, which will be wrapped as [StateOrError.Error]s.
      */
     abstract suspend fun reactTo(event: Event)
-
-    /**
-     * Logs a [message] to the console, open to allow no-op logging in tests.
-     */
-    protected open fun log(message: String) {
-        println("[$logTag] $message")
-    }
-
-    protected open fun logException(throwable: Throwable) {
-        throwable.printStackTrace()
-    }
 }

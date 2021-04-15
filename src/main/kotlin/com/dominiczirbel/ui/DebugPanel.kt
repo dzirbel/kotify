@@ -49,7 +49,8 @@ import kotlinx.coroutines.flow.map
 private enum class DebugTab(val tabName: String, val log: Logger) {
     NETWORK("Network", Logger.Network),
     CACHE("Cache", Logger.Cache),
-    IMAGE_CACHE("Image Cache", Logger.ImageCache)
+    IMAGE_CACHE("Images", Logger.ImageCache),
+    UI("UI", Logger.UI)
 }
 
 private const val MAX_EVENTS = 500
@@ -77,14 +78,23 @@ private data class ImageCacheSettings(
     val includeMiss: Boolean = true
 )
 
+private data class UISettings(
+    val includeStates: Boolean = true,
+    val includeEvents: Boolean = true,
+    val includeErrors: Boolean = true,
+    val presenterRegex: String = ""
+)
+
+// not part of the composition in order to retain values if the panel is hidden
+private val tab = mutableStateOf(DebugTab.values().first())
+private val networkSettings = mutableStateOf(NetworkSettings())
+private val cacheSettings = mutableStateOf(CacheSettings())
+private val imageCacheSettings = mutableStateOf(ImageCacheSettings())
+private val uiSettings = mutableStateOf(UISettings())
+private val scrollStates = DebugTab.values().associate { it to ScrollState(0) }
+
 @Composable
 fun DebugPanel() {
-    val tab = remember { mutableStateOf(DebugTab.values().first()) }
-    val networkSettings = remember { mutableStateOf(NetworkSettings()) }
-    val cacheSettings = remember { mutableStateOf(CacheSettings()) }
-    val imageCacheSettings = remember { mutableStateOf(ImageCacheSettings()) }
-    val scrollStates = DebugTab.values().associate { it to rememberScrollState(0) }
-
     Column {
         Column(Modifier.fillMaxHeight().weight(1f)) {
             Row(Modifier.fillMaxWidth()) {
@@ -96,9 +106,10 @@ fun DebugPanel() {
             Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
             when (tab.value) {
-                DebugTab.NETWORK -> NetworkTab(networkSettings, scrollStates.getValue(tab.value))
-                DebugTab.CACHE -> CacheTab(cacheSettings, scrollStates.getValue(tab.value))
-                DebugTab.IMAGE_CACHE -> ImageCacheTab(imageCacheSettings, scrollStates.getValue(tab.value))
+                DebugTab.NETWORK -> NetworkTab()
+                DebugTab.CACHE -> CacheTab()
+                DebugTab.IMAGE_CACHE -> ImageCacheTab()
+                DebugTab.UI -> UITab()
             }
         }
 
@@ -125,7 +136,7 @@ private fun RowScope.TabButton(tab: DebugTab, currentTab: MutableState<DebugTab>
 }
 
 @Composable
-private fun NetworkTab(networkSettings: MutableState<NetworkSettings>, scrollState: ScrollState) {
+private fun NetworkTab() {
     Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
         val delay = remember { mutableStateOf(DelayInterceptor.delayMs.toString()) }
         val appliedDelay = remember { mutableStateOf(true) }
@@ -176,6 +187,7 @@ private fun NetworkTab(networkSettings: MutableState<NetworkSettings>, scrollSta
         )
     }
 
+    val scrollState = scrollStates.getValue(DebugTab.NETWORK)
     EventList(log = Logger.Network, key = networkSettings.value, scrollState = scrollState) { event ->
         var allow = true
 
@@ -196,7 +208,7 @@ private fun NetworkTab(networkSettings: MutableState<NetworkSettings>, scrollSta
 }
 
 @Composable
-private fun CacheTab(cacheSettings: MutableState<CacheSettings>, scrollState: ScrollState) {
+private fun CacheTab() {
     Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
         val size = SpotifyCache.size
         val sizeOnDisk = SpotifyCache.sizeOnDisk
@@ -286,6 +298,7 @@ private fun CacheTab(cacheSettings: MutableState<CacheSettings>, scrollState: Sc
         )
     }
 
+    val scrollState = scrollStates.getValue(DebugTab.CACHE)
     EventList(log = Logger.Cache, key = cacheSettings.value, scrollState = scrollState) { event ->
         when {
             event.message.startsWith("LOAD") -> cacheSettings.value.includeLoad
@@ -302,7 +315,7 @@ private fun CacheTab(cacheSettings: MutableState<CacheSettings>, scrollState: Sc
 }
 
 @Composable
-private fun ImageCacheTab(imageCacheSettings: MutableState<ImageCacheSettings>, scrollState: ScrollState) {
+private fun ImageCacheTab() {
     Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
         val inMemoryCount = SpotifyImageCache.state.inMemoryCount
         val diskCount = SpotifyImageCache.state.diskCount
@@ -351,12 +364,81 @@ private fun ImageCacheTab(imageCacheSettings: MutableState<ImageCacheSettings>, 
         )
     }
 
+    val scrollState = scrollStates.getValue(DebugTab.IMAGE_CACHE)
     EventList(log = Logger.ImageCache, key = imageCacheSettings.value, scrollState = scrollState) { event ->
         when {
             event.message.startsWith("IN-MEMORY") -> imageCacheSettings.value.includeInMemory
             event.message.startsWith("ON-DISK") -> imageCacheSettings.value.includeOnDisk
             event.message.startsWith("MISS") -> imageCacheSettings.value.includeMiss
             else -> true
+        }
+    }
+}
+
+@Composable
+private fun UITab() {
+    Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
+        OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = uiSettings.value.presenterRegex,
+            singleLine = true,
+            onValueChange = {
+                uiSettings.mutate { copy(presenterRegex = it) }
+            },
+            label = {
+                Text("Presenter class regex (case insensitive)", fontSize = Dimens.fontCaption)
+            }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = uiSettings.value.includeStates,
+            onCheckedChange = { uiSettings.mutate { copy(includeStates = it) } },
+            label = { Text("Include state changes") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = uiSettings.value.includeEvents,
+            onCheckedChange = { uiSettings.mutate { copy(includeEvents = it) } },
+            label = { Text("Include events") }
+        )
+
+        Spacer(Modifier.height(Dimens.space2))
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = uiSettings.value.includeErrors,
+            onCheckedChange = { uiSettings.mutate { copy(includeErrors = it) } },
+            label = { Text("Include errors") }
+        )
+    }
+
+    val eventMessageRegex = remember { """\[(.*)] (.*) -> .*""".toRegex() }
+    val scrollState = scrollStates.getValue(DebugTab.UI)
+    EventList(log = Logger.UI, key = uiSettings.value, scrollState = scrollState) { event ->
+        val match = eventMessageRegex.matchEntire(event.message)!!
+
+        val includeEventType = when (val eventType = match.groupValues[2]) {
+            "State" -> uiSettings.value.includeStates
+            "Event" -> uiSettings.value.includeEvents
+            "Error" -> uiSettings.value.includeErrors
+            else -> error("unexpected event type: $eventType")
+        }
+
+        if (includeEventType) {
+            val presenterRegex = uiSettings.value.presenterRegex
+                .takeIf { it.isNotEmpty() }
+                ?.toRegex(RegexOption.IGNORE_CASE)
+
+            val presenterClass = match.groupValues[1]
+            presenterRegex?.containsMatchIn(presenterClass) != false
+        } else {
+            false
         }
     }
 }

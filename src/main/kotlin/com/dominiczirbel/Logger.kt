@@ -5,6 +5,8 @@ import com.dominiczirbel.Logger.Network.intercept
 import com.dominiczirbel.cache.CacheEvent
 import com.dominiczirbel.cache.ImageCacheEvent
 import com.dominiczirbel.network.model.SpotifyObject
+import com.dominiczirbel.ui.Presenter
+import com.dominiczirbel.util.ellipsize
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -156,6 +158,42 @@ sealed class Logger(private val tag: String) {
                 }
 
                 listOf(Event(message = message, type = type))
+            }
+        }
+    }
+
+    object UI : Logger("UI") {
+        private const val MAX_STATE_LENGTH = 200
+
+        fun handleError(presenter: Presenter<*, *>, throwable: Throwable) {
+            if (logToConsole) {
+                throwable.printStackTrace()
+            }
+
+            log {
+                listOf(
+                    Event(
+                        message = "[${presenter::class.simpleName}] Error -> $throwable",
+                        type = Event.Type.WARNING
+                    )
+                )
+            }
+        }
+
+        fun handleState(presenter: Presenter<*, *>, state: Any) {
+            log {
+                listOf(
+                    Event(
+                        message = "[${presenter::class.simpleName}] State -> " +
+                            state.toString().ellipsize(MAX_STATE_LENGTH)
+                    )
+                )
+            }
+        }
+
+        fun handleEvent(presenter: Presenter<*, *>, event: Any) {
+            log {
+                listOf(Event(message = "[${presenter::class.simpleName}] Event -> $event"))
             }
         }
     }

@@ -13,6 +13,15 @@ private val formatTime = SimpleDateFormat("HH:mm:ss")
 private val formatTimeMillis = SimpleDateFormat("HH:mm:ss.SSS")
 
 /**
+ * Returns a copy of this string trimmed to [maxChars] with an ellipsis (...) appended if the original string exceeded
+ * [maxChars].
+ */
+fun String.ellipsize(maxChars: Int): String {
+    @Suppress("MagicNumber")
+    return if (length > maxChars) take(maxChars - 3) + "..." else this
+}
+
+/**
  * Returns a human-readable format of the given file size in bytes.
  *
  * From https://stackoverflow.com/a/3758880
