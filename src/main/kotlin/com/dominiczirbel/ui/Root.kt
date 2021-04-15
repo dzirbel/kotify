@@ -24,6 +24,7 @@ fun Root() {
         SidePanel(
             direction = PanelDirection.RIGHT,
             state = rightPanelState,
+            panelEnabled = KeyboardShortcuts.debugShown,
             panelContent = { DebugPanel() },
             mainContent = {
                 Column {

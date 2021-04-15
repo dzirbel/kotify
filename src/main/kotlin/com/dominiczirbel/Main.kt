@@ -5,6 +5,7 @@ import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.DelayInterceptor
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.oauth.AccessToken
+import com.dominiczirbel.ui.KeyboardShortcuts
 import com.dominiczirbel.ui.Root
 import com.dominiczirbel.ui.theme.Colors
 import com.dominiczirbel.ui.theme.Dimens
@@ -31,7 +32,11 @@ fun main() {
 
     SwingUtilities.invokeLater {
         AppWindow(title = "Spotify Client")
-            .apply { maximize() }
+            .apply {
+                maximize()
+                // TODO doesn't appear to have focus immediately
+                KeyboardShortcuts.register(this)
+            }
             .show {
                 Colors.current.applyColors {
                     Dimens.applyDimens {

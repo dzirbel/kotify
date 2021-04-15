@@ -53,12 +53,16 @@ object Player {
     /**
      * Plays from the given [contextUri], returning true if this is possible (i.e. [playable] is true) or false if not.
      */
-    fun play(contextUri: String, resumeIfSameContext: Boolean = true, scope: CoroutineScope = GlobalScope): Boolean {
+    fun play(
+        contextUri: String? = null,
+        resumeIfSameContext: Boolean = true,
+        scope: CoroutineScope = GlobalScope
+    ): Boolean {
         currentDevice.value?.let { device ->
             scope.launch {
                 Spotify.Player.startPlayback(
                     contextUri = contextUri
-                        .takeUnless { resumeIfSameContext && playbackContext.value?.uri == contextUri },
+                        ?.takeUnless { resumeIfSameContext && playbackContext.value?.uri == contextUri },
                     deviceId = device.id
                 )
 
@@ -84,5 +88,13 @@ object Player {
         }
 
         return false
+    }
+
+    /**
+     * Toggles the current playback, pausing if it is playing and resuming if it is paused, returning true on success or
+     * false on failure.
+     */
+    fun togglePlayback(scope: CoroutineScope = GlobalScope): Boolean {
+        return if (isPlaying.value) pause(scope = scope) else play(scope = scope)
     }
 }

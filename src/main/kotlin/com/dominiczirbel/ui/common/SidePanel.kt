@@ -57,6 +57,7 @@ fun SidePanel(
     direction: PanelDirection,
     state: PanelState,
     modifier: Modifier = Modifier.fillMaxSize(),
+    panelEnabled: Boolean = true,
     panelModifier: Modifier = Modifier
         .fillMaxSize()
         .background(Colors.current.surface2),
@@ -76,84 +77,97 @@ fun SidePanel(
     Layout(
         modifier = modifier,
         content = {
-            Box(modifier = panelModifier) { panelContent() }
-            Box(modifier = contentModifier) { mainContent() }
-            DraggableSplitter(
-                orientation = splitterOrientation,
-                splitterState = state,
-                params = splitterViewParams,
-                onResize = { delta ->
-                    // invert delta for right/bottom dragging
-                    val adjustedDelta = when (direction) {
-                        PanelDirection.LEFT, PanelDirection.TOP -> delta
-                        PanelDirection.RIGHT, PanelDirection.BOTTOM -> -delta
-                    }
+            if (panelEnabled) {
+                Box(modifier = panelModifier) { panelContent() }
 
-                    state.size = state.size + adjustedDelta
-                }
-            )
-        },
-        measurePolicy = { measurables, constraints ->
-            @Suppress("MagicNumber")
-            require(measurables.size == 3)
+                DraggableSplitter(
+                    orientation = splitterOrientation,
+                    splitterState = state,
+                    params = splitterViewParams,
+                    onResize = { delta ->
+                        // invert delta for right/bottom dragging
+                        val adjustedDelta = when (direction) {
+                            PanelDirection.LEFT, PanelDirection.TOP -> delta
+                            PanelDirection.RIGHT, PanelDirection.BOTTOM -> -delta
+                        }
 
-            val minContentSize = state.minContentSize?.let { with(density) { it.roundToPx() } } ?: 0
-            val panelSizePx = with(density) { state.size.roundToPx() }
-                .coerceAtMost(
-                    when (splitterOrientation) {
-                        Orientation.Horizontal -> constraints.maxHeight - minContentSize
-                        Orientation.Vertical -> constraints.maxWidth - minContentSize
+                        state.size = state.size + adjustedDelta
                     }
                 )
-                .coerceAtLeast(0)
-            val panelPlaceable = measurables[0].measure(
-                when (splitterOrientation) {
-                    Orientation.Horizontal -> constraints.copy(minHeight = panelSizePx, maxHeight = panelSizePx)
-                    Orientation.Vertical -> constraints.copy(minWidth = panelSizePx, maxWidth = panelSizePx)
-                }
-            )
-
-            val contentSize = when (splitterOrientation) {
-                Orientation.Horizontal -> constraints.maxHeight - panelPlaceable.height
-                Orientation.Vertical -> constraints.maxWidth - panelPlaceable.width
-            }
-            val contentPlaceable = measurables[1].measure(
-                when (splitterOrientation) {
-                    Orientation.Horizontal ->
-                        Constraints(
-                            minWidth = constraints.maxWidth,
-                            maxWidth = constraints.maxWidth,
-                            minHeight = contentSize,
-                            maxHeight = contentSize
-                        )
-                    Orientation.Vertical ->
-                        Constraints(
-                            minWidth = contentSize,
-                            maxWidth = contentSize,
-                            minHeight = constraints.maxHeight,
-                            maxHeight = constraints.maxHeight
-                        )
-                }
-            )
-
-            val splitterPlaceable = measurables[2].measure(constraints)
-
-            val (firstPlaceable, secondPlaceable) = when (direction) {
-                PanelDirection.LEFT, PanelDirection.TOP -> Pair(panelPlaceable, contentPlaceable)
-                PanelDirection.RIGHT, PanelDirection.BOTTOM -> Pair(contentPlaceable, panelPlaceable)
             }
 
-            layout(constraints.maxWidth, constraints.maxHeight) {
-                firstPlaceable.place(0, 0)
-                when (splitterOrientation) {
-                    Orientation.Horizontal -> {
-                        secondPlaceable.place(0, firstPlaceable.height)
-                        splitterPlaceable.place(0, firstPlaceable.height)
+            Box(modifier = contentModifier) { mainContent() }
+        },
+        measurePolicy = { measurables, constraints ->
+            if (panelEnabled) {
+                @Suppress("MagicNumber")
+                require(measurables.size == 3)
+
+                val minContentSize = state.minContentSize?.let { with(density) { it.roundToPx() } } ?: 0
+                val panelSizePx = with(density) { state.size.roundToPx() }
+                    .coerceAtMost(
+                        when (splitterOrientation) {
+                            Orientation.Horizontal -> constraints.maxHeight - minContentSize
+                            Orientation.Vertical -> constraints.maxWidth - minContentSize
+                        }
+                    )
+                    .coerceAtLeast(0)
+                val panelPlaceable = measurables[0].measure(
+                    when (splitterOrientation) {
+                        Orientation.Horizontal -> constraints.copy(minHeight = panelSizePx, maxHeight = panelSizePx)
+                        Orientation.Vertical -> constraints.copy(minWidth = panelSizePx, maxWidth = panelSizePx)
                     }
-                    Orientation.Vertical -> {
-                        secondPlaceable.place(firstPlaceable.width, 0)
-                        splitterPlaceable.place(firstPlaceable.width, 0)
+                )
+
+                val contentSize = when (splitterOrientation) {
+                    Orientation.Horizontal -> constraints.maxHeight - panelPlaceable.height
+                    Orientation.Vertical -> constraints.maxWidth - panelPlaceable.width
+                }
+                val contentPlaceable = measurables[2].measure(
+                    when (splitterOrientation) {
+                        Orientation.Horizontal ->
+                            Constraints(
+                                minWidth = constraints.maxWidth,
+                                maxWidth = constraints.maxWidth,
+                                minHeight = contentSize,
+                                maxHeight = contentSize
+                            )
+                        Orientation.Vertical ->
+                            Constraints(
+                                minWidth = contentSize,
+                                maxWidth = contentSize,
+                                minHeight = constraints.maxHeight,
+                                maxHeight = constraints.maxHeight
+                            )
                     }
+                )
+
+                val splitterPlaceable = measurables[1].measure(constraints)
+
+                val (firstPlaceable, secondPlaceable) = when (direction) {
+                    PanelDirection.LEFT, PanelDirection.TOP -> Pair(panelPlaceable, contentPlaceable)
+                    PanelDirection.RIGHT, PanelDirection.BOTTOM -> Pair(contentPlaceable, panelPlaceable)
+                }
+
+                layout(constraints.maxWidth, constraints.maxHeight) {
+                    firstPlaceable.place(0, 0)
+                    when (splitterOrientation) {
+                        Orientation.Horizontal -> {
+                            secondPlaceable.place(0, firstPlaceable.height)
+                            splitterPlaceable.place(0, firstPlaceable.height)
+                        }
+                        Orientation.Vertical -> {
+                            secondPlaceable.place(firstPlaceable.width, 0)
+                            splitterPlaceable.place(firstPlaceable.width, 0)
+                        }
+                    }
+                }
+            } else {
+                require(measurables.size == 1)
+
+                val placeable = measurables[0].measure(constraints)
+                layout(constraints.maxWidth, constraints.maxHeight) {
+                    placeable.place(0, 0)
                 }
             }
         }
