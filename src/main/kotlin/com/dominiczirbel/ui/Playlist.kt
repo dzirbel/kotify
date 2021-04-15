@@ -26,19 +26,23 @@ import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
+import com.dominiczirbel.ui.util.mutate
 import com.dominiczirbel.util.formatDateTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.time.Instant
 
-private class PlaylistPresenter(private val playlistId: String, scope: CoroutineScope) :
-    Presenter<PlaylistPresenter.State?, PlaylistPresenter.Event>(
-        scope = scope,
-        key = playlistId,
-        eventMergeStrategy = EventMergeStrategy.LATEST,
-        startingEvents = listOf(Event.Load(invalidate = false)),
-        initialState = null
-    ) {
+private class PlaylistPresenter(
+    private val page: PlaylistPage,
+    private val pageStack: MutableState<PageStack>,
+    scope: CoroutineScope
+) : Presenter<PlaylistPresenter.State?, PlaylistPresenter.Event>(
+    scope = scope,
+    key = page.playlistId,
+    eventMergeStrategy = EventMergeStrategy.LATEST,
+    startingEvents = listOf(Event.Load(invalidate = false)),
+    initialState = null
+) {
 
     data class State(
         val refreshing: Boolean,
@@ -57,16 +61,17 @@ private class PlaylistPresenter(private val playlistId: String, scope: Coroutine
                 mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
-                    SpotifyCache.invalidate(id = playlistId)
+                    SpotifyCache.invalidate(id = page.playlistId)
                 }
 
-                val playlist = SpotifyCache.Playlists.getFullPlaylist(id = playlistId)
+                val playlist = SpotifyCache.Playlists.getFullPlaylist(id = page.playlistId)
+                pageStack.mutate { withPageTitle(title = page.titleFor(playlist)) }
 
                 mutateState {
                     State(
                         refreshing = false,
                         playlist = playlist,
-                        playlistUpdated = SpotifyCache.lastUpdated(id = playlistId),
+                        playlistUpdated = SpotifyCache.lastUpdated(id = page.playlistId),
                         tracks = null
                     )
                 }
@@ -95,7 +100,7 @@ private object AddedAtColumn : ColumnByString<PlaylistTrack>(header = "Added", w
 @Composable
 fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember(page) { PlaylistPresenter(playlistId = page.playlistId, scope = scope) }
+    val presenter = remember(page) { PlaylistPresenter(page = page, pageStack = pageStack, scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
         val playlist = state.playlist

@@ -32,14 +32,17 @@ import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.TimeUnit
 
-private class AlbumPresenter(private val albumId: String, scope: CoroutineScope) :
-    Presenter<AlbumPresenter.State?, AlbumPresenter.Event>(
-        scope = scope,
-        key = albumId,
-        eventMergeStrategy = EventMergeStrategy.LATEST,
-        startingEvents = listOf(Event.Load(invalidate = false)),
-        initialState = null
-    ) {
+private class AlbumPresenter(
+    private val page: AlbumPage,
+    private val pageStack: MutableState<PageStack>,
+    scope: CoroutineScope
+) : Presenter<AlbumPresenter.State?, AlbumPresenter.Event>(
+    scope = scope,
+    key = page.albumId,
+    eventMergeStrategy = EventMergeStrategy.LATEST,
+    startingEvents = listOf(Event.Load(invalidate = false)),
+    initialState = null
+) {
 
     data class State(
         val refreshing: Boolean,
@@ -58,10 +61,12 @@ private class AlbumPresenter(private val albumId: String, scope: CoroutineScope)
                 mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
-                    SpotifyCache.invalidate(id = albumId)
+                    SpotifyCache.invalidate(id = page.albumId)
                 }
 
-                val album = SpotifyCache.Albums.getFullAlbum(albumId)
+                val album = SpotifyCache.Albums.getFullAlbum(page.albumId)
+                pageStack.mutate { withPageTitle(title = page.titleFor(album)) }
+
                 val tracks = album.tracks.fetchAll<SimplifiedTrack>()
 
                 mutateState {
@@ -69,7 +74,7 @@ private class AlbumPresenter(private val albumId: String, scope: CoroutineScope)
                         refreshing = false,
                         album = album,
                         tracks = tracks,
-                        albumUpdated = SpotifyCache.lastUpdated(id = albumId)
+                        albumUpdated = SpotifyCache.lastUpdated(id = page.albumId)
                     )
                 }
 
@@ -84,7 +89,7 @@ private class AlbumPresenter(private val albumId: String, scope: CoroutineScope)
 @Composable
 fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
     val scope = rememberCoroutineScope()
-    val presenter = remember(page) { AlbumPresenter(albumId = page.albumId, scope = scope) }
+    val presenter = remember(page) { AlbumPresenter(page = page, pageStack = pageStack, scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
         Column {

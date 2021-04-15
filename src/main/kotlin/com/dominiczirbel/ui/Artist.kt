@@ -21,26 +21,30 @@ import com.dominiczirbel.ui.common.Grid
 import com.dominiczirbel.ui.common.InvalidateButton
 import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.theme.Dimens
+import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-private class ArtistPresenter(private val artistId: String, scope: CoroutineScope) :
-    Presenter<ArtistPresenter.State?, ArtistPresenter.Event>(
-        scope = scope,
-        key = artistId,
-        eventMergeStrategy = EventMergeStrategy.LATEST,
-        startingEvents = listOf(
-            Event.Load(
-                refreshArtist = true,
-                refreshArtistAlbums = true,
-                invalidateArtist = false,
-                invalidateArtistAlbums = false
-            )
-        ),
-        initialState = null
-    ) {
+private class ArtistPresenter(
+    private val page: ArtistPage,
+    private val pageStack: MutableState<PageStack>,
+    scope: CoroutineScope
+) : Presenter<ArtistPresenter.State?, ArtistPresenter.Event>(
+    scope = scope,
+    key = page.artistId,
+    eventMergeStrategy = EventMergeStrategy.LATEST,
+    startingEvents = listOf(
+        Event.Load(
+            refreshArtist = true,
+            refreshArtistAlbums = true,
+            invalidateArtist = false,
+            invalidateArtistAlbums = false
+        )
+    ),
+    initialState = null
+) {
 
     data class State(
         val artist: FullArtist,
@@ -71,12 +75,12 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
                 }
 
                 if (event.invalidateArtist) {
-                    SpotifyCache.invalidate(id = artistId)
+                    SpotifyCache.invalidate(id = page.artistId)
                 }
 
                 if (event.invalidateArtistAlbums) {
                     SpotifyCache.invalidate(
-                        SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = artistId)
+                        SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = page.artistId)
                     )
                 }
 
@@ -86,7 +90,7 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
                 coroutineScope {
                     val deferredArtist = if (event.refreshArtist) {
                         async(Dispatchers.IO) {
-                            SpotifyCache.Artists.getFullArtist(id = artistId)
+                            SpotifyCache.Artists.getFullArtist(id = page.artistId)
                         }
                     } else {
                         null
@@ -94,7 +98,7 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
 
                     val deferredArtistAlbums = if (event.refreshArtistAlbums) {
                         async(Dispatchers.IO) {
-                            SpotifyCache.Artists.getArtistAlbums(artistId = artistId)
+                            SpotifyCache.Artists.getArtistAlbums(artistId = page.artistId)
                         }
                     } else {
                         null
@@ -104,6 +108,10 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
                     artistAlbums = deferredArtistAlbums?.await()
                 }
 
+                artist?.let {
+                    pageStack.mutate { withPageTitle(title = page.titleFor(artist)) }
+                }
+
                 mutateState {
                     State(
                         artist = artist ?: it?.artist ?: error(""),
@@ -111,7 +119,7 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
                         refreshingArtist = false,
                         artistAlbums = checkNotNull(artistAlbums ?: it?.artistAlbums),
                         artistAlbumsUpdated = SpotifyCache.lastUpdated(
-                            SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = artistId)
+                            SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = page.artistId)
                         ),
                         refreshingArtistAlbums = false
                     )
@@ -124,7 +132,7 @@ private class ArtistPresenter(private val artistId: String, scope: CoroutineScop
 @Composable
 fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember(page) { ArtistPresenter(artistId = page.artistId, scope = scope) }
+    val presenter = remember(page) { ArtistPresenter(page = page, pageStack = pageStack, scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
         val artist = state.artist

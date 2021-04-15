@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.runtime.Composable
@@ -30,6 +32,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dominiczirbel.cache.SpotifyCache
+import com.dominiczirbel.network.model.Album
+import com.dominiczirbel.network.model.Artist
+import com.dominiczirbel.network.model.Playlist
 import com.dominiczirbel.network.model.PrivateUser
 import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.Page
@@ -42,27 +47,27 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
 object ArtistsPage : Page {
-    override fun toString() = "artists"
+    override fun toString() = "Saved Artists"
 }
 
 data class ArtistPage(val artistId: String) : Page {
-    override fun toString() = "artist($artistId)"
+    fun titleFor(artist: Artist) = "Artist: ${artist.name}"
 }
 
 object AlbumsPage : Page {
-    override fun toString() = "albums"
+    override fun toString() = "Saved Albums"
 }
 
 data class AlbumPage(val albumId: String) : Page {
-    override fun toString() = "album($albumId)"
+    fun titleFor(album: Album) = "Album: ${album.name}"
 }
 
 data class PlaylistPage(val playlistId: String) : Page {
-    override fun toString() = "playlist($playlistId)"
+    fun titleFor(playlist: Playlist) = "Playlist: ${playlist.name}"
 }
 
 object TracksPage : Page {
-    override fun toString() = "tracks"
+    override fun toString() = "Saved Tracks"
 }
 
 private class AuthenticationMenuPresenter(scope: CoroutineScope) :
@@ -108,6 +113,34 @@ fun MainContent(pageStack: MutableState<PageStack>) {
                     )
                 }
 
+                val historyExpanded = remember { mutableStateOf(false) }
+                IconButton(
+                    enabled = pageStack.value.pages.size > 1,
+                    onClick = { historyExpanded.value = true }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.List,
+                        contentDescription = "History",
+                        modifier = Modifier.size(Dimens.iconMedium)
+                    )
+
+                    DropdownMenu(
+                        expanded = historyExpanded.value,
+                        onDismissRequest = { historyExpanded.value = false }
+                    ) {
+                        pageStack.value.pages.forEachIndexed { index, page ->
+                            DropdownMenuItem(
+                                onClick = {
+                                    pageStack.mutate { toIndex(index) }
+                                },
+                                enabled = index != pageStack.value.currentIndex
+                            ) {
+                                Text(pageStack.value.pageTitles[index] ?: page.toString())
+                            }
+                        }
+                    }
+                }
+
                 IconButton(
                     enabled = pageStack.value.hasNext,
                     onClick = { pageStack.mutate { toNext() } }
@@ -118,12 +151,6 @@ fun MainContent(pageStack: MutableState<PageStack>) {
                         modifier = Modifier.size(Dimens.iconMedium)
                     )
                 }
-
-                Text(
-                    text = "Stack: [${pageStack.value.pages.joinToString(separator = ", ")}] | " +
-                        "current: ${pageStack.value.currentIndex}",
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                )
             }
 
             AuthenticationMenuHeader()

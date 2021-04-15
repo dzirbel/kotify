@@ -20,13 +20,15 @@ interface Page
  * A [PageStack] may be not be empty.
  */
 class PageStack private constructor(
-    val pages: Array<Page>,
-    private val scrollStates: Array<ScrollState>,
+    val pages: List<Page>,
+    val pageTitles: List<String?>,
+    private val scrollStates: List<ScrollState>,
     val currentIndex: Int
 ) {
     init {
         require(currentIndex in pages.indices) { "index out of bounds: $currentIndex not in ${pages.indices}" }
-        require(pages.size == scrollStates.size) { "pages list does not match scroll states list" }
+        require(pages.size == scrollStates.size) { "pages array does not match scroll states array" }
+        require(pages.size == pageTitles.size) { "pages array does not match titles array" }
     }
 
     /**
@@ -67,7 +69,12 @@ class PageStack private constructor(
     val hasNext: Boolean
         get() = currentIndex < pages.lastIndex
 
-    constructor(page: Page) : this(pages = arrayOf(page), scrollStates = arrayOf(ScrollState(0)), currentIndex = 0)
+    constructor(page: Page) : this(
+        pages = listOf(page),
+        pageTitles = listOf(null),
+        scrollStates = listOf(ScrollState(0)),
+        currentIndex = 0
+    )
 
     /**
      * Returns a copy of this [PageStack] which represents the stack navigated to the [previous] page.
@@ -75,8 +82,7 @@ class PageStack private constructor(
      * Throws an [IllegalStateException] if there is no previous page in the back-stack.
      */
     fun toPrevious(): PageStack {
-        check(hasPrevious)
-        return PageStack(pages = pages, scrollStates = scrollStates, currentIndex = currentIndex - 1)
+        return toIndex(index = currentIndex - 1)
     }
 
     /**
@@ -85,8 +91,31 @@ class PageStack private constructor(
      * Throws an [IllegalStateException] if there is no next page in the forward-stack.
      */
     fun toNext(): PageStack {
-        check(hasNext)
-        return PageStack(pages = pages, scrollStates = scrollStates, currentIndex = currentIndex + 1)
+        return toIndex(index = currentIndex + 1)
+    }
+
+    /**
+     * Returns a copy of this [PageStack] which represents the stack navigated to the page at [index].
+     *
+     * Throws an [IllegalStateException] if [index] is out of bounds.
+     */
+    fun toIndex(index: Int): PageStack {
+        check(index in pages.indices)
+        return PageStack(pages = pages, pageTitles = pageTitles, scrollStates = scrollStates, currentIndex = index)
+    }
+
+    /**
+     * Returns a copy of this [PageStack] with the given [title] for the page at the given [index].
+     */
+    fun withPageTitle(title: String, index: Int = currentIndex): PageStack {
+        return PageStack(
+            pages = pages,
+            pageTitles = pageTitles.mapIndexed { currentIndex, currentTitle ->
+                if (currentIndex == index) title else currentTitle
+            },
+            scrollStates = scrollStates,
+            currentIndex = currentIndex
+        )
     }
 
     /**
@@ -100,13 +129,14 @@ class PageStack private constructor(
         if (!allowDuplicate && current == page) return this
 
         return PageStack(
-            pages = pages.minusForwardStack().plus(page).toTypedArray(),
-            scrollStates = scrollStates.minusForwardStack().plus(ScrollState(0)).toTypedArray(),
+            pages = pages.minusForwardStack().plus(page),
+            pageTitles = pageTitles.minusForwardStack().plus(null),
+            scrollStates = scrollStates.minusForwardStack().plus(ScrollState(0)),
             currentIndex = currentIndex + 1
         )
     }
 
-    private fun <T> Array<T>.minusForwardStack(): List<T> {
+    private fun <T> List<T>.minusForwardStack(): List<T> {
         // a, b, c, d, e
         //       ^- currentIndex = 2
         //
