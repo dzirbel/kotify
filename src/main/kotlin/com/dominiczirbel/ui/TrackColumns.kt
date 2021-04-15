@@ -85,7 +85,8 @@ class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Trac
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        return first.artists.joinToString().compareTo(second.artists.joinToString())
+        return first.artists.joinToString { it.name }
+            .compareTo(second.artists.joinToString { it.name }, ignoreCase = true)
     }
 
     @Composable
@@ -116,7 +117,7 @@ class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track
         get() = (this as? FullTrack)?.album ?: (this as? SimplifiedTrack)?.album
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        return first.album?.name.orEmpty().compareTo(second.album?.name.orEmpty())
+        return first.album?.name.orEmpty().compareTo(second.album?.name.orEmpty(), ignoreCase = true)
     }
 
     @Composable
