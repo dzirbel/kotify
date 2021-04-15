@@ -103,8 +103,6 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
                     Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
                         Text(state.album.name, fontSize = Dimens.fontTitle)
 
-                        Spacer(Modifier)
-
                         LinkedText(
                             onClickLink = { artistId ->
                                 pageStack.mutate { to(ArtistPage(artistId = artistId)) }

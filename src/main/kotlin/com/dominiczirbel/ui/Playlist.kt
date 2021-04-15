@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -16,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.svgResource
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.FullPlaylist
 import com.dominiczirbel.network.model.PlaylistTrack
@@ -23,6 +26,7 @@ import com.dominiczirbel.ui.common.ColumnByString
 import com.dominiczirbel.ui.common.ColumnWidth
 import com.dominiczirbel.ui.common.IndexColumn
 import com.dominiczirbel.ui.common.InvalidateButton
+import com.dominiczirbel.ui.common.LoadedImage
 import com.dominiczirbel.ui.common.PageStack
 import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
@@ -31,6 +35,7 @@ import com.dominiczirbel.util.formatDateTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.time.Instant
+import java.util.concurrent.TimeUnit
 
 private class PlaylistPresenter(
     private val page: PlaylistPage,
@@ -103,33 +108,60 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
     val presenter = remember(page) { PlaylistPresenter(page = page, pageStack = pageStack, scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
-        val playlist = state.playlist
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(playlist.name, fontSize = Dimens.fontTitle)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    LoadedImage(url = state.playlist.images.firstOrNull()?.url)
 
-                    playlist.owner.displayName?.let {
-                        Spacer(Modifier.width(Dimens.space3))
-                        Text("by $it")
+                    Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+                        Text(state.playlist.name, fontSize = Dimens.fontTitle)
+
+                        state.playlist.description
+                            ?.takeIf { it.isNotEmpty() }
+                            ?.let { Text(it) }
+
+                        Text(
+                            "Created by ${state.playlist.owner.displayName}; " +
+                                "${state.playlist.followers.total} followers"
+                        )
+
+                        val totalDurationMins = remember(state.tracks) {
+                            state.tracks?.let { tracks ->
+                                TimeUnit.MILLISECONDS.toMinutes(tracks.sumBy { it.track.durationMs.toInt() }.toLong())
+                            }
+                        }
+
+                        Text("${state.playlist.tracks.total} songs, ${totalDurationMins ?: "<loading>"} min")
+
+                        val playing = Player.isPlaying.value && Player.playbackContext.value?.uri == state.playlist.uri
+                        IconButton(
+                            enabled = Player.playable,
+                            modifier = Modifier.size(Dimens.iconMedium),
+                            onClick = {
+                                if (playing) Player.pause() else Player.play(contextUri = state.playlist.uri)
+                            }
+                        ) {
+                            Icon(
+                                painter = svgResource(
+                                    if (playing) "pause-circle-outline.svg" else "play-circle-outline.svg"
+                                ),
+                                modifier = Modifier.size(Dimens.iconMedium),
+                                contentDescription = "Play"
+                            )
+                        }
                     }
-
-                    Spacer(Modifier.width(Dimens.space3))
-                    Text("${playlist.followers.total} followers")
                 }
 
-                Column {
-                    InvalidateButton(
-                        refreshing = state.refreshing,
-                        updated = state.playlistUpdated,
-                        onClick = { presenter.emitAsync(PlaylistPresenter.Event.Load(invalidate = true)) }
-                    )
-                }
-            }
-
-            playlist.description?.let {
-                Spacer(Modifier.height(Dimens.space3))
-                Text(it)
+                InvalidateButton(
+                    refreshing = state.refreshing,
+                    updated = state.playlistUpdated,
+                    updatedFormat = { "Playlist last updated $it" },
+                    updatedFallback = "Playlist never updated",
+                    onClick = { presenter.emitAsync(PlaylistPresenter.Event.Load(invalidate = true)) }
+                )
             }
 
             Spacer(Modifier.height(Dimens.space3))
