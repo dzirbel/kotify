@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import com.dominiczirbel.Logger
 import com.dominiczirbel.network.Spotify
 import com.dominiczirbel.network.await
+import com.dominiczirbel.ui.util.assertNotOnUIThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
@@ -104,6 +105,8 @@ object SpotifyImageCache {
     ): ImageBitmap? {
         val deferred = imageJobs.getOrPut(url) {
             scope.async(context = context) {
+                assertNotOnUIThread()
+
                 val (result, duration) = measureTimedValue { fromFileCache(url) }
                 val (cacheFile, image) = result
 

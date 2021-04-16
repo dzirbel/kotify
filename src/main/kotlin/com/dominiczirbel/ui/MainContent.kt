@@ -204,8 +204,7 @@ private fun AuthenticationMenuHeader() {
         ) {
             LoadedImage(
                 url = currentUser?.images?.firstOrNull()?.url,
-                modifier = Modifier.size(Dimens.iconMedium),
-                scope = rememberCoroutineScope()
+                modifier = Modifier.size(Dimens.iconMedium)
             )
 
             Spacer(Modifier.width(Dimens.space2))

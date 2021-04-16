@@ -3,6 +3,7 @@ package com.dominiczirbel.cache
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.dominiczirbel.ui.util.assertNotOnUIThread
 import com.dominiczirbel.util.zipEach
 import com.dominiczirbel.util.zipToMap
 import kotlinx.coroutines.GlobalScope
@@ -434,6 +435,8 @@ class Cache(
      * Synchronously writes the given [cacheMap] to the cache [file], if its hash is different from [lastSaveHash].
      */
     private fun write(cacheMap: Map<String, CacheObject>) {
+        assertNotOnUIThread()
+
         val currentHash = cacheMap.hashCode()
         if (currentHash != lastSaveHash) {
             val duration = measureTime {

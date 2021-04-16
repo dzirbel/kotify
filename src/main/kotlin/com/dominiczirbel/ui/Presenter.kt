@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.dominiczirbel.Logger
 import com.dominiczirbel.ui.Presenter.StateOrError.State
+import com.dominiczirbel.ui.util.assertNotOnUIThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -146,6 +147,7 @@ abstract class Presenter<State, Event : Any> constructor(
         return events
             .onStart { startingEvents?.forEach { emit(it) } }
             .onEach { Logger.UI.handleEvent(presenter = this, event = it) }
+            .onEach { assertNotOnUIThread() }
             .let { flow -> reactTo(flow) }
             .catch {
                 onError(it)

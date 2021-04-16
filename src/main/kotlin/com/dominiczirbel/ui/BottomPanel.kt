@@ -504,7 +504,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
 
 @Composable
 fun BottomPanel(pageStack: MutableState<PageStack>) {
-    val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { BottomPanelPresenter(scope) }
 
     val state = presenter.state().safeState
@@ -613,8 +613,7 @@ private fun CurrentTrack(track: Track?, pageStack: MutableState<PageStack>) {
 
         LoadedImage(
             url = album?.images?.firstOrNull()?.url,
-            size = ALBUM_ART_SIZE,
-            scope = rememberCoroutineScope()
+            size = ALBUM_ART_SIZE
         )
 
         track?.let {

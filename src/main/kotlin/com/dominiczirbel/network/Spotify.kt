@@ -30,6 +30,7 @@ import com.dominiczirbel.network.model.SimplifiedShow
 import com.dominiczirbel.network.model.SimplifiedTrack
 import com.dominiczirbel.network.model.TrackPlayback
 import com.dominiczirbel.network.oauth.AccessToken
+import com.dominiczirbel.ui.util.assertNotOnUIThread
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -156,6 +157,8 @@ object Spotify {
         queryParams: Map<String, String?>? = null,
         body: RequestBody? = null
     ): T {
+        assertNotOnUIThread()
+
         val token = AccessToken.Cache.getOrThrow()
 
         val url = (if (path.startsWith(API_URL)) path else API_URL + path).toHttpUrl()

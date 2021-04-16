@@ -30,6 +30,7 @@ import com.dominiczirbel.ui.common.Table
 import com.dominiczirbel.ui.theme.Dimens
 import com.dominiczirbel.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import java.util.concurrent.TimeUnit
 
 private class AlbumPresenter(
@@ -88,7 +89,7 @@ private class AlbumPresenter(
 
 @Composable
 fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
-    val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember(page) { AlbumPresenter(page = page, pageStack = pageStack, scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
