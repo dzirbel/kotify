@@ -1,6 +1,7 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.internal.os.OperatingSystem
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 private object Versions {
@@ -37,7 +38,7 @@ plugins {
     jacoco
 }
 
-version = "0.1"
+version = "0.1.0"
 
 repositories {
     mavenCentral()
@@ -132,5 +133,11 @@ compose.desktop {
         }
 
         mainClass = "com.dominiczirbel.MainKt"
+
+        nativeDistributions {
+            targetFormats(TargetFormat.Deb, TargetFormat.Exe)
+            packageName = "Spotify"
+            packageVersion = project.version.toString()
+        }
     }
 }
