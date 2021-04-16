@@ -16,7 +16,9 @@ import kotlinx.coroutines.launch
  * A global object to expose the state of the Spotify player and allow changing the state from anywhere in the UI.
  */
 object Player {
-    private val _playEvents = MutableSharedFlow<Unit>()
+    data class PlayEvent(val contextChanged: Boolean)
+
+    private val _playEvents = MutableSharedFlow<PlayEvent>()
 
     /**
      * A [androidx.compose.runtime.MutableState] of the currently active [PlaybackDevice]. [play] requests will be sent
@@ -48,7 +50,7 @@ object Player {
     /**
      * A [SharedFlow] which emits [Unit] each time [play] changes the playback.
      */
-    val playEvents: SharedFlow<Unit> = _playEvents.asSharedFlow()
+    val playEvents: SharedFlow<PlayEvent> = _playEvents.asSharedFlow()
 
     /**
      * Plays from the given [contextUri], returning true if this is possible (i.e. [playable] is true) or false if not.
@@ -60,13 +62,13 @@ object Player {
     ): Boolean {
         currentDevice.value?.let { device ->
             scope.launch {
+                val contextChanged = contextUri != playbackContext.value?.uri
                 Spotify.Player.startPlayback(
-                    contextUri = contextUri
-                        ?.takeUnless { resumeIfSameContext && playbackContext.value?.uri == contextUri },
+                    contextUri = contextUri?.takeUnless { resumeIfSameContext && !contextChanged },
                     deviceId = device.id
                 )
 
-                _playEvents.emit(Unit)
+                _playEvents.emit(PlayEvent(contextChanged = contextChanged))
             }
             return true
         }
@@ -82,7 +84,7 @@ object Player {
             scope.launch {
                 Spotify.Player.pausePlayback(deviceId = device.id)
 
-                _playEvents.emit(Unit)
+                _playEvents.emit(PlayEvent(contextChanged = false))
             }
             return true
         }

@@ -92,9 +92,11 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
 
     init {
         job = scope.launch {
-            Player.playEvents.collect {
-                emit(Event.LoadPlayback())
-                emit(Event.LoadTrackPlayback())
+            Player.playEvents.collect { playEvent ->
+                emit(Event.LoadPlayback(untilIsPlayingChange = true))
+                if (playEvent.contextChanged) {
+                    emit(Event.LoadTrackPlayback(untilTrackChange = true))
+                }
             }
         }
     }
