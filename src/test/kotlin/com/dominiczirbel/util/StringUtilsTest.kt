@@ -4,6 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import java.time.ZoneId
+import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
@@ -38,7 +40,9 @@ internal class StringUtilsTest {
                 timestamp = case.timestamp,
                 includeDate = case.includeDate,
                 includeTime = case.includeTime,
-                includeMillis = case.includeMillis
+                includeMillis = case.includeMillis,
+                locale = Locale.US,
+                zone = ZoneId.of("America/Los_Angeles")
             )
         ).isEqualTo(case.formatted)
     }

@@ -1,16 +1,19 @@
 package com.dominiczirbel.util
 
 import java.lang.Long.signum
-import java.text.SimpleDateFormat
 import java.text.StringCharacterIterator
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
-private val formatDateTimeMillis = SimpleDateFormat("YYYY-MM-dd HH:mm:ss.SSS")
-private val formatDateTime = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
-private val formatDate = SimpleDateFormat("YYYY-MM-dd")
-private val formatTime = SimpleDateFormat("HH:mm:ss")
-private val formatTimeMillis = SimpleDateFormat("HH:mm:ss.SSS")
+private val formatDateTimeMillis = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss.SSS")
+private val formatDateTime = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss")
+private val formatDate = DateTimeFormatter.ofPattern("YYYY-MM-dd")
+private val formatTime = DateTimeFormatter.ofPattern("HH:mm:ss")
+private val formatTimeMillis = DateTimeFormatter.ofPattern("HH:mm:ss.SSS")
 
 /**
  * Returns a copy of this string trimmed to [maxChars] with an ellipsis (...) appended if the original string exceeded
@@ -50,9 +53,11 @@ fun formatDateTime(
     timestamp: Long,
     includeDate: Boolean = true,
     includeTime: Boolean = true,
-    includeMillis: Boolean = false
+    includeMillis: Boolean = false,
+    locale: Locale = Locale.getDefault(),
+    zone: ZoneId = ZoneId.systemDefault()
 ): String {
-    val format = when {
+    val formatter = when {
         includeDate && includeTime && includeMillis -> formatDateTimeMillis
         includeDate && includeTime && !includeMillis -> formatDateTime
         includeDate && !includeTime && includeMillis -> error("unsupported: cannot include millis without time")
@@ -63,7 +68,7 @@ fun formatDateTime(
         else -> error("unsupported: must include some field")
     }
 
-    return format.format(timestamp)
+    return formatter.withLocale(locale).withZone(zone).format(Instant.ofEpochMilli(timestamp))
 }
 
 /**
