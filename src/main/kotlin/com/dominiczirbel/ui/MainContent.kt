@@ -22,8 +22,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.svgResource
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.Album
 import com.dominiczirbel.network.model.Artist
@@ -190,8 +189,8 @@ private fun AuthenticationMenuHeader() {
             }
         ) {
             Icon(
-                imageVector = if (isLight) Icons.Filled.Star else Icons.Outlined.Star,
-                contentDescription = null,
+                painter = svgResource(if (isLight) "wb_sunny.svg" else "nightlight_round.svg"),
+                contentDescription = "Theme",
                 modifier = Modifier.size(Dimens.iconMedium)
             )
         }
