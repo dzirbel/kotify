@@ -141,6 +141,8 @@ compose.desktop {
         mainClass = "com.dzirbel.kotify.MainKt"
 
         nativeDistributions {
+            modules("jdk.crypto.ec") // required for SSL, see https://github.com/JetBrains/compose-jb/issues/429
+
             targetFormats(TargetFormat.Deb, TargetFormat.Exe)
             packageName = "Kotify"
             packageVersion = project.version.toString()
