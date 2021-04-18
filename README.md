@@ -1,7 +1,7 @@
 # Kotify
 
-[![Build status](https://github.com/dzirbel/spotify/workflows/Build/badge.svg)](https://github.com/dzirbel/spotify/actions/workflows/build.yml)
-[![codecov](https://codecov.io/gh/dzirbel/spotify/branch/master/graph/badge.svg?token=RZU5D35M5E)](https://codecov.io/gh/dzirbel/spotify)
+[![Build status](https://github.com/dzirbel/kotify/workflows/Build/badge.svg)](https://github.com/dzirbel/kotify/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/dzirbel/kotify/branch/master/graph/badge.svg?token=RZU5D35M5E)](https://codecov.io/gh/dzirbel/kotify)
 
 Kotify is a multiplatform desktop client for [Spotify](https://www.spotify.com/) focused on library
 organization for power users.
