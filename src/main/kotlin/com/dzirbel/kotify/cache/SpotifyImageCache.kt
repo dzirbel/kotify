@@ -100,6 +100,7 @@ object SpotifyImageCache {
     suspend fun get(
         url: String,
         scope: CoroutineScope,
+        cacheDir: File = IMAGES_DIR,
         context: CoroutineContext = EmptyCoroutineContext,
         client: OkHttpClient = Spotify.configuration.okHttpClient
     ): ImageBitmap? {
@@ -107,7 +108,7 @@ object SpotifyImageCache {
             scope.async(context = context) {
                 assertNotOnUIThread()
 
-                val (result, duration) = measureTimedValue { fromFileCache(url) }
+                val (result, duration) = measureTimedValue { fromFileCache(url, cacheDir = cacheDir) }
                 val (cacheFile, image) = result
 
                 if (image != null) {
@@ -119,7 +120,7 @@ object SpotifyImageCache {
                     image
                 } else {
                     val (image2, duration2) = measureTimedValue {
-                        fromRemote(url = url, cacheFile = cacheFile, client = client)
+                        fromRemote(url = url, cacheFile = cacheFile, client = client, cacheDir = cacheDir)
                     }
 
                     image2?.also {
@@ -145,11 +146,11 @@ object SpotifyImageCache {
         return deferred.await()
     }
 
-    private fun fromFileCache(url: String): Pair<File?, ImageBitmap?> {
+    private fun fromFileCache(url: String, cacheDir: File = IMAGES_DIR): Pair<File?, ImageBitmap?> {
         var cacheFile: File? = null
         if (url.startsWith(SPOTIFY_IMAGE_URL_PREFIX)) {
             val imageHash = url.substring(SPOTIFY_IMAGE_URL_PREFIX.length)
-            cacheFile = IMAGES_DIR.resolve(imageHash)
+            cacheFile = cacheDir.resolve(imageHash)
 
             if (cacheFile.isFile) {
                 return Pair(cacheFile, Image.makeFromEncoded(cacheFile.readBytes()).asImageBitmap())
@@ -159,7 +160,12 @@ object SpotifyImageCache {
         return Pair(cacheFile, null)
     }
 
-    private suspend fun fromRemote(url: String, cacheFile: File?, client: OkHttpClient): ImageBitmap? {
+    private suspend fun fromRemote(
+        url: String,
+        cacheFile: File?,
+        client: OkHttpClient,
+        cacheDir: File = IMAGES_DIR
+    ): ImageBitmap? {
         val request = Request.Builder().url(url).build()
 
         return client.newCall(request).await()
@@ -172,7 +178,7 @@ object SpotifyImageCache {
                 val image = Image.makeFromEncoded(bytes).asImageBitmap()
 
                 cacheFile?.let {
-                    IMAGES_DIR.mkdirs()
+                    cacheDir.mkdirs()
                     it.writeBytes(bytes)
                 }
 
