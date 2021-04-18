@@ -3,7 +3,6 @@ package com.dzirbel.kotify.cache
 import java.io.File
 import kotlin.time.Duration
 
-// TODO add batched get and put events
 sealed class CacheEvent {
     abstract val cache: Cache
 

@@ -13,7 +13,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.io.File
 
-// TODO test batch get/put
 internal class CacheTest {
     @Serializable
     private data class SimpleObject(
@@ -148,6 +147,25 @@ internal class CacheTest {
             SimpleObject(id = "id2", name = "name for id2"),
             SimpleObject(id = "id3", name = "name for id3")
         ).inOrder()
+    }
+
+    @Test
+    fun testPutAll() {
+        val cache = createCache()
+
+        val obj1 = SimpleObject(id = "id1", name = "name1")
+        val obj2 = SimpleObject(id = "id2", name = "name2")
+        val obj3 = SimpleObject(id = "id3", name = "name3")
+
+        val result = cache.putAll(mapOf("id1" to obj1, "id2" to obj2, "id3" to obj3))
+
+        assertThat(result).isTrue()
+        cache.assertContainsExactly(obj1, obj2, obj3)
+
+        val result2 = cache.putAll(mapOf("id1" to obj1, "id2" to obj2, "id3" to obj3))
+
+        assertThat(result2).isFalse()
+        cache.assertContainsExactly(obj1, obj2, obj3)
     }
 
     @Test
