@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.svgResource
 import com.dominiczirbel.cache.SpotifyCache
 import com.dominiczirbel.network.model.Album
 import com.dominiczirbel.network.model.Artist
@@ -181,19 +180,9 @@ private fun AuthenticationMenuHeader() {
     val expandedState = remember { mutableStateOf(false) }
 
     Row {
-        val isLight = Colors.current == Colors.LIGHT
-        IconButton(
-            modifier = Modifier.align(Alignment.CenterVertically),
-            onClick = {
-                Colors.current = if (isLight) Colors.DARK else Colors.LIGHT
-            }
-        ) {
-            Icon(
-                painter = svgResource(if (isLight) "wb_sunny.svg" else "nightlight_round.svg"),
-                contentDescription = "Theme",
-                modifier = Modifier.size(Dimens.iconMedium)
-            )
-        }
+        ThemeSwitcher(modifier = Modifier.align(Alignment.CenterVertically))
+
+        ProjectGithubIcon(modifier = Modifier.align(Alignment.CenterVertically))
 
         Spacer(Modifier.width(Dimens.space2))
 

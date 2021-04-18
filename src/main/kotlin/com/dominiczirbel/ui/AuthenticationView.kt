@@ -79,6 +79,11 @@ fun AuthenticationView() {
                 .align(Alignment.TopCenter),
             verticalArrangement = Arrangement.spacedBy(Dimens.space3, Alignment.Top)
         ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                ThemeSwitcher()
+                ProjectGithubIcon()
+            }
+
             if (!oauthInProgress) {
                 Welcome(state)
             } else {
@@ -94,7 +99,7 @@ fun AuthenticationView() {
 }
 
 @Composable
-fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
+private fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
     Text("Welcome!", fontSize = Dimens.fontTitle)
 
     Spacer(Modifier.height(Dimens.space3))
@@ -232,7 +237,7 @@ fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
 }
 
 @Composable
-fun FlowInProgress(state: MutableState<AuthenticationState>) {
+private fun FlowInProgress(state: MutableState<AuthenticationState>) {
     val oauth = state.value.oauth!!
 
     if (oauth.error.value == null) {
