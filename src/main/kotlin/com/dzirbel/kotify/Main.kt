@@ -18,6 +18,8 @@ fun main(args: Array<String>) {
         settingsPath = args.getOrNull(1)
     )
 
+    Settings.current // trigger a settings load
+
     Logger.logToConsole = false
 
     val okHttpClient = OkHttpClient.Builder()

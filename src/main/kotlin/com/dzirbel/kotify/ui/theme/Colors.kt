@@ -9,10 +9,8 @@ import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import com.dzirbel.kotify.Settings
 
 @Suppress("MagicNumber", "LongParameterList")
 enum class Colors(
@@ -83,7 +81,10 @@ enum class Colors(
     }
 
     companion object {
-        // TODO save color selection between runs
-        var current by mutableStateOf(DARK)
+        var current: Colors
+            get() = Settings.current.colors
+            set(value) {
+                Settings.mutate { copy(colors = value) }
+            }
     }
 }
