@@ -132,11 +132,11 @@ compose.desktop {
             jvmArgs("-Dsun.java2d.uiScale=2.0")
         }
 
-        mainClass = "com.dominiczirbel.MainKt"
+        mainClass = "com.dzirbel.kotify.MainKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.Exe)
-            packageName = "Spotify"
+            packageName = "Kotify"
             packageVersion = project.version.toString()
         }
     }

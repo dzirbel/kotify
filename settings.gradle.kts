@@ -1,4 +1,4 @@
-rootProject.name = "spotify"
+rootProject.name = "kotify"
 
 pluginManagement {
     repositories {
