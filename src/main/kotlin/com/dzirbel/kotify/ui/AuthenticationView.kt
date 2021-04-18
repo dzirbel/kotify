@@ -100,13 +100,13 @@ fun AuthenticationView() {
 
 @Composable
 private fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
-    Text("Welcome!", fontSize = Dimens.fontTitle)
+    Text("Welcome to Kotify!", fontSize = Dimens.fontTitle)
 
     Spacer(Modifier.height(Dimens.space3))
 
     Text(
         "To get started, you'll need to authenticate with Spotify. This will open a web browser to request the " +
-            "permissions this application needs to function."
+            "permissions Kotify needs to function."
     )
 
     Button(

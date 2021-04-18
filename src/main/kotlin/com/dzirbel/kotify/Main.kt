@@ -31,7 +31,7 @@ fun main() {
     SpotifyCache.load()
 
     SwingUtilities.invokeLater {
-        AppWindow(title = "Spotify Client")
+        AppWindow(title = "Kotify")
             .apply {
                 maximize()
                 // TODO doesn't appear to have focus immediately

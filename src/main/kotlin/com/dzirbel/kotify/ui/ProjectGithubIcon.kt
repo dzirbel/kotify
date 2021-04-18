@@ -9,7 +9,7 @@ import androidx.compose.ui.res.svgResource
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.openInBrowser
 
-private const val PROJECT_GITHUB = "https://github.com/dzirbel/spotify"
+private const val PROJECT_GITHUB = "https://github.com/dzirbel/kotify"
 
 @Composable
 fun ProjectGithubIcon(modifier: Modifier = Modifier) {
