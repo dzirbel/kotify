@@ -12,7 +12,12 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import okhttp3.OkHttpClient
 import javax.swing.SwingUtilities
 
-fun main() {
+fun main(args: Array<String>) {
+    KotifyApplication.setup(
+        cachePath = args.getOrNull(0),
+        settingsPath = args.getOrNull(1)
+    )
+
     Logger.logToConsole = false
 
     val okHttpClient = OkHttpClient.Builder()

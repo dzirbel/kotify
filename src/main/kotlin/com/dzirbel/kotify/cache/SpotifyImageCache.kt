@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import com.dzirbel.kotify.KotifyApplication
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.await
@@ -51,7 +52,7 @@ object SpotifyImageCache {
 
     private const val SPOTIFY_IMAGE_URL_PREFIX = "https://i.scdn.co/image/"
     private val IMAGES_DIR by lazy {
-        SpotifyCache.CACHE_DIR.resolve("images")
+        KotifyApplication.cacheDir.resolve("images")
             .also { it.mkdirs() }
             .also { require(it.isDirectory) { "could not create image cache directory $it" } }
     }
@@ -100,7 +101,6 @@ object SpotifyImageCache {
     suspend fun get(
         url: String,
         scope: CoroutineScope,
-        cacheDir: File = IMAGES_DIR,
         context: CoroutineContext = EmptyCoroutineContext,
         client: OkHttpClient = Spotify.configuration.okHttpClient
     ): ImageBitmap? {
@@ -108,7 +108,7 @@ object SpotifyImageCache {
             scope.async(context = context) {
                 assertNotOnUIThread()
 
-                val (result, duration) = measureTimedValue { fromFileCache(url, cacheDir = cacheDir) }
+                val (result, duration) = measureTimedValue { fromFileCache(url) }
                 val (cacheFile, image) = result
 
                 if (image != null) {
@@ -120,7 +120,7 @@ object SpotifyImageCache {
                     image
                 } else {
                     val (image2, duration2) = measureTimedValue {
-                        fromRemote(url = url, cacheFile = cacheFile, client = client, cacheDir = cacheDir)
+                        fromRemote(url = url, cacheFile = cacheFile, client = client)
                     }
 
                     image2?.also {
@@ -146,11 +146,11 @@ object SpotifyImageCache {
         return deferred.await()
     }
 
-    private fun fromFileCache(url: String, cacheDir: File = IMAGES_DIR): Pair<File?, ImageBitmap?> {
+    private fun fromFileCache(url: String): Pair<File?, ImageBitmap?> {
         var cacheFile: File? = null
         if (url.startsWith(SPOTIFY_IMAGE_URL_PREFIX)) {
             val imageHash = url.substring(SPOTIFY_IMAGE_URL_PREFIX.length)
-            cacheFile = cacheDir.resolve(imageHash)
+            cacheFile = IMAGES_DIR.resolve(imageHash)
 
             if (cacheFile.isFile) {
                 return Pair(cacheFile, Image.makeFromEncoded(cacheFile.readBytes()).asImageBitmap())
@@ -160,12 +160,7 @@ object SpotifyImageCache {
         return Pair(cacheFile, null)
     }
 
-    private suspend fun fromRemote(
-        url: String,
-        cacheFile: File?,
-        client: OkHttpClient,
-        cacheDir: File = IMAGES_DIR
-    ): ImageBitmap? {
+    private suspend fun fromRemote(url: String, cacheFile: File?, client: OkHttpClient): ImageBitmap? {
         val request = Request.Builder().url(url).build()
 
         return client.newCall(request).await()
@@ -178,7 +173,7 @@ object SpotifyImageCache {
                 val image = Image.makeFromEncoded(bytes).asImageBitmap()
 
                 cacheFile?.let {
-                    cacheDir.mkdirs()
+                    IMAGES_DIR.mkdirs()
                     it.writeBytes(bytes)
                 }
 

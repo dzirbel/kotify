@@ -3,7 +3,6 @@ package com.dzirbel.kotify.cache
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asDesktopBitmap
 import com.dzirbel.kotify.MockRequestInterceptor
-import com.dzirbel.kotify.cache.SpotifyCache.CACHE_DIR
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -22,10 +21,8 @@ internal class SpotifyImageCacheTest {
 
     @BeforeEach
     fun setup() {
-        testCacheDir.mkdirs()
         SpotifyImageCache.testReset()
         interceptor.requests.clear()
-        testCacheDir.deleteRecursively()
     }
 
     @Test
@@ -133,14 +130,12 @@ internal class SpotifyImageCacheTest {
 
     private fun getImage(url: String = DEFAULT_IMAGE_URL): ImageBitmap? {
         return runBlocking {
-            SpotifyImageCache.get(url = url, cacheDir = testCacheDir, scope = this, client = client)
+            SpotifyImageCache.get(url = url, scope = this, client = client)
         }
     }
 
     companion object {
         private const val DEFAULT_IMAGE_URL = "https://example.com/image"
-
-        private val testCacheDir = CACHE_DIR.resolve("test_images")
 
         private val testImageBytes by lazy { Files.readAllBytes(Path.of("src/test/resources/test-image.jpg")) }
     }

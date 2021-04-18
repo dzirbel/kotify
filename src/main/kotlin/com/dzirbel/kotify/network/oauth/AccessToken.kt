@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.network.oauth
 
 import androidx.compose.runtime.mutableStateOf
-import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.KotifyApplication
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.await
 import com.dzirbel.kotify.network.bodyFromJson
@@ -60,7 +60,7 @@ data class AccessToken(
         /**
          * The file at which the access token is saved, relative to the current working directory.
          */
-        internal val file = SpotifyCache.CACHE_DIR.resolve("access_token.json")
+        internal val file = KotifyApplication.cacheDir.resolve("access_token.json")
 
         /**
          * Whether to log access token updates to the console; used to disable logging when testing the cache directly.

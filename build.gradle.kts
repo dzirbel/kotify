@@ -149,3 +149,11 @@ compose.desktop {
         }
     }
 }
+
+// override compose configuration of arguments so that they're only applied to :run and not when packaging the
+// application
+project.afterEvaluate {
+    tasks.withType<JavaExec> {
+        args = listOf(".kotify/cache", ".kotify/settings")
+    }
+}

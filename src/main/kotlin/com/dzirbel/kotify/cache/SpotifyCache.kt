@@ -3,6 +3,7 @@ package com.dzirbel.kotify.cache
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.dzirbel.kotify.KotifyApplication
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.Album
@@ -31,7 +32,6 @@ import com.dzirbel.kotify.network.model.User
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import java.io.File
 
 object SpotifyCache {
     // TODO clear from cache on log out
@@ -85,16 +85,7 @@ object SpotifyCache {
         }
     }
 
-    /**
-     * The base directory for all cache files.
-     */
-    val CACHE_DIR by lazy {
-        File("cache")
-            .also { it.mkdirs() }
-            .also { require(it.isDirectory) { "could not create cache directory $it" } }
-    }
-
-    private val cacheFile = CACHE_DIR.resolve("cache.json")
+    private val cacheFile = KotifyApplication.cacheDir.resolve("cache.json")
 
     private val cache = Cache(
         file = cacheFile,
