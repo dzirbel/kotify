@@ -85,18 +85,19 @@ configurations.all {
     }
 }
 
-tasks.create<Test>("testLocal") {
+val testLocal = tasks.create<Test>("testLocal") {
     useJUnitPlatform {
         excludeTags("network")
     }
+    finalizedBy("jacocoTestReportLocal")
 }
 
 tasks.test {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
 }
 
 tasks.withType<Test>().configureEach {
-    finalizedBy(tasks.jacocoTestReport)
     testLogging {
         events = setOf(TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR, TestLogEvent.STANDARD_OUT)
         showStackTraces = true
@@ -108,7 +109,12 @@ jacoco {
     toolVersion = Versions.jacoco
 }
 
-tasks.jacocoTestReport {
+tasks.create<JacocoReport>("jacocoTestReportLocal") {
+    executionData(testLocal)
+    sourceSets(sourceSets.main.get())
+}
+
+tasks.withType<JacocoReport> {
     reports {
         xml.isEnabled = true
         csv.isEnabled = false
