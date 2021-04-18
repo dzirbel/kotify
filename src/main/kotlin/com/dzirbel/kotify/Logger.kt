@@ -102,7 +102,8 @@ sealed class Logger(private val tag: String) {
             log {
                 cacheEvents.map { cacheEvent ->
                     val message = when (cacheEvent) {
-                        is CacheEvent.Load -> "LOAD from ${cacheEvent.file} in ${cacheEvent.duration}"
+                        is CacheEvent.Load ->
+                            "LOAD from ${cacheEvent.file} in ${cacheEvent.duration} (${cacheEvent.errors.size} errors)"
                         is CacheEvent.Save -> "SAVE to ${cacheEvent.file} in ${cacheEvent.duration}"
                         is CacheEvent.Dump -> "DUMP"
                         is CacheEvent.Clear -> "CLEAR"

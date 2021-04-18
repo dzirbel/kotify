@@ -7,7 +7,9 @@ import kotlin.time.Duration
 sealed class CacheEvent {
     abstract val cache: Cache
 
-    data class Load(override val cache: Cache, val duration: Duration, val file: File) : CacheEvent()
+    data class Load(override val cache: Cache, val duration: Duration, val file: File, val errors: List<Throwable>) :
+        CacheEvent()
+
     data class Save(override val cache: Cache, val duration: Duration, val file: File) : CacheEvent()
     data class Dump(override val cache: Cache) : CacheEvent()
     data class Clear(override val cache: Cache) : CacheEvent()

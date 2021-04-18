@@ -14,6 +14,7 @@ import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 
@@ -67,7 +68,7 @@ data class CacheObject(
          * Note that neither [KClass] nor [Class] provides a [hashCode] with these semantics, so this custom
          * implementation is necessary.
          */
-        private fun KClass<*>.hashFields(): Int {
+        internal fun KClass<*>.hashFields(): Int {
             return hashes.getOrPut(this) {
                 val fields = java.fields
                     .map { field -> field.name + field.type.canonicalName }
@@ -84,6 +85,8 @@ data class CacheObject(
 
     /**
      * A custom [KSerializer] which uses [type] to deserialize [obj] to the appropriate class.
+     *
+     * If there is an error deserializing [obj] it will be set instead to a [Throwable].
      */
     @Suppress("MagicNumber")
     class Serializer : KSerializer<CacheObject> {
@@ -146,18 +149,27 @@ data class CacheObject(
                             requireNotNull(type) { "attempting to deserialize obj before type" }
                             requireNotNull(classHash) { "attempting to deserialize obj before classHash" }
 
-                            val cls = Class.forName(type).kotlin
-                            if (cls.hashFields() != classHash) {
-                                // TODO find a way to catch this and remove it from the cache instead of failing to
-                                //  deserialize
-                                throw ClassHashChangedException(
-                                    originalHash = classHash,
-                                    deserializedHash = cls.hashCode(),
-                                    type = type
-                                )
+                            val serializer = try {
+                                val cls = Class.forName(type).kotlin
+
+                                if (cls.hashFields() != classHash) {
+                                    throw ClassHashChangedException(
+                                        originalHash = classHash,
+                                        deserializedHash = cls.hashCode(),
+                                        type = type
+                                    )
+                                }
+
+                                cls.serializer()
+                            } catch (ex: Throwable) {
+                                // continue past this element with a generic serializer
+                                decodeSerializableElement(descriptor, index, JsonObject::class.serializer())
+
+                                obj = ex
+                                null
                             }
-                            val serializer = cls.serializer()
-                            obj = decodeSerializableElement(descriptor, index, serializer)
+
+                            serializer?.let { obj = decodeSerializableElement(descriptor, index, it) }
                         }
                         CompositeDecoder.DECODE_DONE -> break
                         else -> error("Unexpected index: $index")

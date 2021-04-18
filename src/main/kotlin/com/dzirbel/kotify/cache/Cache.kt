@@ -219,7 +219,7 @@ class Cache(
                     val replace = current?.let { replacementStrategy.replace(current, value) } != false
                     if (replace) {
                         val previous = cacheMap[id]
-                        val new = com.dzirbel.kotify.cache.CacheObject(id = id, obj = value, cacheTime = cacheTime)
+                        val new = CacheObject(id = id, obj = value, cacheTime = cacheTime)
                         cacheMap[id] = new
 
                         updates[id] = Pair(previous, new)
@@ -360,6 +360,7 @@ class Cache(
      */
     fun load() {
         var duration: Duration? = null
+        val errors: MutableList<Throwable> = mutableListOf()
 
         cache.modify { cacheMap ->
             cacheMap.clear()
@@ -369,6 +370,14 @@ class Cache(
                         FileReader(file)
                             .use { it.readLines().joinToString(separator = " ") }
                             .let { json.decodeFromString<Map<String, CacheObject>>(it) }
+                            .filterValues {
+                                if (it.obj is Throwable) {
+                                    errors.add(it.obj)
+                                    false
+                                } else {
+                                    true
+                                }
+                            }
                             .filterValues { ttlStrategy.isValid(cacheObject = it, currentTime = getCurrentTime()) }
                     )
                 }
@@ -378,7 +387,7 @@ class Cache(
         }
 
         duration?.let {
-            eventHandler(listOf(CacheEvent.Load(cache = this, duration = it, file = file)))
+            eventHandler(listOf(CacheEvent.Load(cache = this, duration = it, file = file, errors = errors)))
         }
     }
 
