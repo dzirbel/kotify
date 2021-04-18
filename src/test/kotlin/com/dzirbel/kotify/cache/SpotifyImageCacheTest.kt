@@ -9,7 +9,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -19,9 +19,9 @@ internal class SpotifyImageCacheTest {
     private val interceptor = MockRequestInterceptor()
     private val client = interceptor.client
 
-    @BeforeEach
-    fun setup() {
-        SpotifyImageCache.testReset()
+    @AfterEach
+    fun cleanup() {
+        SpotifyImageCache.clear()
         interceptor.requests.clear()
     }
 
