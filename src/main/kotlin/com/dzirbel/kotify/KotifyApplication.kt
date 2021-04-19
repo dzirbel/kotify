@@ -28,14 +28,18 @@ object KotifyApplication {
      * The directory under which cache files should be stored.
      */
     val cacheDir: File by lazy {
-        _cacheDir ?: File(".kotify/test-cache").also { println("Using test cache directory ${it.absolutePath}") }
+        _cacheDir ?: File(".kotify/test-cache")
+            .also { it.mkdirs() }
+            .also { println("Using test cache directory ${it.absolutePath}") }
     }
 
     /**
      * The directory under which settings files should be stored.
      */
     val settingsDir: File by lazy {
-        _settingsDir ?: File(".kotify/test-settings").also { println("Using test cache directory ${it.absolutePath}") }
+        _settingsDir ?: File(".kotify/test-settings")
+            .also { it.mkdirs() }
+            .also { println("Using test settings directory ${it.absolutePath}") }
     }
 
     private val userHome by lazy { File(System.getProperty("user.home")) }
