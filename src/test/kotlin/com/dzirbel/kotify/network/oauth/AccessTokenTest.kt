@@ -59,6 +59,23 @@ internal class AccessTokenTest {
     }
 
     @Test
+    fun testScopes() {
+        val token = AccessToken(
+            accessToken = "",
+            tokenType = "",
+            expiresIn = 0,
+            scope = "scope1 SCOPE2"
+        )
+
+        assertThat(token.hasScope("scope1")).isTrue()
+        assertThat(token.hasScope("Scope1")).isTrue()
+        assertThat(token.hasScope("SCOPE2")).isTrue()
+        assertThat(token.hasScope("")).isFalse()
+        assertThat(token.hasScope("abcv")).isFalse()
+        assertThat(token.hasScope("scope3")).isFalse()
+    }
+
+    @Test
     fun testGetPutClear() {
         assertNoToken()
 

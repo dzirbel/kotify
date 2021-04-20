@@ -18,6 +18,7 @@ import okhttp3.Request
 import java.io.FileNotFoundException
 import java.io.FileReader
 import java.nio.file.Files
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 /**
@@ -34,8 +35,6 @@ import java.util.concurrent.TimeUnit
  *
  * Some access tokens (also those granted via an Authorization Code Flow) use a [refreshToken] to get a new token when
  * they have expired.
- *
- * TODO utility function to check the scopes (i.e. make sure that a given list has been granted)
  */
 @Serializable
 data class AccessToken(
@@ -46,9 +45,28 @@ data class AccessToken(
     @SerialName("refresh_token") val refreshToken: String? = null,
     val received: Long = System.currentTimeMillis()
 ) {
-    // TODO tighten by a few seconds to account for network time
     val isExpired
         get() = System.currentTimeMillis() >= received + TimeUnit.SECONDS.toMillis(expiresIn)
+
+    /**
+     * A parsed list of the scopes granted by this [AccessToken], or null if it was not granted with [scope].
+     */
+    val scopes: List<String>? by lazy { scope?.split(' ') }
+
+    /**
+     * The [Instant] at which this [AccessToken] was received.
+     */
+    val receivedInstant: Instant by lazy { Instant.ofEpochMilli(received) }
+
+    /**
+     * The [Instant] at which this [AccessToken] expires.
+     */
+    val expiresInstant: Instant by lazy { receivedInstant.plusSeconds(expiresIn) }
+
+    /**
+     * Determines whether [scope] is granted by this [AccessToken].
+     */
+    fun hasScope(scope: String): Boolean = scopes?.any { it.equals(scope, ignoreCase = true) } == true
 
     /**
      * A simple in-memory and filesystem cache for a single [AccessToken].

@@ -28,6 +28,8 @@ fun liveRelativeDateText(timestamp: Long, format: (String) -> String = { it }): 
 
                 // TODO ideally we might compensate for time taken to format and emit to avoid falling behind, but this
                 //  almost always works as intended
+                // TODO doesn't account for fraction of time left, e.g. if 1.25 hours in the future, will refresh at 1
+                //  hour and then 2 hours, so will be out of date for 45 minutes
                 delay(unit.toMillis(1))
             }
         }
