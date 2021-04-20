@@ -1,14 +1,17 @@
 package com.dzirbel.kotify
 
 import java.io.File
+import java.util.Properties
 
 /**
- * Global constants and configuration for Kotify.
+ * Global constants and configuration for the application.
  */
-object KotifyApplication {
+object Application {
     enum class OperatingSystem {
         WINDOWS, MAC, LINUX
     }
+
+    private const val PROPERTIES_FILENAME = "app.properties"
 
     val currentOs: OperatingSystem? by lazy {
         val os = System.getProperty("os.name").toLowerCase()
@@ -45,10 +48,38 @@ object KotifyApplication {
     private val userHome by lazy { File(System.getProperty("user.home")) }
     private val appData by lazy { File(System.getenv("APPDATA")) }
 
+    lateinit var name: String
+        private set
+
+    private lateinit var nameLower: String
+
+    lateinit var version: String
+        private set
+
+    lateinit var github: String
+        private set
+
     /**
      * Initializes the application-level properties and prints their status to the console.
      */
     fun setup(cachePath: String? = null, settingsPath: String? = null) {
+        val classLoader = Thread.currentThread().contextClassLoader
+        val inputStream = requireNotNull(classLoader.getResourceAsStream(PROPERTIES_FILENAME)) {
+            "$PROPERTIES_FILENAME not found"
+        }
+        val properties = inputStream.use { Properties().apply { load(it) } }
+
+        name = requireNotNull(properties["name"] as? String) { "could not find name property in $PROPERTIES_FILENAME" }
+        nameLower = name.toLowerCase()
+
+        version = requireNotNull(properties["version"] as? String) {
+            "could not find version property in $PROPERTIES_FILENAME"
+        }
+
+        github = requireNotNull(properties["github"] as? String) {
+            "could not find github property in $PROPERTIES_FILENAME"
+        }
+
         val os = currentOs
         println(
             "Detected operating system: ${os?.name?.toLowerCase()?.capitalize()} " +
@@ -90,9 +121,9 @@ object KotifyApplication {
             ?.takeIfIsWriteableDirectory(directoryName = "system cache")
             ?.let {
                 when (os) {
-                    OperatingSystem.WINDOWS -> it.resolve("Kotify").resolve("cache")
-                    OperatingSystem.MAC -> it.resolve("Kotify")
-                    OperatingSystem.LINUX -> it.resolve(".kotify").resolve("cache")
+                    OperatingSystem.WINDOWS -> it.resolve(name).resolve("cache")
+                    OperatingSystem.MAC -> it.resolve(name)
+                    OperatingSystem.LINUX -> it.resolve(".$nameLower").resolve("cache")
                     null -> error("impossible")
                 }
             }
@@ -138,9 +169,9 @@ object KotifyApplication {
             ?.let {
                 // resolve a kotify-specific subdirectory
                 when (os) {
-                    OperatingSystem.WINDOWS -> it.resolve("Kotify").resolve("settings")
-                    OperatingSystem.MAC -> it.resolve("Kotify")
-                    OperatingSystem.LINUX -> it.resolve(".kotify").resolve("settings")
+                    OperatingSystem.WINDOWS -> it.resolve(name).resolve("settings")
+                    OperatingSystem.MAC -> it.resolve(name)
+                    OperatingSystem.LINUX -> it.resolve(".$nameLower").resolve("settings")
                     null -> error("impossible")
                 }
             }

@@ -13,7 +13,7 @@ import okhttp3.OkHttpClient
 import javax.swing.SwingUtilities
 
 fun main(args: Array<String>) {
-    KotifyApplication.setup(
+    Application.setup(
         cachePath = args.getOrNull(0),
         settingsPath = args.getOrNull(1)
     )
@@ -38,7 +38,7 @@ fun main(args: Array<String>) {
     SpotifyCache.load()
 
     SwingUtilities.invokeLater {
-        AppWindow(title = "Kotify")
+        AppWindow(title = "${Application.name} ${Application.version}")
             .apply {
                 maximize()
                 // TODO doesn't appear to have focus immediately

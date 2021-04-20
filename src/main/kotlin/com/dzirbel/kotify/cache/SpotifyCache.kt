@@ -3,7 +3,7 @@ package com.dzirbel.kotify.cache
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.dzirbel.kotify.KotifyApplication
+import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.Album
@@ -85,7 +85,7 @@ object SpotifyCache {
         }
     }
 
-    private val cacheFile = KotifyApplication.cacheDir.resolve("cache.json")
+    private val cacheFile = Application.cacheDir.resolve("cache.json")
 
     private val cache = Cache(
         file = cacheFile,

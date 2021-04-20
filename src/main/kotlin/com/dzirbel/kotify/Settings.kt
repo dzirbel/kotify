@@ -29,7 +29,7 @@ object Settings {
     private val state by lazy { mutableStateOf(load() ?: SettingsData()) }
 
     private val ioCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    private val settingsFile by lazy { KotifyApplication.settingsDir.resolve("settings.json") }
+    private val settingsFile by lazy { Application.settingsDir.resolve("settings.json") }
     private val json = Json {
         prettyPrint = true
         encodeDefaults = true

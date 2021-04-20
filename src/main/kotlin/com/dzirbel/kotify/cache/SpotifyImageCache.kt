@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import com.dzirbel.kotify.KotifyApplication
+import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.await
@@ -52,7 +52,7 @@ object SpotifyImageCache {
 
     private const val SPOTIFY_IMAGE_URL_PREFIX = "https://i.scdn.co/image/"
     private val IMAGES_DIR by lazy {
-        KotifyApplication.cacheDir.resolve("images")
+        Application.cacheDir.resolve("images")
             .also { it.mkdirs() }
             .also { require(it.isDirectory) { "could not create image cache directory $it" } }
     }

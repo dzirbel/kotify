@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.network.oauth.LocalOAuthServer
 import com.dzirbel.kotify.network.oauth.OAuth
 import com.dzirbel.kotify.ui.common.CheckboxWithLabel
@@ -100,13 +101,13 @@ fun AuthenticationView() {
 
 @Composable
 private fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
-    Text("Welcome to Kotify!", fontSize = Dimens.fontTitle)
+    Text("Welcome to ${Application.name}!", fontSize = Dimens.fontTitle)
 
     Spacer(Modifier.height(Dimens.space3))
 
     Text(
         "To get started, you'll need to authenticate with Spotify. This will open a web browser to request the " +
-            "permissions Kotify needs to function."
+            "permissions ${Application.name} needs to function."
     )
 
     Button(

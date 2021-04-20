@@ -3,6 +3,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Properties
 
 private object Versions {
     const val coroutines = "1.4.3" // https://github.com/Kotlin/kotlinx.coroutines
@@ -38,7 +39,9 @@ plugins {
     jacoco
 }
 
-version = "0.1.0"
+val appProperties = file("src/main/resources/app.properties").inputStream().use { Properties().apply { load(it) } }
+
+version = appProperties["version"] as String
 
 repositories {
     mavenCentral()
@@ -144,7 +147,7 @@ compose.desktop {
             modules("jdk.crypto.ec") // required for SSL, see https://github.com/JetBrains/compose-jb/issues/429
 
             targetFormats(TargetFormat.Deb, TargetFormat.Exe)
-            packageName = "Kotify"
+            packageName = appProperties["name"] as String
             packageVersion = project.version.toString()
         }
     }
