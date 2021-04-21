@@ -114,8 +114,8 @@ private class ArtistPresenter(
 
                 mutateState {
                     State(
-                        artist = artist ?: it?.artist ?: error(""),
-                        artistUpdated = artist?.id?.let { SpotifyCache.lastUpdated(it) },
+                        artist = artist ?: it?.artist ?: error("no artist"),
+                        artistUpdated = SpotifyCache.lastUpdated(page.artistId),
                         refreshingArtist = false,
                         artistAlbums = checkNotNull(artistAlbums ?: it?.artistAlbums),
                         artistAlbumsUpdated = SpotifyCache.lastUpdated(

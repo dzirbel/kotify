@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun liveRelativeDateText(timestamp: Long, format: (String) -> String = { it }): String {
     // TODO initial value is not really used and may trigger a recomposition
-    return produceState(initialValue = "") {
+    return produceState(initialValue = "", key1 = timestamp) {
         while (true) {
             val relative = RelativeTimeInfo.of(timestamp = timestamp)
 
