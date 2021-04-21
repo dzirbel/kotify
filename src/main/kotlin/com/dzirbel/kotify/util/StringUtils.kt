@@ -7,7 +7,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import kotlin.math.abs
 
 private val formatDateTimeMillis = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss.SSS")
 private val formatDateTime = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss")
@@ -69,57 +68,6 @@ fun formatDateTime(
     }
 
     return formatter.withLocale(locale).withZone(zone).format(Instant.ofEpochMilli(timestamp))
-}
-
-/**
- * Returns a relative format of the given [timestamp] relative to [now], e.g. "3 minutes ago", and the [TimeUnit] of the
- * granularity.
- */
-fun formatTimeRelativeWithUnit(timestamp: Long, now: Long = System.currentTimeMillis()): Pair<String, TimeUnit> {
-    if (timestamp == now) {
-        return Pair("now", TimeUnit.SECONDS)
-    }
-
-    val difference = abs(timestamp - now)
-
-    var amount = TimeUnit.MILLISECONDS.toDays(difference)
-    val unit = if (amount > 0) {
-        TimeUnit.DAYS
-    } else {
-        amount = TimeUnit.MILLISECONDS.toHours(difference)
-        if (amount > 0) {
-            TimeUnit.HOURS
-        } else {
-            amount = TimeUnit.MILLISECONDS.toMinutes(difference)
-            if (amount > 0) {
-                TimeUnit.MINUTES
-            } else {
-                amount = TimeUnit.MILLISECONDS.toSeconds(difference)
-                TimeUnit.SECONDS
-            }
-        }
-    }
-
-    val timeUnitName = when (unit) {
-        TimeUnit.SECONDS -> "second"
-        TimeUnit.MINUTES -> "minute"
-        TimeUnit.HOURS -> "hour"
-        TimeUnit.DAYS -> "day"
-        else -> error("unexpected TimeUnit $unit")
-    }
-
-    val unitFormatted = if (amount <= 1L) timeUnitName else timeUnitName + "s"
-    val amountFormatted = if (amount == 0L) "<1" else amount.toString()
-
-    val text = if (timestamp < now) "$amountFormatted $unitFormatted ago" else "in $amountFormatted $unitFormatted"
-    return Pair(text, unit)
-}
-
-/**
- * Returns a relative format of the given [timestamp] relative to [now], e.g. "3 minutes ago".
- */
-fun formatTimeRelative(timestamp: Long, now: Long = System.currentTimeMillis()): String {
-    return formatTimeRelativeWithUnit(timestamp = timestamp, now = now).first
 }
 
 /**

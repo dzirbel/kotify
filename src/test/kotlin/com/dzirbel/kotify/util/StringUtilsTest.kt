@@ -7,7 +7,6 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.time.ZoneId
 import java.util.Locale
 import java.util.TimeZone
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -21,8 +20,6 @@ internal class StringUtilsTest {
         val includeTime: Boolean,
         val includeMillis: Boolean
     )
-
-    data class FormatTimeRelativeCase(val timestamp: Long, val now: Long, val formatted: String)
 
     data class FormatDurationCase(val duration: Duration, val formatted: String)
 
@@ -45,12 +42,6 @@ internal class StringUtilsTest {
                 zone = ZoneId.of("America/Los_Angeles")
             )
         ).isEqualTo(case.formatted)
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    fun formatTimeRelative(case: FormatTimeRelativeCase) {
-        assertThat(formatTimeRelative(timestamp = case.timestamp, now = case.now)).isEqualTo(case.formatted)
     }
 
     @ParameterizedTest
@@ -133,67 +124,6 @@ internal class StringUtilsTest {
                     includeTime = false,
                     includeMillis = false
                 )
-            )
-        }
-
-        @JvmStatic
-        @Suppress("unused")
-        fun formatTimeRelative(): List<FormatTimeRelativeCase> {
-            val base = 1_600_000_000_000
-            return listOf(
-                FormatTimeRelativeCase(timestamp = base, now = base, formatted = "now"),
-                FormatTimeRelativeCase(timestamp = base, now = base + 10, formatted = "<1 second ago"),
-                FormatTimeRelativeCase(timestamp = base, now = base - 10, formatted = "in <1 second"),
-                FormatTimeRelativeCase(timestamp = base, now = base + 1_000, formatted = "1 second ago"),
-                FormatTimeRelativeCase(timestamp = base, now = base - 1_000, formatted = "in 1 second"),
-                FormatTimeRelativeCase(timestamp = base, now = base + 1_700, formatted = "1 second ago"),
-                FormatTimeRelativeCase(timestamp = base, now = base - 1_700, formatted = "in 1 second"),
-                FormatTimeRelativeCase(timestamp = base, now = base + 2_000, formatted = "2 seconds ago"),
-                FormatTimeRelativeCase(timestamp = base, now = base - 2_000, formatted = "in 2 seconds"),
-
-                FormatTimeRelativeCase(
-                    timestamp = base,
-                    now = base + TimeUnit.MINUTES.toMillis(3),
-                    formatted = "3 minutes ago"
-                ),
-                FormatTimeRelativeCase(
-                    timestamp = base,
-                    now = base - TimeUnit.MINUTES.toMillis(3),
-                    formatted = "in 3 minutes"
-                ),
-
-                FormatTimeRelativeCase(
-                    timestamp = base,
-                    now = base + TimeUnit.HOURS.toMillis(4),
-                    formatted = "4 hours ago"
-                ),
-                FormatTimeRelativeCase(
-                    timestamp = base,
-                    now = base - TimeUnit.HOURS.toMillis(4),
-                    formatted = "in 4 hours"
-                ),
-
-                FormatTimeRelativeCase(
-                    timestamp = base,
-                    now = base + TimeUnit.DAYS.toMillis(5),
-                    formatted = "5 days ago"
-                ),
-                FormatTimeRelativeCase(
-                    timestamp = base,
-                    now = base - TimeUnit.DAYS.toMillis(5),
-                    formatted = "in 5 days"
-                ),
-
-                FormatTimeRelativeCase(
-                    timestamp = base,
-                    now = base + TimeUnit.DAYS.toMillis(100),
-                    formatted = "100 days ago"
-                ),
-                FormatTimeRelativeCase(
-                    timestamp = base,
-                    now = base - TimeUnit.DAYS.toMillis(100),
-                    formatted = "in 100 days"
-                ),
             )
         }
 
