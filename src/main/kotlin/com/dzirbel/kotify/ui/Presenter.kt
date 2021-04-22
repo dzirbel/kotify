@@ -2,10 +2,7 @@ package com.dzirbel.kotify.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.ui.Presenter.StateOrError.State
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
@@ -132,10 +129,14 @@ abstract class Presenter<State, Event : Any> constructor(
 
     private val events = MutableSharedFlow<Event>()
 
+    private val errorsFlow = MutableStateFlow<List<Throwable>>(emptyList())
+
     /**
      * A list of accumulated errors from the event stream.
      */
-    var errors by mutableStateOf(emptyList<Throwable>())
+    var errors: List<Throwable>
+        get() = errorsFlow.value
+        set(value) { errorsFlow.value = value }
 
     /**
      * The core event [Flow], which includes emitting [startingEvents], reacting to events according to the
@@ -232,7 +233,7 @@ abstract class Presenter<State, Event : Any> constructor(
     private fun onError(throwable: Throwable) {
         Logger.UI.handleError(presenter = this, throwable = throwable)
 
-        errors = errors.plus(throwable)
+        errorsFlow.value = errorsFlow.value.plus(throwable)
 
         synchronized(this) {
             stateFlow.value = StateOrError.Error(lastState = stateFlow.value.safeState, throwable = throwable)
