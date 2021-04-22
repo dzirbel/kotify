@@ -21,7 +21,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.svgResource
 import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.Playlist
@@ -170,12 +169,7 @@ private fun PlaylistItem(playlist: Playlist, pageStack: MutableState<PageStack>)
 
         if (Player.playbackContext.value?.uri == playlist.uri) {
             val sizeDp = with(LocalDensity.current) { Dimens.fontBody.toDp() }
-            Icon(
-                painter = svgResource("volume-up.svg"),
-                contentDescription = "Volume",
-                tint = Colors.current.primary,
-                modifier = Modifier.size(sizeDp)
-            )
+            CachedIcon(name = "volume-up", size = sizeDp, contentDescription = "Volume", tint = Colors.current.primary)
         }
     }
 }

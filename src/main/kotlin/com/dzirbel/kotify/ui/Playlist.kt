@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.svgResource
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullPlaylist
 import com.dzirbel.kotify.network.model.PlaylistTrack
@@ -144,11 +142,8 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                                 if (playing) Player.pause() else Player.play(contextUri = state.playlist.uri)
                             }
                         ) {
-                            Icon(
-                                painter = svgResource(
-                                    if (playing) "pause-circle-outline.svg" else "play-circle-outline.svg"
-                                ),
-                                modifier = Modifier.size(Dimens.iconMedium),
+                            CachedIcon(
+                                name = if (playing) "pause-circle-outline" else "play-circle-outline",
                                 contentDescription = "Play"
                             )
                         }

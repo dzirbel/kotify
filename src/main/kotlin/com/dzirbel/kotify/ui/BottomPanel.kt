@@ -34,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.svgResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -672,11 +671,11 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
                 presenter.emitAsync(BottomPanelPresenter.Event.ToggleShuffle(shuffle = !shuffling))
             }
         ) {
-            Icon(
-                painter = svgResource("shuffle.svg"),
-                modifier = Modifier.size(Dimens.iconSmall),
-                tint = Colors.current.highlighted(highlight = shuffling),
-                contentDescription = "Shuffle"
+            CachedIcon(
+                name = "shuffle",
+                size = Dimens.iconSmall,
+                contentDescription = "Shuffle",
+                tint = Colors.current.highlighted(highlight = shuffling)
             )
         }
 
@@ -686,11 +685,7 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
                 presenter.emitAsync(BottomPanelPresenter.Event.SkipPrevious)
             }
         ) {
-            Icon(
-                painter = svgResource("skip-previous.svg"),
-                modifier = Modifier.size(Dimens.iconSmall),
-                contentDescription = "Previous"
-            )
+            CachedIcon(name = "skip-previous", size = Dimens.iconSmall, contentDescription = "Previous")
         }
 
         IconButton(
@@ -705,9 +700,8 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
                 )
             }
         ) {
-            Icon(
-                painter = svgResource(if (playing) "pause-circle-outline.svg" else "play-circle-outline.svg"),
-                modifier = Modifier.size(Dimens.iconMedium),
+            CachedIcon(
+                name = if (playing) "pause-circle-outline" else "play-circle-outline",
                 contentDescription = if (playing) "Pause" else "Play"
             )
         }
@@ -718,11 +712,7 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
                 presenter.emitAsync(BottomPanelPresenter.Event.SkipNext)
             }
         ) {
-            Icon(
-                painter = svgResource("skip-next.svg"),
-                modifier = Modifier.size(Dimens.iconSmall),
-                contentDescription = "Next"
-            )
+            CachedIcon(name = "skip-next", size = Dimens.iconSmall, contentDescription = "Next")
         }
 
         IconButton(
@@ -737,11 +727,11 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
                 presenter.emitAsync(BottomPanelPresenter.Event.SetRepeat(repeatState = newRepeatState))
             }
         ) {
-            Icon(
-                painter = svgResource(if (repeatState == "track") "repeat-one.svg" else "repeat.svg"),
+            CachedIcon(
+                name = if (repeatState == "track") "repeat-one" else "repeat",
+                size = Dimens.iconSmall,
+                contentDescription = "Repeat",
                 tint = Colors.current.highlighted(highlight = repeatState == "track" || repeatState == "context"),
-                modifier = Modifier.size(Dimens.iconSmall),
-                contentDescription = "Repeat"
             )
         }
     }
@@ -821,10 +811,7 @@ private fun VolumeControls(state: BottomPanelPresenter.State, presenter: BottomP
             dragKey = currentDevice,
             sliderWidth = VOLUME_SLIDER_WIDTH,
             leftContent = {
-                Icon(
-                    painter = svgResource("volume-up.svg"),
-                    contentDescription = "Volume"
-                )
+                CachedIcon(name = "volume-up", contentDescription = "Volume")
             },
             onSeek = { seekPercent ->
                 val volumeInt = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
@@ -909,11 +896,7 @@ private fun DeviceControls(state: BottomPanelPresenter.State, presenter: BottomP
         enabled = dropdownEnabled,
         onClick = { dropdownExpanded.value = !dropdownExpanded.value }
     ) {
-        Icon(
-            painter = svgResource(state.currentDevice.iconName),
-            modifier = Modifier.size(Dimens.iconSmall),
-            contentDescription = null
-        )
+        CachedIcon(name = state.currentDevice.iconName, size = Dimens.iconSmall)
 
         Spacer(Modifier.width(Dimens.space3))
 
@@ -971,11 +954,7 @@ private fun DeviceControls(state: BottomPanelPresenter.State, presenter: BottomP
                             dropdownExpanded.value = false
                         }
                     ) {
-                        Icon(
-                            painter = svgResource(device.iconName),
-                            modifier = Modifier.size(Dimens.iconSmall),
-                            contentDescription = null
-                        )
+                        CachedIcon(name = device.iconName, size = Dimens.iconSmall)
 
                         Spacer(Modifier.width(Dimens.space2))
 
@@ -989,10 +968,10 @@ private fun DeviceControls(state: BottomPanelPresenter.State, presenter: BottomP
 
 private val PlaybackDevice?.iconName: String
     get() {
-        if (this == null) return "devices-other.svg"
+        if (this == null) return "devices-other"
         return when {
-            type.equals("computer", ignoreCase = true) -> "computer.svg"
-            type.equals("smartphone", ignoreCase = true) -> "smartphone.svg"
-            else -> "devices-other.svg"
+            type.equals("computer", ignoreCase = true) -> "computer"
+            type.equals("smartphone", ignoreCase = true) -> "smartphone"
+            else -> "devices-other"
         }
     }

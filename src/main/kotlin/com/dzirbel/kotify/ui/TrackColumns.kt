@@ -7,15 +7,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.ContentAlpha
-import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.svgResource
 import com.dzirbel.kotify.network.model.FullTrack
 import com.dzirbel.kotify.network.model.SimplifiedAlbum
 import com.dzirbel.kotify.network.model.SimplifiedTrack
@@ -65,11 +62,12 @@ object PlayingColumn : Column<Track>() {
     override fun item(item: Track, index: Int) {
         if (Player.currentTrack.value?.id == item.id) {
             val fontSizeDp = with(LocalDensity.current) { Dimens.fontBody.toDp() }
-            Icon(
-                painter = svgResource("volume-up.svg"),
+            CachedIcon(
+                name = "volume-up",
+                size = fontSizeDp,
                 contentDescription = "Playing",
-                tint = Colors.current.primary,
-                modifier = Modifier.padding(horizontal = Dimens.space2).size(fontSizeDp)
+                modifier = Modifier.padding(horizontal = Dimens.space2),
+                tint = Colors.current.primary
             )
         } else {
             Box(Modifier)

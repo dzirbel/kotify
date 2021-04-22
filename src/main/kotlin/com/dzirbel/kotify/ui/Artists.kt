@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -22,7 +21,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.svgResource
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullArtist
 import com.dzirbel.kotify.ui.common.Grid
@@ -137,9 +135,9 @@ private fun ArtistCell(artist: FullArtist, pageStack: MutableState<PageStack>) {
                 onClick = { Player.play(contextUri = artist.uri) }
             ) {
                 val playing = Player.playbackContext.value?.uri == artist.uri
-                Icon(
-                    painter = svgResource("play-circle-outline.svg"),
-                    modifier = Modifier.size(Dimens.iconSmall),
+                CachedIcon(
+                    name = "play-circle-outline",
+                    size = Dimens.iconSmall,
                     contentDescription = "Play",
                     tint = Colors.current.highlighted(highlight = playing)
                 )
