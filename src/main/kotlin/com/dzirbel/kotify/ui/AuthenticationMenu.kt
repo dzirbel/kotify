@@ -20,12 +20,16 @@ import com.dzirbel.kotify.ui.theme.Dimens
 private val MAX_WIDTH = 500.dp
 
 @Composable
-fun AuthenticationMenu(user: PrivateUser) {
+fun AuthenticationMenu(user: PrivateUser?) {
     Column(
         modifier = Modifier.padding(Dimens.space3).widthIn(max = MAX_WIDTH),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2)
     ) {
-        Text("Authenticated as ${user.displayName} [${user.id}]")
+        if (user == null) {
+            Text("Not authenticated")
+        } else {
+            Text("Authenticated as ${user.displayName} [${user.id}]")
+        }
 
         AccessToken.Cache.token?.let { token ->
             Text("Access token: ${token.accessToken}")

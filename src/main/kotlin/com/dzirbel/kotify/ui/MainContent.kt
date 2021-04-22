@@ -174,9 +174,10 @@ private fun AuthenticationMenuHeader() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { AuthenticationMenuPresenter(scope = scope) }
 
-    val currentUser = presenter.state().safeState // TODO proper error handling
+    val currentUser = presenter.state().safeState
+    val userError = presenter.state() is Presenter.StateOrError.Error
 
-    val username = currentUser?.displayName ?: "<loading>"
+    val username = if (userError) "<ERROR>" else currentUser?.displayName ?: "<loading>"
     val expandedState = remember { mutableStateOf(false) }
 
     Row {
@@ -187,7 +188,7 @@ private fun AuthenticationMenuHeader() {
         Spacer(Modifier.width(Dimens.space2))
 
         SimpleTextButton(
-            enabled = currentUser != null,
+            enabled = currentUser != null || userError,
             onClick = { expandedState.value = !expandedState.value }
         ) {
             LoadedImage(
@@ -211,13 +212,11 @@ private fun AuthenticationMenuHeader() {
                 modifier = Modifier.requiredSize(Dimens.iconMedium).align(Alignment.CenterVertically)
             )
 
-            currentUser?.let {
-                DropdownMenu(
-                    expanded = expandedState.value,
-                    onDismissRequest = { expandedState.value = false }
-                ) {
-                    AuthenticationMenu(user = currentUser)
-                }
+            DropdownMenu(
+                expanded = expandedState.value,
+                onDismissRequest = { expandedState.value = false }
+            ) {
+                AuthenticationMenu(user = currentUser)
             }
         }
     }
