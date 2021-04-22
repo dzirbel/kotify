@@ -28,6 +28,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.Logger
@@ -141,9 +143,15 @@ private fun NetworkTab() {
         val delay = remember { mutableStateOf(DelayInterceptor.delayMs.toString()) }
         val appliedDelay = remember { mutableStateOf(true) }
 
-        // TODO ideally we might reset to the actual delay value on un-focus
         OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { focusState ->
+                    if (focusState == FocusState.Inactive) {
+                        delay.value = DelayInterceptor.delayMs.toString()
+                        appliedDelay.value = true
+                    }
+                },
             value = delay.value,
             singleLine = true,
             isError = !appliedDelay.value,
