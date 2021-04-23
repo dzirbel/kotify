@@ -25,3 +25,10 @@ fun <A, B> Iterable<A>.zipToMap(other: Iterable<B>): Map<A, B> {
     }
     return map
 }
+
+/**
+ * Returns this [List] if all its elements are non-null, otherwise returns null.
+ */
+fun <T> List<T?>.takeIfAllNonNull(): List<T>? {
+    if (all { it != null }) @Suppress("unchecked_cast") return this as List<T> else return null
+}

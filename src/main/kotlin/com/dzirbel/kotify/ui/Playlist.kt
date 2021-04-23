@@ -79,7 +79,10 @@ private class PlaylistPresenter(
                     )
                 }
 
-                val tracks = playlist.tracks.fetchAll<PlaylistTrack>()
+                val tracks = SpotifyCache.Playlists.getPlaylistTracks(
+                    playlistId = page.playlistId,
+                    paging = playlist.tracks
+                )
 
                 mutateState { it?.copy(tracks = tracks) }
             }

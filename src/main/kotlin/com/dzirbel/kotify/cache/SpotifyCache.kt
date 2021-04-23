@@ -15,7 +15,9 @@ import com.dzirbel.kotify.network.model.FullEpisode
 import com.dzirbel.kotify.network.model.FullPlaylist
 import com.dzirbel.kotify.network.model.FullShow
 import com.dzirbel.kotify.network.model.FullTrack
+import com.dzirbel.kotify.network.model.Paging
 import com.dzirbel.kotify.network.model.Playlist
+import com.dzirbel.kotify.network.model.PlaylistTrack
 import com.dzirbel.kotify.network.model.PrivateUser
 import com.dzirbel.kotify.network.model.PublicUser
 import com.dzirbel.kotify.network.model.SavedAlbum
@@ -29,6 +31,7 @@ import com.dzirbel.kotify.network.model.SimplifiedShow
 import com.dzirbel.kotify.network.model.SimplifiedTrack
 import com.dzirbel.kotify.network.model.Track
 import com.dzirbel.kotify.network.model.User
+import com.dzirbel.kotify.util.takeIfAllNonNull
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -81,6 +84,20 @@ object SpotifyCache {
 
             companion object {
                 fun idFor(artistId: String) = "artist-albums-$artistId"
+            }
+        }
+
+        @Serializable
+        data class PlaylistTracks(
+            val playlistId: String,
+            val playlistTrackIds: List<String>,
+            val trackIds: List<String>
+        ) : CacheableObject {
+            override val id
+                get() = idFor(playlistId)
+
+            companion object {
+                fun idFor(playlistId: String) = "playlist-tracks-$playlistId"
             }
         }
     }
@@ -289,11 +306,46 @@ object SpotifyCache {
 
             return savedPlaylists.ids
         }
+
+        suspend fun getPlaylistTracks(playlistId: String, paging: Paging<PlaylistTrack>? = null): List<PlaylistTrack> {
+            cache.getCachedValue<GlobalObjects.PlaylistTracks>(
+                id = GlobalObjects.PlaylistTracks.idFor(playlistId = playlistId)
+            )?.let { playlistTracks ->
+                cache.getCached(ids = playlistTracks.playlistTrackIds)
+                    .map { it?.obj as? PlaylistTrack }
+                    .takeIfAllNonNull()
+                    ?.let { return it }
+            }
+
+            return (paging ?: Spotify.Playlists.getPlaylistTracks(playlistId = playlistId)).fetchAll<PlaylistTrack>()
+                .also { tracks ->
+                    val trackIds = tracks.map { it.track.id }.takeIfAllNonNull()
+
+                    // TODO prevents caching playlist tracks for playlists with local tracks
+                    if (trackIds == null) {
+                        cache.putAll(tracks)
+                    } else {
+                        val playlistTracks = GlobalObjects.PlaylistTracks(
+                            playlistId = playlistId,
+                            playlistTrackIds = trackIds.map { PlaylistTrack.idFor(trackId = it) },
+                            trackIds = trackIds
+                        )
+                        cache.putAll(tracks.plus(playlistTracks))
+                    }
+                }
+        }
     }
 
     object Tracks {
         suspend fun getTrack(id: String): Track = cache.get<Track>(id) { Spotify.Tracks.getTrack(id) }
         suspend fun getFullTrack(id: String): FullTrack = cache.get(id) { Spotify.Tracks.getTrack(id) }
+
+        suspend fun getTracks(ids: List<String>): List<Track> {
+            return cache.getAll<Track>(ids = ids) { missingIds ->
+                missingIds.chunked(size = Spotify.MAX_LIMIT)
+                    .flatMap { idsChunk -> Spotify.Tracks.getTracks(ids = idsChunk) }
+            }
+        }
 
         suspend fun getFullTracks(ids: List<String>): List<FullTrack> {
             return cache.getAll(ids = ids) { missingIds ->
