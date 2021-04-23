@@ -64,6 +64,10 @@ data class PlaylistPage(val playlistId: String) : Page {
     fun titleFor(playlist: Playlist) = "Playlist: ${playlist.name}"
 }
 
+object LibraryStatePage : Page {
+    override fun toString() = "Library State"
+}
+
 object TracksPage : Page {
     override fun toString() = "Saved Tracks"
 }
@@ -152,7 +156,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
                 }
             }
 
-            AuthenticationMenuHeader()
+            AuthenticationMenuHeader(pageStack)
         }
 
         Box(Modifier.fillMaxSize().weight(1f)) {
@@ -163,6 +167,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
                 is AlbumPage -> Album(pageStack, current)
                 is ArtistPage -> Artist(pageStack, current)
                 is PlaylistPage -> Playlist(pageStack, current)
+                LibraryStatePage -> LibraryState(pageStack)
                 else -> error("unknown page type: ${pageStack.value.current}")
             }
         }
@@ -170,7 +175,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
 }
 
 @Composable
-private fun AuthenticationMenuHeader() {
+private fun AuthenticationMenuHeader(pageStack: MutableState<PageStack>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { AuthenticationMenuPresenter(scope = scope) }
 
@@ -181,6 +186,13 @@ private fun AuthenticationMenuHeader() {
     val expandedState = remember { mutableStateOf(false) }
 
     Row {
+        SimpleTextButton(
+            modifier = Modifier.align(Alignment.CenterVertically),
+            onClick = { pageStack.mutate { to(LibraryStatePage) } }
+        ) {
+            Text("Library")
+        }
+
         ThemeSwitcher(modifier = Modifier.align(Alignment.CenterVertically))
 
         ProjectGithubIcon(modifier = Modifier.align(Alignment.CenterVertically))

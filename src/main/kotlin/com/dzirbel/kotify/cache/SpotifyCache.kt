@@ -206,6 +206,12 @@ object SpotifyCache {
         cache.put(obj)
     }
 
+    fun getCacheObject(id: String): CacheObject? = cache.getCached(id)
+    fun getCacheObjects(ids: List<String>): List<CacheObject?> = cache.getCached(ids)
+
+    inline fun <reified T> getCached(id: String): T? = getCacheObject(id)?.obj as? T
+    inline fun <reified T> getCached(ids: List<String>): List<T?> = getCacheObjects(ids).map { it?.obj as? T }
+
     object Albums {
         // most batched calls have a maximum of 50; for albums the maximum is 20
         private const val MAX_ALBUM_IDS_LOOKUP = 20
