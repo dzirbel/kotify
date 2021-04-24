@@ -244,7 +244,8 @@ fun <T> Table(
     val sortState = remember { mutableStateOf<Pair<Column<T>, Sort>?>(null) }
 
     // map from original row index to its index when sorted
-    val sortedIndexMap = remember(sortState.value, items) {
+    // TODO optimize
+    val sortedIndexMap: List<Int> = remember(sortState.value, items) {
         val indexed = sortState.value?.let { (column, sort) ->
             items
                 .withIndex()
@@ -265,7 +266,7 @@ fun <T> Table(
                     }
                 }
                 .map { it.index }
-        } ?: items.indices
+        } ?: items.indices.toList()
 
         if (includeHeader) {
             listOf(0).plus(indexed.map { it + 1 })
@@ -308,31 +309,25 @@ fun <T> Table(
             }
         },
         measurePolicy = { measurables, constraints ->
-            val gridMeasurables = measurables.dropLast(numDividers)
-            val dividerMeasurables = measurables.takeLast(numDividers)
+            val numNonDividers = measurables.size - numDividers
 
             // row index -> the indexes of the measurables/placeables for the items in each row
-            val indexesForRow: List<IntRange> = sortedIndexMap.map { row ->
+            val indexesForRow: Array<IntRange> = Array(sortedIndexMap.size) { index ->
+                val row = sortedIndexMap[index]
                 (row * numCols) until ((row + 1) * numCols)
             }
 
-            check(indexesForRow.size == numRows)
-            indexesForRow.forEach { check(it.count() == numCols) }
-
             // column index -> the indexes of the measurables/placeables for the items in each column
-            val indexesForCol: List<List<Int>> = (0 until numCols).map { col ->
-                List(numRows) { row -> col + (numCols * row) }
+            val indexesForCol: Array<Array<Int>> = Array(numCols) { col ->
+                Array(numRows) { row -> col + (numCols * row) }
             }
 
-            check(indexesForCol.size == numCols)
-            indexesForCol.forEach { check(it.count() == numRows) }
-
-            val columnWidths: List<ColumnWidth> = columns.map { it.width }
+            val columnWidths: Array<ColumnWidth> = Array(numCols) { col -> columns[col].width }
             var remainingWidth: Float = constraints.maxWidth.toFloat()
             // column width in pixels after it has been measured
             val colWidths: Array<Float?> = arrayOfNulls(numCols)
             // index of placeable is the same as the index of the measurable
-            val placeables: Array<Placeable?> = arrayOfNulls(gridMeasurables.size)
+            val placeables: Array<Placeable?> = arrayOfNulls(numNonDividers)
 
             // 1: first measure the fixed columns and those determined by header width
             columnWidths.forEachIndexed { colIndex, columnSize ->
@@ -342,7 +337,7 @@ fun <T> Table(
                     remainingWidth -= width
 
                     indexesForCol[colIndex].forEach { index ->
-                        placeables[index] = gridMeasurables[index].measure(
+                        placeables[index] = measurables[index].measure(
                             Constraints.fixedWidth(width = width.roundToInt())
                         )
                     }
@@ -350,7 +345,7 @@ fun <T> Table(
                     check(includeHeader) { "cannot use ${ColumnWidth.MatchHeader} without a header" }
 
                     val headerIndex = indexesForCol[colIndex].first()
-                    val headerPlaceable = gridMeasurables[headerIndex].measure(Constraints())
+                    val headerPlaceable = measurables[headerIndex].measure(Constraints())
                     placeables[headerIndex] = headerPlaceable
                     val width = headerPlaceable.width
 
@@ -358,7 +353,7 @@ fun <T> Table(
                     remainingWidth -= width
 
                     indexesForCol[colIndex].drop(1).forEach { index ->
-                        placeables[index] = gridMeasurables[index].measure(
+                        placeables[index] = measurables[index].measure(
                             Constraints.fixedWidth(width = width)
                         )
                     }
@@ -376,7 +371,7 @@ fun <T> Table(
                     }
 
                     val colWidth = indexesForCol[colIndex].maxOf { index ->
-                        gridMeasurables[index].measure(Constraints(minWidth = min, maxWidth = max))
+                        measurables[index].measure(Constraints(minWidth = min, maxWidth = max))
                             .also { placeables[index] = it }
                             .width
                     }
@@ -400,27 +395,24 @@ fun <T> Table(
                     colWidths[colIndex] = colWidth
 
                     indexesForCol[colIndex].forEach { index ->
-                        placeables[index] = gridMeasurables[index].measure(
+                        placeables[index] = measurables[index].measure(
                             Constraints(maxWidth = colWidth.roundToInt().coerceAtLeast(0))
                         )
                     }
                 }
             }
 
-            // all column widths and placeables should be set by now
-            colWidths.forEach { checkNotNull(it) }
-            placeables.forEach { checkNotNull(it) }
-
             // height of each row is the maximum height of the cell in the group; total height is used for the layout
             var totalHeight = 0
-            val rowHeights = (0 until numRows).map { rowIndex ->
+            val rowHeights = Array(numRows) { rowIndex ->
                 indexesForRow[rowIndex].maxOf { placeables[it]!!.height }
                     .also { totalHeight += it }
             }
 
-            val dividerPlaceables = dividerMeasurables.map { dividerMeasurable ->
-                dividerMeasurable.measure(
-                    Constraints.fixed(width = constraints.maxWidth, height = Dimens.divider.roundToPx())
+            val dividerHeightPx = Dimens.divider.roundToPx()
+            val dividerPlaceables = Array(numDividers) { index ->
+                measurables[numNonDividers + index].measure(
+                    Constraints.fixed(width = constraints.maxWidth, height = dividerHeightPx)
                 ).also { totalHeight += it.height }
             }
 
