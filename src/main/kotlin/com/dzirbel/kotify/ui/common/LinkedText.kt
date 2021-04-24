@@ -196,7 +196,7 @@ private fun AnnotatedString.characterOffset(offset: Offset, layoutResult: TextLa
         val charBoundingBox = layoutResult.getBoundingBox(closestOffset)
         if (charBoundingBox.contains(offset)) return closestOffset
 
-        val adjusted = closestOffset - 1
+        val adjusted = (closestOffset - 1).coerceAtLeast(0)
 
         // if the adjusted box still does not contain the offset, nothing is being hovered - this happens when the text
         // breaks and the offset is beyond the line end
