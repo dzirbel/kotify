@@ -1,10 +1,11 @@
 package com.dzirbel.kotify.ui.common
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.produceState
+import com.dzirbel.kotify.ui.util.iterativeState
 import com.dzirbel.kotify.util.RelativeTimeInfo
-import kotlinx.coroutines.delay
 import java.util.concurrent.TimeUnit
+
+private const val MILLIS_IN_SECOND = 1_000L
 
 /**
  * Returns an auto-updating relative date text for the given [timestamp].
@@ -18,18 +19,14 @@ import java.util.concurrent.TimeUnit
  */
 @Composable
 fun liveRelativeDateText(timestamp: Long, format: (String) -> String = { it }): String {
-    // TODO initial value is not really used and may trigger a recomposition
-    return produceState(initialValue = "", key1 = timestamp) {
-        while (true) {
-            val relative = RelativeTimeInfo.of(timestamp = timestamp)
+    return iterativeState(key = timestamp) {
+        val relative = RelativeTimeInfo.of(timestamp = timestamp)
+        val value = format(relative.format())
 
-            value = format(relative.format())
+        // for second granularity, using the exact amount of time until the next increment tends to fluctuate the
+        // updates, so we can just delay by one second each time
+        val delay = if (relative.unit == TimeUnit.SECONDS) MILLIS_IN_SECOND else relative.msUntilNextIncrement
 
-            // for second granularity, using the exact amount of time until the next increment tends to fluctuate the
-            // updates, so we can just delay by one second each time
-            delay(
-                if (relative.unit == TimeUnit.SECONDS) TimeUnit.SECONDS.toMillis(1) else relative.msUntilNextIncrement
-            )
-        }
-    }.value
+        Pair(value, delay)
+    }
 }
