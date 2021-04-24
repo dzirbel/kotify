@@ -318,8 +318,8 @@ fun <T> Table(
             }
 
             // column index -> the indexes of the measurables/placeables for the items in each column
-            val indexesForCol: Array<Array<Int>> = Array(numCols) { col ->
-                Array(numRows) { row -> col + (numCols * row) }
+            val indexesForCol: Array<IntArray> = Array(numCols) { col ->
+                IntArray(numRows) { row -> col + (numCols * row) }
             }
 
             val columnWidths: Array<ColumnWidth> = Array(numCols) { col -> columns[col].width }
