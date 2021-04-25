@@ -15,6 +15,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.network.model.Album
 import com.dzirbel.kotify.ui.common.Grid
 import com.dzirbel.kotify.ui.common.InvalidateButton
@@ -57,6 +58,8 @@ private class AlbumsPresenter(scope: CoroutineScope) :
                     .sortedBy { it.name }
 
                 val savedAlbums = albums.mapNotNullTo(mutableSetOf()) { it.id }
+
+                SpotifyImageCache.loadFromFileCache(urls = albums.mapNotNull { it.images.firstOrNull()?.url })
 
                 mutateState {
                     State(

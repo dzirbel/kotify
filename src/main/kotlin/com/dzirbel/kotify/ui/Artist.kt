@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.network.model.Album
 import com.dzirbel.kotify.network.model.FullArtist
 import com.dzirbel.kotify.ui.common.Grid
@@ -114,6 +115,10 @@ private class ArtistPresenter(
 
                 artist?.let {
                     pageStack.mutate { withPageTitle(title = page.titleFor(artist)) }
+                }
+
+                artistAlbums?.let { albums ->
+                    SpotifyImageCache.loadFromFileCache(urls = albums.mapNotNull { it.images.firstOrNull()?.url })
                 }
 
                 val savedAlbums = LibraryCache.savedAlbums

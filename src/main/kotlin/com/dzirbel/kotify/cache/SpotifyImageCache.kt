@@ -10,11 +10,13 @@ import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.await
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jetbrains.skija.Image
@@ -24,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
-import kotlin.time.measureTimedValue
+import kotlin.time.TimeSource
 
 sealed class ImageCacheEvent {
     data class InMemory(val url: String) : ImageCacheEvent()
@@ -96,6 +98,24 @@ object SpotifyImageCache {
     }
 
     /**
+     * Synchronously loads all the given [urls] from the file cache, if they are not currently in the in-memory cache or
+     * already being loaded. This is useful for batch loading a set of images all at once.
+     */
+    fun loadFromFileCache(urls: List<String>) {
+        runBlocking {
+            urls
+                .filter { url -> !imageJobs.containsKey(url) }
+                .map { url -> Pair(url, async { fromFileCache(url) }) }
+                .forEach { (url, deferred) ->
+                    val (_, image) = deferred.await()
+                    if (image != null) {
+                        imageJobs.putIfAbsent(url, CompletableDeferred(image))
+                    }
+                }
+        }
+    }
+
+    /**
      * Fetches the [ImageBitmap] from the given [url] or cache.
      */
     suspend fun get(
@@ -108,28 +128,8 @@ object SpotifyImageCache {
             scope.async(context = context) {
                 assertNotOnUIThread()
 
-                val (result, duration) = measureTimedValue { fromFileCache(url) }
-                val (cacheFile, image) = result
-
-                if (image != null) {
-                    totalCompleted.incrementAndGet()
-                    Logger.ImageCache.handleImageCacheEvent(
-                        ImageCacheEvent.OnDisk(url = url, duration = duration, cacheFile = cacheFile!!)
-                    )
-
-                    image
-                } else {
-                    val (image2, duration2) = measureTimedValue {
-                        fromRemote(url = url, cacheFile = cacheFile, client = client)
-                    }
-
-                    image2?.also {
-                        totalCompleted.incrementAndGet()
-                        Logger.ImageCache.handleImageCacheEvent(
-                            ImageCacheEvent.Fetch(url = url, duration = duration2, cacheFile = cacheFile)
-                        )
-                    }
-                }
+                val (cacheFile, image) = fromFileCache(url)
+                image ?: fromRemote(url = url, cacheFile = cacheFile, client = client)
             }.also { deferred ->
                 deferred.invokeOnCompletion { error ->
                     if (error == null) {
@@ -141,19 +141,28 @@ object SpotifyImageCache {
 
         if (deferred.isCompleted) {
             Logger.ImageCache.handleImageCacheEvent(ImageCacheEvent.InMemory(url = url))
+            return deferred.getCompleted()
         }
 
         return deferred.await()
     }
 
     private fun fromFileCache(url: String): Pair<File?, ImageBitmap?> {
+        val start = TimeSource.Monotonic.markNow()
         var cacheFile: File? = null
         if (url.startsWith(SPOTIFY_IMAGE_URL_PREFIX)) {
             val imageHash = url.substring(SPOTIFY_IMAGE_URL_PREFIX.length)
             cacheFile = IMAGES_DIR.resolve(imageHash)
 
             if (cacheFile.isFile) {
-                return Pair(cacheFile, Image.makeFromEncoded(cacheFile.readBytes()).asImageBitmap())
+                val image = Image.makeFromEncoded(cacheFile.readBytes()).asImageBitmap()
+
+                totalCompleted.incrementAndGet()
+                Logger.ImageCache.handleImageCacheEvent(
+                    ImageCacheEvent.OnDisk(url = url, duration = start.elapsedNow(), cacheFile = cacheFile)
+                )
+
+                return Pair(cacheFile, image)
             }
         }
 
@@ -161,6 +170,7 @@ object SpotifyImageCache {
     }
 
     private suspend fun fromRemote(url: String, cacheFile: File?, client: OkHttpClient): ImageBitmap? {
+        val start = TimeSource.Monotonic.markNow()
         val request = Request.Builder().url(url).build()
 
         return client.newCall(request).await()
@@ -176,6 +186,11 @@ object SpotifyImageCache {
                     IMAGES_DIR.mkdirs()
                     it.writeBytes(bytes)
                 }
+
+                totalCompleted.incrementAndGet()
+                Logger.ImageCache.handleImageCacheEvent(
+                    ImageCacheEvent.Fetch(url = url, duration = start.elapsedNow(), cacheFile = cacheFile)
+                )
 
                 image
             }
