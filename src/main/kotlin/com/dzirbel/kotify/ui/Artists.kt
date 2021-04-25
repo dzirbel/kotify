@@ -152,9 +152,8 @@ private fun ArtistCell(
         Spacer(Modifier.height(Dimens.space3))
 
         Row(
-            Modifier.widthIn(max = Dimens.contentImage),
+            modifier = Modifier.widthIn(max = Dimens.contentImage),
             horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
-            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = artist.name, modifier = Modifier.weight(1f))
 

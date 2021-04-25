@@ -45,9 +45,8 @@ fun AlbumCell(
         Spacer(Modifier.height(Dimens.space2))
 
         Row(
-            Modifier.widthIn(max = Dimens.contentImage),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.widthIn(max = Dimens.contentImage),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space2)
         ) {
             Text(text = album.name, modifier = Modifier.weight(1f))
 
