@@ -14,21 +14,23 @@ import com.dzirbel.kotify.ui.theme.Dimens
  */
 @Composable
 fun ToggleSaveButton(
-    isSaved: Boolean,
+    isSaved: Boolean?,
     size: Dp = Dimens.iconSmall,
     onSave: (Boolean) -> Unit
 ) {
-    val expectedState = remember { mutableStateOf(isSaved) }
+    val expectedState = remember(isSaved) { mutableStateOf(isSaved) }
     IconButton(
         modifier = Modifier.size(size),
-        enabled = expectedState.value == isSaved,
+        enabled = isSaved != null && expectedState.value == isSaved,
         onClick = {
-            expectedState.value = !isSaved
-            onSave(!isSaved)
+            isSaved?.let {
+                expectedState.value = !isSaved
+                onSave(!isSaved)
+            }
         }
     ) {
         CachedIcon(
-            name = if (isSaved) "favorite" else "favorite-border",
+            name = if (isSaved == true) "favorite" else "favorite-border",
             size = size,
             contentDescription = "Save"
         )

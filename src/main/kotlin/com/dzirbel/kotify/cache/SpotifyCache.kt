@@ -226,31 +226,35 @@ object SpotifyCache {
             }
         }
 
-        suspend fun saveAlbum(id: String) {
+        suspend fun saveAlbum(id: String): Set<String>? {
             Spotify.Library.saveAlbums(listOf(id))
 
-            cache.getCached(GlobalObjects.SavedAlbums.ID)?.let { albums ->
+            return cache.getCached(GlobalObjects.SavedAlbums.ID)?.let { albums ->
                 val savedAlbums = albums.obj as GlobalObjects.SavedAlbums
 
-                // don't update the cache time since we haven't actually refreshed the value from the remote
-                cache.put(
-                    value = savedAlbums.copy(ids = savedAlbums.ids.plus(id)),
-                    cacheTime = albums.cacheTime
-                )
+                savedAlbums.ids.plus(id).also { savedIds ->
+                    // don't update the cache time since we haven't actually refreshed the value from the remote
+                    cache.put(
+                        value = savedAlbums.copy(ids = savedIds),
+                        cacheTime = albums.cacheTime
+                    )
+                }
             }
         }
 
-        suspend fun unsaveAlbum(id: String) {
+        suspend fun unsaveAlbum(id: String): Set<String>? {
             Spotify.Library.removeAlbums(listOf(id))
 
-            cache.getCached(GlobalObjects.SavedAlbums.ID)?.let { albums ->
+            return cache.getCached(GlobalObjects.SavedAlbums.ID)?.let { albums ->
                 val savedAlbums = albums.obj as GlobalObjects.SavedAlbums
 
-                // don't update the cache time since we haven't actually refreshed the value from the remote
-                cache.put(
-                    value = savedAlbums.copy(ids = savedAlbums.ids.minus(id)),
-                    cacheTime = albums.cacheTime
-                )
+                savedAlbums.ids.minus(id).also { savedIds ->
+                    // don't update the cache time since we haven't actually refreshed the value from the remote
+                    cache.put(
+                        value = savedAlbums.copy(ids = savedIds),
+                        cacheTime = albums.cacheTime
+                    )
+                }
             }
         }
 
@@ -272,23 +276,33 @@ object SpotifyCache {
         suspend fun saveArtist(id: String): Set<String>? {
             Spotify.Follow.follow(type = "artist", ids = listOf(id))
 
-            // TODO don't update cache time
-            return cache.getCachedValue<GlobalObjects.SavedArtists>(GlobalObjects.SavedArtists.ID)
-                ?.ids
-                ?.plus(id)
-                ?.also { ids -> cache.put(GlobalObjects.SavedArtists(ids = ids)) }
-                ?.toSet()
+            return cache.getCached(GlobalObjects.SavedArtists.ID)?.let { artists ->
+                val savedArtists = artists.obj as GlobalObjects.SavedArtists
+
+                savedArtists.ids.plus(id).also { savedIds ->
+                    // don't update the cache time since we haven't actually refreshed the value from the remote
+                    cache.put(
+                        value = savedArtists.copy(ids = savedIds),
+                        cacheTime = artists.cacheTime
+                    )
+                }
+            }
         }
 
         suspend fun unsaveArtist(id: String): Set<String>? {
             Spotify.Follow.unfollow(type = "artist", ids = listOf(id))
 
-            // TODO don't update cache time
-            return cache.getCachedValue<GlobalObjects.SavedArtists>(GlobalObjects.SavedArtists.ID)
-                ?.ids
-                ?.minus(id)
-                ?.also { ids -> cache.put(GlobalObjects.SavedArtists(ids = ids)) }
-                ?.toSet()
+            return cache.getCached(GlobalObjects.SavedArtists.ID)?.let { artists ->
+                val savedArtists = artists.obj as GlobalObjects.SavedArtists
+
+                savedArtists.ids.minus(id).also { savedIds ->
+                    // don't update the cache time since we haven't actually refreshed the value from the remote
+                    cache.put(
+                        value = savedArtists.copy(ids = savedIds),
+                        cacheTime = artists.cacheTime
+                    )
+                }
+            }
         }
 
         suspend fun getArtistAlbums(artistId: String): List<Album> {
@@ -379,6 +393,38 @@ object SpotifyCache {
             return cache.getAll(ids = ids) { missingIds ->
                 missingIds.chunked(size = Spotify.MAX_LIMIT)
                     .flatMap { idsChunk -> Spotify.Tracks.getTracks(ids = idsChunk) }
+            }
+        }
+
+        suspend fun saveTrack(id: String): Set<String>? {
+            Spotify.Library.saveTracks(ids = listOf(id))
+
+            return cache.getCached(GlobalObjects.SavedTracks.ID)?.let { tracks ->
+                val savedTracks = tracks.obj as GlobalObjects.SavedTracks
+
+                savedTracks.ids.plus(id).also { savedIds ->
+                    // don't update the cache time since we haven't actually refreshed the value from the remote
+                    cache.put(
+                        value = savedTracks.copy(ids = savedIds),
+                        cacheTime = tracks.cacheTime
+                    )
+                }
+            }
+        }
+
+        suspend fun unsaveTrack(id: String): Set<String>? {
+            Spotify.Library.removeTracks(ids = listOf(id))
+
+            return cache.getCached(GlobalObjects.SavedTracks.ID)?.let { tracks ->
+                val savedTracks = tracks.obj as GlobalObjects.SavedTracks
+
+                savedTracks.ids.minus(id).also { savedIds ->
+                    // don't update the cache time since we haven't actually refreshed the value from the remote
+                    cache.put(
+                        value = savedTracks.copy(ids = savedIds),
+                        cacheTime = tracks.cacheTime
+                    )
+                }
             }
         }
 

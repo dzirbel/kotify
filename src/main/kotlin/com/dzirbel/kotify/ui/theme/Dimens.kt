@@ -17,6 +17,7 @@ object Dimens {
     val space5 = 32.dp
 
     // icon sizes - all icons must either use one of these sizes or a size matching a font size
+    val iconTiny = 14.dp
     val iconSmall = 20.dp
     val iconMedium = 32.dp
     val iconLarge = 48.dp

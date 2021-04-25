@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullTrack
@@ -115,6 +116,10 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         val selectedDevice: PlaybackDevice? = null,
         val devices: List<PlaybackDevice>? = null,
 
+        val trackIsSaved: Boolean? = null,
+        val artistsAreSaved: Map<String, Boolean>? = null,
+        val albumIsSaved: Boolean? = null,
+
         val loadingPlayback: Boolean = true,
         val loadingTrackPlayback: Boolean = true,
         val loadingDevices: Boolean = true,
@@ -127,6 +132,32 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
     ) {
         val currentDevice: PlaybackDevice?
             get() = selectedDevice ?: playbackCurrentDevice ?: devices?.firstOrNull()
+
+        fun withTrack(track: Track?): State {
+            if (track == null) {
+                return copy(
+                    playbackTrack = null,
+                    trackIsSaved = null,
+                    artistsAreSaved = null,
+                    albumIsSaved = null
+                )
+            }
+
+            val savedArtists = LibraryCache.savedArtists
+            val albumId = when (track) {
+                is SimplifiedTrack -> track.album?.id
+                is FullTrack -> track.album.id
+                else -> null
+            }
+            return copy(
+                playbackTrack = track,
+                trackIsSaved = LibraryCache.savedTracks?.contains(track.id),
+                artistsAreSaved = savedArtists?.let {
+                    track.artists.mapNotNull { it.id }.associateWith { id -> savedArtists.contains(id) }
+                },
+                albumIsSaved = LibraryCache.savedAlbums?.contains(albumId)
+            )
+        }
     }
 
     sealed class Event {
@@ -155,6 +186,10 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         class SeekTo(val positionMs: Int) : Event()
 
         class SelectDevice(val device: PlaybackDevice) : Event()
+
+        class ToggleTrackSaved(val trackId: String, val save: Boolean) : Event()
+        class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
+        class ToggleArtistSaved(val artistId: String, val save: Boolean) : Event()
     }
 
     override fun reactTo(events: Flow<Event>): Flow<Event> {
@@ -171,6 +206,9 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             events.filterIsInstance<Event.SetVolume>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.SeekTo>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.SelectDevice>().transformLatest { reactTo(it) },
+            events.filterIsInstance<Event.ToggleTrackSaved>().transformLatest { reactTo(it) },
+            events.filterIsInstance<Event.ToggleAlbumSaved>().transformLatest { reactTo(it) },
+            events.filterIsInstance<Event.ToggleArtistSaved>().transformLatest { reactTo(it) },
         )
     }
 
@@ -269,16 +307,19 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                         emit(event.copy(retries = event.retries - 1))
                     }
 
-                    else -> mutateState {
-                        it.copy(
-                            playbackTrack = playback.item ?: it.playbackTrack,
-                            playbackProgressMs = playback.progressMs,
-                            playbackIsPlaying = playback.isPlaying,
-                            playbackShuffleState = playback.shuffleState,
-                            playbackRepeatState = playback.repeatState,
-                            playbackCurrentDevice = playback.device,
-                            loadingPlayback = false
-                        )
+                    else -> {
+                        mutateState {
+                            it
+                                .withTrack(track = playback.item)
+                                .copy(
+                                    playbackProgressMs = playback.progressMs,
+                                    playbackIsPlaying = playback.isPlaying,
+                                    playbackShuffleState = playback.shuffleState,
+                                    playbackRepeatState = playback.repeatState,
+                                    playbackCurrentDevice = playback.device,
+                                    loadingPlayback = false
+                                )
+                        }
                     }
                 }
             }
@@ -309,7 +350,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 when {
                     trackPlayback == null ->
                         mutateState {
-                            it.copy(loadingTrackPlayback = false, playbackTrack = null)
+                            it.withTrack(null).copy(loadingTrackPlayback = false)
                         }
 
                     trackPlayback.item == null -> {
@@ -341,12 +382,13 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
 
                     else -> {
                         mutateState {
-                            it.copy(
-                                playbackTrack = trackPlayback.item,
-                                playbackProgressMs = trackPlayback.progressMs,
-                                playbackIsPlaying = trackPlayback.isPlaying,
-                                loadingTrackPlayback = false
-                            )
+                            it
+                                .withTrack(track = trackPlayback.item)
+                                .copy(
+                                    playbackProgressMs = trackPlayback.progressMs,
+                                    playbackIsPlaying = trackPlayback.isPlaying,
+                                    loadingTrackPlayback = false
+                                )
                         }
 
                         // refresh after the current track is expected to end
@@ -491,6 +533,47 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                     throw ex
                 }
             }
+
+            is Event.ToggleTrackSaved -> {
+                val savedTrackIds = if (event.save) {
+                    SpotifyCache.Tracks.saveTrack(id = event.trackId)
+                } else {
+                    SpotifyCache.Tracks.unsaveTrack(id = event.trackId)
+                }
+
+                mutateState {
+                    it.copy(trackIsSaved = savedTrackIds?.contains(event.trackId))
+                }
+            }
+
+            is Event.ToggleAlbumSaved -> {
+                val savedAlbumIds = if (event.save) {
+                    SpotifyCache.Albums.saveAlbum(id = event.albumId)
+                } else {
+                    SpotifyCache.Albums.unsaveAlbum(id = event.albumId)
+                }
+
+                mutateState {
+                    it.copy(albumIsSaved = savedAlbumIds?.contains(event.albumId))
+                }
+            }
+
+            is Event.ToggleArtistSaved -> {
+                val savedArtistIds = if (event.save) {
+                    SpotifyCache.Artists.saveArtist(id = event.artistId)
+                } else {
+                    SpotifyCache.Artists.unsaveArtist(id = event.artistId)
+                }
+
+                savedArtistIds?.let {
+                    mutateState {
+                        it.copy(
+                            artistsAreSaved = it.artistsAreSaved
+                                ?.plus(event.artistId to savedArtistIds.contains(event.artistId))
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -519,7 +602,14 @@ fun BottomPanel(pageStack: MutableState<PageStack>) {
             modifier = Modifier.background(Colors.current.surface2).padding(Dimens.space3),
             content = {
                 Column {
-                    CurrentTrack(track = state.playbackTrack, pageStack = pageStack)
+                    CurrentTrack(
+                        track = state.playbackTrack,
+                        trackIsSaved = state.trackIsSaved,
+                        artistsAreSaved = state.artistsAreSaved,
+                        albumIsSaved = state.albumIsSaved,
+                        presenter = presenter,
+                        pageStack = pageStack
+                    )
                 }
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -608,7 +698,14 @@ fun BottomPanel(pageStack: MutableState<PageStack>) {
 }
 
 @Composable
-private fun CurrentTrack(track: Track?, pageStack: MutableState<PageStack>) {
+private fun CurrentTrack(
+    track: Track?,
+    trackIsSaved: Boolean?,
+    artistsAreSaved: Map<String, Boolean>?,
+    albumIsSaved: Boolean?,
+    presenter: BottomPanelPresenter,
+    pageStack: MutableState<PageStack>
+) {
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space4)) {
         val album = (track as? FullTrack)?.album ?: (track as? SimplifiedTrack)?.album
 
@@ -622,33 +719,82 @@ private fun CurrentTrack(track: Track?, pageStack: MutableState<PageStack>) {
                 modifier = Modifier.sizeIn(minHeight = ALBUM_ART_SIZE),
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(track.name)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space3)
+                ) {
+                    Text(track.name)
+
+                    track.id?.let { trackId ->
+                        ToggleSaveButton(isSaved = trackIsSaved) {
+                            presenter.emitAsync(
+                                BottomPanelPresenter.Event.ToggleTrackSaved(trackId = trackId, save = it)
+                            )
+                        }
+                    }
+                }
 
                 Spacer(Modifier.height(Dimens.space3))
 
-                LinkedText(
-                    key = track.artists,
-                    style = LocalTextStyle.current.copy(fontSize = Dimens.fontSmall),
-                    onClickLink = { artistId ->
-                        pageStack.mutate { to(ArtistPage(artistId = artistId)) }
-                    }
-                ) {
-                    list(track.artists) { artist ->
-                        link(text = artist.name, link = artist.id)
+                Row(verticalAlignment = Alignment.Top) {
+                    Text("by ", fontSize = Dimens.fontSmall)
+
+                    Column {
+                        track.artists.forEach { artist ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(Dimens.space2)
+                            ) {
+                                LinkedText(
+                                    key = artist.id,
+                                    style = LocalTextStyle.current.copy(fontSize = Dimens.fontSmall),
+                                    onClickLink = { artistId ->
+                                        pageStack.mutate { to(ArtistPage(artistId = artistId)) }
+                                    }
+                                ) {
+                                    link(text = artist.name, link = artist.id)
+                                }
+
+                                artist.id?.let { artistId ->
+                                    ToggleSaveButton(
+                                        isSaved = artistsAreSaved?.get(artist.id),
+                                        size = Dimens.iconTiny
+                                    ) {
+                                        presenter.emitAsync(
+                                            BottomPanelPresenter.Event.ToggleArtistSaved(artistId = artistId, save = it)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
                 Spacer(Modifier.height(Dimens.space2))
 
                 if (album != null) {
-                    LinkedText(
-                        key = album,
-                        style = LocalTextStyle.current.copy(fontSize = Dimens.fontSmall),
-                        onClickLink = { albumId ->
-                            pageStack.mutate { to(AlbumPage(albumId = albumId)) }
-                        }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.space2)
                     ) {
-                        link(text = album.name, link = album.id)
+                        LinkedText(
+                            key = album.id,
+                            style = LocalTextStyle.current.copy(fontSize = Dimens.fontSmall),
+                            onClickLink = { albumId ->
+                                pageStack.mutate { to(AlbumPage(albumId = albumId)) }
+                            }
+                        ) {
+                            text("on ")
+                            link(text = album.name, link = album.id)
+                        }
+
+                        album.id?.let { albumId ->
+                            ToggleSaveButton(isSaved = albumIsSaved, size = Dimens.iconTiny) {
+                                presenter.emitAsync(
+                                    BottomPanelPresenter.Event.ToggleAlbumSaved(albumId = albumId, save = it)
+                                )
+                            }
+                        }
                     }
                 }
             }
