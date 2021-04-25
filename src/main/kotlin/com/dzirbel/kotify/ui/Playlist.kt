@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullPlaylist
 import com.dzirbel.kotify.network.model.PlaylistTrack
@@ -51,11 +52,13 @@ private class PlaylistPresenter(
         val refreshing: Boolean,
         val playlist: FullPlaylist,
         val tracks: List<PlaylistTrack>?,
+        val isSaved: Boolean?,
         val playlistUpdated: Long?
     )
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
+        data class ToggleSave(val save: Boolean) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -70,11 +73,14 @@ private class PlaylistPresenter(
                 val playlist = SpotifyCache.Playlists.getFullPlaylist(id = page.playlistId)
                 pageStack.mutate { withPageTitle(title = page.titleFor(playlist)) }
 
+                val isSaved = LibraryCache.savedPlaylists?.contains(playlist.id)
+
                 mutateState {
                     State(
                         refreshing = false,
                         playlist = playlist,
                         playlistUpdated = SpotifyCache.lastUpdated(id = page.playlistId),
+                        isSaved = isSaved,
                         tracks = null
                     )
                 }
@@ -85,6 +91,17 @@ private class PlaylistPresenter(
                 )
 
                 mutateState { it?.copy(tracks = tracks) }
+            }
+
+            is Event.ToggleSave -> {
+                val savedPlaylists = if (event.save) {
+                    SpotifyCache.Playlists.savePlaylist(id = page.playlistId)
+                } else {
+                    SpotifyCache.Playlists.unsavePlaylist(id = page.playlistId)
+                }
+
+                val isSaved = savedPlaylists?.contains(page.playlistId)
+                mutateState { it?.copy(isSaved = isSaved) }
             }
         }
     }
@@ -137,18 +154,28 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
 
                         Text("${state.playlist.tracks.total} songs, ${totalDurationMins ?: "<loading>"} min")
 
-                        val playing = Player.isPlaying.value && Player.playbackContext.value?.uri == state.playlist.uri
-                        IconButton(
-                            enabled = Player.playable,
-                            modifier = Modifier.size(Dimens.iconMedium),
-                            onClick = {
-                                if (playing) Player.pause() else Player.play(contextUri = state.playlist.uri)
-                            }
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            CachedIcon(
-                                name = if (playing) "pause-circle-outline" else "play-circle-outline",
-                                contentDescription = "Play"
-                            )
+                            ToggleSaveButton(isSaved = state.isSaved, size = Dimens.iconMedium) {
+                                presenter.emitAsync(PlaylistPresenter.Event.ToggleSave(save = it))
+                            }
+
+                            val playing = Player.isPlaying.value && Player.playbackContext.value?.uri == state.playlist.uri
+                            IconButton(
+                                enabled = Player.playable,
+                                modifier = Modifier.size(Dimens.iconMedium),
+                                onClick = {
+                                    if (playing) Player.pause() else Player.play(contextUri = state.playlist.uri)
+                                }
+                            ) {
+                                CachedIcon(
+                                    name = if (playing) "pause-circle-outline" else "play-circle-outline",
+                                    contentDescription = "Play"
+                                )
+                            }
                         }
                     }
                 }
