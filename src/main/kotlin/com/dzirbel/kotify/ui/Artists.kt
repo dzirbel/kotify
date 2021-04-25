@@ -44,11 +44,13 @@ private class ArtistsPresenter(scope: CoroutineScope) :
     data class State(
         val refreshing: Boolean,
         val artists: List<FullArtist>,
+        val savedArtists: Set<String>,
         val artistsUpdated: Long?
     )
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
+        data class ToggleSave(val artistId: String, val save: Boolean) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -64,12 +66,27 @@ private class ArtistsPresenter(scope: CoroutineScope) :
                     .map { SpotifyCache.Artists.getFullArtist(it) }
                     .sortedBy { it.name }
 
+                val savedArtists = artists.map { it.id }.toSet()
+
                 mutateState {
                     State(
                         refreshing = false,
                         artists = artists,
+                        savedArtists = savedArtists,
                         artistsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedArtists.ID)
                     )
+                }
+            }
+
+            is Event.ToggleSave -> {
+                val savedArtists = if (event.save) {
+                    SpotifyCache.Artists.saveArtist(id = event.artistId)
+                } else {
+                    SpotifyCache.Artists.unsaveArtist(id = event.artistId)
+                }
+
+                savedArtists?.let {
+                    mutateState { it?.copy(savedArtists = savedArtists) }
                 }
             }
         }
@@ -102,13 +119,25 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
                 horizontalSpacing = Dimens.space2,
                 verticalSpacing = Dimens.space3,
                 verticalCellAlignment = Alignment.Top
-            ) { artist -> ArtistCell(artist, pageStack) }
+            ) { artist ->
+                ArtistCell(
+                    artist = artist,
+                    savedArtists = state.savedArtists,
+                    presenter = presenter,
+                    pageStack = pageStack
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun ArtistCell(artist: FullArtist, pageStack: MutableState<PageStack>) {
+private fun ArtistCell(
+    artist: FullArtist,
+    savedArtists: Set<String>,
+    presenter: ArtistsPresenter,
+    pageStack: MutableState<PageStack>
+) {
     Column(
         Modifier
             .clip(RoundedCornerShape(Dimens.cornerSize))
@@ -128,6 +157,11 @@ private fun ArtistCell(artist: FullArtist, pageStack: MutableState<PageStack>) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = artist.name, modifier = Modifier.weight(1f))
+
+            val isSaved = savedArtists.contains(artist.id)
+            ToggleSaveButton(isSaved = isSaved) {
+                presenter.emitAsync(ArtistsPresenter.Event.ToggleSave(artistId = artist.id, save = !isSaved))
+            }
 
             IconButton(
                 enabled = Player.playable,

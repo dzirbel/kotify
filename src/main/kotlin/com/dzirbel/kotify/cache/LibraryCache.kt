@@ -9,7 +9,7 @@ import com.dzirbel.kotify.network.model.Track
 import com.dzirbel.kotify.util.zipToMap
 
 object LibraryCache {
-    val savedArtists: List<String>?
+    val savedArtists: Set<String>?
         get() = SpotifyCache.getCached<GlobalObjects.SavedArtists>(GlobalObjects.SavedArtists.ID)?.ids
 
     val artistsUpdated: Long?
@@ -27,7 +27,7 @@ object LibraryCache {
                 )
             }
 
-    val savedAlbums: List<String>?
+    val savedAlbums: Set<String>?
         get() = SpotifyCache.getCached<GlobalObjects.SavedAlbums>(GlobalObjects.SavedAlbums.ID)?.ids
 
     val albumsUpdated: Long?
@@ -36,7 +36,7 @@ object LibraryCache {
     val albums: Map<String, Album?>?
         get() = savedAlbums?.let { ids -> ids.zipToMap(SpotifyCache.getCached<Album>(ids)) }
 
-    val savedPlaylists: List<String>?
+    val savedPlaylists: Set<String>?
         get() = SpotifyCache.getCached<GlobalObjects.SavedPlaylists>(GlobalObjects.SavedPlaylists.ID)?.ids
 
     val playlistsUpdated: Long?
@@ -54,7 +54,7 @@ object LibraryCache {
                 playlistIds.zipToMap(SpotifyCache.getCached<GlobalObjects.PlaylistTracks>(playlistTrackIds))
             }
 
-    val savedTracks: List<String>?
+    val savedTracks: Set<String>?
         get() = SpotifyCache.getCached<GlobalObjects.SavedTracks>(GlobalObjects.SavedTracks.ID)?.ids
 
     val tracks: Map<String, Track?>?

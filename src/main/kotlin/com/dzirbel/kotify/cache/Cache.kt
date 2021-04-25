@@ -129,7 +129,7 @@ class Cache(
      * Gets the [CacheObject] associated with each [ids], if it exists in the in-memory cache and is still valid
      * according to [ttlStrategy].
      */
-    fun getCached(ids: List<String>): List<CacheObject?> {
+    fun getCached(ids: Iterable<String>): List<CacheObject?> {
         return cache.modify { cacheMap -> ids.map { id -> cacheMap.getIfValid(id) } }
             .also { objs ->
                 val events = objs.zip(ids) { obj, id ->
