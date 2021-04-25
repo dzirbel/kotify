@@ -94,7 +94,9 @@ object SpotifyImageCache {
      * Immediately returns the in-memory cached [ImageBitmap] for [url], if these is one.
      */
     fun getInMemory(url: String): ImageBitmap? {
-        return imageJobs[url]?.getCompleted()
+        return imageJobs[url]?.getCompleted()?.also {
+            Logger.ImageCache.handleImageCacheEvent(ImageCacheEvent.InMemory(url = url))
+        }
     }
 
     /**
