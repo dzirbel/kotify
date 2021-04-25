@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullAlbum
 import com.dzirbel.kotify.network.model.SimplifiedTrack
@@ -47,11 +48,13 @@ private class AlbumPresenter(
         val refreshing: Boolean,
         val album: FullAlbum,
         val tracks: List<Track>,
+        val isSaved: Boolean?,
         val albumUpdated: Long?
     )
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
+        data class ToggleSave(val save: Boolean) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -66,6 +69,8 @@ private class AlbumPresenter(
                 val album = SpotifyCache.Albums.getFullAlbum(page.albumId)
                 pageStack.mutate { withPageTitle(title = page.titleFor(album)) }
 
+                val isSaved = LibraryCache.savedAlbums?.contains(album.id)
+
                 val tracks = album.tracks.fetchAll<SimplifiedTrack>()
 
                 mutateState {
@@ -73,6 +78,7 @@ private class AlbumPresenter(
                         refreshing = false,
                         album = album,
                         tracks = tracks,
+                        isSaved = isSaved,
                         albumUpdated = SpotifyCache.lastUpdated(id = page.albumId)
                     )
                 }
@@ -80,6 +86,17 @@ private class AlbumPresenter(
                 val fullTracks = SpotifyCache.Tracks.getFullTracks(ids = tracks.map { it.id!! })
 
                 mutateState { it?.copy(tracks = fullTracks) }
+            }
+
+            is Event.ToggleSave -> {
+                val savedAlbums = if (event.save) {
+                    SpotifyCache.Albums.saveAlbum(id = page.albumId)
+                } else {
+                    SpotifyCache.Albums.unsaveAlbum(id = page.albumId)
+                }
+
+                val isSaved = savedAlbums?.contains(page.albumId)
+                mutateState { it?.copy(isSaved = isSaved) }
             }
         }
     }
@@ -121,18 +138,27 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
 
                         Text("${state.album.tracks.total} songs, $totalDurationMins min")
 
-                        val playing = Player.isPlaying.value && Player.playbackContext.value?.uri == state.album.uri
-                        IconButton(
-                            enabled = Player.playable,
-                            modifier = Modifier.size(Dimens.iconMedium),
-                            onClick = {
-                                if (playing) Player.pause() else Player.play(contextUri = state.album.uri)
-                            }
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            CachedIcon(
-                                name = if (playing) "pause-circle-outline" else "play-circle-outline",
-                                contentDescription = "Play"
-                            )
+                            ToggleSaveButton(isSaved = state.isSaved, size = Dimens.iconMedium) {
+                                presenter.emitAsync(AlbumPresenter.Event.ToggleSave(save = it))
+                            }
+
+                            val playing = Player.isPlaying.value && Player.playbackContext.value?.uri == state.album.uri
+                            IconButton(
+                                enabled = Player.playable,
+                                modifier = Modifier.size(Dimens.iconMedium),
+                                onClick = {
+                                    if (playing) Player.pause() else Player.play(contextUri = state.album.uri)
+                                }
+                            ) {
+                                CachedIcon(
+                                    name = if (playing) "pause-circle-outline" else "play-circle-outline",
+                                    contentDescription = "Play"
+                                )
+                            }
                         }
                     }
                 }
