@@ -25,7 +25,12 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 
 @Composable
-fun AlbumCell(album: Album, pageStack: MutableState<PageStack>) {
+fun AlbumCell(
+    album: Album,
+    savedAlbums: Set<String>?,
+    pageStack: MutableState<PageStack>,
+    onToggleSave: (Boolean) -> Unit
+) {
     Column(
         Modifier
             .clip(RoundedCornerShape(Dimens.cornerSize))
@@ -45,6 +50,9 @@ fun AlbumCell(album: Album, pageStack: MutableState<PageStack>) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = album.name, modifier = Modifier.weight(1f))
+
+            val isSaved = savedAlbums?.contains(album.id)
+            ToggleSaveButton(isSaved = isSaved) { onToggleSave(it) }
 
             album.uri?.let { uri ->
                 IconButton(

@@ -34,11 +34,13 @@ private class AlbumsPresenter(scope: CoroutineScope) :
     data class State(
         val refreshing: Boolean,
         val albums: List<Album>,
+        val savedAlbums: Set<String>,
         val albumsUpdated: Long?
     )
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
+        data class ToggleSave(val albumId: String, val save: Boolean) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -54,12 +56,27 @@ private class AlbumsPresenter(scope: CoroutineScope) :
                     .map { SpotifyCache.Albums.getAlbum(it) }
                     .sortedBy { it.name }
 
+                val savedAlbums = albums.mapNotNullTo(mutableSetOf()) { it.id }
+
                 mutateState {
                     State(
                         refreshing = false,
                         albums = albums,
+                        savedAlbums = savedAlbums,
                         albumsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedAlbums.ID)
                     )
+                }
+            }
+
+            is Event.ToggleSave -> {
+                val savedAlbums = if (event.save) {
+                    SpotifyCache.Albums.saveAlbum(id = event.albumId)
+                } else {
+                    SpotifyCache.Albums.unsaveAlbum(id = event.albumId)
+                }
+
+                savedAlbums?.let {
+                    mutateState { it?.copy(savedAlbums = savedAlbums) }
                 }
             }
         }
@@ -92,7 +109,18 @@ fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
                 horizontalSpacing = Dimens.space2,
                 verticalSpacing = Dimens.space3,
                 verticalCellAlignment = Alignment.Top
-            ) { album -> AlbumCell(album, pageStack) }
+            ) { album ->
+                AlbumCell(
+                    album = album,
+                    savedAlbums = state.savedAlbums,
+                    pageStack = pageStack,
+                    onToggleSave = { save ->
+                        album.id?.let { albumId ->
+                            presenter.emitAsync(AlbumsPresenter.Event.ToggleSave(albumId = albumId, save = save))
+                        }
+                    }
+                )
+            }
         }
     }
 }

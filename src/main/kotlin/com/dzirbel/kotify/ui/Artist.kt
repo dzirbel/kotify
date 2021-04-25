@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.Album
 import com.dzirbel.kotify.network.model.FullArtist
@@ -52,6 +53,7 @@ private class ArtistPresenter(
         val refreshingArtist: Boolean,
         val artistAlbums: List<Album>,
         val artistAlbumsUpdated: Long?,
+        val savedAlbums: Set<String>?,
         val refreshingArtistAlbums: Boolean
     )
 
@@ -62,6 +64,8 @@ private class ArtistPresenter(
             val invalidateArtist: Boolean,
             val invalidateArtistAlbums: Boolean
         ) : Event()
+
+        data class ToggleSave(val albumId: String, val save: Boolean) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -112,6 +116,8 @@ private class ArtistPresenter(
                     pageStack.mutate { withPageTitle(title = page.titleFor(artist)) }
                 }
 
+                val savedAlbums = LibraryCache.savedAlbums
+
                 mutateState {
                     State(
                         artist = artist ?: it?.artist ?: error("no artist"),
@@ -121,8 +127,21 @@ private class ArtistPresenter(
                         artistAlbumsUpdated = SpotifyCache.lastUpdated(
                             SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = page.artistId)
                         ),
+                        savedAlbums = savedAlbums,
                         refreshingArtistAlbums = false
                     )
+                }
+            }
+
+            is Event.ToggleSave -> {
+                val savedAlbums = if (event.save) {
+                    SpotifyCache.Albums.saveAlbum(id = event.albumId)
+                } else {
+                    SpotifyCache.Albums.unsaveAlbum(id = event.albumId)
+                }
+
+                savedAlbums?.let {
+                    mutateState { it?.copy(savedAlbums = savedAlbums) }
                 }
             }
         }
@@ -188,7 +207,18 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
                 horizontalSpacing = Dimens.space2,
                 verticalSpacing = Dimens.space3,
                 verticalCellAlignment = Alignment.Top
-            ) { album -> AlbumCell(album, pageStack) }
+            ) { album ->
+                AlbumCell(
+                    album = album,
+                    savedAlbums = state.savedAlbums,
+                    pageStack = pageStack,
+                    onToggleSave = { save ->
+                        album.id?.let { albumId ->
+                            presenter.emitAsync(ArtistPresenter.Event.ToggleSave(albumId = albumId, save = save))
+                        }
+                    }
+                )
+            }
         }
     }
 }

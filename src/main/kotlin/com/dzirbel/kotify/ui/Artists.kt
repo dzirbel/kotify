@@ -66,7 +66,7 @@ private class ArtistsPresenter(scope: CoroutineScope) :
                     .map { SpotifyCache.Artists.getFullArtist(it) }
                     .sortedBy { it.name }
 
-                val savedArtists = artists.map { it.id }.toSet()
+                val savedArtists = artists.mapTo(mutableSetOf()) { it.id }
 
                 mutateState {
                     State(
