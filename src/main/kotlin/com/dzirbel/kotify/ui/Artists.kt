@@ -9,10 +9,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -28,7 +26,6 @@ import com.dzirbel.kotify.ui.common.Grid
 import com.dzirbel.kotify.ui.common.InvalidateButton
 import com.dzirbel.kotify.ui.common.LoadedImage
 import com.dzirbel.kotify.ui.common.PageStack
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
@@ -165,19 +162,7 @@ private fun ArtistCell(
                 presenter.emitAsync(ArtistsPresenter.Event.ToggleSave(artistId = artist.id, save = !isSaved))
             }
 
-            IconButton(
-                enabled = Player.playable,
-                modifier = Modifier.size(Dimens.iconSmall),
-                onClick = { Player.play(contextUri = artist.uri) }
-            ) {
-                val playing = Player.playbackContext.value?.uri == artist.uri
-                CachedIcon(
-                    name = "play-circle-outline",
-                    size = Dimens.iconSmall,
-                    contentDescription = "Play",
-                    tint = Colors.current.highlighted(highlight = playing)
-                )
-            }
+            PlayButton(contextUri = artist.uri, size = Dimens.iconSmall)
         }
     }
 }

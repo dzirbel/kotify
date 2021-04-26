@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -162,20 +160,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                                 presenter.emitAsync(PlaylistPresenter.Event.ToggleSave(save = it))
                             }
 
-                            val playing =
-                                Player.isPlaying.value && Player.playbackContext.value?.uri == state.playlist.uri
-                            IconButton(
-                                enabled = Player.playable,
-                                modifier = Modifier.size(Dimens.iconMedium),
-                                onClick = {
-                                    if (playing) Player.pause() else Player.play(contextUri = state.playlist.uri)
-                                }
-                            ) {
-                                CachedIcon(
-                                    name = if (playing) "pause-circle-outline" else "play-circle-outline",
-                                    contentDescription = "Play"
-                                )
-                            }
+                            PlayButton(contextUri = state.playlist.uri)
                         }
                     }
                 }
