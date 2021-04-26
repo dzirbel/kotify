@@ -15,12 +15,13 @@ import com.dzirbel.kotify.ui.theme.Dimens
 @Composable
 fun ToggleSaveButton(
     isSaved: Boolean?,
+    modifier: Modifier = Modifier,
     size: Dp = Dimens.iconSmall,
     onSave: (Boolean) -> Unit
 ) {
     val expectedState = remember(isSaved) { mutableStateOf(isSaved) }
     IconButton(
-        modifier = Modifier.size(size),
+        modifier = modifier.size(size),
         enabled = isSaved != null && expectedState.value == isSaved,
         onClick = {
             isSaved?.let {

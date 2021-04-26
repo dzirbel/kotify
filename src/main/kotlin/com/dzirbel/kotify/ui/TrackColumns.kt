@@ -10,9 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import com.dzirbel.kotify.cache.LibraryCache
+import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullTrack
 import com.dzirbel.kotify.network.model.SimplifiedAlbum
 import com.dzirbel.kotify.network.model.SimplifiedTrack
@@ -27,15 +31,19 @@ import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 fun trackColumns(
     pageStack: MutableState<PageStack>,
+    savedTracks: Set<String>? = LibraryCache.savedTracks,
     includeTrackNumber: Boolean = true,
     includeAlbum: Boolean = true
 ): List<Column<Track>> {
     return listOfNotNull(
         PlayingColumn,
         TrackNumberColumn.takeIf { includeTrackNumber },
+        SavedColumn(savedTracks = savedTracks),
         NameColumn,
         ArtistColumn(pageStack),
         AlbumColumn(pageStack).takeIf { includeAlbum },
@@ -72,6 +80,43 @@ object PlayingColumn : Column<Track>() {
         } else {
             Box(Modifier)
         }
+    }
+}
+
+class SavedColumn(savedTracks: Set<String>?) : Column<Track>() {
+    private val savedTracks = mutableStateOf(savedTracks)
+
+    override val width = ColumnWidth.Fill()
+    override val verticalAlignment = Alignment.Top
+
+    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+        error("cannot compare by saved state")
+    }
+
+    @Composable
+    override fun header(sort: MutableState<Sort?>) {
+        Box(Modifier)
+    }
+
+    @Composable
+    override fun item(item: Track, index: Int) {
+        item.id?.let { trackId ->
+            val scope = rememberCoroutineScope { Dispatchers.IO }
+            ToggleSaveButton(
+                modifier = Modifier.padding(Dimens.space2),
+                isSaved = savedTracks.value?.contains(item.id)
+            ) { save ->
+                scope.launch {
+                    if (save) {
+                        SpotifyCache.Tracks.saveTrack(id = trackId)
+                        savedTracks.mutate { this?.plus(trackId) }
+                    } else {
+                        SpotifyCache.Tracks.unsaveTrack(id = trackId)
+                        savedTracks.mutate { this?.minus(trackId) }
+                    }
+                }
+            }
+        } ?: Box(Modifier)
     }
 }
 

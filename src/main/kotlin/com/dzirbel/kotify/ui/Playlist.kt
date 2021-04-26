@@ -154,7 +154,6 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
 
                         Text("${state.playlist.tracks.total} songs, ${totalDurationMins ?: "<loading>"} min")
 
-
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
                             verticalAlignment = Alignment.CenterVertically
@@ -163,7 +162,8 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                                 presenter.emitAsync(PlaylistPresenter.Event.ToggleSave(save = it))
                             }
 
-                            val playing = Player.isPlaying.value && Player.playbackContext.value?.uri == state.playlist.uri
+                            val playing =
+                                Player.isPlaying.value && Player.playbackContext.value?.uri == state.playlist.uri
                             IconButton(
                                 enabled = Player.playable,
                                 modifier = Modifier.size(Dimens.iconMedium),
@@ -203,7 +203,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                             add(1, IndexColumn)
 
                             @Suppress("MagicNumber")
-                            add(5, AddedAtColumn)
+                            add(6, AddedAtColumn)
                         }
                 }
 
