@@ -37,7 +37,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 object SpotifyCache {
-    // TODO clear from cache on log out
     object GlobalObjects {
         const val CURRENT_USER_ID = "current-user"
 

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.network.model.PrivateUser
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.common.liveRelativeDateText
@@ -50,7 +51,10 @@ fun AuthenticationMenu(user: PrivateUser?) {
 
         Button(
             modifier = Modifier.align(Alignment.CenterHorizontally),
-            onClick = { AccessToken.Cache.clear() },
+            onClick = {
+                LibraryCache.clear()
+                AccessToken.Cache.clear()
+            },
         ) {
             Text("Sign out")
         }

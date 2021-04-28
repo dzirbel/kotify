@@ -75,4 +75,12 @@ object LibraryCache {
             ?.playlistTrackIds
             ?.let { SpotifyCache.getCached<PlaylistTrack>(ids = it) }
     }
+
+    fun clear() {
+        SpotifyCache.invalidate(GlobalObjects.SavedAlbums.ID)
+        SpotifyCache.invalidate(GlobalObjects.SavedAlbums.ID)
+        SpotifyCache.invalidate(GlobalObjects.SavedTracks.ID)
+        SpotifyCache.invalidate(GlobalObjects.SavedPlaylists.ID)
+        SpotifyCache.invalidate(GlobalObjects.CURRENT_USER_ID)
+    }
 }
