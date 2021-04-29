@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Dimens
 
 @Composable
@@ -18,6 +19,7 @@ fun RefreshButton(
     modifier: Modifier = Modifier,
     refreshing: Boolean,
     onClick: () -> Unit,
+    iconSize: Dp = Dimens.iconMedium,
     content: @Composable RowScope.() -> Unit
 ) {
     SimpleTextButton(
@@ -28,12 +30,12 @@ fun RefreshButton(
         content()
 
         if (refreshing) {
-            CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
+            CircularProgressIndicator(Modifier.size(iconSize))
         } else {
             Icon(
                 imageVector = Icons.Filled.Refresh,
                 contentDescription = "Refresh",
-                modifier = Modifier.size(Dimens.iconMedium)
+                modifier = Modifier.size(iconSize)
             )
         }
     }
@@ -46,11 +48,13 @@ fun InvalidateButton(
     updated: Long?,
     updatedFormat: (String) -> String = { "Last updated $it" },
     updatedFallback: String = "Never updated",
+    iconSize: Dp = Dimens.iconMedium,
     onClick: () -> Unit,
 ) {
     RefreshButton(
         modifier = modifier,
         refreshing = refreshing,
+        iconSize = iconSize,
         onClick = { onClick() }
     ) {
         Text(
