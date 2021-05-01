@@ -63,6 +63,25 @@ object LibraryCache {
     val tracksUpdated: Long?
         get() = SpotifyCache.lastUpdated(GlobalObjects.SavedTracks.ID)
 
+    // TODO also include cache times of individual artists, albums, etc?
+    val lastUpdated: Long?
+        get() {
+            val ids = listOf(
+                GlobalObjects.SavedArtists.ID,
+                GlobalObjects.SavedAlbums.ID,
+                GlobalObjects.SavedPlaylists.ID,
+                GlobalObjects.SavedTracks.ID,
+                GlobalObjects.CURRENT_USER_ID
+            )
+
+            val values = SpotifyCache.lastUpdated(ids).filterNotNull()
+
+            // return null if any values are not cached
+            if (values.size < ids.size) return null
+
+            return values.maxOrNull()
+        }
+
     fun playlistsContaining(trackId: String): Set<String>? {
         return playlistTracks
             ?.filterValues { playlistTracks -> playlistTracks?.trackIds?.any { it == trackId } == true }

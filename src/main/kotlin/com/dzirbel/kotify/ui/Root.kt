@@ -17,7 +17,7 @@ import com.dzirbel.kotify.ui.common.SidePanel
 @Composable
 fun Root() {
     if (AccessToken.Cache.hasToken) {
-        val leftPanelState = remember { PanelState(initialSize = 250.dp, minSize = 100.dp, minContentSize = 250.dp) }
+        val leftPanelState = remember { PanelState(initialSize = 300.dp, minSize = 150.dp, minContentSize = 250.dp) }
         val rightPanelState = remember { PanelState(initialSize = 400.dp, minSize = 125.dp, minContentSize = 250.dp) }
         val pageStack = remember { mutableStateOf(PageStack(ArtistsPage)) }
 

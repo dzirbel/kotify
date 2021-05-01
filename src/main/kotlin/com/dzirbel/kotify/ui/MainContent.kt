@@ -156,7 +156,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
                 }
             }
 
-            AuthenticationMenuHeader(pageStack)
+            AuthenticationMenuHeader()
         }
 
         Box(Modifier.fillMaxSize().weight(1f)) {
@@ -175,7 +175,7 @@ fun MainContent(pageStack: MutableState<PageStack>) {
 }
 
 @Composable
-private fun AuthenticationMenuHeader(pageStack: MutableState<PageStack>) {
+private fun AuthenticationMenuHeader() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { AuthenticationMenuPresenter(scope = scope) }
 
@@ -186,13 +186,6 @@ private fun AuthenticationMenuHeader(pageStack: MutableState<PageStack>) {
     val expandedState = remember { mutableStateOf(false) }
 
     Row {
-        SimpleTextButton(
-            modifier = Modifier.align(Alignment.CenterVertically),
-            onClick = { pageStack.mutate { to(LibraryStatePage) } }
-        ) {
-            Text("Library")
-        }
-
         ThemeSwitcher(modifier = Modifier.align(Alignment.CenterVertically))
 
         ProjectGithubIcon(modifier = Modifier.align(Alignment.CenterVertically))

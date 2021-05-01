@@ -1,5 +1,8 @@
 package com.dzirbel.kotify.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,25 +11,30 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.Playlist
+import com.dzirbel.kotify.ui.common.InvalidateButton
 import com.dzirbel.kotify.ui.common.PageStack
 import com.dzirbel.kotify.ui.common.SimpleTextButton
 import com.dzirbel.kotify.ui.common.VerticalScroll
+import com.dzirbel.kotify.ui.common.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.HandleState
@@ -42,7 +50,7 @@ private class LibraryPresenter(scope: CoroutineScope) :
         initialState = null
     ) {
 
-    data class State(val refreshing: Boolean, val playlists: List<Playlist>)
+    data class State(val refreshing: Boolean, val playlists: List<Playlist>, val playlistsUpdated: Long?)
 
     sealed class Event {
         class LoadPlaylists(val invalidate: Boolean = false) : Event()
@@ -60,10 +68,13 @@ private class LibraryPresenter(scope: CoroutineScope) :
                 val playlists = SpotifyCache.Playlists.getSavedPlaylists()
                     .map { SpotifyCache.Playlists.getPlaylist(it) }
 
+                val playlistsUpdated = LibraryCache.playlistsUpdated
+
                 mutateState {
                     State(
                         refreshing = false,
-                        playlists = playlists
+                        playlists = playlists,
+                        playlistsUpdated = playlistsUpdated
                     )
                 }
             }
@@ -75,13 +86,49 @@ private class LibraryPresenter(scope: CoroutineScope) :
 fun LibraryPanel(pageStack: MutableState<PageStack>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { LibraryPresenter(scope = scope) }
+    val libraryLastUpdated = remember { LibraryCache.lastUpdated }
 
     VerticalScroll {
         Text(
             text = "Library",
             fontSize = Dimens.fontTitle,
-            modifier = Modifier.padding(Dimens.space3)
+            modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3)
         )
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space3, vertical = Dimens.space2),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = libraryLastUpdated?.let {
+                    liveRelativeDateText(timestamp = libraryLastUpdated, format = { "Last updated $it" })
+                } ?: "Never updated"
+            )
+
+            val moreExpanded = remember { mutableStateOf(false) }
+            IconButton(
+                modifier = Modifier.size(Dimens.iconSmall),
+                onClick = { moreExpanded.value = true }
+            ) {
+                CachedIcon(name = "more-vert", contentDescription = "More", size = Dimens.iconSmall)
+
+                DropdownMenu(
+                    expanded = moreExpanded.value,
+                    onDismissRequest = { moreExpanded.value = false }
+                ) {
+                    DropdownMenuItem(
+                        onClick = {
+                            moreExpanded.value = false
+                            pageStack.mutate { to(LibraryStatePage) }
+                        }
+                    ) {
+                        Text("Details")
+                    }
+                }
+            }
+        }
+
+        Box(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
         Spacer(Modifier.height(Dimens.space3))
 
@@ -105,30 +152,27 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
 
         Spacer(Modifier.height(Dimens.space3))
 
-        val stateOrError = presenter.state()
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                modifier = Modifier.weight(1f).padding(Dimens.space3),
-                fontSize = Dimens.fontTitle,
-                text = "Playlists"
-            )
+        Text(
+            modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3),
+            fontSize = Dimens.fontTitle,
+            text = "Playlists"
+        )
 
-            val refreshing = stateOrError.safeState?.refreshing == true
-            IconButton(
-                enabled = !refreshing,
-                onClick = { presenter.emitAsync(LibraryPresenter.Event.LoadPlaylists(invalidate = true)) }
-            ) {
-                if (refreshing) {
-                    CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
-                } else {
-                    Icon(
-                        imageVector = Icons.Filled.Refresh,
-                        contentDescription = "Refresh",
-                        modifier = Modifier.size(Dimens.iconMedium)
-                    )
-                }
+        val stateOrError = presenter.state()
+        val refreshing = stateOrError.safeState?.refreshing == true
+        InvalidateButton(
+            refreshing = refreshing,
+            updated = stateOrError.safeState?.playlistsUpdated,
+            contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
+            iconSize = Dimens.iconSmall,
+            onClick = {
+                presenter.emitAsync(LibraryPresenter.Event.LoadPlaylists(invalidate = true))
             }
-        }
+        )
+
+        Box(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
+
+        Spacer(Modifier.height(Dimens.space3))
 
         HandleState(
             state = { stateOrError },

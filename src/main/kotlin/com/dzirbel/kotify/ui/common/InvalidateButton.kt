@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.common
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
@@ -19,12 +20,14 @@ fun RefreshButton(
     modifier: Modifier = Modifier,
     refreshing: Boolean,
     onClick: () -> Unit,
+    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
     iconSize: Dp = Dimens.iconMedium,
     content: @Composable RowScope.() -> Unit
 ) {
     SimpleTextButton(
         modifier = modifier,
         enabled = !refreshing,
+        contentPadding = contentPadding,
         onClick = onClick
     ) {
         content()
@@ -48,12 +51,14 @@ fun InvalidateButton(
     updated: Long?,
     updatedFormat: (String) -> String = { "Last updated $it" },
     updatedFallback: String = "Never updated",
+    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
     iconSize: Dp = Dimens.iconMedium,
     onClick: () -> Unit,
 ) {
     RefreshButton(
         modifier = modifier,
         refreshing = refreshing,
+        contentPadding = contentPadding,
         iconSize = iconSize,
         onClick = { onClick() }
     ) {

@@ -201,6 +201,10 @@ object SpotifyCache {
         return cache.getCached(id)?.cacheTime
     }
 
+    fun lastUpdated(ids: List<String>): List<Long?> {
+        return cache.getCached(ids = ids).map { it?.cacheTime }
+    }
+
     fun put(obj: CacheableObject) {
         cache.put(obj)
     }
