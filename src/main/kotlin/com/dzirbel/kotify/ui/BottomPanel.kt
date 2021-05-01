@@ -116,6 +116,9 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         val selectedDevice: PlaybackDevice? = null,
         val devices: List<PlaybackDevice>? = null,
 
+        // non-null when muted, saves the previous volume percent
+        val savedVolume: Int? = null,
+
         val trackIsSaved: Boolean? = null,
         val artistsAreSaved: Map<String, Boolean>? = null,
         val albumIsSaved: Boolean? = null,
@@ -183,6 +186,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         class ToggleShuffle(val shuffle: Boolean) : Event()
         class SetRepeat(val repeatState: String) : Event()
         class SetVolume(val volume: Int) : Event()
+        class ToggleMuteVolume(val mute: Boolean, val previousVolume: Int) : Event()
         class SeekTo(val positionMs: Int) : Event()
 
         class SelectDevice(val device: PlaybackDevice) : Event()
@@ -204,6 +208,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             events.filterIsInstance<Event.ToggleShuffle>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.SetRepeat>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.SetVolume>().transformLatest { reactTo(it) },
+            events.filterIsInstance<Event.ToggleMuteVolume>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.SeekTo>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.SelectDevice>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.ToggleTrackSaved>().transformLatest { reactTo(it) },
@@ -497,11 +502,29 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 val deviceId: String
                 mutateState {
                     deviceId = requireNotNull(it.currentDevice?.id) { "no device" }
-                    it
+                    it.copy(savedVolume = event.volume)
                 }
 
                 Spotify.Player.setVolume(deviceId = deviceId, volumePercent = event.volume)
                 emit(Event.LoadDevices(untilVolumeChange = true, untilVolumeChangeDeviceId = deviceId))
+            }
+
+            is Event.ToggleMuteVolume -> {
+                val deviceId: String
+                val savedVolume: Int?
+                mutateState {
+                    deviceId = requireNotNull(it.currentDevice?.id) { "no device" }
+                    savedVolume = it.savedVolume
+                    it
+                }
+
+                val volume = if (event.mute) 0 else requireNotNull(savedVolume) { "no saved volume" }
+                Spotify.Player.setVolume(deviceId = deviceId, volumePercent = volume)
+                emit(Event.LoadDevices(untilVolumeChange = true, untilVolumeChangeDeviceId = deviceId))
+
+                mutateState {
+                    it.copy(savedVolume = event.previousVolume)
+                }
             }
 
             is Event.SeekTo -> {
@@ -951,13 +974,30 @@ private fun VolumeControls(state: BottomPanelPresenter.State, presenter: BottomP
         } else {
             currentDevice?.volumePercent
         }
+        val muted = volume == 0
 
         SeekableSlider(
             progress = @Suppress("MagicNumber") volume?.let { it.toFloat() / 100 },
             dragKey = currentDevice,
             sliderWidth = VOLUME_SLIDER_WIDTH,
             leftContent = {
-                CachedIcon(name = "volume-up", contentDescription = "Volume")
+                IconButton(
+                    modifier = Modifier.size(Dimens.iconSmall),
+                    enabled = volume != null,
+                    onClick = {
+                        if (volume != null) {
+                            presenter.emitAsync(
+                                BottomPanelPresenter.Event.ToggleMuteVolume(mute = !muted, previousVolume = volume)
+                            )
+                        }
+                    }
+                ) {
+                    CachedIcon(
+                        name = if (muted) "volume-off" else "volume-up",
+                        contentDescription = "Volume",
+                        size = Dimens.iconSmall
+                    )
+                }
             },
             onSeek = { seekPercent ->
                 val volumeInt = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
