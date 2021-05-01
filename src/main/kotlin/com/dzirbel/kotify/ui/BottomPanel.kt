@@ -641,7 +641,7 @@ fun BottomPanel(pageStack: MutableState<PageStack>) {
                     TrackProgress(state = state, presenter = presenter)
                 }
 
-                Column(verticalArrangement = Arrangement.Center) {
+                Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.End) {
                     VolumeControls(state = state, presenter = presenter)
 
                     DeviceControls(state = state, presenter = presenter)
