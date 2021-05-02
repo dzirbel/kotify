@@ -197,6 +197,10 @@ object SpotifyCache {
         cache.invalidate(id)
     }
 
+    fun invalidate(ids: List<String>) {
+        cache.invalidate(ids = ids)
+    }
+
     fun lastUpdated(id: String): Long? {
         return cache.getCached(id)?.cacheTime
     }
@@ -275,6 +279,13 @@ object SpotifyCache {
     object Artists {
         suspend fun getArtist(id: String): Artist = cache.get<Artist>(id) { Spotify.Artists.getArtist(id) }
         suspend fun getFullArtist(id: String): FullArtist = cache.get(id) { Spotify.Artists.getArtist(id) }
+
+        suspend fun getFullArtists(ids: List<String>): List<FullArtist> {
+            return cache.getAll(ids = ids) { missingIds ->
+                missingIds.chunked(size = Spotify.MAX_LIMIT)
+                    .flatMap { Spotify.Artists.getArtists(ids = it) }
+            }
+        }
 
         suspend fun saveArtist(id: String): Set<String>? {
             Spotify.Follow.follow(type = "artist", ids = listOf(id))

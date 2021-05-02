@@ -82,6 +82,11 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
         object RefreshSavedAlbums : Event()
         object RefreshSavedTracks : Event()
         object RefreshSavedPlaylists : Event()
+
+        object FetchMissingArtists : Event()
+        object InvalidateArtists : Event()
+        object FetchMissingArtistAlbums : Event()
+        object InvalidateArtistAlbums : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -172,47 +177,100 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                     )
                 }
             }
+
+            Event.FetchMissingArtists -> {
+                val missingIds = requireNotNull(LibraryCache.artists?.filterValues { it == null })
+                SpotifyCache.Artists.getFullArtists(ids = missingIds.keys.toList())
+
+                val artists = loadArtists()
+                mutateState { it?.copy(artists = artists) }
+            }
+
+            Event.InvalidateArtists -> {
+                val ids = requireNotNull(LibraryCache.artists?.filterValues { it != null })
+                SpotifyCache.invalidate(ids.keys.toList())
+
+                val artists = loadArtists()
+                mutateState { it?.copy(artists = artists) }
+            }
+
+            Event.FetchMissingArtistAlbums -> {
+                val missingIds = requireNotNull(LibraryCache.artistAlbums?.filterValues { it == null })
+                // TODO run in parallel
+                missingIds.flatMap { SpotifyCache.Artists.getArtistAlbums(artistId = it.key) }
+
+                val artists = loadArtists()
+                mutateState { it?.copy(artists = artists) }
+            }
+
+            Event.InvalidateArtistAlbums -> {
+                val ids = requireNotNull(LibraryCache.artists?.filterValues { it != null })
+                SpotifyCache.invalidate(ids.keys.map { SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = it) })
+
+                val artists = loadArtists()
+                mutateState { it?.copy(artists = artists) }
+            }
         }
     }
 
     private fun loadArtists(): List<CachedArtist>? {
-        val artistAlbums = LibraryCache.artistAlbums
-        // TODO batch lastUpdated calls
-        return LibraryCache.artists?.map { (id, artist) ->
-            CachedArtist(
-                id = id,
-                artist = artist,
-                updated = SpotifyCache.lastUpdated(id),
-                albums = artistAlbums?.get(id),
-                albumsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = id))
+        return LibraryCache.artists?.toList()?.let { artists ->
+            val artistAlbums = LibraryCache.artistAlbums
+
+            // batch calls for last updates
+            val updated = SpotifyCache.lastUpdated(
+                artists.map { it.first }
+                    .plus(artists.map { SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = it.first) })
             )
+            check(updated.size == artists.size * 2)
+
+            artists.mapIndexed { index, (id, artist) ->
+                CachedArtist(
+                    id = id,
+                    artist = artist,
+                    updated = updated[index],
+                    albums = artistAlbums?.get(id),
+                    albumsUpdated = updated[index + artists.size]
+                )
+            }
         }
     }
 
     private fun loadAlbums(): List<CachedAlbum>? {
-        // TODO batch lastUpdated calls
-        return LibraryCache.albums?.map { (id, album) ->
-            CachedAlbum(
-                id = id,
-                album = album,
-                updated = SpotifyCache.lastUpdated(id)
-            )
+        return LibraryCache.albums?.toList()?.let { albums ->
+            // batch calls for last updates
+            val updated = SpotifyCache.lastUpdated(albums.map { it.first })
+
+            albums.mapIndexed { index, (id, album) ->
+                CachedAlbum(
+                    id = id,
+                    album = album,
+                    updated = updated[index]
+                )
+            }
         }
     }
 
     private fun loadPlaylists(): List<CachedPlaylist>? {
-        val playlistTracks = LibraryCache.playlistTracks
-        // TODO batch lastUpdated calls
-        return LibraryCache.playlists?.map { (id, playlist) ->
-            CachedPlaylist(
-                id = id,
-                playlist = playlist,
-                updated = SpotifyCache.lastUpdated(id),
-                tracks = playlistTracks?.get(id),
-                tracksUpdated = SpotifyCache.lastUpdated(
-                    SpotifyCache.GlobalObjects.PlaylistTracks.idFor(playlistId = id)
-                )
+        return LibraryCache.playlists?.toList()?.let { playlists ->
+            val playlistTracks = LibraryCache.playlistTracks
+
+            // batch calls for last updates
+            val updated = SpotifyCache.lastUpdated(
+                playlists.map { it.first }
+                    .plus(playlists.map { SpotifyCache.GlobalObjects.PlaylistTracks.idFor(playlistId = it.first) })
             )
+            check(updated.size == playlists.size * 2)
+
+            playlists.mapIndexed { index, (id, playlist) ->
+                CachedPlaylist(
+                    id = id,
+                    playlist = playlist,
+                    updated = updated[index],
+                    tracks = playlistTracks?.get(id),
+                    tracksUpdated = updated[index + playlists.size]
+                )
+            }
         }
     }
 }
@@ -380,7 +438,8 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
                     DropdownMenuItem(
                         enabled = full < totalSaved,
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.FetchMissingArtists)
+                            inCacheExpanded.value = false
                         }
                     ) {
                         Text("Fetch missing")
@@ -388,7 +447,8 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
 
                     DropdownMenuItem(
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.InvalidateArtists)
+                            inCacheExpanded.value = false
                         }
                     ) {
                         Text("Invalidate all")
@@ -406,7 +466,8 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
                 ) {
                     DropdownMenuItem(
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.FetchMissingArtistAlbums)
+                            albumMappingsExpanded.value = false
                         }
                     ) {
                         Text("Fetch missing")
@@ -414,7 +475,8 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
 
                     DropdownMenuItem(
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.InvalidateArtistAlbums)
+                            albumMappingsExpanded.value = false
                         }
                     ) {
                         Text("Invalidate all")

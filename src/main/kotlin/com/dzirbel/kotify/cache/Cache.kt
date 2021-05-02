@@ -309,23 +309,33 @@ class Cache(
      * cache will be written to disk in the background.
      */
     fun invalidate(id: String, saveOnChange: Boolean = this.saveOnChange): CacheObject? {
-        val previousObject: CacheObject?
-        val cacheState = cache.modify { cacheMap ->
-            previousObject = cacheMap.remove(id)
+        return invalidate(ids = listOf(id), saveOnChange = saveOnChange).first()
+    }
 
-            // only create map copy if it will be used
-            if (previousObject != null && saveOnChange) HashMap(cacheMap) else null
+    // TODO document and test
+    fun invalidate(ids: List<String>, saveOnChange: Boolean = this.saveOnChange): List<CacheObject?> {
+        val previousObjects: List<CacheObject?>
+        val anyRemoved: Boolean
+        val cacheState = cache.modify { cacheMap ->
+            previousObjects = ids.map { cacheMap.remove(it) }
+            anyRemoved = previousObjects.any { it != null }
+
+            if (saveOnChange && anyRemoved) HashMap(cacheMap) else null
         }
 
-        if (previousObject != null) {
+        if (anyRemoved) {
             if (saveOnChange) {
                 writeInBackground(cacheMap = cacheState!!)
             }
 
-            eventHandler(listOf(CacheEvent.Invalidate(cache = this, id = id, value = previousObject)))
+            eventHandler(
+                previousObjects.mapNotNull { cacheObject ->
+                    cacheObject?.let { CacheEvent.Invalidate(cache = this, id = cacheObject.id, value = cacheObject) }
+                }
+            )
         }
 
-        return previousObject
+        return previousObjects
     }
 
     /**
