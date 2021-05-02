@@ -244,32 +244,26 @@ fun <T> Table(
     val sortState = remember { mutableStateOf<Pair<Column<T>, Sort>?>(null) }
 
     // map from original row index to its index when sorted
-    // TODO optimize
-    val sortedIndexMap: List<Int> = remember(sortState.value, items) {
+    val sortedIndexMap: IntArray = remember(sortState.value, items) {
         val indexed = sortState.value?.let { (column, sort) ->
-            items
-                .withIndex()
-                .sortedWith { (firstIndex, first), (secondIndex, second) ->
-                    val columnCompare = column.compare(
-                        first = first,
-                        firstIndex = firstIndex,
-                        second = second,
-                        secondIndex = secondIndex
-                    )
+            val comparator = Comparator<IndexedValue<T>> { (firstIndex, first), (secondIndex, second) ->
+                column.compare(
+                    first = first,
+                    firstIndex = firstIndex,
+                    second = second,
+                    secondIndex = secondIndex
+                )
+            }.let { if (sort == Sort.REVERSE_ORDER) it.reversed() else it }
 
-                    val inOrder = columnCompare.takeIf { it != 0 }
-                        ?: firstIndex.compareTo(secondIndex)
+            val indexedArray = Array(items.size) { index -> IndexedValue(index = index, value = items[index]) }
+            indexedArray.sortWith(comparator)
 
-                    when (sort) {
-                        Sort.IN_ORDER -> inOrder
-                        Sort.REVERSE_ORDER -> -inOrder
-                    }
-                }
-                .map { it.index }
-        } ?: items.indices.toList()
+            IntArray(indexedArray.size) { indexedArray[it].index }
+        } ?: IntArray(items.size) { it }
 
         if (includeHeader) {
-            listOf(0).plus(indexed.map { it + 1 })
+            // prepend 0 and increment all the other indexes to account for the header row
+            IntArray(indexed.size + 1) { if (it == 0) 0 else indexed[it - 1] + 1 }
         } else {
             indexed
         }
