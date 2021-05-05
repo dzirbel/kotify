@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Text
@@ -19,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullAlbum
@@ -468,6 +471,15 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
 
             val inCacheExpanded = remember { mutableStateOf(false) }
             SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
+                val allInCache = full == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
+
+                Spacer(Modifier.width(Dimens.space1))
+
                 Text(
                     "$totalCached/$totalSaved in cache" +
                         simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
@@ -500,6 +512,15 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
 
             val albumMappingsExpanded = remember { mutableStateOf(false) }
             SimpleTextButton(onClick = { albumMappingsExpanded.value = true }) {
+                val allInCache = albums == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
+
+                Spacer(Modifier.width(Dimens.space1))
+
                 Text("$albums/$totalSaved album mappings")
 
                 DropdownMenu(
@@ -575,6 +596,15 @@ private fun Albums(state: LibraryStatePresenter.State, presenter: LibraryStatePr
 
             val inCacheExpanded = remember { mutableStateOf(false) }
             SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
+                val allInCache = full == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
+
+                Spacer(Modifier.width(Dimens.space1))
+
                 Text(
                     "$totalCached/$totalSaved in cache" +
                         simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
@@ -652,6 +682,15 @@ private fun Tracks(state: LibraryStatePresenter.State, presenter: LibraryStatePr
 
             val inCacheExpanded = remember { mutableStateOf(false) }
             SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
+                val allInCache = full == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
+
+                Spacer(Modifier.width(Dimens.space1))
+
                 Text(
                     "$totalCached/$totalSaved in cache" +
                         simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
@@ -724,6 +763,15 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
 
             val inCacheExpanded = remember { mutableStateOf(false) }
             SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
+                val allInCache = full == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
+
+                Spacer(Modifier.width(Dimens.space1))
+
                 Text(
                     "$totalCached/$totalSaved in cache" +
                         simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
@@ -756,6 +804,15 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
 
             val trackMappingsExpanded = remember { mutableStateOf(false) }
             SimpleTextButton(onClick = { trackMappingsExpanded.value = true }) {
+                val allInCache = tracks == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
+
+                Spacer(Modifier.width(Dimens.space1))
+
                 Text("$tracks/$totalSaved track mappings")
 
                 DropdownMenu(
