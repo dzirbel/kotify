@@ -21,18 +21,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.network.model.Album
-import com.dzirbel.kotify.network.model.Artist
 import com.dzirbel.kotify.network.model.FullAlbum
 import com.dzirbel.kotify.network.model.FullArtist
 import com.dzirbel.kotify.network.model.FullPlaylist
 import com.dzirbel.kotify.network.model.FullTrack
-import com.dzirbel.kotify.network.model.Playlist
 import com.dzirbel.kotify.network.model.SimplifiedAlbum
 import com.dzirbel.kotify.network.model.SimplifiedArtist
 import com.dzirbel.kotify.network.model.SimplifiedPlaylist
 import com.dzirbel.kotify.network.model.SimplifiedTrack
-import com.dzirbel.kotify.network.model.Track
 import com.dzirbel.kotify.ui.common.Column
 import com.dzirbel.kotify.ui.common.ColumnByString
 import com.dzirbel.kotify.ui.common.ColumnWidth
@@ -60,13 +56,16 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
     ) {
 
     data class State(
-        val artists: List<CachedArtist>?,
+        val artists: List<LibraryCache.CachedArtist>?,
         val artistsUpdated: Long?,
+
+        val albums: List<LibraryCache.CachedAlbum>?,
         val albumsUpdated: Long?,
-        val albums: List<CachedAlbum>?,
-        val playlists: List<CachedPlaylist>?,
+
+        val playlists: List<LibraryCache.CachedPlaylist>?,
         val playlistsUpdated: Long?,
-        val tracks: Map<String, Track?>?,
+
+        val tracks: List<LibraryCache.CachedTrack>?,
         val tracksUpdated: Long?,
 
         val refreshingSavedArtists: Boolean = false,
@@ -108,13 +107,13 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
         when (event) {
             Event.Load -> {
                 val state = State(
-                    artists = loadArtists(),
+                    artists = LibraryCache.cachedArtists,
                     artistsUpdated = LibraryCache.artistsUpdated,
                     albumsUpdated = LibraryCache.albumsUpdated,
-                    albums = loadAlbums(),
+                    albums = LibraryCache.cachedAlbums,
                     playlistsUpdated = LibraryCache.playlistsUpdated,
-                    playlists = loadPlaylists(),
-                    tracks = LibraryCache.tracks,
+                    playlists = LibraryCache.cachedPlaylists,
+                    tracks = LibraryCache.cachedTracks,
                     tracksUpdated = LibraryCache.tracksUpdated,
                 )
 
@@ -128,7 +127,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
                 SpotifyCache.Artists.getSavedArtists()
 
-                val artists = loadArtists()
+                val artists = LibraryCache.cachedArtists
                 val artistsUpdated = LibraryCache.artistsUpdated
                 mutateState {
                     it?.copy(
@@ -146,7 +145,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
                 SpotifyCache.Albums.getSavedAlbums()
 
-                val albums = loadAlbums()
+                val albums = LibraryCache.cachedAlbums
                 val albumsUpdated = LibraryCache.albumsUpdated
                 mutateState {
                     it?.copy(
@@ -164,7 +163,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
                 SpotifyCache.Tracks.getSavedTracks()
 
-                val tracks = LibraryCache.tracks
+                val tracks = LibraryCache.cachedTracks
                 val tracksUpdated = LibraryCache.tracksUpdated
                 mutateState {
                     it?.copy(
@@ -182,7 +181,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
                 SpotifyCache.Playlists.getSavedPlaylists()
 
-                val playlists = loadPlaylists()
+                val playlists = LibraryCache.cachedPlaylists
                 val playlistsUpdated = LibraryCache.playlistsUpdated
                 mutateState {
                     it?.copy(
@@ -197,7 +196,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 val missingIds = requireNotNull(LibraryCache.artists?.filterValues { it !is FullArtist })
                 SpotifyCache.Artists.getFullArtists(ids = missingIds.keys.toList())
 
-                val artists = loadArtists()
+                val artists = LibraryCache.cachedArtists
                 mutateState { it?.copy(artists = artists) }
             }
 
@@ -205,7 +204,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 val ids = requireNotNull(LibraryCache.artists?.filterValues { it != null })
                 SpotifyCache.invalidate(ids.keys.toList())
 
-                val artists = loadArtists()
+                val artists = LibraryCache.cachedArtists
                 mutateState { it?.copy(artists = artists) }
             }
 
@@ -218,7 +217,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                     }
                     .collect()
 
-                val artists = loadArtists()
+                val artists = LibraryCache.cachedArtists
                 mutateState { it?.copy(artists = artists) }
             }
 
@@ -226,7 +225,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 val ids = requireNotNull(LibraryCache.artists?.filterValues { it != null })
                 SpotifyCache.invalidate(ids.keys.map { SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = it) })
 
-                val artists = loadArtists()
+                val artists = LibraryCache.cachedArtists
                 mutateState { it?.copy(artists = artists) }
             }
 
@@ -234,7 +233,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 val missingIds = requireNotNull(LibraryCache.albums?.filterValues { it !is FullAlbum })
                 SpotifyCache.Albums.getAlbums(ids = missingIds.keys.toList())
 
-                val albums = loadAlbums()
+                val albums = LibraryCache.cachedAlbums
                 mutateState { it?.copy(albums = albums) }
             }
 
@@ -242,7 +241,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 val ids = requireNotNull(LibraryCache.albums?.filterValues { it != null })
                 SpotifyCache.invalidate(ids.keys.toList())
 
-                val albums = loadAlbums()
+                val albums = LibraryCache.cachedAlbums
                 mutateState { it?.copy(albums = albums) }
             }
 
@@ -250,7 +249,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 val missingIds = requireNotNull(LibraryCache.tracks?.filterValues { it !is FullTrack })
                 SpotifyCache.Tracks.getFullTracks(ids = missingIds.keys.toList())
 
-                val tracks = LibraryCache.tracks
+                val tracks = LibraryCache.cachedTracks
                 mutateState { it?.copy(tracks = tracks) }
             }
 
@@ -258,7 +257,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 val ids = requireNotNull(LibraryCache.tracks?.filterValues { it != null })
                 SpotifyCache.invalidate(ids.keys.toList())
 
-                val tracks = LibraryCache.tracks
+                val tracks = LibraryCache.cachedTracks
                 mutateState { it?.copy(tracks = tracks) }
             }
 
@@ -271,7 +270,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                     }
                     .collect()
 
-                val playlists = loadPlaylists()
+                val playlists = LibraryCache.cachedPlaylists
                 mutateState { it?.copy(playlists = playlists) }
             }
 
@@ -279,7 +278,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 val ids = requireNotNull(LibraryCache.playlists?.filterValues { it != null })
                 SpotifyCache.invalidate(ids.keys.toList())
 
-                val playlists = loadPlaylists()
+                val playlists = LibraryCache.cachedPlaylists
                 mutateState { it?.copy(playlists = playlists) }
             }
 
@@ -293,7 +292,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                     }
                     .collect()
 
-                val playlists = loadPlaylists()
+                val playlists = LibraryCache.cachedPlaylists
                 mutateState { it?.copy(playlists = playlists) }
             }
 
@@ -301,119 +300,33 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 val ids = requireNotNull(LibraryCache.playlistTracks?.filterValues { it != null })
                 SpotifyCache.invalidate(ids.keys.toList())
 
-                val playlists = loadPlaylists()
+                val playlists = LibraryCache.cachedPlaylists
                 mutateState { it?.copy(playlists = playlists) }
-            }
-        }
-    }
-
-    private fun loadArtists(): List<CachedArtist>? {
-        return LibraryCache.artists?.toList()?.let { artists ->
-            val artistAlbums = LibraryCache.artistAlbums
-
-            // batch calls for last updates
-            val updated = SpotifyCache.lastUpdated(
-                artists.map { it.first }
-                    .plus(artists.map { SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = it.first) })
-            )
-            check(updated.size == artists.size * 2)
-
-            artists.mapIndexed { index, (id, artist) ->
-                CachedArtist(
-                    id = id,
-                    artist = artist,
-                    updated = updated[index],
-                    albums = artistAlbums?.get(id),
-                    albumsUpdated = updated[index + artists.size]
-                )
-            }
-        }
-    }
-
-    private fun loadAlbums(): List<CachedAlbum>? {
-        return LibraryCache.albums?.toList()?.let { albums ->
-            // batch calls for last updates
-            val updated = SpotifyCache.lastUpdated(albums.map { it.first })
-
-            albums.mapIndexed { index, (id, album) ->
-                CachedAlbum(
-                    id = id,
-                    album = album,
-                    updated = updated[index]
-                )
-            }
-        }
-    }
-
-    private fun loadPlaylists(): List<CachedPlaylist>? {
-        return LibraryCache.playlists?.toList()?.let { playlists ->
-            val playlistTracks = LibraryCache.playlistTracks
-
-            // batch calls for last updates
-            val updated = SpotifyCache.lastUpdated(
-                playlists.map { it.first }
-                    .plus(playlists.map { SpotifyCache.GlobalObjects.PlaylistTracks.idFor(playlistId = it.first) })
-            )
-            check(updated.size == playlists.size * 2)
-
-            playlists.mapIndexed { index, (id, playlist) ->
-                CachedPlaylist(
-                    id = id,
-                    playlist = playlist,
-                    updated = updated[index],
-                    tracks = playlistTracks?.get(id),
-                    tracksUpdated = updated[index + playlists.size]
-                )
             }
         }
     }
 }
 
-// TODO expose directly from LibraryCache?
-private data class CachedArtist(
-    val id: String,
-    val artist: Artist?,
-    val updated: Long?,
-    val albums: List<String>?,
-    val albumsUpdated: Long?
-)
-
-// TODO expose directly from LibraryCache?
-private data class CachedAlbum(
-    val id: String,
-    val album: Album?,
-    val updated: Long?
-)
-
-// TODO expose directly from LibraryCache?
-private data class CachedPlaylist(
-    val id: String,
-    val playlist: Playlist?,
-    val updated: Long?,
-    val tracks: SpotifyCache.GlobalObjects.PlaylistTracks?,
-    val tracksUpdated: Long?
-)
-
 // TODO allow refreshing artist/album
 private val artistColumns = listOf(
-    object : ColumnByString<CachedArtist>(header = "Name", width = ColumnWidth.Fill()) {
-        override fun toString(item: CachedArtist, index: Int): String = item.artist?.name.orEmpty()
+    object : ColumnByString<LibraryCache.CachedArtist>(header = "Name", width = ColumnWidth.Fill()) {
+        override fun toString(item: LibraryCache.CachedArtist, index: Int): String = item.artist?.name.orEmpty()
     },
 
-    object : ColumnByString<CachedArtist>(header = "ID", width = ColumnWidth.Fill()) {
-        override fun toString(item: CachedArtist, index: Int): String = item.id
+    object : ColumnByString<LibraryCache.CachedArtist>(header = "ID", width = ColumnWidth.Fill()) {
+        override fun toString(item: LibraryCache.CachedArtist, index: Int): String = item.id
     },
 
-    object : ColumnByString<CachedArtist>(header = "Type", width = ColumnWidth.Fill()) {
-        override fun toString(item: CachedArtist, index: Int): String {
+    object : ColumnByString<LibraryCache.CachedArtist>(header = "Type", width = ColumnWidth.Fill()) {
+        override fun toString(item: LibraryCache.CachedArtist, index: Int): String {
             return item.artist?.let { it::class.java.simpleName }.orEmpty()
         }
     },
 
-    object : Column<CachedArtist>() {
+    object : Column<LibraryCache.CachedArtist>() {
         override val width = ColumnWidth.Fill()
 
-        override fun compare(first: CachedArtist, firstIndex: Int, second: CachedArtist, secondIndex: Int): Int {
+        override fun compare(first: LibraryCache.CachedArtist, firstIndex: Int, second: LibraryCache.CachedArtist, secondIndex: Int): Int {
             return (first.updated ?: 0).compareTo(second.updated ?: 0)
         }
 
@@ -421,26 +334,26 @@ private val artistColumns = listOf(
         override fun header(sort: MutableState<Sort?>) = standardHeader(sort = sort, header = "Artist updated")
 
         @Composable
-        override fun item(item: CachedArtist, index: Int) {
+        override fun item(item: LibraryCache.CachedArtist, index: Int) {
             val text = item.updated?.let { liveRelativeDateText(timestamp = it) }.orEmpty()
             Text(text = text, modifier = Modifier.padding(Dimens.space3))
         }
     },
 
-    object : ColumnByString<CachedArtist>(header = "Albums", width = ColumnWidth.Fill()) {
-        override fun compare(first: CachedArtist, firstIndex: Int, second: CachedArtist, secondIndex: Int): Int {
+    object : ColumnByString<LibraryCache.CachedArtist>(header = "Albums", width = ColumnWidth.Fill()) {
+        override fun compare(first: LibraryCache.CachedArtist, firstIndex: Int, second: LibraryCache.CachedArtist, secondIndex: Int): Int {
             return (first.albums?.size ?: 0).compareTo(second.albums?.size ?: 0)
         }
 
-        override fun toString(item: CachedArtist, index: Int): String {
+        override fun toString(item: LibraryCache.CachedArtist, index: Int): String {
             return item.albums?.size?.toString().orEmpty()
         }
     },
 
-    object : Column<CachedArtist>() {
+    object : Column<LibraryCache.CachedArtist>() {
         override val width = ColumnWidth.Fill()
 
-        override fun compare(first: CachedArtist, firstIndex: Int, second: CachedArtist, secondIndex: Int): Int {
+        override fun compare(first: LibraryCache.CachedArtist, firstIndex: Int, second: LibraryCache.CachedArtist, secondIndex: Int): Int {
             return (first.albumsUpdated ?: 0).compareTo(second.albumsUpdated ?: 0)
         }
 
@@ -448,7 +361,7 @@ private val artistColumns = listOf(
         override fun header(sort: MutableState<Sort?>) = standardHeader(sort = sort, header = "Albums updated")
 
         @Composable
-        override fun item(item: CachedArtist, index: Int) {
+        override fun item(item: LibraryCache.CachedArtist, index: Int) {
             val text = item.albumsUpdated?.let { liveRelativeDateText(timestamp = it) }.orEmpty()
             Text(text = text, modifier = Modifier.padding(Dimens.space3))
         }
@@ -688,9 +601,9 @@ private fun Tracks(state: LibraryStatePresenter.State, presenter: LibraryStatePr
     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             val totalSaved = tracks.size
-            val totalCached = tracks.count { it.value != null }
-            val simplified = tracks.count { it.value is SimplifiedTrack }
-            val full = tracks.count { it.value is FullTrack }
+            val totalCached = tracks.count { it.track != null }
+            val simplified = tracks.count { it.track is SimplifiedTrack }
+            val full = tracks.count { it.track is FullTrack }
 
             Text("$totalSaved Saved Tracks", modifier = Modifier.padding(end = Dimens.space3))
 
