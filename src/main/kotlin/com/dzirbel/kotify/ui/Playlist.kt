@@ -123,7 +123,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember(page) { PlaylistPresenter(page = page, pageStack = pageStack, scope = scope) }
 
-    ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
+    ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Row(

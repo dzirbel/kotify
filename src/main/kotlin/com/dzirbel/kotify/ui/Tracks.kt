@@ -70,7 +70,7 @@ fun BoxScope.Tracks(pageStack: MutableState<PageStack>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { TracksPresenter(scope = scope) }
 
-    ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
+    ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Tracks", fontSize = Dimens.fontTitle)

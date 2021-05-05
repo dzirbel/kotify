@@ -411,7 +411,7 @@ fun BoxScope.LibraryState(pageStack: MutableState<PageStack>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { LibraryStatePresenter(scope = scope) }
 
-    ScrollingPage(scrollState = pageStack.value.currentScrollState, state = { presenter.state() }) { state ->
+    ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
             Text("Library State", fontSize = Dimens.fontTitle)
 

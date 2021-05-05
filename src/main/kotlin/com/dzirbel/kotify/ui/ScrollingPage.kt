@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
@@ -23,11 +24,11 @@ import com.dzirbel.kotify.ui.util.HandleState
 @Composable
 fun <T> BoxScope.ScrollingPage(
     scrollState: ScrollState,
-    state: @Composable () -> Presenter.StateOrError<T?>,
+    presenter: Presenter<T?, *>,
     content: @Composable (T) -> Unit
 ) {
     HandleState(
-        state = state,
+        state = { presenter.state() },
         onError = { throwable ->
             Column(Modifier.align(Alignment.Center)) {
                 Icon(
@@ -48,6 +49,12 @@ fun <T> BoxScope.ScrollingPage(
                     color = Colors.current.error,
                     fontFamily = FontFamily.Monospace
                 )
+
+                Button(
+                    onClick = { presenter.clearError() }
+                ) {
+                    Text("Clear")
+                }
             }
         },
         onLoading = {

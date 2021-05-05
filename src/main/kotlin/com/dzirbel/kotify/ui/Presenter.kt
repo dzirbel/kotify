@@ -191,6 +191,15 @@ abstract class Presenter<State, Event : Any> constructor(
     }
 
     /**
+     * Clears any current error state from this presenter, resetting it the last non-error state.
+     */
+    fun clearError() {
+        synchronized(this) {
+            stateFlow.value = State(stateFlow.value.safeState)
+        }
+    }
+
+    /**
      * Emits the given [event], possibly suspending until there is enough buffer space in the event flow. Most cases
      * should use [emitAsync] instead.
      */
