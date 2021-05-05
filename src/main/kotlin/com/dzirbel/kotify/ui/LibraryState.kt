@@ -46,6 +46,10 @@ import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
 
 private class LibraryStatePresenter(scope: CoroutineScope) :
     Presenter<LibraryStatePresenter.State?, LibraryStatePresenter.Event>(
@@ -87,6 +91,17 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
         object InvalidateArtists : Event()
         object FetchMissingArtistAlbums : Event()
         object InvalidateArtistAlbums : Event()
+
+        object FetchMissingAlbums : Event()
+        object InvalidateAlbums : Event()
+
+        object FetchMissingTracks : Event()
+        object InvalidateTracks : Event()
+
+        object FetchMissingPlaylists : Event()
+        object InvalidatePlaylists : Event()
+        object FetchMissingPlaylistTracks : Event()
+        object InvalidatePlaylistTracks : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -179,7 +194,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.FetchMissingArtists -> {
-                val missingIds = requireNotNull(LibraryCache.artists?.filterValues { it == null })
+                val missingIds = requireNotNull(LibraryCache.artists?.filterValues { it !is FullArtist })
                 SpotifyCache.Artists.getFullArtists(ids = missingIds.keys.toList())
 
                 val artists = loadArtists()
@@ -196,8 +211,12 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
             Event.FetchMissingArtistAlbums -> {
                 val missingIds = requireNotNull(LibraryCache.artistAlbums?.filterValues { it == null })
-                // TODO run in parallel
-                missingIds.flatMap { SpotifyCache.Artists.getArtistAlbums(artistId = it.key) }
+                missingIds.keys
+                    .asFlow()
+                    .flatMapMerge { id ->
+                        flow<Unit> { SpotifyCache.Artists.getArtistAlbums(artistId = id) }
+                    }
+                    .collect()
 
                 val artists = loadArtists()
                 mutateState { it?.copy(artists = artists) }
@@ -209,6 +228,81 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
                 val artists = loadArtists()
                 mutateState { it?.copy(artists = artists) }
+            }
+
+            Event.FetchMissingAlbums -> {
+                val missingIds = requireNotNull(LibraryCache.albums?.filterValues { it !is FullAlbum })
+                SpotifyCache.Albums.getAlbums(ids = missingIds.keys.toList())
+
+                val albums = loadAlbums()
+                mutateState { it?.copy(albums = albums) }
+            }
+
+            Event.InvalidateAlbums -> {
+                val ids = requireNotNull(LibraryCache.albums?.filterValues { it != null })
+                SpotifyCache.invalidate(ids.keys.toList())
+
+                val albums = loadAlbums()
+                mutateState { it?.copy(albums = albums) }
+            }
+
+            Event.FetchMissingTracks -> {
+                val missingIds = requireNotNull(LibraryCache.tracks?.filterValues { it !is FullTrack })
+                SpotifyCache.Tracks.getFullTracks(ids = missingIds.keys.toList())
+
+                val tracks = LibraryCache.tracks
+                mutateState { it?.copy(tracks = tracks) }
+            }
+
+            Event.InvalidateTracks -> {
+                val ids = requireNotNull(LibraryCache.tracks?.filterValues { it != null })
+                SpotifyCache.invalidate(ids.keys.toList())
+
+                val tracks = LibraryCache.tracks
+                mutateState { it?.copy(tracks = tracks) }
+            }
+
+            Event.FetchMissingPlaylists -> {
+                val missingIds = requireNotNull(LibraryCache.playlists?.filterValues { it !is FullPlaylist })
+                missingIds.keys
+                    .asFlow()
+                    .flatMapMerge { id ->
+                        flow<Unit> { SpotifyCache.Playlists.getFullPlaylist(id = id) }
+                    }
+                    .collect()
+
+                val playlists = loadPlaylists()
+                mutateState { it?.copy(playlists = playlists) }
+            }
+
+            Event.InvalidatePlaylists -> {
+                val ids = requireNotNull(LibraryCache.playlists?.filterValues { it != null })
+                SpotifyCache.invalidate(ids.keys.toList())
+
+                val playlists = loadPlaylists()
+                mutateState { it?.copy(playlists = playlists) }
+            }
+
+            Event.FetchMissingPlaylistTracks -> {
+                val missingIds = requireNotNull(LibraryCache.playlistTracks?.filterValues { it == null })
+
+                missingIds.keys
+                    .asFlow()
+                    .flatMapMerge { id ->
+                        flow<Unit> { SpotifyCache.Playlists.getPlaylistTracks(playlistId = id) }
+                    }
+                    .collect()
+
+                val playlists = loadPlaylists()
+                mutateState { it?.copy(playlists = playlists) }
+            }
+
+            Event.InvalidatePlaylistTracks -> {
+                val ids = requireNotNull(LibraryCache.playlistTracks?.filterValues { it != null })
+                SpotifyCache.invalidate(ids.keys.toList())
+
+                val playlists = loadPlaylists()
+                mutateState { it?.copy(playlists = playlists) }
             }
         }
     }
@@ -545,7 +639,8 @@ private fun Albums(state: LibraryStatePresenter.State, presenter: LibraryStatePr
                     DropdownMenuItem(
                         enabled = full < totalSaved,
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.FetchMissingAlbums)
+                            inCacheExpanded.value = false
                         }
                     ) {
                         Text("Fetch missing")
@@ -553,7 +648,8 @@ private fun Albums(state: LibraryStatePresenter.State, presenter: LibraryStatePr
 
                     DropdownMenuItem(
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.InvalidateAlbums)
+                            inCacheExpanded.value = false
                         }
                     ) {
                         Text("Invalidate all")
@@ -620,7 +716,8 @@ private fun Tracks(state: LibraryStatePresenter.State, presenter: LibraryStatePr
                     DropdownMenuItem(
                         enabled = full < totalSaved,
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.FetchMissingTracks)
+                            inCacheExpanded.value = false
                         }
                     ) {
                         Text("Fetch missing")
@@ -628,7 +725,8 @@ private fun Tracks(state: LibraryStatePresenter.State, presenter: LibraryStatePr
 
                     DropdownMenuItem(
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.InvalidateTracks)
+                            inCacheExpanded.value = false
                         }
                     ) {
                         Text("Invalidate all")
@@ -690,7 +788,8 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
                     DropdownMenuItem(
                         enabled = full < totalSaved,
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.FetchMissingPlaylists)
+                            inCacheExpanded.value = false
                         }
                     ) {
                         Text("Fetch missing")
@@ -698,7 +797,8 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
 
                     DropdownMenuItem(
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.InvalidatePlaylists)
+                            inCacheExpanded.value = false
                         }
                     ) {
                         Text("Invalidate all")
@@ -716,7 +816,8 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
                 ) {
                     DropdownMenuItem(
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.FetchMissingPlaylistTracks)
+                            trackMappingsExpanded.value = false
                         }
                     ) {
                         Text("Fetch missing")
@@ -724,7 +825,8 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
 
                     DropdownMenuItem(
                         onClick = {
-                            // TODO
+                            presenter.emitAsync(LibraryStatePresenter.Event.InvalidatePlaylistTracks)
+                            trackMappingsExpanded.value = false
                         }
                     ) {
                         Text("Invalidate all")

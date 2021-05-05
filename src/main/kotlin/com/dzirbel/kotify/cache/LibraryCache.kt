@@ -79,7 +79,7 @@ object LibraryCache {
             // return null if any values are not cached
             if (values.size < ids.size) return null
 
-            return values.maxOrNull()
+            return values.minOrNull()
         }
 
     fun playlistsContaining(trackId: String): Set<String>? {
