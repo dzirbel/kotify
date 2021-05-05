@@ -61,8 +61,65 @@ abstract class ColumnByString<T>(
     }
 }
 
-object IndexColumn : ColumnByString<PlaylistTrack>(header = "#", width = ColumnWidth.Fill(), sortable = false) {
-    override fun toString(item: PlaylistTrack, index: Int) = (index + 1).toString()
+/**
+ * A simple [Column] where the content is rendered as [Text] via [toNumber]. Used rather than [ColumnByString] to also
+ * correctly sort by [toNumber].
+ */
+abstract class ColumnByNumber<T>(
+    val header: String,
+    override val width: ColumnWidth,
+    val padding: Dp = Dimens.space3,
+    val sortable: Boolean = true,
+    override val horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    override val verticalAlignment: Alignment.Vertical = Alignment.Top
+) : Column<T>() {
+    abstract fun toNumber(item: T, index: Int): Number?
+
+    override fun compare(first: T, firstIndex: Int, second: T, secondIndex: Int): Int {
+        val firstNumber = toNumber(first, firstIndex)?.toDouble() ?: 0.0
+        val secondNumber = toNumber(second, secondIndex)?.toDouble() ?: 0.0
+        return firstNumber.compareTo(secondNumber)
+    }
+
+    @Composable
+    override fun header(sort: MutableState<Sort?>) {
+        standardHeader(sort = sort, header = header, padding = padding, sortable = sortable)
+    }
+
+    @Composable
+    override fun item(item: T, index: Int) {
+        Text(text = toNumber(item, index)?.toString().orEmpty(), modifier = Modifier.padding(padding))
+    }
+}
+
+abstract class ColumnByRelativeDateText<T>(
+    val header: String,
+    override val width: ColumnWidth,
+    val padding: Dp = Dimens.space3,
+    val sortable: Boolean = true,
+    override val horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    override val verticalAlignment: Alignment.Vertical = Alignment.Top
+) : Column<T>() {
+    abstract fun relativeDate(item: T, index: Int): Long?
+
+    override fun compare(first: T, firstIndex: Int, second: T, secondIndex: Int): Int {
+        return (relativeDate(first, firstIndex) ?: 0).compareTo(relativeDate(second, secondIndex) ?: 0)
+    }
+
+    @Composable
+    override fun header(sort: MutableState<Sort?>) {
+        standardHeader(sort = sort, header = header, padding = padding, sortable = sortable)
+    }
+
+    @Composable
+    override fun item(item: T, index: Int) {
+        val text = relativeDate(item, index)?.let { liveRelativeDateText(timestamp = it) }.orEmpty()
+        Text(text = text, modifier = Modifier.padding(Dimens.space3))
+    }
+}
+
+object IndexColumn : ColumnByNumber<PlaylistTrack>(header = "#", width = ColumnWidth.Fill(), sortable = false) {
+    override fun toNumber(item: PlaylistTrack, index: Int) = index + 1
 }
 
 /**

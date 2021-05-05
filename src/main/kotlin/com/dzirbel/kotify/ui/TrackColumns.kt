@@ -22,6 +22,7 @@ import com.dzirbel.kotify.network.model.SimplifiedAlbum
 import com.dzirbel.kotify.network.model.SimplifiedTrack
 import com.dzirbel.kotify.network.model.Track
 import com.dzirbel.kotify.ui.common.Column
+import com.dzirbel.kotify.ui.common.ColumnByNumber
 import com.dzirbel.kotify.ui.common.ColumnByString
 import com.dzirbel.kotify.ui.common.ColumnWidth
 import com.dzirbel.kotify.ui.common.LinkedText
@@ -196,12 +197,8 @@ object DurationColumn : ColumnByString<Track>(
     }
 }
 
-object TrackNumberColumn : ColumnByString<Track>(header = "#", width = ColumnWidth.Fill()) {
-    override fun toString(item: Track, index: Int) = item.trackNumber.toString()
-
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        return first.trackNumber.compareTo(second.trackNumber)
-    }
+object TrackNumberColumn : ColumnByNumber<Track>(header = "#", width = ColumnWidth.Fill()) {
+    override fun toNumber(item: Track, index: Int) = item.trackNumber
 }
 
 object PopularityColumn : Column<Track>() {

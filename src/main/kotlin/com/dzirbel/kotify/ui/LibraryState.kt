@@ -29,15 +29,14 @@ import com.dzirbel.kotify.network.model.SimplifiedAlbum
 import com.dzirbel.kotify.network.model.SimplifiedArtist
 import com.dzirbel.kotify.network.model.SimplifiedPlaylist
 import com.dzirbel.kotify.network.model.SimplifiedTrack
-import com.dzirbel.kotify.ui.common.Column
+import com.dzirbel.kotify.ui.common.ColumnByNumber
+import com.dzirbel.kotify.ui.common.ColumnByRelativeDateText
 import com.dzirbel.kotify.ui.common.ColumnByString
 import com.dzirbel.kotify.ui.common.ColumnWidth
 import com.dzirbel.kotify.ui.common.InvalidateButton
 import com.dzirbel.kotify.ui.common.PageStack
 import com.dzirbel.kotify.ui.common.SimpleTextButton
-import com.dzirbel.kotify.ui.common.Sort
 import com.dzirbel.kotify.ui.common.Table
-import com.dzirbel.kotify.ui.common.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlinx.coroutines.CoroutineScope
@@ -323,48 +322,84 @@ private val artistColumns = listOf(
         }
     },
 
-    object : Column<LibraryCache.CachedArtist>() {
-        override val width = ColumnWidth.Fill()
+    object : ColumnByRelativeDateText<LibraryCache.CachedArtist>(
+        header = "Artist updated",
+        width = ColumnWidth.Fill()
+    ) {
+        override fun relativeDate(item: LibraryCache.CachedArtist, index: Int) = item.updated
+    },
 
-        override fun compare(first: LibraryCache.CachedArtist, firstIndex: Int, second: LibraryCache.CachedArtist, secondIndex: Int): Int {
-            return (first.updated ?: 0).compareTo(second.updated ?: 0)
-        }
+    object : ColumnByNumber<LibraryCache.CachedArtist>(header = "Albums", width = ColumnWidth.Fill()) {
+        override fun toNumber(item: LibraryCache.CachedArtist, index: Int) = item.albums?.size
+    },
 
-        @Composable
-        override fun header(sort: MutableState<Sort?>) = standardHeader(sort = sort, header = "Artist updated")
+    object : ColumnByRelativeDateText<LibraryCache.CachedArtist>(
+        header = "Albums updated",
+        width = ColumnWidth.Fill()
+    ) {
+        override fun relativeDate(item: LibraryCache.CachedArtist, index: Int) = item.albumsUpdated
+    },
+)
 
-        @Composable
-        override fun item(item: LibraryCache.CachedArtist, index: Int) {
-            val text = item.updated?.let { liveRelativeDateText(timestamp = it) }.orEmpty()
-            Text(text = text, modifier = Modifier.padding(Dimens.space3))
+// TODO allow refreshing album
+private val albumColumns = listOf(
+    object : ColumnByString<LibraryCache.CachedAlbum>(header = "Name", width = ColumnWidth.Fill()) {
+        override fun toString(item: LibraryCache.CachedAlbum, index: Int): String = item.album?.name.orEmpty()
+    },
+
+    object : ColumnByString<LibraryCache.CachedAlbum>(header = "Artists", width = ColumnWidth.Fill()) {
+        override fun toString(item: LibraryCache.CachedAlbum, index: Int): String {
+            return item.album?.artists?.joinToString { it.name }.orEmpty()
         }
     },
 
-    object : ColumnByString<LibraryCache.CachedArtist>(header = "Albums", width = ColumnWidth.Fill()) {
-        override fun compare(first: LibraryCache.CachedArtist, firstIndex: Int, second: LibraryCache.CachedArtist, secondIndex: Int): Int {
-            return (first.albums?.size ?: 0).compareTo(second.albums?.size ?: 0)
-        }
+    object : ColumnByString<LibraryCache.CachedAlbum>(header = "ID", width = ColumnWidth.Fill()) {
+        override fun toString(item: LibraryCache.CachedAlbum, index: Int): String = item.id
+    },
 
-        override fun toString(item: LibraryCache.CachedArtist, index: Int): String {
-            return item.albums?.size?.toString().orEmpty()
+    object : ColumnByString<LibraryCache.CachedAlbum>(header = "Type", width = ColumnWidth.Fill()) {
+        override fun toString(item: LibraryCache.CachedAlbum, index: Int): String {
+            return item.album?.let { it::class.java.simpleName }.orEmpty()
         }
     },
 
-    object : Column<LibraryCache.CachedArtist>() {
-        override val width = ColumnWidth.Fill()
+    object : ColumnByRelativeDateText<LibraryCache.CachedAlbum>(header = "Album updated", width = ColumnWidth.Fill()) {
+        override fun relativeDate(item: LibraryCache.CachedAlbum, index: Int) = item.updated
+    },
+)
 
-        override fun compare(first: LibraryCache.CachedArtist, firstIndex: Int, second: LibraryCache.CachedArtist, secondIndex: Int): Int {
-            return (first.albumsUpdated ?: 0).compareTo(second.albumsUpdated ?: 0)
+// TODO allow refreshing playlist/tracks
+private val playlistColumns = listOf(
+    object : ColumnByString<LibraryCache.CachedPlaylist>(header = "Name", width = ColumnWidth.Fill()) {
+        override fun toString(item: LibraryCache.CachedPlaylist, index: Int): String = item.playlist?.name.orEmpty()
+    },
+
+    object : ColumnByString<LibraryCache.CachedPlaylist>(header = "ID", width = ColumnWidth.Fill()) {
+        override fun toString(item: LibraryCache.CachedPlaylist, index: Int): String = item.id
+    },
+
+    object : ColumnByString<LibraryCache.CachedPlaylist>(header = "Type", width = ColumnWidth.Fill()) {
+        override fun toString(item: LibraryCache.CachedPlaylist, index: Int): String {
+            return item.playlist?.let { it::class.java.simpleName }.orEmpty()
         }
+    },
 
-        @Composable
-        override fun header(sort: MutableState<Sort?>) = standardHeader(sort = sort, header = "Albums updated")
+    object : ColumnByRelativeDateText<LibraryCache.CachedPlaylist>(
+        header = "Playlist updated",
+        width = ColumnWidth.Fill()
+    ) {
+        override fun relativeDate(item: LibraryCache.CachedPlaylist, index: Int) = item.updated
+    },
 
-        @Composable
-        override fun item(item: LibraryCache.CachedArtist, index: Int) {
-            val text = item.albumsUpdated?.let { liveRelativeDateText(timestamp = it) }.orEmpty()
-            Text(text = text, modifier = Modifier.padding(Dimens.space3))
-        }
+    object : ColumnByNumber<LibraryCache.CachedPlaylist>(header = "Tracks", width = ColumnWidth.Fill()) {
+        override fun toNumber(item: LibraryCache.CachedPlaylist, index: Int) = item.tracks?.trackIds?.size
+    },
+
+    object : ColumnByRelativeDateText<LibraryCache.CachedPlaylist>(
+        header = "Tracks updated",
+        width = ColumnWidth.Fill()
+    ) {
+        override fun relativeDate(item: LibraryCache.CachedPlaylist, index: Int) = item.tracksUpdated
     },
 )
 
@@ -498,7 +533,7 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
     }
 
     if (artistsExpanded.value) {
-        Table(columns = artistColumns, items = state.artists.toList())
+        Table(columns = artistColumns, items = artists.toList())
     }
 }
 
@@ -577,7 +612,7 @@ private fun Albums(state: LibraryStatePresenter.State, presenter: LibraryStatePr
     }
 
     if (albumsExpanded.value) {
-        // TODO albums table
+        Table(columns = albumColumns, items = albums.toList())
     }
 }
 
@@ -754,6 +789,6 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
     }
 
     if (playlistsExpanded.value) {
-        // TODO playlist table
+        Table(columns = playlistColumns, items = playlists.toList())
     }
 }
