@@ -15,7 +15,7 @@ fun ThemeSwitcher(modifier: Modifier = Modifier) {
         }
     ) {
         CachedIcon(
-            name = if (isLight) "wb_sunny" else "nightlight_round",
+            name = if (isLight) "wb-sunny" else "nightlight-round",
             contentDescription = "Theme"
         )
     }
