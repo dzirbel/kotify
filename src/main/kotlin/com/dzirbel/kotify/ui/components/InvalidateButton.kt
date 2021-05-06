@@ -1,10 +1,8 @@
-package com.dzirbel.kotify.ui.common
+package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
@@ -68,6 +66,6 @@ fun InvalidateButton(
             } ?: updatedFallback
         )
 
-        Spacer(Modifier.width(Dimens.space2))
+        HorizontalSpacer(Dimens.space2)
     }
 }

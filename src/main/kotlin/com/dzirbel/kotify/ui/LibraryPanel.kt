@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,11 +29,12 @@ import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.Playlist
-import com.dzirbel.kotify.ui.common.InvalidateButton
-import com.dzirbel.kotify.ui.common.PageStack
-import com.dzirbel.kotify.ui.common.SimpleTextButton
-import com.dzirbel.kotify.ui.common.VerticalScroll
-import com.dzirbel.kotify.ui.common.liveRelativeDateText
+import com.dzirbel.kotify.ui.components.InvalidateButton
+import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.components.VerticalScroll
+import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.HandleState
@@ -130,7 +130,7 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
 
         Box(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
-        Spacer(Modifier.height(Dimens.space3))
+        VerticalSpacer(Dimens.space3)
 
         MaxWidthButton(
             text = "Artists",
@@ -150,7 +150,7 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
             onClick = { pageStack.mutate { to(TracksPage) } }
         )
 
-        Spacer(Modifier.height(Dimens.space3))
+        VerticalSpacer(Dimens.space3)
 
         Text(
             modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3),
@@ -172,7 +172,7 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
 
         Box(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
 
-        Spacer(Modifier.height(Dimens.space3))
+        VerticalSpacer(Dimens.space3)
 
         HandleState(
             state = { stateOrError },

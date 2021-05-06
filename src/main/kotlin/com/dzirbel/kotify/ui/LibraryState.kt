@@ -6,11 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Text
@@ -32,14 +30,15 @@ import com.dzirbel.kotify.network.model.SimplifiedAlbum
 import com.dzirbel.kotify.network.model.SimplifiedArtist
 import com.dzirbel.kotify.network.model.SimplifiedPlaylist
 import com.dzirbel.kotify.network.model.SimplifiedTrack
-import com.dzirbel.kotify.ui.common.ColumnByNumber
-import com.dzirbel.kotify.ui.common.ColumnByRelativeDateText
-import com.dzirbel.kotify.ui.common.ColumnByString
-import com.dzirbel.kotify.ui.common.ColumnWidth
-import com.dzirbel.kotify.ui.common.InvalidateButton
-import com.dzirbel.kotify.ui.common.PageStack
-import com.dzirbel.kotify.ui.common.SimpleTextButton
-import com.dzirbel.kotify.ui.common.Table
+import com.dzirbel.kotify.ui.components.ColumnByNumber
+import com.dzirbel.kotify.ui.components.ColumnByRelativeDateText
+import com.dzirbel.kotify.ui.components.ColumnByString
+import com.dzirbel.kotify.ui.components.ColumnWidth
+import com.dzirbel.kotify.ui.components.HorizontalSpacer
+import com.dzirbel.kotify.ui.components.InvalidateButton
+import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.components.Table
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlinx.coroutines.CoroutineScope
@@ -478,7 +477,7 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
                     tint = if (allInCache) Color.Green else Color.Red
                 )
 
-                Spacer(Modifier.width(Dimens.space1))
+                HorizontalSpacer(Dimens.space1)
 
                 Text(
                     "$totalCached/$totalSaved in cache" +
@@ -519,7 +518,7 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
                     tint = if (allInCache) Color.Green else Color.Red
                 )
 
-                Spacer(Modifier.width(Dimens.space1))
+                HorizontalSpacer(Dimens.space1)
 
                 Text("$albums/$totalSaved album mappings")
 
@@ -603,7 +602,7 @@ private fun Albums(state: LibraryStatePresenter.State, presenter: LibraryStatePr
                     tint = if (allInCache) Color.Green else Color.Red
                 )
 
-                Spacer(Modifier.width(Dimens.space1))
+                HorizontalSpacer(Dimens.space1)
 
                 Text(
                     "$totalCached/$totalSaved in cache" +
@@ -689,7 +688,7 @@ private fun Tracks(state: LibraryStatePresenter.State, presenter: LibraryStatePr
                     tint = if (allInCache) Color.Green else Color.Red
                 )
 
-                Spacer(Modifier.width(Dimens.space1))
+                HorizontalSpacer(Dimens.space1)
 
                 Text(
                     "$totalCached/$totalSaved in cache" +
@@ -770,7 +769,7 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
                     tint = if (allInCache) Color.Green else Color.Red
                 )
 
-                Spacer(Modifier.width(Dimens.space1))
+                HorizontalSpacer(Dimens.space1)
 
                 Text(
                     "$totalCached/$totalSaved in cache" +
@@ -811,7 +810,7 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
                     tint = if (allInCache) Color.Green else Color.Red
                 )
 
-                Spacer(Modifier.width(Dimens.space1))
+                HorizontalSpacer(Dimens.space1)
 
                 Text("$tracks/$totalSaved track mappings")
 

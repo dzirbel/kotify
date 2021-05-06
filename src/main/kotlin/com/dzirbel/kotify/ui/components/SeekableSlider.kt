@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.common
+package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -6,12 +6,10 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -79,9 +77,9 @@ fun SeekableSlider(
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         leftContent?.let {
-            Spacer(Modifier.width(Dimens.space2))
+            HorizontalSpacer(Dimens.space2)
             it()
-            Spacer(Modifier.width(Dimens.space2))
+            HorizontalSpacer(Dimens.space2)
         }
 
         val padding = Dimens.space3
@@ -197,9 +195,9 @@ fun SeekableSlider(
         }
 
         rightContent?.let {
-            Spacer(Modifier.width(Dimens.space2))
+            HorizontalSpacer(Dimens.space2)
             it()
-            Spacer(Modifier.width(Dimens.space2))
+            HorizontalSpacer(Dimens.space2)
         }
     }
 }

@@ -2,8 +2,6 @@ package com.dzirbel.kotify.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.Button
@@ -15,7 +13,8 @@ import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.network.model.PrivateUser
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.ui.common.liveRelativeDateText
+import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Dimens
 
 private val MAX_WIDTH = 500.dp
@@ -47,7 +46,7 @@ fun AuthenticationMenu(user: PrivateUser?) {
             )
         }
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         Button(
             modifier = Modifier.align(Alignment.CenterHorizontally),

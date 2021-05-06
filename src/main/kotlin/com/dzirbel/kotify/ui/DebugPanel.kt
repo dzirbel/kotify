@@ -5,13 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
@@ -37,9 +34,12 @@ import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.ui.common.CheckboxWithLabel
-import com.dzirbel.kotify.ui.common.SimpleTextButton
-import com.dzirbel.kotify.ui.common.VerticalScroll
+import com.dzirbel.kotify.ui.components.CheckboxWithLabel
+import com.dzirbel.kotify.ui.components.HorizontalDivider
+import com.dzirbel.kotify.ui.components.HorizontalSpacer
+import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.components.VerticalScroll
+import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
@@ -105,7 +105,7 @@ fun DebugPanel() {
                 }
             }
 
-            Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
+            HorizontalDivider()
 
             when (tab.value) {
                 DebugTab.NETWORK -> NetworkTab()
@@ -115,7 +115,7 @@ fun DebugPanel() {
             }
         }
 
-        Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
+        HorizontalDivider()
 
         SimpleTextButton(
             onClick = { tab.value.log.clear() },
@@ -167,7 +167,7 @@ private fun NetworkTab() {
             }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -176,7 +176,7 @@ private fun NetworkTab() {
             label = { Text("Spotify API calls only") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -185,7 +185,7 @@ private fun NetworkTab() {
             label = { Text("Incoming responses only") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -224,7 +224,7 @@ private fun CacheTab() {
 
         Text("$size cached objects; $sizeOnDiskFormatted on disk")
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         Button(
             modifier = Modifier.fillMaxWidth(),
@@ -233,7 +233,7 @@ private fun CacheTab() {
             Text("Clear cache")
         }
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -242,7 +242,7 @@ private fun CacheTab() {
             label = { Text("Include LOAD events") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -251,7 +251,7 @@ private fun CacheTab() {
             label = { Text("Include SAVE events") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -260,7 +260,7 @@ private fun CacheTab() {
             label = { Text("Include DUMP events") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -269,7 +269,7 @@ private fun CacheTab() {
             label = { Text("Include CLEAR events") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -278,7 +278,7 @@ private fun CacheTab() {
             label = { Text("Include HIT events") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -287,7 +287,7 @@ private fun CacheTab() {
             label = { Text("Include MISS events") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -296,7 +296,7 @@ private fun CacheTab() {
             label = { Text("Include PUT events") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -335,7 +335,7 @@ private fun ImageCacheTab() {
                 "$diskCount cached on disk for a total of $totalSizeFormatted on disk"
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         Button(
             modifier = Modifier.fillMaxWidth(),
@@ -344,7 +344,7 @@ private fun ImageCacheTab() {
             Text("Clear image cache")
         }
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -353,7 +353,7 @@ private fun ImageCacheTab() {
             label = { Text("Include IN-MEMORY events") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -362,7 +362,7 @@ private fun ImageCacheTab() {
             label = { Text("Include ON-DISK events") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -398,7 +398,7 @@ private fun UITab() {
             }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -407,7 +407,7 @@ private fun UITab() {
             label = { Text("Include state changes") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -416,7 +416,7 @@ private fun UITab() {
             label = { Text("Include events") }
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
@@ -484,7 +484,7 @@ private fun EventList(
                         }
                     )
 
-                    Spacer(Modifier.width(Dimens.space1))
+                    HorizontalSpacer(Dimens.space1)
 
                     Text(
                         text = event.message,
@@ -492,7 +492,7 @@ private fun EventList(
                     )
                 }
 
-                Spacer(Modifier.height(Dimens.space1))
+                VerticalSpacer(Dimens.space1)
 
                 Text(
                     text = remember(event.time) { formatDateTime(event.time, includeMillis = true) },
@@ -503,7 +503,7 @@ private fun EventList(
             }
 
             if (index != events.lastIndex) {
-                Spacer(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
+                HorizontalDivider()
             }
         }
     }

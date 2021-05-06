@@ -4,9 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -15,9 +13,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.Track
-import com.dzirbel.kotify.ui.common.InvalidateButton
-import com.dzirbel.kotify.ui.common.PageStack
-import com.dzirbel.kotify.ui.common.Table
+import com.dzirbel.kotify.ui.components.InvalidateButton
+import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.Table
+import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,7 +83,7 @@ fun BoxScope.Tracks(pageStack: MutableState<PageStack>) {
                 }
             }
 
-            Spacer(Modifier.height(Dimens.space3))
+            VerticalSpacer(Dimens.space3)
 
             Table(
                 columns = trackColumns(pageStack),

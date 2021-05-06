@@ -1,11 +1,9 @@
-package com.dzirbel.kotify.ui.common
+package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.Checkbox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,7 +11,7 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.theme.Dimens
 
 /**
- * Wraps a [Checkbox] in a clickable [Row] with the given [label] as a label.
+ * A [Checkbox] wrapped in a clickable [Row] with the given [label] as a label at the end.
  */
 @Composable
 fun CheckboxWithLabel(
@@ -30,7 +28,7 @@ fun CheckboxWithLabel(
     ) {
         Checkbox(checked = checked, onCheckedChange = null)
 
-        Spacer(Modifier.width(Dimens.space2))
+        HorizontalSpacer(Dimens.space2)
 
         label()
     }

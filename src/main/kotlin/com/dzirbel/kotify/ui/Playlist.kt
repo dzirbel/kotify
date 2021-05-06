@@ -4,9 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -19,13 +17,14 @@ import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullPlaylist
 import com.dzirbel.kotify.network.model.PlaylistTrack
-import com.dzirbel.kotify.ui.common.ColumnByString
-import com.dzirbel.kotify.ui.common.ColumnWidth
-import com.dzirbel.kotify.ui.common.IndexColumn
-import com.dzirbel.kotify.ui.common.InvalidateButton
-import com.dzirbel.kotify.ui.common.LoadedImage
-import com.dzirbel.kotify.ui.common.PageStack
-import com.dzirbel.kotify.ui.common.Table
+import com.dzirbel.kotify.ui.components.ColumnByString
+import com.dzirbel.kotify.ui.components.ColumnWidth
+import com.dzirbel.kotify.ui.components.IndexColumn
+import com.dzirbel.kotify.ui.components.InvalidateButton
+import com.dzirbel.kotify.ui.components.LoadedImage
+import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.Table
+import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDateTime
@@ -174,7 +173,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                 )
             }
 
-            Spacer(Modifier.height(Dimens.space3))
+            VerticalSpacer(Dimens.space3)
 
             val tracks = state.tracks
             if (tracks == null) {

@@ -8,10 +8,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.ui.common.PageStack
-import com.dzirbel.kotify.ui.common.PanelDirection
-import com.dzirbel.kotify.ui.common.PanelState
-import com.dzirbel.kotify.ui.common.SidePanel
+import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.PanelDirection
+import com.dzirbel.kotify.ui.components.PanelState
+import com.dzirbel.kotify.ui.components.SidePanel
 
 @Suppress("MagicNumber")
 @Composable

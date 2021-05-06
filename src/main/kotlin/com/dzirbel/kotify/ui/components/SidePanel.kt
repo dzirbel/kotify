@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.common
+package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -22,9 +22,8 @@ class PanelState(
     initialSize: Dp,
     private val minSize: Dp? = null,
     private val maxSize: Dp? = null,
-    val minContentSize: Dp? = null,
-    resizeEnabled: Boolean = true
-) : SplitterState {
+    val minContentSize: Dp? = null
+) {
     private var _size by mutableStateOf(initialSize)
 
     init {
@@ -39,9 +38,6 @@ class PanelState(
         set(value) {
             _size = value.coerceAtMostNullable(maxSize).coerceAtLeastNullable(minSize)
         }
-
-    override var isResizing by mutableStateOf(false)
-    override var isResizeEnabled by mutableStateOf(resizeEnabled)
 
     private fun <T : Comparable<T>> T.coerceAtMostNullable(maximumValue: T?): T {
         return maximumValue?.let { coerceAtMost(it) } ?: this
@@ -82,7 +78,6 @@ fun SidePanel(
 
                 DraggableSplitter(
                     orientation = splitterOrientation,
-                    splitterState = state,
                     params = splitterViewParams,
                     onResize = { delta ->
                         // invert delta for right/bottom dragging

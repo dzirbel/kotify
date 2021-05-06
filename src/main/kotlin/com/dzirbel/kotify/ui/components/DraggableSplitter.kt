@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.common
+package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -17,11 +19,6 @@ import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import java.awt.Cursor
-
-interface SplitterState {
-    var isResizing: Boolean
-    var isResizeEnabled: Boolean
-}
 
 data class SplitterViewParams(
     val dragTargetWidth: Dp = Dimens.space3,
@@ -32,10 +29,12 @@ data class SplitterViewParams(
 @Composable
 fun DraggableSplitter(
     orientation: Orientation,
-    splitterState: SplitterState,
+    resizeEnabled: Boolean = true,
     params: SplitterViewParams = SplitterViewParams(),
     onResize: (delta: Dp) -> Unit
 ) {
+    val resizing = remember { mutableStateOf(false) }
+
     Box {
         val density = LocalDensity.current
         Box(
@@ -47,7 +46,7 @@ fun DraggableSplitter(
                     }
                 }
                 .run {
-                    if (splitterState.isResizeEnabled) {
+                    if (resizeEnabled) {
                         this
                             .draggable(
                                 state = rememberDraggableState {
@@ -60,8 +59,8 @@ fun DraggableSplitter(
                                     Orientation.Vertical -> Orientation.Horizontal
                                 },
                                 startDragImmediately = true,
-                                onDragStarted = { splitterState.isResizing = true },
-                                onDragStopped = { splitterState.isResizing = false }
+                                onDragStarted = { resizing.value = true },
+                                onDragStopped = { resizing.value = false }
                             )
                             .hoverCursor(
                                 when (orientation) {

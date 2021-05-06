@@ -8,14 +8,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
@@ -40,10 +37,12 @@ import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.network.oauth.LocalOAuthServer
 import com.dzirbel.kotify.network.oauth.OAuth
-import com.dzirbel.kotify.ui.common.CheckboxWithLabel
-import com.dzirbel.kotify.ui.common.HyperlinkSpanStyle
-import com.dzirbel.kotify.ui.common.LinkedText
-import com.dzirbel.kotify.ui.common.SimpleTextButton
+import com.dzirbel.kotify.ui.components.CheckboxWithLabel
+import com.dzirbel.kotify.ui.components.HorizontalSpacer
+import com.dzirbel.kotify.ui.components.HyperlinkSpanStyle
+import com.dzirbel.kotify.ui.components.LinkedText
+import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.getClipboard
@@ -103,7 +102,7 @@ fun AuthenticationView() {
 private fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
     Text("Welcome to ${Application.name}!", fontSize = Dimens.fontTitle)
 
-    Spacer(Modifier.height(Dimens.space3))
+    VerticalSpacer(Dimens.space3)
 
     Text(
         "To get started, you'll need to authenticate with Spotify. This will open a web browser to request the " +
@@ -119,7 +118,7 @@ private fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
         Text("Authenticate")
     }
 
-    Spacer(Modifier.height(Dimens.space5))
+    VerticalSpacer(Dimens.space5)
 
     val detailsExpanded = remember { mutableStateOf(false) }
     SimpleTextButton(
@@ -132,7 +131,7 @@ private fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
             contentDescription = null
         )
 
-        Spacer(Modifier.width(Dimens.space2))
+        HorizontalSpacer(Dimens.space2)
 
         Text("Technical details")
     }
@@ -165,7 +164,7 @@ private fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
             text(" for details.")
         }
 
-        Spacer(Modifier.height(Dimens.space3))
+        VerticalSpacer(Dimens.space3)
 
         TextField(
             value = state.value.port.toString(),
@@ -196,7 +195,7 @@ private fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
                 "otherwise the authentication request will be rejected."
         )
 
-        Spacer(Modifier.height(Dimens.space3))
+        VerticalSpacer(Dimens.space3)
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Scopes", fontSize = Dimens.fontTitle)
@@ -253,7 +252,7 @@ private fun FlowInProgress(state: MutableState<AuthenticationState>) {
         )
     }
 
-    Spacer(Modifier.height(Dimens.space3))
+    VerticalSpacer(Dimens.space3)
 
     Button(
         onClick = {
@@ -264,7 +263,7 @@ private fun FlowInProgress(state: MutableState<AuthenticationState>) {
         Text("Cancel flow")
     }
 
-    Spacer(Modifier.height(Dimens.space3))
+    VerticalSpacer(Dimens.space3)
 
     Text("If your browser was not opened automatically, copy this URL:")
 
@@ -288,7 +287,7 @@ private fun FlowInProgress(state: MutableState<AuthenticationState>) {
         }
     }
 
-    Spacer(Modifier.height(Dimens.space3))
+    VerticalSpacer(Dimens.space3)
 
     Text(
         "If you've accepted the authorization request in Spotify but it wasn't automatically captured (the browser " +

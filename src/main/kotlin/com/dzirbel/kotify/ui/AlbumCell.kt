@@ -4,8 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,8 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.dzirbel.kotify.network.model.Album
-import com.dzirbel.kotify.ui.common.LoadedImage
-import com.dzirbel.kotify.ui.common.PageStack
+import com.dzirbel.kotify.ui.components.LoadedImage
+import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 
@@ -39,7 +38,7 @@ fun AlbumCell(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        Spacer(Modifier.height(Dimens.space2))
+        VerticalSpacer(Dimens.space2)
 
         Row(
             modifier = Modifier.widthIn(max = Dimens.contentImage),

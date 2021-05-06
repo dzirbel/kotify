@@ -4,9 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -19,9 +17,10 @@ import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.network.model.Album
 import com.dzirbel.kotify.network.model.FullArtist
-import com.dzirbel.kotify.ui.common.Grid
-import com.dzirbel.kotify.ui.common.InvalidateButton
-import com.dzirbel.kotify.ui.common.PageStack
+import com.dzirbel.kotify.ui.components.Grid
+import com.dzirbel.kotify.ui.components.InvalidateButton
+import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
@@ -205,7 +204,7 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
                 }
             }
 
-            Spacer(Modifier.height(Dimens.space3))
+            VerticalSpacer(Dimens.space3)
 
             Grid(
                 elements = albums,

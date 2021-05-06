@@ -5,13 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.CircularProgressIndicator
@@ -44,11 +42,13 @@ import com.dzirbel.kotify.network.model.FullTrack
 import com.dzirbel.kotify.network.model.PlaybackDevice
 import com.dzirbel.kotify.network.model.SimplifiedTrack
 import com.dzirbel.kotify.network.model.Track
-import com.dzirbel.kotify.ui.common.LinkedText
-import com.dzirbel.kotify.ui.common.LoadedImage
-import com.dzirbel.kotify.ui.common.PageStack
-import com.dzirbel.kotify.ui.common.SeekableSlider
-import com.dzirbel.kotify.ui.common.SimpleTextButton
+import com.dzirbel.kotify.ui.components.HorizontalSpacer
+import com.dzirbel.kotify.ui.components.LinkedText
+import com.dzirbel.kotify.ui.components.LoadedImage
+import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.SeekableSlider
+import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
@@ -757,7 +757,7 @@ private fun CurrentTrack(
                     }
                 }
 
-                Spacer(Modifier.height(Dimens.space3))
+                VerticalSpacer(Dimens.space3)
 
                 Row(verticalAlignment = Alignment.Top) {
                     Text("by ", fontSize = Dimens.fontSmall)
@@ -793,7 +793,7 @@ private fun CurrentTrack(
                     }
                 }
 
-                Spacer(Modifier.height(Dimens.space2))
+                VerticalSpacer(Dimens.space2)
 
                 if (album != null) {
                     Row(
@@ -1084,7 +1084,7 @@ private fun DeviceControls(state: BottomPanelPresenter.State, presenter: BottomP
     ) {
         CachedIcon(name = state.currentDevice.iconName, size = Dimens.iconSmall)
 
-        Spacer(Modifier.width(Dimens.space3))
+        HorizontalSpacer(Dimens.space3)
 
         val text = when {
             devices == null && state.loadingDevices -> "Loading devices..."
@@ -1099,7 +1099,7 @@ private fun DeviceControls(state: BottomPanelPresenter.State, presenter: BottomP
         if (dropdownEnabled) {
             devices!!
 
-            Spacer(Modifier.width(Dimens.space3))
+            HorizontalSpacer(Dimens.space3)
 
             // use a custom layout in order to match width with height, which doesn't seem to be possible any other
             // way (e.g. aspectRatio() modifier)
@@ -1142,7 +1142,7 @@ private fun DeviceControls(state: BottomPanelPresenter.State, presenter: BottomP
                     ) {
                         CachedIcon(name = device.iconName, size = Dimens.iconSmall)
 
-                        Spacer(Modifier.width(Dimens.space2))
+                        HorizontalSpacer(Dimens.space2)
 
                         Text(device.name)
                     }

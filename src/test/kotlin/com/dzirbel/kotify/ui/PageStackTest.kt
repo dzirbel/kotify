@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.ui
 
-import com.dzirbel.kotify.ui.common.Page
-import com.dzirbel.kotify.ui.common.PageStack
+import com.dzirbel.kotify.ui.components.Page
+import com.dzirbel.kotify.ui.components.PageStack
 import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.Test
 

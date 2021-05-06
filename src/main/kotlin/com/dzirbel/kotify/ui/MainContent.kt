@@ -5,13 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
@@ -34,10 +32,11 @@ import com.dzirbel.kotify.network.model.Album
 import com.dzirbel.kotify.network.model.Artist
 import com.dzirbel.kotify.network.model.Playlist
 import com.dzirbel.kotify.network.model.PrivateUser
-import com.dzirbel.kotify.ui.common.LoadedImage
-import com.dzirbel.kotify.ui.common.Page
-import com.dzirbel.kotify.ui.common.PageStack
-import com.dzirbel.kotify.ui.common.SimpleTextButton
+import com.dzirbel.kotify.ui.components.HorizontalSpacer
+import com.dzirbel.kotify.ui.components.LoadedImage
+import com.dzirbel.kotify.ui.components.Page
+import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
@@ -190,7 +189,7 @@ private fun AuthenticationMenuHeader() {
 
         ProjectGithubIcon(modifier = Modifier.align(Alignment.CenterVertically))
 
-        Spacer(Modifier.width(Dimens.space2))
+        HorizontalSpacer(Dimens.space2)
 
         SimpleTextButton(
             enabled = currentUser != null || userError,
@@ -201,7 +200,7 @@ private fun AuthenticationMenuHeader() {
                 modifier = Modifier.size(Dimens.iconMedium)
             )
 
-            Spacer(Modifier.width(Dimens.space2))
+            HorizontalSpacer(Dimens.space2)
 
             Text(
                 text = username,
@@ -209,7 +208,7 @@ private fun AuthenticationMenuHeader() {
                 modifier = Modifier.align(Alignment.CenterVertically)
             )
 
-            Spacer(Modifier.width(Dimens.space2))
+            HorizontalSpacer(Dimens.space2)
 
             Icon(
                 imageVector = Icons.Filled.KeyboardArrowDown,

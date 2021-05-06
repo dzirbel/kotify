@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,10 +20,11 @@ import androidx.compose.ui.draw.clip
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.network.model.FullArtist
-import com.dzirbel.kotify.ui.common.Grid
-import com.dzirbel.kotify.ui.common.InvalidateButton
-import com.dzirbel.kotify.ui.common.LoadedImage
-import com.dzirbel.kotify.ui.common.PageStack
+import com.dzirbel.kotify.ui.components.Grid
+import com.dzirbel.kotify.ui.components.InvalidateButton
+import com.dzirbel.kotify.ui.components.LoadedImage
+import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
@@ -112,7 +111,7 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
                 }
             }
 
-            Spacer(Modifier.height(Dimens.space3))
+            VerticalSpacer(Dimens.space3)
 
             Grid(
                 elements = state.artists,
@@ -149,7 +148,7 @@ private fun ArtistCell(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        Spacer(Modifier.height(Dimens.space3))
+        VerticalSpacer(Dimens.space3)
 
         Row(
             modifier = Modifier.widthIn(max = Dimens.contentImage),
