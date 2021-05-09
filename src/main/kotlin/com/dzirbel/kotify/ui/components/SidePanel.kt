@@ -5,53 +5,90 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.theme.Colors
+import com.dzirbel.kotify.util.coerceAtLeastNullable
+import com.dzirbel.kotify.util.coerceAtMostNullable
 
 enum class PanelDirection { LEFT, RIGHT, TOP, BOTTOM }
 
-// TODO support min/maxes as percentages
-class PanelState(
-    initialSize: Dp,
-    private val minSize: Dp? = null,
-    private val maxSize: Dp? = null,
-    val minContentSize: Dp? = null
+sealed class FixedOrPercent {
+    abstract fun measure(total: Dp): Dp
+
+    data class Fixed(val value: Dp) : FixedOrPercent() {
+        override fun measure(total: Dp) = value
+    }
+
+    data class Percent(val value: Float) : FixedOrPercent() {
+        override fun measure(total: Dp) = total * value
+    }
+}
+
+data class PanelParams(
+    val initialSize: FixedOrPercent,
+
+    val minPanelSizeDp: Dp? = null,
+    val minPanelSizePercent: Float? = null,
+    val maxPanelSizeDp: Dp? = null,
+    val maxPanelSizePercent: Float? = null,
+
+    val minContentSizeDp: Dp? = null,
+    val minContentSizePercent: Float? = null,
+    val maxContentSizeDp: Dp? = null,
+    val maxContentSizePercent: Float? = null,
 ) {
-    private var _size by mutableStateOf(initialSize)
-
     init {
-        require(maxSize == null || minContentSize == null) {
-            "cannot set both a panel max size and a content min size: this could lead to cases where neither the " +
-                "panel nor the content can fill the view"
+        val hasMinPanelSize = minPanelSizeDp != null || minPanelSizePercent != null
+        val hasMaxPanelSize = maxPanelSizeDp != null || maxPanelSizePercent != null
+        val hasMinContentSize = minContentSizeDp != null || minContentSizePercent != null
+        val hasMaxContentSize = maxContentSizeDp != null || maxContentSizePercent != null
+
+        require(!(hasMinPanelSize && hasMaxContentSize)) {
+            "cannot set both a minimum panel size and maximum content size: this could lead to cases where neither " +
+                "the panel nor content can fill the view"
+        }
+
+        require(!(hasMaxPanelSize && hasMinContentSize)) {
+            "cannot set both a maximum panel size and minimum content size: this could lead to cases where neither " +
+                "the panel nor content can fill the view"
         }
     }
 
-    var size
-        get() = _size
-        set(value) {
-            _size = value.coerceAtMostNullable(maxSize).coerceAtLeastNullable(minSize)
-        }
-
-    private fun <T : Comparable<T>> T.coerceAtMostNullable(maximumValue: T?): T {
-        return maximumValue?.let { coerceAtMost(it) } ?: this
+    /**
+     * Determines the minimum panel size with the given [total] size, or zero if there is no minimum size.
+     */
+    fun minPanelSize(total: Dp): Dp {
+        return listOfNotNull(
+            minPanelSizeDp,
+            minPanelSizePercent?.let { total * it },
+            maxContentSizeDp?.let { total - it },
+            maxContentSizePercent?.let { total - total * it },
+        ).minOrNull() ?: 0.dp
     }
 
-    private fun <T : Comparable<T>> T.coerceAtLeastNullable(minimumValue: T?): T {
-        return minimumValue?.let { coerceAtLeast(it) } ?: this
+    /**
+     * Determines the minimum panel size with the given [total] size, or [total] if there is no maximum size.
+     */
+    fun maxPanelSize(total: Dp): Dp {
+        return listOfNotNull(
+            maxPanelSizeDp,
+            maxPanelSizePercent?.let { total * it },
+            minContentSizeDp?.let { total - it },
+            minContentSizePercent?.let { total - total * it },
+        ).maxOrNull() ?: total
     }
 }
 
 @Composable
 fun SidePanel(
     direction: PanelDirection,
-    state: PanelState,
+    params: PanelParams,
     modifier: Modifier = Modifier.fillMaxSize(),
     panelEnabled: Boolean = true,
     panelModifier: Modifier = Modifier
@@ -68,7 +105,8 @@ fun SidePanel(
         PanelDirection.LEFT, PanelDirection.RIGHT -> Orientation.Vertical
         PanelDirection.TOP, PanelDirection.BOTTOM -> Orientation.Horizontal
     }
-    val density = LocalDensity.current
+    val size = remember { mutableStateOf<Dp?>(null) }
+    val totalSize = remember { mutableStateOf<Dp?>(null) }
 
     Layout(
         modifier = modifier,
@@ -86,7 +124,13 @@ fun SidePanel(
                             PanelDirection.RIGHT, PanelDirection.BOTTOM -> -delta
                         }
 
-                        state.size = state.size + adjustedDelta
+                        size.value?.let { currentSize ->
+                            val max = totalSize.value?.let { params.maxPanelSize(total = it) }
+                            val min = totalSize.value?.let { params.minPanelSize(total = it) }
+                            size.value = (currentSize + adjustedDelta)
+                                .coerceAtLeastNullable(min)
+                                .coerceAtMostNullable(max)
+                        }
                     }
                 )
             }
@@ -98,15 +142,20 @@ fun SidePanel(
                 @Suppress("MagicNumber")
                 require(measurables.size == 3)
 
-                val minContentSize = state.minContentSize?.let { with(density) { it.roundToPx() } } ?: 0
-                val panelSizePx = with(density) { state.size.roundToPx() }
-                    .coerceAtMost(
-                        when (splitterOrientation) {
-                            Orientation.Horizontal -> constraints.maxHeight - minContentSize
-                            Orientation.Vertical -> constraints.maxWidth - minContentSize
-                        }
-                    )
-                    .coerceAtLeast(0)
+                val totalSizeDp = when (direction) {
+                    PanelDirection.LEFT, PanelDirection.RIGHT -> constraints.maxWidth
+                    PanelDirection.BOTTOM, PanelDirection.TOP -> constraints.maxHeight
+                }
+                    .toDp()
+                    .also { totalSize.value = it }
+
+                val panelSizePx = size.value?.roundToPx()
+                    ?: params.initialSize.measure(total = totalSizeDp)
+                        .coerceAtLeast(params.minPanelSize(total = totalSizeDp))
+                        .coerceAtMost(params.maxPanelSize(total = totalSizeDp))
+                        .also { size.value = it }
+                        .roundToPx()
+
                 val panelPlaceable = measurables[0].measure(
                     when (splitterOrientation) {
                         Orientation.Horizontal -> constraints.copy(minHeight = panelSizePx, maxHeight = panelSizePx)
