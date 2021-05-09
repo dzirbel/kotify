@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
@@ -13,35 +12,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Dimens
 
+/**
+ * Either an indefinite progress indicator when [refreshing] is true, otherwise a refresh icon.
+ */
 @Composable
-fun RefreshButton(
-    modifier: Modifier = Modifier,
-    refreshing: Boolean,
-    onClick: () -> Unit,
-    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
-    iconSize: Dp = Dimens.iconMedium,
-    content: @Composable RowScope.() -> Unit
-) {
-    SimpleTextButton(
-        modifier = modifier,
-        enabled = !refreshing,
-        contentPadding = contentPadding,
-        onClick = onClick
-    ) {
-        content()
-
-        if (refreshing) {
-            CircularProgressIndicator(Modifier.size(iconSize))
-        } else {
-            Icon(
-                imageVector = Icons.Filled.Refresh,
-                contentDescription = "Refresh",
-                modifier = Modifier.size(iconSize)
-            )
-        }
+fun RefreshIcon(refreshing: Boolean, size: Dp = Dimens.iconMedium) {
+    if (refreshing) {
+        CircularProgressIndicator(Modifier.size(size))
+    } else {
+        Icon(
+            imageVector = Icons.Filled.Refresh,
+            contentDescription = "Refresh",
+            modifier = Modifier.size(size)
+        )
     }
 }
 
+/**
+ * A [SimpleTextButton] which handles the common case of invalidating a cached resource.
+ */
 @Composable
 fun InvalidateButton(
     modifier: Modifier = Modifier,
@@ -53,12 +42,11 @@ fun InvalidateButton(
     iconSize: Dp = Dimens.iconMedium,
     onClick: () -> Unit,
 ) {
-    RefreshButton(
+    SimpleTextButton(
         modifier = modifier,
-        refreshing = refreshing,
+        enabled = !refreshing,
         contentPadding = contentPadding,
-        iconSize = iconSize,
-        onClick = { onClick() }
+        onClick = onClick
     ) {
         Text(
             text = updated?.let {
@@ -67,5 +55,7 @@ fun InvalidateButton(
         )
 
         HorizontalSpacer(Dimens.space2)
+
+        RefreshIcon(refreshing = refreshing, size = iconSize)
     }
 }
