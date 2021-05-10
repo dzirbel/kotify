@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.ui.theme
 
-import androidx.compose.foundation.ScrollbarStyleAmbient
+import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.defaultScrollbarStyle
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
@@ -71,7 +71,7 @@ enum class Colors(
     fun applyColors(content: @Composable () -> Unit) {
         CompositionLocalProvider(
             LocalContentColor provides text,
-            ScrollbarStyleAmbient provides defaultScrollbarStyle().copy(
+            LocalScrollbarStyle provides defaultScrollbarStyle().copy(
                 hoverColor = scrollBarHover,
                 unhoverColor = scrollBarUnhover
             )

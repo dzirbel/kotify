@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.ui.theme
 
-import androidx.compose.foundation.ScrollbarStyleAmbient
+import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -44,7 +44,7 @@ object Dimens {
     fun applyDimens(content: @Composable () -> Unit) {
         CompositionLocalProvider(
             LocalTextStyle provides TextStyle(fontSize = fontBody),
-            ScrollbarStyleAmbient provides ScrollbarStyleAmbient.current.copy(thickness = scrollbarWidth),
+            LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(thickness = scrollbarWidth),
             content = content
         )
     }
