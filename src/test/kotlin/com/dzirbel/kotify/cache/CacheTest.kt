@@ -103,6 +103,27 @@ internal class CacheTest {
     }
 
     @Test
+    fun testInvalidateAll() {
+        val cache = createCache()
+
+        val obj1 = SimpleObject(id = "id1", name = "name1")
+        val obj2 = SimpleObject(id = "id2", name = "name2")
+        val obj3 = SimpleObject(id = "id3", name = "name3")
+
+        val result = cache.putAll(mapOf("id1" to obj1, "id2" to obj2, "id3" to obj3))
+
+        assertThat(result).isTrue()
+        cache.assertContainsExactly(obj1, obj2, obj3)
+
+        val invalidateResult = cache.invalidate(ids = listOf("id1", "id3", "id4"))
+
+        assertThat(invalidateResult.map { it?.obj })
+            .containsExactly(obj1, obj3, null)
+            .inOrder()
+        cache.assertContainsExactly(obj2)
+    }
+
+    @Test
     fun testRemoteCalls() {
         val cache = createCache()
         var calls = 0

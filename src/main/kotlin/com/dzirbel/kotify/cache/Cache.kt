@@ -312,7 +312,12 @@ class Cache(
         return invalidate(ids = listOf(id), saveOnChange = saveOnChange).first()
     }
 
-    // TODO document and test
+    /**
+     * Invalidates the cached values with the given [ids], removing them from the cache and returning them.
+     *
+     * If there were any cached values to invalidate and [saveOnChange] is true (defaulting to [Cache.saveOnChange]),
+     * the cache will be written to disk in the background.
+     */
     fun invalidate(ids: List<String>, saveOnChange: Boolean = this.saveOnChange): List<CacheObject?> {
         val previousObjects: List<CacheObject?>
         val anyRemoved: Boolean
