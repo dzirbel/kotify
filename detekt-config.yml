@@ -223,7 +223,7 @@ formatting:
     active: true
     autoCorrect: true
   ArgumentListWrapping:
-    active: true
+    active: false
     autoCorrect: true
   ChainWrapping:
     active: true
