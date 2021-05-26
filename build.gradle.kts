@@ -15,7 +15,7 @@ private object Versions {
     const val ktor = "1.5.3" // https://ktor.io/changelog/
     const val mockk = "1.11.0" // https://mockk.io/
     const val okhttp = "4.9.1" // https://square.github.io/okhttp/
-    const val truth = "1.1.2" // https://truth.dev/
+    const val truth = "1.1.3" // https://truth.dev/
 }
 
 plugins {
