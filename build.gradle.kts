@@ -10,7 +10,7 @@ private object Versions {
     const val detekt = "1.16.0" // https://github.com/detekt/detekt; also update plugin version
     const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco
     const val junit = "5.7.2" // https://junit.org/junit5/
-    const val kotlinReflect = "1.5.10"
+    const val kotlinReflect = "1.5.10" // should match kotlin version
     const val kotlinxSerialization = "1.0.1" // https://github.com/Kotlin/kotlinx.serialization
     const val slf4j = "1.7.30" // http://www.slf4j.org/
     const val ktor = "1.5.4" // https://ktor.io/changelog/
@@ -30,7 +30,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version "1.16.0"
 
     // https://plugins.gradle.org/plugin/name.remal.check-dependency-updates
-    id("name.remal.check-dependency-updates") version "1.3.0"
+    id("name.remal.check-dependency-updates") version "1.3.1"
 
     // https://github.com/jetbrains/compose-jb
     id("org.jetbrains.compose") version "0.4.0-build211"
@@ -49,8 +49,6 @@ repositories {
     jcenter()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
-
-
 
 dependencies {
     implementation(compose.desktop.currentOs)
