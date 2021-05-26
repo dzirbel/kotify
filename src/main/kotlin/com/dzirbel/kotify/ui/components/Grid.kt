@@ -97,7 +97,7 @@ fun <E> Grid(
             // row) plus the total vertical spacing (the vertical spacing per row times the number of rows plus 1, to
             // include the trailing space)
             val totalHeight = (verticalSpacingPx * (chunkedPlaceables.size + 1)) +
-                chunkedPlaceables.sumBy { row -> row.maxOf { it.height } }
+                chunkedPlaceables.sumOf { row -> row.maxOf { it.height } }
 
             layout(constraints.maxWidth, totalHeight) {
                 // keep track of the y for each row; start at the spacing to include the top spacing

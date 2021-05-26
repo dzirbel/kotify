@@ -8,8 +8,9 @@ import java.util.Properties
 private object Versions {
     const val coroutines = "1.4.3" // https://github.com/Kotlin/kotlinx.coroutines
     const val detekt = "1.16.0" // https://github.com/detekt/detekt; also update plugin version
-    const val jacoco = "0.8.6" // https://github.com/jacoco/jacoco
+    const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco
     const val junit = "5.7.2" // https://junit.org/junit5/
+    const val kotlinReflect = "1.5.10"
     const val kotlinxSerialization = "1.0.1" // https://github.com/Kotlin/kotlinx.serialization
     const val slf4j = "1.7.30" // http://www.slf4j.org/
     const val ktor = "1.5.4" // https://ktor.io/changelog/
@@ -20,10 +21,10 @@ private object Versions {
 
 plugins {
     // https://kotlinlang.org/releases.html
-    kotlin("jvm") version "1.4.32"
+    kotlin("jvm") version "1.5.10"
 
     // https://github.com/Kotlin/kotlinx.serialization
-    kotlin("plugin.serialization") version "1.4.32"
+    kotlin("plugin.serialization") version "1.5.10"
 
     // https://github.com/detekt/detekt; also update dependency version
     id("io.gitlab.arturbosch.detekt") version "1.16.0"
@@ -32,7 +33,7 @@ plugins {
     id("name.remal.check-dependency-updates") version "1.3.0"
 
     // https://github.com/jetbrains/compose-jb
-    id("org.jetbrains.compose") version "0.4.0-build190"
+    id("org.jetbrains.compose") version "0.4.0-build211"
 
     `java-test-fixtures`
 
@@ -48,6 +49,8 @@ repositories {
     jcenter()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
+
+
 
 dependencies {
     implementation(compose.desktop.currentOs)
@@ -71,6 +74,12 @@ dependencies {
     testFixturesImplementation("com.google.truth", "truth", Versions.truth)
 
     detektPlugins("io.gitlab.arturbosch.detekt", "detekt-formatting", Versions.detekt)
+
+    constraints {
+        implementation("org.jetbrains.kotlin", "kotlin-reflect", Versions.kotlinReflect) {
+            because("required by ktor-server-netty, which still depends on 1.4.*")
+        }
+    }
 }
 
 tasks.withType<KotlinCompile>().configureEach {

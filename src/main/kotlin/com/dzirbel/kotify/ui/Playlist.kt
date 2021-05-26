@@ -145,7 +145,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
 
                         val totalDurationMins = remember(state.tracks) {
                             state.tracks?.let { tracks ->
-                                TimeUnit.MILLISECONDS.toMinutes(tracks.sumBy { it.track.durationMs.toInt() }.toLong())
+                                TimeUnit.MILLISECONDS.toMinutes(tracks.sumOf { it.track.durationMs.toInt() }.toLong())
                             }
                         }
 

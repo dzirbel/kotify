@@ -47,7 +47,7 @@ internal class StringUtilsTest {
     @ParameterizedTest
     @MethodSource
     fun formatDuration(case: FormatDurationCase) {
-        assertThat(formatDuration(durationMs = case.duration.toLongMilliseconds())).isEqualTo(case.formatted)
+        assertThat(formatDuration(durationMs = case.duration.inWholeMilliseconds)).isEqualTo(case.formatted)
     }
 
     companion object {

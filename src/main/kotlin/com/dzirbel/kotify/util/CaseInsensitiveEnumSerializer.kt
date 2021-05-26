@@ -5,6 +5,7 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import java.util.Locale
 import kotlin.reflect.KClass
 
 /**
@@ -21,6 +22,6 @@ abstract class CaseInsensitiveEnumSerializer<E : Enum<E>>(private val enumClass:
     }
 
     override fun deserialize(decoder: Decoder): E {
-        return java.lang.Enum.valueOf(enumClass.java, decoder.decodeString().toUpperCase())
+        return java.lang.Enum.valueOf(enumClass.java, decoder.decodeString().uppercase(Locale.getDefault()))
     }
 }

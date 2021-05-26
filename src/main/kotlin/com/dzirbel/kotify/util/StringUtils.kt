@@ -24,6 +24,13 @@ fun String.ellipsize(maxChars: Int): String {
 }
 
 /**
+ * Returns a copy of this string with its first character capitalized.
+ */
+fun String.capitalize(locale: Locale = Locale.getDefault()): String {
+    return replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
+}
+
+/**
  * Returns a human-readable format of the given file size in bytes.
  *
  * From https://stackoverflow.com/a/3758880

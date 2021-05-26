@@ -309,7 +309,7 @@ object Spotify {
             return get(
                 "artists/$id/albums",
                 mapOf(
-                    "include_groups" to includeGroups?.joinToString(separator = ",") { it.name.toLowerCase(Locale.US) },
+                    "include_groups" to includeGroups?.joinToString(separator = ",") { it.name.lowercase(Locale.US) },
                     "country" to country,
                     "limit" to limit?.toString(),
                     "offset" to offset?.toString()

@@ -130,7 +130,7 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
                         Text(state.album.releaseDate)
 
                         val totalDurationMins = remember(state.tracks) {
-                            TimeUnit.MILLISECONDS.toMinutes(state.tracks.sumBy { it.durationMs.toInt() }.toLong())
+                            TimeUnit.MILLISECONDS.toMinutes(state.tracks.sumOf { it.durationMs.toInt() }.toLong())
                         }
 
                         Text("${state.album.tracks.total} songs, $totalDurationMins min")

@@ -1,6 +1,8 @@
 package com.dzirbel.kotify
 
+import com.dzirbel.kotify.util.capitalize
 import java.io.File
+import java.util.Locale
 import java.util.Properties
 
 /**
@@ -14,7 +16,7 @@ object Application {
     private const val PROPERTIES_FILENAME = "app.properties"
 
     val currentOs: OperatingSystem? by lazy {
-        val os = System.getProperty("os.name").toLowerCase()
+        val os = System.getProperty("os.name").lowercase(Locale.getDefault())
         when {
             os.contains("win") -> OperatingSystem.WINDOWS
             os.contains("mac") || os.contains("darwin") -> OperatingSystem.MAC
@@ -70,7 +72,7 @@ object Application {
         val properties = inputStream.use { Properties().apply { load(it) } }
 
         name = requireNotNull(properties["name"] as? String) { "could not find name property in $PROPERTIES_FILENAME" }
-        nameLower = name.toLowerCase()
+        nameLower = name.lowercase(Locale.getDefault())
 
         version = requireNotNull(properties["version"] as? String) {
             "could not find version property in $PROPERTIES_FILENAME"
@@ -82,7 +84,7 @@ object Application {
 
         val os = currentOs
         println(
-            "Detected operating system: ${os?.name?.toLowerCase()?.capitalize()} " +
+            "Detected operating system: ${os?.name?.lowercase(Locale.getDefault())?.capitalize()} " +
                 "(os.name: ${System.getProperty("os.name")})"
         )
 
