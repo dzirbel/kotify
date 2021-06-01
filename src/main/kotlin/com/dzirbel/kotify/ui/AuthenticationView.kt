@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
@@ -49,6 +50,8 @@ import com.dzirbel.kotify.ui.util.getClipboard
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.setClipboard
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 data class AuthenticationState(
     val oauth: OAuth? = null,
@@ -64,7 +67,6 @@ private const val WIDTH_FRACTION = 0.5f
 @Composable
 fun AuthenticationView() {
     val state = remember { mutableStateOf(AuthenticationState()) }
-    val oauthInProgress = state.value.oauth?.inProgress?.value == true
     val scrollState: ScrollState = rememberScrollState(0)
 
     Box(Modifier.fillMaxSize().background(Colors.current.surface2)) {
@@ -84,10 +86,11 @@ fun AuthenticationView() {
                 ProjectGithubIcon()
             }
 
-            if (!oauthInProgress) {
+            val oauth = state.value.oauth
+            if (oauth == null) {
                 Welcome(state)
             } else {
-                FlowInProgress(state)
+                FlowInProgress(state, oauth)
             }
         }
 
@@ -237,9 +240,7 @@ private fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
 }
 
 @Composable
-private fun FlowInProgress(state: MutableState<AuthenticationState>) {
-    val oauth = state.value.oauth!!
-
+private fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
     if (oauth.error.value == null) {
         Text("Authentication in progress. Accept the OAuth request from Spotify in your browser to continue.")
     } else {
@@ -315,19 +316,38 @@ private fun FlowInProgress(state: MutableState<AuthenticationState>) {
         }
     }
 
-    // TODO loading state
-    // TODO show result of attempt
     val submitting = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     Button(
-        enabled = state.value.manualRedirectUrl.isNotEmpty() && !submitting.value,
+        enabled = state.value.manualRedirectUrl.toHttpUrlOrNull() != null && !submitting.value,
         onClick = {
             submitting.value = true
+            val url = state.value.manualRedirectUrl.toHttpUrl()
             scope.launch {
-                oauth.onManualRedirect(url = state.value.manualRedirectUrl)
+                oauth.onManualRedirect(url = url)
+                submitting.value = false
             }
         }
     ) {
-        Text("Submit")
+        if (submitting.value) {
+            CircularProgressIndicator()
+        } else {
+            Text("Submit")
+        }
+    }
+
+    oauth.result.value?.let { result ->
+        val message = when (result) {
+            is LocalOAuthServer.Result.Error -> "Error: ${result.error}"
+            is LocalOAuthServer.Result.MismatchedState ->
+                "Mismatched state: expected `${result.expectedState}` but was `${result.actualState}`"
+            is LocalOAuthServer.Result.Success -> null
+        }
+
+        message?.let {
+            VerticalSpacer(Dimens.space3)
+
+            Text(it, color = Colors.current.error)
+        }
     }
 }

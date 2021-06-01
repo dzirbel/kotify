@@ -27,12 +27,14 @@ class OAuth private constructor(
     private val redirectUri: String,
     val authorizationUrl: HttpUrl
 ) {
-    val inProgress = mutableStateOf(true)
     val error = mutableStateOf<Throwable?>(null)
+    val result = mutableStateOf<LocalOAuthServer.Result?>(null)
+    private var stopped = false
 
     private val server: LocalOAuthServer = LocalOAuthServer(
         state = state,
         callback = { result ->
+            this.result.value = result
             if (result is LocalOAuthServer.Result.Success) {
                 try {
                     onSuccess(code = result.code)
@@ -40,8 +42,6 @@ class OAuth private constructor(
                 } catch (ex: Throwable) {
                     error.value = ex
                 }
-            } else {
-                finish()
             }
         }
     ).start()
@@ -51,11 +51,11 @@ class OAuth private constructor(
      * consumed.
      */
     private fun finish() {
-        val wasInProgress = synchronized(this) {
-            inProgress.value.also { inProgress.value = false }
+        val wasFinished = synchronized(this) {
+            stopped.also { stopped = true }
         }
 
-        if (wasInProgress) {
+        if (!wasFinished) {
             // run async to avoid deadlock (since in onSuccess() we're still processing a request)
             GlobalScope.launch {
                 runCatching { server.stop() }
@@ -70,8 +70,8 @@ class OAuth private constructor(
         finish()
     }
 
-    suspend fun onManualRedirect(url: String) {
-        server.manualRedirectUrl(url = url)
+    suspend fun onManualRedirect(url: HttpUrl): LocalOAuthServer.Result {
+        return server.manualRedirectUrl(url = url)
     }
 
     /**
