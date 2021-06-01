@@ -70,27 +70,27 @@ fun AuthenticationView() {
     val scrollState: ScrollState = rememberScrollState(0)
 
     Box(Modifier.fillMaxSize().background(Colors.current.surface2)) {
-        // TODO mouse wheel in the horizontal padding doesn't work
-        Column(
-            modifier = Modifier
-                .verticalScroll(scrollState)
-                .padding(vertical = Dimens.space5)
-                .defaultMinSize(minWidth = MIN_WIDTH)
-                .fillMaxWidth(fraction = WIDTH_FRACTION)
-                .fillMaxHeight()
-                .align(Alignment.TopCenter),
-            verticalArrangement = Arrangement.spacedBy(Dimens.space3, Alignment.Top)
-        ) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                ThemeSwitcher()
-                ProjectGithubIcon()
-            }
+        Box(Modifier.verticalScroll(scrollState).fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .padding(vertical = Dimens.space5)
+                    .defaultMinSize(minWidth = MIN_WIDTH)
+                    .fillMaxWidth(fraction = WIDTH_FRACTION)
+                    .fillMaxHeight()
+                    .align(Alignment.TopCenter),
+                verticalArrangement = Arrangement.spacedBy(Dimens.space3, Alignment.Top)
+            ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    ThemeSwitcher()
+                    ProjectGithubIcon()
+                }
 
-            val oauth = state.value.oauth
-            if (oauth == null) {
-                Welcome(state)
-            } else {
-                FlowInProgress(state, oauth)
+                val oauth = state.value.oauth
+                if (oauth == null) {
+                    Welcome(state)
+                } else {
+                    FlowInProgress(state, oauth)
+                }
             }
         }
 
