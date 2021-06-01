@@ -31,7 +31,7 @@ fun <T> callbackAsState(
     key: Any,
     callback: suspend () -> T?
 ): State<T?> {
-    return produceState(initialValue = null, key1 = key) {
+    return produceState<T?>(initialValue = null, key1 = key) {
         if (context == EmptyCoroutineContext) {
             callback()?.let { this@produceState.value = it }
         } else {
