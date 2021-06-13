@@ -1,8 +1,12 @@
 package com.dzirbel.kotify.ui
 
 import androidx.compose.runtime.MutableState
+import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.network.model.FullTrack
+import com.dzirbel.kotify.network.model.Playback
+import com.dzirbel.kotify.network.model.PlaybackContext
 import com.dzirbel.kotify.network.model.PlaybackDevice
 import com.google.common.truth.Truth.assertThat
 import io.mockk.Runs
@@ -18,30 +22,46 @@ import io.mockk.unmockkAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
 // TODO finish testing
 internal class BottomPanelPresenterTest {
     private val currentDeviceState: MutableState<PlaybackDevice?> = mockk {
         every { value = any() } just Runs
     }
+    private val currentTrackState: MutableState<FullTrack?> = mockk {
+        every { value = any() } just Runs
+    }
+    private val isPlayingState: MutableState<Boolean> = mockk {
+        every { value = any() } just Runs
+    }
+    private val playbackContextState: MutableState<PlaybackContext?> = mockk {
+        every { value = any() } just Runs
+    }
 
     @BeforeEach
     fun setup() {
         unmockkAll()
-        mockkObject(Spotify.Player, SpotifyCache, Player)
+        mockkObject(Spotify.Player, SpotifyCache, LibraryCache, Player)
         every { Player.currentDevice } returns currentDeviceState
+        every { Player.currentTrack } returns currentTrackState
+        every { Player.isPlaying } returns isPlayingState
+        every { Player.playbackContext } returns playbackContextState
 
         coEvery { Spotify.Player.getAvailableDevices() } returns emptyList()
         coEvery { Spotify.Player.getCurrentPlayback() } returns null
         coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returns null
+
+        every { LibraryCache.savedAlbums } returns emptySet()
+        every { LibraryCache.savedArtists } returns emptySet()
+        every { LibraryCache.savedTracks } returns emptySet()
     }
 
     @AfterEach
     fun finish() {
-        confirmVerified(Spotify.Player)
-        confirmVerified(SpotifyCache)
-        confirmVerified(Player)
-        confirmVerified(currentDeviceState)
+        confirmVerified(Spotify.Player, SpotifyCache, LibraryCache, Player)
+        confirmVerified(currentDeviceState, currentTrackState, isPlayingState, playbackContextState)
     }
 
     @Test
@@ -107,6 +127,55 @@ internal class BottomPanelPresenterTest {
         }
     }
 
+    @ParameterizedTest
+    @MethodSource("playback")
+    fun loadPlayback(playback: Playback?) {
+        testPresenter(::BottomPanelPresenter) { presenter ->
+            verifyOpenCalls()
+
+            coEvery { Spotify.Player.getCurrentPlayback() } returns playback
+
+            presenter.emit(BottomPanelPresenter.Event.LoadPlayback())
+
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(
+                loadedState.copy(
+                    loadingPlayback = false,
+                    playbackProgressMs = playback?.progressMs,
+                    playbackIsPlaying = playback?.isPlaying,
+                    playbackShuffleState = playback?.shuffleState,
+                    playbackRepeatState = playback?.repeatState,
+                    playbackCurrentDevice = playback?.device,
+                    playbackTrack = playback?.item,
+                    trackIsSaved = playback?.item?.let { false },
+                    albumIsSaved = playback?.item?.let { false },
+                    artistsAreSaved = playback?.item?.let { emptyMap() },
+                )
+            )
+
+            coVerify {
+                Spotify.Player.getCurrentPlayback()
+                if (playback != null) {
+                    Player.isPlaying
+                    isPlayingState.value = playback.isPlaying
+
+                    Player.playbackContext
+                    playbackContextState.value = playback.context
+
+                    playback.item?.let { track ->
+                        SpotifyCache.put(track)
+
+                        Player.currentTrack
+                        currentTrackState.value = track
+
+                        LibraryCache.savedAlbums
+                        LibraryCache.savedArtists
+                        LibraryCache.savedTracks
+                    }
+                }
+            }
+        }
+    }
+
     private fun verifyOpenCalls(device: PlaybackDevice? = null) {
         coVerifyAll {
             Spotify.Player.getAvailableDevices()
@@ -121,10 +190,41 @@ internal class BottomPanelPresenterTest {
 
     companion object {
         private val loadingState = BottomPanelPresenter.State()
-        private val loadedState = BottomPanelPresenter.State().copy(
+        private val loadedState = BottomPanelPresenter.State(
             loadingPlayback = false,
             loadingTrackPlayback = false,
-            loadingDevices = false
+            loadingDevices = false,
+            devices = emptyList()
         )
+
+        @JvmStatic
+        @Suppress("unused")
+        fun playback(): List<Playback?> {
+            return listOf(
+                null,
+                Playback(
+                    timestamp = 123,
+                    device = mockk(),
+                    progressMs = 456,
+                    isPlaying = true,
+                    currentlyPlayingType = "type",
+                    item = null,
+                    shuffleState = true,
+                    repeatState = "repeat",
+                    context = null
+                ),
+                Playback(
+                    timestamp = 0,
+                    device = mockk(),
+                    progressMs = 0,
+                    isPlaying = false,
+                    currentlyPlayingType = "type",
+                    item = mockk(relaxed = true),
+                    shuffleState = false,
+                    repeatState = "repeat",
+                    context = mockk()
+                ),
+            )
+        }
     }
 }
