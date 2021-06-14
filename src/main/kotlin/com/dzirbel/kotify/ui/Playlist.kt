@@ -159,7 +159,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                                 presenter.emitAsync(PlaylistPresenter.Event.ToggleSave(save = it))
                             }
 
-                            PlayButton(contextUri = state.playlist.uri)
+                            PlayButton(context = Player.PlayContext.playlist(state.playlist))
                         }
                     }
                 }
@@ -180,7 +180,13 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
                 val columns = remember(pageStack) {
-                    trackColumns(pageStack, includeTrackNumber = false)
+                    trackColumns(
+                        pageStack = pageStack,
+                        includeTrackNumber = false,
+                        playContextFromIndex = { index ->
+                            Player.PlayContext.playlistTrack(playlist = state.playlist, index = index)
+                        }
+                    )
                         .map { column -> column.mapped<PlaylistTrack> { it.track } }
                         .toMutableList()
                         .apply {

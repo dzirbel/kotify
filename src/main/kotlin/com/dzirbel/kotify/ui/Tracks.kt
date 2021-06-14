@@ -85,8 +85,9 @@ fun BoxScope.Tracks(pageStack: MutableState<PageStack>) {
 
             VerticalSpacer(Dimens.space3)
 
+            // TODO find the context to play tracks from the list of all saved tracks
             Table(
-                columns = trackColumns(pageStack),
+                columns = trackColumns(pageStack = pageStack, playContextFromIndex = null),
                 items = state.tracks
             )
         }

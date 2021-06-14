@@ -161,7 +161,7 @@ private fun ArtistCell(
                 presenter.emitAsync(ArtistsPresenter.Event.ToggleSave(artistId = artist.id, save = !isSaved))
             }
 
-            PlayButton(contextUri = artist.uri, size = Dimens.iconSmall)
+            PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
         }
     }
 }

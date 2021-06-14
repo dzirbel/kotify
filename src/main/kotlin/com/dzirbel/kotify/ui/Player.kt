@@ -2,9 +2,13 @@ package com.dzirbel.kotify.ui
 
 import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.network.model.Album
+import com.dzirbel.kotify.network.model.Artist
 import com.dzirbel.kotify.network.model.FullTrack
 import com.dzirbel.kotify.network.model.PlaybackContext
 import com.dzirbel.kotify.network.model.PlaybackDevice
+import com.dzirbel.kotify.network.model.Playlist
+import com.dzirbel.kotify.network.model.Track
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,6 +21,49 @@ import kotlinx.coroutines.launch
  */
 object Player {
     data class PlayEvent(val contextChanged: Boolean)
+
+    /**
+     * Encapsulates options to start playback.
+     */
+    data class PlayContext(
+        val contextUri: String,
+        val offset: Spotify.PlaybackOffset? = null,
+        val positionMs: Int? = null,
+    ) {
+        interface Creator {
+            fun create(track: Track, index: Int): PlayContext?
+        }
+
+        companion object {
+            /**
+             * Returns a [PlayContext] which plays the given [album].
+             */
+            fun album(album: Album) = album.uri?.let { PlayContext(contextUri = it) }
+
+            /**
+             * Returns a [PlayContext] which plays the track at the given [index] on the given [album].
+             */
+            fun albumTrack(album: Album, index: Int): PlayContext? {
+                return album.uri?.let { uri ->
+                    PlayContext(contextUri = uri, offset = Spotify.PlaybackOffset(position = index))
+                }
+            }
+
+            fun artist(artist: Artist) = artist.uri?.let { PlayContext(contextUri = it) }
+
+            /**
+             * Returns a [PlayContext] which plays the given [playlist].
+             */
+            fun playlist(playlist: Playlist) = PlayContext(contextUri = playlist.uri)
+
+            /**
+             * Returns a [PlayContext] which plays the track at the given [index] on the given [playlist].
+             */
+            fun playlistTrack(playlist: Playlist, index: Int): PlayContext {
+                return PlayContext(contextUri = playlist.uri, offset = Spotify.PlaybackOffset(position = index))
+            }
+        }
+    }
 
     private val _playEvents = MutableSharedFlow<PlayEvent>()
 
@@ -53,18 +100,22 @@ object Player {
     val playEvents: SharedFlow<PlayEvent> = _playEvents.asSharedFlow()
 
     /**
-     * Plays from the given [contextUri], returning true if this is possible (i.e. [playable] is true) or false if not.
+     * Plays from the given [context], returning true if this is possible (i.e. [playable] is true) or false if not.
      */
     fun play(
-        contextUri: String? = null,
+        context: PlayContext? = null,
         resumeIfSameContext: Boolean = true,
         scope: CoroutineScope = GlobalScope
     ): Boolean {
         currentDevice.value?.let { device ->
             scope.launch {
-                val contextChanged = contextUri != playbackContext.value?.uri
+                val contextChanged = context?.contextUri != playbackContext.value?.uri
                 Spotify.Player.startPlayback(
-                    contextUri = contextUri?.takeUnless { resumeIfSameContext && !contextChanged },
+                    contextUri = context?.contextUri?.takeUnless {
+                        context.offset == null && context.positionMs == null && resumeIfSameContext && !contextChanged
+                    },
+                    offset = context?.offset,
+                    positionMs = context?.positionMs,
                     deviceId = device.id
                 )
 

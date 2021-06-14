@@ -31,7 +31,6 @@ import com.dzirbel.kotify.network.model.SimplifiedTrack
 import com.dzirbel.kotify.network.model.TrackPlayback
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -68,6 +67,9 @@ object Spotify {
 
     @Serializable
     data class ErrorObject(val error: ErrorDetails)
+
+    @Serializable
+    data class PlaybackOffset(val position: Int? = null)
 
     @Serializable
     data class ErrorDetails(val status: Int, val message: String)
@@ -1085,16 +1087,14 @@ object Spotify {
             deviceId: String? = null,
             contextUri: String? = null,
             uris: List<String>? = null,
-            offset: Any? = null,
+            offset: PlaybackOffset? = null,
             positionMs: Int? = null
         ) {
             @Serializable
             data class Body(
                 @SerialName("context_uri") val contextUri: String? = null,
                 @SerialName("uris") val uris: List<String>? = null,
-                @Contextual
-                @SerialName("offset")
-                val offset: Any? = null,
+                @SerialName("offset") val offset: PlaybackOffset? = null,
                 @SerialName("position_ms") val positionMs: Int? = null
             )
 

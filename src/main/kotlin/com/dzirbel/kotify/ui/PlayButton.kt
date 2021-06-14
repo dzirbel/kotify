@@ -9,14 +9,14 @@ import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 
 @Composable
-fun PlayButton(contextUri: String, size: Dp = Dimens.iconMedium) {
-    val matchesContext = Player.playbackContext.value?.uri == contextUri
+fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
+    val matchesContext = Player.playbackContext.value?.uri == context?.contextUri
     val playing = Player.isPlaying.value && matchesContext
     IconButton(
-        enabled = Player.playable,
+        enabled = Player.playable && context != null,
         modifier = Modifier.size(size),
         onClick = {
-            if (playing) Player.pause() else Player.play(contextUri = contextUri)
+            if (playing) Player.pause() else Player.play(context = context)
         }
     ) {
         CachedIcon(

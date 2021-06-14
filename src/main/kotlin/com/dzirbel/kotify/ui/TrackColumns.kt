@@ -7,18 +7,21 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.ContentAlpha
+import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullTrack
-import com.dzirbel.kotify.network.model.SimplifiedAlbum
 import com.dzirbel.kotify.network.model.SimplifiedTrack
 import com.dzirbel.kotify.network.model.Track
 import com.dzirbel.kotify.ui.components.Column
@@ -28,6 +31,7 @@ import com.dzirbel.kotify.ui.components.ColumnWidth
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.Sort
+import com.dzirbel.kotify.ui.components.hoverState
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
@@ -39,10 +43,11 @@ fun trackColumns(
     pageStack: MutableState<PageStack>,
     savedTracks: Set<String>? = LibraryCache.savedTracks,
     includeTrackNumber: Boolean = true,
-    includeAlbum: Boolean = true
+    includeAlbum: Boolean = true,
+    playContextFromIndex: ((Int) -> Player.PlayContext?)?
 ): List<Column<Track>> {
     return listOfNotNull(
-        PlayingColumn,
+        playContextFromIndex?.let { PlayingColumn(playContextFromIndex = it) },
         TrackNumberColumn.takeIf { includeTrackNumber },
         SavedColumn(savedTracks = savedTracks),
         NameColumn,
@@ -53,7 +58,17 @@ fun trackColumns(
     )
 }
 
-object PlayingColumn : Column<Track>() {
+/**
+ * A [Column] which displays the current play state of a [Track] with an icon, and allows playing a [Track] via the
+ * [playContext].
+ */
+class PlayingColumn(
+    /**
+     * Returns a [Player.PlayContext] to play when the user selects the given [track] at the given [index] in the
+     * column.
+     */
+    private val playContextFromIndex: (Int) -> Player.PlayContext?
+) : Column<Track>() {
     override val width = ColumnWidth.Fill()
 
     override val verticalAlignment = Alignment.CenterVertically
@@ -69,17 +84,37 @@ object PlayingColumn : Column<Track>() {
 
     @Composable
     override fun item(item: Track, index: Int) {
+        val hoverState = remember { mutableStateOf(false) }
+        val baseModifier = Modifier
+            .hoverState(hoverState)
+            .padding(horizontal = Dimens.space2)
+
+        val fontSizeDp = with(LocalDensity.current) { Dimens.fontBody.toDp() }
         if (Player.currentTrack.value?.id == item.id) {
-            val fontSizeDp = with(LocalDensity.current) { Dimens.fontBody.toDp() }
             CachedIcon(
                 name = "volume-up",
                 size = fontSizeDp,
                 contentDescription = "Playing",
-                modifier = Modifier.padding(horizontal = Dimens.space2),
+                modifier = baseModifier,
                 tint = Colors.current.primary
             )
         } else {
-            Box(Modifier)
+            val context = playContextFromIndex(index)
+            // TODO refactor to use full size for hover and not render transparent icon button when not hovering
+            IconButton(
+                modifier = baseModifier.size(fontSizeDp),
+                onClick = {
+                    Player.play(context = context)
+                },
+                enabled = context != null
+            ) {
+                CachedIcon(
+                    name = "play-circle-outline",
+                    size = fontSizeDp,
+                    contentDescription = "Playing",
+                    tint = if (hoverState.value) Colors.current.primary else Color.Companion.Transparent
+                )
+            }
         }
     }
 }
@@ -156,9 +191,6 @@ class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Trac
 
 class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track>() {
     override val width = ColumnWidth.Weighted(weight = 1f)
-
-    private val Track.album: SimplifiedAlbum?
-        get() = (this as? FullTrack)?.album ?: (this as? SimplifiedTrack)?.album
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
         return first.album?.name.orEmpty().compareTo(second.album?.name.orEmpty(), ignoreCase = true)

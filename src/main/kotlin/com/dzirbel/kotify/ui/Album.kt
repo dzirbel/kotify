@@ -143,7 +143,7 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
                                 presenter.emitAsync(AlbumPresenter.Event.ToggleSave(save = it))
                             }
 
-                            PlayButton(contextUri = state.album.uri)
+                            PlayButton(context = Player.PlayContext.album(state.album))
                         }
                     }
                 }
@@ -160,7 +160,13 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
             VerticalSpacer(Dimens.space3)
 
             Table(
-                columns = trackColumns(pageStack, includeAlbum = false),
+                columns = trackColumns(
+                    pageStack = pageStack,
+                    includeAlbum = false,
+                    playContextFromIndex = { index ->
+                        Player.PlayContext.albumTrack(album = state.album, index = index)
+                    }
+                ),
                 items = state.tracks
             )
         }

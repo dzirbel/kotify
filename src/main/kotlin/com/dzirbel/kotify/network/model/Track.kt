@@ -74,6 +74,8 @@ interface Track : SpotifyObject {
 
     /** The number of the track. If an album has several discs, the track number is the number on the specified disc. */
     val trackNumber: Int
+
+    val album: Album?
 }
 
 /**
@@ -100,7 +102,7 @@ data class SimplifiedTrack(
     override val uri: String? = null,
 
     /** Undocumented field. */
-    val album: SimplifiedAlbum? = null,
+    override val album: SimplifiedAlbum? = null,
 
     /** Undocumented field. */
     val episode: Boolean? = null,
@@ -146,7 +148,7 @@ data class FullTrack(
      * The album on which the track appears. The album object includes a link in href to full information about the
      * album.
      */
-    val album: SimplifiedAlbum,
+    override val album: SimplifiedAlbum,
 
     /** Known external IDs for the track. */
     @SerialName("external_ids") val externalIds: ExternalId,

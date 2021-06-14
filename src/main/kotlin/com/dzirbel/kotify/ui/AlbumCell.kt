@@ -49,9 +49,7 @@ fun AlbumCell(
             val isSaved = savedAlbums?.contains(album.id)
             ToggleSaveButton(isSaved = isSaved) { onToggleSave(it) }
 
-            album.uri?.let { uri ->
-                PlayButton(contextUri = uri, size = Dimens.iconSmall)
-            }
+            PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)
         }
     }
 }
