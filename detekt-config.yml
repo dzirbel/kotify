@@ -28,6 +28,8 @@ comments:
     active: false
   CommentOverPrivateProperty:
     active: false
+  DeprecatedBlockTag:
+    active: true
   EndOfSentenceFormat:
     active: false
     endOfSentenceFormat: '([.?!][ \t\n\r\f<])|([.?!:]$)'
@@ -58,7 +60,16 @@ complexity:
     ignoreSingleWhenExpression: false
     ignoreSimpleWhenEntries: false
     ignoreNestingFunctions: false
-    nestingFunctions: [run, let, apply, with, also, use, forEach, isNotNull, ifNull]
+    nestingFunctions:
+      - 'also'
+      - 'apply'
+      - 'forEach'
+      - 'isNotNull'
+      - 'ifNull'
+      - 'let'
+      - 'run'
+      - 'use'
+      - 'with'
   LabeledExpression:
     active: true
     ignoredLabels: []
@@ -68,6 +79,7 @@ complexity:
   LongMethod:
     active: false
     threshold: 60
+    ignoreAnnotated: []
     excludes: ['**/test/**', '**/testFixtures/**']
   LongParameterList:
     active: true
@@ -156,7 +168,11 @@ exceptions:
   active: true
   ExceptionRaisedInUnexpectedLocation:
     active: true
-    methodNames: [toString, hashCode, equals, finalize]
+    methodNames:
+      - 'equals'
+      - 'finalize'
+      - 'hashCode'
+      - 'toString'
   InstanceOfCheckForException:
     active: true
     excludes: ['**/test/**', '**/testFixtures/**']
@@ -174,10 +190,10 @@ exceptions:
   SwallowedException:
     active: true
     ignoredExceptionTypes:
-      - InterruptedException
-      - NumberFormatException
-      - ParseException
-      - MalformedURLException
+      - 'InterruptedException'
+      - 'MalformedURLException'
+      - 'NumberFormatException'
+      - 'ParseException'
     allowedExceptionNameRegex: '_|(ignore|expected).*'
   ThrowingExceptionFromFinally:
     active: true
@@ -185,32 +201,29 @@ exceptions:
     active: true
   ThrowingExceptionsWithoutMessageOrCause:
     active: true
-    exceptions:
-      - IllegalArgumentException
-      - IllegalStateException
-      - IOException
+    excludes: ['**/test/**', '**/testFixtures/**']
   ThrowingNewInstanceOfSameException:
     active: true
   TooGenericExceptionCaught:
     active: false
     excludes: ['**/test/**', '**/testFixtures/**']
     exceptionNames:
-      - ArrayIndexOutOfBoundsException
-      - Error
-      - Exception
-      - IllegalMonitorStateException
-      - NullPointerException
-      - IndexOutOfBoundsException
-      - RuntimeException
-      - Throwable
+      - 'ArrayIndexOutOfBoundsException'
+      - 'Error'
+      - 'Exception'
+      - 'IllegalMonitorStateException'
+      - 'IndexOutOfBoundsException'
+      - 'NullPointerException'
+      - 'RuntimeException'
+      - 'Throwable'
     allowedExceptionNameRegex: '^(_|(ignore|expected).*)'
   TooGenericExceptionThrown:
     active: true
     exceptionNames:
-      - Error
-      - Exception
-      - Throwable
-      - RuntimeException
+      - 'Error'
+      - 'Exception'
+      - 'RuntimeException'
+      - 'Throwable'
 
 formatting:
   active: true
@@ -225,6 +238,8 @@ formatting:
   ArgumentListWrapping:
     active: false
     autoCorrect: true
+    indentSize: 4
+    maxLineLength: 120
   ChainWrapping:
     active: true
     autoCorrect: true
@@ -252,6 +267,7 @@ formatting:
   MaximumLineLength:
     active: true
     maxLineLength: 120
+    ignoreBackTickedIdentifier: false
   ModifierOrdering:
     active: true
     autoCorrect: true
@@ -301,6 +317,7 @@ formatting:
     active: true
     autoCorrect: true
     indentSize: 4
+    maxLineLength: 120
   SpacingAroundAngleBrackets:
     active: true
     autoCorrect: true
@@ -346,6 +363,9 @@ formatting:
 
 naming:
   active: true
+  BooleanPropertyNaming:
+    active: false
+    allowedPattern: '^(is|has|are)'
   ClassNaming:
     active: true
     classPattern: '[A-Z$][a-zA-Z0-9$]*'
@@ -372,7 +392,8 @@ naming:
     functionPattern: '^([a-z$][a-zA-Z$0-9]*)|(`.*`)$'
     excludeClassPattern: '$^'
     ignoreOverridden: true
-    ignoreAnnotated: ['Composable']
+    ignoreAnnotated:
+      - 'Composable'
   FunctionParameterNaming:
     active: true
     parameterPattern: '[a-z][A-Za-z0-9]*'
@@ -390,7 +411,7 @@ naming:
   NoNameShadowing:
     active: true
   NonBooleanPropertyPrefixedWithIs:
-    active: false
+    active: true
   ObjectPropertyNaming:
     active: true
     constantPattern: '[A-Za-z][_A-Za-z0-9]*'
@@ -430,11 +451,17 @@ performance:
 
 potential-bugs:
   active: true
+  AvoidReferentialEquality:
+    active: true
+    forbiddenTypePatterns:
+      - 'kotlin.String'
   CastToNullableType:
     active: true
   Deprecation:
     active: true
   DontDowncastCollectionTypes:
+    active: true
+  DoubleMutabilityForCollection:
     active: true
   DuplicateCaseInWhenExpression:
     active: true
@@ -451,7 +478,11 @@ potential-bugs:
   IgnoredReturnValue:
     active: false
     restrictToAnnotatedMethods: true
-    returnValueAnnotations: ['*.CheckReturnValue', '*.CheckResult']
+    returnValueAnnotations:
+      - '*.CheckResult'
+      - '*.CheckReturnValue'
+    ignoreReturnValueAnnotations:
+      - '*.CanIgnoreReturnValue'
   ImplicitDefaultLocale:
     active: true
   ImplicitUnitReturnType:
@@ -525,7 +556,10 @@ style:
     includeLineWrapping: false
   ForbiddenComment:
     active: false
-    values: ['TODO:', 'FIXME:', 'STOPSHIP:']
+    values:
+      - 'FIXME:'
+      - 'STOPSHIP:'
+      - 'TODO:'
     allowedPatterns: ''
   ForbiddenImport:
     active: false
@@ -536,7 +570,10 @@ style:
     methods: []
   ForbiddenPublicDataClass:
     active: false
-    ignorePackages: ['*.internal', '*.internal.*']
+    excludes: ['**']
+    ignorePackages:
+      - '*.internal'
+      - '*.internal.*'
   ForbiddenVoid:
     active: true
     ignoreOverridden: false
@@ -544,8 +581,10 @@ style:
   FunctionOnlyReturningConstant:
     active: true
     ignoreOverridableFunction: true
+    ignoreActualFunction: true
     excludedFunctions: 'describeContents'
-    excludeAnnotatedFunction: ['dagger.Provides']
+    excludeAnnotatedFunction:
+      - 'dagger.Provides'
   LibraryCodeMustSpecifyReturnType:
     active: true
   LibraryEntitiesShouldNotBePublic:
@@ -556,7 +595,11 @@ style:
   MagicNumber:
     active: true
     excludes: ['**/test/**', '**/testFixtures/**']
-    ignoreNumbers: ['-1', '0', '1', '2']
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: true
     ignoreLocalVariableDeclaration: false
@@ -588,6 +631,8 @@ style:
   NewLineAtEndOfFile:
     active: true
   NoTabs:
+    active: true
+  ObjectLiteralToLambda:
     active: true
   OptionalAbstractKeyword:
     active: true
@@ -621,6 +666,7 @@ style:
   ThrowsCount:
     active: false
     max: 2
+    excludeGuardClauses: false
   TrailingWhitespace:
     active: true
   UnderscoresInNumericLiterals:
@@ -628,7 +674,8 @@ style:
     acceptableDecimalLength: 5
   UnnecessaryAbstractClass:
     active: true
-    excludeAnnotatedClasses: []
+    excludeAnnotatedClasses:
+      - 'dagger.Module'
   UnnecessaryAnnotationUseSiteTarget:
     active: true
   UnnecessaryApply:

@@ -7,7 +7,7 @@ import java.util.Properties
 
 private object Versions {
     const val coroutines = "1.5.0" // https://github.com/Kotlin/kotlinx.coroutines
-    const val detekt = "1.17.1" // https://github.com/detekt/detekt; also update plugin version
+    const val detekt = "1.18.1" // https://github.com/detekt/detekt; also update plugin version
     const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco
     const val junit = "5.8.0" // https://junit.org/junit5/
     const val kotlinReflect = "1.5.10" // should match kotlin version
@@ -27,7 +27,7 @@ plugins {
     kotlin("plugin.serialization") version "1.5.10"
 
     // https://github.com/detekt/detekt; also update dependency version
-    id("io.gitlab.arturbosch.detekt") version "1.17.1"
+    id("io.gitlab.arturbosch.detekt") version "1.18.1"
 
     // https://plugins.gradle.org/plugin/name.remal.check-dependency-updates
     id("name.remal.check-dependency-updates") version "1.5.0"
@@ -138,7 +138,7 @@ tasks.create<Task>("checkLocal") {
 }
 
 detekt {
-    input = files("src")
+    source = files("src")
     config = files("detekt-config.yml")
 }
 
