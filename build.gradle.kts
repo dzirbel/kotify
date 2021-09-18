@@ -14,7 +14,7 @@ private object Versions {
     const val kotlinxSerialization = "1.0.1" // https://github.com/Kotlin/kotlinx.serialization
     const val slf4j = "1.7.32" // http://www.slf4j.org/
     const val ktor = "1.5.4" // https://ktor.io/changelog/
-    const val mockk = "1.11.0" // https://mockk.io/
+    const val mockk = "1.12.0" // https://mockk.io/
     const val okhttp = "4.9.1" // https://square.github.io/okhttp/
     const val truth = "1.1.3" // https://truth.dev/
 }
