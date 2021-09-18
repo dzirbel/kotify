@@ -30,7 +30,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version "1.17.1"
 
     // https://plugins.gradle.org/plugin/name.remal.check-dependency-updates
-    id("name.remal.check-dependency-updates") version "1.3.1"
+    id("name.remal.check-dependency-updates") version "1.5.0"
 
     // https://github.com/jetbrains/compose-jb
     id("org.jetbrains.compose") version "0.4.0"
