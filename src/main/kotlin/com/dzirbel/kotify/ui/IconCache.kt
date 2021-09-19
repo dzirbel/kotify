@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.res.loadSvgResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -83,7 +84,7 @@ object IconCache {
                     GlobalScope.async {
                         val iconPath = "$name.svg"
                         requireNotNull(classLoader.getResourceAsStream(iconPath)) { "Icon $iconPath not found" }
-                            .use { loadSvgResource(it, density) }
+                            .use { loadSvgPainter(it, density) }
                     }
                 }
             }.await()

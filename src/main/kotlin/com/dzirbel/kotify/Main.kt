@@ -1,6 +1,9 @@
 package com.dzirbel.kotify
 
-import androidx.compose.desktop.AppWindow
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
@@ -10,7 +13,6 @@ import com.dzirbel.kotify.ui.Root
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import okhttp3.OkHttpClient
-import javax.swing.SwingUtilities
 
 fun main(args: Array<String>) {
     Application.setup(
@@ -37,19 +39,18 @@ fun main(args: Array<String>) {
 
     SpotifyCache.load()
 
-    SwingUtilities.invokeLater {
-        AppWindow(title = "${Application.name} ${Application.version}")
-            .apply {
-                maximize()
-                // TODO doesn't appear to have focus immediately
-                KeyboardShortcuts.register(this)
-            }
-            .show {
-                Colors.current.applyColors {
-                    Dimens.applyDimens {
-                        Root()
-                    }
+    application {
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "${Application.name} ${Application.version}",
+            state = rememberWindowState(placement = WindowPlacement.Maximized),
+            onKeyEvent = KeyboardShortcuts::handle
+        ) {
+            Colors.current.applyColors {
+                Dimens.applyDimens {
+                    Root()
                 }
             }
+        }
     }
 }

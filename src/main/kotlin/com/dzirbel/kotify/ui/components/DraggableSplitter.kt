@@ -14,6 +14,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Colors
@@ -62,11 +64,13 @@ fun DraggableSplitter(
                                 onDragStarted = { resizing.value = true },
                                 onDragStopped = { resizing.value = false }
                             )
-                            .hoverCursor(
-                                when (orientation) {
-                                    Orientation.Horizontal -> Cursor(Cursor.N_RESIZE_CURSOR)
-                                    Orientation.Vertical -> Cursor(Cursor.E_RESIZE_CURSOR)
-                                }
+                            .pointerIcon(
+                                PointerIcon(
+                                    when (orientation) {
+                                        Orientation.Horizontal -> Cursor(Cursor.N_RESIZE_CURSOR)
+                                        Orientation.Vertical -> Cursor(Cursor.E_RESIZE_CURSOR)
+                                    }
+                                )
                             )
                     } else {
                         this

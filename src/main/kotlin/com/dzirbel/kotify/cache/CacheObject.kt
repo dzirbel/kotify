@@ -1,7 +1,5 @@
 package com.dzirbel.kotify.cache
 
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationStrategy
@@ -95,8 +93,6 @@ data class CacheObject(
                 "cached as $originalHash but attempting to deserialize with $deserializedHash"
         )
 
-        @InternalSerializationApi
-        @ExperimentalSerializationApi
         override val descriptor = buildClassSerialDescriptor("CacheObject") {
             element("id", PrimitiveSerialDescriptor("id", PrimitiveKind.STRING))
             element("cacheTime", PrimitiveSerialDescriptor("cacheInt", PrimitiveKind.LONG))
@@ -111,8 +107,6 @@ data class CacheObject(
             )
         }
 
-        @InternalSerializationApi
-        @ExperimentalSerializationApi
         override fun serialize(encoder: Encoder, value: CacheObject) {
             val objClass = value.obj::class
             require(objClass.java.typeName == value.type)
@@ -129,8 +123,6 @@ data class CacheObject(
             }
         }
 
-        @ExperimentalSerializationApi
-        @InternalSerializationApi
         override fun deserialize(decoder: Decoder): CacheObject {
             return decoder.decode {
                 var id: String? = null
@@ -192,8 +184,6 @@ data class CacheObject(
          * Avoids using [kotlinx.serialization.encoding.encodeStructure] since it swallows exceptions in [block] if the
          * [CompositeEncoder.endStructure] calls also throws an error, which it typically does if [block] fails.
          */
-        @ExperimentalSerializationApi
-        @InternalSerializationApi
         private fun Encoder.encode(block: CompositeEncoder.() -> Unit) {
             val composite = beginStructure(descriptor)
             composite.block()
@@ -206,8 +196,6 @@ data class CacheObject(
          * Avoids using [kotlinx.serialization.encoding.decodeStructure] since it swallows exceptions in [block] if the
          * [CompositeDecoder.endStructure] calls also throws an error, which it typically does if [block] fails.
          */
-        @ExperimentalSerializationApi
-        @InternalSerializationApi
         private fun <T> Decoder.decode(block: CompositeDecoder.() -> T): T {
             val composite = beginStructure(descriptor)
             return composite.block().also { composite.endStructure(descriptor) }

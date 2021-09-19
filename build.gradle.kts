@@ -10,7 +10,7 @@ private object Versions {
     const val detekt = "1.18.1" // https://github.com/detekt/detekt; also update plugin version
     const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco
     const val junit = "5.8.0" // https://junit.org/junit5/
-    const val kotlinReflect = "1.5.10" // should match kotlin version
+    const val kotlinReflect = "1.5.31" // should match kotlin version
     const val kotlinxSerialization = "1.0.1" // https://github.com/Kotlin/kotlinx.serialization
     const val slf4j = "1.7.32" // http://www.slf4j.org/
     const val ktor = "1.6.3" // https://ktor.io/changelog/
@@ -21,10 +21,10 @@ private object Versions {
 
 plugins {
     // https://kotlinlang.org/releases.html
-    kotlin("jvm") version "1.5.10"
+    kotlin("jvm") version "1.5.30"
 
     // https://github.com/Kotlin/kotlinx.serialization
-    kotlin("plugin.serialization") version "1.5.10"
+    kotlin("plugin.serialization") version "1.5.30"
 
     // https://github.com/detekt/detekt; also update dependency version
     id("io.gitlab.arturbosch.detekt") version "1.18.1"
@@ -33,7 +33,7 @@ plugins {
     id("name.remal.check-dependency-updates") version "1.5.0"
 
     // https://github.com/jetbrains/compose-jb
-    id("org.jetbrains.compose") version "0.4.0"
+    id("org.jetbrains.compose") version "1.0.0-alpha4-build348"
 
     `java-test-fixtures`
 
@@ -47,6 +47,7 @@ version = appProperties["version"] as String
 repositories {
     mavenCentral()
     jcenter()
+    google()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
@@ -67,6 +68,7 @@ dependencies {
     testImplementation("io.mockk", "mockk", Versions.mockk)
 
     testFixturesImplementation(compose.desktop.currentOs)
+    testFixturesImplementation("org.jetbrains.kotlinx", "kotlinx-serialization-json", Versions.kotlinxSerialization) // TODO necessary for the opt-in
     testFixturesImplementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
     testFixturesImplementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
     testFixturesImplementation("com.google.truth", "truth", Versions.truth)
@@ -82,12 +84,15 @@ dependencies {
 
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.allWarningsAsErrors = true
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "1.8" // TODO revisit
     kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.time.ExperimentalTime"
     kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
     kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlinx.coroutines.FlowPreview"
     kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.contracts.ExperimentalContracts"
     kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlinx.coroutines.DelicateCoroutinesApi" // allow use of GlobalScope
+    kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlinx.serialization.ExperimentalSerializationApi"
+    kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlinx.serialization.InternalSerializationApi"
+    kotlinOptions.freeCompilerArgs += "-Xopt-in=androidx.compose.ui.ExperimentalComposeUiApi"
 }
 
 configurations.all {

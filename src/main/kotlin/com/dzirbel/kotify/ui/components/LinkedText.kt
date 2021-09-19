@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui.components
 
-import androidx.compose.desktop.LocalAppWindow
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.LocalContentAlpha
@@ -13,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.text.AnnotatedString
@@ -22,12 +23,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.util.openInBrowser
-import java.awt.Cursor
 
 private const val ANNOTATION_TAG_LINK = "link"
-
-private val hoverCursor by lazy { Cursor(Cursor.HAND_CURSOR) }
-private val defaultCursor by lazy { Cursor.getDefaultCursor() }
 
 /**
  * Defines a simple DSL for constructing an [AnnotatedString] which has plain [text] and [link] components.
@@ -109,8 +106,6 @@ fun LinkedText(
     }
 
     val hoverModifier = Modifier.composed {
-        LocalAppWindow.current.window.cursor = if (hoverState.value.second != null) hoverCursor else defaultCursor
-
         pointerMoveFilter(
             onMove = { offset ->
                 val characterOffset = text.characterOffset(offset, layoutResult.value)
@@ -123,6 +118,7 @@ fun LinkedText(
                 true
             }
         )
+            .pointerIcon(if (hoverState.value.second != null) PointerIcon.Hand else PointerIcon.Default)
     }
 
     val textColor = style.color.takeOrElse {
