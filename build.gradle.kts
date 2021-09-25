@@ -125,8 +125,8 @@ tasks.create<JacocoReport>("jacocoTestReportLocal") {
 
 tasks.withType<JacocoReport> {
     reports {
-        xml.isEnabled = true
-        csv.isEnabled = false
+        xml.required.set(true)
+        csv.required.set(false)
     }
 }
 
