@@ -73,12 +73,6 @@ dependencies {
     testFixturesImplementation("com.google.truth", "truth", Versions.truth)
 
     detektPlugins("io.gitlab.arturbosch.detekt", "detekt-formatting", Versions.detekt)
-
-    constraints {
-        implementation("org.jetbrains.kotlin", "kotlin-reflect", Versions.kotlinReflect) {
-            because("required by ktor-server-netty, which still depends on 1.4.*")
-        }
-    }
 }
 
 tasks.withType<KotlinCompile>().configureEach {
