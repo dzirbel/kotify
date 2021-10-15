@@ -36,6 +36,9 @@ interface Episode : SpotifyObject {
     /** External URLs for this episode. */
     val externalUrls: ExternalUrl
 
+    /** Undocumented field */
+    val htmlDescription: String?
+
     /** The cover art for the episode in various sizes, widest first. */
     val images: List<Image>
 
@@ -85,6 +88,7 @@ data class SimplifiedEpisode(
     @SerialName("duration_ms") override val durationMs: Int,
     override val explicit: Boolean,
     @SerialName("external_urls") override val externalUrls: ExternalUrl,
+    @SerialName("html_description") override val htmlDescription: String?,
     override val images: List<Image>,
     @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean,
     @SerialName("is_playable") override val isPlayable: Boolean,
@@ -110,6 +114,7 @@ data class FullEpisode(
     @SerialName("duration_ms") override val durationMs: Int,
     override val explicit: Boolean,
     @SerialName("external_urls") override val externalUrls: ExternalUrl,
+    @SerialName("html_description") override val htmlDescription: String?,
     override val images: List<Image>,
     @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean,
     @SerialName("is_playable") override val isPlayable: Boolean,

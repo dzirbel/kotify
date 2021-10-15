@@ -1,9 +1,9 @@
 package com.dzirbel.kotify.network
 
-import com.dzirbel.kotify.properties.ArtistProperties
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
 import com.dzirbel.kotify.network.model.SimplifiedAlbum
+import com.dzirbel.kotify.properties.ArtistProperties
 import com.dzirbel.kotify.zipWithBy
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
@@ -44,6 +44,29 @@ internal class SpotifyArtistsTest {
     @MethodSource("artists")
     fun getArtistAlbums(artistProperties: ArtistProperties) {
         val albums = runBlocking { Spotify.Artists.getArtistAlbums(artistProperties.id).fetchAll<SimplifiedAlbum>() }
+
+        if (albums.size != artistProperties.albums.size) {
+            val expectedIds = artistProperties.albums.map { it.id }
+            val actualIds = albums.map { it.id }
+            val idToName = artistProperties.albums.associate { it.id to it.name }
+                .plus(albums.associate { it.id to it.name })
+
+            expectedIds
+                .minus(actualIds)
+                .map { id -> Pair(id, idToName[id]) }
+                .takeIf { it.isNotEmpty() }
+                ?.let {
+                    println("Missing expected albums: $it")
+                }
+
+            actualIds
+                .minus(expectedIds)
+                .map { id -> Pair(id, idToName[id]) }
+                .takeIf { it.isNotEmpty() }
+                ?.let {
+                    println("Received unexpected albums: $it")
+                }
+        }
 
         albums.zipWithBy(artistProperties.albums) { album, albumProperties -> album.id == albumProperties.id }
             .forEach { (album, albumProperties) -> albumProperties.check(album) }

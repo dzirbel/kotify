@@ -216,11 +216,11 @@ object Fixtures {
             genres = listOf("symphonic metal", "cello"),
             albums = listOf(
                 AlbumProperties("1H3J2vxFHf0WxYUa9iklzu", "Cell-0"),
-                AlbumProperties("18Gt3lLDRHDLGoFVMGwHsN", "Plays Metallica by Four Cellos - A Live Performance"),
                 AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
+                AlbumProperties("18Gt3lLDRHDLGoFVMGwHsN", "Plays Metallica by Four Cellos - A Live Performance"),
                 AlbumProperties("5lG9ONdudQ38vodYN0rdqf", "Plays Metallica by Four Cellos (Remastered)"),
-                AlbumProperties("7LZNQn0nVJCEUQXfidfizI", "Plays Metallica by Four Cellos (Remastered)"),
                 AlbumProperties("4TwdbWtWDxgeLykyt4ExRr", "Plays Metallica by Four Cellos (Remastered)"),
+                AlbumProperties("7LZNQn0nVJCEUQXfidfizI", "Plays Metallica by Four Cellos (Remastered)"),
                 AlbumProperties("3SAl71qdd63DXgbhk5U9ML", "Shadowmaker - Commentary"),
                 AlbumProperties("5E9y1NhXyYvDz7VpzWffdM", "Shadowmaker - Track by Track Commentary"),
                 AlbumProperties("5jraCBpvLqFRcO2RuRAeWB", "Shadowmaker"),
@@ -248,6 +248,9 @@ object Fixtures {
                 AlbumProperties("6leqa6QQESn76w64IdN9yQ", "Inquisition Symphony"),
                 AlbumProperties("6izew86bUpFcKle2S4eD3Z", "Apocalyptica Plays Metallica By Four Cellos"),
                 AlbumProperties("22wMPgeOpzduo9VK5uZa7R", "Plays Metallica by Four Cellos"),
+                AlbumProperties("5nD1xrMGEY3VMwmOHlCf0U", "Venomous Moon"),
+                AlbumProperties("1a41bF4VOFX3rMt5BjL6X1", "Venomous Moon"),
+                AlbumProperties("06y3HY4YTWEQxMPgCK6oEy", "White Room (feat. Jacoby Shaddix)"),
                 AlbumProperties("2ngB7G5SEpiKmxS1cR4gNO", "Ei Vaihtoehtoo (feat. Paleface)"),
                 AlbumProperties("3W8ep9kCGVEf5TLFtRRB2T", "Talk To Me (feat. Lzzy Hale)"),
                 AlbumProperties("6dksdceqBM8roInjffIaZw", "Live Or Die (feat. Joakim Brodén)"),
@@ -282,6 +285,9 @@ object Fixtures {
                 AlbumProperties("0J5JZft7fQGAqGHG4H9arD", "I'm Not Jesus"),
                 AlbumProperties("1whgSNqpUgqhFid5LLeV9l", "Oh Holy Night"),
                 AlbumProperties("7AamTlpklHzHo8Ki6mhQfK", "Oh Holy Night"),
+                AlbumProperties("4Ab1f4ThdvTJZl1xrwavtk", "Sounds of Heaven"),
+                AlbumProperties("1xdZFyYtyVJO9z4ll756lQ", "Viaje a 1998"),
+                AlbumProperties("4J53FaRZIbr95I6TzZw4Xr", "It Doesn't Matter Two (Lockdown Version)"),
                 AlbumProperties("69fr2Pcl9qaDIHPG2OovIS", "Funeral Songs"),
                 AlbumProperties("374PwdVlct4JejdqIfZksY", "Afscheid"),
                 AlbumProperties("3P39JR7Kqv8z6CnW5C53Ux", "REMIXES"),
@@ -290,10 +296,6 @@ object Fixtures {
                 AlbumProperties("1ZFgVY4Op7A4oSAx2EALVj", "Into Eternity"),
                 AlbumProperties("3XdOaVUr2YMaIFw8VWAik4", "Live At Wacken 2017: 28 Years Louder Than Hell"),
                 AlbumProperties("0zoX0Nu3Fqy5dQEyGYJFF0", "Angry Birds Seasons (Original Game Soundtrack)"),
-                AlbumProperties(
-                    "5lVF8bTtiBjcA0thnWP0Rh",
-                    "Relaxing Classical Playlist: Beautiful Instrumental Music Experience"
-                ),
                 AlbumProperties("7hTh0cY5Gk4IZko0tdAlrx", "Vain elämää - kausi 7 toinen kattaus"),
                 AlbumProperties("3nXB9yTfBqkMlRQrpJygX2", "Kelpaat kelle vaan (Vain elämää kausi 7) [Apocalyptica]"),
                 AlbumProperties("6mLr5helbCIWVTGmzqluQ7", "UNDERWORLD"),
@@ -304,25 +306,22 @@ object Fixtures {
                 AlbumProperties("5AtL2ik9BkXfw1oXxsMlRb", "Rock Meets Classic"),
                 AlbumProperties("2jHbUdX8o1SutlRZDBMmV4", "Few Against Many"),
                 AlbumProperties("1zTOn78xdhc8CtfewE7f9M", "Few Against Many"),
-                AlbumProperties("1D2EzCuoaD8CJ7aZYfKqko", "Festival Summer 2011"),
                 AlbumProperties("1ZQ3n54DZU7aFmDbtbyLcO", "Can’t Stand The Silence"),
                 AlbumProperties("64hHYdSDATjIn1CSuZ60nv", "Truth Or Dare"),
                 AlbumProperties("5VYNuX1fPVDSe9lFmP6rh5", "Not Strong Enough"),
                 AlbumProperties("6EJQZGtgCftGiFSKHg5Usl", "Избранное: музыка из кинофильмов и сериалов"),
-                AlbumProperties(
-                    "7jWLdyYqBTqXH1PAFVL7vN",
-                    "The Midnight Meat Train (Original Motion Picture Soundtrack)"
-                ),
+                AlbumProperties("5P54iC1TsPsEUtsRj7AqeB", "Albüm"),
+                AlbumProperties("7jWLdyYqBTqXH1PAFVL7vN", "The Midnight Meat Train (Original Motion Picture Soundtrack)"),
                 AlbumProperties("4uNzDULQ9RAy0nxGaPbCDn", "The Poison (Deluxe Version)"),
                 AlbumProperties("4gHIcZWRHEWY0TyPrS8r01", "Delikatessen"),
                 AlbumProperties("7zU9hmH9CKQ9Yf5SruqOLM", "The Poison"),
                 AlbumProperties("0gTBfbw4XVrPLiPBQFXlA3", "Land Of Darkness"),
                 AlbumProperties("5U13StzHC0FkL4pCPIdU7t", "Die Schlinge"),
-                AlbumProperties("7dHGyGv1jOupJ52rqjdgkF", "The Poison"),
                 AlbumProperties("5H43u8akWXK8JA0zEk7dLt", "The Poison"),
+                AlbumProperties("7dHGyGv1jOupJ52rqjdgkF", "The Poison"),
                 AlbumProperties("47IoCLkvmHFxxq9NntxyIi", "Бой с тенью (Оригинальный саундтрек к фильму)"),
-                AlbumProperties("58TQcPpRD9XcXhUDWF5P27", "The Poison"),
                 AlbumProperties("42QVkdlfEk9uaG0NboeKpq", "The Poison"),
+                AlbumProperties("58TQcPpRD9XcXhUDWF5P27", "The Poison"),
                 AlbumProperties("0uLrUJVzrbHf6vcg58ooY1", "Angelzoom"),
                 AlbumProperties("19Gkms8Mb4wmoqm1a5VYys", "Metal Rock Cavalcade I"),
                 AlbumProperties("3PH0jVnduEPrwz0OOThXaq", "Die Schlinge"),
@@ -495,22 +494,40 @@ object Fixtures {
                 ),
                 AlbumProperties("5QkqgBLXsymXJKWaagawSY", "Indie Love", totalTracks = 19, albumType = Album.Type.ALBUM),
                 AlbumProperties("3rM6kWYqHb7RW1nWWxJF41", "Twisted", totalTracks = 19, albumType = Album.Type.ALBUM),
+                AlbumProperties(
+                    "0HojjwZyJFH4nywrYGfwMJ",
+                    "¡Calor En La Ciudad!",
+                    totalTracks = 39,
+                    albumType = Album.Type.COMPILATION
+                ),
+                AlbumProperties(
+                    "3r77ZQgndz6sw6emGvr7tR",
+                    "Alternative Rock: The Best Of The Rest",
+                    totalTracks = 30,
+                    albumType = Album.Type.COMPILATION
+                ),
+                AlbumProperties(
+                    "3ZCqORuVBN89Do4oYVDVnt",
+                    "Chill Rock",
+                    totalTracks = 30,
+                    albumType = Album.Type.COMPILATION
+                ),
             )
         )
     )
 
     val episodes = listOf(
         EpisodeProperties(
-            id = "4D5tzjNC8WkIASQMn4NrcA",
-            name = "Why monkeys (and humans) are wired for fairness | Sarah Brosnan",
+            id = "03tIPON3n9IH5Fwxy02ZZF",
+            name = "The first step towards more inclusive dermatology | Jenna C. Lester",
             description = """
-                         Fairness matters ... to both people and primates. Sharing priceless footage of capuchin monkeys
-                responding to perceived injustice, primatologist Sarah Brosnan explores why humans and monkeys evolved
-                to care about equality -- and emphasizes the connection between a healthy, cooperative society and
-                everyone getting their fair share.       
-                """
-                .toSingleLine(),
-            releaseDate = "2020-12-10",
+                Skin is one of the most powerful predictors of health, yet nearly half of all new dermatologists admit
+                to feeling uncomfortable identifying health issues on darker skin tones -- resulting in poorer health
+                outcomes for patients of color. In this crucial talk, TED Fellow and dermatologist Jenna C. Lester
+                shares her effort to extend medical training beyond its current limited scope and ensure all medical
+                students get trained in the full spectrum of diseases as they appear in all patients, regardless of skin
+                tone.""".toSingleLine(),
+            releaseDate = "2021-10-15",
             releaseDatePrecision = "day",
             languages = listOf("en")
         ),
@@ -519,8 +536,7 @@ object Fixtures {
             name = "#1581 - J. Prince",
             description = """
                 J. Prince is the CEO of Rap-A-Lot Records, author of The Art & Science of Respect, and founder of The
-                Loyalty Collection, a limited collection of fine wines. 
-                """
+                Loyalty Collection, a limited collection of fine wines."""
                 .toSingleLine(),
             releaseDate = "2020-12-18",
             releaseDatePrecision = "day",
@@ -544,7 +560,7 @@ object Fixtures {
                 TrackProperties(
                     id = "6gtb1Oh7qRjobkH4jfJAnj",
                     name = "Grace",
-                    artistNames = setOf("Apocalyptica", "Hotei"),
+                    artistNames = setOf("Apocalyptica", "HOTEI"),
                     trackNumber = 2,
                     addedBy = userId,
                     addedAt = "2021-02-11T06:20:38Z"
@@ -569,7 +585,7 @@ object Fixtures {
             description = """
                 Science, pop culture and comedy collide on StarTalk Radio! Astrophysicist and Hayden Planetarium
                 director Neil deGrasse Tyson, his comic co-hosts, guest celebrities and scientists discuss astronomy,
-                physics, and everything else about life in the universe. Keep Looking Up! New episodes premiere Friday
+                physics, and everything else about life in the universe. Keep Looking Up! New episodes premiere Monday
                 nights at 7pm ET.
                 """
                 .toSingleLine()

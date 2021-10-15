@@ -14,7 +14,10 @@ class SpotifyPersonalizationTest {
     fun topArtists(timeRange: Spotify.Personalization.TimeRange) {
         val artists = runBlocking { Spotify.Personalization.topArtists(timeRange = timeRange) }
 
-        assertThat(artists.items).isNotEmpty()
+        // personalization may not have sufficient data for shorter time ranges
+        if (timeRange == Spotify.Personalization.TimeRange.LONG_TERM) {
+            assertThat(artists.items).isNotEmpty()
+        }
     }
 
     @ParameterizedTest
@@ -22,6 +25,9 @@ class SpotifyPersonalizationTest {
     fun topTracks(timeRange: Spotify.Personalization.TimeRange) {
         val tracks = runBlocking { Spotify.Personalization.topTracks(timeRange = timeRange) }
 
-        assertThat(tracks.items).isNotEmpty()
+        // personalization may not have sufficient data for shorter time ranges
+        if (timeRange == Spotify.Personalization.TimeRange.LONG_TERM) {
+            assertThat(tracks.items).isNotEmpty()
+        }
     }
 }

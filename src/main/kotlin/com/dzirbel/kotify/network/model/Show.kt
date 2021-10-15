@@ -36,6 +36,9 @@ interface Show : SpotifyObject {
     /** Known external URLs for this show. */
     val externalUrls: ExternalUrl
 
+    /** Undocumented field. */
+    val htmlDescription: String?
+
     /** The cover art for the show in various sizes, widest first. */
     val images: List<Image>
 
@@ -68,6 +71,7 @@ data class SimplifiedShow(
     override val explicit: Boolean,
     @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val href: String,
+    @SerialName("html_description") override val htmlDescription: String?,
     override val id: String,
     override val images: List<Image>,
     @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean? = null,
@@ -91,6 +95,7 @@ data class FullShow(
     override val explicit: Boolean,
     @SerialName("external_urls") override val externalUrls: ExternalUrl,
     override val href: String,
+    @SerialName("html_description") override val htmlDescription: String?,
     override val id: String,
     override val images: List<Image>,
     @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean? = null,

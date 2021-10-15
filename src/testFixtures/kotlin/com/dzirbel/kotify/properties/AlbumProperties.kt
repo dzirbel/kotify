@@ -4,7 +4,8 @@ import com.dzirbel.kotify.network.model.Album
 import com.dzirbel.kotify.network.model.FullAlbum
 import com.dzirbel.kotify.network.model.SavedAlbum
 import com.dzirbel.kotify.network.model.SimplifiedTrack
-import com.google.common.truth.Truth
+import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.runBlocking
 
 data class AlbumProperties(
@@ -18,24 +19,24 @@ data class AlbumProperties(
     fun check(album: Album) {
         super.check(album)
 
-        albumType?.let { Truth.assertThat(album.albumType).isEqualTo(it) }
-        Truth.assertThat(album.artists).isNotEmpty()
-        Truth.assertThat(album.availableMarkets).isNotNull()
-        Truth.assertThat(album.images).isNotEmpty()
-        Truth.assertThat(album.releaseDate).isNotNull()
-        Truth.assertThat(album.releaseDatePrecision).isNotNull()
-        Truth.assertThat(album.restrictions).isNull()
-        totalTracks?.let { Truth.assertThat(album.totalTracks).isEqualTo(it) }
+        albumType?.let { assertWithMessage("incorrect album type for $name").that(album.albumType).isEqualTo(it) }
+        assertThat(album.artists).isNotEmpty()
+        assertThat(album.availableMarkets).isNotNull()
+        assertThat(album.images).isNotEmpty()
+        assertThat(album.releaseDate).isNotNull()
+        assertThat(album.releaseDatePrecision).isNotNull()
+        assertThat(album.restrictions).isNull()
+        totalTracks?.let { assertWithMessage("incorrect totalTracks for $name").that(album.totalTracks).isEqualTo(it) }
 
         if (album is FullAlbum) {
-            Truth.assertThat(album.genres).containsAtLeastElementsIn(genres)
-            Truth.assertThat(album.popularity).isIn(0..100)
-            Truth.assertThat(album.tracks.items).isNotEmpty()
+            assertThat(album.genres).containsAtLeastElementsIn(genres)
+            assertThat(album.popularity).isIn(0..100)
+            assertThat(album.tracks.items).isNotEmpty()
             totalTracks?.let {
-                Truth.assertThat(album.tracks.total).isEqualTo(totalTracks)
+                assertThat(album.tracks.total).isEqualTo(totalTracks)
 
                 val allTracks = runBlocking { album.tracks.fetchAll<SimplifiedTrack>() }
-                Truth.assertThat(allTracks).hasSize(totalTracks)
+                assertThat(allTracks).hasSize(totalTracks)
             }
         }
     }
@@ -43,7 +44,7 @@ data class AlbumProperties(
     fun check(savedAlbum: SavedAlbum) {
         check(savedAlbum.album)
 
-        Truth.assertThat(addedAt).isNotNull()
-        Truth.assertThat(savedAlbum.addedAt).isEqualTo(addedAt)
+        assertThat(addedAt).isNotNull()
+        assertThat(savedAlbum.addedAt).isEqualTo(addedAt)
     }
 }
