@@ -311,7 +311,10 @@ object Fixtures {
                 AlbumProperties("5VYNuX1fPVDSe9lFmP6rh5", "Not Strong Enough"),
                 AlbumProperties("6EJQZGtgCftGiFSKHg5Usl", "Избранное: музыка из кинофильмов и сериалов"),
                 AlbumProperties("5P54iC1TsPsEUtsRj7AqeB", "Albüm"),
-                AlbumProperties("7jWLdyYqBTqXH1PAFVL7vN", "The Midnight Meat Train (Original Motion Picture Soundtrack)"),
+                AlbumProperties(
+                    "7jWLdyYqBTqXH1PAFVL7vN",
+                    "The Midnight Meat Train (Original Motion Picture Soundtrack)"
+                ),
                 AlbumProperties("4uNzDULQ9RAy0nxGaPbCDn", "The Poison (Deluxe Version)"),
                 AlbumProperties("4gHIcZWRHEWY0TyPrS8r01", "Delikatessen"),
                 AlbumProperties("7zU9hmH9CKQ9Yf5SruqOLM", "The Poison"),
