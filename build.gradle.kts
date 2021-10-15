@@ -1,6 +1,7 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.internal.os.OperatingSystem
+import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
@@ -63,6 +64,12 @@ dependencies {
     testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit)
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", Versions.junit)
+
+    // JUnit 4 is required to run Compose tests
+    testCompileOnly("junit:junit:4.13")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+    testImplementation(compose("org.jetbrains.compose.ui:ui-test-junit4"))
+
     testImplementation("com.google.truth", "truth", Versions.truth)
     testImplementation("io.mockk", "mockk", Versions.mockk)
 

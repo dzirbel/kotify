@@ -1,0 +1,66 @@
+package com.dzirbel.kotify.ui
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.TestComposeWindow
+import com.google.common.truth.Truth.assertWithMessage
+import java.io.File
+
+private val resourcesDir = File("src/test/resources")
+private val screenshotsDir = resourcesDir.resolve("screenshots")
+
+/**
+ * Runs a basic screenshot test for [content].
+ *
+ * If [record] is true, this will write a PNG file with the image displayed by [content]. Otherwise, this verifies that
+ * the previously recorded screenshot matches exactly the image displayed by [content]. This is a simple mechanism to
+ * generate reference screenshots when creating a test and verifying them otherwise. If [record] is true an
+ * [AssertionError] will be thrown, failing the test, to ensure that [record] is not left enabled.
+ *
+ * Screenshots are saved in the test resources directory under a "screenshots" directory, then under a folder with the
+ * fully qualified class name of the receiving object (i.e. the test class), and finally in a file with the given
+ * [filename] (to allow multiple screenshots from the same test class).
+ */
+fun Any.screenshotTest(
+    filename: String,
+    windowWidth: Int = 1024,
+    windowHeight: Int = 768,
+    record: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    val window = TestComposeWindow(width = windowWidth, height = windowHeight)
+    window.setContent(content)
+
+    val screenshotData = window.surface.makeImageSnapshot().encodeToData()
+    requireNotNull(screenshotData) { "failed to encode screenshot to data" }
+    val screenshotBytes = screenshotData.bytes
+
+    val className = requireNotNull(this::class.qualifiedName) {
+        "no class qualified name: screenshotTest() may not be called from local/anonymous classes"
+    }
+    val classScreenshotsDir = screenshotsDir.resolve(className)
+    val screenshotFile = classScreenshotsDir.resolve("$filename.png")
+
+    if (record) {
+        classScreenshotsDir.mkdirs()
+        screenshotFile.writeBytes(screenshotBytes)
+        println("Wrote screenshot $filename to $screenshotFile")
+        throw AssertionError(
+            "Failing test in record mode. The screenshot was successfully recorded; this assertion ensures that all " +
+                "live tests are not in record mode."
+        )
+    } else {
+        assertWithMessage("missing screenshot file $screenshotFile")
+            .that(screenshotFile.exists())
+            .isTrue()
+
+        val recordedBytes = screenshotFile.readBytes()
+        if (!screenshotBytes.contentEquals(recordedBytes)) {
+            val mismatchFile = classScreenshotsDir.resolve("$filename-MISMATCH.png")
+            mismatchFile.writeBytes(screenshotBytes)
+            throw AssertionError(
+                "Screenshot mismatch for $screenshotFile. The image generated in the test has been written to " +
+                    "$mismatchFile for comparison (but then should be deleted)."
+            )
+        }
+    }
+}
