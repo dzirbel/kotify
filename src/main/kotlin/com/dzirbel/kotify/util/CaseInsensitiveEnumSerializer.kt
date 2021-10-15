@@ -9,7 +9,7 @@ import java.util.Locale
 import kotlin.reflect.KClass
 
 /**
- * A [KSerializer] serializes and deserializes [Enum]s based on their [Enum.name], ignoring case.
+ * A [KSerializer] which serializes and deserializes [Enum]s based on their [Enum.name], ignoring case.
  *
  * The default serializer requires that the decoded value matches the enum value's name (or its SerialName) exactly, and
  * so it cannot handle cases where the JSON value may be sometimes uppercase and sometimes lowercase.
