@@ -24,14 +24,14 @@ import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullTrack
 import com.dzirbel.kotify.network.model.SimplifiedTrack
 import com.dzirbel.kotify.network.model.Track
-import com.dzirbel.kotify.ui.components.Column
-import com.dzirbel.kotify.ui.components.ColumnByNumber
-import com.dzirbel.kotify.ui.components.ColumnByString
-import com.dzirbel.kotify.ui.components.ColumnWidth
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.PageStack
-import com.dzirbel.kotify.ui.components.Sort
 import com.dzirbel.kotify.ui.components.hoverState
+import com.dzirbel.kotify.ui.components.table.Column
+import com.dzirbel.kotify.ui.components.table.ColumnByNumber
+import com.dzirbel.kotify.ui.components.table.ColumnByString
+import com.dzirbel.kotify.ui.components.table.ColumnWidth
+import com.dzirbel.kotify.ui.components.table.Sort
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
@@ -70,8 +70,7 @@ class PlayingColumn(
     private val playContextFromIndex: (Int) -> Player.PlayContext?
 ) : Column<Track>() {
     override val width = ColumnWidth.Fill()
-
-    override val verticalAlignment = Alignment.CenterVertically
+    override val cellAlignment = Alignment.TopCenter
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
         error("cannot compare by playing state")
@@ -123,7 +122,6 @@ class SavedColumn(savedTracks: Set<String>?) : Column<Track>() {
     private val savedTracks = mutableStateOf(savedTracks)
 
     override val width = ColumnWidth.Fill()
-    override val verticalAlignment = Alignment.Top
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
         error("cannot compare by saved state")
@@ -156,7 +154,9 @@ class SavedColumn(savedTracks: Set<String>?) : Column<Track>() {
     }
 }
 
-object NameColumn : ColumnByString<Track>(header = "Title", width = ColumnWidth.Weighted(weight = 1f)) {
+object NameColumn : ColumnByString<Track>(header = "Title") {
+    override val width = ColumnWidth.Weighted(weight = 1f)
+
     override fun toString(item: Track, index: Int) = item.name
 }
 
@@ -217,11 +217,9 @@ class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track
     }
 }
 
-object DurationColumn : ColumnByString<Track>(
-    header = "Duration",
-    width = ColumnWidth.Fill(),
-    horizontalAlignment = Alignment.End
-) {
+object DurationColumn : ColumnByString<Track>(header = "Duration") {
+    override val cellAlignment = Alignment.TopEnd
+
     override fun toString(item: Track, index: Int) = formatDuration(item.durationMs)
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
@@ -229,13 +227,13 @@ object DurationColumn : ColumnByString<Track>(
     }
 }
 
-object TrackNumberColumn : ColumnByNumber<Track>(header = "#", width = ColumnWidth.Fill()) {
+object TrackNumberColumn : ColumnByNumber<Track>(header = "#") {
     override fun toNumber(item: Track, index: Int) = item.trackNumber
 }
 
 object PopularityColumn : Column<Track>() {
     override val width: ColumnWidth = ColumnWidth.MatchHeader
-    override val horizontalAlignment = Alignment.End
+    override val cellAlignment = Alignment.TopEnd
 
     private val Track.popularity: Int?
         get() = (this as? FullTrack)?.popularity ?: (this as? SimplifiedTrack)?.popularity

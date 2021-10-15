@@ -15,7 +15,7 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
- * A simple two dimensional grid layout, which arranges [elementContent] for each [elements] as a table.
+ * A simple two-dimensional grid layout, which arranges [elementContent] for each [elements] as a table.
  *
  * The layout always expands vertically to fit all the [elements]. Each column has the width of the widest
  * [elementContent]; each row the height of the tallest [elementContent] in that row. The number of columns will equal

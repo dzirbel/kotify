@@ -19,6 +19,9 @@ import com.dzirbel.kotify.ui.util.callbackAsState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
+/**
+ * Wraps [Image] for the given [url] with a loading state, using the [SpotifyImageCache] to fetch the image.
+ */
 @Composable
 fun LoadedImage(
     url: String?,

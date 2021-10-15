@@ -21,7 +21,7 @@ import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageStack
-import com.dzirbel.kotify.ui.components.Table
+import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate

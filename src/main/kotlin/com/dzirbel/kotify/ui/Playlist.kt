@@ -17,14 +17,13 @@ import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullPlaylist
 import com.dzirbel.kotify.network.model.PlaylistTrack
-import com.dzirbel.kotify.ui.components.ColumnByString
-import com.dzirbel.kotify.ui.components.ColumnWidth
-import com.dzirbel.kotify.ui.components.IndexColumn
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageStack
-import com.dzirbel.kotify.ui.components.Table
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.table.ColumnByString
+import com.dzirbel.kotify.ui.components.table.IndexColumn
+import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDateTime
@@ -104,7 +103,7 @@ private class PlaylistPresenter(
     }
 }
 
-private object AddedAtColumn : ColumnByString<PlaylistTrack>(header = "Added", width = ColumnWidth.Fill()) {
+private object AddedAtColumn : ColumnByString<PlaylistTrack>(header = "Added") {
     private val PlaylistTrack.addedAtTimestamp
         get() = Instant.parse(addedAt.orEmpty()).toEpochMilli()
 

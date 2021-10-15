@@ -28,6 +28,10 @@ data class SplitterViewParams(
     val lineColor: Color = Colors.current.dividerColor
 )
 
+/**
+ * A vertical or horizontal (depending on [orientation]) divider which can be dragged either horizontally or vertically,
+ * respectively.
+ */
 @Composable
 fun DraggableSplitter(
     orientation: Orientation,

@@ -15,7 +15,7 @@ import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.Track
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
-import com.dzirbel.kotify.ui.components.Table
+import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlinx.coroutines.CoroutineScope
