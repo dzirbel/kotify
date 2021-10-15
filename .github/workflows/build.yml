@@ -22,7 +22,7 @@ jobs:
       - name: Upload test results to codecov
         run: |
           Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
-          .\codecov.exe -t ${CODECOV_TOKEN}
+          .\codecov.exe -t ${CODECOV_TOKEN} -F unit
         if: ${{ always() }} # upload even if the build failed, in case it was just test failures
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

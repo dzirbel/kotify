@@ -37,7 +37,14 @@ jobs:
 
       - run: ./gradlew --stacktrace testIntegration
 
-      # TODO upload code coverage (if we can keep it separate from the unit tests)
+      - name: Upload test results to codecov
+        run: |
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          chmod +x codecov
+          ./codecov -t ${CODECOV_TOKEN} -F integration
+        if: ${{ always() }} # upload even if the build failed, in case it was just test failures
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload access_token.json to B2 (in case it was refreshed)
         run: ./b2 upload-file ${B2_BUCKET_NAME} .kotify/test-cache/access_token.json access_token.json
