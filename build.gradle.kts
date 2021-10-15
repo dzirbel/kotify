@@ -108,6 +108,13 @@ val testLocal = tasks.create<Test>("testLocal") {
     finalizedBy("jacocoTestReportLocal")
 }
 
+val testIntegration = tasks.create<Test>("testIntegration") {
+    useJUnitPlatform {
+        includeTags("network")
+    }
+    finalizedBy("jacocoTestReportIntegration")
+}
+
 tasks.test {
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
@@ -127,6 +134,11 @@ jacoco {
 
 tasks.create<JacocoReport>("jacocoTestReportLocal") {
     executionData(testLocal)
+    sourceSets(sourceSets.main.get())
+}
+
+tasks.create<JacocoReport>("jacocoTestReportIntegration") {
+    executionData(testIntegration)
     sourceSets(sourceSets.main.get())
 }
 

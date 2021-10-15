@@ -1,0 +1,46 @@
+name: Build
+
+on:
+  schedule:
+    - cron: "0 11 * * 0" # 11:00 UTC (=4am PST) every Sunday
+  workflow_dispatch: # allow manual trigger
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '16'
+
+      - name: Download B2 binary
+        run: curl https://github.com/Backblaze/B2_Command_Line_Tool/releases/download/v2.1.0/b2-linux -L -o b2
+      - run: chmod +x b2
+
+      - name: Authorize B2 account
+        run: ./b2 authorize-account $B2_APPKEY_ID $B2_APPKEY
+        env:
+          B2_APPKEY_ID: ${{ secrets.B2_APPKEY_ID }}
+          B2_APPKEY: ${{ secrets.B2_APPKEY }}
+
+      - run: mkdir -p .kotify/test-cache
+
+      - name: Download access_token.json from B2
+        run: ./b2 download-file-by-name $B2_BUCKET_NAME access_token.json .kotify/test-cache/access_token.json
+        env:
+          B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
+
+      - run: ./gradlew --stacktrace testIntegration
+
+      # TODO upload code coverage (if we can keep it separate from the unit tests)
+
+      - name: Upload access_token.json to B2 (in case it was refreshed)
+        run: ./b2 upload-file ${B2_BUCKET_NAME} .kotify/test-cache/access_token.json access_token.json
+        if: ${{ always() }} # upload even if the build failed
+        env:
+          B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}

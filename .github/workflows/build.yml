@@ -8,7 +8,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ windows-latest ]
+        os: [ windows-latest ] # screenshot tests must be run on windows
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -17,36 +17,12 @@ jobs:
           distribution: 'adopt'
           java-version: '16'
 
-#      - name: Download B2 binary
-#        run: curl https://github.com/Backblaze/B2_Command_Line_Tool/releases/download/v2.1.0/b2-linux -L -o b2
-#      - run: chmod +x b2
-#
-#      - name: Authorize B2 account
-#        run: ./b2 authorize-account $B2_APPKEY_ID $B2_APPKEY
-#        env:
-#          B2_APPKEY_ID: ${{ secrets.B2_APPKEY_ID }}
-#          B2_APPKEY: ${{ secrets.B2_APPKEY }}
-#
-#      - name: Download access_token.json from B2
-#        run: ./b2 download-file-by-name $B2_BUCKET_NAME access_token.json access_token.json
-#        env:
-#          B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
-
-      # TODO re-enable network tests on CI (disabled for now due to rate limiting)
-      - run: ./gradlew --no-daemon --stacktrace --console=plain checkLocal
-
-      - name: Download codecov uploader
-        run: Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
-        if: ${{ always() }} # upload even if the build failed, in case it was just test failures
+      - run: ./gradlew --stacktrace checkLocal
 
       - name: Upload test results to codecov
-        run: .\codecov.exe -t ${CODECOV_TOKEN}
+        run: |
+          Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
+          .\codecov.exe -t ${CODECOV_TOKEN}
         if: ${{ always() }} # upload even if the build failed, in case it was just test failures
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-#      - name: Upload access_token.json to B2 (in case it was refreshed)
-#        run: ./b2 upload-file ${B2_BUCKET_NAME} access_token.json access_token.json
-#        if: ${{ always() }} # upload even if the build failed
-#        env:
-#          B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
