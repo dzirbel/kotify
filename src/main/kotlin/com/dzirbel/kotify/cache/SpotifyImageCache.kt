@@ -4,7 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
@@ -157,7 +157,7 @@ object SpotifyImageCache {
             cacheFile = IMAGES_DIR.resolve(imageHash)
 
             if (cacheFile.isFile) {
-                val image = Image.makeFromEncoded(cacheFile.readBytes()).asImageBitmap()
+                val image = Image.makeFromEncoded(cacheFile.readBytes()).toComposeImageBitmap()
 
                 totalCompleted.incrementAndGet()
                 Logger.ImageCache.handleImageCacheEvent(
@@ -182,7 +182,7 @@ object SpotifyImageCache {
             }
             ?.takeIf { bytes -> bytes.isNotEmpty() }
             ?.let { bytes ->
-                val image = Image.makeFromEncoded(bytes).asImageBitmap()
+                val image = Image.makeFromEncoded(bytes).toComposeImageBitmap()
 
                 cacheFile?.let {
                     IMAGES_DIR.mkdirs()

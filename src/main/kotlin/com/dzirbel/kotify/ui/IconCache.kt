@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.loadSvgPainter
-import androidx.compose.ui.res.loadSvgResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -64,7 +63,7 @@ object IconCache {
      * Loads the icon with the given [name] from the application resources, using an in-memory cache to avoid reloading
      * the same icon multiple times.
      *
-     * Hack: the [size] must be provided, since [loadSvgResource] returns a [Painter] rather than the SVG data itself.
+     * Hack: the [size] must be provided, since [loadSvgPainter] returns a [Painter] rather than the SVG data itself.
      * This [Painter] behaves incorrectly when drawing the same icon at different sizes, so we simply use a different
      * key in the cache for each icon-size combination.
      */
