@@ -35,8 +35,12 @@ jobs:
       # TODO re-enable network tests on CI (disabled for now due to rate limiting)
       - run: ./gradlew --no-daemon --stacktrace --console=plain checkLocal
 
+      - name: Download codecov uploader
+        run: Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
+        if: ${{ always() }} # upload even if the build failed, in case it was just test failures
+
       - name: Upload test results to codecov
-        run: bash <(curl -s https://codecov.io/bash)
+        run: .\codecov.exe -t ${CODECOV_TOKEN}
         if: ${{ always() }} # upload even if the build failed, in case it was just test failures
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
