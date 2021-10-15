@@ -54,13 +54,15 @@ fun Any.screenshotTest(
             .isTrue()
 
         val recordedBytes = screenshotFile.readBytes()
+        val mismatchFile = classScreenshotsDir.resolve("$filename-MISMATCH.png")
         if (!screenshotBytes.contentEquals(recordedBytes)) {
-            val mismatchFile = classScreenshotsDir.resolve("$filename-MISMATCH.png")
             mismatchFile.writeBytes(screenshotBytes)
             throw AssertionError(
                 "Screenshot mismatch for $screenshotFile. The image generated in the test has been written to " +
                     "$mismatchFile for comparison (but then should be deleted)."
             )
+        } else {
+            mismatchFile.delete()
         }
     }
 }

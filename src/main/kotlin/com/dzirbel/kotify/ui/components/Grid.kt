@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import com.dzirbel.kotify.ui.theme.Dimens
+import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -75,6 +76,8 @@ fun <E> Grid(
             // truncate any "fractional column"
             val cols: Int = columns
                 ?: ((constraints.maxWidth - horizontalSpacingPx) / columnWidthWithSpacing).toInt().coerceAtLeast(1)
+            // number of rows is the number of elements divided by number of columns, rounded up
+            val rows: Int = ceil(elements.size.toFloat() / cols).toInt()
 
             // now we need to account for that "fractional column" by adding some "extra" to each column spacing,
             // distributed among each spacing (note: we cannot add this extra to the columns rather than the spacing
@@ -89,35 +92,37 @@ fun <E> Grid(
             val horizontalSpacingPxWithExtra: Float = horizontalSpacingPx + extra
             val columnWidthWithSpacingAndExtra: Float = maxElementWidth + horizontalSpacingPxWithExtra
 
-            // chunk placeables into rows
-            val chunkedPlaceables = placeables.chunked(cols)
-
             // total used height is the sum of the row heights (each of which being the maximum element height in the
             // row) plus the total vertical spacing (the vertical spacing per row times the number of rows plus 1, to
             // include the trailing space)
-            val totalHeight = (verticalSpacingPx * (chunkedPlaceables.size + 1)).roundToInt() +
-                chunkedPlaceables.sumOf { row -> row.maxOf { it.height } }
+            var totalHeight = (verticalSpacingPx * (rows + 1)).roundToInt()
+            val rowHeights = Array(rows) { row ->
+                placeables.subList(fromIndex = row * cols, toIndex = ((row + 1) * cols).coerceAtMost(elements.size))
+                    .maxOf { it.height }
+                    .also { totalHeight += it }
+            }
 
             layout(constraints.maxWidth, totalHeight) {
                 // keep track of the y for each row; start at the spacing to include the top spacing
                 var y = verticalSpacingPx
-                for (row in chunkedPlaceables) {
-                    val rowHeight = row.maxOf { it.height }
+                for (rowIndex in 0 until rows) {
+                    val rowHeight = rowHeights[rowIndex]
+                    val roundedY = y.roundToInt()
 
-                    for ((colIndex, placeable) in row.withIndex()) {
-                        // now, to position the element: (baseX, baseY) is the top-left corner of its cell
-                        val baseX = (horizontalSpacingPxWithExtra + (colIndex * columnWidthWithSpacingAndExtra))
-                            .roundToInt()
-                        val baseY = y.roundToInt()
+                    for (colIndex in 0 until cols) {
+                        placeables.getOrNull(colIndex + rowIndex * cols)?.let { placeable ->
+                            val baseX = (horizontalSpacingPxWithExtra + (colIndex * columnWidthWithSpacingAndExtra))
+                                .roundToInt()
 
-                        // then adjust the element based on its alignment and place it
-                        val alignment = cellAlignment.align(
-                            size = IntSize(width = placeable.width, height = placeable.height),
-                            space = IntSize(width = maxElementWidth, height = rowHeight),
-                            layoutDirection = layoutDirection,
-                        )
+                            // then adjust the element based on its alignment and place it
+                            val alignment = cellAlignment.align(
+                                size = IntSize(width = placeable.width, height = placeable.height),
+                                space = IntSize(width = maxElementWidth, height = rowHeight),
+                                layoutDirection = layoutDirection,
+                            )
 
-                        placeable.place(x = baseX + alignment.x, y = baseY + alignment.y)
+                            placeable.place(x = baseX + alignment.x, y = roundedY + alignment.y)
+                        }
                     }
 
                     y += rowHeight + verticalSpacingPx
