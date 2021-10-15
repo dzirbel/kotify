@@ -117,7 +117,7 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
                 elements = state.artists,
                 horizontalSpacing = Dimens.space2,
                 verticalSpacing = Dimens.space3,
-                verticalCellAlignment = Alignment.Top
+                cellAlignment = Alignment.TopCenter,
             ) { artist ->
                 ArtistCell(
                     artist = artist,

@@ -5,11 +5,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.IntSize
 import com.dzirbel.kotify.ui.theme.Dimens
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -30,13 +30,12 @@ fun <E> Grid(
     modifier: Modifier = Modifier,
     horizontalSpacing: Dp = Dimens.space3,
     verticalSpacing: Dp = Dimens.space3,
-    horizontalCellAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
-    verticalCellAlignment: Alignment.Vertical = Alignment.CenterVertically,
-    layoutDirection: LayoutDirection = LayoutDirection.Ltr,
+    cellAlignment: Alignment = Alignment.Center,
     columns: Int? = null,
     elementContent: @Composable (E) -> Unit
 ) {
-    require(columns == null || columns > 0)
+    require(columns == null || columns > 0) { "columns must be positive; got $columns" }
+    val layoutDirection = LocalLayoutDirection.current
 
     Layout(
         content = {
@@ -50,8 +49,8 @@ fun <E> Grid(
         measurePolicy = { measurables, constraints ->
             check(measurables.size == elements.size)
 
-            val horizontalSpacingPx = horizontalSpacing.toPx()
-            val verticalSpacingPx = verticalSpacing.roundToPx()
+            val horizontalSpacingPx: Float = horizontalSpacing.toPx()
+            val verticalSpacingPx: Float = verticalSpacing.toPx()
 
             // max width for each column is the total column space (total width minus one horizontal spacing for the
             // spacing after the last column) divided by the minimum number of columns, minus the spacing for the column
@@ -69,13 +68,13 @@ fun <E> Grid(
             }
 
             // the total width of a column, including its spacing
-            val columnWidthWithSpacing = maxElementWidth + horizontalSpacingPx
+            val columnWidthWithSpacing: Float = maxElementWidth + horizontalSpacingPx
 
             // number of columns is the total column space (total width minus one horizontal spacing for the spacing
             // after the last column) divided by the column width including its spacing; then taking the floor to
             // truncate any "fractional column"
-            val cols = columns
-                ?: floor((constraints.maxWidth - horizontalSpacingPx) / columnWidthWithSpacing).toInt().coerceAtLeast(1)
+            val cols: Int = columns
+                ?: ((constraints.maxWidth - horizontalSpacingPx) / columnWidthWithSpacing).toInt().coerceAtLeast(1)
 
             // now we need to account for that "fractional column" by adding some "extra" to each column spacing,
             // distributed among each spacing (note: we cannot add this extra to the columns rather than the spacing
@@ -96,7 +95,7 @@ fun <E> Grid(
             // total used height is the sum of the row heights (each of which being the maximum element height in the
             // row) plus the total vertical spacing (the vertical spacing per row times the number of rows plus 1, to
             // include the trailing space)
-            val totalHeight = (verticalSpacingPx * (chunkedPlaceables.size + 1)) +
+            val totalHeight = (verticalSpacingPx * (chunkedPlaceables.size + 1)).roundToInt() +
                 chunkedPlaceables.sumOf { row -> row.maxOf { it.height } }
 
             layout(constraints.maxWidth, totalHeight) {
@@ -106,23 +105,19 @@ fun <E> Grid(
                     val rowHeight = row.maxOf { it.height }
 
                     for ((colIndex, placeable) in row.withIndex()) {
-                        // now, to position the element: (baseX, baseY) is the the top-left corner of its cell
+                        // now, to position the element: (baseX, baseY) is the top-left corner of its cell
                         val baseX = (horizontalSpacingPxWithExtra + (colIndex * columnWidthWithSpacingAndExtra))
                             .roundToInt()
-                        val baseY = y
+                        val baseY = y.roundToInt()
 
                         // then adjust the element based on its alignment and place it
-                        placeable.place(
-                            x = baseX + horizontalCellAlignment.align(
-                                size = placeable.width,
-                                space = maxElementWidth,
-                                layoutDirection = layoutDirection
-                            ),
-                            y = baseY + verticalCellAlignment.align(
-                                size = placeable.height,
-                                space = rowHeight
-                            )
+                        val alignment = cellAlignment.align(
+                            size = IntSize(width = placeable.width, height = placeable.height),
+                            space = IntSize(width = maxElementWidth, height = rowHeight),
+                            layoutDirection = layoutDirection,
                         )
+
+                        placeable.place(x = baseX + alignment.x, y = baseY + alignment.y)
                     }
 
                     y += rowHeight + verticalSpacingPx

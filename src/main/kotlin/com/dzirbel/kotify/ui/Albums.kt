@@ -110,7 +110,7 @@ fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
                 elements = state.albums,
                 horizontalSpacing = Dimens.space2,
                 verticalSpacing = Dimens.space3,
-                verticalCellAlignment = Alignment.Top
+                cellAlignment = Alignment.TopCenter,
             ) { album ->
                 AlbumCell(
                     album = album,
