@@ -10,7 +10,8 @@ private object Versions {
     const val coroutines = "1.5.2" // https://github.com/Kotlin/kotlinx.coroutines
     const val detekt = "1.18.1" // https://github.com/detekt/detekt; also update plugin version
     const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco
-    const val junit = "5.8.1" // https://junit.org/junit5/
+    const val junit4 = "4.13.2" // https://junit.org/junit4/
+    const val junit5 = "5.8.1" // https://junit.org/junit5/
     const val kotlinReflect = "1.5.31" // should match kotlin version
     const val kotlinxSerialization = "1.0.1" // https://github.com/Kotlin/kotlinx.serialization
     const val slf4j = "1.7.32" // http://www.slf4j.org/
@@ -61,13 +62,13 @@ dependencies {
     implementation("org.slf4j", "slf4j-nop", Versions.slf4j)
 
     testImplementation("org.jetbrains.kotlinx", "kotlinx-coroutines-test", Versions.coroutines)
-    testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit)
-    testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit)
-    testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", Versions.junit)
+    testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit5)
+    testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit5)
+    testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", Versions.junit5)
 
     // JUnit 4 is required to run Compose tests
-    testCompileOnly("junit:junit:4.13")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+    testCompileOnly("junit", "junit", Versions.junit4)
+    testRuntimeOnly("org.junit.vintage", "junit-vintage-engine", Versions.junit5)
     testImplementation(compose("org.jetbrains.compose.ui:ui-test-junit4"))
 
     testImplementation("com.google.truth", "truth", Versions.truth)
