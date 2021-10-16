@@ -13,10 +13,11 @@ import com.dzirbel.kotify.ui.util.assertNotOnUIThread
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jetbrains.skia.Image
@@ -73,22 +74,15 @@ object SpotifyImageCache {
     /**
      * Clears the in-memory and disk cache.
      */
-    fun clear(scope: CoroutineScope = GlobalScope) {
+    fun clear(scope: CoroutineScope = GlobalScope, deleteFileCache: Boolean = true) {
         scope.launch {
             imageJobs.clear()
             totalCompleted.set(0)
-            IMAGES_DIR.deleteRecursively()
+            if (deleteFileCache) {
+                IMAGES_DIR.deleteRecursively()
+            }
             state = State()
         }
-    }
-
-    /**
-     * Resets the in-memory cache, for use from unit tests.
-     */
-    internal fun testReset() {
-        imageJobs.clear()
-        totalCompleted.set(0)
-        state = State()
     }
 
     /**
@@ -104,19 +98,23 @@ object SpotifyImageCache {
      * Synchronously loads all the given [urls] from the file cache, if they are not currently in the in-memory cache or
      * already being loaded. This is useful for batch loading a set of images all at once.
      */
-    fun loadFromFileCache(urls: List<String>) {
-        runBlocking {
-            urls
-                .filter { url -> !imageJobs.containsKey(url) }
-                .map { url -> Pair(url, async { fromFileCache(url) }) }
-                .forEach { (url, deferred) ->
-                    val (_, image) = deferred.await()
-                    if (image != null) {
-                        @Suppress("DeferredResultUnused")
-                        imageJobs.putIfAbsent(url, CompletableDeferred(image))
+    suspend fun loadFromFileCache(urls: List<String>, scope: CoroutineScope) {
+        val jobs = mutableSetOf<Job>()
+        for (url in urls) {
+            if (!imageJobs.containsKey(url)) {
+                jobs.add(
+                    scope.launch(Dispatchers.IO) {
+                        val (_, image) = fromFileCache(url)
+                        if (image != null) {
+                            @Suppress("DeferredResultUnused")
+                            imageJobs.computeIfAbsent(url) { CompletableDeferred(image) }
+                        }
                     }
-                }
+                )
+            }
         }
+
+        jobs.forEach { it.join() }
     }
 
     /**

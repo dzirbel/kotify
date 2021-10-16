@@ -117,7 +117,10 @@ private class ArtistPresenter(
                 }
 
                 artistAlbums?.let { albums ->
-                    SpotifyImageCache.loadFromFileCache(urls = albums.mapNotNull { it.images.firstOrNull()?.url })
+                    SpotifyImageCache.loadFromFileCache(
+                        urls = albums.mapNotNull { it.images.firstOrNull()?.url },
+                        scope = scope,
+                    )
                 }
 
                 val savedAlbums = LibraryCache.savedAlbums

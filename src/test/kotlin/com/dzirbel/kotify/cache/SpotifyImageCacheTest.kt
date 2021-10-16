@@ -21,7 +21,7 @@ internal class SpotifyImageCacheTest {
 
     @AfterEach
     fun cleanup() {
-        SpotifyImageCache.clear()
+        runBlocking { SpotifyImageCache.clear(scope = this) }
         interceptor.requests.clear()
     }
 
@@ -116,7 +116,7 @@ internal class SpotifyImageCacheTest {
         assertThat(interceptor.requests).hasSize(1)
         assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(1)
 
-        SpotifyImageCache.testReset()
+        runBlocking { SpotifyImageCache.clear(scope = this, deleteFileCache = false) }
         assertThat(SpotifyImageCache.getInMemory(url)).isNull()
 
         val image2 = getImage(url = url)

@@ -58,7 +58,10 @@ private class AlbumsPresenter(scope: CoroutineScope) :
 
                 val savedAlbums = albums.mapNotNullTo(mutableSetOf()) { it.id }
 
-                SpotifyImageCache.loadFromFileCache(urls = albums.mapNotNull { it.images.firstOrNull()?.url })
+                SpotifyImageCache.loadFromFileCache(
+                    urls = albums.mapNotNull { it.images.firstOrNull()?.url },
+                    scope = scope,
+                )
 
                 mutateState {
                     State(
