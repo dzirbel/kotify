@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.TestComposeWindow
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Theme
-import com.google.common.truth.Truth.assertWithMessage
 import java.io.File
 
 private val resourcesDir = File("src/test/resources")
@@ -31,9 +30,10 @@ fun Any.screenshotTest(
     windowHeight: Int = 768,
     record: Boolean = false,
     colorsSet: Set<Colors> = Colors.values().toSet(),
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val multipleColorSets = colorsSet.size > 1
+    var recordedScreenshots = false
     for (colors in colorsSet) {
         val window = TestComposeWindow(width = windowWidth, height = windowHeight)
         window.setContent {
@@ -55,15 +55,12 @@ fun Any.screenshotTest(
         val filenameWithColors = if (multipleColorSets) "$filename-${colors.name.lowercase()}" else filename
         val screenshotFile = classScreenshotsDir.resolve("$filenameWithColors.png")
 
-        if (record) {
+        if (record || !screenshotFile.exists()) {
+            recordedScreenshots = true
             classScreenshotsDir.mkdirs()
             screenshotFile.writeBytes(screenshotBytes)
             println("Wrote screenshot $filename to $screenshotFile")
         } else {
-            assertWithMessage("missing screenshot file $screenshotFile")
-                .that(screenshotFile.exists())
-                .isTrue()
-
             val recordedBytes = screenshotFile.readBytes()
             val mismatchFile = classScreenshotsDir.resolve("$filenameWithColors-MISMATCH.png")
             if (!screenshotBytes.contentEquals(recordedBytes)) {
@@ -78,10 +75,10 @@ fun Any.screenshotTest(
         }
     }
 
-    if (record) {
+    if (recordedScreenshots) {
         throw AssertionError(
-            "Failing test in record mode. The screenshot was successfully recorded; this assertion ensures that all " +
-                "live tests are not in record mode."
+            "Failing test because screenshots were recorded. Screenshots were successfully saved; this assertion " +
+                "ensures that all live tests are not in record mode and all screenshots exist."
         )
     }
 }
