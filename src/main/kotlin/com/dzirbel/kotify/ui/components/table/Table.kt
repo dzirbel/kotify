@@ -73,27 +73,31 @@ fun <T> Table(
         content = {
             if (includeHeader) {
                 columns.forEach { column ->
-                    column.header(
-                        sort = remember(column) {
-                            object : MutableState<Sort?> {
-                                override var value: Sort?
-                                    get() = if (sortState.value?.first == column) sortState.value?.second else null
-                                    set(value) {
-                                        sortState.value = value?.let { Pair(column, it) }
-                                    }
+                    Box {
+                        column.header(
+                            sort = remember(column) {
+                                object : MutableState<Sort?> {
+                                    override var value: Sort?
+                                        get() = if (sortState.value?.first == column) sortState.value?.second else null
+                                        set(value) {
+                                            sortState.value = value?.let { Pair(column, it) }
+                                        }
 
-                                override fun component1(): Sort? = value
+                                    override fun component1(): Sort? = value
 
-                                override fun component2(): (Sort?) -> Unit = { value = it }
+                                    override fun component2(): (Sort?) -> Unit = { value = it }
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
 
             items.forEachIndexed { index, item ->
                 columns.forEach { column ->
-                    column.item(item, index)
+                    Box {
+                        column.item(item, index)
+                    }
                 }
             }
 
@@ -130,9 +134,7 @@ fun <T> Table(
                     remainingWidth -= width
 
                     indexesForCol[colIndex].forEach { index ->
-                        placeables[index] = measurables[index].measure(
-                            Constraints.fixedWidth(width = width.roundToInt())
-                        )
+                        placeables[index] = measurables[index].measure(Constraints(maxWidth = width.roundToInt()))
                     }
                 } else if (columnSize is ColumnWidth.MatchHeader) {
                     check(includeHeader) { "cannot use ${ColumnWidth.MatchHeader} without a header" }
@@ -146,9 +148,7 @@ fun <T> Table(
                     remainingWidth -= width
 
                     indexesForCol[colIndex].drop(1).forEach { index ->
-                        placeables[index] = measurables[index].measure(
-                            Constraints.fixedWidth(width = width)
-                        )
+                        placeables[index] = measurables[index].measure(Constraints(maxWidth = width))
                     }
                 }
             }
