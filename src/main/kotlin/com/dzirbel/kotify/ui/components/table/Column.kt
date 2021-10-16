@@ -43,7 +43,9 @@ abstract class Column<T> {
      * a positive number if [second] should be placed before [first], and 0 if another comparison should be used to
      * tiebreak.
      */
-    abstract fun compare(first: T, firstIndex: Int, second: T, secondIndex: Int): Int
+    open fun compare(first: T, firstIndex: Int, second: T, secondIndex: Int): Int {
+        throw NotImplementedError("Column $this cannot be sorted")
+    }
 
     /**
      * The content for the header of this column.

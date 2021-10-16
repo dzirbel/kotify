@@ -72,10 +72,6 @@ class PlayingColumn(
     override val width = ColumnWidth.Fill()
     override val cellAlignment = Alignment.TopCenter
 
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        error("cannot compare by playing state")
-    }
-
     @Composable
     override fun header(sort: MutableState<Sort?>) {
         Box(Modifier)
@@ -122,10 +118,6 @@ class SavedColumn(savedTracks: Set<String>?) : Column<Track>() {
     private val savedTracks = mutableStateOf(savedTracks)
 
     override val width = ColumnWidth.Fill()
-
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        error("cannot compare by saved state")
-    }
 
     @Composable
     override fun header(sort: MutableState<Sort?>) {

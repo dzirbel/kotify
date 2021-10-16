@@ -189,7 +189,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                         .map { column -> column.mapped<PlaylistTrack> { it.track } }
                         .toMutableList()
                         .apply {
-                            add(1, IndexColumn)
+                            add(1, IndexColumn())
 
                             @Suppress("MagicNumber")
                             add(6, AddedAtColumn)
