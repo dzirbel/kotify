@@ -17,6 +17,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.screenshotTest
+import com.dzirbel.kotify.ui.theme.Colors
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -78,7 +79,8 @@ internal class GridTest {
     @ParameterizedTest
     @MethodSource("screenshotTestCases")
     fun testScreenshot(case: ScreenshotTestCase) {
-        screenshotTest(filename = case.filename) {
+        // no need to test multiple color sets since all the colors are hardcoded anyway
+        screenshotTest(filename = case.filename, colorsSet = setOf(Colors.LIGHT)) {
             Grid(
                 modifier = Modifier.background(Color.Green),
                 elements = List(50) { it },

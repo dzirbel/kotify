@@ -1,7 +1,12 @@
 package com.dzirbel.kotify.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.TestComposeWindow
+import com.dzirbel.kotify.ui.theme.Colors
+import com.dzirbel.kotify.ui.theme.Dimens
 import com.google.common.truth.Truth.assertWithMessage
 import java.io.File
 
@@ -25,44 +30,61 @@ fun Any.screenshotTest(
     windowWidth: Int = 1024,
     windowHeight: Int = 768,
     record: Boolean = false,
+    colorsSet: Set<Colors> = Colors.values().toSet(),
     content: @Composable () -> Unit
 ) {
-    val window = TestComposeWindow(width = windowWidth, height = windowHeight)
-    window.setContent(content)
+    val multipleColorSets = colorsSet.size > 1
+    for (colors in colorsSet) {
+        val window = TestComposeWindow(width = windowWidth, height = windowHeight)
+        window.setContent {
+            Colors.current = colors
+            colors.applyColors {
+                Dimens.applyDimens {
+                    Box(Modifier.background(colors.surface3)) {
+                        content()
+                    }
+                }
+            }
+        }
 
-    val screenshotData = window.surface.makeImageSnapshot().encodeToData()
-    requireNotNull(screenshotData) { "failed to encode screenshot to data" }
-    val screenshotBytes = screenshotData.bytes
+        val screenshotData = window.surface.makeImageSnapshot().encodeToData()
+        requireNotNull(screenshotData) { "failed to encode screenshot to data" }
+        val screenshotBytes = screenshotData.bytes
 
-    val className = requireNotNull(this::class.qualifiedName) {
-        "no class qualified name: screenshotTest() may not be called from local/anonymous classes"
+        val className = requireNotNull(this::class.qualifiedName) {
+            "no class qualified name: screenshotTest() may not be called from local/anonymous classes"
+        }
+        val classScreenshotsDir = screenshotsDir.resolve(className)
+        val filenameWithColors = if (multipleColorSets) "$filename-${colors.name.lowercase()}" else filename
+        val screenshotFile = classScreenshotsDir.resolve("$filenameWithColors.png")
+
+        if (record) {
+            classScreenshotsDir.mkdirs()
+            screenshotFile.writeBytes(screenshotBytes)
+            println("Wrote screenshot $filename to $screenshotFile")
+        } else {
+            assertWithMessage("missing screenshot file $screenshotFile")
+                .that(screenshotFile.exists())
+                .isTrue()
+
+            val recordedBytes = screenshotFile.readBytes()
+            val mismatchFile = classScreenshotsDir.resolve("$filenameWithColors-MISMATCH.png")
+            if (!screenshotBytes.contentEquals(recordedBytes)) {
+                mismatchFile.writeBytes(screenshotBytes)
+                throw AssertionError(
+                    "Screenshot mismatch for $screenshotFile. The image generated in the test has been written to " +
+                            "$mismatchFile for comparison (but then should be deleted)."
+                )
+            } else {
+                mismatchFile.delete()
+            }
+        }
     }
-    val classScreenshotsDir = screenshotsDir.resolve(className)
-    val screenshotFile = classScreenshotsDir.resolve("$filename.png")
 
     if (record) {
-        classScreenshotsDir.mkdirs()
-        screenshotFile.writeBytes(screenshotBytes)
-        println("Wrote screenshot $filename to $screenshotFile")
         throw AssertionError(
             "Failing test in record mode. The screenshot was successfully recorded; this assertion ensures that all " +
-                "live tests are not in record mode."
+                    "live tests are not in record mode."
         )
-    } else {
-        assertWithMessage("missing screenshot file $screenshotFile")
-            .that(screenshotFile.exists())
-            .isTrue()
-
-        val recordedBytes = screenshotFile.readBytes()
-        val mismatchFile = classScreenshotsDir.resolve("$filename-MISMATCH.png")
-        if (!screenshotBytes.contentEquals(recordedBytes)) {
-            mismatchFile.writeBytes(screenshotBytes)
-            throw AssertionError(
-                "Screenshot mismatch for $screenshotFile. The image generated in the test has been written to " +
-                    "$mismatchFile for comparison (but then should be deleted)."
-            )
-        } else {
-            mismatchFile.delete()
-        }
     }
 }
