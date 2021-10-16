@@ -25,7 +25,7 @@ internal class SpotifyImageCacheTest {
         interceptor.requests.clear()
     }
 
-    @Test
+    @RepeatedTest(5)
     fun testRemoteSuccess() {
         interceptor.responseBody = testImageBytes.toResponseBody(contentType = "image/jpeg".toMediaType())
 
@@ -36,7 +36,7 @@ internal class SpotifyImageCacheTest {
         assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(1)
     }
 
-    @RepeatedTest(3)
+    @RepeatedTest(5)
     fun testRemoteConcurrent() {
         interceptor.responseBody = testImageBytes.toResponseBody(contentType = "image/jpeg".toMediaType())
         interceptor.delayMs = 100

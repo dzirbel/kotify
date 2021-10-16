@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -22,6 +23,7 @@ import okhttp3.Request
 import org.jetbrains.skia.Image
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -59,7 +61,7 @@ object SpotifyImageCache {
             .also { require(it.isDirectory) { "could not create image cache directory $it" } }
     }
 
-    private val imageJobs: MutableMap<String, Deferred<ImageBitmap?>> = ConcurrentHashMap()
+    private val imageJobs: ConcurrentMap<String, Deferred<ImageBitmap?>> = ConcurrentHashMap()
 
     private var totalCompleted = AtomicInteger()
 
@@ -91,7 +93,7 @@ object SpotifyImageCache {
     }
 
     /**
-     * Immediately returns the in-memory cached [ImageBitmap] for [url], if these is one.
+     * Immediately returns the in-memory cached [ImageBitmap] for [url], if there is one.
      */
     fun getInMemory(url: String): ImageBitmap? {
         return imageJobs[url]?.getCompleted()?.also {
@@ -111,6 +113,7 @@ object SpotifyImageCache {
                 .forEach { (url, deferred) ->
                     val (_, image) = deferred.await()
                     if (image != null) {
+                        @Suppress("DeferredResultUnused")
                         imageJobs.putIfAbsent(url, CompletableDeferred(image))
                     }
                 }
@@ -126,7 +129,7 @@ object SpotifyImageCache {
         context: CoroutineContext = EmptyCoroutineContext,
         client: OkHttpClient = Spotify.configuration.okHttpClient
     ): ImageBitmap? {
-        val deferred = imageJobs.getOrPut(url) {
+        val deferred = imageJobs.computeIfAbsent(url) {
             scope.async(context = context) {
                 assertNotOnUIThread()
 
