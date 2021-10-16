@@ -10,8 +10,7 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.KeyboardShortcuts
 import com.dzirbel.kotify.ui.Root
-import com.dzirbel.kotify.ui.theme.Colors
-import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.Theme
 import okhttp3.OkHttpClient
 
 fun main(args: Array<String>) {
@@ -46,11 +45,7 @@ fun main(args: Array<String>) {
             state = rememberWindowState(placement = WindowPlacement.Maximized),
             onKeyEvent = KeyboardShortcuts::handle
         ) {
-            Colors.current.applyColors {
-                Dimens.applyDimens {
-                    Root()
-                }
-            }
+            Theme.apply { Root() }
         }
     }
 }

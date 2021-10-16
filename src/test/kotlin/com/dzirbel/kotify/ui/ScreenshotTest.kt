@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.TestComposeWindow
 import com.dzirbel.kotify.ui.theme.Colors
-import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.Theme
 import com.google.common.truth.Truth.assertWithMessage
 import java.io.File
 
@@ -37,12 +37,9 @@ fun Any.screenshotTest(
     for (colors in colorsSet) {
         val window = TestComposeWindow(width = windowWidth, height = windowHeight)
         window.setContent {
-            Colors.current = colors
-            colors.applyColors {
-                Dimens.applyDimens {
-                    Box(Modifier.background(colors.surface3)) {
-                        content()
-                    }
+            Theme.apply(colors = colors) {
+                Box(Modifier.background(colors.surface3)) {
+                    content()
                 }
             }
         }
@@ -73,7 +70,7 @@ fun Any.screenshotTest(
                 mismatchFile.writeBytes(screenshotBytes)
                 throw AssertionError(
                     "Screenshot mismatch for $screenshotFile. The image generated in the test has been written to " +
-                            "$mismatchFile for comparison (but then should be deleted)."
+                        "$mismatchFile for comparison (but then should be deleted)."
                 )
             } else {
                 mismatchFile.delete()
@@ -84,7 +81,7 @@ fun Any.screenshotTest(
     if (record) {
         throw AssertionError(
             "Failing test in record mode. The screenshot was successfully recorded; this assertion ensures that all " +
-                    "live tests are not in record mode."
+                "live tests are not in record mode."
         )
     }
 }

@@ -44,7 +44,7 @@ abstract class Column<T> {
      * tiebreak.
      */
     open fun compare(first: T, firstIndex: Int, second: T, secondIndex: Int): Int {
-        throw NotImplementedError("Column $this cannot be sorted")
+        error("Column $this cannot be sorted")
     }
 
     /**

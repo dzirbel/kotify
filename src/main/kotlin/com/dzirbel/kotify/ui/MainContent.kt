@@ -184,12 +184,10 @@ private fun AuthenticationMenuHeader() {
     val username = if (userError) "<ERROR>" else currentUser?.displayName ?: "<loading>"
     val expandedState = remember { mutableStateOf(false) }
 
-    Row {
+    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
         ThemeSwitcher(modifier = Modifier.align(Alignment.CenterVertically))
 
         ProjectGithubIcon(modifier = Modifier.align(Alignment.CenterVertically))
-
-        HorizontalSpacer(Dimens.space2)
 
         SimpleTextButton(
             enabled = currentUser != null || userError,

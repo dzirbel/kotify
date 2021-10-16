@@ -832,7 +832,7 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
     val shuffling = state.playbackShuffleState == true
     val repeatState = state.playbackRepeatState
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
         IconButton(
             enabled = controlsEnabled && !state.togglingShuffle,
             onClick = {
