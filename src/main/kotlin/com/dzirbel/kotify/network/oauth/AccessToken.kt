@@ -11,8 +11,8 @@ import kotlinx.coroutines.async
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToStream
 import okhttp3.FormBody
 import okhttp3.Request
 import java.io.FileNotFoundException
@@ -184,8 +184,9 @@ data class AccessToken(
          * Writes [token] to disk.
          */
         private fun save(token: AccessToken) {
-            val json = json.encodeToString(token)
-            Files.write(file.toPath(), json.split('\n'))
+            file.outputStream().use { outputStream ->
+                json.encodeToStream(token, outputStream)
+            }
             log("Saved access token to $file")
         }
 

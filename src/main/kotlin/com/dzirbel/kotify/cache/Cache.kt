@@ -10,11 +10,10 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToStream
 import java.io.File
 import java.io.FileReader
-import java.nio.file.Files
 import java.util.concurrent.Executors
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -464,8 +463,9 @@ class Cache(
         val currentHash = cacheMap.hashCode()
         if (currentHash != lastSaveHash) {
             val duration = measureTime {
-                val content = json.encodeToString(cacheMap)
-                Files.writeString(file.toPath(), content)
+                file.outputStream().use { outputStream ->
+                    json.encodeToStream(cacheMap, outputStream)
+                }
             }
 
             eventHandler(listOf(CacheEvent.Save(cache = this, duration = duration, file = file)))

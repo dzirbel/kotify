@@ -9,10 +9,9 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToStream
 import java.io.FileReader
-import java.nio.file.Files
 import java.util.concurrent.Executors
 
 /**
@@ -75,8 +74,9 @@ object Settings {
             assertNotOnUIThread()
 
             try {
-                val content = json.encodeToString(data)
-                Files.writeString(settingsFile.toPath(), content)
+                settingsFile.outputStream().use { outputStream ->
+                    json.encodeToStream(data, outputStream)
+                }
                 println("Saved settings to ${settingsFile.absolutePath}")
             } catch (ex: Throwable) {
                 System.err.println("Error saving settings to ${settingsFile.absolutePath}")
