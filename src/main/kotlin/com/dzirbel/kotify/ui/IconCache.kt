@@ -20,6 +20,8 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 /**
  * A wrapper around [Icon] which loads an icon with the given [name] from the [IconCache].
@@ -57,7 +59,7 @@ object IconCache {
     private data class IconHash(val name: String, val density: Density, val size: Dp)
 
     private val classLoader = Thread.currentThread().contextClassLoader
-    private val jobs: MutableMap<IconHash, Deferred<Painter>> = mutableMapOf()
+    private val jobs: ConcurrentMap<IconHash, Deferred<Painter>> = ConcurrentHashMap()
 
     /**
      * Loads the icon with the given [name] from the application resources, using an in-memory cache to avoid reloading
@@ -76,17 +78,16 @@ object IconCache {
         jobs[key]?.getCompleted()?.let { return it }
 
         return callbackAsState(context = Dispatchers.IO, key = name) {
-            synchronized(jobs) {
-                jobs.getOrPut(key) {
-                    // cannot use scope local to the composition in case it is removed from the composition before
-                    // finishing, but then the same icon is requested again
-                    GlobalScope.async {
-                        val iconPath = "$name.svg"
-                        requireNotNull(classLoader.getResourceAsStream(iconPath)) { "Icon $iconPath not found" }
-                            .use { loadSvgPainter(it, density) }
-                    }
+            jobs.computeIfAbsent(key) {
+                // cannot use scope local to the composition in case it is removed from the composition before
+                // finishing, but then the same icon is requested again
+                GlobalScope.async {
+                    val iconPath = "$name.svg"
+                    requireNotNull(classLoader.getResourceAsStream(iconPath)) { "Icon $iconPath not found" }
+                        .use { loadSvgPainter(it, density) }
                 }
-            }.await()
+            }
+                .await()
         }.value ?: EmptyPainter
     }
 }
