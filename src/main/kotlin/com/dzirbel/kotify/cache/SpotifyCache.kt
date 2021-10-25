@@ -214,10 +214,10 @@ object SpotifyCache {
     }
 
     fun getCacheObject(id: String): CacheObject? = cache.getCached(id)
-    fun getCacheObjects(ids: Iterable<String>): List<CacheObject?> = cache.getCached(ids)
+    fun getCacheObjects(ids: Collection<String>): List<CacheObject?> = cache.getCached(ids)
 
     inline fun <reified T> getCached(id: String): T? = getCacheObject(id)?.obj as? T
-    inline fun <reified T> getCached(ids: Iterable<String>): List<T?> = getCacheObjects(ids).map { it?.obj as? T }
+    inline fun <reified T> getCached(ids: Collection<String>): List<T?> = getCacheObjects(ids).map { it?.obj as? T }
 
     object Albums {
         // most batched calls have a maximum of 50; for albums the maximum is 20

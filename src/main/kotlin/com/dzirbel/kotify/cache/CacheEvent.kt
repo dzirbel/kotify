@@ -18,4 +18,13 @@ sealed class CacheEvent {
         CacheEvent()
 
     data class Invalidate(override val cache: Cache, val id: String, val value: CacheObject) : CacheEvent()
+
+    companion object {
+        /**
+         * Returns a [CacheEvent.Hit] if [value] is not null or a [CacheEvent.Miss] if it is null.
+         */
+        fun hitOrMiss(cache: Cache, id: String, value: CacheObject?): CacheEvent {
+            return if (value == null) Miss(cache = cache, id = id) else Hit(cache = cache, id = id, value = value)
+        }
+    }
 }

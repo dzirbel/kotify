@@ -14,10 +14,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
-import kotlin.time.Duration
 import kotlin.time.measureTime
 
 /**
@@ -30,7 +28,7 @@ import kotlin.time.measureTime
  * in-memory cache) with [load].
  *
  * An optional [ttlStrategy] can limit the values in the cache to observe an arbitrary [CacheTTLStrategy]. Once the
- * [ttlStrategy] marks an object as invalid, it will no longer appear in any of the cache accessors, e.g. [cache],
+ * [ttlStrategy] marks an object as invalid, it will no longer appear in any of the cache accessors, e.g. [getCache],
  * [get], etc., but may only be removed from memory once it is attempted to be accessed.
  *
  * [eventHandler] will be invoked whenever this [Cache] processes a [CacheEvent].
@@ -41,44 +39,13 @@ class Cache(
     private val ttlStrategy: CacheTTLStrategy = CacheTTLStrategy.AlwaysValid,
     private val replacementStrategy: CacheReplacementStrategy = CacheReplacementStrategy.AlwaysReplace,
     private val getCurrentTime: () -> Long = { System.currentTimeMillis() },
-    private val eventHandler: (List<CacheEvent>) -> Unit = { }
+    private val eventHandler: (List<CacheEvent>) -> Unit = { },
 ) {
     private val json = Json {
         encodeDefaults = true
     }
 
-    /**
-     * A simple wrapper around a [cache] map, which guarantees calls to the map are thread-safe via [modify].
-     */
-    private class CacheWrapper {
-        private val cache: MutableMap<String, CacheObject> = mutableMapOf()
-
-        var size by mutableStateOf(0)
-            private set
-
-        /**
-         * Modifies the current cache map.
-         *
-         * The current value of [cache] is passed into [block], which may make modifications to the map and return an
-         * arbitrary [T] which is then returned from this function. [T] may not be the same object as [cache] to avoid
-         * exposing it to non-thread-safe access. Calls to [block] are synchronized, so as much work as possible should
-         * be done outside of it for performance.
-         */
-        fun <T> modify(block: (MutableMap<String, CacheObject>) -> T): T {
-            contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
-
-            return synchronized(this) {
-                block(cache)
-                    .also { size = cache.size }
-
-                    // Direct references to the cache map should not be exposed; it should always be referenced via the
-                    // wrapper. Copes of it may be returned.
-                    .also { check(it !== cache) }
-            }
-        }
-    }
-
-    private val cache = CacheWrapper()
+    private val cache = ConcurrentHashMap<String, CacheObject>()
 
     private var lastSaveHash: Int? = null
 
@@ -89,14 +56,15 @@ class Cache(
      *
      * This is backed by a [androidx.compose.runtime.MutableState] so it may be used easily in a composition.
      */
-    val size: Int
-        get() = cache.size
+    var size: Int by mutableStateOf(0)
+        private set
 
     /**
      * Gets the full set of in-memory cached [CacheObject]s. Typically only used in tests.
      */
     fun getCache(): Map<String, CacheObject> {
-        return cache.modify { cacheMap -> cacheMap.removeExpired() }
+        return cache.filterExpired()
+            .also { size = it.size }
             .also { eventHandler(listOf(CacheEvent.Dump(this))) }
     }
 
@@ -109,17 +77,14 @@ class Cache(
      * unnecessary and too costly.
      */
     fun getCached(id: String): CacheObject? {
-        return cache.modify { cacheMap -> cacheMap.getIfValid(id) }
-            .also { obj ->
-                val event = if (obj == null) {
-                    CacheEvent.Miss(cache = this, id = id)
-                } else {
-                    CacheEvent.Hit(cache = this, id = id, value = obj)
-                }
-                eventHandler(listOf(event))
-            }
+        return cache.getIfValid(id)
+            .also { obj -> eventHandler(listOf(CacheEvent.hitOrMiss(cache = this, id = id, value = obj))) }
     }
 
+    /**
+     * Gets the [T] associated with [id], if it exists in the in-memory cache and is still valid according to
+     * [ttlStrategy]. This is a convenience wrapper on [getCached] which attempts to cast the [CacheObject.obj] to [T].
+     */
     inline fun <reified T> getCachedValue(id: String): T? {
         return getCached(id)?.obj as? T
     }
@@ -128,18 +93,19 @@ class Cache(
      * Gets the [CacheObject] associated with each [ids], if it exists in the in-memory cache and is still valid
      * according to [ttlStrategy].
      */
-    fun getCached(ids: Iterable<String>): List<CacheObject?> {
-        return cache.modify { cacheMap -> ids.map { id -> cacheMap.getIfValid(id) } }
-            .also { objs ->
-                val events = objs.zip(ids) { obj, id ->
-                    if (obj == null) {
-                        CacheEvent.Miss(cache = this, id = id)
-                    } else {
-                        CacheEvent.Hit(cache = this, id = id, value = obj)
-                    }
-                }
-                eventHandler(events)
-            }
+    fun getCached(ids: Collection<String>): List<CacheObject?> {
+        val currentTime = getCurrentTime()
+
+        val objs = ArrayList<CacheObject?>(ids.size)
+        val events = ArrayList<CacheEvent>(ids.size)
+        for (id in ids) {
+            val obj = cache.getIfValid(id, currentTime = currentTime)
+            objs.add(obj)
+            events.add(CacheEvent.hitOrMiss(cache = this, id = id, value = obj))
+        }
+
+        eventHandler(events)
+        return objs
     }
 
     /**
@@ -151,7 +117,7 @@ class Cache(
     fun put(
         value: CacheableObject,
         cacheTime: Long = getCurrentTime(),
-        saveOnChange: Boolean = this.saveOnChange
+        saveOnChange: Boolean = this.saveOnChange,
     ): Boolean {
         return putAll(values = listOf(value), cacheTime = cacheTime, saveOnChange = saveOnChange)
     }
@@ -165,7 +131,7 @@ class Cache(
     fun putAll(
         values: Iterable<CacheableObject>,
         cacheTime: Long = getCurrentTime(),
-        saveOnChange: Boolean = this.saveOnChange
+        saveOnChange: Boolean = this.saveOnChange,
     ): Boolean {
         val allObjects = values
             .flatMap { it.recursiveCacheableObjects }
@@ -187,7 +153,7 @@ class Cache(
         id: String,
         value: Any,
         cacheTime: Long = getCurrentTime(),
-        saveOnChange: Boolean = this.saveOnChange
+        saveOnChange: Boolean = this.saveOnChange,
     ): Boolean {
         return putAll(values = mapOf(id to value), cacheTime = cacheTime, saveOnChange = saveOnChange)
     }
@@ -208,29 +174,26 @@ class Cache(
     fun putAll(
         values: Map<String, Any>,
         cacheTime: Long = getCurrentTime(),
-        saveOnChange: Boolean = this.saveOnChange
+        saveOnChange: Boolean = this.saveOnChange,
     ): Boolean {
         val updates = mutableMapOf<String, Pair<CacheObject?, CacheObject>>()
-        val cacheMap = cache.modify { cacheMap ->
-            values.forEach { (id, value) ->
-                val current = cacheMap.getIfValid(id)?.obj
-                if (value != current) {
-                    val replace = current?.let { replacementStrategy.replace(current, value) } != false
-                    if (replace) {
-                        val previous = cacheMap[id]
-                        val new = CacheObject(id = id, obj = value, cacheTime = cacheTime)
-                        cacheMap[id] = new
+        val currentTime = getCurrentTime()
 
-                        updates[id] = Pair(previous, new)
-                    }
+        values.forEach { (id, value) ->
+            val current = cache.getIfValid(id, currentTime = currentTime)
+            if (value != current?.obj) {
+                val replace = current?.let { replacementStrategy.replace(current.obj, value) } != false
+                if (replace) {
+                    val new = CacheObject(id = id, obj = value, cacheTime = cacheTime)
+                    updates[id] = Pair(current, new)
                 }
             }
-
-            // only create map copy if it will be used
-            if (saveOnChange && updates.isNotEmpty()) HashMap(cacheMap) else null
         }
 
-        if (updates.isNotEmpty()) {
+        return if (updates.isNotEmpty()) {
+            cache.putAll(updates.mapValues { it.value.second })
+            size = cache.size
+
             eventHandler(
                 updates.map { (id, update) ->
                     CacheEvent.Update(cache = this, id = id, previous = update.first, new = update.second)
@@ -238,11 +201,13 @@ class Cache(
             )
 
             if (saveOnChange) {
-                writeInBackground(cacheMap = cacheMap!!)
+                writeInBackground(cacheMap = HashMap(cache))
             }
-        }
 
-        return updates.isNotEmpty()
+            true
+        } else {
+            false
+        }
     }
 
     /**
@@ -273,10 +238,9 @@ class Cache(
     inline fun <reified T : CacheableObject> getAll(
         ids: List<String>,
         saveOnChange: Boolean = this.saveOnChange,
-        remote: (List<String>) -> List<T>
+        remote: (List<String>) -> List<T>,
     ): List<T> {
         val cached: List<CacheObject?> = getCached(ids = ids)
-        check(cached.size == ids.size)
 
         // if we have all the objects cached no need to call remote
         if (cached.all { it?.obj as? T != null }) {
@@ -318,18 +282,17 @@ class Cache(
      * the cache will be written to disk in the background.
      */
     fun invalidate(ids: List<String>, saveOnChange: Boolean = this.saveOnChange): List<CacheObject?> {
-        val previousObjects: List<CacheObject?>
-        val anyRemoved: Boolean
-        val cacheState = cache.modify { cacheMap ->
-            previousObjects = ids.map { cacheMap.remove(it) }
-            anyRemoved = previousObjects.any { it != null }
-
-            if (saveOnChange && anyRemoved) HashMap(cacheMap) else null
+        var anyRemoved = false
+        val previousObjects: List<CacheObject?> = ids.map { id ->
+            cache.remove(id)
+                .also { if (it != null) anyRemoved = true }
         }
 
         if (anyRemoved) {
+            size = cache.size
+
             if (saveOnChange) {
-                writeInBackground(cacheMap = cacheState!!)
+                writeInBackground(cacheMap = HashMap(cache))
             }
 
             eventHandler(
@@ -346,7 +309,8 @@ class Cache(
      * Clears the cache, both in-memory and on disk.
      */
     fun clear() {
-        cache.modify { cacheMap -> cacheMap.clear() }
+        cache.clear()
+        size = 0
 
         if (saveOnChange) {
             writeInBackground(cacheMap = emptyMap())
@@ -363,7 +327,7 @@ class Cache(
      * coroutine to write the cache in the background.
      */
     fun save(synchronous: Boolean = true) {
-        val cacheMap = cache.modify { cacheMap -> cacheMap.removeExpired() }
+        val cacheMap = cache.filterExpired()
         if (synchronous) write(cacheMap) else writeInBackground(cacheMap)
     }
 
@@ -373,66 +337,60 @@ class Cache(
      * Simply clears the cache if the file does not exist.
      */
     fun load() {
-        var duration: Duration? = null
         val errors: MutableList<Throwable> = mutableListOf()
 
-        cache.modify { cacheMap ->
-            cacheMap.clear()
-            if (file.canRead()) {
-                duration = measureTime {
-                    file.inputStream()
-                        .use { json.decodeFromStream<Map<String, CacheObject>>(it) }
-                        .filterValues {
-                            if (it.obj is Throwable) {
-                                errors.add(it.obj)
-                                false
-                            } else {
-                                true
-                            }
+        cache.clear()
+
+        if (file.canRead()) {
+            val duration = measureTime {
+                file.inputStream()
+                    .use { json.decodeFromStream<Map<String, CacheObject>>(it) }
+                    .filterValues {
+                        if (it.obj is Throwable) {
+                            errors.add(it.obj)
+                            false
+                        } else {
+                            ttlStrategy.isValid(cacheObject = it, currentTime = getCurrentTime())
                         }
-                        .filterValues { ttlStrategy.isValid(cacheObject = it, currentTime = getCurrentTime()) }
-                        .let { cacheMap.putAll(it) }
-                }
+                    }
+                    .let {
+                        cache.putAll(it)
+                        lastSaveHash = cache.hashCode()
+                    }
             }
 
-            lastSaveHash = cacheMap.hashCode()
+            eventHandler(listOf(CacheEvent.Load(cache = this, duration = duration, file = file, errors = errors)))
+        } else {
+            lastSaveHash = cache.hashCode()
         }
 
-        duration?.let {
-            eventHandler(listOf(CacheEvent.Load(cache = this, duration = it, file = file, errors = errors)))
-        }
+        size = cache.size
     }
 
     /**
-     * Removes values from this cache map which are expired according to [ttlStrategy] and returns a copy of this map
-     * with the expired values removed.
+     * Returns a copy of this map with values removed which are expired according to [ttlStrategy].
      */
-    private fun MutableMap<String, CacheObject>.removeExpired(): Map<String, CacheObject> {
-        val filtered = mutableMapOf<String, CacheObject>()
-        var anyFiltered = false
-        for (entry in this) {
-            if (ttlStrategy.isValid(cacheObject = entry.value, currentTime = getCurrentTime())) {
-                filtered[entry.key] = entry.value
-            } else {
-                anyFiltered = true
-            }
-        }
+    private fun Map<String, CacheObject>.filterExpired(): Map<String, CacheObject> {
+        if (ttlStrategy == CacheTTLStrategy.AlwaysValid) return HashMap(this)
 
-        if (anyFiltered) {
-            clear()
-            putAll(filtered)
+        val currentTime = getCurrentTime()
+        return filterTo(HashMap()) {
+            ttlStrategy.isValid(cacheObject = it.value, currentTime = currentTime)
         }
-
-        return filtered
     }
 
     /**
      * Gets the cached value under [id], returning null and removing it from this [MutableMap] if it is expired
      * according to [ttlStrategy].
      */
-    private fun MutableMap<String, CacheObject>.getIfValid(id: String): CacheObject? {
+    private fun MutableMap<String, CacheObject>.getIfValid(
+        id: String,
+        currentTime: Long = getCurrentTime(),
+    ): CacheObject? {
+        if (ttlStrategy == CacheTTLStrategy.AlwaysValid) return this[id]
+
         return this[id]?.let { cacheObject ->
-            if (ttlStrategy.isValid(cacheObject = cacheObject, currentTime = getCurrentTime())) {
+            if (ttlStrategy.isValid(cacheObject = cacheObject, currentTime = currentTime)) {
                 cacheObject
             } else {
                 remove(id)
@@ -442,7 +400,7 @@ class Cache(
     }
 
     /**
-     * Launches a coroutine to write the given [cacheMap] to the [cache] file.
+     * Launches a coroutine to write the given [cacheMap] to the cache [file].
      *
      * By using the [ioCoroutineContext], these writes will be executed one at a time.
      */
