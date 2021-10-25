@@ -117,6 +117,6 @@ fun <T> HandleState(
 ) {
     when (val stateOrError = state()) {
         is Presenter.StateOrError.Error -> onError(stateOrError.throwable)
-        is Presenter.StateOrError.State -> stateOrError.state?.let { onSuccess(it) } ?: onLoading()
+        is Presenter.StateOrError.State -> stateOrError.state?.also { onSuccess(it) } ?: onLoading()
     }
 }
