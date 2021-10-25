@@ -16,6 +16,8 @@ import kotlinx.serialization.json.encodeToStream
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 import kotlin.time.measureTime
 
 /**
@@ -343,8 +345,11 @@ class Cache(
 
         if (file.canRead()) {
             val duration = measureTime {
-                file.inputStream()
-                    .use { json.decodeFromStream<Map<String, CacheObject>>(it) }
+                file.inputStream().use { fileInputStream ->
+                    GZIPInputStream(fileInputStream).use { gzipInputStream ->
+                        json.decodeFromStream<Map<String, CacheObject>>(gzipInputStream)
+                    }
+                }
                     .filterValues {
                         if (it.obj is Throwable) {
                             errors.add(it.obj)
@@ -419,8 +424,10 @@ class Cache(
         val currentHash = cacheMap.hashCode()
         if (currentHash != lastSaveHash) {
             val duration = measureTime {
-                file.outputStream().use { outputStream ->
-                    json.encodeToStream(cacheMap, outputStream)
+                file.outputStream().use { fileOutputStream ->
+                    GZIPOutputStream(fileOutputStream).use { gzipOutputStream ->
+                        json.encodeToStream(cacheMap, gzipOutputStream)
+                    }
                 }
             }
 

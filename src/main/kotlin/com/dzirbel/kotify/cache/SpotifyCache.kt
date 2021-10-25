@@ -101,7 +101,7 @@ object SpotifyCache {
         }
     }
 
-    private val cacheFile = Application.cacheDir.resolve("cache.json")
+    private val cacheFile = Application.cacheDir.resolve("cache.json.gzip")
 
     private val cache = Cache(
         file = cacheFile,
