@@ -30,19 +30,17 @@ import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
-private class ArtistsPresenter(scope: CoroutineScope) :
-    Presenter<ArtistsPresenter.State?, ArtistsPresenter.Event>(
-        scope = scope,
-        eventMergeStrategy = EventMergeStrategy.LATEST,
-        startingEvents = listOf(Event.Load(invalidate = false)),
-        initialState = null
-    ) {
-
+private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.State?, ArtistsPresenter.Event>(
+    scope = scope,
+    eventMergeStrategy = EventMergeStrategy.LATEST,
+    startingEvents = listOf(Event.Load(invalidate = false)),
+    initialState = null
+) {
     data class State(
         val refreshing: Boolean,
         val artists: List<FullArtist>,
         val savedArtists: Set<String>,
-        val artistsUpdated: Long?
+        val artistsUpdated: Long?,
     )
 
     sealed class Event {
@@ -138,7 +136,7 @@ private fun ArtistCell(
     artist: FullArtist,
     savedArtists: Set<String>,
     presenter: ArtistsPresenter,
-    pageStack: MutableState<PageStack>
+    pageStack: MutableState<PageStack>,
 ) {
     Column(
         Modifier
