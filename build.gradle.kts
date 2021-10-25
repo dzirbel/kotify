@@ -35,7 +35,7 @@ plugins {
     id("name.remal.check-dependency-updates") version "1.5.0"
 
     // https://github.com/jetbrains/compose-jb
-    id("org.jetbrains.compose") version "1.0.0-alpha4-build398"
+    id("org.jetbrains.compose") version "1.0.0-beta1"
 
     `java-test-fixtures`
 

@@ -3,8 +3,8 @@ package com.dzirbel.kotify.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.TestComposeWindow
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Theme
 import java.io.File
@@ -35,7 +35,7 @@ fun Any.screenshotTest(
     val multipleColorSets = colorsSet.size > 1
     var recordedScreenshots = false
     for (colors in colorsSet) {
-        val window = TestComposeWindow(width = windowWidth, height = windowHeight)
+        val window = ImageComposeScene(width = windowWidth, height = windowHeight)
         window.setContent {
             Theme.apply(colors = colors) {
                 Box(Modifier.background(colors.surface3)) {
@@ -44,7 +44,7 @@ fun Any.screenshotTest(
             }
         }
 
-        val screenshotData = window.surface.makeImageSnapshot().encodeToData()
+        val screenshotData = window.render().encodeToData()
         requireNotNull(screenshotData) { "failed to encode screenshot to data" }
         val screenshotBytes = screenshotData.bytes
 
