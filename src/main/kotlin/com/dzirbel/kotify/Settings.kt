@@ -8,10 +8,9 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
-import java.io.FileReader
 import java.util.concurrent.Executors
 
 /**
@@ -58,9 +57,8 @@ object Settings {
         return try {
             settingsFile
                 .takeIf { it.isFile }
-                ?.let { FileReader(it) }
-                ?.use { it.readLines().joinToString(separator = " ") }
-                ?.let { json.decodeFromString<SettingsData>(it) }
+                ?.inputStream()
+                ?.use { json.decodeFromStream<SettingsData>(it) }
                 ?.also { println("Loaded settings from ${settingsFile.absolutePath}") }
         } catch (ex: Throwable) {
             System.err.println("Error loading settings from ${settingsFile.absolutePath}; reverting to defaults")

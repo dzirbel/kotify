@@ -10,13 +10,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import okhttp3.FormBody
 import okhttp3.Request
 import java.io.FileNotFoundException
-import java.io.FileReader
 import java.nio.file.Files
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -195,8 +194,8 @@ data class AccessToken(
          */
         private fun load(): AccessToken? {
             return try {
-                FileReader(file).use { it.readLines().joinToString(separator = "\n") }
-                    .let { json.decodeFromString<AccessToken>(it) }
+                file.inputStream()
+                    .use { json.decodeFromStream<AccessToken>(it) }
                     .also { log("Loaded access token from $file") }
             } catch (_: FileNotFoundException) {
                 null.also { log("No saved access token at $file") }

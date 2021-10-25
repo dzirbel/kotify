@@ -6,14 +6,14 @@ import androidx.compose.runtime.setValue
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
 import com.dzirbel.kotify.util.zipEach
 import com.dzirbel.kotify.util.zipToMap
+import io.ktor.utils.io.core.use
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import java.io.File
-import java.io.FileReader
 import java.util.concurrent.Executors
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -380,20 +380,18 @@ class Cache(
             cacheMap.clear()
             if (file.canRead()) {
                 duration = measureTime {
-                    cacheMap.putAll(
-                        FileReader(file)
-                            .use { it.readLines().joinToString(separator = " ") }
-                            .let { json.decodeFromString<Map<String, CacheObject>>(it) }
-                            .filterValues {
-                                if (it.obj is Throwable) {
-                                    errors.add(it.obj)
-                                    false
-                                } else {
-                                    true
-                                }
+                    file.inputStream()
+                        .use { json.decodeFromStream<Map<String, CacheObject>>(it) }
+                        .filterValues {
+                            if (it.obj is Throwable) {
+                                errors.add(it.obj)
+                                false
+                            } else {
+                                true
                             }
-                            .filterValues { ttlStrategy.isValid(cacheObject = it, currentTime = getCurrentTime()) }
-                    )
+                        }
+                        .filterValues { ttlStrategy.isValid(cacheObject = it, currentTime = getCurrentTime()) }
+                        .let { cacheMap.putAll(it) }
                 }
             }
 
