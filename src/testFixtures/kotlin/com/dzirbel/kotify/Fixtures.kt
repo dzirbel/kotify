@@ -522,7 +522,7 @@ object Fixtures {
     val episodes = listOf(
         EpisodeProperties(
             id = "03tIPON3n9IH5Fwxy02ZZF",
-            name = "The first step towards more inclusive dermatology | Jenna C. Lester",
+            name = "Why skin disease is often misdiagnosed in darker skin tones | Jenna C. Lester",
             description = """
                 Skin is one of the most powerful predictors of health, yet nearly half of all new dermatologists admit
                 to feeling uncomfortable identifying health issues on darker skin tones -- resulting in poorer health
@@ -601,9 +601,8 @@ object Fixtures {
             description = """
                 NPR's Up First is the news you need to start your day. The three biggest stories of the day, with
                 reporting and analysis from NPR News — in 10 minutes. Available weekdays by 6 a.m. ET, with hosts Rachel
-                Martin, Noel King and Steve Inskeep. Now available on Saturdays by 8 a.m. ET, with hosts Lulu
-                Garcia-Navarro and Scott Simon. Subscribe and listen, then support your local NPR station at
-                donate.npr.org.
+                Martin, Noel King, Steve Inskeep and A Martinez. Also available on Saturdays by 8 a.m. ET, with Scott
+                Simon. Subscribe and listen, then support your local NPR station at donate.npr.org.
                 """
                 .toSingleLine()
         )
