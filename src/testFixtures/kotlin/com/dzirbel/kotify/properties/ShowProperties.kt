@@ -19,7 +19,6 @@ data class ShowProperties(
 
         assertThat(show.description).isEqualTo(description)
         assertThat(show.explicit).isEqualTo(explicit)
-        assertThat(show.languages).isEqualTo(languages)
         assertThat(show.mediaType).isEqualTo(mediaType)
 
         languages?.let { assertThat(show.languages).isEqualTo(it) }
