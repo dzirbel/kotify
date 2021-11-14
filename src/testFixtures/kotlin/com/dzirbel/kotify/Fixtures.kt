@@ -532,7 +532,6 @@ object Fixtures {
                 tone.""".toSingleLine(),
             releaseDate = "2021-10-15",
             releaseDatePrecision = "day",
-            languages = listOf("en")
         ),
         EpisodeProperties(
             id = "61i9zd2aluBye0NiSf6NOh",
@@ -543,7 +542,6 @@ object Fixtures {
                 .toSingleLine(),
             releaseDate = "2020-12-18",
             releaseDatePrecision = "day",
-            languages = listOf("en")
         )
     )
 
