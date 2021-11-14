@@ -543,7 +543,7 @@ object Fixtures {
                 .toSingleLine(),
             releaseDate = "2020-12-18",
             releaseDatePrecision = "day",
-            languages = listOf("en-US")
+            languages = listOf("en")
         )
     )
 
