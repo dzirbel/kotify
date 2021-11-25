@@ -17,8 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullTrack
@@ -70,7 +68,7 @@ class PlayingColumn(
     private val playContextFromIndex: (Int) -> Player.PlayContext?
 ) : Column<Track>() {
     override val width = ColumnWidth.Fill()
-    override val cellAlignment = Alignment.TopCenter
+    override val cellAlignment = Alignment.Center
 
     @Composable
     override fun header(sort: MutableState<Sort?>) {
@@ -80,35 +78,29 @@ class PlayingColumn(
     @Composable
     override fun item(item: Track, index: Int) {
         val hoverState = remember { mutableStateOf(false) }
-        val baseModifier = Modifier
-            .hoverState(hoverState)
-            .padding(horizontal = Dimens.space2)
-
-        val fontSizeDp = with(LocalDensity.current) { Dimens.fontBody.toDp() }
-        if (Player.currentTrack.value?.id == item.id) {
-            CachedIcon(
-                name = "volume-up",
-                size = fontSizeDp,
-                contentDescription = "Playing",
-                modifier = baseModifier,
-                tint = Colors.current.primary
-            )
-        } else {
-            val context = playContextFromIndex(index)
-            // TODO refactor to use full size for hover and not render transparent icon button when not hovering
-            IconButton(
-                modifier = baseModifier.size(fontSizeDp),
-                onClick = {
-                    Player.play(context = context)
-                },
-                enabled = context != null
-            ) {
+        Box(Modifier.hoverState(hoverState).padding(Dimens.space2).size(Dimens.fontBodyDp)) {
+            if (Player.currentTrack.value?.id == item.id) {
                 CachedIcon(
-                    name = "play-circle-outline",
-                    size = fontSizeDp,
+                    name = "volume-up",
+                    size = Dimens.fontBodyDp,
                     contentDescription = "Playing",
-                    tint = if (hoverState.value) Colors.current.primary else Color.Companion.Transparent
+                    tint = Colors.current.primary,
                 )
+            } else {
+                if (hoverState.value) {
+                    val context = playContextFromIndex(index)
+                    IconButton(
+                        onClick = { Player.play(context = context) },
+                        enabled = context != null,
+                    ) {
+                        CachedIcon(
+                            name = "play-circle-outline",
+                            size = Dimens.fontBodyDp,
+                            contentDescription = "Play",
+                            tint = Colors.current.primary,
+                        )
+                    }
+                }
             }
         }
     }
@@ -238,14 +230,13 @@ object PopularityColumn : Column<Track>() {
     @Composable
     override fun item(item: Track, index: Int) {
         val popularity = item.popularity ?: 0
-        val height = with(LocalDensity.current) { Dimens.fontBody.toDp() }
         val color = Colors.current.text.copy(alpha = ContentAlpha.disabled)
 
         Box(
             Modifier
                 .padding(Dimens.space3)
                 .background(Colors.current.surface2)
-                .height(height)
+                .height(Dimens.fontBodyDp)
                 .fillMaxWidth()
                 .border(width = Dimens.divider, color = color)
         ) {
