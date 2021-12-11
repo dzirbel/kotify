@@ -11,7 +11,7 @@ private object Versions {
     const val detekt = "1.18.1" // https://github.com/detekt/detekt; also update plugin version
     const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco
     const val junit4 = "4.13.2" // https://junit.org/junit4/
-    const val junit5 = "5.8.1" // https://junit.org/junit5/
+    const val junit5 = "5.8.2" // https://junit.org/junit5/
     const val kotlinReflect = "1.5.31" // should match kotlin version
     const val kotlinxSerialization = "1.3.1" // https://github.com/Kotlin/kotlinx.serialization
     const val slf4j = "1.7.32" // http://www.slf4j.org/
