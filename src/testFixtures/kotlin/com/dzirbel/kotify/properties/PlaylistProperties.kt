@@ -4,7 +4,7 @@ import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.network.model.FullPlaylist
 import com.dzirbel.kotify.network.model.Playlist
 import com.dzirbel.kotify.network.model.PlaylistTrack
-import com.google.common.truth.Truth
+import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 
 data class PlaylistProperties(
@@ -18,9 +18,9 @@ data class PlaylistProperties(
     fun check(playlist: Playlist) {
         super.check(playlist)
 
-        Truth.assertThat(playlist.description).isEqualTo(description)
-        Truth.assertThat(playlist.public).isEqualTo(public)
-        Truth.assertThat(playlist.owner.displayName).isEqualTo(owner)
+        assertThat(playlist.description).isEqualTo(description)
+        assertThat(playlist.public).isEqualTo(public)
+        assertThat(playlist.owner.displayName).isEqualTo(owner)
         if (tracks != null && playlist is FullPlaylist) {
             val allItems = runBlocking { playlist.tracks.fetchAll<PlaylistTrack>() }
             tracks.zip(allItems).forEach { (trackProperties, playlistTrack) ->

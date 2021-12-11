@@ -2,7 +2,7 @@ package com.dzirbel.kotify.properties
 
 import com.dzirbel.kotify.isNullIf
 import com.dzirbel.kotify.network.model.SpotifyObject
-import com.google.common.truth.Truth
+import com.google.common.truth.Truth.assertThat
 
 abstract class ObjectProperties(
     private val type: String,
@@ -13,10 +13,10 @@ abstract class ObjectProperties(
     abstract val name: String
 
     protected fun check(obj: SpotifyObject) {
-        Truth.assertThat(obj.id).isEqualTo(id)
-        Truth.assertThat(obj.name).isEqualTo(name)
-        Truth.assertThat(obj.type).isEqualTo(type)
-        Truth.assertThat(obj.href).isNullIf(hrefNull)
-        Truth.assertThat(obj.uri).isNullIf(uriNull)
+        assertThat(obj.id).isEqualTo(id)
+        assertThat(obj.name).isEqualTo(name)
+        assertThat(obj.type).isEqualTo(type)
+        assertThat(obj.href).isNullIf(hrefNull)
+        assertThat(obj.uri).isNullIf(uriNull)
     }
 }

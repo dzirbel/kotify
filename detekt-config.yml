@@ -562,8 +562,9 @@ style:
       - 'TODO:'
     allowedPatterns: ''
   ForbiddenImport:
-    active: false
-    imports: []
+    active: true
+    imports:
+      - 'com.google.common.truth.Truth' # import assertThat() directly
     forbiddenPatterns: ''
   ForbiddenMethodCall:
     active: false

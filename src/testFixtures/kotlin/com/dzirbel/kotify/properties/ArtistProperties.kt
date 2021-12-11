@@ -2,7 +2,7 @@ package com.dzirbel.kotify.properties
 
 import com.dzirbel.kotify.network.model.Artist
 import com.dzirbel.kotify.network.model.FullArtist
-import com.google.common.truth.Truth
+import com.google.common.truth.Truth.assertThat
 
 data class ArtistProperties(
     override val id: String,
@@ -14,10 +14,10 @@ data class ArtistProperties(
         super.check(artist)
 
         if (artist is FullArtist) {
-            Truth.assertThat(artist.followers.total).isAtLeast(0)
-            Truth.assertThat(artist.genres).containsAtLeastElementsIn(genres)
-            Truth.assertThat(artist.images).isNotEmpty()
-            Truth.assertThat(artist.popularity).isIn(0..100)
+            assertThat(artist.followers.total).isAtLeast(0)
+            assertThat(artist.genres).containsAtLeastElementsIn(genres)
+            assertThat(artist.images).isNotEmpty()
+            assertThat(artist.popularity).isIn(0..100)
         }
     }
 }

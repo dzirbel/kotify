@@ -3,7 +3,7 @@ package com.dzirbel.kotify.properties
 import com.dzirbel.kotify.network.model.PlaylistTrack
 import com.dzirbel.kotify.network.model.SavedTrack
 import com.dzirbel.kotify.network.model.Track
-import com.google.common.truth.Truth
+import com.google.common.truth.Truth.assertThat
 
 data class TrackProperties(
     override val id: String?,
@@ -19,27 +19,27 @@ data class TrackProperties(
     fun check(track: Track) {
         super.check(track)
 
-        Truth.assertThat(track.artists.map { it.name }).containsExactlyElementsIn(artistNames)
-        Truth.assertThat(track.trackNumber).isEqualTo(trackNumber)
-        Truth.assertThat(track.discNumber).isEqualTo(discNumber)
-        Truth.assertThat(track.durationMs).isAtLeast(0)
-        Truth.assertThat(track.explicit).isEqualTo(explicit)
-        Truth.assertThat(track.isLocal).isEqualTo(isLocal)
-        Truth.assertThat(track.externalUrls).isNotNull()
+        assertThat(track.artists.map { it.name }).containsExactlyElementsIn(artistNames)
+        assertThat(track.trackNumber).isEqualTo(trackNumber)
+        assertThat(track.discNumber).isEqualTo(discNumber)
+        assertThat(track.durationMs).isAtLeast(0)
+        assertThat(track.explicit).isEqualTo(explicit)
+        assertThat(track.isLocal).isEqualTo(isLocal)
+        assertThat(track.externalUrls).isNotNull()
     }
 
     fun check(playlistTrack: PlaylistTrack) {
         check(playlistTrack.track)
 
-        Truth.assertThat(playlistTrack.isLocal).isEqualTo(isLocal)
-        addedBy?.let { Truth.assertThat(playlistTrack.addedBy.id).isEqualTo(it) }
-        addedAt?.let { Truth.assertThat(playlistTrack.addedAt).isEqualTo(it) }
+        assertThat(playlistTrack.isLocal).isEqualTo(isLocal)
+        addedBy?.let { assertThat(playlistTrack.addedBy.id).isEqualTo(it) }
+        addedAt?.let { assertThat(playlistTrack.addedAt).isEqualTo(it) }
     }
 
     fun check(savedTrack: SavedTrack) {
         check(savedTrack.track)
 
-        Truth.assertThat(addedAt).isNotNull()
-        Truth.assertThat(savedTrack.addedAt).isEqualTo(addedAt)
+        assertThat(addedAt).isNotNull()
+        assertThat(savedTrack.addedAt).isEqualTo(addedAt)
     }
 }
