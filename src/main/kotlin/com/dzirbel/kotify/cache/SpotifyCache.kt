@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.cache
 
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -497,5 +498,15 @@ object SpotifyCache {
 
             return user
         }
+    }
+
+    object Ratings {
+        fun ratingState(trackId: String): State<CacheObject?> = cache.stateOf(idFor(trackId))
+
+        fun getRating(trackId: String): Int? = cache.getCachedValue<Int>(idFor(trackId))
+        fun setRating(trackId: String, rating: Int) = cache.put(idFor(trackId), rating)
+        fun clearRating(trackId: String) = cache.invalidate(idFor(trackId))
+
+        private fun idFor(trackId: String) = "track-rating-$trackId"
     }
 }

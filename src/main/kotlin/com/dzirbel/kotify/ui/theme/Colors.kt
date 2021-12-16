@@ -21,6 +21,7 @@ enum class Colors(
     val text: Color,
     val textOnSurface: Color,
     val error: Color,
+    val star: Color,
     private val scrollBarHover: Color,
     private val scrollBarUnhover: Color,
     private val materialColors: androidx.compose.material.Colors
@@ -33,6 +34,7 @@ enum class Colors(
         text = Color(0xFA, 0xFA, 0xFA),
         textOnSurface = Color(0x08, 0x08, 0x08),
         error = Color.Red,
+        star = Color.Yellow,
         scrollBarHover = Color(0x60, 0x60, 0x60),
         scrollBarUnhover = Color(0x50, 0x50, 0x50),
         materialColors = darkColors()
@@ -46,6 +48,7 @@ enum class Colors(
         text = Color(0x08, 0x08, 0x08),
         textOnSurface = Color(0xFA, 0xFA, 0xFA),
         error = Color.Red,
+        star = Color.Yellow,
         scrollBarHover = Color(0x90, 0x90, 0x90),
         scrollBarUnhover = Color(0x78, 0x78, 0x78),
         materialColors = lightColors()

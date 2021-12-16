@@ -754,6 +754,8 @@ private fun CurrentTrack(
                             )
                         }
                     }
+
+                    TrackStarRating(trackId = track.id)
                 }
 
                 VerticalSpacer(Dimens.space3)

@@ -1,5 +1,7 @@
 package com.dzirbel.kotify.cache
 
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,6 +16,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import java.io.File
+import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.zip.GZIPInputStream
@@ -48,6 +51,9 @@ class Cache(
     }
 
     private val cache = ConcurrentHashMap<String, CacheObject>()
+
+    // TODO concurrency and locking for states (may not be necessary if always used from the UI thread?)
+    private val states = mutableMapOf<String, WeakReference<MutableState<CacheObject?>>>()
 
     private var lastSaveHash: Int? = null
 
@@ -108,6 +114,20 @@ class Cache(
 
         eventHandler(events)
         return objs
+    }
+
+    /**
+     * Gets a [State] which reflects the current [CacheObject] associated with the given [id].
+     *
+     * States are internally stored as [WeakReference]s so if multiple are being used at the same time, the same [State]
+     * will be returned, but if all [State]s for a particular ID go out of scope, it will be garbage collected.
+     */
+    fun stateOf(id: String): State<CacheObject?> {
+        return states
+            .getOrPut(id) { WeakReference(mutableStateOf(getCached(id))) }
+            .get()
+            ?: mutableStateOf(getCached(id))
+                .also { states[id] = WeakReference(it) }
     }
 
     /**
@@ -195,6 +215,10 @@ class Cache(
         return if (updates.isNotEmpty()) {
             cache.putAll(updates.mapValues { it.value.second })
             size = cache.size
+
+            updates.forEach { (id, update) ->
+                states[id]?.get()?.value = update.second
+            }
 
             eventHandler(
                 updates.map { (id, update) ->
@@ -286,8 +310,12 @@ class Cache(
     fun invalidate(ids: List<String>, saveOnChange: Boolean = this.saveOnChange): List<CacheObject?> {
         var anyRemoved = false
         val previousObjects: List<CacheObject?> = ids.map { id ->
-            cache.remove(id)
-                .also { if (it != null) anyRemoved = true }
+            cache.remove(id).also {
+                if (it != null) {
+                    anyRemoved = true
+                    states[id]?.get()?.value = null
+                }
+            }
         }
 
         if (anyRemoved) {

@@ -51,6 +51,7 @@ fun trackColumns(
         NameColumn,
         ArtistColumn(pageStack),
         AlbumColumn(pageStack).takeIf { includeAlbum },
+        RatingColumn,
         DurationColumn,
         PopularityColumn
     )
@@ -258,6 +259,33 @@ object PopularityColumn : Column<Track>() {
             firstPopularity != null && secondPopularity != null -> firstPopularity.compareTo(secondPopularity)
             firstPopularity != null -> -1 // second is null -> first before second
             secondPopularity != null -> 1 // first is null -> second before first
+            else -> 0
+        }
+    }
+}
+
+object RatingColumn : Column<Track>() {
+    override val width: ColumnWidth = ColumnWidth.Fill()
+    override val cellAlignment = Alignment.Center
+
+    @Composable
+    override fun header(sort: MutableState<Sort?>) {
+        standardHeader(sort = sort, header = "Rating")
+    }
+
+    @Composable
+    override fun item(item: Track, index: Int) {
+        TrackStarRating(trackId = item.id, modifier = Modifier.padding(horizontal = Dimens.space3))
+    }
+
+    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+        val firstRating = first.id?.let { SpotifyCache.Ratings.getRating(trackId = it) }
+        val secondRating = second.id?.let { SpotifyCache.Ratings.getRating(trackId = it) }
+
+        return when {
+            firstRating != null && secondRating != null -> firstRating.compareTo(secondRating)
+            firstRating != null -> -1 // second is null -> first before second
+            secondRating != null -> 1 // first is null -> second before first
             else -> 0
         }
     }
