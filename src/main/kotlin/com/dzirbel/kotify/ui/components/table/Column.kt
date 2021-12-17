@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,10 +47,25 @@ abstract class Column<T> {
     }
 
     /**
+     * Returns a [Comparator] which compares indexed elements of type [T] according to [compare] and the given [sort]
+     * order.
+     */
+    fun getComparator(sort: Sort): Comparator<IndexedValue<T>> {
+        return Comparator<IndexedValue<T>> { (firstIndex, first), (secondIndex, second) ->
+            compare(
+                first = first,
+                firstIndex = firstIndex,
+                second = second,
+                secondIndex = secondIndex
+            )
+        }.let { if (sort == Sort.REVERSE_ORDER) it.reversed() else it }
+    }
+
+    /**
      * The content for the header of this column.
      */
     @Composable
-    abstract fun header(sort: MutableState<Sort?>)
+    abstract fun header(sort: Sort?, onSetSort: (Sort?) -> Unit)
 
     /**
      * The content for the given [item] at the given [index].
@@ -64,7 +78,8 @@ abstract class Column<T> {
      */
     @Composable
     fun standardHeader(
-        sort: MutableState<Sort?>,
+        sort: Sort?,
+        onSetSort: (Sort?) -> Unit,
         header: String,
         sortable: Boolean = true,
         padding: Dp = Dimens.space3
@@ -73,11 +88,13 @@ abstract class Column<T> {
             SimpleTextButton(
                 contentPadding = PaddingValues(end = padding),
                 onClick = {
-                    sort.value = when (sort.value) {
-                        Sort.IN_ORDER -> Sort.REVERSE_ORDER
-                        Sort.REVERSE_ORDER -> null
-                        null -> Sort.IN_ORDER
-                    }
+                    onSetSort(
+                        when (sort) {
+                            Sort.IN_ORDER -> Sort.REVERSE_ORDER
+                            Sort.REVERSE_ORDER -> null
+                            null -> Sort.IN_ORDER
+                        }
+                    )
                 }
             ) {
                 Text(
@@ -86,7 +103,7 @@ abstract class Column<T> {
                     modifier = Modifier.padding(start = padding, top = padding, bottom = padding, end = padding / 2)
                 )
 
-                val icon = when (sort.value) {
+                val icon = when (sort) {
                     Sort.IN_ORDER -> Icons.Default.KeyboardArrowUp
                     Sort.REVERSE_ORDER -> Icons.Default.KeyboardArrowDown
                     null -> Icons.Default.KeyboardArrowUp
@@ -96,7 +113,7 @@ abstract class Column<T> {
                     imageVector = icon,
                     contentDescription = null,
                     modifier = Modifier.size(Dimens.iconSmall),
-                    tint = Colors.current.highlighted(sort.value != null, otherwise = Color.Transparent)
+                    tint = Colors.current.highlighted(sort != null, otherwise = Color.Transparent)
                 )
             }
         } else {
@@ -125,8 +142,8 @@ abstract class Column<T> {
             }
 
             @Composable
-            override fun header(sort: MutableState<Sort?>) {
-                base.header(sort)
+            override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
+                base.header(sort, onSetSort)
             }
 
             @Composable

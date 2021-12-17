@@ -10,7 +10,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -69,8 +68,8 @@ internal class TableTest {
                             override val cellAlignment = Alignment.BottomEnd
 
                             @Composable
-                            override fun header(sort: MutableState<Sort?>) {
-                                standardHeader(sort = sort, header = "Col 2", sortable = false)
+                            override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
+                                standardHeader(sort = sort, onSetSort = onSetSort, header = "Col 2", sortable = false)
                             }
 
                             @Composable
@@ -103,7 +102,7 @@ internal class TableTest {
                             override val headerAlignment = Alignment.Center
 
                             @Composable
-                            override fun header(sort: MutableState<Sort?>) {
+                            override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
                                 Text("Custom header")
                             }
 
@@ -123,7 +122,7 @@ internal class TableTest {
                             override val headerAlignment = Alignment.Center
 
                             @Composable
-                            override fun header(sort: MutableState<Sort?>) {
+                            override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
                                 Text("H", modifier = Modifier.padding(Dimens.space1))
                             }
 

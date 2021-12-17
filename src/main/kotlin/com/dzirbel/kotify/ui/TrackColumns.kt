@@ -72,7 +72,7 @@ class PlayingColumn(
     override val cellAlignment = Alignment.Center
 
     @Composable
-    override fun header(sort: MutableState<Sort?>) {
+    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
         Box(Modifier)
     }
 
@@ -113,7 +113,7 @@ class SavedColumn(savedTracks: Set<String>?) : Column<Track>() {
     override val width = ColumnWidth.Fill()
 
     @Composable
-    override fun header(sort: MutableState<Sort?>) {
+    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
         Box(Modifier)
     }
 
@@ -154,8 +154,8 @@ class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Trac
     }
 
     @Composable
-    override fun header(sort: MutableState<Sort?>) {
-        standardHeader(sort = sort, header = "Artist")
+    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
+        standardHeader(sort = sort, onSetSort = onSetSort, header = "Artist")
     }
 
     @Composable
@@ -182,8 +182,8 @@ class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track
     }
 
     @Composable
-    override fun header(sort: MutableState<Sort?>) {
-        standardHeader(sort = sort, header = "Album")
+    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
+        standardHeader(sort = sort, onSetSort = onSetSort, header = "Album")
     }
 
     @Composable
@@ -224,8 +224,8 @@ object PopularityColumn : Column<Track>() {
         get() = (this as? FullTrack)?.popularity ?: (this as? SimplifiedTrack)?.popularity
 
     @Composable
-    override fun header(sort: MutableState<Sort?>) {
-        standardHeader(sort = sort, header = "Popularity")
+    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
+        standardHeader(sort = sort, onSetSort = onSetSort, header = "Popularity")
     }
 
     @Composable
@@ -269,8 +269,8 @@ object RatingColumn : Column<Track>() {
     override val cellAlignment = Alignment.Center
 
     @Composable
-    override fun header(sort: MutableState<Sort?>) {
-        standardHeader(sort = sort, header = "Rating")
+    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
+        standardHeader(sort = sort, onSetSort = onSetSort, header = "Rating")
     }
 
     @Composable

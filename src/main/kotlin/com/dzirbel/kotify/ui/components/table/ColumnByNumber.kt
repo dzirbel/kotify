@@ -3,7 +3,6 @@ package com.dzirbel.kotify.ui.components.table
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -29,8 +28,8 @@ abstract class ColumnByNumber<T>(
     }
 
     @Composable
-    override fun header(sort: MutableState<Sort?>) {
-        standardHeader(sort = sort, header = header, padding = padding, sortable = sortable)
+    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
+        standardHeader(sort = sort, onSetSort = onSetSort, header = header, padding = padding, sortable = sortable)
     }
 
     @Composable

@@ -19,6 +19,24 @@ import kotlin.math.roundToInt
 
 enum class Sort { IN_ORDER, REVERSE_ORDER }
 
+@Composable
+fun <T> Table(
+    columns: List<Column<T>>,
+    items: List<T>,
+    includeHeader: Boolean = true,
+    modifier: Modifier = Modifier,
+) {
+    val sortState: MutableState<Pair<Column<T>, Sort>?> = remember { mutableStateOf(null) }
+    Table(
+        columns = columns,
+        items = items,
+        includeHeader = includeHeader,
+        modifier = modifier,
+        sort = sortState.value,
+        onSetSort = { sortState.value = it },
+    )
+}
+
 /**
  * A table layout which renders [items] in a set of [columns]. Each [Column] determines how the content for the row
  * provided by [items] is displayed. Moreover, each [Column] determines the width of its content based on its
@@ -33,6 +51,8 @@ fun <T> Table(
     items: List<T>,
     includeHeader: Boolean = true,
     modifier: Modifier = Modifier,
+    sort: Pair<Column<T>, Sort>?,
+    onSetSort: (Pair<Column<T>, Sort>?) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
 
@@ -40,19 +60,10 @@ fun <T> Table(
     val numRows = items.size + if (includeHeader) 1 else 0
     val numDividers = numRows - 1
 
-    val sortState = remember { mutableStateOf<Pair<Column<T>, Sort>?>(null) }
-
     // map from original row index to its index when sorted
-    val sortedIndexMap: IntArray = remember(sortState.value, items) {
-        val indexed = sortState.value?.let { (column, sort) ->
-            val comparator = Comparator<IndexedValue<T>> { (firstIndex, first), (secondIndex, second) ->
-                column.compare(
-                    first = first,
-                    firstIndex = firstIndex,
-                    second = second,
-                    secondIndex = secondIndex
-                )
-            }.let { if (sort == Sort.REVERSE_ORDER) it.reversed() else it }
+    val sortedIndexMap: IntArray = remember(sort, items) {
+        val indexed = sort?.let { (column, sort) ->
+            val comparator = column.getComparator(sort)
 
             val indexedArray = Array(items.size) { index -> IndexedValue(index = index, value = items[index]) }
             indexedArray.sortWith(comparator)
@@ -75,19 +86,8 @@ fun <T> Table(
                 columns.forEach { column ->
                     Box {
                         column.header(
-                            sort = remember(column) {
-                                object : MutableState<Sort?> {
-                                    override var value: Sort?
-                                        get() = if (sortState.value?.first == column) sortState.value?.second else null
-                                        set(value) {
-                                            sortState.value = value?.let { Pair(column, it) }
-                                        }
-
-                                    override fun component1(): Sort? = value
-
-                                    override fun component2(): (Sort?) -> Unit = { value = it }
-                                }
-                            }
+                            sort = if (sort?.first == column) sort.second else null,
+                            onSetSort = { onSetSort(it?.let { Pair(column, it) }) },
                         )
                     }
                 }

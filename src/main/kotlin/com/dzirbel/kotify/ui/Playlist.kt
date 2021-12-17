@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -15,17 +16,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullPlaylist
 import com.dzirbel.kotify.network.model.PlaylistTrack
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.IndexColumn
+import com.dzirbel.kotify.ui.components.table.Sort
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.ReorderCalculator
 import com.dzirbel.kotify.util.formatDateTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,15 +51,20 @@ private class PlaylistPresenter(
 
     data class State(
         val refreshing: Boolean,
+        val reordering: Boolean = false,
+        // TODO allow sorting by multiple columns to break ties and wrap this in a nicer data structure
+        val sort: Pair<Column<PlaylistTrack>, Sort>? = null,
         val playlist: FullPlaylist,
         val tracks: List<PlaylistTrack>?,
         val isSaved: Boolean?,
-        val playlistUpdated: Long?
+        val playlistUpdated: Long?,
     )
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
         data class ToggleSave(val save: Boolean) : Event()
+        data class SetSort(val sort: Pair<Column<PlaylistTrack>, Sort>?) : Event()
+        data class Order(val sort: Pair<Column<PlaylistTrack>, Sort>, val tracks: List<PlaylistTrack>) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -64,6 +74,9 @@ private class PlaylistPresenter(
 
                 if (event.invalidate) {
                     SpotifyCache.invalidate(id = page.playlistId)
+                    SpotifyCache.invalidate(
+                        id = SpotifyCache.GlobalObjects.PlaylistTracks.idFor(playlistId = page.playlistId)
+                    )
                 }
 
                 val playlist = SpotifyCache.Playlists.getFullPlaylist(id = page.playlistId)
@@ -77,7 +90,7 @@ private class PlaylistPresenter(
                         playlist = playlist,
                         playlistUpdated = SpotifyCache.lastUpdated(id = page.playlistId),
                         isSaved = isSaved,
-                        tracks = null
+                        tracks = null,
                     )
                 }
 
@@ -98,6 +111,37 @@ private class PlaylistPresenter(
 
                 val isSaved = savedPlaylists?.contains(page.playlistId)
                 mutateState { it?.copy(isSaved = isSaved) }
+            }
+
+            is Event.SetSort -> mutateState { it?.copy(sort = event.sort) }
+
+            is Event.Order -> {
+                val (column, sort) = event.sort
+
+                val ops = ReorderCalculator.calculateReorderOperations(
+                    list = event.tracks.withIndex().toList(),
+                    comparator = column.getComparator(sort),
+                )
+
+                if (ops.isNotEmpty()) {
+                    mutateState { it?.copy(reordering = true) }
+
+                    for (op in ops) {
+                        Spotify.Playlists.reorderPlaylistItems(
+                            playlistId = page.playlistId,
+                            rangeStart = op.rangeStart,
+                            rangeLength = op.rangeLength,
+                            insertBefore = op.insertBefore,
+                        )
+                    }
+
+                    SpotifyCache.invalidate(
+                        id = SpotifyCache.GlobalObjects.PlaylistTracks.idFor(playlistId = page.playlistId)
+                    )
+                    val tracks = SpotifyCache.Playlists.getPlaylistTracks(playlistId = page.playlistId)
+
+                    mutateState { it?.copy(tracks = tracks, reordering = false, sort = null) }
+                }
             }
         }
     }
@@ -160,6 +204,23 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
 
                             PlayButton(context = Player.PlayContext.playlist(state.playlist))
                         }
+
+                        Button(
+                            enabled = state.sort != null && state.tracks != null && !state.reordering,
+                            onClick = {
+                                state.sort?.let { sort ->
+                                    state.tracks?.let { tracks ->
+                                        presenter.emitAsync(PlaylistPresenter.Event.Order(sort = sort, tracks = tracks))
+                                    }
+                                }
+                            },
+                        ) {
+                            if (state.reordering) {
+                                Text("Reordering...")
+                            } else {
+                                Text("Set current order as playlist order")
+                            }
+                        }
                     }
                 }
 
@@ -196,7 +257,14 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                         }
                 }
 
-                Table(columns = columns, items = tracks)
+                Table(
+                    columns = columns,
+                    items = tracks,
+                    sort = state.sort,
+                    onSetSort = { sort ->
+                        presenter.emitAsync(PlaylistPresenter.Event.SetSort(sort = sort))
+                    },
+                )
             }
         }
     }
