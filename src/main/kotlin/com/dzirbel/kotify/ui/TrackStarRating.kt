@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.ui.components.StarRating
 
-private const val STARS = 5
+private const val DEFAULT_MAX_RATING = 10
 
 /**
  * Star rating component for a track with the given [trackId].
@@ -17,14 +17,26 @@ fun TrackStarRating(trackId: String?, modifier: Modifier = Modifier) {
         trackId?.let { SpotifyCache.Ratings.ratingState(trackId = trackId) }
     }
 
+    val rating = state?.value?.obj as? SpotifyCache.GlobalObjects.TrackRating
+    val maxRating = rating?.maxRating ?: DEFAULT_MAX_RATING
+
     StarRating(
-        rating = state?.value?.obj as? Int,
-        stars = STARS,
+        rating = rating?.rating,
+        stars = maxRating,
         modifier = modifier,
         ratedTimestamp = state?.value?.cacheTime,
         enabled = trackId != null,
         onRate = { star ->
-            trackId?.let { SpotifyCache.Ratings.setRating(trackId = trackId, rating = star) }
+            trackId?.let {
+                SpotifyCache.Ratings.setRating(
+                    trackId = trackId,
+                    rating = SpotifyCache.GlobalObjects.TrackRating(
+                        trackId = trackId,
+                        rating = star,
+                        maxRating = maxRating,
+                    ),
+                )
+            }
         },
         onClearRating = if (trackId != null && state?.value != null) {
             { SpotifyCache.Ratings.clearRating(trackId = trackId) }

@@ -273,7 +273,9 @@ object RatingColumn : Column<Track>() {
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
         val firstRating = first.id?.let { SpotifyCache.Ratings.getRating(trackId = it) }
+            ?.let { it.rating.toDouble() / it.maxRating }
         val secondRating = second.id?.let { SpotifyCache.Ratings.getRating(trackId = it) }
+            ?.let { it.rating.toDouble() / it.maxRating }
 
         return firstRating.compareToNullable(secondRating)
     }
