@@ -100,6 +100,17 @@ object SpotifyCache {
                 fun idFor(playlistId: String) = "playlist-tracks-$playlistId"
             }
         }
+
+        @Serializable
+        data class RatedTracks(
+            val trackIds: Set<String>
+        ) : CacheableObject {
+            override val id = ID
+
+            companion object {
+                const val ID = "rated-tracks"
+            }
+        }
     }
 
     private val cacheFile = Application.cacheDir.resolve("cache.json.gzip")
@@ -504,8 +515,29 @@ object SpotifyCache {
         fun ratingState(trackId: String): State<CacheObject?> = cache.stateOf(idFor(trackId))
 
         fun getRating(trackId: String): Int? = cache.getCachedValue<Int>(idFor(trackId))
-        fun setRating(trackId: String, rating: Int) = cache.put(idFor(trackId), rating)
-        fun clearRating(trackId: String) = cache.invalidate(idFor(trackId))
+        fun setRating(trackId: String, rating: Int) {
+            cache.putAll(
+                mapOf(
+                    idFor(trackId) to rating,
+                    GlobalObjects.RatedTracks.ID to GlobalObjects.RatedTracks(ratedTracks().orEmpty().plus(trackId)),
+                )
+            )
+        }
+
+        fun clearRating(trackId: String) {
+            cache.invalidate(idFor(trackId))
+            cache.put(GlobalObjects.RatedTracks.ID, GlobalObjects.RatedTracks(ratedTracks().orEmpty().minus(trackId)))
+        }
+
+        fun ratedTracks(): Set<String>? {
+            return cache.getCachedValue<GlobalObjects.RatedTracks>(GlobalObjects.RatedTracks.ID)?.trackIds
+        }
+
+        fun clearAllRatings() {
+            ratedTracks()?.let { trackIds ->
+                cache.invalidate(trackIds.map { idFor(it) }.plus(GlobalObjects.RatedTracks.ID))
+            }
+        }
 
         private fun idFor(trackId: String) = "track-rating-$trackId"
     }

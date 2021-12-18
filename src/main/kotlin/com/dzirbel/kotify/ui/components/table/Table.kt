@@ -25,8 +25,9 @@ fun <T> Table(
     items: List<T>,
     includeHeader: Boolean = true,
     modifier: Modifier = Modifier,
+    defaultSort: Pair<Column<T>, Sort>? = null,
 ) {
-    val sortState: MutableState<Pair<Column<T>, Sort>?> = remember { mutableStateOf(null) }
+    val sortState: MutableState<Pair<Column<T>, Sort>?> = remember { mutableStateOf(defaultSort) }
     Table(
         columns = columns,
         items = items,

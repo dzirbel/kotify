@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Text
@@ -20,6 +21,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.model.FullAlbum
@@ -30,6 +32,7 @@ import com.dzirbel.kotify.network.model.SimplifiedAlbum
 import com.dzirbel.kotify.network.model.SimplifiedArtist
 import com.dzirbel.kotify.network.model.SimplifiedPlaylist
 import com.dzirbel.kotify.network.model.SimplifiedTrack
+import com.dzirbel.kotify.network.model.Track
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
@@ -37,6 +40,7 @@ import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByRelativeDateText
 import com.dzirbel.kotify.ui.components.table.ColumnByString
+import com.dzirbel.kotify.ui.components.table.Sort
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -46,6 +50,8 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
+
+private val RATINGS_TABLE_WIDTH = 750.dp
 
 private class LibraryStatePresenter(scope: CoroutineScope) :
     Presenter<LibraryStatePresenter.State?, LibraryStatePresenter.Event>(
@@ -67,6 +73,8 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
         val tracks: List<LibraryCache.CachedTrack>?,
         val tracksUpdated: Long?,
+
+        val ratedTracks: List<Track>,
 
         val refreshingSavedArtists: Boolean = false,
         val refreshingArtists: Set<String> = emptySet(),
@@ -97,6 +105,8 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
         object FetchMissingTracks : Event()
         object InvalidateTracks : Event()
 
+        object ClearAllRatings : Event()
+
         object FetchMissingPlaylists : Event()
         object InvalidatePlaylists : Event()
         object FetchMissingPlaylistTracks : Event()
@@ -115,6 +125,9 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                     playlists = LibraryCache.cachedPlaylists,
                     tracks = LibraryCache.cachedTracks,
                     tracksUpdated = LibraryCache.tracksUpdated,
+                    ratedTracks = SpotifyCache.Ratings.ratedTracks().orEmpty().let { trackIds ->
+                        SpotifyCache.Tracks.getTracks(ids = trackIds.toList())
+                    },
                 )
 
                 mutateState { state }
@@ -261,6 +274,11 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 mutateState { it?.copy(tracks = tracks) }
             }
 
+            Event.ClearAllRatings -> {
+                SpotifyCache.Ratings.clearAllRatings()
+                mutateState { it?.copy(ratedTracks = emptyList()) }
+            }
+
             Event.FetchMissingPlaylists -> {
                 val missingIds = requireNotNull(LibraryCache.playlists?.filterValues { it !is FullPlaylist })
                 missingIds.keys
@@ -392,6 +410,11 @@ private val playlistColumns = listOf(
     },
 )
 
+private val ratedTrackColumns = listOf(
+    NameColumn,
+    RatingColumn,
+)
+
 @Composable
 fun BoxScope.LibraryState(pageStack: MutableState<PageStack>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
@@ -414,6 +437,10 @@ fun BoxScope.LibraryState(pageStack: MutableState<PageStack>) {
             Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Colors.current.dividerColor))
 
             Playlists(state, presenter)
+
+            Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Colors.current.dividerColor))
+
+            Ratings(state, presenter)
         }
     }
 }
@@ -833,5 +860,35 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
 
     if (playlistsExpanded.value) {
         Table(columns = playlistColumns, items = playlists.toList())
+    }
+}
+
+@Composable
+private fun Ratings(state: LibraryStatePresenter.State, presenter: LibraryStatePresenter) {
+    val ratedTracks = state.ratedTracks
+
+    val ratingsExpanded = remember { mutableStateOf(false) }
+
+    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("${ratedTracks.size} Rated Tracks", modifier = Modifier.padding(end = Dimens.space3))
+
+            SimpleTextButton(onClick = { presenter.emitAsync(LibraryStatePresenter.Event.ClearAllRatings) }) {
+                Text("Clear all ratings")
+            }
+        }
+
+        SimpleTextButton(onClick = { ratingsExpanded.value = !ratingsExpanded.value }) {
+            Text(if (ratingsExpanded.value) "Collapse" else "Expand")
+        }
+    }
+
+    if (ratingsExpanded.value) {
+        Table(
+            columns = ratedTrackColumns,
+            items = ratedTracks,
+            modifier = Modifier.widthIn(max = RATINGS_TABLE_WIDTH),
+            defaultSort = Pair(RatingColumn, Sort.REVERSE_ORDER), // sort by rating descending by default
+        )
     }
 }
