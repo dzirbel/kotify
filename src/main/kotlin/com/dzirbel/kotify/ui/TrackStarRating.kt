@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.ui.components.StarRating
@@ -12,7 +13,9 @@ private const val STARS = 5
  */
 @Composable
 fun TrackStarRating(trackId: String?, modifier: Modifier = Modifier) {
-    val state = trackId?.let { SpotifyCache.Ratings.ratingState(trackId = trackId) }
+    val state = remember(trackId) {
+        trackId?.let { SpotifyCache.Ratings.ratingState(trackId = trackId) }
+    }
 
     StarRating(
         rating = state?.value?.obj as? Int,
