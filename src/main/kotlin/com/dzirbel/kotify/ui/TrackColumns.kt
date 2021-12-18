@@ -33,6 +33,7 @@ import com.dzirbel.kotify.ui.components.table.Sort
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.compareToNullable
 import com.dzirbel.kotify.util.formatDuration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -252,15 +253,7 @@ object PopularityColumn : Column<Track>() {
     }
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        val firstPopularity = first.popularity
-        val secondPopularity = second.popularity
-
-        return when {
-            firstPopularity != null && secondPopularity != null -> firstPopularity.compareTo(secondPopularity)
-            firstPopularity != null -> -1 // second is null -> first before second
-            secondPopularity != null -> 1 // first is null -> second before first
-            else -> 0
-        }
+        return first.popularity.compareToNullable(second.popularity)
     }
 }
 
@@ -282,11 +275,6 @@ object RatingColumn : Column<Track>() {
         val firstRating = first.id?.let { SpotifyCache.Ratings.getRating(trackId = it) }
         val secondRating = second.id?.let { SpotifyCache.Ratings.getRating(trackId = it) }
 
-        return when {
-            firstRating != null && secondRating != null -> firstRating.compareTo(secondRating)
-            firstRating != null -> -1 // second is null -> first before second
-            secondRating != null -> 1 // first is null -> second before first
-            else -> 0
-        }
+        return firstRating.compareToNullable(secondRating)
     }
 }
