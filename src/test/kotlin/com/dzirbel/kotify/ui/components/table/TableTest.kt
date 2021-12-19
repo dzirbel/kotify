@@ -47,7 +47,7 @@ internal class TableTest {
                 ScreenshotTestCase(
                     filename = "simple",
                     columns = listOf(
-                        object : ColumnByString<String>(header = "Col 1") {
+                        object : ColumnByString<String>(name = "Col 1") {
                             override fun toString(item: String, index: Int) = item
                         }
                     ),
@@ -59,18 +59,13 @@ internal class TableTest {
                     columns = listOf(
                         IndexColumn(),
 
-                        object : ColumnByString<String>(header = "Col 1") {
+                        object : ColumnByString<String>(name = "Col 1") {
                             override fun toString(item: String, index: Int) = item
                         },
 
-                        object : Column<String>() {
+                        object : Column<String>(name = "Col 2", sortable = false) {
                             override val width = ColumnWidth.Weighted(weight = 1f)
                             override val cellAlignment = Alignment.BottomEnd
-
-                            @Composable
-                            override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
-                                standardHeader(sort = sort, onSetSort = onSetSort, header = "Col 2", sortable = false)
-                            }
 
                             @Composable
                             override fun item(item: String, index: Int) {
@@ -96,13 +91,13 @@ internal class TableTest {
                     columns = listOf(
                         IndexColumn(),
 
-                        object : Column<Int>() {
+                        object : Column<Int>(name = "Unused", sortable = false) {
                             override val width = ColumnWidth.Fixed(50.dp)
                             override val cellAlignment = Alignment.Center
                             override val headerAlignment = Alignment.Center
 
                             @Composable
-                            override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
+                            override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
                                 Text("Custom header")
                             }
 
@@ -116,13 +111,13 @@ internal class TableTest {
                             }
                         },
 
-                        object : Column<Int>() {
+                        object : Column<Int>(name = "Unused", sortable = false) {
                             override val width = ColumnWidth.MatchHeader
                             override val cellAlignment = Alignment.Center
                             override val headerAlignment = Alignment.Center
 
                             @Composable
-                            override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
+                            override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
                                 Text("H", modifier = Modifier.padding(Dimens.space1))
                             }
 
@@ -132,7 +127,7 @@ internal class TableTest {
                             }
                         },
 
-                        object : ColumnByString<Int>(header = "Even or odd?") {
+                        object : ColumnByString<Int>(name = "Even or odd?") {
                             override val width = ColumnWidth.Weighted(weight = 1.5f)
 
                             override fun toString(item: Int, index: Int): String {
@@ -140,7 +135,7 @@ internal class TableTest {
                             }
                         },
 
-                        object : ColumnByNumber<Int>(header = "Collatz") {
+                        object : ColumnByNumber<Int>(name = "Collatz") {
                             override val width = ColumnWidth.Weighted(weight = 1.5f)
 
                             override fun toNumber(item: Int, index: Int): Number {

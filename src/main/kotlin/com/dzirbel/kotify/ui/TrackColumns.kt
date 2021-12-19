@@ -29,7 +29,7 @@ import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.ColumnWidth
-import com.dzirbel.kotify.ui.components.table.Sort
+import com.dzirbel.kotify.ui.components.table.SortOrder
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
@@ -68,12 +68,12 @@ class PlayingColumn(
      * column.
      */
     private val playContextFromIndex: (Int) -> Player.PlayContext?
-) : Column<Track>() {
+) : Column<Track>(name = "Currently playing", sortable = false) {
     override val width = ColumnWidth.Fill()
     override val cellAlignment = Alignment.Center
 
     @Composable
-    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
+    override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
         Box(Modifier)
     }
 
@@ -108,13 +108,13 @@ class PlayingColumn(
     }
 }
 
-class SavedColumn(savedTracks: Set<String>?) : Column<Track>() {
+class SavedColumn(savedTracks: Set<String>?) : Column<Track>(name = "Saved", sortable = false) {
     private val savedTracks = mutableStateOf(savedTracks)
 
     override val width = ColumnWidth.Fill()
 
     @Composable
-    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
+    override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
         Box(Modifier)
     }
 
@@ -140,23 +140,18 @@ class SavedColumn(savedTracks: Set<String>?) : Column<Track>() {
     }
 }
 
-object NameColumn : ColumnByString<Track>(header = "Title") {
+object NameColumn : ColumnByString<Track>(name = "Title") {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun toString(item: Track, index: Int) = item.name
 }
 
-class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Track>() {
+class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Track>(name = "Artist", sortable = true) {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
         return first.artists.joinToString { it.name }
             .compareTo(second.artists.joinToString { it.name }, ignoreCase = true)
-    }
-
-    @Composable
-    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
-        standardHeader(sort = sort, onSetSort = onSetSort, header = "Artist")
     }
 
     @Composable
@@ -175,16 +170,11 @@ class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Trac
     }
 }
 
-class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track>() {
+class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track>(name = "Album", sortable = true) {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
         return first.album?.name.orEmpty().compareTo(second.album?.name.orEmpty(), ignoreCase = true)
-    }
-
-    @Composable
-    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
-        standardHeader(sort = sort, onSetSort = onSetSort, header = "Album")
     }
 
     @Composable
@@ -203,7 +193,7 @@ class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track
     }
 }
 
-object DurationColumn : ColumnByString<Track>(header = "Duration") {
+object DurationColumn : ColumnByString<Track>(name = "Duration") {
     override val cellAlignment = Alignment.TopEnd
 
     override fun toString(item: Track, index: Int) = formatDuration(item.durationMs)
@@ -213,21 +203,16 @@ object DurationColumn : ColumnByString<Track>(header = "Duration") {
     }
 }
 
-object TrackNumberColumn : ColumnByNumber<Track>(header = "#") {
+object TrackNumberColumn : ColumnByNumber<Track>(name = "#", sortable = true) {
     override fun toNumber(item: Track, index: Int) = item.trackNumber
 }
 
-object PopularityColumn : Column<Track>() {
+object PopularityColumn : Column<Track>(name = "Popularity", sortable = true) {
     override val width: ColumnWidth = ColumnWidth.MatchHeader
     override val cellAlignment = Alignment.TopEnd
 
     private val Track.popularity: Int?
         get() = (this as? FullTrack)?.popularity ?: (this as? SimplifiedTrack)?.popularity
-
-    @Composable
-    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
-        standardHeader(sort = sort, onSetSort = onSetSort, header = "Popularity")
-    }
 
     @Composable
     override fun item(item: Track, index: Int) {
@@ -257,14 +242,9 @@ object PopularityColumn : Column<Track>() {
     }
 }
 
-object RatingColumn : Column<Track>() {
+object RatingColumn : Column<Track>(name = "Rating", sortable = true) {
     override val width: ColumnWidth = ColumnWidth.Fill()
     override val cellAlignment = Alignment.Center
-
-    @Composable
-    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
-        standardHeader(sort = sort, onSetSort = onSetSort, header = "Rating")
-    }
 
     @Composable
     override fun item(item: Track, index: Int) {

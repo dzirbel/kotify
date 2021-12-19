@@ -41,6 +41,7 @@ import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByRelativeDateText
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.Sort
+import com.dzirbel.kotify.ui.components.table.SortOrder
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -327,85 +328,85 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
 // TODO allow refreshing artist/album
 private val artistColumns = listOf(
-    object : ColumnByString<LibraryCache.CachedArtist>(header = "Name") {
+    object : ColumnByString<LibraryCache.CachedArtist>(name = "Name") {
         override fun toString(item: LibraryCache.CachedArtist, index: Int): String = item.artist?.name.orEmpty()
     },
 
-    object : ColumnByString<LibraryCache.CachedArtist>(header = "ID") {
+    object : ColumnByString<LibraryCache.CachedArtist>(name = "ID") {
         override fun toString(item: LibraryCache.CachedArtist, index: Int): String = item.id
     },
 
-    object : ColumnByString<LibraryCache.CachedArtist>(header = "Type") {
+    object : ColumnByString<LibraryCache.CachedArtist>(name = "Type") {
         override fun toString(item: LibraryCache.CachedArtist, index: Int): String {
             return item.artist?.let { it::class.java.simpleName }.orEmpty()
         }
     },
 
-    object : ColumnByRelativeDateText<LibraryCache.CachedArtist>(header = "Artist updated") {
+    object : ColumnByRelativeDateText<LibraryCache.CachedArtist>(name = "Artist updated") {
         override fun timestampFor(item: LibraryCache.CachedArtist, index: Int) = item.updated
     },
 
-    object : ColumnByNumber<LibraryCache.CachedArtist>(header = "Albums") {
+    object : ColumnByNumber<LibraryCache.CachedArtist>(name = "Albums") {
         override fun toNumber(item: LibraryCache.CachedArtist, index: Int) = item.albums?.size
     },
 
-    object : ColumnByRelativeDateText<LibraryCache.CachedArtist>(header = "Albums updated") {
+    object : ColumnByRelativeDateText<LibraryCache.CachedArtist>(name = "Albums updated") {
         override fun timestampFor(item: LibraryCache.CachedArtist, index: Int) = item.albumsUpdated
     },
 )
 
 // TODO allow refreshing album
 private val albumColumns = listOf(
-    object : ColumnByString<LibraryCache.CachedAlbum>(header = "Name") {
+    object : ColumnByString<LibraryCache.CachedAlbum>(name = "Name") {
         override fun toString(item: LibraryCache.CachedAlbum, index: Int): String = item.album?.name.orEmpty()
     },
 
-    object : ColumnByString<LibraryCache.CachedAlbum>(header = "Artists") {
+    object : ColumnByString<LibraryCache.CachedAlbum>(name = "Artists") {
         override fun toString(item: LibraryCache.CachedAlbum, index: Int): String {
             return item.album?.artists?.joinToString { it.name }.orEmpty()
         }
     },
 
-    object : ColumnByString<LibraryCache.CachedAlbum>(header = "ID") {
+    object : ColumnByString<LibraryCache.CachedAlbum>(name = "ID") {
         override fun toString(item: LibraryCache.CachedAlbum, index: Int): String = item.id
     },
 
-    object : ColumnByString<LibraryCache.CachedAlbum>(header = "Type") {
+    object : ColumnByString<LibraryCache.CachedAlbum>(name = "Type") {
         override fun toString(item: LibraryCache.CachedAlbum, index: Int): String {
             return item.album?.let { it::class.java.simpleName }.orEmpty()
         }
     },
 
-    object : ColumnByRelativeDateText<LibraryCache.CachedAlbum>(header = "Album updated") {
+    object : ColumnByRelativeDateText<LibraryCache.CachedAlbum>(name = "Album updated") {
         override fun timestampFor(item: LibraryCache.CachedAlbum, index: Int) = item.updated
     },
 )
 
 // TODO allow refreshing playlist/tracks
 private val playlistColumns = listOf(
-    object : ColumnByString<LibraryCache.CachedPlaylist>(header = "Name") {
+    object : ColumnByString<LibraryCache.CachedPlaylist>(name = "Name") {
         override fun toString(item: LibraryCache.CachedPlaylist, index: Int): String = item.playlist?.name.orEmpty()
     },
 
-    object : ColumnByString<LibraryCache.CachedPlaylist>(header = "ID") {
+    object : ColumnByString<LibraryCache.CachedPlaylist>(name = "ID") {
         override fun toString(item: LibraryCache.CachedPlaylist, index: Int): String = item.id
     },
 
-    object : ColumnByString<LibraryCache.CachedPlaylist>(header = "Type") {
+    object : ColumnByString<LibraryCache.CachedPlaylist>(name = "Type") {
         override fun toString(item: LibraryCache.CachedPlaylist, index: Int): String {
             return item.playlist?.let { it::class.java.simpleName }.orEmpty()
         }
     },
 
-    object : ColumnByRelativeDateText<LibraryCache.CachedPlaylist>(header = "Playlist updated") {
+    object : ColumnByRelativeDateText<LibraryCache.CachedPlaylist>(name = "Playlist updated") {
         override fun timestampFor(item: LibraryCache.CachedPlaylist, index: Int) = item.updated
     },
 
-    object : ColumnByNumber<LibraryCache.CachedPlaylist>(header = "Tracks") {
+    object : ColumnByNumber<LibraryCache.CachedPlaylist>(name = "Tracks") {
         override fun toNumber(item: LibraryCache.CachedPlaylist, index: Int) = item.tracks?.trackIds?.size
     },
 
-    object : ColumnByRelativeDateText<LibraryCache.CachedPlaylist>(header = "Tracks updated") {
+    object : ColumnByRelativeDateText<LibraryCache.CachedPlaylist>(name = "Tracks updated") {
         override fun timestampFor(item: LibraryCache.CachedPlaylist, index: Int) = item.tracksUpdated
     },
 )
@@ -888,7 +889,7 @@ private fun Ratings(state: LibraryStatePresenter.State, presenter: LibraryStateP
             columns = ratedTrackColumns,
             items = ratedTracks,
             modifier = Modifier.widthIn(max = RATINGS_TABLE_WIDTH),
-            defaultSort = Pair(RatingColumn, Sort.REVERSE_ORDER), // sort by rating descending by default
+            defaultSortOrder = Sort(RatingColumn, SortOrder.DESCENDING), // sort by rating descending by default
         )
     }
 }

@@ -3,6 +3,7 @@ package com.dzirbel.kotify.ui.components
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.TextButton
@@ -22,13 +23,29 @@ fun SimpleTextButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(Dimens.space3),
+    enforceMinWidth: Boolean = true,
+    enforceMinHeight: Boolean = false,
     backgroundColor: Color = Color.Transparent,
     textColor: Color = if (backgroundColor == Color.Transparent) Colors.current.text else Colors.current.textOnSurface,
     onClick: () -> Unit,
     content: @Composable RowScope.() -> Unit
 ) {
     TextButton(
-        modifier = modifier.heightIn(min = 1.dp), // override minimum button height, 0dp doesn't work
+        modifier = modifier
+            .let {
+                if (enforceMinWidth) {
+                    it
+                } else {
+                    it.widthIn(min = 1.dp)
+                }
+            }
+            .let {
+                if (enforceMinHeight) {
+                    it
+                } else {
+                    it.heightIn(min = 1.dp)
+                }
+            },
         enabled = enabled,
         contentPadding = contentPadding,
         shape = RectangleShape,

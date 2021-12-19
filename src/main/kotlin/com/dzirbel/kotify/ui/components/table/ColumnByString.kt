@@ -11,10 +11,10 @@ import com.dzirbel.kotify.ui.theme.Dimens
  * A simple [Column] where the header and content are rendered as [Text] via [toString].
  */
 abstract class ColumnByString<T>(
-    private val header: String,
+    name: String,
+    sortable: Boolean = true,
     private val padding: Dp = Dimens.space3,
-    private val sortable: Boolean = true,
-) : Column<T>() {
+) : Column<T>(name = name, sortable = sortable) {
     /**
      * Renders the content of the given [item] as the returned string.
      */
@@ -25,8 +25,8 @@ abstract class ColumnByString<T>(
     }
 
     @Composable
-    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
-        standardHeader(sort = sort, onSetSort = onSetSort, header = header, padding = padding, sortable = sortable)
+    override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
+        standardHeader(sortOrder = sortOrder, onSetSort = onSetSort, padding = padding)
     }
 
     @Composable

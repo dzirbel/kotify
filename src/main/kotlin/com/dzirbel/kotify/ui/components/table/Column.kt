@@ -5,9 +5,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,7 +18,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 /**
  * Represents a single column in a [Table].
  */
-abstract class Column<T> {
+abstract class Column<T>(val name: String, val sortable: Boolean) {
     /**
      * The policy by which the width of the column is measured.
      */
@@ -47,10 +44,10 @@ abstract class Column<T> {
     }
 
     /**
-     * Returns a [Comparator] which compares indexed elements of type [T] according to [compare] and the given [sort]
-     * order.
+     * Returns a [Comparator] which compares indexed elements of type [T] according to [compare] and the given
+     * [sortOrder] order.
      */
-    fun getComparator(sort: Sort): Comparator<IndexedValue<T>> {
+    fun getComparator(sortOrder: SortOrder): Comparator<IndexedValue<T>> {
         return Comparator<IndexedValue<T>> { (firstIndex, first), (secondIndex, second) ->
             compare(
                 first = first,
@@ -58,14 +55,16 @@ abstract class Column<T> {
                 second = second,
                 secondIndex = secondIndex
             )
-        }.let { if (sort == Sort.REVERSE_ORDER) it.reversed() else it }
+        }.let { if (sortOrder == SortOrder.DESCENDING) it.reversed() else it }
     }
 
     /**
      * The content for the header of this column.
      */
     @Composable
-    abstract fun header(sort: Sort?, onSetSort: (Sort?) -> Unit)
+    open fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
+        standardHeader(sortOrder = sortOrder, onSetSort = onSetSort)
+    }
 
     /**
      * The content for the given [item] at the given [index].
@@ -78,10 +77,10 @@ abstract class Column<T> {
      */
     @Composable
     fun standardHeader(
-        sort: Sort?,
-        onSetSort: (Sort?) -> Unit,
-        header: String,
-        sortable: Boolean = true,
+        sortOrder: SortOrder?,
+        onSetSort: (SortOrder?) -> Unit,
+        header: String = name,
+        sortable: Boolean = this.sortable,
         padding: Dp = Dimens.space3
     ) {
         if (sortable) {
@@ -89,10 +88,10 @@ abstract class Column<T> {
                 contentPadding = PaddingValues(end = padding),
                 onClick = {
                     onSetSort(
-                        when (sort) {
-                            Sort.IN_ORDER -> Sort.REVERSE_ORDER
-                            Sort.REVERSE_ORDER -> null
-                            null -> Sort.IN_ORDER
+                        when (sortOrder) {
+                            SortOrder.ASCENDING -> SortOrder.DESCENDING
+                            SortOrder.DESCENDING -> null
+                            null -> SortOrder.ASCENDING
                         }
                     )
                 }
@@ -103,17 +102,11 @@ abstract class Column<T> {
                     modifier = Modifier.padding(start = padding, top = padding, bottom = padding, end = padding / 2)
                 )
 
-                val icon = when (sort) {
-                    Sort.IN_ORDER -> Icons.Default.KeyboardArrowUp
-                    Sort.REVERSE_ORDER -> Icons.Default.KeyboardArrowDown
-                    null -> Icons.Default.KeyboardArrowUp
-                }
-
                 Icon(
-                    imageVector = icon,
+                    imageVector = sortOrder.icon,
                     contentDescription = null,
                     modifier = Modifier.size(Dimens.iconSmall),
-                    tint = Colors.current.highlighted(sort != null, otherwise = Color.Transparent)
+                    tint = Colors.current.highlighted(sortOrder != null, otherwise = Color.Transparent)
                 )
             }
         } else {
@@ -125,9 +118,9 @@ abstract class Column<T> {
      * Creates a new [Column] from this [Column] with the same values, but mapped with [mapper]. This is convenient for
      * reusing a [Column] with a different type of item but the same content.
      */
-    fun <R> mapped(mapper: (R) -> T): Column<R> {
+    fun <R> mapped(name: String = this.name, sortable: Boolean = this.sortable, mapper: (R) -> T): Column<R> {
         val base = this
-        return object : Column<R>() {
+        return object : Column<R>(name = name, sortable = sortable) {
             override val width = base.width
             override val cellAlignment = base.cellAlignment
             override val headerAlignment = base.headerAlignment
@@ -142,8 +135,8 @@ abstract class Column<T> {
             }
 
             @Composable
-            override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
-                base.header(sort, onSetSort)
+            override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
+                base.header(sortOrder, onSetSort)
             }
 
             @Composable

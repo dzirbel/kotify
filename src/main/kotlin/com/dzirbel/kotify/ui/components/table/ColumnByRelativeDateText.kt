@@ -12,10 +12,10 @@ import com.dzirbel.kotify.ui.theme.Dimens
  * A standard [Column] which displays a relative date text for each row based on [timestampFor].
  */
 abstract class ColumnByRelativeDateText<T>(
-    private val header: String,
+    name: String,
+    sortable: Boolean = true,
     private val padding: Dp = Dimens.space3,
-    private val sortable: Boolean = true,
-) : Column<T>() {
+) : Column<T>(name = name, sortable = sortable) {
     /**
      * Returns the timestamp of the content to be rendered as a relative date.
      */
@@ -26,8 +26,8 @@ abstract class ColumnByRelativeDateText<T>(
     }
 
     @Composable
-    override fun header(sort: Sort?, onSetSort: (Sort?) -> Unit) {
-        standardHeader(sort = sort, onSetSort = onSetSort, header = header, padding = padding, sortable = sortable)
+    override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
+        standardHeader(sortOrder = sortOrder, onSetSort = onSetSort, padding = padding)
     }
 
     @Composable

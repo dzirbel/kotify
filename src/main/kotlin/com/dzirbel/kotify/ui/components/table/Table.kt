@@ -17,23 +17,21 @@ import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlin.math.roundToInt
 
-enum class Sort { IN_ORDER, REVERSE_ORDER }
-
 @Composable
 fun <T> Table(
     columns: List<Column<T>>,
     items: List<T>,
     includeHeader: Boolean = true,
     modifier: Modifier = Modifier,
-    defaultSort: Pair<Column<T>, Sort>? = null,
+    defaultSortOrder: Sort<T>? = null,
 ) {
-    val sortState: MutableState<Pair<Column<T>, Sort>?> = remember { mutableStateOf(defaultSort) }
+    val sortState: MutableState<Sort<T>?> = remember { mutableStateOf(defaultSortOrder) }
     Table(
         columns = columns,
         items = items,
         includeHeader = includeHeader,
         modifier = modifier,
-        sort = sortState.value,
+        sorts = listOfNotNull(sortState.value),
         onSetSort = { sortState.value = it },
     )
 }
@@ -52,8 +50,8 @@ fun <T> Table(
     items: List<T>,
     includeHeader: Boolean = true,
     modifier: Modifier = Modifier,
-    sort: Pair<Column<T>, Sort>?,
-    onSetSort: (Pair<Column<T>, Sort>?) -> Unit,
+    sorts: List<Sort<T>>,
+    onSetSort: (Sort<T>?) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
 
@@ -62,15 +60,19 @@ fun <T> Table(
     val numDividers = numRows - 1
 
     // map from original row index to its index when sorted
-    val sortedIndexMap: IntArray = remember(sort, items) {
-        val indexed = sort?.let { (column, sort) ->
-            val comparator = column.getComparator(sort)
+    val sortedIndexMap: IntArray = remember(sorts, items) {
+        val indexed = if (sorts.isEmpty()) {
+            IntArray(items.size) { it }
+        } else {
+            // TODO test and extract
+            val comparators = sorts.map { it.column.getComparator(it.sortOrder) }
+            val combinedComparator = comparators.reduce { first, second -> first.thenComparing(second) }
 
             val indexedArray = Array(items.size) { index -> IndexedValue(index = index, value = items[index]) }
-            indexedArray.sortWith(comparator)
+            indexedArray.sortWith(combinedComparator)
 
             IntArray(indexedArray.size) { indexedArray[it].index }
-        } ?: IntArray(items.size) { it }
+        }
 
         if (includeHeader) {
             // prepend 0 and increment all the other indexes to account for the header row
@@ -87,8 +89,8 @@ fun <T> Table(
                 columns.forEach { column ->
                     Box {
                         column.header(
-                            sort = if (sort?.first == column) sort.second else null,
-                            onSetSort = { onSetSort(it?.let { Pair(column, it) }) },
+                            sortOrder = sorts.firstOrNull { it.column == column }?.sortOrder,
+                            onSetSort = { onSetSort(it?.let { Sort(column, it) }) },
                         )
                     }
                 }
