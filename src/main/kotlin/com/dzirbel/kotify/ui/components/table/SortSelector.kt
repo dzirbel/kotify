@@ -93,7 +93,15 @@ fun <T> SortSelector(
 
         val addDropdownExpanded = remember { mutableStateOf(false) }
 
-        IconButton(onClick = { addDropdownExpanded.value = true }) {
+        val sortableColumns = remember(sorts, columns) {
+            val sortColumns = sorts.mapTo(mutableSetOf()) { it.column }
+            columns.filter { it.sortable && it !in sortColumns }
+        }
+
+        IconButton(
+            enabled = sortableColumns.isNotEmpty(),
+            onClick = { addDropdownExpanded.value = true },
+        ) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = null,
@@ -105,19 +113,16 @@ fun <T> SortSelector(
             expanded = addDropdownExpanded.value,
             onDismissRequest = { addDropdownExpanded.value = false }
         ) {
-            columns.forEach { column ->
-                // TODO optimize
-                if (column.sortable && sorts.none { it.column == column }) {
-                    DropdownMenuItem(
-                        onClick = {
-                            addDropdownExpanded.value = false
+            sortableColumns.forEach { column ->
+                DropdownMenuItem(
+                    onClick = {
+                        addDropdownExpanded.value = false
 
-                            val newSort = Sort(column = column, sortOrder = SortOrder.ASCENDING)
-                            onSetSort(sorts.plus(newSort))
-                        }
-                    ) {
-                        Text(column.name)
+                        val newSort = Sort(column = column, sortOrder = SortOrder.ASCENDING)
+                        onSetSort(sorts.plus(newSort))
                     }
+                ) {
+                    Text(column.name)
                 }
             }
         }
