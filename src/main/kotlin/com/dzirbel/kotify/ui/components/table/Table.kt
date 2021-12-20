@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.isSpecified
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.util.compareInOrder
 import kotlin.math.roundToInt
 
 @Composable
@@ -64,12 +65,10 @@ fun <T> Table(
         val indexed = if (sorts.isEmpty()) {
             IntArray(items.size) { it }
         } else {
-            // TODO test and extract
-            val comparators = sorts.map { it.column.getComparator(it.sortOrder) }
-            val combinedComparator = comparators.reduce { first, second -> first.thenComparing(second) }
+            val comparator = sorts.map { it.comparator }.compareInOrder()
 
             val indexedArray = Array(items.size) { index -> IndexedValue(index = index, value = items[index]) }
-            indexedArray.sortWith(combinedComparator)
+            indexedArray.sortWith(comparator)
 
             IntArray(indexedArray.size) { indexedArray[it].index }
         }

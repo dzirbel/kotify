@@ -31,6 +31,7 @@ import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.ReorderCalculator
+import com.dzirbel.kotify.util.compareInOrder
 import com.dzirbel.kotify.util.formatDateTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -115,13 +116,9 @@ private class PlaylistPresenter(
             is Event.SetSorts -> mutateState { it?.copy(sorts = event.sorts) }
 
             is Event.Order -> {
-                // TODO test and extract
-                val comparators = event.sorts.map { it.column.getComparator(it.sortOrder) }
-                val combinedComparator = comparators.reduce { first, second -> first.thenComparing(second) }
-
                 val ops = ReorderCalculator.calculateReorderOperations(
                     list = event.tracks.withIndex().toList(),
-                    comparator = combinedComparator,
+                    comparator = event.sorts.map { it.comparator }.compareInOrder(),
                 )
 
                 if (ops.isNotEmpty()) {

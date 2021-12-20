@@ -44,21 +44,6 @@ abstract class Column<T>(val name: String, val sortable: Boolean) {
     }
 
     /**
-     * Returns a [Comparator] which compares indexed elements of type [T] according to [compare] and the given
-     * [sortOrder] order.
-     */
-    fun getComparator(sortOrder: SortOrder): Comparator<IndexedValue<T>> {
-        return Comparator<IndexedValue<T>> { (firstIndex, first), (secondIndex, second) ->
-            compare(
-                first = first,
-                firstIndex = firstIndex,
-                second = second,
-                secondIndex = secondIndex
-            )
-        }.let { if (sortOrder == SortOrder.DESCENDING) it.reversed() else it }
-    }
-
-    /**
      * The content for the header of this column.
      */
     @Composable
