@@ -9,12 +9,14 @@ import java.util.Properties
 private object Versions {
     const val coroutines = "1.5.2" // https://github.com/Kotlin/kotlinx.coroutines
     const val detekt = "1.18.1" // https://github.com/detekt/detekt; also update plugin version
+    const val exposed = "0.36.2" // https://github.com/JetBrains/Exposed
     const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco
     const val junit4 = "4.13.2" // https://junit.org/junit4/
     const val junit5 = "5.8.2" // https://junit.org/junit5/
     const val kotlinReflect = "1.5.31" // should match kotlin version
     const val kotlinxSerialization = "1.3.1" // https://github.com/Kotlin/kotlinx.serialization
     const val slf4j = "1.7.32" // http://www.slf4j.org/
+    const val sqliteJdbc = "3.36.0.3" // https://github.com/xerial/sqlite-jdbc
     const val ktor = "1.6.7" // https://ktor.io/changelog/
     const val mockk = "1.12.1" // https://mockk.io/
     const val okhttp = "4.9.2" // https://square.github.io/okhttp/
@@ -61,6 +63,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx", "kotlinx-serialization-json", Versions.kotlinxSerialization)
     implementation("org.slf4j", "slf4j-nop", Versions.slf4j)
 
+    implementation("org.jetbrains.exposed:exposed-core:${Versions.exposed}")
+    implementation("org.jetbrains.exposed:exposed-dao:${Versions.exposed}")
+    implementation("org.jetbrains.exposed:exposed-jdbc:${Versions.exposed}")
+    implementation("org.jetbrains.exposed:exposed-java-time:${Versions.exposed}")
+    implementation("org.xerial:sqlite-jdbc:${Versions.sqliteJdbc}")
+
     testImplementation("org.jetbrains.kotlinx", "kotlinx-coroutines-test", Versions.coroutines)
     testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit5)
     testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit5)
@@ -86,6 +94,7 @@ dependencies {
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.allWarningsAsErrors = true
     kotlinOptions.jvmTarget = "16"
+    kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.ExperimentalUnsignedTypes"
     kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.time.ExperimentalTime"
     kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
     kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlinx.coroutines.FlowPreview"
