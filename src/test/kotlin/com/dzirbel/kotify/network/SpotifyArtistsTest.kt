@@ -2,7 +2,7 @@ package com.dzirbel.kotify.network
 
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
-import com.dzirbel.kotify.network.model.SimplifiedAlbum
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
 import com.dzirbel.kotify.properties.ArtistProperties
 import com.dzirbel.kotify.zipWithBy
 import com.google.common.truth.Truth.assertThat
@@ -43,7 +43,9 @@ internal class SpotifyArtistsTest {
     @ParameterizedTest
     @MethodSource("artists")
     fun getArtistAlbums(artistProperties: ArtistProperties) {
-        val albums = runBlocking { Spotify.Artists.getArtistAlbums(artistProperties.id).fetchAll<SimplifiedAlbum>() }
+        val albums = runBlocking {
+            Spotify.Artists.getArtistAlbums(artistProperties.id).fetchAll<SimplifiedSpotifyAlbum>()
+        }
 
         if (albums.size != artistProperties.albums.size) {
             val expectedIds = artistProperties.albums.map { it.id }

@@ -28,10 +28,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.network.model.Album
-import com.dzirbel.kotify.network.model.Artist
-import com.dzirbel.kotify.network.model.Playlist
-import com.dzirbel.kotify.network.model.PrivateUser
+import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.network.model.SpotifyArtist
+import com.dzirbel.kotify.network.model.SpotifyPlaylist
+import com.dzirbel.kotify.network.model.PrivateSpotifyUser
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.Page
@@ -48,7 +48,7 @@ object ArtistsPage : Page {
 }
 
 data class ArtistPage(val artistId: String) : Page {
-    fun titleFor(artist: Artist) = "Artist: ${artist.name}"
+    fun titleFor(artist: SpotifyArtist) = "Artist: ${artist.name}"
 }
 
 object AlbumsPage : Page {
@@ -56,11 +56,11 @@ object AlbumsPage : Page {
 }
 
 data class AlbumPage(val albumId: String) : Page {
-    fun titleFor(album: Album) = "Album: ${album.name}"
+    fun titleFor(album: SpotifyAlbum) = "Album: ${album.name}"
 }
 
 data class PlaylistPage(val playlistId: String) : Page {
-    fun titleFor(playlist: Playlist) = "Playlist: ${playlist.name}"
+    fun titleFor(playlist: SpotifyPlaylist) = "Playlist: ${playlist.name}"
 }
 
 object LibraryStatePage : Page {
@@ -72,7 +72,7 @@ object TracksPage : Page {
 }
 
 private class AuthenticationMenuPresenter(scope: CoroutineScope) :
-    Presenter<PrivateUser?, AuthenticationMenuPresenter.Event>(
+    Presenter<PrivateSpotifyUser?, AuthenticationMenuPresenter.Event>(
         scope = scope,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load),

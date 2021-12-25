@@ -4,7 +4,7 @@ import com.dzirbel.kotify.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-interface User : CacheableObject {
+interface SpotifyUser : CacheableObject {
     /** The Spotify user ID for this user. */
     override val id: String
 
@@ -12,16 +12,16 @@ interface User : CacheableObject {
     val displayName: String?
 
     /** Known public external URLs for this user. */
-    val externalUrls: ExternalUrl
+    val externalUrls: SpotifyExternalUrl
 
     /** Information about the followers of this user. */
-    val followers: Followers?
+    val followers: SpotifyFollowers?
 
     /** A link to the Web API endpoint for this user. */
     val href: String
 
     /** The user’s profile image. */
-    val images: List<Image>?
+    val images: List<SpotifyImage>?
 
     /** The object type: "user" */
     val type: String
@@ -34,28 +34,28 @@ interface User : CacheableObject {
  * https://developer.spotify.com/documentation/web-api/reference/#object-publicuserobject
  */
 @Serializable
-data class PublicUser(
+data class PublicSpotifyUser(
     @SerialName("display_name") override val displayName: String? = null,
-    @SerialName("external_urls") override val externalUrls: ExternalUrl,
-    override val followers: Followers? = null,
+    @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
+    override val followers: SpotifyFollowers? = null,
     override val href: String,
     override val id: String,
-    override val images: List<Image>? = null,
+    override val images: List<SpotifyImage>? = null,
     override val type: String,
     override val uri: String
-) : User
+) : SpotifyUser
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-privateuserobject
  */
 @Serializable
-data class PrivateUser(
+data class PrivateSpotifyUser(
     @SerialName("display_name") override val displayName: String? = null,
-    @SerialName("external_urls") override val externalUrls: ExternalUrl,
-    override val followers: Followers? = null,
+    @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
+    override val followers: SpotifyFollowers? = null,
     override val href: String,
     override val id: String,
-    override val images: List<Image>? = null,
+    override val images: List<SpotifyImage>? = null,
     override val type: String,
     override val uri: String,
 
@@ -76,7 +76,7 @@ data class PrivateUser(
      * The user’s explicit content settings. This field is only available when the current user has granted access to
      * the user-read-private scope.
      */
-    @SerialName("explicit_content") val explicitContent: ExplicitContentSettings,
+    @SerialName("explicit_content") val explicitContent: SpotifyExplicitContentSettings,
 
     /**
      * The user’s Spotify subscription level: "premium", "free", etc. (The subscription level "open" can be considered
@@ -84,4 +84,4 @@ data class PrivateUser(
      * This field is only available when the current user has granted access to the user-read-private scope.
      */
     val product: String? = null
-) : User
+) : SpotifyUser

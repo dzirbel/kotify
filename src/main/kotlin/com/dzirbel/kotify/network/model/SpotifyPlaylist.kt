@@ -5,7 +5,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Suppress("ComplexInterface")
-interface Playlist : SpotifyObject {
+interface SpotifyPlaylist : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the playlist. */
     override val href: String
 
@@ -31,17 +31,17 @@ interface Playlist : SpotifyObject {
     val description: String?
 
     /** Known external URLs for this playlist. */
-    val externalUrls: ExternalUrl
+    val externalUrls: SpotifyExternalUrl
 
     /**
      * Images for the playlist. The array may be empty or contain up to three images. The images are returned by size in
      * descending order. See Working with Playlists.
      * Note: If returned, the source URL for the image ( url ) is temporary and will expire in less than a day.
      */
-    val images: List<Image>
+    val images: List<SpotifyImage>
 
     /** The user who owns the playlist */
-    val owner: PublicUser
+    val owner: PublicSpotifyUser
 
     /** Undocumented field. */
     val primaryColor: String?
@@ -60,7 +60,7 @@ interface Playlist : SpotifyObject {
 }
 
 @Serializable
-data class SimplifiedPlaylist(
+data class SimplifiedSpotifyPlaylist(
     override val href: String,
     override val id: String,
     override val name: String,
@@ -68,19 +68,19 @@ data class SimplifiedPlaylist(
     override val uri: String,
     override val collaborative: Boolean,
     override val description: String,
-    @SerialName("external_urls") override val externalUrls: ExternalUrl,
-    override val images: List<Image>,
-    override val owner: PublicUser,
+    @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
+    override val images: List<SpotifyImage>,
+    override val owner: PublicSpotifyUser,
     @SerialName("primary_color") override val primaryColor: String? = null,
     override val public: Boolean? = null,
     @SerialName("snapshot_id") override val snapshotId: String,
 
     /** Undocumented field. */
-    val tracks: PlaylistTracks?
-) : Playlist
+    val tracks: SpotifyPlaylistTracks?
+) : SpotifyPlaylist
 
 @Serializable
-data class FullPlaylist(
+data class FullSpotifyPlaylist(
     override val href: String,
     override val id: String,
     override val name: String,
@@ -88,26 +88,26 @@ data class FullPlaylist(
     override val uri: String,
     override val collaborative: Boolean,
     override val description: String?,
-    @SerialName("external_urls") override val externalUrls: ExternalUrl,
-    override val images: List<Image>,
-    override val owner: PublicUser,
+    @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
+    override val images: List<SpotifyImage>,
+    override val owner: PublicSpotifyUser,
     @SerialName("primary_color") override val primaryColor: String? = null,
     override val public: Boolean? = null,
     @SerialName("snapshot_id") override val snapshotId: String,
 
     /** Information about the followers of the playlist. */
-    val followers: Followers,
+    val followers: SpotifyFollowers,
 
     /** Information about the tracks of the playlist. */
-    val tracks: Paging<PlaylistTrack>
-) : Playlist {
+    val tracks: Paging<SpotifyPlaylistTrack>
+) : SpotifyPlaylist {
     override val cacheableObjects: Collection<CacheableObject>
         get() = tracks.items.map { it.track } // TODO doesn't cache tracks beyond the first page
 }
 
 /** Undocumented model. */
 @Serializable
-data class PlaylistTracks(
+data class SpotifyPlaylistTracks(
     val href: String,
     val total: Int
 )

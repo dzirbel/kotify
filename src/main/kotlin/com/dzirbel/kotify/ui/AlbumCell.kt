@@ -13,7 +13,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import com.dzirbel.kotify.network.model.Album
+import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
@@ -22,7 +22,7 @@ import com.dzirbel.kotify.ui.util.mutate
 
 @Composable
 fun AlbumCell(
-    album: Album,
+    album: SpotifyAlbum,
     savedAlbums: Set<String>?,
     pageStack: MutableState<PageStack>,
     onToggleSave: (Boolean) -> Unit

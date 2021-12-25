@@ -6,7 +6,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Suppress("ComplexInterface")
-interface Album : SpotifyObject {
+interface SpotifyAlbum : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the album. */
     override val href: String?
 
@@ -29,7 +29,7 @@ interface Album : SpotifyObject {
      * The artists of the album. Each artist object includes a link in href to more detailed information about the
      * artist.
      */
-    val artists: List<SimplifiedArtist>
+    val artists: List<SimplifiedSpotifyArtist>
 
     /**
      * The markets in which the album is available: ISO 3166-1 alpha-2 country codes. Note that an album is considered
@@ -41,7 +41,7 @@ interface Album : SpotifyObject {
     val externalUrls: Map<String, String>
 
     /** The cover art for the album in various sizes, widest first. */
-    val images: List<Image>
+    val images: List<SpotifyImage>
 
     /**
      * The date the album was first released, for example 1981. Depending on the precision, it might be shown as
@@ -78,14 +78,14 @@ interface Album : SpotifyObject {
  * https://developer.spotify.com/documentation/web-api/reference/#object-simplifiedalbumobject
  */
 @Serializable
-data class SimplifiedAlbum(
-    @SerialName("album_type") override val albumType: Album.Type? = null,
-    override val artists: List<SimplifiedArtist>,
+data class SimplifiedSpotifyAlbum(
+    @SerialName("album_type") override val albumType: SpotifyAlbum.Type? = null,
+    override val artists: List<SimplifiedSpotifyArtist>,
     @SerialName("available_markets") override val availableMarkets: List<String>? = null,
     @SerialName("external_urls") override val externalUrls: Map<String, String>,
     override val href: String? = null,
     override val id: String? = null,
-    override val images: List<Image>,
+    override val images: List<SpotifyImage>,
     override val name: String,
     @SerialName("release_date") override val releaseDate: String? = null,
     @SerialName("release_date_precision") override val releaseDatePrecision: String? = null,
@@ -99,8 +99,8 @@ data class SimplifiedAlbum(
      * "appears_on". Compare to album_type this field represents relationship between the artist and the album.
      */
     @SerialName("album_group")
-    val albumGroup: Album.Type? = null
-) : Album {
+    val albumGroup: SpotifyAlbum.Type? = null
+) : SpotifyAlbum {
     override val cacheableObjects: Collection<CacheableObject>
         get() = artists
 }
@@ -109,14 +109,14 @@ data class SimplifiedAlbum(
  * https://developer.spotify.com/documentation/web-api/reference/#object-albumobject
  */
 @Serializable
-data class FullAlbum(
-    @SerialName("album_type") override val albumType: Album.Type? = null,
-    override val artists: List<SimplifiedArtist>,
+data class FullSpotifyAlbum(
+    @SerialName("album_type") override val albumType: SpotifyAlbum.Type? = null,
+    override val artists: List<SimplifiedSpotifyArtist>,
     @SerialName("available_markets") override val availableMarkets: List<String>? = null,
     @SerialName("external_urls") override val externalUrls: Map<String, String>,
     override val href: String,
     override val id: String,
-    override val images: List<Image>,
+    override val images: List<SpotifyImage>,
     override val name: String,
     @SerialName("release_date") override val releaseDate: String,
     @SerialName("release_date_precision") override val releaseDatePrecision: String,
@@ -126,11 +126,11 @@ data class FullAlbum(
     override val uri: String,
 
     /** The copyright statements of the album. */
-    val copyrights: List<Copyright>,
+    val copyrights: List<SpotifyCopyright>,
 
     /** Known external IDs for the album. */
     @SerialName("external_ids")
-    val externalIds: ExternalId,
+    val externalIds: SpotifyExternalId,
 
     /**
      * A list of the genres used to classify the album. For example: "Prog Rock", "Post-Grunge". (If not yet classified,
@@ -148,8 +148,8 @@ data class FullAlbum(
     val popularity: Int,
 
     /** The tracks of the album. */
-    val tracks: Paging<SimplifiedTrack>
-) : Album {
+    val tracks: Paging<SimplifiedSpotifyTrack>
+) : SpotifyAlbum {
     override val cacheableObjects: Collection<CacheableObject>
         get() = artists.plus(tracks.items) // TODO doesn't cache tracks beyond the first page
 }
@@ -158,7 +158,7 @@ data class FullAlbum(
  * https://developer.spotify.com/documentation/web-api/reference/#object-savedalbumobject
  */
 @Serializable
-data class SavedAlbum(
+data class SpotifySavedAlbum(
     /**
      * The date and time the album was saved Timestamps are returned in ISO 8601 format as Coordinated Universal Time
      * (UTC) with a zero offset: YYYY-MM-DDTHH:MM:SSZ. If the time is imprecise (for example, the date/time of an album
@@ -167,7 +167,7 @@ data class SavedAlbum(
     @SerialName("added_at") val addedAt: String,
 
     /** Information about the album. */
-    val album: FullAlbum
+    val album: FullSpotifyAlbum
 ) : CacheableObject {
     override val id: String?
         get() = null

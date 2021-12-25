@@ -5,7 +5,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Suppress("ComplexInterface")
-interface Show : SpotifyObject {
+interface SpotifyShow : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the show. */
     override val href: String
 
@@ -25,7 +25,7 @@ interface Show : SpotifyObject {
     val availableMarkets: List<String>
 
     /** The copyright statements of the show. */
-    val copyrights: List<Copyright>
+    val copyrights: List<SpotifyCopyright>
 
     /** A description of the show. */
     val description: String
@@ -34,13 +34,13 @@ interface Show : SpotifyObject {
     val explicit: Boolean
 
     /** Known external URLs for this show. */
-    val externalUrls: ExternalUrl
+    val externalUrls: SpotifyExternalUrl
 
     /** Undocumented field. */
     val htmlDescription: String?
 
     /** The cover art for the show in various sizes, widest first. */
-    val images: List<Image>
+    val images: List<SpotifyImage>
 
     /**
      * True if all of the show’s episodes are hosted outside of Spotify’s CDN. This field might be null in some cases.
@@ -64,16 +64,16 @@ interface Show : SpotifyObject {
  * https://developer.spotify.com/documentation/web-api/reference/#object-simplifiedshowobject
  */
 @Serializable
-data class SimplifiedShow(
+data class SimplifiedSpotifyShow(
     @SerialName("available_markets") override val availableMarkets: List<String>,
-    override val copyrights: List<Copyright>,
+    override val copyrights: List<SpotifyCopyright>,
     override val description: String,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrl,
+    @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
     override val href: String,
     @SerialName("html_description") override val htmlDescription: String?,
     override val id: String,
-    override val images: List<Image>,
+    override val images: List<SpotifyImage>,
     @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean? = null,
     override val languages: List<String>,
     @SerialName("media_type") override val mediaType: String,
@@ -82,22 +82,22 @@ data class SimplifiedShow(
     @SerialName("total_episodes") override val totalEpisodes: Int,
     override val type: String,
     override val uri: String
-) : Show
+) : SpotifyShow
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-showobject
  */
 @Serializable
-data class FullShow(
+data class FullSpotifyShow(
     @SerialName("available_markets") override val availableMarkets: List<String>,
-    override val copyrights: List<Copyright>,
+    override val copyrights: List<SpotifyCopyright>,
     override val description: String,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrl,
+    @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
     override val href: String,
     @SerialName("html_description") override val htmlDescription: String?,
     override val id: String,
-    override val images: List<Image>,
+    override val images: List<SpotifyImage>,
     @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean? = null,
     override val languages: List<String>,
     @SerialName("media_type") override val mediaType: String,
@@ -107,8 +107,8 @@ data class FullShow(
     override val type: String,
     override val uri: String,
 
-    val episodes: Paging<SimplifiedEpisode>
-) : Show {
+    val episodes: Paging<SimplifiedSpotifyEpisode>
+) : SpotifyShow {
     override val cacheableObjects: Collection<CacheableObject>
         get() = episodes.items // TODO doesn't cache episodes beyond the first page
 }
@@ -117,7 +117,7 @@ data class FullShow(
  * https://developer.spotify.com/documentation/web-api/reference/#object-savedshowobject
  */
 @Serializable
-data class SavedShow(
+data class SpotifySavedShow(
     /**
      * The date and time the show was saved. Timestamps are returned in ISO 8601 format as Coordinated Universal Time
      * (UTC) with a zero offset: YYYY-MM-DDTHH:MM:SSZ. If the time is imprecise (for example, the date/time of an album
@@ -126,7 +126,7 @@ data class SavedShow(
     @SerialName("added_at") val addedAt: String,
 
     /** Information about the show. */
-    val show: SimplifiedShow
+    val show: SimplifiedSpotifyShow
 ) : CacheableObject {
     override val id: String? = null
 

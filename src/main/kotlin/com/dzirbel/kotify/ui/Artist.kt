@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.cache.SpotifyImageCache
-import com.dzirbel.kotify.network.model.Album
-import com.dzirbel.kotify.network.model.FullArtist
+import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
@@ -48,10 +48,10 @@ private class ArtistPresenter(
 ) {
 
     data class State(
-        val artist: FullArtist,
+        val artist: FullSpotifyArtist,
         val artistUpdated: Long?,
         val refreshingArtist: Boolean,
-        val artistAlbums: List<Album>,
+        val artistAlbums: List<SpotifyAlbum>,
         val artistAlbumsUpdated: Long?,
         val savedAlbums: Set<String>?,
         val refreshingArtistAlbums: Boolean
@@ -88,8 +88,8 @@ private class ArtistPresenter(
                     )
                 }
 
-                val artist: FullArtist?
-                val artistAlbums: List<Album>?
+                val artist: FullSpotifyArtist?
+                val artistAlbums: List<SpotifyAlbum>?
 
                 coroutineScope {
                     val deferredArtist = if (event.refreshArtist) {

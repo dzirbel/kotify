@@ -24,15 +24,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.network.model.FullAlbum
-import com.dzirbel.kotify.network.model.FullArtist
-import com.dzirbel.kotify.network.model.FullPlaylist
-import com.dzirbel.kotify.network.model.FullTrack
-import com.dzirbel.kotify.network.model.SimplifiedAlbum
-import com.dzirbel.kotify.network.model.SimplifiedArtist
-import com.dzirbel.kotify.network.model.SimplifiedPlaylist
-import com.dzirbel.kotify.network.model.SimplifiedTrack
-import com.dzirbel.kotify.network.model.Track
+import com.dzirbel.kotify.network.model.FullSpotifyAlbum
+import com.dzirbel.kotify.network.model.FullSpotifyArtist
+import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
+import com.dzirbel.kotify.network.model.FullSpotifyTrack
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyArtist
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
@@ -75,7 +75,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
         val tracks: List<LibraryCache.CachedTrack>?,
         val tracksUpdated: Long?,
 
-        val ratedTracks: List<Track>,
+        val ratedTracks: List<SpotifyTrack>,
 
         val refreshingSavedArtists: Boolean = false,
         val refreshingArtists: Set<String> = emptySet(),
@@ -207,7 +207,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.FetchMissingArtists -> {
-                val missingIds = requireNotNull(LibraryCache.artists?.filterValues { it !is FullArtist })
+                val missingIds = requireNotNull(LibraryCache.artists?.filterValues { it !is FullSpotifyArtist })
                 SpotifyCache.Artists.getFullArtists(ids = missingIds.keys.toList())
 
                 val artists = LibraryCache.cachedArtists
@@ -244,7 +244,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.FetchMissingAlbums -> {
-                val missingIds = requireNotNull(LibraryCache.albums?.filterValues { it !is FullAlbum })
+                val missingIds = requireNotNull(LibraryCache.albums?.filterValues { it !is FullSpotifyAlbum })
                 SpotifyCache.Albums.getAlbums(ids = missingIds.keys.toList())
 
                 val albums = LibraryCache.cachedAlbums
@@ -260,7 +260,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.FetchMissingTracks -> {
-                val missingIds = requireNotNull(LibraryCache.tracks?.filterValues { it !is FullTrack })
+                val missingIds = requireNotNull(LibraryCache.tracks?.filterValues { it !is FullSpotifyTrack })
                 SpotifyCache.Tracks.getFullTracks(ids = missingIds.keys.toList())
 
                 val tracks = LibraryCache.cachedTracks
@@ -281,7 +281,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.FetchMissingPlaylists -> {
-                val missingIds = requireNotNull(LibraryCache.playlists?.filterValues { it !is FullPlaylist })
+                val missingIds = requireNotNull(LibraryCache.playlists?.filterValues { it !is FullSpotifyPlaylist })
                 missingIds.keys
                     .asFlow()
                     .flatMapMerge { id ->
@@ -469,8 +469,8 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
         Row(verticalAlignment = Alignment.CenterVertically) {
             val totalSaved = artists.size
             val totalCached = artists.count { it.artist != null }
-            val simplified = artists.count { it.artist is SimplifiedArtist }
-            val full = artists.count { it.artist is FullArtist }
+            val simplified = artists.count { it.artist is SimplifiedSpotifyArtist }
+            val full = artists.count { it.artist is FullSpotifyArtist }
             val albums = artists.count { it.albums != null }
 
             Text("$totalSaved Saved Artists", modifier = Modifier.padding(end = Dimens.space3))
@@ -595,8 +595,8 @@ private fun Albums(state: LibraryStatePresenter.State, presenter: LibraryStatePr
         Row(verticalAlignment = Alignment.CenterVertically) {
             val totalSaved = albums.size
             val totalCached = albums.count { it.album != null }
-            val simplified = albums.count { it.album is SimplifiedAlbum }
-            val full = albums.count { it.album is FullAlbum }
+            val simplified = albums.count { it.album is SimplifiedSpotifyAlbum }
+            val full = albums.count { it.album is FullSpotifyAlbum }
 
             Text("$totalSaved Saved Albums", modifier = Modifier.padding(end = Dimens.space3))
 
@@ -681,8 +681,8 @@ private fun Tracks(state: LibraryStatePresenter.State, presenter: LibraryStatePr
         Row(verticalAlignment = Alignment.CenterVertically) {
             val totalSaved = tracks.size
             val totalCached = tracks.count { it.track != null }
-            val simplified = tracks.count { it.track is SimplifiedTrack }
-            val full = tracks.count { it.track is FullTrack }
+            val simplified = tracks.count { it.track is SimplifiedSpotifyTrack }
+            val full = tracks.count { it.track is FullSpotifyTrack }
 
             Text("$totalSaved Saved Tracks", modifier = Modifier.padding(end = Dimens.space3))
 
@@ -761,8 +761,8 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
         Row(verticalAlignment = Alignment.CenterVertically) {
             val totalSaved = playlists.size
             val totalCached = playlists.count { it.playlist != null }
-            val simplified = playlists.count { it.playlist is SimplifiedPlaylist }
-            val full = playlists.count { it.playlist is FullPlaylist }
+            val simplified = playlists.count { it.playlist is SimplifiedSpotifyPlaylist }
+            val full = playlists.count { it.playlist is FullSpotifyPlaylist }
             val tracks = playlists.count { it.tracks != null }
 
             Text("$totalSaved Saved Playlists", modifier = Modifier.padding(end = Dimens.space3))

@@ -1,9 +1,9 @@
 package com.dzirbel.kotify.network
 
-import com.dzirbel.kotify.properties.AlbumProperties
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
-import com.dzirbel.kotify.network.model.SimplifiedTrack
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.properties.AlbumProperties
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
@@ -42,7 +42,9 @@ internal class SpotifyAlbumsTest {
     @ParameterizedTest
     @MethodSource("albums")
     fun getAlbumTracks(albumProperties: AlbumProperties) {
-        val tracks = runBlocking { Spotify.Albums.getAlbumTracks(albumProperties.id).fetchAll<SimplifiedTrack>() }
+        val tracks = runBlocking {
+            Spotify.Albums.getAlbumTracks(albumProperties.id).fetchAll<SimplifiedSpotifyTrack>()
+        }
         val trackProperties = Fixtures.albums.getValue(albumProperties)
 
         assertThat(tracks).hasSize(trackProperties.size)

@@ -12,7 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.network.model.Track
+import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.table.Table
@@ -31,7 +31,7 @@ private class TracksPresenter(scope: CoroutineScope) :
 
     data class State(
         val refreshing: Boolean,
-        val tracks: List<Track>,
+        val tracks: List<SpotifyTrack>,
         val tracksUpdated: Long?
     )
 

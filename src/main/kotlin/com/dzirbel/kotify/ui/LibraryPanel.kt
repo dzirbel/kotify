@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.network.model.Playlist
+import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.SimpleTextButton
@@ -49,7 +49,7 @@ private class LibraryPresenter(scope: CoroutineScope) :
         initialState = null
     ) {
 
-    data class State(val refreshing: Boolean, val playlists: List<Playlist>, val playlistsUpdated: Long?)
+    data class State(val refreshing: Boolean, val playlists: List<SpotifyPlaylist>, val playlistsUpdated: Long?)
 
     sealed class Event {
         class LoadPlaylists(val invalidate: Boolean = false) : Event()
@@ -196,7 +196,7 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
 }
 
 @Composable
-private fun PlaylistItem(playlist: Playlist, pageStack: MutableState<PageStack>) {
+private fun PlaylistItem(playlist: SpotifyPlaylist, pageStack: MutableState<PageStack>) {
     val selected = pageStack.value.current == PlaylistPage(playlistId = playlist.id)
 
     SimpleTextButton(

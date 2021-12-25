@@ -5,7 +5,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Suppress("ComplexInterface")
-interface Episode : SpotifyObject {
+interface SpotifyEpisode : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the episode. */
     override val href: String
 
@@ -34,13 +34,13 @@ interface Episode : SpotifyObject {
     val explicit: Boolean
 
     /** External URLs for this episode. */
-    val externalUrls: ExternalUrl
+    val externalUrls: SpotifyExternalUrl
 
     /** Undocumented field */
     val htmlDescription: String?
 
     /** The cover art for the episode in various sizes, widest first. */
-    val images: List<Image>
+    val images: List<SpotifyImage>
 
     /** True if the episode is hosted outside of Spotify’s CDN. */
     val isExternallyHosted: Boolean
@@ -70,14 +70,14 @@ interface Episode : SpotifyObject {
      * The user’s most recent position in the episode. Set if the supplied access token is a user token and has the
      * scope user-read-playback-position.
      */
-    val resumePoint: ResumePoint?
+    val resumePoint: SpotifyResumePoint?
 }
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-simplifiedepisodeobject
  */
 @Serializable
-data class SimplifiedEpisode(
+data class SimplifiedSpotifyEpisode(
     override val href: String,
     override val id: String,
     override val name: String,
@@ -87,23 +87,23 @@ data class SimplifiedEpisode(
     override val description: String,
     @SerialName("duration_ms") override val durationMs: Int,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrl,
+    @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
     @SerialName("html_description") override val htmlDescription: String?,
-    override val images: List<Image>,
+    override val images: List<SpotifyImage>,
     @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean,
     @SerialName("is_playable") override val isPlayable: Boolean,
     override val language: String? = null,
     override val languages: List<String>,
     @SerialName("release_date") override val releaseDate: String,
     @SerialName("release_date_precision") override val releaseDatePrecision: String,
-    @SerialName("resume_point") override val resumePoint: ResumePoint? = null
-) : Episode
+    @SerialName("resume_point") override val resumePoint: SpotifyResumePoint? = null
+) : SpotifyEpisode
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-episodeobject
  */
 @Serializable
-data class FullEpisode(
+data class FullSpotifyEpisode(
     override val href: String,
     override val id: String,
     override val name: String,
@@ -113,20 +113,20 @@ data class FullEpisode(
     override val description: String,
     @SerialName("duration_ms") override val durationMs: Int,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrl,
+    @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
     @SerialName("html_description") override val htmlDescription: String?,
-    override val images: List<Image>,
+    override val images: List<SpotifyImage>,
     @SerialName("is_externally_hosted") override val isExternallyHosted: Boolean,
     @SerialName("is_playable") override val isPlayable: Boolean,
     override val language: String? = null,
     override val languages: List<String>,
     @SerialName("release_date") override val releaseDate: String,
     @SerialName("release_date_precision") override val releaseDatePrecision: String,
-    @SerialName("resume_point") override val resumePoint: ResumePoint? = null,
+    @SerialName("resume_point") override val resumePoint: SpotifyResumePoint? = null,
 
     /** The show on which the episode belongs. */
-    val show: SimplifiedShow
-) : Episode {
+    val show: SimplifiedSpotifyShow
+) : SpotifyEpisode {
     override val cacheableObjects: Collection<CacheableObject>
         get() = setOf(show)
 }

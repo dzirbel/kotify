@@ -19,9 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.network.model.FullTrack
-import com.dzirbel.kotify.network.model.SimplifiedTrack
-import com.dzirbel.kotify.network.model.Track
+import com.dzirbel.kotify.network.model.FullSpotifyTrack
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.hoverState
@@ -44,7 +44,7 @@ fun trackColumns(
     includeTrackNumber: Boolean = true,
     includeAlbum: Boolean = true,
     playContextFromIndex: ((Int) -> Player.PlayContext?)?
-): List<Column<Track>> {
+): List<Column<SpotifyTrack>> {
     return listOfNotNull(
         playContextFromIndex?.let { PlayingColumn(playContextFromIndex = it) },
         TrackNumberColumn.takeIf { includeTrackNumber },
@@ -59,8 +59,8 @@ fun trackColumns(
 }
 
 /**
- * A [Column] which displays the current play state of a [Track] with an icon, and allows playing a [Track] via the
- * [playContext].
+ * A [Column] which displays the current play state of a [SpotifyTrack] with an icon, and allows playing a
+ * [SpotifyTrack] via the [playContext].
  */
 class PlayingColumn(
     /**
@@ -68,7 +68,7 @@ class PlayingColumn(
      * column.
      */
     private val playContextFromIndex: (Int) -> Player.PlayContext?
-) : Column<Track>(name = "Currently playing", sortable = false) {
+) : Column<SpotifyTrack>(name = "Currently playing", sortable = false) {
     override val width = ColumnWidth.Fill()
     override val cellAlignment = Alignment.Center
 
@@ -78,7 +78,7 @@ class PlayingColumn(
     }
 
     @Composable
-    override fun item(item: Track, index: Int) {
+    override fun item(item: SpotifyTrack, index: Int) {
         val hoverState = remember { mutableStateOf(false) }
         Box(Modifier.hoverState(hoverState).padding(Dimens.space2).size(Dimens.fontBodyDp)) {
             if (Player.currentTrack.value?.id == item.id) {
@@ -108,7 +108,7 @@ class PlayingColumn(
     }
 }
 
-class SavedColumn(savedTracks: Set<String>?) : Column<Track>(name = "Saved", sortable = false) {
+class SavedColumn(savedTracks: Set<String>?) : Column<SpotifyTrack>(name = "Saved", sortable = false) {
     private val savedTracks = mutableStateOf(savedTracks)
 
     override val width = ColumnWidth.Fill()
@@ -119,7 +119,7 @@ class SavedColumn(savedTracks: Set<String>?) : Column<Track>(name = "Saved", sor
     }
 
     @Composable
-    override fun item(item: Track, index: Int) {
+    override fun item(item: SpotifyTrack, index: Int) {
         item.id?.let { trackId ->
             val scope = rememberCoroutineScope { Dispatchers.IO }
             ToggleSaveButton(
@@ -140,22 +140,24 @@ class SavedColumn(savedTracks: Set<String>?) : Column<Track>(name = "Saved", sor
     }
 }
 
-object NameColumn : ColumnByString<Track>(name = "Title") {
+object NameColumn : ColumnByString<SpotifyTrack>(name = "Title") {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override fun toString(item: Track, index: Int) = item.name
+    override fun toString(item: SpotifyTrack, index: Int) = item.name
 }
 
-class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Track>(name = "Artist", sortable = true) {
+class ArtistColumn(
+    private val pageStack: MutableState<PageStack>,
+) : Column<SpotifyTrack>(name = "Artist", sortable = true) {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+    override fun compare(first: SpotifyTrack, firstIndex: Int, second: SpotifyTrack, secondIndex: Int): Int {
         return first.artists.joinToString { it.name }
             .compareTo(second.artists.joinToString { it.name }, ignoreCase = true)
     }
 
     @Composable
-    override fun item(item: Track, index: Int) {
+    override fun item(item: SpotifyTrack, index: Int) {
         LinkedText(
             modifier = Modifier.padding(Dimens.space3),
             key = item,
@@ -170,15 +172,17 @@ class ArtistColumn(private val pageStack: MutableState<PageStack>) : Column<Trac
     }
 }
 
-class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track>(name = "Album", sortable = true) {
+class AlbumColumn(
+    private val pageStack: MutableState<PageStack>,
+) : Column<SpotifyTrack>(name = "Album", sortable = true) {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+    override fun compare(first: SpotifyTrack, firstIndex: Int, second: SpotifyTrack, secondIndex: Int): Int {
         return first.album?.name.orEmpty().compareTo(second.album?.name.orEmpty(), ignoreCase = true)
     }
 
     @Composable
-    override fun item(item: Track, index: Int) {
+    override fun item(item: SpotifyTrack, index: Int) {
         LinkedText(
             modifier = Modifier.padding(Dimens.space3),
             key = item,
@@ -193,29 +197,29 @@ class AlbumColumn(private val pageStack: MutableState<PageStack>) : Column<Track
     }
 }
 
-object DurationColumn : ColumnByString<Track>(name = "Duration") {
+object DurationColumn : ColumnByString<SpotifyTrack>(name = "Duration") {
     override val cellAlignment = Alignment.TopEnd
 
-    override fun toString(item: Track, index: Int) = formatDuration(item.durationMs)
+    override fun toString(item: SpotifyTrack, index: Int) = formatDuration(item.durationMs)
 
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+    override fun compare(first: SpotifyTrack, firstIndex: Int, second: SpotifyTrack, secondIndex: Int): Int {
         return first.durationMs.compareTo(second.durationMs)
     }
 }
 
-object TrackNumberColumn : ColumnByNumber<Track>(name = "#", sortable = true) {
-    override fun toNumber(item: Track, index: Int) = item.trackNumber
+object TrackNumberColumn : ColumnByNumber<SpotifyTrack>(name = "#", sortable = true) {
+    override fun toNumber(item: SpotifyTrack, index: Int) = item.trackNumber
 }
 
-object PopularityColumn : Column<Track>(name = "Popularity", sortable = true) {
+object PopularityColumn : Column<SpotifyTrack>(name = "Popularity", sortable = true) {
     override val width: ColumnWidth = ColumnWidth.MatchHeader
     override val cellAlignment = Alignment.TopEnd
 
-    private val Track.popularity: Int?
-        get() = (this as? FullTrack)?.popularity ?: (this as? SimplifiedTrack)?.popularity
+    private val SpotifyTrack.popularity: Int?
+        get() = (this as? FullSpotifyTrack)?.popularity ?: (this as? SimplifiedSpotifyTrack)?.popularity
 
     @Composable
-    override fun item(item: Track, index: Int) {
+    override fun item(item: SpotifyTrack, index: Int) {
         val popularity = item.popularity ?: 0
         val color = Colors.current.text.copy(alpha = ContentAlpha.disabled)
 
@@ -237,21 +241,21 @@ object PopularityColumn : Column<Track>(name = "Popularity", sortable = true) {
         }
     }
 
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+    override fun compare(first: SpotifyTrack, firstIndex: Int, second: SpotifyTrack, secondIndex: Int): Int {
         return first.popularity.compareToNullable(second.popularity)
     }
 }
 
-object RatingColumn : Column<Track>(name = "Rating", sortable = true) {
+object RatingColumn : Column<SpotifyTrack>(name = "Rating", sortable = true) {
     override val width: ColumnWidth = ColumnWidth.Fill()
     override val cellAlignment = Alignment.Center
 
     @Composable
-    override fun item(item: Track, index: Int) {
+    override fun item(item: SpotifyTrack, index: Int) {
         TrackStarRating(trackId = item.id, modifier = Modifier.padding(horizontal = Dimens.space3))
     }
 
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
+    override fun compare(first: SpotifyTrack, firstIndex: Int, second: SpotifyTrack, secondIndex: Int): Int {
         val firstRating = first.id?.let { SpotifyCache.Ratings.getRating(trackId = it) }
             ?.let { it.rating.toDouble() / it.maxRating }
         val secondRating = second.id?.let { SpotifyCache.Ratings.getRating(trackId = it) }

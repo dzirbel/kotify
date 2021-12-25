@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Section(
+data class SpotifySection(
     /** The starting point (in seconds) of the section. */
     val start: Float,
 

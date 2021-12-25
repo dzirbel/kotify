@@ -2,7 +2,7 @@ package com.dzirbel.kotify.network
 
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
-import com.dzirbel.kotify.network.model.SimplifiedPlaylist
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
 import com.dzirbel.kotify.properties.PlaylistProperties
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
@@ -19,7 +19,7 @@ import java.nio.file.Path
 class SpotifyPlaylistsTest {
     @Test
     fun getPlaylists() {
-        val playlists = runBlocking { Spotify.Playlists.getPlaylists().fetchAll<SimplifiedPlaylist>() }
+        val playlists = runBlocking { Spotify.Playlists.getPlaylists().fetchAll<SimplifiedSpotifyPlaylist>() }
 
         // don't zip since there are playlists that aren't in Fixtures
         Fixtures.playlists.forEach { playlistProperties ->
@@ -31,7 +31,7 @@ class SpotifyPlaylistsTest {
     @Test
     fun getPlaylistsByUser() {
         val playlists = runBlocking {
-            Spotify.Playlists.getPlaylists(userId = Fixtures.userId).fetchAll<SimplifiedPlaylist>()
+            Spotify.Playlists.getPlaylists(userId = Fixtures.userId).fetchAll<SimplifiedSpotifyPlaylist>()
         }
 
         // don't zip since there are playlists that aren't in Fixtures

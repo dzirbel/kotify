@@ -3,7 +3,7 @@ package com.dzirbel.kotify.network.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class TimeInterval(
+data class SpotifyTimeInterval(
     /** The starting point (in seconds) of the time interval. */
     val start: Float,
 

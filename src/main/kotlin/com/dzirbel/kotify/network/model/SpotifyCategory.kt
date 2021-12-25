@@ -6,12 +6,12 @@ import kotlinx.serialization.Serializable
  * https://developer.spotify.com/documentation/web-api/reference/#object-categoryobject
  */
 @Serializable
-data class Category(
+data class SpotifyCategory(
     /** A link to the Web API endpoint returning full details of the category. */
     val href: String,
 
     /** The category icon, in various sizes. */
-    val icons: List<Image>,
+    val icons: List<SpotifyImage>,
 
     /** The Spotify category ID of the category. */
     val id: String,

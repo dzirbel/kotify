@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.properties
 
-import com.dzirbel.kotify.network.model.Episode
+import com.dzirbel.kotify.network.model.SpotifyEpisode
 import com.google.common.truth.Truth.assertThat
 
 data class EpisodeProperties(
@@ -11,7 +11,7 @@ data class EpisodeProperties(
     private val releaseDatePrecision: String,
     private val languages: List<String>? = null,
 ) : ObjectProperties(type = "episode") {
-    fun check(episode: Episode) {
+    fun check(episode: SpotifyEpisode) {
         super.check(episode)
 
         assertThat(episode.description).isEqualTo(description)

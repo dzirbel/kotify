@@ -1,6 +1,6 @@
 package com.dzirbel.kotify
 
-import com.dzirbel.kotify.network.model.Album
+import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.properties.AlbumProperties
 import com.dzirbel.kotify.properties.ArtistProperties
 import com.dzirbel.kotify.properties.EpisodeProperties
@@ -351,169 +351,199 @@ object Fixtures {
                     "5P7GIlX83brISe8k0XQQL1",
                     "A Strange Encounter",
                     totalTracks = 10,
-                    albumType = Album.Type.ALBUM
+                    albumType = SpotifyAlbum.Type.ALBUM
                 ),
                 AlbumProperties(
                     "148kHVSDW2cwyAnmOUnSsm",
                     "Crystal Sounds",
                     totalTracks = 10,
-                    albumType = Album.Type.ALBUM
+                    albumType = SpotifyAlbum.Type.ALBUM
                 ),
-                AlbumProperties("1v0kIX9QOYJhmbixRoWpeY", "Contact", totalTracks = 10, albumType = Album.Type.ALBUM),
-                AlbumProperties("6ua9tnBfjtFbEvlwwPePNE", "Contact", totalTracks = 11, albumType = Album.Type.ALBUM),
+                AlbumProperties(
+                    "1v0kIX9QOYJhmbixRoWpeY",
+                    "Contact",
+                    totalTracks = 10,
+                    albumType = SpotifyAlbum.Type.ALBUM,
+                ),
+                AlbumProperties(
+                    "6ua9tnBfjtFbEvlwwPePNE",
+                    "Contact",
+                    totalTracks = 11,
+                    albumType = SpotifyAlbum.Type.ALBUM,
+                ),
                 AlbumProperties(
                     "53d6xPe9mO7wVUCCPqlUqb",
                     "The Invitation",
                     totalTracks = 12,
-                    albumType = Album.Type.ALBUM
+                    albumType = SpotifyAlbum.Type.ALBUM
                 ),
                 AlbumProperties(
                     "7JSZOMOVibNSpGWSfcgqcN",
                     "The Invitation",
                     totalTracks = 12,
-                    albumType = Album.Type.ALBUM
+                    albumType = SpotifyAlbum.Type.ALBUM
                 ),
                 AlbumProperties(
                     "2taMI79KWzXO0cOV4RJx4i",
                     "The Invitation",
                     totalTracks = 11,
-                    albumType = Album.Type.ALBUM
+                    albumType = SpotifyAlbum.Type.ALBUM
                 ),
                 AlbumProperties(
                     "2Ea6nI5gRsy7QXCYFihMEk",
                     "Into The Fire (Acoustic)",
                     totalTracks = 1,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "5nU3OZkQWBJnz1SijLLepR",
                     "Into the Fire (Acoustic)",
                     totalTracks = 1,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
-                AlbumProperties("3dXyenZqQJOktXiLRBXU55", "Home", totalTracks = 2, albumType = Album.Type.SINGLE),
+                AlbumProperties(
+                    "3dXyenZqQJOktXiLRBXU55",
+                    "Home",
+                    totalTracks = 2,
+                    albumType = SpotifyAlbum.Type.SINGLE,
+                ),
                 AlbumProperties(
                     "3CcltJjnlBarLBrnbU7Dgg",
                     "The Loneliest Star",
                     totalTracks = 2,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "4gUjTWrUEcc3Dc2M1k9Jj4",
                     "All The Love In Your Hands",
                     totalTracks = 3,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "5bb11iSUgn7dYtodcW5fhW",
                     "All The Love In Your Hands (Acoustic Version)",
                     totalTracks = 1,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "7i6IV55nXu52k7dqckivO7",
                     "All The Love In Your Hands (Cicada Remix Esingle)",
                     totalTracks = 1,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "1UYhCN5SOV713pJcCBQ7Cf",
                     "All The Love In Your Hands (Qattara Remix Esingle)",
                     totalTracks = 1,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
-                AlbumProperties("7ETiCkWai8cmWbVfnKCLJ6", "Follow Me", totalTracks = 3, albumType = Album.Type.SINGLE),
+                AlbumProperties(
+                    "7ETiCkWai8cmWbVfnKCLJ6",
+                    "Follow Me",
+                    totalTracks = 3,
+                    albumType = SpotifyAlbum.Type.SINGLE,
+                ),
                 AlbumProperties(
                     "75Rh0bIPEP7IJMUzpGo4os",
                     "Into The Fire (Cicada Remix)",
                     totalTracks = 1,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "14pHgW7BaEclVGKiw4xhAN",
                     "Thru The Glass",
                     totalTracks = 2,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "5Y1ybrFh0aScu26vW7HNwf",
                     "Thru The Glass (On-Line Exclusive)",
                     totalTracks = 1,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "6Qh7aqH8eZq6ttLEaLeaOK",
                     "Do No Wrong",
                     totalTracks = 2,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "2MniZtyXdn2pr4mKzDealC",
                     "Into The Fire",
                     totalTracks = 3,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "5OLMgzmbLgt7xLS2mBaxoo",
                     "Into The Fire",
                     totalTracks = 1,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "2zi2pN4YdijE2OWEFZmkPH",
                     "Thru The Glass",
                     totalTracks = 3,
-                    albumType = Album.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE
                 ),
                 AlbumProperties(
                     "5XLcGXPZdjtz3UkZMdJgvE",
                     "All My Love",
                     totalTracks = 36,
-                    albumType = Album.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION
                 ),
                 AlbumProperties(
                     "0NHF6ViRN7Bv55QVwZmfGR",
                     "Rock Chillout",
                     totalTracks = 31,
-                    albumType = Album.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION
                 ),
                 AlbumProperties(
                     "1TGoeK3BIRKHSOatnlHp6e",
                     "Pure Rock Ballads",
                     totalTracks = 18,
-                    albumType = Album.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION
                 ),
                 AlbumProperties(
                     "0fvoWtxY2mO6zgzCm9cqrj",
                     "Bones (Original Television Soundtrack)",
                     totalTracks = 13,
-                    albumType = Album.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION
                 ),
                 AlbumProperties(
                     "1uyjx3SQ0LOIiLsH45lq8s",
                     "Bones - Original Television Soundtrack",
                     totalTracks = 13,
-                    albumType = Album.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION
                 ),
-                AlbumProperties("5QkqgBLXsymXJKWaagawSY", "Indie Love", totalTracks = 19, albumType = Album.Type.ALBUM),
-                AlbumProperties("3rM6kWYqHb7RW1nWWxJF41", "Twisted", totalTracks = 19, albumType = Album.Type.ALBUM),
+                AlbumProperties(
+                    "5QkqgBLXsymXJKWaagawSY",
+                    "Indie Love",
+                    totalTracks = 19,
+                    albumType = SpotifyAlbum.Type.ALBUM,
+                ),
+                AlbumProperties(
+                    "3rM6kWYqHb7RW1nWWxJF41",
+                    "Twisted",
+                    totalTracks = 19,
+                    albumType = SpotifyAlbum.Type.ALBUM,
+                ),
                 AlbumProperties(
                     "0HojjwZyJFH4nywrYGfwMJ",
                     "¡Calor En La Ciudad!",
                     totalTracks = 39,
-                    albumType = Album.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION
                 ),
                 AlbumProperties(
                     "3r77ZQgndz6sw6emGvr7tR",
                     "Alternative Rock: The Best Of The Rest",
                     totalTracks = 30,
-                    albumType = Album.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION
                 ),
                 AlbumProperties(
                     "3ZCqORuVBN89Do4oYVDVnt",
                     "Chill Rock",
                     totalTracks = 30,
-                    albumType = Album.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION
                 ),
             )
         )

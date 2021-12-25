@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.properties
 
-import com.dzirbel.kotify.network.model.PlaylistTrack
-import com.dzirbel.kotify.network.model.SavedTrack
-import com.dzirbel.kotify.network.model.Track
+import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
+import com.dzirbel.kotify.network.model.SpotifySavedTrack
+import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.google.common.truth.Truth.assertThat
 
 data class TrackProperties(
@@ -16,7 +16,7 @@ data class TrackProperties(
     val addedBy: String? = null,
     val addedAt: String? = null
 ) : ObjectProperties(type = "track", hrefNull = isLocal) {
-    fun check(track: Track) {
+    fun check(track: SpotifyTrack) {
         super.check(track)
 
         assertThat(track.artists.map { it.name }).containsExactlyElementsIn(artistNames)
@@ -28,7 +28,7 @@ data class TrackProperties(
         assertThat(track.externalUrls).isNotNull()
     }
 
-    fun check(playlistTrack: PlaylistTrack) {
+    fun check(playlistTrack: SpotifyPlaylistTrack) {
         check(playlistTrack.track)
 
         assertThat(playlistTrack.isLocal).isEqualTo(isLocal)
@@ -36,7 +36,7 @@ data class TrackProperties(
         addedAt?.let { assertThat(playlistTrack.addedAt).isEqualTo(it) }
     }
 
-    fun check(savedTrack: SavedTrack) {
+    fun check(savedTrack: SpotifySavedTrack) {
         check(savedTrack.track)
 
         assertThat(addedAt).isNotNull()

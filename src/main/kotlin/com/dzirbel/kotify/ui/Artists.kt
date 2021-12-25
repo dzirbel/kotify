@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.cache.SpotifyImageCache
-import com.dzirbel.kotify.network.model.FullArtist
+import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -38,7 +38,7 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
 ) {
     data class State(
         val refreshing: Boolean,
-        val artists: List<FullArtist>,
+        val artists: List<FullSpotifyArtist>,
         val savedArtists: Set<String>,
         val artistsUpdated: Long?,
     )
@@ -133,7 +133,7 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
 
 @Composable
 private fun ArtistCell(
-    artist: FullArtist,
+    artist: FullSpotifyArtist,
     savedArtists: Set<String>,
     presenter: ArtistsPresenter,
     pageStack: MutableState<PageStack>,

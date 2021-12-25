@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class TrackLink(
+data class SpotifyTrackLink(
     /**
      * Known external URLs for this track.
      */

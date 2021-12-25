@@ -2,9 +2,9 @@ package com.dzirbel.kotify.network
 
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
-import com.dzirbel.kotify.network.model.SavedAlbum
-import com.dzirbel.kotify.network.model.SavedShow
-import com.dzirbel.kotify.network.model.SavedTrack
+import com.dzirbel.kotify.network.model.SpotifySavedAlbum
+import com.dzirbel.kotify.network.model.SpotifySavedShow
+import com.dzirbel.kotify.network.model.SpotifySavedTrack
 import com.dzirbel.kotify.zipWithBy
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test
 class SpotifyLibraryTest {
     @Test
     fun getSavedAlbums() {
-        val albums = runBlocking { Spotify.Library.getSavedAlbums().fetchAll<SavedAlbum>() }
+        val albums = runBlocking { Spotify.Library.getSavedAlbums().fetchAll<SpotifySavedAlbum>() }
 
         albums.zipWithBy(Fixtures.savedAlbums) { savedAlbum, albumProperties ->
             savedAlbum.album.id == albumProperties.id
@@ -56,7 +56,7 @@ class SpotifyLibraryTest {
     @Test
     fun getSavedTracks() {
         val tracksPaging = runBlocking { Spotify.Library.getSavedTracks() }
-        val tracks = runBlocking { tracksPaging.fetchAll<SavedTrack>() }
+        val tracks = runBlocking { tracksPaging.fetchAll<SpotifySavedTrack>() }
 
         tracks.zipWithBy(Fixtures.savedTracks) { savedTrack, trackProperties ->
             savedTrack.track.id == trackProperties.id
@@ -97,7 +97,7 @@ class SpotifyLibraryTest {
     @Test
     fun getSavedShows() {
         val showsPaging = runBlocking { Spotify.Library.getSavedShows() }
-        val shows = runBlocking { showsPaging.fetchAll<SavedShow>() }
+        val shows = runBlocking { showsPaging.fetchAll<SpotifySavedShow>() }
 
         val expected = Fixtures.shows.filter { it.saved }
 

@@ -36,10 +36,10 @@ import androidx.compose.ui.unit.sp
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.model.FullTrack
-import com.dzirbel.kotify.network.model.PlaybackDevice
-import com.dzirbel.kotify.network.model.SimplifiedTrack
-import com.dzirbel.kotify.network.model.Track
+import com.dzirbel.kotify.network.model.FullSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -105,15 +105,15 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
     }
 
     data class State(
-        val playbackTrack: Track? = null,
+        val playbackTrack: SpotifyTrack? = null,
         val playbackProgressMs: Long? = null,
         val playbackIsPlaying: Boolean? = null,
         val playbackShuffleState: Boolean? = null,
         val playbackRepeatState: String? = null,
-        val playbackCurrentDevice: PlaybackDevice? = null,
+        val playbackCurrentDevice: SpotifyPlaybackDevice? = null,
 
-        val selectedDevice: PlaybackDevice? = null,
-        val devices: List<PlaybackDevice>? = null,
+        val selectedDevice: SpotifyPlaybackDevice? = null,
+        val devices: List<SpotifyPlaybackDevice>? = null,
 
         // non-null when muted, saves the previous volume percent
         val savedVolume: Int? = null,
@@ -132,10 +132,10 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         val skippingPrevious: Boolean = false,
         val skippingNext: Boolean = false
     ) {
-        val currentDevice: PlaybackDevice?
+        val currentDevice: SpotifyPlaybackDevice?
             get() = selectedDevice ?: playbackCurrentDevice ?: devices?.firstOrNull()
 
-        fun withTrack(track: Track?): State {
+        fun withTrack(track: SpotifyTrack?): State {
             if (track == null) {
                 return copy(
                     playbackTrack = null,
@@ -147,8 +147,8 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
 
             val savedArtists = LibraryCache.savedArtists
             val albumId = when (track) {
-                is SimplifiedTrack -> track.album?.id
-                is FullTrack -> track.album.id
+                is SimplifiedSpotifyTrack -> track.album?.id
+                is FullSpotifyTrack -> track.album.id
                 else -> null
             }
             return copy(
@@ -188,7 +188,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         class ToggleMuteVolume(val mute: Boolean, val previousVolume: Int) : Event()
         class SeekTo(val positionMs: Int) : Event()
 
-        class SelectDevice(val device: PlaybackDevice) : Event()
+        class SelectDevice(val device: SpotifyPlaybackDevice) : Event()
 
         class ToggleTrackSaved(val trackId: String, val save: Boolean) : Event()
         class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
@@ -251,7 +251,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 ) {
                     emit(event.copy(retries = event.retries - 1))
                 } else {
-                    val currentDevice: PlaybackDevice?
+                    val currentDevice: SpotifyPlaybackDevice?
                     mutateState {
                         it.copy(devices = devices, loadingDevices = false)
                             .also { newState -> currentDevice = newState.currentDevice }
@@ -329,7 +329,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             is Event.LoadTrackPlayback -> {
-                val currentTrack: Track?
+                val currentTrack: SpotifyTrack?
                 mutateState {
                     currentTrack = it.playbackTrack
                     it.copy(loadingTrackPlayback = true)
@@ -542,7 +542,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             is Event.SelectDevice -> {
-                val previousSelectedDevice: PlaybackDevice?
+                val previousSelectedDevice: SpotifyPlaybackDevice?
                 mutateState {
                     previousSelectedDevice = it.selectedDevice
                     it.copy(selectedDevice = event.device)
@@ -721,7 +721,7 @@ fun BottomPanel(pageStack: MutableState<PageStack>) {
 
 @Composable
 private fun CurrentTrack(
-    track: Track?,
+    track: SpotifyTrack?,
     trackIsSaved: Boolean?,
     artistsAreSaved: Map<String, Boolean>?,
     albumIsSaved: Boolean?,
@@ -729,7 +729,7 @@ private fun CurrentTrack(
     pageStack: MutableState<PageStack>
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space4)) {
-        val album = (track as? FullTrack)?.album ?: (track as? SimplifiedTrack)?.album
+        val album = (track as? FullSpotifyTrack)?.album ?: (track as? SimplifiedSpotifyTrack)?.album
 
         LoadedImage(
             url = album?.images?.firstOrNull()?.url,
@@ -1145,7 +1145,7 @@ private fun DeviceControls(state: BottomPanelPresenter.State, presenter: BottomP
     }
 }
 
-private val PlaybackDevice?.iconName: String
+private val SpotifyPlaybackDevice?.iconName: String
     get() {
         if (this == null) return "devices-other"
         return when {

@@ -1,34 +1,34 @@
 package com.dzirbel.kotify.network
 
-import com.dzirbel.kotify.network.model.Album
-import com.dzirbel.kotify.network.model.AudioAnalysis
-import com.dzirbel.kotify.network.model.AudioFeatures
-import com.dzirbel.kotify.network.model.Category
 import com.dzirbel.kotify.network.model.CursorPaging
-import com.dzirbel.kotify.network.model.FullAlbum
-import com.dzirbel.kotify.network.model.FullArtist
-import com.dzirbel.kotify.network.model.FullEpisode
-import com.dzirbel.kotify.network.model.FullPlaylist
-import com.dzirbel.kotify.network.model.FullShow
-import com.dzirbel.kotify.network.model.FullTrack
-import com.dzirbel.kotify.network.model.Image
+import com.dzirbel.kotify.network.model.FullSpotifyAlbum
+import com.dzirbel.kotify.network.model.FullSpotifyArtist
+import com.dzirbel.kotify.network.model.FullSpotifyEpisode
+import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
+import com.dzirbel.kotify.network.model.FullSpotifyShow
+import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.Paging
-import com.dzirbel.kotify.network.model.PlayHistoryObject
-import com.dzirbel.kotify.network.model.Playback
-import com.dzirbel.kotify.network.model.PlaybackDevice
-import com.dzirbel.kotify.network.model.PlaylistTrack
-import com.dzirbel.kotify.network.model.PrivateUser
-import com.dzirbel.kotify.network.model.PublicUser
-import com.dzirbel.kotify.network.model.Recommendations
-import com.dzirbel.kotify.network.model.SavedAlbum
-import com.dzirbel.kotify.network.model.SavedShow
-import com.dzirbel.kotify.network.model.SavedTrack
-import com.dzirbel.kotify.network.model.SimplifiedAlbum
-import com.dzirbel.kotify.network.model.SimplifiedEpisode
-import com.dzirbel.kotify.network.model.SimplifiedPlaylist
-import com.dzirbel.kotify.network.model.SimplifiedShow
-import com.dzirbel.kotify.network.model.SimplifiedTrack
-import com.dzirbel.kotify.network.model.TrackPlayback
+import com.dzirbel.kotify.network.model.PrivateSpotifyUser
+import com.dzirbel.kotify.network.model.PublicSpotifyUser
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyEpisode
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyShow
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.network.model.SpotifyAudioAnalysis
+import com.dzirbel.kotify.network.model.SpotifyAudioFeatures
+import com.dzirbel.kotify.network.model.SpotifyCategory
+import com.dzirbel.kotify.network.model.SpotifyImage
+import com.dzirbel.kotify.network.model.SpotifyPlayHistoryObject
+import com.dzirbel.kotify.network.model.SpotifyPlayback
+import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
+import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
+import com.dzirbel.kotify.network.model.SpotifyRecommendations
+import com.dzirbel.kotify.network.model.SpotifySavedAlbum
+import com.dzirbel.kotify.network.model.SpotifySavedShow
+import com.dzirbel.kotify.network.model.SpotifySavedTrack
+import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
 import kotlinx.serialization.SerialName
@@ -75,40 +75,43 @@ object Spotify {
     data class ErrorDetails(val status: Int, val message: String)
 
     @Serializable
-    private data class AlbumsModel(val albums: List<FullAlbum>)
+    private data class AlbumsModel(val albums: List<FullSpotifyAlbum>)
 
     @Serializable
-    private data class AlbumsPagingModel(val albums: Paging<SimplifiedAlbum>)
+    private data class AlbumsPagingModel(val albums: Paging<SimplifiedSpotifyAlbum>)
 
     @Serializable
-    private data class ArtistsModel(val artists: List<FullArtist>)
+    private data class ArtistsModel(val artists: List<FullSpotifyArtist>)
 
     @Serializable
-    data class ArtistsCursorPagingModel(val artists: CursorPaging<FullArtist>)
+    data class ArtistsCursorPagingModel(val artists: CursorPaging<FullSpotifyArtist>)
 
     @Serializable
-    private data class AudioFeaturesModel(@SerialName("audio_features") val audioFeatures: List<AudioFeatures>)
+    private data class AudioFeaturesModel(@SerialName("audio_features") val audioFeatures: List<SpotifyAudioFeatures>)
 
     @Serializable
-    private data class CategoriesModel(val categories: Paging<Category>)
+    private data class CategoriesModel(val categories: Paging<SpotifyCategory>)
 
     @Serializable
-    private data class EpisodesModel(val episodes: List<FullEpisode>)
+    private data class EpisodesModel(val episodes: List<FullSpotifyEpisode>)
 
     @Serializable
-    private data class PlaylistPagingModel(val playlists: Paging<SimplifiedPlaylist>, val message: String? = null)
+    private data class PlaylistPagingModel(
+        val playlists: Paging<SimplifiedSpotifyPlaylist>,
+        val message: String? = null,
+    )
 
     @Serializable
     private data class RecommendationGenresModel(val genres: List<String>)
 
     @Serializable
-    private data class ShowsModel(val shows: List<SimplifiedShow>)
+    private data class ShowsModel(val shows: List<SimplifiedSpotifyShow>)
 
     @Serializable
     private data class SnaphshotId(@SerialName("snapshot_id") val snapshotId: String)
 
     @Serializable
-    private data class TracksModel(val tracks: List<FullTrack>)
+    private data class TracksModel(val tracks: List<FullSpotifyTrack>)
 
     suspend inline fun <reified T : Any?> get(path: String, queryParams: Map<String, String?>? = null): T {
         return request(method = "GET", path = path, queryParams = queryParams, body = null)
@@ -207,7 +210,7 @@ object Spotify {
          * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
          *  if you want to apply Track Relinking.
          */
-        suspend fun getAlbum(id: String, market: String? = null): FullAlbum {
+        suspend fun getAlbum(id: String, market: String? = null): FullSpotifyAlbum {
             return get("albums/$id", mapOf("market" to market))
         }
 
@@ -229,7 +232,7 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null,
             market: String? = null
-        ): Paging<SimplifiedTrack> {
+        ): Paging<SimplifiedSpotifyTrack> {
             return get(
                 "albums/$id/tracks",
                 mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
@@ -245,7 +248,7 @@ object Spotify {
          * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
          *  if you want to apply Track Relinking.
          */
-        suspend fun getAlbums(ids: List<String>, market: String? = null): List<FullAlbum> {
+        suspend fun getAlbums(ids: List<String>, market: String? = null): List<FullSpotifyAlbum> {
             return get<AlbumsModel>(
                 "albums",
                 mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
@@ -266,7 +269,7 @@ object Spotify {
          *
          * @param id The Spotify ID for the artist.
          */
-        suspend fun getArtist(id: String): FullArtist = get("artists/$id")
+        suspend fun getArtist(id: String): FullSpotifyArtist = get("artists/$id")
 
         /**
          * Get Spotify catalog information for several artists based on their Spotify IDs.
@@ -275,7 +278,7 @@ object Spotify {
          *
          * @param ids A comma-separated list of the Spotify IDs for the artists. Maximum: 50 IDs.
          */
-        suspend fun getArtists(ids: List<String>): List<FullArtist> {
+        suspend fun getArtists(ids: List<String>): List<FullSpotifyArtist> {
             return get<ArtistsModel>("artists", mapOf("ids" to ids.joinToString(separator = ","))).artists
         }
 
@@ -303,11 +306,11 @@ object Spotify {
          */
         suspend fun getArtistAlbums(
             id: String,
-            includeGroups: List<Album.Type>? = null,
+            includeGroups: List<SpotifyAlbum.Type>? = null,
             country: String? = null,
             limit: Int? = null,
             offset: Int? = null
-        ): Paging<SimplifiedAlbum> {
+        ): Paging<SimplifiedSpotifyAlbum> {
             return get(
                 "artists/$id/albums",
                 mapOf(
@@ -327,7 +330,7 @@ object Spotify {
          * @param id The Spotify ID for the artist
          * @param country Required. An ISO 3166-1 alpha-2 country code or the string from_token.
          */
-        suspend fun getArtistTopTracks(id: String, country: String): List<FullTrack> {
+        suspend fun getArtistTopTracks(id: String, country: String): List<FullSpotifyTrack> {
             return get<TracksModel>("artists/$id/top-tracks", mapOf("country" to country)).tracks
         }
 
@@ -339,7 +342,7 @@ object Spotify {
          *
          * @param id The Spotify ID for the artist
          */
-        suspend fun getArtistRelatedArtists(id: String): List<FullArtist> {
+        suspend fun getArtistRelatedArtists(id: String): List<FullSpotifyArtist> {
             return get<ArtistsModel>("artists/$id/related-artists").artists
         }
     }
@@ -364,7 +367,7 @@ object Spotify {
          *  supplied, or if the specified language is not available, the category strings returned will be in the
          *  Spotify default language (American English).
          */
-        suspend fun getCategory(categoryId: String, country: String? = null, locale: String? = null): Category {
+        suspend fun getCategory(categoryId: String, country: String? = null, locale: String? = null): SpotifyCategory {
             return get("browse/categories/$categoryId", mapOf("country" to country, "locale" to locale))
         }
 
@@ -384,7 +387,7 @@ object Spotify {
             country: String? = null,
             limit: Int? = null,
             offset: Int? = null
-        ): Paging<SimplifiedPlaylist> {
+        ): Paging<SimplifiedSpotifyPlaylist> {
             return get<PlaylistPagingModel>(
                 "browse/categories/$categoryId/playlists",
                 mapOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString())
@@ -415,7 +418,7 @@ object Spotify {
             locale: String? = null,
             limit: Int? = null,
             offset: Int? = null
-        ): Paging<Category> {
+        ): Paging<SpotifyCategory> {
             return get<CategoriesModel>(
                 "browse/categories",
                 mapOf(
@@ -457,7 +460,7 @@ object Spotify {
             timestamp: String? = null,
             limit: Int? = null,
             offset: Int? = null
-        ): Paging<SimplifiedPlaylist> {
+        ): Paging<SimplifiedSpotifyPlaylist> {
             return get<PlaylistPagingModel>(
                 "browse/featured-playlists",
                 mapOf(
@@ -487,7 +490,7 @@ object Spotify {
             country: String? = null,
             limit: Int? = null,
             offset: Int? = null
-        ): Paging<SimplifiedAlbum> {
+        ): Paging<SimplifiedSpotifyAlbum> {
             return get<AlbumsPagingModel>(
                 "browse/new-releases",
                 mapOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString())
@@ -530,7 +533,7 @@ object Spotify {
             seedGenres: List<String>,
             seedTracks: List<String>,
             tunableTrackAttributes: Map<String, String> = emptyMap()
-        ): Recommendations {
+        ): SpotifyRecommendations {
             return get(
                 "recommendations",
                 mapOf(
@@ -571,7 +574,7 @@ object Spotify {
          *  Note: If neither market or user country are provided, the content is considered unavailable for the client.
          *  Users can view the country that is associated with their account in the account settings.
          */
-        suspend fun getEpisode(id: String, market: String? = null): FullEpisode {
+        suspend fun getEpisode(id: String, market: String? = null): FullSpotifyEpisode {
             return get("episodes/$id", mapOf("market" to market))
         }
 
@@ -587,7 +590,7 @@ object Spotify {
          *  Note: If neither market or user country are provided, the content is considered unavailable for the client.
          *  Users can view the country that is associated with their account in the account settings.
          */
-        suspend fun getEpisodes(ids: List<String>, market: String? = null): List<FullEpisode> {
+        suspend fun getEpisodes(ids: List<String>, market: String? = null): List<FullSpotifyEpisode> {
             return get<EpisodesModel>(
                 "episodes",
                 mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
@@ -638,7 +641,7 @@ object Spotify {
          * @param limit Optional. The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
          * @param after Optional. The last artist ID retrieved from the previous request.
          */
-        suspend fun getFollowedArtists(limit: Int? = null, after: String? = null): CursorPaging<FullArtist> {
+        suspend fun getFollowedArtists(limit: Int? = null, after: String? = null): CursorPaging<FullSpotifyArtist> {
             return get<ArtistsCursorPagingModel>(
                 "me/following",
                 mapOf("type" to "artist", "limit" to limit?.toString(), "after" to after)
@@ -733,7 +736,7 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null,
             market: String? = null
-        ): Paging<SavedAlbum> {
+        ): Paging<SpotifySavedAlbum> {
             return get(
                 "me/albums",
                 mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
@@ -798,7 +801,7 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null,
             market: String? = null
-        ): Paging<SavedTrack> {
+        ): Paging<SpotifySavedTrack> {
             return get(
                 "me/tracks",
                 mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
@@ -858,7 +861,7 @@ object Spotify {
          * @param offset The index of the first show to return. Default: 0 (the first object). Use with limit to get the
          *  next set of shows.
          */
-        suspend fun getSavedShows(limit: Int? = null, offset: Int? = null): Paging<SavedShow> {
+        suspend fun getSavedShows(limit: Int? = null, offset: Int? = null): Paging<SpotifySavedShow> {
             return get("me/shows", mapOf("limit" to limit?.toString(), "offset" to offset?.toString()))
         }
 
@@ -943,7 +946,7 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null,
             timeRange: TimeRange? = null
-        ): Paging<FullArtist> {
+        ): Paging<FullSpotifyArtist> {
             return get(
                 "me/top/artists",
                 mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value)
@@ -975,7 +978,7 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null,
             timeRange: TimeRange? = null
-        ): Paging<FullTrack> {
+        ): Paging<FullSpotifyTrack> {
             return get(
                 "me/top/tracks",
                 mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value)
@@ -1006,7 +1009,10 @@ object Spotify {
          *  to maintain their current behaviour and might be deprecated in the future. In addition to providing this
          *  parameter, make sure that your client properly handles cases of new
          */
-        suspend fun getCurrentPlayback(market: String? = null, additionalTypes: List<String>? = null): Playback? {
+        suspend fun getCurrentPlayback(
+            market: String? = null,
+            additionalTypes: List<String>? = null,
+        ): SpotifyPlayback? {
             return get(
                 "me/player",
                 mapOf("market" to market, "additional_types" to additionalTypes?.joinToString(separator = ","))
@@ -1040,9 +1046,9 @@ object Spotify {
          *
          * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-a-users-available-devices
          */
-        suspend fun getAvailableDevices(): List<PlaybackDevice> {
+        suspend fun getAvailableDevices(): List<SpotifyPlaybackDevice> {
             @Serializable
-            data class Response(val devices: List<PlaybackDevice>)
+            data class Response(val devices: List<SpotifyPlaybackDevice>)
 
             return get<Response>("me/player/devices").devices
         }
@@ -1064,7 +1070,7 @@ object Spotify {
         suspend fun getCurrentlyPlayingTrack(
             market: String? = null,
             additionalTypes: List<String>? = null
-        ): TrackPlayback? {
+        ): SpotifyTrackPlayback? {
             return get(
                 "me/player/currently-playing",
                 mapOf("market" to market, "additional_types" to additionalTypes?.joinToString(separator = ","))
@@ -1248,7 +1254,7 @@ object Spotify {
             limit: Int? = null,
             after: Long? = null,
             before: Long? = null
-        ): CursorPaging<PlayHistoryObject> {
+        ): CursorPaging<SpotifyPlayHistoryObject> {
             return get(
                 "me/player/recently-played",
                 queryParams = mapOf(
@@ -1293,7 +1299,7 @@ object Spotify {
          * @param offset Optional. The index of the first playlist to return. Default: 0 (the first object). Maximum
          *  offset: 100.000. Use with limit to get the next set of playlists.
          */
-        suspend fun getPlaylists(limit: Int? = null, offset: Int? = null): Paging<SimplifiedPlaylist> {
+        suspend fun getPlaylists(limit: Int? = null, offset: Int? = null): Paging<SimplifiedSpotifyPlaylist> {
             return get("me/playlists", mapOf("limit" to limit?.toString(), "offset" to offset?.toString()))
         }
 
@@ -1306,7 +1312,11 @@ object Spotify {
          * @param offset Optional. The index of the first playlist to return. Default: 0 (the first object). Maximum
          *  offset: 100.000. Use with limit to get the next set of playlists.
          */
-        suspend fun getPlaylists(userId: String, limit: Int? = null, offset: Int? = null): Paging<SimplifiedPlaylist> {
+        suspend fun getPlaylists(
+            userId: String,
+            limit: Int? = null,
+            offset: Int? = null,
+        ): Paging<SimplifiedSpotifyPlaylist> {
             return get("users/$userId/playlists", mapOf("limit" to limit?.toString(), "offset" to offset?.toString()))
         }
 
@@ -1331,7 +1341,7 @@ object Spotify {
             public: Boolean? = null,
             collaborative: Boolean? = null,
             description: String? = null
-        ): FullPlaylist {
+        ): FullSpotifyPlaylist {
             return post(
                 "users/$userId/playlists",
                 jsonBody = mapOf(
@@ -1493,7 +1503,7 @@ object Spotify {
          *
          * @param playlistId The Spotify ID for the playlist.
          */
-        suspend fun getPlaylistCoverImages(playlistId: String): List<Image> {
+        suspend fun getPlaylistCoverImages(playlistId: String): List<SpotifyImage> {
             return get("playlists/$playlistId/images")
         }
 
@@ -1543,7 +1553,7 @@ object Spotify {
             fields: List<String>? = null,
             market: String? = null,
             additionalTypes: List<String>? = null
-        ): FullPlaylist {
+        ): FullSpotifyPlaylist {
             return get(
                 "playlists/$playlistId",
                 mapOf(
@@ -1588,7 +1598,7 @@ object Spotify {
             offset: Int? = null,
             market: String? = null,
             additionalTypes: List<String>? = null
-        ): Paging<PlaylistTrack> {
+        ): Paging<SpotifyPlaylistTrack> {
             return get(
                 "playlists/$playlistId/tracks",
                 mapOf(
@@ -1611,12 +1621,12 @@ object Spotify {
     object Search {
         @Serializable
         data class SearchResults(
-            val albums: Paging<SimplifiedAlbum>? = null,
-            val artists: Paging<FullArtist>? = null,
-            val tracks: Paging<FullTrack>? = null,
-            val playlists: Paging<SimplifiedPlaylist>? = null,
-            val shows: Paging<SimplifiedShow>? = null,
-            val episodes: Paging<SimplifiedEpisode>? = null
+            val albums: Paging<SimplifiedSpotifyAlbum>? = null,
+            val artists: Paging<FullSpotifyArtist>? = null,
+            val tracks: Paging<FullSpotifyTrack>? = null,
+            val playlists: Paging<SimplifiedSpotifyPlaylist>? = null,
+            val shows: Paging<SimplifiedSpotifyShow>? = null,
+            val episodes: Paging<SimplifiedSpotifyEpisode>? = null
         )
 
         /**
@@ -1686,7 +1696,7 @@ object Spotify {
          *  Note: If neither market or user country are provided, the content is considered unavailable for the client.
          *  Users can view the country that is associated with their account in the account settings.
          */
-        suspend fun getShow(id: String, market: String? = null): FullShow {
+        suspend fun getShow(id: String, market: String? = null): FullSpotifyShow {
             return get("shows/$id", mapOf("market" to market))
         }
 
@@ -1702,7 +1712,7 @@ object Spotify {
          *  Note: If neither market or user country are provided, the content is considered unavailable for the client.
          *  Users can view the country that is associated with their account in the account settings.
          */
-        suspend fun getShows(ids: List<String>, market: String? = null): List<SimplifiedShow> {
+        suspend fun getShows(ids: List<String>, market: String? = null): List<SimplifiedSpotifyShow> {
             return get<ShowsModel>(
                 "shows",
                 mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
@@ -1730,7 +1740,7 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null,
             market: String? = null
-        ): Paging<SimplifiedEpisode> {
+        ): Paging<SimplifiedSpotifyEpisode> {
             return get(
                 "shows/$id/episodes",
                 mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
@@ -1760,7 +1770,7 @@ object Spotify {
          *
          * @param id Required. The Spotify ID for the track.
          */
-        suspend fun getAudioAnalysis(id: String): AudioAnalysis = get("audio-analysis/$id")
+        suspend fun getAudioAnalysis(id: String): SpotifyAudioAnalysis = get("audio-analysis/$id")
 
         /**
          * Get audio feature information for a single track identified by its unique Spotify ID.
@@ -1769,7 +1779,7 @@ object Spotify {
          *
          * @param id Required. The Spotify ID for the track.
          */
-        suspend fun getAudioFeatures(id: String): AudioFeatures = get("audio-features/$id")
+        suspend fun getAudioFeatures(id: String): SpotifyAudioFeatures = get("audio-features/$id")
 
         /**
          * Get audio features for multiple tracks based on their Spotify IDs.
@@ -1778,7 +1788,7 @@ object Spotify {
          *
          * @param ids Required. A comma-separated list of the Spotify IDs for the tracks. Maximum: 100 IDs.
          */
-        suspend fun getAudioFeatures(ids: List<String>): List<AudioFeatures> {
+        suspend fun getAudioFeatures(ids: List<String>): List<SpotifyAudioFeatures> {
             return get<AudioFeaturesModel>(
                 "audio-features",
                 mapOf("ids" to ids.joinToString(separator = ","))
@@ -1794,7 +1804,7 @@ object Spotify {
          * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
          *  if you want to apply Track Relinking.
          */
-        suspend fun getTrack(id: String, market: String? = null): FullTrack {
+        suspend fun getTrack(id: String, market: String? = null): FullSpotifyTrack {
             return get("tracks/$id", mapOf("market" to market))
         }
 
@@ -1807,7 +1817,7 @@ object Spotify {
          * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
          *  if you want to apply Track Relinking.
          */
-        suspend fun getTracks(ids: List<String>, market: String? = null): List<FullTrack> {
+        suspend fun getTracks(ids: List<String>, market: String? = null): List<FullSpotifyTrack> {
             return get<TracksModel>(
                 "tracks",
                 mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
@@ -1826,7 +1836,7 @@ object Spotify {
          *
          * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-current-users-profile
          */
-        suspend fun getCurrentUser(): PrivateUser {
+        suspend fun getCurrentUser(): PrivateSpotifyUser {
             return get("me")
         }
 
@@ -1837,7 +1847,7 @@ object Spotify {
          *
          * @param userId The user’s Spotify user ID.
          */
-        suspend fun getUser(userId: String): PublicUser {
+        suspend fun getUser(userId: String): PublicSpotifyUser {
             return get("users/$userId")
         }
     }

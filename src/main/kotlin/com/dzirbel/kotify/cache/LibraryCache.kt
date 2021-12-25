@@ -1,17 +1,17 @@
 package com.dzirbel.kotify.cache
 
 import com.dzirbel.kotify.cache.SpotifyCache.GlobalObjects
-import com.dzirbel.kotify.network.model.Album
-import com.dzirbel.kotify.network.model.Artist
-import com.dzirbel.kotify.network.model.Playlist
-import com.dzirbel.kotify.network.model.PlaylistTrack
-import com.dzirbel.kotify.network.model.Track
+import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.network.model.SpotifyArtist
+import com.dzirbel.kotify.network.model.SpotifyPlaylist
+import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
+import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.util.zipToMap
 
 object LibraryCache {
     data class CachedArtist(
         val id: String,
-        val artist: Artist?,
+        val artist: SpotifyArtist?,
         val updated: Long?,
         val albums: List<String>?,
         val albumsUpdated: Long?
@@ -19,13 +19,13 @@ object LibraryCache {
 
     data class CachedAlbum(
         val id: String,
-        val album: Album?,
+        val album: SpotifyAlbum?,
         val updated: Long?
     )
 
     data class CachedPlaylist(
         val id: String,
-        val playlist: Playlist?,
+        val playlist: SpotifyPlaylist?,
         val updated: Long?,
         val tracks: GlobalObjects.PlaylistTracks?,
         val tracksUpdated: Long?
@@ -33,7 +33,7 @@ object LibraryCache {
 
     data class CachedTrack(
         val id: String,
-        val track: Track?,
+        val track: SpotifyTrack?,
         val updated: Long?
     )
 
@@ -43,8 +43,8 @@ object LibraryCache {
     val artistsUpdated: Long?
         get() = SpotifyCache.lastUpdated(GlobalObjects.SavedArtists.ID)
 
-    val artists: Map<String, Artist?>?
-        get() = savedArtists?.let { ids -> ids.zipToMap(SpotifyCache.getCached<Artist>(ids)) }
+    val artists: Map<String, SpotifyArtist?>?
+        get() = savedArtists?.let { ids -> ids.zipToMap(SpotifyCache.getCached<SpotifyArtist>(ids)) }
 
     val cachedArtists: List<CachedArtist>?
         get() {
@@ -85,8 +85,8 @@ object LibraryCache {
     val albumsUpdated: Long?
         get() = SpotifyCache.lastUpdated(GlobalObjects.SavedAlbums.ID)
 
-    val albums: Map<String, Album?>?
-        get() = savedAlbums?.let { ids -> ids.zipToMap(SpotifyCache.getCached<Album>(ids)) }
+    val albums: Map<String, SpotifyAlbum?>?
+        get() = savedAlbums?.let { ids -> ids.zipToMap(SpotifyCache.getCached<SpotifyAlbum>(ids)) }
 
     val cachedAlbums: List<CachedAlbum>?
         get() {
@@ -106,8 +106,8 @@ object LibraryCache {
     val playlistsUpdated: Long?
         get() = SpotifyCache.lastUpdated(GlobalObjects.SavedPlaylists.ID)
 
-    val playlists: Map<String, Playlist?>?
-        get() = savedPlaylists?.let { ids -> ids.zipToMap(SpotifyCache.getCached<Playlist>(ids)) }
+    val playlists: Map<String, SpotifyPlaylist?>?
+        get() = savedPlaylists?.let { ids -> ids.zipToMap(SpotifyCache.getCached<SpotifyPlaylist>(ids)) }
 
     val playlistTracks: Map<String, GlobalObjects.PlaylistTracks?>?
         get() = savedPlaylists
@@ -145,8 +145,8 @@ object LibraryCache {
     val savedTracks: Set<String>?
         get() = SpotifyCache.getCached<GlobalObjects.SavedTracks>(GlobalObjects.SavedTracks.ID)?.ids
 
-    val tracks: Map<String, Track?>?
-        get() = savedTracks?.let { ids -> ids.zipToMap(SpotifyCache.getCached<Track>(ids)) }
+    val tracks: Map<String, SpotifyTrack?>?
+        get() = savedTracks?.let { ids -> ids.zipToMap(SpotifyCache.getCached<SpotifyTrack>(ids)) }
 
     val tracksUpdated: Long?
         get() = SpotifyCache.lastUpdated(GlobalObjects.SavedTracks.ID)
@@ -188,11 +188,11 @@ object LibraryCache {
             ?.keys
     }
 
-    fun playlistTracks(playlistId: String): List<PlaylistTrack?>? {
+    fun playlistTracks(playlistId: String): List<SpotifyPlaylistTrack?>? {
         val playlistTrackId = GlobalObjects.PlaylistTracks.idFor(playlistId = playlistId)
         return SpotifyCache.getCached<GlobalObjects.PlaylistTracks>(playlistTrackId)
             ?.playlistTrackIds
-            ?.let { SpotifyCache.getCached<PlaylistTrack>(ids = it) }
+            ?.let { SpotifyCache.getCached<SpotifyPlaylistTrack>(ids = it) }
     }
 
     fun clear() {

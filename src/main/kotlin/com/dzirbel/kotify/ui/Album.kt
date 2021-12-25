@@ -14,9 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.network.model.FullAlbum
-import com.dzirbel.kotify.network.model.SimplifiedTrack
-import com.dzirbel.kotify.network.model.Track
+import com.dzirbel.kotify.network.model.FullSpotifyAlbum
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -43,8 +43,8 @@ private class AlbumPresenter(
 
     data class State(
         val refreshing: Boolean,
-        val album: FullAlbum,
-        val tracks: List<Track>,
+        val album: FullSpotifyAlbum,
+        val tracks: List<SpotifyTrack>,
         val isSaved: Boolean?,
         val albumUpdated: Long?
     )
@@ -68,7 +68,7 @@ private class AlbumPresenter(
 
                 val isSaved = LibraryCache.savedAlbums?.contains(album.id)
 
-                val tracks = album.tracks.fetchAll<SimplifiedTrack>()
+                val tracks = album.tracks.fetchAll<SimplifiedSpotifyTrack>()
 
                 mutateState {
                     State(

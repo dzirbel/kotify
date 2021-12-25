@@ -2,13 +2,13 @@ package com.dzirbel.kotify.ui
 
 import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.model.Album
-import com.dzirbel.kotify.network.model.Artist
-import com.dzirbel.kotify.network.model.FullTrack
-import com.dzirbel.kotify.network.model.PlaybackContext
-import com.dzirbel.kotify.network.model.PlaybackDevice
-import com.dzirbel.kotify.network.model.Playlist
-import com.dzirbel.kotify.network.model.Track
+import com.dzirbel.kotify.network.model.FullSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.network.model.SpotifyArtist
+import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
+import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
+import com.dzirbel.kotify.network.model.SpotifyPlaylist
+import com.dzirbel.kotify.network.model.SpotifyTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,35 +31,35 @@ object Player {
         val positionMs: Int? = null,
     ) {
         interface Creator {
-            fun create(track: Track, index: Int): PlayContext?
+            fun create(track: SpotifyTrack, index: Int): PlayContext?
         }
 
         companion object {
             /**
              * Returns a [PlayContext] which plays the given [album].
              */
-            fun album(album: Album) = album.uri?.let { PlayContext(contextUri = it) }
+            fun album(album: SpotifyAlbum) = album.uri?.let { PlayContext(contextUri = it) }
 
             /**
              * Returns a [PlayContext] which plays the track at the given [index] on the given [album].
              */
-            fun albumTrack(album: Album, index: Int): PlayContext? {
+            fun albumTrack(album: SpotifyAlbum, index: Int): PlayContext? {
                 return album.uri?.let { uri ->
                     PlayContext(contextUri = uri, offset = Spotify.PlaybackOffset(position = index))
                 }
             }
 
-            fun artist(artist: Artist) = artist.uri?.let { PlayContext(contextUri = it) }
+            fun artist(artist: SpotifyArtist) = artist.uri?.let { PlayContext(contextUri = it) }
 
             /**
              * Returns a [PlayContext] which plays the given [playlist].
              */
-            fun playlist(playlist: Playlist) = PlayContext(contextUri = playlist.uri)
+            fun playlist(playlist: SpotifyPlaylist) = PlayContext(contextUri = playlist.uri)
 
             /**
              * Returns a [PlayContext] which plays the track at the given [index] on the given [playlist].
              */
-            fun playlistTrack(playlist: Playlist, index: Int): PlayContext {
+            fun playlistTrack(playlist: SpotifyPlaylist, index: Int): PlayContext {
                 return PlayContext(contextUri = playlist.uri, offset = Spotify.PlaybackOffset(position = index))
             }
         }
@@ -68,15 +68,15 @@ object Player {
     private val _playEvents = MutableSharedFlow<PlayEvent>()
 
     /**
-     * A [androidx.compose.runtime.MutableState] of the currently active [PlaybackDevice]. [play] requests will be sent
-     * to this device, and [playable] is true when it is non-null.
+     * A [androidx.compose.runtime.MutableState] of the currently active [SpotifyPlaybackDevice]. [play] requests will
+     * be sent to this device, and [playable] is true when it is non-null.
      */
-    val currentDevice = mutableStateOf<PlaybackDevice?>(null)
+    val currentDevice = mutableStateOf<SpotifyPlaybackDevice?>(null)
 
     /**
-     * A [androidx.compose.runtime.MutableState] of the current [PlaybackContext].
+     * A [androidx.compose.runtime.MutableState] of the current [SpotifyPlaybackContext].
      */
-    val playbackContext = mutableStateOf<PlaybackContext?>(null)
+    val playbackContext = mutableStateOf<SpotifyPlaybackContext?>(null)
 
     /**
      * A [androidx.compose.runtime.MutableState] of whether the playback is currently playing.
@@ -84,9 +84,9 @@ object Player {
     val isPlaying = mutableStateOf(false)
 
     /**
-     * A [androidx.compose.runtime.MutableState] of the currently playing [FullTrack].
+     * A [androidx.compose.runtime.MutableState] of the currently playing [FullSpotifyTrack].
      */
-    val currentTrack = mutableStateOf<FullTrack?>(null)
+    val currentTrack = mutableStateOf<FullSpotifyTrack?>(null)
 
     /**
      * Whether it is currently possible to play music in the player.

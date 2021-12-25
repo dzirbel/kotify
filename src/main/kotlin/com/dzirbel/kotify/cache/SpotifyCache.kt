@@ -7,31 +7,31 @@ import androidx.compose.runtime.setValue
 import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.model.Album
-import com.dzirbel.kotify.network.model.Artist
-import com.dzirbel.kotify.network.model.Episode
-import com.dzirbel.kotify.network.model.FullAlbum
-import com.dzirbel.kotify.network.model.FullArtist
-import com.dzirbel.kotify.network.model.FullEpisode
-import com.dzirbel.kotify.network.model.FullPlaylist
-import com.dzirbel.kotify.network.model.FullShow
-import com.dzirbel.kotify.network.model.FullTrack
+import com.dzirbel.kotify.network.model.FullSpotifyAlbum
+import com.dzirbel.kotify.network.model.FullSpotifyArtist
+import com.dzirbel.kotify.network.model.FullSpotifyEpisode
+import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
+import com.dzirbel.kotify.network.model.FullSpotifyShow
+import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.Paging
-import com.dzirbel.kotify.network.model.Playlist
-import com.dzirbel.kotify.network.model.PlaylistTrack
-import com.dzirbel.kotify.network.model.PrivateUser
-import com.dzirbel.kotify.network.model.PublicUser
-import com.dzirbel.kotify.network.model.SavedAlbum
-import com.dzirbel.kotify.network.model.SavedTrack
-import com.dzirbel.kotify.network.model.Show
-import com.dzirbel.kotify.network.model.SimplifiedAlbum
-import com.dzirbel.kotify.network.model.SimplifiedArtist
-import com.dzirbel.kotify.network.model.SimplifiedEpisode
-import com.dzirbel.kotify.network.model.SimplifiedPlaylist
-import com.dzirbel.kotify.network.model.SimplifiedShow
-import com.dzirbel.kotify.network.model.SimplifiedTrack
-import com.dzirbel.kotify.network.model.Track
-import com.dzirbel.kotify.network.model.User
+import com.dzirbel.kotify.network.model.PrivateSpotifyUser
+import com.dzirbel.kotify.network.model.PublicSpotifyUser
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyArtist
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyEpisode
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyShow
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.network.model.SpotifyArtist
+import com.dzirbel.kotify.network.model.SpotifyEpisode
+import com.dzirbel.kotify.network.model.SpotifyPlaylist
+import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
+import com.dzirbel.kotify.network.model.SpotifySavedAlbum
+import com.dzirbel.kotify.network.model.SpotifySavedTrack
+import com.dzirbel.kotify.network.model.SpotifyShow
+import com.dzirbel.kotify.network.model.SpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyUser
 import com.dzirbel.kotify.util.takeIfAllNonNull
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -156,8 +156,8 @@ object SpotifyCache {
              *
              * This is a convenience function to check the common case where the cache may include both a simplified
              * version of a model and a full version; in this case we need to ensure the full version is never replaced
-             * by a simplified version. For example, [Album] objects come in both a [FullAlbum] and [SimplifiedAlbum]
-             * variant
+             * by a simplified version. For example, [SpotifyAlbum] objects come in both a [FullSpotifyAlbum] and
+             * [SimplifiedSpotifyAlbum] variant
              *
              * This also checks that [current] is a [Base] object XOR [new] is a [Base] object; this is a sanity check
              * that new objects are not replacing entirely different types of objects in the cache.
@@ -179,13 +179,20 @@ object SpotifyCache {
 
             @Suppress("ReturnCount")
             override fun replace(current: Any, new: Any): Boolean {
-                checkReplacement<Album, SimplifiedAlbum, FullAlbum>(current, new)?.let { return it }
-                checkReplacement<Artist, SimplifiedArtist, FullArtist>(current, new)?.let { return it }
-                checkReplacement<Episode, SimplifiedEpisode, FullEpisode>(current, new)?.let { return it }
-                checkReplacement<Playlist, SimplifiedPlaylist, FullPlaylist>(current, new)?.let { return it }
-                checkReplacement<Show, SimplifiedShow, FullShow>(current, new)?.let { return it }
-                checkReplacement<Track, SimplifiedTrack, FullTrack>(current, new)?.let { return it }
-                checkReplacement<User, PublicUser, PrivateUser>(current, new)?.let { return it }
+                checkReplacement<SpotifyAlbum, SimplifiedSpotifyAlbum, FullSpotifyAlbum>(current, new)
+                    ?.let { return it }
+                checkReplacement<SpotifyArtist, SimplifiedSpotifyArtist, FullSpotifyArtist>(current, new)
+                    ?.let { return it }
+                checkReplacement<SpotifyEpisode, SimplifiedSpotifyEpisode, FullSpotifyEpisode>(current, new)
+                    ?.let { return it }
+                checkReplacement<SpotifyPlaylist, SimplifiedSpotifyPlaylist, FullSpotifyPlaylist>(current, new)
+                    ?.let { return it }
+                checkReplacement<SpotifyShow, SimplifiedSpotifyShow, FullSpotifyShow>(current, new)
+                    ?.let { return it }
+                checkReplacement<SpotifyTrack, SimplifiedSpotifyTrack, FullSpotifyTrack>(current, new)
+                    ?.let { return it }
+                checkReplacement<SpotifyUser, PublicSpotifyUser, PrivateSpotifyUser>(current, new)
+                    ?.let { return it }
 
                 return true
             }
@@ -253,11 +260,11 @@ object SpotifyCache {
         // most batched calls have a maximum of 50; for albums the maximum is 20
         private const val MAX_ALBUM_IDS_LOOKUP = 20
 
-        suspend fun getAlbum(id: String): Album = cache.get<Album>(id) { Spotify.Albums.getAlbum(id) }
-        suspend fun getFullAlbum(id: String): FullAlbum = cache.get(id) { Spotify.Albums.getAlbum(id) }
+        suspend fun getAlbum(id: String): SpotifyAlbum = cache.get<SpotifyAlbum>(id) { Spotify.Albums.getAlbum(id) }
+        suspend fun getFullAlbum(id: String): FullSpotifyAlbum = cache.get(id) { Spotify.Albums.getAlbum(id) }
 
-        suspend fun getAlbums(ids: List<String>): List<Album> {
-            return cache.getAll<Album>(ids = ids) { missingIds ->
+        suspend fun getAlbums(ids: List<String>): List<SpotifyAlbum> {
+            return cache.getAll<SpotifyAlbum>(ids = ids) { missingIds ->
                 missingIds.chunked(size = MAX_ALBUM_IDS_LOOKUP)
                     .flatMap { idsChunk -> Spotify.Albums.getAlbums(ids = idsChunk) }
             }
@@ -298,7 +305,7 @@ object SpotifyCache {
         suspend fun getSavedAlbums(): Set<String> {
             cache.getCachedValue<GlobalObjects.SavedAlbums>(GlobalObjects.SavedAlbums.ID)?.ids?.let { return it }
 
-            val albums = Spotify.Library.getSavedAlbums(limit = Spotify.MAX_LIMIT).fetchAll<SavedAlbum>()
+            val albums = Spotify.Library.getSavedAlbums(limit = Spotify.MAX_LIMIT).fetchAll<SpotifySavedAlbum>()
             val savedAlbums = GlobalObjects.SavedAlbums(ids = albums.mapTo(mutableSetOf()) { it.album.id })
             cache.putAll(albums.plus(savedAlbums))
 
@@ -307,10 +314,13 @@ object SpotifyCache {
     }
 
     object Artists {
-        suspend fun getArtist(id: String): Artist = cache.get<Artist>(id) { Spotify.Artists.getArtist(id) }
-        suspend fun getFullArtist(id: String): FullArtist = cache.get(id) { Spotify.Artists.getArtist(id) }
+        suspend fun getArtist(id: String): SpotifyArtist {
+            return cache.get<SpotifyArtist>(id) { Spotify.Artists.getArtist(id) }
+        }
 
-        suspend fun getFullArtists(ids: List<String>): List<FullArtist> {
+        suspend fun getFullArtist(id: String): FullSpotifyArtist = cache.get(id) { Spotify.Artists.getArtist(id) }
+
+        suspend fun getFullArtists(ids: List<String>): List<FullSpotifyArtist> {
             return cache.getAll(ids = ids) { missingIds ->
                 missingIds.chunked(size = Spotify.MAX_LIMIT)
                     .flatMap { Spotify.Artists.getArtists(ids = it) }
@@ -349,12 +359,12 @@ object SpotifyCache {
             }
         }
 
-        suspend fun getArtistAlbums(artistId: String): List<Album> {
+        suspend fun getArtistAlbums(artistId: String): List<SpotifyAlbum> {
             cache.getCachedValue<GlobalObjects.ArtistAlbums>(
                 id = GlobalObjects.ArtistAlbums.idFor(artistId = artistId)
             )?.let { return Albums.getAlbums(ids = it.albumIds) }
 
-            return Spotify.Artists.getArtistAlbums(id = artistId).fetchAll<SimplifiedAlbum>()
+            return Spotify.Artists.getArtistAlbums(id = artistId).fetchAll<SimplifiedSpotifyAlbum>()
                 .also { albums ->
                     val artistAlbums = GlobalObjects.ArtistAlbums(
                         artistId = artistId,
@@ -378,8 +388,13 @@ object SpotifyCache {
     }
 
     object Playlists {
-        suspend fun getPlaylist(id: String): Playlist = cache.get<Playlist>(id) { Spotify.Playlists.getPlaylist(id) }
-        suspend fun getFullPlaylist(id: String): FullPlaylist = cache.get(id) { Spotify.Playlists.getPlaylist(id) }
+        suspend fun getPlaylist(id: String): SpotifyPlaylist {
+            return cache.get<SpotifyPlaylist>(id) { Spotify.Playlists.getPlaylist(id) }
+        }
+
+        suspend fun getFullPlaylist(id: String): FullSpotifyPlaylist {
+            return cache.get(id) { Spotify.Playlists.getPlaylist(id) }
+        }
 
         suspend fun savePlaylist(id: String): Set<String>? {
             Spotify.Follow.followPlaylist(playlistId = id)
@@ -418,24 +433,28 @@ object SpotifyCache {
                 ?.let { return it.ids }
 
             val playlists = Spotify.Playlists.getPlaylists(limit = Spotify.MAX_LIMIT)
-                .fetchAll<SimplifiedPlaylist>()
+                .fetchAll<SimplifiedSpotifyPlaylist>()
             val savedPlaylists = GlobalObjects.SavedPlaylists(ids = playlists.mapTo(mutableSetOf()) { it.id })
             cache.putAll(playlists.plus(savedPlaylists))
 
             return savedPlaylists.ids
         }
 
-        suspend fun getPlaylistTracks(playlistId: String, paging: Paging<PlaylistTrack>? = null): List<PlaylistTrack> {
+        suspend fun getPlaylistTracks(
+            playlistId: String,
+            paging: Paging<SpotifyPlaylistTrack>? = null,
+        ): List<SpotifyPlaylistTrack> {
             cache.getCachedValue<GlobalObjects.PlaylistTracks>(
                 id = GlobalObjects.PlaylistTracks.idFor(playlistId = playlistId)
             )?.let { playlistTracks ->
                 cache.getCached(ids = playlistTracks.playlistTrackIds)
-                    .map { it?.obj as? PlaylistTrack }
+                    .map { it?.obj as? SpotifyPlaylistTrack }
                     .takeIfAllNonNull()
                     ?.let { return it }
             }
 
-            return (paging ?: Spotify.Playlists.getPlaylistTracks(playlistId = playlistId)).fetchAll<PlaylistTrack>()
+            return (paging ?: Spotify.Playlists.getPlaylistTracks(playlistId = playlistId))
+                .fetchAll<SpotifyPlaylistTrack>()
                 .also { tracks ->
                     val trackIds = tracks.map { it.track.id }.takeIfAllNonNull()
 
@@ -445,7 +464,7 @@ object SpotifyCache {
                     } else {
                         val playlistTracks = GlobalObjects.PlaylistTracks(
                             playlistId = playlistId,
-                            playlistTrackIds = trackIds.map { PlaylistTrack.idFor(trackId = it) },
+                            playlistTrackIds = trackIds.map { SpotifyPlaylistTrack.idFor(trackId = it) },
                             trackIds = trackIds
                         )
                         cache.putAll(tracks.plus(playlistTracks))
@@ -455,17 +474,17 @@ object SpotifyCache {
     }
 
     object Tracks {
-        suspend fun getTrack(id: String): Track = cache.get<Track>(id) { Spotify.Tracks.getTrack(id) }
-        suspend fun getFullTrack(id: String): FullTrack = cache.get(id) { Spotify.Tracks.getTrack(id) }
+        suspend fun getTrack(id: String): SpotifyTrack = cache.get<SpotifyTrack>(id) { Spotify.Tracks.getTrack(id) }
+        suspend fun getFullTrack(id: String): FullSpotifyTrack = cache.get(id) { Spotify.Tracks.getTrack(id) }
 
-        suspend fun getTracks(ids: List<String>): List<Track> {
-            return cache.getAll<Track>(ids = ids) { missingIds ->
+        suspend fun getTracks(ids: List<String>): List<SpotifyTrack> {
+            return cache.getAll<SpotifyTrack>(ids = ids) { missingIds ->
                 missingIds.chunked(size = Spotify.MAX_LIMIT)
                     .flatMap { idsChunk -> Spotify.Tracks.getTracks(ids = idsChunk) }
             }
         }
 
-        suspend fun getFullTracks(ids: List<String>): List<FullTrack> {
+        suspend fun getFullTracks(ids: List<String>): List<FullSpotifyTrack> {
             return cache.getAll(ids = ids) { missingIds ->
                 missingIds.chunked(size = Spotify.MAX_LIMIT)
                     .flatMap { idsChunk -> Spotify.Tracks.getTracks(ids = idsChunk) }
@@ -508,7 +527,7 @@ object SpotifyCache {
             cache.getCachedValue<GlobalObjects.SavedTracks>(GlobalObjects.SavedTracks.ID)
                 ?.let { return it.ids }
 
-            val tracks = Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT).fetchAll<SavedTrack>()
+            val tracks = Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT).fetchAll<SpotifySavedTrack>()
             val savedTracks = GlobalObjects.SavedTracks(ids = tracks.mapTo(mutableSetOf()) { it.track.id })
             cache.putAll(tracks.plus(savedTracks))
 
@@ -517,10 +536,10 @@ object SpotifyCache {
     }
 
     object UsersProfile {
-        suspend fun getCurrentUser(): PrivateUser {
-            cache.getCachedValue<PrivateUser>(GlobalObjects.CURRENT_USER_ID)?.let { return it }
+        suspend fun getCurrentUser(): PrivateSpotifyUser {
+            cache.getCachedValue<PrivateSpotifyUser>(GlobalObjects.CURRENT_USER_ID)?.let { return it }
 
-            val user: PrivateUser = Spotify.UsersProfile.getCurrentUser()
+            val user: PrivateSpotifyUser = Spotify.UsersProfile.getCurrentUser()
 
             // cache the user both under its own id and the current id, this way it can be accessed from either
             cache.putAll(mapOf(user.id to user, GlobalObjects.CURRENT_USER_ID to user))

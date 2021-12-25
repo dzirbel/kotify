@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
  * https://developer.spotify.com/documentation/web-api/reference/#object-resumepointobject
  */
 @Serializable
-data class ResumePoint(
+data class SpotifyResumePoint(
     /** Whether or not the episode has been fully played by the user. */
     @SerialName("fully_played") val fullyPlayed: Boolean,
 

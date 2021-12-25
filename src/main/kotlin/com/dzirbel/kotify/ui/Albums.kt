@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.cache.SpotifyImageCache
-import com.dzirbel.kotify.network.model.Album
+import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
@@ -33,7 +33,7 @@ private class AlbumsPresenter(scope: CoroutineScope) :
 
     data class State(
         val refreshing: Boolean,
-        val albums: List<Album>,
+        val albums: List<SpotifyAlbum>,
         val savedAlbums: Set<String>,
         val albumsUpdated: Long?
     )

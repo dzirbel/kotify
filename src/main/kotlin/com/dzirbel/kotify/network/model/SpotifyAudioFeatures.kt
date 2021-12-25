@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
  * https://developer.spotify.com/documentation/web-api/reference/#object-audiofeaturesobject
  */
 @Serializable
-data class AudioFeatures(
+data class SpotifyAudioFeatures(
     /**
      * A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track
      * is acoustic.

@@ -8,16 +8,16 @@ import kotlinx.serialization.json.JsonObject
  * Undocumented object.
  */
 @Serializable
-data class Playback(
+data class SpotifyPlayback(
     val timestamp: Long,
-    val device: PlaybackDevice,
+    val device: SpotifyPlaybackDevice,
     @SerialName("progress_ms") val progressMs: Long,
     @SerialName("is_playing") val isPlaying: Boolean,
     @SerialName("currently_playing_type") val currentlyPlayingType: String,
-    val item: FullTrack?,
+    val item: FullSpotifyTrack?,
     @SerialName("shuffle_state") val shuffleState: Boolean,
     @SerialName("repeat_state") val repeatState: String,
-    val context: PlaybackContext?,
+    val context: SpotifyPlaybackContext?,
     val actions: JsonObject? = null
 )
 
@@ -25,13 +25,13 @@ data class Playback(
  * Undocumented object.
  */
 @Serializable
-data class TrackPlayback(
+data class SpotifyTrackPlayback(
     val timestamp: Long,
     @SerialName("progress_ms") val progressMs: Long,
     @SerialName("is_playing") val isPlaying: Boolean,
     @SerialName("currently_playing_type") val currentlyPlayingType: String,
-    val item: FullTrack?,
-    val context: PlaybackContext?,
+    val item: FullSpotifyTrack?,
+    val context: SpotifyPlaybackContext?,
     val actions: JsonObject? = null
 )
 
@@ -39,7 +39,7 @@ data class TrackPlayback(
  * Undocumented object.
  */
 @Serializable
-data class PlaybackDevice(
+data class SpotifyPlaybackDevice(
     val id: String,
     @SerialName("is_active") val isActive: Boolean,
     @SerialName("is_restricted") val isRestricted: Boolean,
@@ -53,9 +53,9 @@ data class PlaybackDevice(
  * Undocumented object.
  */
 @Serializable
-data class PlaybackContext(
+data class SpotifyPlaybackContext(
     val uri: String,
-    @SerialName("external_urls") val externalUrls: ExternalUrl,
+    @SerialName("external_urls") val externalUrls: SpotifyExternalUrl,
     val href: String,
     val type: String
 )
@@ -64,8 +64,8 @@ data class PlaybackContext(
  * Undocumented object.
  */
 @Serializable
-data class PlayHistoryObject(
-    val track: FullTrack,
+data class SpotifyPlayHistoryObject(
+    val track: FullSpotifyTrack,
     @SerialName("played_at") val playedAt: String,
-    val context: PlaybackContext
+    val context: SpotifyPlaybackContext
 )

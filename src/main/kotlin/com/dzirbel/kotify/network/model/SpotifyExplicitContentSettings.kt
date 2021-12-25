@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
  * https://developer.spotify.com/documentation/web-api/reference/#object-explicitcontentsettingsobject
  */
 @Serializable
-data class ExplicitContentSettings(
+data class SpotifyExplicitContentSettings(
     /** When true, indicates that explicit content should not be played. */
     @SerialName("filter_enabled") val filterEnabled: Boolean,
 

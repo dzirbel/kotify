@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Segment(
+data class SpotifySegment(
     /** The starting point (in seconds) of the segment. */
     val start: Float,
 

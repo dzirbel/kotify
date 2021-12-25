@@ -4,10 +4,10 @@ import androidx.compose.runtime.MutableState
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.model.FullTrack
-import com.dzirbel.kotify.network.model.Playback
-import com.dzirbel.kotify.network.model.PlaybackContext
-import com.dzirbel.kotify.network.model.PlaybackDevice
+import com.dzirbel.kotify.network.model.FullSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyPlayback
+import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
+import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.google.common.truth.Truth.assertThat
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -27,16 +27,16 @@ import org.junit.jupiter.params.provider.MethodSource
 
 // TODO finish testing
 internal class BottomPanelPresenterTest {
-    private val currentDeviceState: MutableState<PlaybackDevice?> = mockk {
+    private val currentDeviceState: MutableState<SpotifyPlaybackDevice?> = mockk {
         every { value = any() } just Runs
     }
-    private val currentTrackState: MutableState<FullTrack?> = mockk {
+    private val currentTrackState: MutableState<FullSpotifyTrack?> = mockk {
         every { value = any() } just Runs
     }
     private val isPlayingState: MutableState<Boolean> = mockk {
         every { value = any() } just Runs
     }
-    private val playbackContextState: MutableState<PlaybackContext?> = mockk {
+    private val playbackContextState: MutableState<SpotifyPlaybackContext?> = mockk {
         every { value = any() } just Runs
     }
 
@@ -81,8 +81,8 @@ internal class BottomPanelPresenterTest {
         testPresenter(::BottomPanelPresenter) { presenter ->
             verifyOpenCalls()
 
-            val device1: PlaybackDevice = mockk()
-            val device2: PlaybackDevice = mockk()
+            val device1: SpotifyPlaybackDevice = mockk()
+            val device2: SpotifyPlaybackDevice = mockk()
             coEvery { Spotify.Player.getAvailableDevices() } returns listOf(device1, device2)
 
             presenter.emit(BottomPanelPresenter.Event.LoadDevices())
@@ -99,7 +99,7 @@ internal class BottomPanelPresenterTest {
 
     @Test
     fun loadDevicesUntilVolumeChange() {
-        val device: PlaybackDevice = mockk {
+        val device: SpotifyPlaybackDevice = mockk {
             every { id } returns "device_id"
             every { volumePercent } returnsMany listOf(20, 20, 20, 30)
         }
@@ -129,7 +129,7 @@ internal class BottomPanelPresenterTest {
 
     @ParameterizedTest
     @MethodSource("playback")
-    fun loadPlayback(playback: Playback?) {
+    fun loadPlayback(playback: SpotifyPlayback?) {
         testPresenter(::BottomPanelPresenter) { presenter ->
             verifyOpenCalls()
 
@@ -176,7 +176,7 @@ internal class BottomPanelPresenterTest {
         }
     }
 
-    private fun verifyOpenCalls(device: PlaybackDevice? = null) {
+    private fun verifyOpenCalls(device: SpotifyPlaybackDevice? = null) {
         coVerifyAll {
             Spotify.Player.getAvailableDevices()
             Spotify.Player.getCurrentPlayback()
@@ -199,10 +199,10 @@ internal class BottomPanelPresenterTest {
 
         @JvmStatic
         @Suppress("unused")
-        fun playback(): List<Playback?> {
+        fun playback(): List<SpotifyPlayback?> {
             return listOf(
                 null,
-                Playback(
+                SpotifyPlayback(
                     timestamp = 123,
                     device = mockk(),
                     progressMs = 456,
@@ -213,7 +213,7 @@ internal class BottomPanelPresenterTest {
                     repeatState = "repeat",
                     context = null
                 ),
-                Playback(
+                SpotifyPlayback(
                     timestamp = 0,
                     device = mockk(),
                     progressMs = 0,

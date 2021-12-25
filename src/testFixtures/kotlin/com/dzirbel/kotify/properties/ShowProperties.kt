@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.properties
 
-import com.dzirbel.kotify.network.model.SavedShow
-import com.dzirbel.kotify.network.model.Show
+import com.dzirbel.kotify.network.model.SpotifySavedShow
+import com.dzirbel.kotify.network.model.SpotifyShow
 import com.google.common.truth.Truth.assertThat
 
 data class ShowProperties(
@@ -14,7 +14,7 @@ data class ShowProperties(
     private val languages: List<String>? = null,
     private val mediaType: String = "audio"
 ) : ObjectProperties(type = "show") {
-    fun check(show: Show) {
+    fun check(show: SpotifyShow) {
         super.check(show)
 
         assertThat(show.description).isEqualTo(description)
@@ -24,7 +24,7 @@ data class ShowProperties(
         languages?.let { assertThat(show.languages).isEqualTo(it) }
     }
 
-    fun check(savedShow: SavedShow) {
+    fun check(savedShow: SpotifySavedShow) {
         check(savedShow.show)
 
         assertThat(addedAt).isNotNull()

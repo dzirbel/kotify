@@ -5,10 +5,10 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Shared properties for Track objects; see [SimplifiedTrack] and [FullTrack].
+ * Shared properties for Track objects; see [SimplifiedSpotifyTrack] and [FullSpotifyTrack].
  */
 @Suppress("ComplexInterface")
-interface Track : SpotifyObject {
+interface SpotifyTrack : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the track. */
     override val href: String?
 
@@ -28,7 +28,7 @@ interface Track : SpotifyObject {
      * The artists who performed the track. Each artist object includes a link in href to more detailed information
      * about the artist.
      */
-    val artists: List<SimplifiedArtist>
+    val artists: List<SimplifiedSpotifyArtist>
 
     /** A list of the countries in which the track can be played, identified by their ISO 3166-1 alpha-2 code. */
     val availableMarkets: List<String>?
@@ -43,7 +43,7 @@ interface Track : SpotifyObject {
     val explicit: Boolean
 
     /** External URLs for this track. */
-    val externalUrls: ExternalUrl
+    val externalUrls: SpotifyExternalUrl
 
     /** Whether or not the track is from a local file. */
     val isLocal: Boolean
@@ -59,7 +59,7 @@ interface Track : SpotifyObject {
      * fact, exists. The requested track has been replaced with a different track. The track in the linked_from object
      * contains information about the originally requested track.
      */
-    val linkedFrom: TrackLink?
+    val linkedFrom: SpotifyTrackLink?
 
     /** A URL to a 30 second preview (MP3 format) of the track. */
     val previewUrl: String?
@@ -75,25 +75,25 @@ interface Track : SpotifyObject {
     /** The number of the track. If an album has several discs, the track number is the number on the specified disc. */
     val trackNumber: Int
 
-    val album: Album?
+    val album: SpotifyAlbum?
 }
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-simplifiedtrackobject
  */
 @Serializable
-data class SimplifiedTrack(
-    override val artists: List<SimplifiedArtist>,
+data class SimplifiedSpotifyTrack(
+    override val artists: List<SimplifiedSpotifyArtist>,
     @SerialName("available_markets") override val availableMarkets: List<String>? = null,
     @SerialName("disc_number") override val discNumber: Int,
     @SerialName("duration_ms") override val durationMs: Long,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrl,
+    @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
     override val href: String? = null,
     override val id: String? = null,
     @SerialName("is_local") override val isLocal: Boolean,
     @SerialName("is_playable") override val isPlayable: Boolean? = null,
-    @SerialName("linked_from") override val linkedFrom: TrackLink? = null,
+    @SerialName("linked_from") override val linkedFrom: SpotifyTrackLink? = null,
     override val name: String,
     @SerialName("preview_url") override val previewUrl: String? = null,
     override val restrictions: Map<String, String>? = null,
@@ -102,7 +102,7 @@ data class SimplifiedTrack(
     override val uri: String? = null,
 
     /** Undocumented field. */
-    override val album: SimplifiedAlbum? = null,
+    override val album: SimplifiedSpotifyAlbum? = null,
 
     /** Undocumented field. */
     val episode: Boolean? = null,
@@ -112,11 +112,11 @@ data class SimplifiedTrack(
 
     /** Undocumented field. */
     @SerialName("external_ids")
-    val externalIds: ExternalId? = null,
+    val externalIds: SpotifyExternalId? = null,
 
     /** Undocumented field. */
     val popularity: Int? = null
-) : Track {
+) : SpotifyTrack {
     override val cacheableObjects: Collection<CacheableObject>
         get() = album?.let { setOf(it) } ?: emptySet()
 }
@@ -125,18 +125,18 @@ data class SimplifiedTrack(
  * https://developer.spotify.com/documentation/web-api/reference/#object-trackobject
  */
 @Serializable
-data class FullTrack(
-    override val artists: List<SimplifiedArtist>,
+data class FullSpotifyTrack(
+    override val artists: List<SimplifiedSpotifyArtist>,
     @SerialName("available_markets") override val availableMarkets: List<String>? = null,
     @SerialName("disc_number") override val discNumber: Int,
     @SerialName("duration_ms") override val durationMs: Long,
     override val explicit: Boolean,
-    @SerialName("external_urls") override val externalUrls: ExternalUrl,
+    @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
     override val href: String,
     override val id: String,
     @SerialName("is_local") override val isLocal: Boolean,
     @SerialName("is_playable") override val isPlayable: Boolean? = null,
-    @SerialName("linked_from") override val linkedFrom: TrackLink? = null,
+    @SerialName("linked_from") override val linkedFrom: SpotifyTrackLink? = null,
     override val name: String,
     @SerialName("preview_url") override val previewUrl: String? = null,
     override val restrictions: Map<String, String>? = null,
@@ -148,10 +148,10 @@ data class FullTrack(
      * The album on which the track appears. The album object includes a link in href to full information about the
      * album.
      */
-    override val album: SimplifiedAlbum,
+    override val album: SimplifiedSpotifyAlbum,
 
     /** Known external IDs for the track. */
-    @SerialName("external_ids") val externalIds: ExternalId,
+    @SerialName("external_ids") val externalIds: SpotifyExternalId,
 
     /**
      * The popularity of the track. The value will be between 0 and 100, with 100 being the most popular.
@@ -164,7 +164,7 @@ data class FullTrack(
      * popularity value may lag actual popularity by a few days: the value is not updated in real time.
      */
     val popularity: Int
-) : Track {
+) : SpotifyTrack {
     override val cacheableObjects: Collection<CacheableObject>
         get() = setOf(album)
 }
@@ -173,7 +173,7 @@ data class FullTrack(
  * https://developer.spotify.com/documentation/web-api/reference/#object-savedtrackobject
  */
 @Serializable
-data class SavedTrack(
+data class SpotifySavedTrack(
     /**
      * The date and time the track was saved. Timestamps are returned in ISO 8601 format as Coordinated Universal Time
      * (UTC) with a zero offset: YYYY-MM-DDTHH:MM:SSZ. If the time is imprecise (for example, the date/time of an album
@@ -182,7 +182,7 @@ data class SavedTrack(
     @SerialName("added_at") val addedAt: String,
 
     /** Information about the track. */
-    val track: FullTrack
+    val track: FullSpotifyTrack
 ) : CacheableObject {
     override val id: String? = null
 

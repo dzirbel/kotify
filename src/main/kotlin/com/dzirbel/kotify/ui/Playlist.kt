@@ -17,8 +17,8 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.model.FullPlaylist
-import com.dzirbel.kotify.network.model.PlaylistTrack
+import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
+import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageStack
@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit
 private class PlaylistPresenter(
     private val page: PlaylistPage,
     private val pageStack: MutableState<PageStack>,
-    scope: CoroutineScope
+    scope: CoroutineScope,
 ) : Presenter<PlaylistPresenter.State?, PlaylistPresenter.Event>(
     scope = scope,
     key = page.playlistId,
@@ -53,9 +53,9 @@ private class PlaylistPresenter(
     data class State(
         val refreshing: Boolean,
         val reordering: Boolean = false,
-        val sorts: List<Sort<PlaylistTrack>> = emptyList(),
-        val playlist: FullPlaylist,
-        val tracks: List<PlaylistTrack>?,
+        val sorts: List<Sort<SpotifyPlaylistTrack>> = emptyList(),
+        val playlist: FullSpotifyPlaylist,
+        val tracks: List<SpotifyPlaylistTrack>?,
         val isSaved: Boolean?,
         val playlistUpdated: Long?,
     )
@@ -63,8 +63,8 @@ private class PlaylistPresenter(
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
         data class ToggleSave(val save: Boolean) : Event()
-        data class SetSorts(val sorts: List<Sort<PlaylistTrack>>) : Event()
-        data class Order(val sorts: List<Sort<PlaylistTrack>>, val tracks: List<PlaylistTrack>) : Event()
+        data class SetSorts(val sorts: List<Sort<SpotifyPlaylistTrack>>) : Event()
+        data class Order(val sorts: List<Sort<SpotifyPlaylistTrack>>, val tracks: List<SpotifyPlaylistTrack>) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -145,15 +145,20 @@ private class PlaylistPresenter(
     }
 }
 
-private object AddedAtColumn : ColumnByString<PlaylistTrack>(name = "Added") {
-    private val PlaylistTrack.addedAtTimestamp
+private object AddedAtColumn : ColumnByString<SpotifyPlaylistTrack>(name = "Added") {
+    private val SpotifyPlaylistTrack.addedAtTimestamp
         get() = Instant.parse(addedAt.orEmpty()).toEpochMilli()
 
-    override fun toString(item: PlaylistTrack, index: Int): String {
+    override fun toString(item: SpotifyPlaylistTrack, index: Int): String {
         return formatDateTime(timestamp = item.addedAtTimestamp, includeTime = false)
     }
 
-    override fun compare(first: PlaylistTrack, firstIndex: Int, second: PlaylistTrack, secondIndex: Int): Int {
+    override fun compare(
+        first: SpotifyPlaylistTrack,
+        firstIndex: Int,
+        second: SpotifyPlaylistTrack,
+        secondIndex: Int,
+    ): Int {
         return first.addedAtTimestamp.compareTo(second.addedAtTimestamp)
     }
 }
@@ -245,7 +250,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                             Player.PlayContext.playlistTrack(playlist = state.playlist, index = index)
                         }
                     )
-                        .map { column -> column.mapped<PlaylistTrack> { it.track } }
+                        .map { column -> column.mapped<SpotifyPlaylistTrack> { it.track } }
                         .toMutableList()
                         .apply {
                             add(1, IndexColumn())
