@@ -9,7 +9,7 @@ import com.dzirbel.kotify.network.model.SpotifyTrack
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 
-object TrackTable : SpotifyEntityTable() {
+object TrackTable : SpotifyEntityTable(name = "tracks") {
     val durationMs: Column<ULong> = ulong("duration_ms")
 }
 
