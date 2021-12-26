@@ -16,6 +16,7 @@ abstract class SpotifyEntityTable(name: String = "") : StringIdTable(name = name
 
     val createdTime: Column<Instant> = timestamp("created_time").clientDefault { Instant.now() }
     val updatedTime: Column<Instant> = timestamp("updated_time").clientDefault { Instant.now() }
+    val fullUpdatedTime: Column<Instant?> = timestamp("full_updated_time").clientDefault { Instant.now() }.nullable()
 }
 
 /**
@@ -26,6 +27,7 @@ abstract class SpotifyEntity(id: EntityID<String>, table: SpotifyEntityTable) : 
 
     var createdTime: Instant by table.createdTime
     var updatedTime: Instant by table.updatedTime
+    var fullUpdatedTime: Instant? by table.fullUpdatedTime
 }
 
 /**

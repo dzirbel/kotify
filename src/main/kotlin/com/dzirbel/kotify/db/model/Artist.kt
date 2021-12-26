@@ -12,6 +12,7 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.Table
+import java.time.Instant
 
 object ArtistTable : SpotifyEntityTable(name = "artists") {
     val popularity: Column<UInt?> = uinteger("popularity").nullable()
@@ -39,6 +40,8 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
     companion object : SpotifyEntityClass<Artist, SpotifyArtist>(ArtistTable) {
         override fun Artist.update(networkModel: SpotifyArtist) {
             if (networkModel is FullSpotifyArtist) {
+                fullUpdatedTime = Instant.now()
+
                 popularity = networkModel.popularity.toUInt()
                 followersTotal = networkModel.followers.total.toUInt()
                 images = SizedCollection(networkModel.images.map { Image.from(it) })

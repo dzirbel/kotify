@@ -5,9 +5,11 @@ import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
+import java.time.Instant
 
 object TrackTable : SpotifyEntityTable(name = "tracks") {
     val durationMs: Column<ULong> = ulong("duration_ms")
@@ -19,6 +21,10 @@ class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
     companion object : SpotifyEntityClass<Track, SpotifyTrack>(TrackTable) {
         override fun Track.update(networkModel: SpotifyTrack) {
             durationMs = networkModel.durationMs.toULong() // TODO use ULong in network model?
+
+            if (networkModel is FullSpotifyTrack) {
+                fullUpdatedTime = Instant.now()
+            }
         }
     }
 }
