@@ -5,6 +5,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.oauth.AccessToken
@@ -20,6 +21,8 @@ fun main(args: Array<String>) {
     )
 
     Settings.current // trigger a settings load
+
+    KotifyDatabase.db // initialize database connection and create schema
 
     Logger.logToConsole = false
 
