@@ -111,6 +111,28 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
     }
 
     /**
+     * Adds the given [networkModel] to the database and returns its mapped [EntityType]. Useful when an unrelated
+     * endpoint also returns a model of [NetworkType].
+     *
+     * Should not be called from within a transaction.
+     */
+    fun put(networkModel: NetworkType): EntityType? {
+        return transaction { entityClass.from(networkModel) }
+    }
+
+    /**
+     * Adds the given [networkModels] to the database and returns their mapped [EntityType]s. Useful when an unrelated
+     * endpoint also returns models of [NetworkType].
+     *
+     * Should not be called from within a transaction.
+     */
+    fun put(networkModels: List<NetworkType>): List<EntityType?> {
+        return transaction {
+            networkModels.map { entityClass.from(it) }
+        }
+    }
+
+    /**
      * Invalidates the entity with the given [id], returning true if it existed and was invalidated or false otherwise.
      */
     fun invalidate(id: String): Boolean {

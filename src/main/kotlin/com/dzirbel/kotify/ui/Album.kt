@@ -14,15 +14,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.db.model.Track
+import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
-import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageStack
-import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +45,7 @@ private class AlbumPresenter(
     data class State(
         val refreshing: Boolean,
         val album: FullSpotifyAlbum,
-        val tracks: List<SpotifyTrack>,
+        val tracks: List<Track>,
         val isSaved: Boolean?,
         val albumUpdated: Long?
     )
@@ -68,7 +69,8 @@ private class AlbumPresenter(
 
                 val isSaved = LibraryCache.savedAlbums?.contains(album.id)
 
-                val tracks = album.tracks.fetchAll<SimplifiedSpotifyTrack>()
+                val networkTracks = album.tracks.fetchAll<SimplifiedSpotifyTrack>()
+                val tracks = TrackRepository.put(networkTracks).filterNotNull()
 
                 mutateState {
                     State(
@@ -76,11 +78,13 @@ private class AlbumPresenter(
                         album = album,
                         tracks = tracks,
                         isSaved = isSaved,
-                        albumUpdated = SpotifyCache.lastUpdated(id = page.albumId)
+                        albumUpdated = SpotifyCache.lastUpdated(id = page.albumId),
                     )
                 }
 
-                val fullTracks = SpotifyCache.Tracks.getFullTracks(ids = tracks.map { it.id!! })
+                // TODO just get full if simplified is cached, not always from remote
+                val fullTracks = TrackRepository.getRemote(ids = tracks.map { it.id.value })
+                    .filterNotNull()
 
                 mutateState { it?.copy(tracks = fullTracks) }
             }
@@ -160,7 +164,7 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
             VerticalSpacer(Dimens.space3)
 
             Table(
-                columns = trackColumns(
+                columns = trackColumns2(
                     pageStack = pageStack,
                     includeAlbum = false,
                     playContextFromIndex = { index ->
