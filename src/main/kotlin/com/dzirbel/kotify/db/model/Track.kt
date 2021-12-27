@@ -4,12 +4,14 @@ import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
+import com.dzirbel.kotify.db.cachedOutsideTransaction
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.Table
 import java.time.Instant
@@ -43,7 +45,7 @@ class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
 
     var album: Album? by Album optionalReferencedOn TrackTable.album
 
-    var artists: SizedIterable<Artist> by Artist via TrackTable.TrackArtistTable
+    var artists: SizedIterable<Artist> by (Artist via TrackTable.TrackArtistTable).cachedOutsideTransaction()
 
     companion object : SpotifyEntityClass<Track, SpotifyTrack>(TrackTable) {
         override fun Track.update(networkModel: SpotifyTrack) {
@@ -56,6 +58,8 @@ class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
             networkModel.album?.let {
                 album = Album.from(it)
             }
+
+            artists = SizedCollection(networkModel.artists.mapNotNull { Artist.from(it) })
 
             if (networkModel is SimplifiedSpotifyTrack) {
                 networkModel.popularity?.let {
