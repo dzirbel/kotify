@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.DatabaseExtension
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyExternalUrl
@@ -8,21 +8,11 @@ import com.dzirbel.kotify.network.model.SpotifyFollowers
 import com.dzirbel.kotify.network.model.SpotifyImage
 import com.google.common.truth.Truth.assertThat
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
+@ExtendWith(DatabaseExtension::class)
 internal class ArtistTest {
-    @BeforeEach
-    fun setup() {
-        KotifyDatabase.db
-    }
-
-    @AfterEach
-    fun cleanup() {
-        KotifyDatabase.clear()
-    }
-
     @Test
     fun testFromSimplified() {
         val simplifiedSpotifyArtist = SimplifiedSpotifyArtist(
