@@ -42,13 +42,14 @@ object KotifyDatabase {
 
         Database.connect("jdbc:sqlite:${dbFile.absolutePath}", driver = "org.sqlite.JDBC").also {
             transaction(it) {
+                @Suppress("SpreadOperator")
                 SchemaUtils.createMissingTablesAndColumns(*tables)
             }
         }
     }
 
     fun clear() {
-        transaction {
+        transaction(db) {
             tables.forEach { it.deleteAll() }
         }
     }
