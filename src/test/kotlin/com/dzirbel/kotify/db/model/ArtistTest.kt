@@ -7,7 +7,6 @@ import com.dzirbel.kotify.network.model.SpotifyExternalUrl
 import com.dzirbel.kotify.network.model.SpotifyFollowers
 import com.dzirbel.kotify.network.model.SpotifyImage
 import com.google.common.truth.Truth.assertThat
-import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -16,20 +15,12 @@ import org.junit.jupiter.api.Test
 internal class ArtistTest {
     @BeforeEach
     fun setup() {
-        transaction(KotifyDatabase.db) {
-            SchemaUtils.create(
-                ArtistTable,
-                ArtistTable.ArtistImageTable,
-                ArtistTable.ArtistGenreTable,
-                ImageTable,
-                GenreTable,
-            )
-        }
+        KotifyDatabase.db
     }
 
     @AfterEach
     fun cleanup() {
-        KotifyDatabase.dbFile.delete()
+        KotifyDatabase.clear()
     }
 
     @Test
