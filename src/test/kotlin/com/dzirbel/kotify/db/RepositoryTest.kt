@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -81,7 +82,7 @@ internal class RepositoryTest {
 
     @AfterEach
     fun cleanup() {
-        KotifyDatabase.dbFile.delete()
+        transaction(KotifyDatabase.db) { TestEntityTable.deleteAll() }
         TestRepository.fetchedIds.clear()
         TestRepository.batchFetchedIds.clear()
     }
