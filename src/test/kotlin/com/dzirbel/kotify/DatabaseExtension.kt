@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 class DatabaseExtension : BeforeAllCallback, AfterEachCallback {
     override fun beforeAll(context: ExtensionContext?) {
         KotifyDatabase.db
+        KotifyDatabase.dbFile.deleteOnExit()
     }
 
     override fun afterEach(context: ExtensionContext?) {

@@ -74,21 +74,29 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
     }
 
     /**
-     * Retrieves the [EntityType] for the given [id], from the local cache if present, otherwise fetches it from the
-     * remote source, caches, and returns it.
+     * Retrieves the [EntityType] for the given [id], from the local cache if present and it satisfies [cachePredicate],
+     * otherwise fetches it from the remote source, caches, and returns it.
      */
-    suspend fun get(id: String): EntityType? = getCached(id) ?: getRemote(id)
+    suspend fun get(
+        id: String,
+        cachePredicate: (id: String, cached: EntityType) -> Boolean = { _, _ -> true }
+    ): EntityType? = getCached(id)?.takeIf { cachePredicate(id, it) } ?: getRemote(id)
 
     /**
-     * Retrieves the [EntityType]s for the given [ids], from the local cache if present, otherwise fetches the IDs not
-     * locally cached from the remote source and returns them.
+     * Retrieves the [EntityType]s for the given [ids], from the local cache if present and it satisfies
+     * [cachePredicate], otherwise fetches the IDs not locally cached from the remote source, caches, and returns them.
      */
-    suspend fun get(ids: List<String>): List<EntityType> {
+    suspend fun get(
+        ids: List<String>,
+        cachePredicate: (id: String, cached: EntityType) -> Boolean = { _, _ -> true },
+    ): List<EntityType?> {
         val missingIndices = ArrayList<IndexedValue<String>>()
         val cached = ArrayList<EntityType?>(ids.size)
 
         for (indexedValue in ids.withIndex()) {
             val cachedValue = getCached(indexedValue.value)
+                ?.takeIf { cachePredicate(indexedValue.value, it) }
+
             cached.add(cachedValue)
 
             if (cachedValue == null) {
@@ -97,8 +105,7 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
         }
 
         if (missingIndices.isEmpty()) {
-            @Suppress("UNCHECKED_CAST")
-            return cached as List<EntityType>
+            return cached
         }
 
         val remote = getRemote(ids = missingIndices.map { it.value })
@@ -106,30 +113,43 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
             cached[indexedValue.index] = value
         }
 
-        @Suppress("UNCHECKED_CAST")
-        return cached as List<EntityType>
+        return cached
+    }
+
+    /**
+     * Retrieves the the [EntityType] for the given [id], guaranteeing that it has a non-null
+     * [SpotifyEntity.fullUpdatedTime], i.e. corresponds to a full model.
+     */
+    suspend fun getFull(id: String): EntityType? {
+        return get(id = id, cachePredicate = { _, value -> value.fullUpdatedTime != null })
+    }
+
+    /**
+     * Retrieves the the [EntityType]s for the given [ids], guaranteeing that each has a non-null
+     * [SpotifyEntity.fullUpdatedTime], i.e. corresponds to a full model.
+     */
+    suspend fun getFull(ids: List<String>): List<EntityType?> {
+        return get(ids = ids, cachePredicate = { _, value -> value.fullUpdatedTime != null })
     }
 
     /**
      * Adds the given [networkModel] to the database and returns its mapped [EntityType]. Useful when an unrelated
      * endpoint also returns a model of [NetworkType].
      *
-     * Should not be called from within a transaction.
+     * Must be called from within a transaction.
      */
     fun put(networkModel: NetworkType): EntityType? {
-        return transaction { entityClass.from(networkModel) }
+        return entityClass.from(networkModel)
     }
 
     /**
      * Adds the given [networkModels] to the database and returns their mapped [EntityType]s. Useful when an unrelated
      * endpoint also returns models of [NetworkType].
      *
-     * Should not be called from within a transaction.
+     * Must be called from within a transaction.
      */
     fun put(networkModels: List<NetworkType>): List<EntityType?> {
-        return transaction {
-            networkModels.map { entityClass.from(it) }
-        }
+        return networkModels.map { entityClass.from(it) }
     }
 
     /**

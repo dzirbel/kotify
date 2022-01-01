@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui
 
 import androidx.compose.runtime.mutableStateOf
+import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
@@ -8,7 +9,6 @@ import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
-import com.dzirbel.kotify.network.model.SpotifyTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,10 +30,6 @@ object Player {
         val offset: Spotify.PlaybackOffset? = null,
         val positionMs: Int? = null,
     ) {
-        interface Creator {
-            fun create(track: SpotifyTrack, index: Int): PlayContext?
-        }
-
         companion object {
             /**
              * Returns a [PlayContext] which plays the given [album].
@@ -41,9 +37,14 @@ object Player {
             fun album(album: SpotifyAlbum) = album.uri?.let { PlayContext(contextUri = it) }
 
             /**
+             * Returns a [PlayContext] which plays the given [album].
+             */
+            fun album(album: Album) = album.uri?.let { PlayContext(contextUri = it) }
+
+            /**
              * Returns a [PlayContext] which plays the track at the given [index] on the given [album].
              */
-            fun albumTrack(album: SpotifyAlbum, index: Int): PlayContext? {
+            fun albumTrack(album: Album, index: Int): PlayContext? {
                 return album.uri?.let { uri ->
                     PlayContext(contextUri = uri, offset = Spotify.PlaybackOffset(position = index))
                 }

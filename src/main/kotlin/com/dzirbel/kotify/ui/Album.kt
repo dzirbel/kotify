@@ -14,10 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.db.model.TrackRepository
-import com.dzirbel.kotify.network.model.FullSpotifyAlbum
-import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -28,6 +28,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 private class AlbumPresenter(
@@ -39,15 +40,15 @@ private class AlbumPresenter(
     key = page.albumId,
     eventMergeStrategy = EventMergeStrategy.LATEST,
     startingEvents = listOf(Event.Load(invalidate = false)),
-    initialState = null
+    initialState = null,
 ) {
 
     data class State(
         val refreshing: Boolean,
-        val album: FullSpotifyAlbum,
+        val album: Album,
         val tracks: List<Track>,
         val isSaved: Boolean?,
-        val albumUpdated: Long?
+        val albumUpdated: Instant,
     )
 
     sealed class Event {
@@ -61,16 +62,15 @@ private class AlbumPresenter(
                 mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
-                    SpotifyCache.invalidate(id = page.albumId)
+                    AlbumRepository.invalidate(id = page.albumId)
                 }
 
-                val album = SpotifyCache.Albums.getFullAlbum(page.albumId)
+                val album = AlbumRepository.get(id = page.albumId) ?: error("TODO show 404 page") // TODO 404 page
+
                 pageStack.mutate { withPageTitle(title = page.titleFor(album)) }
 
-                val isSaved = LibraryCache.savedAlbums?.contains(album.id)
-
-                val networkTracks = album.tracks.fetchAll<SimplifiedSpotifyTrack>()
-                val tracks = TrackRepository.put(networkTracks).filterNotNull()
+                val isSaved = LibraryCache.savedAlbums?.contains(album.id.value)
+                val tracks = album.getAllTracks()
 
                 mutateState {
                     State(
@@ -78,13 +78,12 @@ private class AlbumPresenter(
                         album = album,
                         tracks = tracks,
                         isSaved = isSaved,
-                        albumUpdated = SpotifyCache.lastUpdated(id = page.albumId),
+                        albumUpdated = album.updatedTime,
                     )
                 }
 
-                // TODO just get full if simplified is cached, not always from remote
-                val fullTracks = TrackRepository.getRemote(ids = tracks.map { it.id.value })
-                    .filterNotNull()
+                val fullTracks = TrackRepository.getFull(ids = tracks.map { it.id.value })
+                    .zip(tracks) { fullTrack, existingTrack -> fullTrack ?: existingTrack }
 
                 mutateState { it?.copy(tracks = fullTracks) }
             }
@@ -127,17 +126,19 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
                         ) {
                             text("By ")
                             list(state.album.artists) { artist ->
-                                link(text = artist.name, link = artist.id)
+                                link(text = artist.name, link = artist.id.value)
                             }
                         }
 
-                        Text(state.album.releaseDate)
+                        state.album.releaseDate?.let {
+                            Text(it)
+                        }
 
                         val totalDurationMins = remember(state.tracks) {
                             TimeUnit.MILLISECONDS.toMinutes(state.tracks.sumOf { it.durationMs.toInt() }.toLong())
                         }
 
-                        Text("${state.album.tracks.total} songs, $totalDurationMins min")
+                        Text("${state.album.totalTracks} songs, $totalDurationMins min")
 
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
@@ -154,7 +155,7 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
 
                 InvalidateButton(
                     refreshing = state.refreshing,
-                    updated = state.albumUpdated,
+                    updated = state.albumUpdated.epochSecond,
                     updatedFormat = { "Album last updated $it" },
                     updatedFallback = "Album never updated",
                     onClick = { presenter.emitAsync(AlbumPresenter.Event.Load(invalidate = true)) }

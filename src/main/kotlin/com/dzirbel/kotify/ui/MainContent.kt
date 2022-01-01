@@ -28,10 +28,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.network.model.PrivateSpotifyUser
 import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
-import com.dzirbel.kotify.network.model.PrivateSpotifyUser
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.Page
@@ -56,7 +56,7 @@ object AlbumsPage : Page {
 }
 
 data class AlbumPage(val albumId: String) : Page {
-    fun titleFor(album: SpotifyAlbum) = "Album: ${album.name}"
+    fun titleFor(album: Album) = "Album: ${album.name}"
 }
 
 data class PlaylistPage(val playlistId: String) : Page {

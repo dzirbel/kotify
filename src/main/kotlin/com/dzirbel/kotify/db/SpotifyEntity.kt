@@ -13,10 +13,11 @@ import java.time.Instant
  */
 abstract class SpotifyEntityTable(name: String = "") : StringIdTable(name = name) {
     val name: Column<String> = text("name")
+    val uri: Column<String?> = text("uri").nullable()
 
     val createdTime: Column<Instant> = timestamp("created_time").clientDefault { Instant.now() }
     val updatedTime: Column<Instant> = timestamp("updated_time").clientDefault { Instant.now() }
-    val fullUpdatedTime: Column<Instant?> = timestamp("full_updated_time").clientDefault { Instant.now() }.nullable()
+    val fullUpdatedTime: Column<Instant?> = timestamp("full_updated_time").nullable()
 }
 
 /**
@@ -24,6 +25,7 @@ abstract class SpotifyEntityTable(name: String = "") : StringIdTable(name = name
  */
 abstract class SpotifyEntity(id: EntityID<String>, table: SpotifyEntityTable) : Entity<String>(id) {
     var name: String by table.name
+    var uri: String? by table.uri
 
     var createdTime: Instant by table.createdTime
     var updatedTime: Instant by table.updatedTime
@@ -43,7 +45,7 @@ abstract class SpotifyEntityClass<EntityType : SpotifyEntity, NetworkType : Spot
      * Sets fields on this [EntityType] according to the given [networkModel]. Used either to create a new entity or
      * update an existing one from a new [networkModel].
      */
-    abstract fun EntityType.update(networkModel: NetworkType)
+    protected abstract fun EntityType.update(networkModel: NetworkType)
 
     /**
      * Converts the given [networkModel] into an [EntityType], either creating a new entity or updating the existing one
@@ -60,10 +62,12 @@ abstract class SpotifyEntityClass<EntityType : SpotifyEntity, NetworkType : Spot
             ?.apply {
                 updatedTime = Instant.now()
                 name = networkModel.name
+                uri = networkModel.uri
                 update(networkModel)
             }
             ?: new(id = id) {
                 name = networkModel.name
+                uri = networkModel.uri
                 update(networkModel)
             }
     }

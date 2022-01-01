@@ -167,7 +167,7 @@ class ArtistColumn2(
                 pageStack.mutate { to(ArtistPage(artistId = artistId)) }
             }
         ) {
-            list(item.artists.toList()) { artist ->
+            list(item.artists) { artist ->
                 link(text = artist.name, link = artist.id.value)
             }
         }
