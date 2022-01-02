@@ -90,30 +90,29 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
         cachePredicate: (id: String, cached: EntityType) -> Boolean = { _, _ -> true },
     ): List<EntityType?> {
         val missingIndices = ArrayList<IndexedValue<String>>()
-        val cached = ArrayList<EntityType?>(ids.size)
 
-        // TODO use batch getCached() to avoid a new transaction on each call
-        for (indexedValue in ids.withIndex()) {
-            val cachedValue = getCached(id = indexedValue.value)
-                ?.takeIf { cachePredicate(indexedValue.value, it) }
+        val cachedValues = getCached(ids = ids)
+            .mapIndexedTo(ArrayList(ids.size)) { index, cached ->
+                val id = ids[index]
+                val result = cached?.takeIf { cachePredicate(id, it) }
 
-            cached.add(cachedValue)
+                if (result == null) {
+                    missingIndices.add(IndexedValue(index = index, value = id))
+                }
 
-            if (cachedValue == null) {
-                missingIndices.add(indexedValue)
+                result
             }
-        }
 
         if (missingIndices.isEmpty()) {
-            return cached
+            return cachedValues
         }
 
         val remote = getRemote(ids = missingIndices.map { it.value })
         missingIndices.zipEach(remote) { indexedValue, value ->
-            cached[indexedValue.index] = value
+            cachedValues[indexedValue.index] = value
         }
 
-        return cached
+        return cachedValues
     }
 
     /**

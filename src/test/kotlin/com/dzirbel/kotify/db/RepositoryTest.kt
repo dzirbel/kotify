@@ -61,7 +61,7 @@ private object TestRepository : Repository<TestEntity, TestNetworkModel>(TestEnt
 
     override suspend fun fetch(ids: List<String>): List<TestNetworkModel?> {
         batchFetchedIds.add(ids)
-        return super.fetch(ids)
+        return ids.map { remoteModels[it] }
     }
 }
 
@@ -80,9 +80,15 @@ private val remoteModels = mapOf(
         intField = 4,
         booleanField = false,
     ),
+    "id3" to TestNetworkModel(
+        id = "id3",
+        name = "Object 3",
+        stringField = "str3",
+        intField = 8,
+        booleanField = false,
+    ),
 )
 
-// TODO finish testing
 internal class RepositoryTest {
     @BeforeEach
     fun setup() {
@@ -129,6 +135,90 @@ internal class RepositoryTest {
 
             assertThat(TestRepository.fetchedIds).containsExactly("dne")
             assertThat(TestRepository.batchFetchedIds).isEmpty()
+        }
+    }
+
+    @Test
+    fun testGetSequence() {
+        val id = "id1"
+        runBlocking {
+            // first attempt is not in cache
+            val result1 = TestRepository.getCached(id = id)
+            assertThat(result1).isNull()
+            assertThat(TestRepository.fetchedIds).isEmpty()
+            assertThat(TestRepository.batchFetchedIds).isEmpty()
+
+            // second attempt fetches from the remote
+            val start2 = Instant.now()
+            val result2 = TestRepository.get(id = id)
+            val end2 = Instant.now()
+
+            requireNotNull(result2)
+            result2.assertMatches(remoteModels.getValue(id), createStart = start2, createEnd = end2)
+            assertThat(TestRepository.fetchedIds).containsExactly(id)
+            assertThat(TestRepository.batchFetchedIds).isEmpty()
+
+            // third attempt fetches from the cache
+            val result3 = TestRepository.get(id = id)
+
+            requireNotNull(result3)
+            result3.assertMatches(remoteModels.getValue(id), createStart = start2, createEnd = end2)
+            assertThat(TestRepository.fetchedIds).containsExactly(id)
+            assertThat(TestRepository.batchFetchedIds).isEmpty()
+
+            // fourth attempt fetches again from the remote, updating the model
+            val start4 = Instant.now()
+            val result4 = TestRepository.getRemote(id = id)
+            val end4 = Instant.now()
+
+            requireNotNull(result4)
+            result4.assertMatches(
+                remoteModels.getValue(id),
+                createStart = start2,
+                createEnd = end2,
+                updateStart = start4,
+                updateEnd = end4,
+            )
+            assertThat(TestRepository.fetchedIds).containsExactly(id, id)
+            assertThat(TestRepository.batchFetchedIds).isEmpty()
+        }
+    }
+
+    @Test
+    fun testGetBatched() {
+        runBlocking {
+            val cachedValue = remoteModels.entries.first()
+            transaction(KotifyDatabase.db) { TestRepository.put(cachedValue.value) }
+
+            val result = TestRepository.get(ids = remoteModels.keys.toList())
+            assertThat(result).hasSize(remoteModels.size)
+            remoteModels.forEach { (_, networkModel) ->
+                // every result model matches one network model
+                val matchingCount = result.count {
+                    runCatching { it?.assertMatches(networkModel) }.isSuccess
+                }
+                assertThat(matchingCount).isEqualTo(1)
+            }
+
+            assertThat(TestRepository.fetchedIds).isEmpty()
+            assertThat(TestRepository.batchFetchedIds)
+                .containsExactly(remoteModels.keys.minus(cachedValue.key).toList())
+        }
+    }
+
+    @Test
+    fun testInvalidate() {
+        val id = "id1"
+        runBlocking {
+            assertThat(TestRepository.getCached(id = id)).isNull()
+
+            transaction(KotifyDatabase.db) { TestRepository.put(requireNotNull(remoteModels[id])) }
+
+            assertThat(TestRepository.getCached(id = id)).isNotNull()
+
+            TestRepository.invalidate(id = id)
+
+            assertThat(TestRepository.getCached(id = id)).isNull()
         }
     }
 
