@@ -2,8 +2,6 @@ package com.dzirbel.kotify.db
 
 import com.dzirbel.kotify.network.model.SpotifyObject
 import com.dzirbel.kotify.util.zipEach
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.transaction
 
 /**
  * Manages access of values in a local, database-based source and a remote, network-based source.
@@ -14,7 +12,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
  */
 abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObject>(
     private val entityClass: SpotifyEntityClass<EntityType, NetworkType>,
-    private val db: Database = KotifyDatabase.db,
 ) {
     /**
      * Fetches a single network model of [NetworkType] via a remote call to the network.
@@ -34,16 +31,16 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
     /**
      * Retrieves the [EntityType] with the given [id] in the local cache, if it exists.
      */
-    fun getCached(id: String): EntityType? {
-        return transaction(db) { entityClass.findById(id) }
+    suspend fun getCached(id: String): EntityType? {
+        return KotifyDatabase.transaction { entityClass.findById(id) }
     }
 
     /**
      * Retrieves the [EntityType]s with the given [ids] in the local cache, if they exist. The returned list has the
      * same order and length as [ids] with missing values as null values in the list.
      */
-    fun getCached(ids: Iterable<String>): List<EntityType?> {
-        return transaction(db) {
+    suspend fun getCached(ids: Iterable<String>): List<EntityType?> {
+        return KotifyDatabase.transaction {
             ids.map { id -> entityClass.findById(id) }
         }
     }
@@ -54,7 +51,7 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
      */
     suspend fun getRemote(id: String): EntityType? {
         return fetch(id)?.let { networkModel ->
-            transaction(db) { entityClass.from(networkModel) }
+            KotifyDatabase.transaction { entityClass.from(networkModel) }
         }
     }
 
@@ -70,7 +67,7 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
         val networkModels = fetch(ids = ids).filterNotNull()
         if (networkModels.isEmpty()) return emptyList()
 
-        return transaction(db) { entityClass.from(networkModels) }
+        return KotifyDatabase.transaction { entityClass.from(networkModels) }
     }
 
     /**
@@ -79,8 +76,10 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
      */
     suspend fun get(
         id: String,
-        cachePredicate: (id: String, cached: EntityType) -> Boolean = { _, _ -> true }
-    ): EntityType? = getCached(id)?.takeIf { cachePredicate(id, it) } ?: getRemote(id)
+        cachePredicate: (id: String, cached: EntityType) -> Boolean = { _, _ -> true },
+    ): EntityType? {
+        return getCached(id = id)?.takeIf { cachePredicate(id, it) } ?: getRemote(id = id)
+    }
 
     /**
      * Retrieves the [EntityType]s for the given [ids], from the local cache if present and it satisfies
@@ -93,8 +92,9 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
         val missingIndices = ArrayList<IndexedValue<String>>()
         val cached = ArrayList<EntityType?>(ids.size)
 
+        // TODO use batch getCached() to avoid a new transaction on each call
         for (indexedValue in ids.withIndex()) {
-            val cachedValue = getCached(indexedValue.value)
+            val cachedValue = getCached(id = indexedValue.value)
                 ?.takeIf { cachePredicate(indexedValue.value, it) }
 
             cached.add(cachedValue)
@@ -155,16 +155,16 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
     /**
      * Invalidates the entity with the given [id], returning true if it existed and was invalidated or false otherwise.
      */
-    fun invalidate(id: String): Boolean {
-        return transaction(db) { entityClass.findById(id)?.delete() } != null
+    suspend fun invalidate(id: String): Boolean {
+        return KotifyDatabase.transaction { entityClass.findById(id)?.delete() } != null
     }
 
     /**
      * Invalidates the entities with the given [ids], returning true for each if it existed and was invalidates or false
      * otherwise.
      */
-    fun invalidate(ids: List<String>): List<Boolean> {
-        return transaction(db) {
+    suspend fun invalidate(ids: List<String>): List<Boolean> {
+        return KotifyDatabase.transaction {
             ids.map { id -> entityClass.findById(id)?.delete() != null }
         }
     }

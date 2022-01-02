@@ -3,6 +3,9 @@ package com.dzirbel.kotify.db
 import com.dzirbel.kotify.network.model.SpotifyObject
 import com.google.common.collect.Range
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
@@ -11,6 +14,7 @@ import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
@@ -69,6 +73,13 @@ private val remoteModels = mapOf(
         intField = 2,
         booleanField = true,
     ),
+    "id2" to TestNetworkModel(
+        id = "id2",
+        name = "Object 2",
+        stringField = "str2",
+        intField = 4,
+        booleanField = false,
+    ),
 )
 
 // TODO finish testing
@@ -89,13 +100,15 @@ internal class RepositoryTest {
 
     @Test
     fun testEmpty() {
-        assertThat(TestRepository.getCached(id = "id1")).isNull()
-        assertThat(TestRepository.getCached(ids = List(3) { "id$it" })).isEqualTo(List(3) { null })
+        runBlocking {
+            assertThat(TestRepository.getCached(id = "id1")).isNull()
+            assertThat(TestRepository.getCached(ids = List(3) { "id$it" })).isEqualTo(List(3) { null })
+        }
     }
 
     @Test
     fun testGetRemote() {
-        runBlockingTest {
+        runBlocking {
             val start = Instant.now()
             val result = TestRepository.getRemote(id = "id1")
             val end = Instant.now()
@@ -116,6 +129,23 @@ internal class RepositoryTest {
 
             assertThat(TestRepository.fetchedIds).containsExactly("dne")
             assertThat(TestRepository.batchFetchedIds).isEmpty()
+        }
+    }
+
+    @RepeatedTest(100)
+    fun testGetParallel() {
+        runBlocking {
+            val job1a = async(Dispatchers.IO) { TestRepository.get(id = "id1") }
+            val job2a = async(Dispatchers.IO) { TestRepository.get(id = "id2") }
+
+            job1a.await()
+            job2a.await()
+
+            val job1b = async(Dispatchers.IO) { TestRepository.get(id = "id1") }
+            val job2b = async(Dispatchers.IO) { TestRepository.get(id = "id2") }
+
+            job1b.await()
+            job2b.await()
         }
     }
 

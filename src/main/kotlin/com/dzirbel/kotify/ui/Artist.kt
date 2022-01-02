@@ -15,8 +15,11 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.cache.SpotifyImageCache
-import com.dzirbel.kotify.network.model.SpotifyAlbum
-import com.dzirbel.kotify.network.model.FullSpotifyArtist
+import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.db.model.AlbumRepository
+import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
@@ -48,13 +51,11 @@ private class ArtistPresenter(
 ) {
 
     data class State(
-        val artist: FullSpotifyArtist,
-        val artistUpdated: Long?,
+        val artist: Artist,
         val refreshingArtist: Boolean,
-        val artistAlbums: List<SpotifyAlbum>,
-        val artistAlbumsUpdated: Long?,
+        val artistAlbums: List<Album>,
         val savedAlbums: Set<String>?,
-        val refreshingArtistAlbums: Boolean
+        val refreshingArtistAlbums: Boolean,
     )
 
     sealed class Event {
@@ -79,22 +80,22 @@ private class ArtistPresenter(
                 }
 
                 if (event.invalidateArtist) {
-                    SpotifyCache.invalidate(id = page.artistId)
+                    AlbumRepository.invalidate(id = page.artistId)
                 }
 
                 if (event.invalidateArtistAlbums) {
-                    SpotifyCache.invalidate(
-                        SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = page.artistId)
-                    )
+                    ArtistRepository.getCached(id = page.artistId)?.let { artist ->
+                        KotifyDatabase.transaction { artist.albumsFetched = null }
+                    }
                 }
 
-                val artist: FullSpotifyArtist?
-                val artistAlbums: List<SpotifyAlbum>?
+                val artist: Artist?
+                val artistAlbums: List<Album>?
 
                 coroutineScope {
                     val deferredArtist = if (event.refreshArtist) {
                         async(Dispatchers.IO) {
-                            SpotifyCache.Artists.getFullArtist(id = page.artistId)
+                            ArtistRepository.getFull(id = page.artistId)
                         }
                     } else {
                         null
@@ -102,7 +103,7 @@ private class ArtistPresenter(
 
                     val deferredArtistAlbums = if (event.refreshArtistAlbums) {
                         async(Dispatchers.IO) {
-                            SpotifyCache.Artists.getArtistAlbums(artistId = page.artistId)
+                            Artist.getAllAlbums(artistId = page.artistId)
                         }
                     } else {
                         null
@@ -128,12 +129,8 @@ private class ArtistPresenter(
                 mutateState {
                     State(
                         artist = artist ?: it?.artist ?: error("no artist"),
-                        artistUpdated = SpotifyCache.lastUpdated(page.artistId),
                         refreshingArtist = false,
                         artistAlbums = checkNotNull(artistAlbums ?: it?.artistAlbums),
-                        artistAlbumsUpdated = SpotifyCache.lastUpdated(
-                            SpotifyCache.GlobalObjects.ArtistAlbums.idFor(artistId = page.artistId)
-                        ),
                         savedAlbums = savedAlbums,
                         refreshingArtistAlbums = false
                     )
@@ -172,7 +169,7 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
                     InvalidateButton(
                         modifier = Modifier.align(Alignment.End),
                         refreshing = state.refreshingArtist,
-                        updated = state.artistUpdated,
+                        updated = state.artist.updatedTime.toEpochMilli(),
                         updatedFormat = { "Artist last updated $it" },
                         updatedFallback = "Artist never updated",
                         onClick = {
@@ -190,7 +187,7 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
                     InvalidateButton(
                         modifier = Modifier.align(Alignment.End),
                         refreshing = state.refreshingArtistAlbums,
-                        updated = state.artistAlbumsUpdated,
+                        updated = state.artist.albumsFetched?.toEpochMilli(),
                         updatedFormat = { "Albums last updated $it" },
                         updatedFallback = "Albums never updated",
                         onClick = {
@@ -215,14 +212,12 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
                 verticalSpacing = Dimens.space3,
                 cellAlignment = Alignment.TopCenter,
             ) { album ->
-                AlbumCell(
+                AlbumCell2(
                     album = album,
                     savedAlbums = state.savedAlbums,
                     pageStack = pageStack,
                     onToggleSave = { save ->
-                        album.id?.let { albumId ->
-                            presenter.emitAsync(ArtistPresenter.Event.ToggleSave(albumId = albumId, save = save))
-                        }
+                        presenter.emitAsync(ArtistPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
                     }
                 )
             }

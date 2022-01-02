@@ -155,7 +155,7 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
 
                 InvalidateButton(
                     refreshing = state.refreshing,
-                    updated = state.albumUpdated.epochSecond,
+                    updated = state.albumUpdated.toEpochMilli(),
                     updatedFormat = { "Album last updated $it" },
                     updatedFallback = "Album never updated",
                     onClick = { presenter.emitAsync(AlbumPresenter.Event.Load(invalidate = true)) }

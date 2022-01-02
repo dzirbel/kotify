@@ -13,6 +13,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageStack
@@ -47,6 +48,40 @@ fun AlbumCell(
             Text(text = album.name, modifier = Modifier.weight(1f))
 
             val isSaved = savedAlbums?.contains(album.id)
+            ToggleSaveButton(isSaved = isSaved) { onToggleSave(it) }
+
+            PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)
+        }
+    }
+}
+
+@Composable
+fun AlbumCell2(
+    album: Album,
+    savedAlbums: Set<String>?,
+    pageStack: MutableState<PageStack>,
+    onToggleSave: (Boolean) -> Unit
+) {
+    Column(
+        Modifier
+            .clip(RoundedCornerShape(Dimens.cornerSize))
+            .clickable { pageStack.mutate { to(AlbumPage(albumId = album.id.value)) } }
+            .padding(Dimens.space3)
+    ) {
+        LoadedImage(
+            url = album.images.firstOrNull()?.url,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+
+        VerticalSpacer(Dimens.space2)
+
+        Row(
+            modifier = Modifier.widthIn(max = Dimens.contentImage),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space2)
+        ) {
+            Text(text = album.name, modifier = Modifier.weight(1f))
+
+            val isSaved = savedAlbums?.contains(album.id.value)
             ToggleSaveButton(isSaved = isSaved) { onToggleSave(it) }
 
             PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)

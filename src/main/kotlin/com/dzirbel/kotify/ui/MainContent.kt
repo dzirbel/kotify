@@ -29,8 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.network.model.PrivateSpotifyUser
-import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -48,7 +48,7 @@ object ArtistsPage : Page {
 }
 
 data class ArtistPage(val artistId: String) : Page {
-    fun titleFor(artist: SpotifyArtist) = "Artist: ${artist.name}"
+    fun titleFor(artist: Artist) = "Artist: ${artist.name}"
 }
 
 object AlbumsPage : Page {
