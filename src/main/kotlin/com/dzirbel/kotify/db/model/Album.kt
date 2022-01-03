@@ -1,7 +1,9 @@
 package com.dzirbel.kotify.db.model
 
+import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.Repository
-import com.dzirbel.kotify.db.SpotifyEntity
+import com.dzirbel.kotify.db.SavableSpotifyEntity
+import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cachedAsList
@@ -12,7 +14,6 @@ import com.dzirbel.kotify.network.model.SpotifyAlbum
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 
 object AlbumTable : SpotifyEntityTable(name = "albums") {
@@ -46,9 +47,15 @@ object AlbumTable : SpotifyEntityTable(name = "albums") {
         val track = reference("track", TrackTable)
         override val primaryKey = PrimaryKey(album, track)
     }
+
+    object SavedAlbumsTable : SavedEntityTable(name = "saved_albums")
 }
 
-class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
+class Album(id: EntityID<String>) : SavableSpotifyEntity(
+    id = id,
+    table = AlbumTable,
+    savedEntityTable = AlbumTable.SavedAlbumsTable,
+) {
     var albumType: SpotifyAlbum.Type? by AlbumTable.albumType
     var releaseDate: String? by AlbumTable.releaseDate
     var releaseDatePrecision: String? by AlbumTable.releaseDatePrecision
@@ -75,7 +82,7 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
             val networkTracks = Spotify.Albums.getAlbumTracks(id = id.value)
                 .fetchAll<SimplifiedSpotifyTrack>()
 
-            transaction {
+            KotifyDatabase.transaction {
                 networkTracks.mapNotNull { Track.from(it) }
                     .also { tracks = it }
             }
