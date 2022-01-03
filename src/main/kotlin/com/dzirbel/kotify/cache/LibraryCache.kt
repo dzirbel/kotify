@@ -1,12 +1,15 @@
 package com.dzirbel.kotify.cache
 
 import com.dzirbel.kotify.cache.SpotifyCache.GlobalObjects
-import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.db.model.AlbumRepository
+import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.util.zipToMap
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.exposed.sql.transactions.transaction
 
 object LibraryCache {
     data class CachedArtist(
@@ -15,12 +18,6 @@ object LibraryCache {
         val updated: Long?,
         val albums: List<String>?,
         val albumsUpdated: Long?
-    )
-
-    data class CachedAlbum(
-        val id: String,
-        val album: SpotifyAlbum?,
-        val updated: Long?
     )
 
     data class CachedPlaylist(
@@ -49,53 +46,25 @@ object LibraryCache {
     val cachedArtists: List<CachedArtist>?
         get() {
             return artists?.toList()?.let { artists ->
-                val artistAlbums = LibraryCache.artistAlbums
+                val artistIds = artists.map { it.first }
 
                 // batch calls for last updates
-                val updated = SpotifyCache.lastUpdated(
-                    artists.map { it.first }
-                        .plus(artists.map { GlobalObjects.ArtistAlbums.idFor(artistId = it.first) })
-                )
-                check(updated.size == artists.size * 2)
+                val updated = SpotifyCache.lastUpdated(artistIds)
+                val dbArtists = transaction {
+                    artistIds.map { Artist.findById(id = it) }
+                }
+                val artistAlbums = transaction {
+                    dbArtists.map { artist -> artist?.albums?.map { it.id.value } }
+                }
 
                 artists.mapIndexed { index, (id, artist) ->
                     CachedArtist(
                         id = id,
                         artist = artist,
                         updated = updated[index],
-                        albums = artistAlbums?.get(id),
-                        albumsUpdated = updated[index + artists.size]
+                        albums = artistAlbums[index],
+                        albumsUpdated = dbArtists[index]?.albumsFetched?.toEpochMilli(),
                     )
-                }
-            }
-        }
-
-    val artistAlbums: Map<String, List<String>?>?
-        get() = savedArtists
-            ?.let { artistIds ->
-                val artistAlbumIds = artistIds.map { artistId -> GlobalObjects.ArtistAlbums.idFor(artistId = artistId) }
-                artistIds.zipToMap(
-                    SpotifyCache.getCached<GlobalObjects.ArtistAlbums>(artistAlbumIds).map { it?.albumIds }
-                )
-            }
-
-    val savedAlbums: Set<String>?
-        get() = SpotifyCache.getCached<GlobalObjects.SavedAlbums>(GlobalObjects.SavedAlbums.ID)?.ids
-
-    val albumsUpdated: Long?
-        get() = SpotifyCache.lastUpdated(GlobalObjects.SavedAlbums.ID)
-
-    val albums: Map<String, SpotifyAlbum?>?
-        get() = savedAlbums?.let { ids -> ids.zipToMap(SpotifyCache.getCached<SpotifyAlbum>(ids)) }
-
-    val cachedAlbums: List<CachedAlbum>?
-        get() {
-            return albums?.toList()?.let { albums ->
-                // batch calls for last updates
-                val updated = SpotifyCache.lastUpdated(albums.map { it.first })
-
-                albums.mapIndexed { index, (id, album) ->
-                    CachedAlbum(id = id, album = album, updated = updated[index])
                 }
             }
         }
@@ -168,13 +137,16 @@ object LibraryCache {
         get() {
             val ids = listOf(
                 GlobalObjects.SavedArtists.ID,
-                GlobalObjects.SavedAlbums.ID,
                 GlobalObjects.SavedPlaylists.ID,
                 GlobalObjects.SavedTracks.ID,
                 GlobalObjects.CURRENT_USER_ID
             )
 
-            val values = SpotifyCache.lastUpdated(ids).filterNotNull()
+            val savedAlbumsUpdated = runBlocking { AlbumRepository.savedAlbumsUpdated() }
+
+            val values = SpotifyCache.lastUpdated(ids)
+                .plus(savedAlbumsUpdated?.toEpochMilli())
+                .filterNotNull()
 
             // return null if any values are not cached
             if (values.size < ids.size) return null
@@ -196,8 +168,6 @@ object LibraryCache {
     }
 
     fun clear() {
-        SpotifyCache.invalidate(GlobalObjects.SavedAlbums.ID)
-        SpotifyCache.invalidate(GlobalObjects.SavedAlbums.ID)
         SpotifyCache.invalidate(GlobalObjects.SavedTracks.ID)
         SpotifyCache.invalidate(GlobalObjects.SavedPlaylists.ID)
         SpotifyCache.invalidate(GlobalObjects.CURRENT_USER_ID)

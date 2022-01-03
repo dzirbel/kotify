@@ -35,10 +35,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
-import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LinkedText
@@ -64,6 +65,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -157,7 +159,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 artistsAreSaved = savedArtists?.let {
                     track.artists.mapNotNull { it.id }.associateWith { id -> savedArtists.contains(id) }
                 },
-                albumIsSaved = LibraryCache.savedAlbums?.contains(albumId)
+                albumIsSaved = albumId?.let { runBlocking { AlbumRepository.isSaved(albumId = albumId) } }
             )
         }
     }
@@ -569,15 +571,8 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             is Event.ToggleAlbumSaved -> {
-                val savedAlbumIds = if (event.save) {
-                    SpotifyCache.Albums.saveAlbum(id = event.albumId)
-                } else {
-                    SpotifyCache.Albums.unsaveAlbum(id = event.albumId)
-                }
-
-                mutateState {
-                    it.copy(albumIsSaved = savedAlbumIds?.contains(event.albumId))
-                }
+                AlbumRepository.setSaved(albumId = event.albumId, saved = event.save)
+                mutateState { it.copy(albumIsSaved = event.save) }
             }
 
             is Event.ToggleArtistSaved -> {

@@ -12,8 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.cache.LibraryCache
-import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.Track
@@ -69,7 +68,7 @@ private class AlbumPresenter(
 
                 pageStack.mutate { withPageTitle(title = page.titleFor(album)) }
 
-                val isSaved = LibraryCache.savedAlbums?.contains(album.id.value)
+                val isSaved = KotifyDatabase.transaction { album.isSaved }
                 val tracks = album.getAllTracks()
 
                 mutateState {
@@ -89,14 +88,8 @@ private class AlbumPresenter(
             }
 
             is Event.ToggleSave -> {
-                val savedAlbums = if (event.save) {
-                    SpotifyCache.Albums.saveAlbum(id = page.albumId)
-                } else {
-                    SpotifyCache.Albums.unsaveAlbum(id = page.albumId)
-                }
-
-                val isSaved = savedAlbums?.contains(page.albumId)
-                mutateState { it?.copy(isSaved = isSaved) }
+                AlbumRepository.setSaved(albumId = page.albumId, saved = event.save)
+                mutateState { it?.copy(isSaved = event.save) }
             }
         }
     }

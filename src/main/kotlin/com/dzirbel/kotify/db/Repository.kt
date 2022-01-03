@@ -162,7 +162,7 @@ abstract class Repository<EntityType : SpotifyEntity, NetworkType : SpotifyObjec
      * Invalidates the entities with the given [ids], returning true for each if it existed and was invalidates or false
      * otherwise.
      */
-    suspend fun invalidate(ids: List<String>): List<Boolean> {
+    suspend fun invalidate(ids: Iterable<String>): List<Boolean> {
         return KotifyDatabase.transaction {
             ids.map { id -> entityClass.findById(id)?.delete() != null }
         }

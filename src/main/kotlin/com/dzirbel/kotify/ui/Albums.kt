@@ -12,14 +12,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.cache.SpotifyImageCache
-import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.util.plusOrMinus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
@@ -33,8 +34,8 @@ private class AlbumsPresenter(scope: CoroutineScope) :
 
     data class State(
         val refreshing: Boolean,
-        val albums: List<SpotifyAlbum>,
-        val savedAlbums: Set<String>,
+        val albums: List<Album>,
+        val savedAlbumIds: Set<String>,
         val albumsUpdated: Long?
     )
 
@@ -49,14 +50,14 @@ private class AlbumsPresenter(scope: CoroutineScope) :
                 mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
-                    SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedAlbums.ID)
+                    AlbumRepository.invalidateSavedAlbums()
                 }
 
-                val albums = SpotifyCache.Albums.getSavedAlbums()
-                    .map { SpotifyCache.Albums.getAlbum(it) }
+                val savedAlbumIds = AlbumRepository.getSavedAlbums()
+                val albums = AlbumRepository.get(ids = savedAlbumIds.toList())
+                    .filterNotNull()
                     .sortedBy { it.name }
-
-                val savedAlbums = albums.mapNotNullTo(mutableSetOf()) { it.id }
+                val albumsUpdated = AlbumRepository.savedAlbumsUpdated()
 
                 SpotifyImageCache.loadFromFileCache(
                     urls = albums.mapNotNull { it.images.firstOrNull()?.url },
@@ -67,21 +68,16 @@ private class AlbumsPresenter(scope: CoroutineScope) :
                     State(
                         refreshing = false,
                         albums = albums,
-                        savedAlbums = savedAlbums,
-                        albumsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedAlbums.ID)
+                        savedAlbumIds = savedAlbumIds,
+                        albumsUpdated = albumsUpdated?.toEpochMilli()
                     )
                 }
             }
 
             is Event.ToggleSave -> {
-                val savedAlbums = if (event.save) {
-                    SpotifyCache.Albums.saveAlbum(id = event.albumId)
-                } else {
-                    SpotifyCache.Albums.unsaveAlbum(id = event.albumId)
-                }
-
-                savedAlbums?.let {
-                    mutateState { it?.copy(savedAlbums = savedAlbums) }
+                AlbumRepository.setSaved(albumId = event.albumId, saved = event.save)
+                mutateState {
+                    it?.copy(savedAlbumIds = it.savedAlbumIds.plusOrMinus(event.albumId, event.save))
                 }
             }
         }
@@ -117,12 +113,10 @@ fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
             ) { album ->
                 AlbumCell(
                     album = album,
-                    savedAlbums = state.savedAlbums,
+                    isSaved = state.savedAlbumIds.contains(album.id.value),
                     pageStack = pageStack,
                     onToggleSave = { save ->
-                        album.id?.let { albumId ->
-                            presenter.emitAsync(AlbumsPresenter.Event.ToggleSave(albumId = albumId, save = save))
-                        }
+                        presenter.emitAsync(AlbumsPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
                     }
                 )
             }

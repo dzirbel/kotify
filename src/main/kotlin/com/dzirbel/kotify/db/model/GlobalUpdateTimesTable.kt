@@ -1,7 +1,9 @@
 package com.dzirbel.kotify.db.model
 
+import com.dzirbel.kotify.db.KotifyDatabase
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
@@ -22,11 +24,11 @@ object GlobalUpdateTimesTable : Table(name = "global_update_times") {
 
     /**
      * Gets the last time the given [key] was updated, or null if it has never been updated.
-     *
-     * Must be called from within a transaction.
      */
-    fun updated(key: String): Instant? {
-        return select { GlobalUpdateTimesTable.key eq key }.firstOrNull()?.get(updateTime)
+    suspend fun updated(key: String): Instant? {
+        return KotifyDatabase.transaction {
+            select { GlobalUpdateTimesTable.key eq key }.firstOrNull()?.get(updateTime)
+        }
     }
 
     /**
@@ -45,6 +47,15 @@ object GlobalUpdateTimesTable : Table(name = "global_update_times") {
                 it[GlobalUpdateTimesTable.key] = key
                 it[GlobalUpdateTimesTable.updateTime] = updateTime
             }
+        }
+    }
+
+    /**
+     * Invalidates the last update time for the given [key].
+     */
+    suspend fun invalidate(key: String) {
+        KotifyDatabase.transaction {
+            deleteWhere { GlobalUpdateTimesTable.key eq key }
         }
     }
 

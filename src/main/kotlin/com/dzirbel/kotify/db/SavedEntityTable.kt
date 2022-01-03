@@ -1,13 +1,14 @@
 package com.dzirbel.kotify.db
 
-import com.dzirbel.kotify.db.model.AlbumTable
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
 import java.time.Instant
+import kotlin.properties.ReadOnlyProperty
 
 /**
  * Common table schema for representing the saved/unsaved status of an entity with a string ID.
@@ -30,26 +31,107 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
      * this one, in which case the global one should be used.
      */
     val savedCheckTime: Column<Instant?> = timestamp("saved_check_time").nullable()
+
+    /**
+     * Determines whether the entity with the given [entityId] is saved, returning null if its status is unknown.
+     *
+     * Must be called from within a transaction.
+     */
+    fun isSaved(entityId: String): Boolean? {
+        return select { id eq entityId }.firstOrNull()?.let { it[savedTime] != null }
+    }
+
+    /**
+     * Stores the entity with the given [entityId] as the given [saved] state, having been saved at the given
+     * [saveTime].
+     *
+     * Must be called from within a transaction.
+     */
+    fun setSaved(entityId: String, saved: Boolean, saveTime: Instant = Instant.now()) {
+        select { id eq entityId }
+            .firstOrNull()
+            ?: insert {
+                it[id] = entityId
+                it[savedTime] = if (saved) saveTime else null
+                it[savedCheckTime] = saveTime
+            }
+    }
+
+    /**
+     * Gets the set of entity IDs which are marked as having been saved.
+     */
+    fun savedEntityIds(): Set<String> {
+        return select { savedTime neq null }.mapTo(mutableSetOf()) { it[id].value }
+    }
 }
 
+/**
+ * A [SpotifyEntity] which is able to be saved to the user's library. The save status is stored in [savedEntityTable],
+ * but convenience DAO accessors are provided here.
+ */
 abstract class SavableSpotifyEntity(
     id: EntityID<String>,
     table: SpotifyEntityTable,
     private val savedEntityTable: SavedEntityTable,
+    globalUpdateKey: String,
 ) : SpotifyEntity(id, table) {
-    val isSaved: Boolean? by isSaved<SavableSpotifyEntity>(savedEntityTable).cachedOutsideTransaction()
-    val savedTime: Instant? by savedTime<SavableSpotifyEntity>(savedEntityTable).cachedOutsideTransaction()
+    val isSaved: Boolean? by isSaved<SavableSpotifyEntity>().cachedOutsideTransaction()
+    val savedTime: Instant? by savedTime<SavableSpotifyEntity>().cachedOutsideTransaction()
     val savedCheckTime: Instant? by savedCheckTime<SavableSpotifyEntity>(
-        savedEntityTable = AlbumTable.SavedAlbumsTable,
-        globalUpdateKey = GlobalUpdateTimesTable.Keys.SAVED_ALBUMS,
+        savedEntityTable = savedEntityTable,
+        globalUpdateKey = globalUpdateKey,
     ).cachedOutsideTransaction()
 
+    /**
+     * A [ReadOnlyProperty] which reflects the saved status of a [SavableSpotifyEntity] based on its [savedEntityTable]
+     * which stores its saved-time records.
+     */
+    private fun <T : SpotifyEntity> isSaved(): ReadOnlyProperty<T, Boolean?> {
+        return ReadOnlyProperty { thisRef, _ ->
+            savedEntityTable.select { savedEntityTable.id eq thisRef.id }
+                .firstOrNull()
+                ?.let { it[savedEntityTable.savedTime] != null }
+        }
+    }
+
+    /**
+     * A [ReadOnlyProperty] which reflects the saved time of a [SavableSpotifyEntity] based on its [savedEntityTable]
+     * which stores its saved-time records.
+     */
+    private fun <T : SpotifyEntity> savedTime(): ReadOnlyProperty<T, Instant?> {
+        return ReadOnlyProperty { thisRef, _ ->
+            savedEntityTable.select { savedEntityTable.id eq thisRef.id }
+                .firstOrNull()
+                ?.let { it[savedEntityTable.savedTime] }
+        }
+    }
+
+    /**
+     * A [ReadOnlyProperty] which reflects the last time the saved status of a [SavableSpotifyEntity] was checked based
+     * on its [savedEntityTable] which stores its individual saved-time records and [globalUpdateKey] which is the
+     * [GlobalUpdateTimesTable] key for global saved checks on this entity type.
+     */
+    private fun <T : SpotifyEntity> savedCheckTime(
+        savedEntityTable: SavedEntityTable,
+        globalUpdateKey: String,
+    ): ReadOnlyProperty<T, Instant?> {
+        return ReadOnlyProperty { thisRef, _ ->
+            val entitySavedCheckTime = savedEntityTable.select { savedEntityTable.id eq thisRef.id }
+                .firstOrNull()
+                ?.let { it[savedEntityTable.savedCheckTime] }
+
+            val globalSavedCheckTime = runBlocking { GlobalUpdateTimesTable.updated(key = globalUpdateKey) }
+
+            listOfNotNull(entitySavedCheckTime, globalSavedCheckTime).maxOrNull()
+        }
+    }
+
+    /**
+     * Stores this entity as the given [saved] state, having been saved at the given [saveTime].
+     *
+     * Must be called from within a transaction.
+     */
     fun setSaved(saved: Boolean, saveTime: Instant = Instant.now()) {
-        savedEntityTable.select { savedEntityTable.id eq id }
-            .firstOrNull()
-            ?: savedEntityTable.insert {
-                it[savedTime] = if (saved) saveTime else null
-                it[savedCheckTime] = saveTime
-            }
+        savedEntityTable.setSaved(entityId = id.value, saved = saved, saveTime = saveTime)
     }
 }
