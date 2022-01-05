@@ -1,25 +1,14 @@
 package com.dzirbel.kotify.cache
 
 import com.dzirbel.kotify.cache.SpotifyCache.GlobalObjects
-import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
-import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.sql.transactions.transaction
 
 object LibraryCache {
-    data class CachedArtist(
-        val id: String,
-        val artist: SpotifyArtist?,
-        val updated: Long?,
-        val albums: List<String>?,
-        val albumsUpdated: Long?
-    )
-
     data class CachedPlaylist(
         val id: String,
         val playlist: SpotifyPlaylist?,
@@ -33,41 +22,6 @@ object LibraryCache {
         val track: SpotifyTrack?,
         val updated: Long?
     )
-
-    val savedArtists: Set<String>?
-        get() = SpotifyCache.getCached<GlobalObjects.SavedArtists>(GlobalObjects.SavedArtists.ID)?.ids
-
-    val artistsUpdated: Long?
-        get() = SpotifyCache.lastUpdated(GlobalObjects.SavedArtists.ID)
-
-    val artists: Map<String, SpotifyArtist?>?
-        get() = savedArtists?.let { ids -> ids.zipToMap(SpotifyCache.getCached<SpotifyArtist>(ids)) }
-
-    val cachedArtists: List<CachedArtist>?
-        get() {
-            return artists?.toList()?.let { artists ->
-                val artistIds = artists.map { it.first }
-
-                // batch calls for last updates
-                val updated = SpotifyCache.lastUpdated(artistIds)
-                val dbArtists = transaction {
-                    artistIds.map { Artist.findById(id = it) }
-                }
-                val artistAlbums = transaction {
-                    dbArtists.map { artist -> artist?.albums?.map { it.id.value } }
-                }
-
-                artists.mapIndexed { index, (id, artist) ->
-                    CachedArtist(
-                        id = id,
-                        artist = artist,
-                        updated = updated[index],
-                        albums = artistAlbums[index],
-                        albumsUpdated = dbArtists[index]?.albumsFetched?.toEpochMilli(),
-                    )
-                }
-            }
-        }
 
     val savedPlaylists: Set<String>?
         get() = SpotifyCache.getCached<GlobalObjects.SavedPlaylists>(GlobalObjects.SavedPlaylists.ID)?.ids

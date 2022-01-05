@@ -30,6 +30,7 @@ private val tables = arrayOf(
     ArtistTable,
     ArtistTable.ArtistGenreTable,
     ArtistTable.ArtistImageTable,
+    ArtistTable.SavedArtistsTable,
     GenreTable,
     GlobalUpdateTimesTable,
     ImageTable,

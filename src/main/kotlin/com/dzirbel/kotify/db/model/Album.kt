@@ -154,6 +154,6 @@ object SavedAlbumRepository : SavedRepository<SpotifySavedAlbum>(savedEntityTabl
     }
 
     override fun from(savedNetworkType: SpotifySavedAlbum): String? {
-        return Album.from(savedNetworkType.album)?.id?.value
+        return Album.fromSavedAlbum(savedNetworkType)?.id?.value
     }
 }

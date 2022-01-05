@@ -69,7 +69,7 @@ abstract class SavedRepository<SavedNetworkType>(
         val saved = fetchIsSaved(ids = listOf(id)).first()
 
         KotifyDatabase.transaction {
-            savedEntityTable.setSaved(entityId = id, saved = saved)
+            savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = null)
         }
 
         return saved
@@ -109,7 +109,7 @@ abstract class SavedRepository<SavedNetworkType>(
         pushSaved(ids = listOf(id), saved = saved)
 
         KotifyDatabase.transaction {
-            savedEntityTable.setSaved(entityId = id, saved = saved)
+            savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = Instant.now())
         }
     }
 
@@ -121,7 +121,7 @@ abstract class SavedRepository<SavedNetworkType>(
         pushSaved(ids = ids, saved = saved)
 
         KotifyDatabase.transaction {
-            ids.forEach { id -> savedEntityTable.setSaved(entityId = id, saved = saved) }
+            ids.forEach { id -> savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = Instant.now()) }
         }
     }
 

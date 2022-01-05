@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableState
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
+import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
@@ -44,7 +45,7 @@ internal class BottomPanelPresenterTest {
     @BeforeEach
     fun setup() {
         unmockkAll()
-        mockkObject(Spotify.Player, SpotifyCache, LibraryCache, Player, SavedAlbumRepository)
+        mockkObject(Spotify.Player, SpotifyCache, LibraryCache, Player, SavedAlbumRepository, SavedArtistRepository)
 
         every { Player.currentDevice } returns currentDeviceState
         every { Player.currentTrack } returns currentTrackState
@@ -56,7 +57,7 @@ internal class BottomPanelPresenterTest {
         coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returns null
 
         coEvery { SavedAlbumRepository.isSaved(any()) } returns false
-        every { LibraryCache.savedArtists } returns emptySet()
+        coEvery { SavedArtistRepository.getLibraryCached() } returns emptySet()
         every { LibraryCache.savedTracks } returns emptySet()
     }
 
@@ -170,7 +171,7 @@ internal class BottomPanelPresenterTest {
                         currentTrackState.value = track
 
                         SavedAlbumRepository.isSaved(playback.item!!.album.id!!)
-                        LibraryCache.savedArtists
+                        SavedArtistRepository.getLibraryCached()
                         LibraryCache.savedTracks
                     }
                 }

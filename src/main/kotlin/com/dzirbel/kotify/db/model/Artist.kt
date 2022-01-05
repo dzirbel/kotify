@@ -117,6 +117,7 @@ object SavedArtistRepository : SavedRepository<FullSpotifyArtist>(savedEntityTab
     }
 
     override fun from(savedNetworkType: FullSpotifyArtist): String? {
+        ArtistTable.SavedArtistsTable.setSaved(entityId = savedNetworkType.id, saved = true, savedTime = null)
         return Artist.from(savedNetworkType)?.id?.value
     }
 }

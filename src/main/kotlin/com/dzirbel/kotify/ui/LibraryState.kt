@@ -29,12 +29,12 @@ import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.AlbumTable
 import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.ArtistTable
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
-import com.dzirbel.kotify.network.model.FullSpotifyArtist
+import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
-import com.dzirbel.kotify.network.model.SimplifiedSpotifyArtist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
@@ -71,10 +71,12 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
     ) {
 
     data class State(
-        val artists: List<LibraryCache.CachedArtist>?,
+        // pair artistId, artist? in case we have the ID cached but not artist
+        val artists: List<Pair<String, Artist?>>?,
         val artistsUpdated: Long?,
 
-        val albums: List<Pair<String, Album?>>?, // pair albumId, album? in case we have the ID cached but not album
+        // pair albumId, album? in case we have the ID cached but not album
+        val albums: List<Pair<String, Album?>>?,
         val albumsUpdated: Long?,
 
         val playlists: List<LibraryCache.CachedPlaylist>?,
@@ -125,16 +127,19 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             Event.Load -> {
+                val artistIds = SavedArtistRepository.getLibrary()
+                val artists = ArtistRepository.getCached(ids = artistIds)
+
                 val albumIds = SavedAlbumRepository.getLibrary()
                 val albums = AlbumRepository.getCached(ids = albumIds)
 
                 val state = State(
-                    artists = LibraryCache.cachedArtists,
-                    artistsUpdated = LibraryCache.artistsUpdated,
-                    albumsUpdated = SavedAlbumRepository.libraryUpdated()?.toEpochMilli(),
+                    artists = artistIds.zip(artists),
+                    artistsUpdated = SavedArtistRepository.libraryUpdated()?.toEpochMilli(),
                     albums = albumIds.zip(albums),
-                    playlistsUpdated = LibraryCache.playlistsUpdated,
+                    albumsUpdated = SavedAlbumRepository.libraryUpdated()?.toEpochMilli(),
                     playlists = LibraryCache.cachedPlaylists,
+                    playlistsUpdated = LibraryCache.playlistsUpdated,
                     tracks = LibraryCache.cachedTracks,
                     tracksUpdated = LibraryCache.tracksUpdated,
                     ratedTracks = SpotifyCache.Ratings.ratedTracks().orEmpty().let { trackIds ->
@@ -148,17 +153,17 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             Event.RefreshSavedArtists -> {
                 mutateState { it?.copy(refreshingSavedArtists = true) }
 
-                SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedArtists.ID)
+                SavedArtistRepository.invalidateLibrary()
 
-                SpotifyCache.Artists.getSavedArtists()
+                val artistIds = SavedArtistRepository.getLibrary()
+                val artists = ArtistRepository.getCached(ids = artistIds)
+                val artistsUpdated = SavedArtistRepository.libraryUpdated()?.toEpochMilli()
 
-                val artists = LibraryCache.cachedArtists
-                val artistsUpdated = LibraryCache.artistsUpdated
                 mutateState {
                     it?.copy(
-                        artists = artists,
+                        artists = artistIds.zip(artists),
                         artistsUpdated = artistsUpdated,
-                        refreshingSavedArtists = false
+                        refreshingSavedArtists = false,
                     )
                 }
             }
@@ -176,7 +181,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                     it?.copy(
                         albums = albumIds.zip(albums),
                         albumsUpdated = albumsUpdated,
-                        refreshingSavedAlbums = false
+                        refreshingSavedAlbums = false,
                     )
                 }
             }
@@ -218,28 +223,27 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.FetchMissingArtists -> {
-                val missingIds = requireNotNull(LibraryCache.artists?.filterValues { it !is FullSpotifyArtist })
-                SpotifyCache.Artists.getFullArtists(ids = missingIds.keys.toList())
+                val artistIds = requireNotNull(SavedArtistRepository.getLibraryCached()).toList()
+                val artists = ArtistRepository.getFull(ids = artistIds)
 
-                val artists = LibraryCache.cachedArtists
-                mutateState { it?.copy(artists = artists) }
+                mutateState { it?.copy(artists = artistIds.zip(artists)) }
             }
 
             Event.InvalidateArtists -> {
-                val ids = requireNotNull(LibraryCache.artists?.filterValues { it != null })
-                SpotifyCache.invalidate(ids.keys.toList())
+                val artistIds = requireNotNull(SavedArtistRepository.getLibraryCached()).toList()
+                ArtistRepository.invalidate(ids = artistIds)
+                val artists = ArtistRepository.getCached(ids = artistIds)
 
-                val artists = LibraryCache.cachedArtists
-                mutateState { it?.copy(artists = artists) }
+                mutateState { it?.copy(artists = artistIds.zip(artists)) }
             }
 
             Event.FetchMissingArtistAlbums -> {
-                val savedArtistIds = requireNotNull(LibraryCache.savedArtists)
+                val artistIds = requireNotNull(SavedArtistRepository.getLibraryCached()).toList()
                 val missingIds = KotifyDatabase.transaction {
                     Artist.find { ArtistTable.albumsFetched eq null }
                         .map { it.id.value }
                 }
-                    .filter { savedArtistIds.contains(it) }
+                    .filter { artistIds.contains(it) }
 
                 missingIds
                     .asFlow()
@@ -248,8 +252,8 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                     }
                     .collect()
 
-                val artists = LibraryCache.cachedArtists
-                mutateState { it?.copy(artists = artists) }
+                val artists = ArtistRepository.getCached(ids = artistIds)
+                mutateState { it?.copy(artists = artistIds.zip(artists)) }
             }
 
             Event.InvalidateArtistAlbums -> {
@@ -261,19 +265,20 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                     }
                 }
 
-                val artists = LibraryCache.cachedArtists
-                mutateState { it?.copy(artists = artists) }
+                val artistIds = requireNotNull(SavedArtistRepository.getLibraryCached()).toList()
+                val artists = ArtistRepository.getCached(ids = artistIds)
+                mutateState { it?.copy(artists = artistIds.zip(artists)) }
             }
 
             Event.FetchMissingAlbums -> {
-                val albumIds = requireNotNull(SavedAlbumRepository.getLibraryCached())
-                val albums = AlbumRepository.getFull(ids = albumIds.toList())
+                val albumIds = requireNotNull(SavedAlbumRepository.getLibraryCached()).toList()
+                val albums = AlbumRepository.getFull(ids = albumIds)
 
                 mutateState { it?.copy(albums = albumIds.zip(albums)) }
             }
 
             Event.InvalidateAlbums -> {
-                val albumIds = requireNotNull(SavedAlbumRepository.getLibraryCached())
+                val albumIds = requireNotNull(SavedAlbumRepository.getLibraryCached()).toList()
                 AlbumRepository.invalidate(ids = albumIds)
                 val albums = AlbumRepository.getCached(ids = albumIds)
 
@@ -349,30 +354,28 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
 // TODO allow refreshing artist/album
 private val artistColumns = listOf(
-    object : ColumnByString<LibraryCache.CachedArtist>(name = "Name") {
-        override fun toString(item: LibraryCache.CachedArtist, index: Int): String = item.artist?.name.orEmpty()
+    object : ColumnByString<Pair<String, Artist?>>(name = "Name") {
+        override fun toString(item: Pair<String, Artist?>, index: Int): String = item.second?.name.orEmpty()
     },
 
-    object : ColumnByString<LibraryCache.CachedArtist>(name = "ID") {
-        override fun toString(item: LibraryCache.CachedArtist, index: Int): String = item.id
+    object : ColumnByString<Pair<String, Artist?>>(name = "ID") {
+        override fun toString(item: Pair<String, Artist?>, index: Int): String = item.first
     },
 
-    object : ColumnByString<LibraryCache.CachedArtist>(name = "Type") {
-        override fun toString(item: LibraryCache.CachedArtist, index: Int): String {
-            return item.artist?.let { it::class.java.simpleName }.orEmpty()
+    object : ColumnByRelativeDateText<Pair<String, Artist?>>(name = "Artist updated") {
+        override fun timestampFor(item: Pair<String, Artist?>, index: Int) = item.second?.updatedTime?.toEpochMilli()
+    },
+
+    object : ColumnByNumber<Pair<String, Artist?>>(name = "Albums") {
+        override fun toNumber(item: Pair<String, Artist?>, index: Int): Int? {
+            return item.second?.let { artist ->
+                if (artist.hasAllAlbums) artist.albums.size else null
+            }
         }
     },
 
-    object : ColumnByRelativeDateText<LibraryCache.CachedArtist>(name = "Artist updated") {
-        override fun timestampFor(item: LibraryCache.CachedArtist, index: Int) = item.updated
-    },
-
-    object : ColumnByNumber<LibraryCache.CachedArtist>(name = "Albums") {
-        override fun toNumber(item: LibraryCache.CachedArtist, index: Int) = item.albums?.size
-    },
-
-    object : ColumnByRelativeDateText<LibraryCache.CachedArtist>(name = "Albums updated") {
-        override fun timestampFor(item: LibraryCache.CachedArtist, index: Int) = item.albumsUpdated
+    object : ColumnByRelativeDateText<Pair<String, Artist?>>(name = "Albums updated") {
+        override fun timestampFor(item: Pair<String, Artist?>, index: Int) = item.second?.albumsFetched?.toEpochMilli()
     },
 )
 
@@ -487,10 +490,10 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             val totalSaved = artists.size
-            val totalCached = artists.count { it.artist != null }
-            val simplified = artists.count { it.artist is SimplifiedSpotifyArtist }
-            val full = artists.count { it.artist is FullSpotifyArtist }
-            val albums = artists.count { it.albums != null }
+            val totalCached = artists.count { it.second != null }
+            val simplified = artists.count { it.second != null && it.second?.fullUpdatedTime == null }
+            val full = artists.count { it.second?.fullUpdatedTime != null }
+            val albums = artists.count { it.second?.hasAllAlbums == true }
 
             Text("$totalSaved Saved Artists", modifier = Modifier.padding(end = Dimens.space3))
 

@@ -17,10 +17,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistRepository
+import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -28,6 +28,7 @@ import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.plusOrMinus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
@@ -55,13 +56,14 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                 mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
-                    SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedArtists.ID)
+                    SavedArtistRepository.invalidateLibrary()
                 }
 
-                val savedArtistIds = SpotifyCache.Artists.getSavedArtists()
+                val savedArtistIds = SavedArtistRepository.getLibrary()
                 val artists = ArtistRepository.getFull(ids = savedArtistIds.toList())
                     .filterNotNull()
                     .sortedBy { it.name }
+                val artistsUpdated = SavedArtistRepository.libraryUpdated()
 
                 SpotifyImageCache.loadFromFileCache(
                     urls = artists.mapNotNull { it.images.firstOrNull()?.url },
@@ -73,20 +75,15 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                         refreshing = false,
                         artists = artists,
                         savedArtistIds = savedArtistIds,
-                        artistsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedArtists.ID)
+                        artistsUpdated = artistsUpdated?.toEpochMilli(),
                     )
                 }
             }
 
             is Event.ToggleSave -> {
-                val savedArtists = if (event.save) {
-                    SpotifyCache.Artists.saveArtist(id = event.artistId)
-                } else {
-                    SpotifyCache.Artists.unsaveArtist(id = event.artistId)
-                }
-
-                savedArtists?.let {
-                    mutateState { it?.copy(savedArtistIds = savedArtists) }
+                SavedArtistRepository.setSaved(id = event.artistId, saved = event.save)
+                mutateState {
+                    it?.copy(savedArtistIds = it.savedArtistIds.plusOrMinus(event.artistId, event.save))
                 }
             }
         }

@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
+import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
@@ -147,7 +148,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 )
             }
 
-            val savedArtists = LibraryCache.savedArtists
+            val savedArtists = runBlocking { SavedArtistRepository.getLibraryCached() }
             val albumId = when (track) {
                 is SimplifiedSpotifyTrack -> track.album?.id
                 is FullSpotifyTrack -> track.album.id
@@ -576,19 +577,12 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             is Event.ToggleArtistSaved -> {
-                val savedArtistIds = if (event.save) {
-                    SpotifyCache.Artists.saveArtist(id = event.artistId)
-                } else {
-                    SpotifyCache.Artists.unsaveArtist(id = event.artistId)
-                }
-
-                savedArtistIds?.let {
-                    mutateState {
-                        it.copy(
-                            artistsAreSaved = it.artistsAreSaved
-                                ?.plus(event.artistId to savedArtistIds.contains(event.artistId))
-                        )
-                    }
+                SavedArtistRepository.setSaved(id = event.artistId, saved = event.save)
+                mutateState {
+                    it.copy(
+                        artistsAreSaved = it.artistsAreSaved
+                            ?.plus(event.artistId to event.save)
+                    )
                 }
             }
         }

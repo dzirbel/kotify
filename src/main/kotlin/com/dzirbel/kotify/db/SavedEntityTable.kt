@@ -17,6 +17,8 @@ import kotlin.properties.ReadOnlyProperty
  * present in the database.
  */
 abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) {
+    val saved: Column<Boolean> = bool("saved").default(true)
+
     /**
      * The time at which the entity was saved, as provided by the Spotify API, or null if it was not saved.
      */
@@ -38,22 +40,23 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
      * Must be called from within a transaction.
      */
     fun isSaved(entityId: String): Boolean? {
-        return select { id eq entityId }.firstOrNull()?.let { it[savedTime] != null }
+        return select { id eq entityId }.firstOrNull()?.get(saved)
     }
 
     /**
      * Stores the entity with the given [entityId] as the given [saved] state, having been saved at the given
-     * [saveTime].
+     * [savedTime].
      *
      * Must be called from within a transaction.
      */
-    fun setSaved(entityId: String, saved: Boolean, saveTime: Instant = Instant.now()) {
+    fun setSaved(entityId: String, saved: Boolean, savedTime: Instant?, savedCheckTime: Instant = Instant.now()) {
         select { id eq entityId }
             .firstOrNull()
             ?: insert {
                 it[id] = entityId
-                it[savedTime] = if (saved) saveTime else null
-                it[savedCheckTime] = saveTime
+                it[this.saved] = saved
+                it[this.savedTime] = savedTime?.takeIf { saved }
+                it[this.savedCheckTime] = savedCheckTime
             }
     }
 
@@ -61,7 +64,7 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
      * Gets the set of entity IDs which are marked as having been saved.
      */
     fun savedEntityIds(): Set<String> {
-        return select { savedTime neq null }.mapTo(mutableSetOf()) { it[id].value }
+        return select { saved eq true }.mapTo(mutableSetOf()) { it[id].value }
     }
 }
 
@@ -90,7 +93,7 @@ abstract class SavableSpotifyEntity(
         return ReadOnlyProperty { thisRef, _ ->
             savedEntityTable.select { savedEntityTable.id eq thisRef.id }
                 .firstOrNull()
-                ?.let { it[savedEntityTable.savedTime] != null }
+                ?.get(savedEntityTable.saved)
         }
     }
 
@@ -131,7 +134,12 @@ abstract class SavableSpotifyEntity(
      *
      * Must be called from within a transaction.
      */
-    fun setSaved(saved: Boolean, saveTime: Instant = Instant.now()) {
-        savedEntityTable.setSaved(entityId = id.value, saved = saved, saveTime = saveTime)
+    fun setSaved(saved: Boolean, saveTime: Instant = Instant.now(), savedCheckTime: Instant = Instant.now()) {
+        savedEntityTable.setSaved(
+            entityId = id.value,
+            saved = saved,
+            savedTime = saveTime,
+            savedCheckTime = savedCheckTime,
+        )
     }
 }
