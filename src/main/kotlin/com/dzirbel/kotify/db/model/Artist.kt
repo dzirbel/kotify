@@ -87,5 +87,9 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
 
 object ArtistRepository : Repository<Artist, SpotifyArtist>(Artist) {
     override suspend fun fetch(id: String) = Spotify.Artists.getArtist(id = id)
-    override suspend fun fetch(ids: List<String>) = Spotify.Artists.getArtists(ids = ids)
+    override suspend fun fetch(ids: List<String>): List<SpotifyArtist?> {
+        // TODO fetch chunks in parallel
+        return ids.chunked(size = Spotify.MAX_LIMIT)
+            .flatMap { idsChunk -> Spotify.Artists.getArtists(ids = idsChunk) }
+    }
 }

@@ -19,7 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.cache.SpotifyImageCache
-import com.dzirbel.kotify.network.model.FullSpotifyArtist
+import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -38,8 +39,8 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
 ) {
     data class State(
         val refreshing: Boolean,
-        val artists: List<FullSpotifyArtist>,
-        val savedArtists: Set<String>,
+        val artists: List<Artist>,
+        val savedArtistIds: Set<String>,
         val artistsUpdated: Long?,
     )
 
@@ -57,11 +58,10 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                     SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedArtists.ID)
                 }
 
-                val artists = SpotifyCache.Artists.getSavedArtists()
-                    .map { SpotifyCache.Artists.getFullArtist(it) }
+                val savedArtistIds = SpotifyCache.Artists.getSavedArtists()
+                val artists = ArtistRepository.getFull(ids = savedArtistIds.toList())
+                    .filterNotNull()
                     .sortedBy { it.name }
-
-                val savedArtists = artists.mapTo(mutableSetOf()) { it.id }
 
                 SpotifyImageCache.loadFromFileCache(
                     urls = artists.mapNotNull { it.images.firstOrNull()?.url },
@@ -72,7 +72,7 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                     State(
                         refreshing = false,
                         artists = artists,
-                        savedArtists = savedArtists,
+                        savedArtistIds = savedArtistIds,
                         artistsUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedArtists.ID)
                     )
                 }
@@ -86,7 +86,7 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                 }
 
                 savedArtists?.let {
-                    mutateState { it?.copy(savedArtists = savedArtists) }
+                    mutateState { it?.copy(savedArtistIds = savedArtists) }
                 }
             }
         }
@@ -122,7 +122,7 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
             ) { artist ->
                 ArtistCell(
                     artist = artist,
-                    savedArtists = state.savedArtists,
+                    savedArtists = state.savedArtistIds,
                     presenter = presenter,
                     pageStack = pageStack
                 )
@@ -133,7 +133,7 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
 
 @Composable
 private fun ArtistCell(
-    artist: FullSpotifyArtist,
+    artist: Artist,
     savedArtists: Set<String>,
     presenter: ArtistsPresenter,
     pageStack: MutableState<PageStack>,
@@ -141,7 +141,7 @@ private fun ArtistCell(
     Column(
         Modifier
             .clip(RoundedCornerShape(Dimens.cornerSize))
-            .clickable { pageStack.mutate { to(ArtistPage(artistId = artist.id)) } }
+            .clickable { pageStack.mutate { to(ArtistPage(artistId = artist.id.value)) } }
             .padding(Dimens.space3)
     ) {
         LoadedImage(
@@ -157,9 +157,9 @@ private fun ArtistCell(
         ) {
             Text(text = artist.name, modifier = Modifier.weight(1f))
 
-            val isSaved = savedArtists.contains(artist.id)
+            val isSaved = savedArtists.contains(artist.id.value)
             ToggleSaveButton(isSaved = isSaved) {
-                presenter.emitAsync(ArtistsPresenter.Event.ToggleSave(artistId = artist.id, save = !isSaved))
+                presenter.emitAsync(ArtistsPresenter.Event.ToggleSave(artistId = artist.id.value, save = !isSaved))
             }
 
             PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)

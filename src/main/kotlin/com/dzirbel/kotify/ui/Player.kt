@@ -2,10 +2,10 @@ package com.dzirbel.kotify.ui
 
 import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
-import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
@@ -50,7 +50,7 @@ object Player {
                 }
             }
 
-            fun artist(artist: SpotifyArtist) = artist.uri?.let { PlayContext(contextUri = it) }
+            fun artist(artist: Artist) = artist.uri?.let { PlayContext(contextUri = it) }
 
             /**
              * Returns a [PlayContext] which plays the given [playlist].
