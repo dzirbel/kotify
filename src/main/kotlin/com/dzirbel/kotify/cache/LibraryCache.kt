@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.cache
 
 import com.dzirbel.kotify.cache.SpotifyCache.GlobalObjects
-import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
@@ -142,7 +142,7 @@ object LibraryCache {
                 GlobalObjects.CURRENT_USER_ID
             )
 
-            val savedAlbumsUpdated = runBlocking { AlbumRepository.savedAlbumsUpdated() }
+            val savedAlbumsUpdated = runBlocking { SavedAlbumRepository.libraryUpdated() }
 
             val values = SpotifyCache.lastUpdated(ids)
                 .plus(savedAlbumsUpdated?.toEpochMilli())

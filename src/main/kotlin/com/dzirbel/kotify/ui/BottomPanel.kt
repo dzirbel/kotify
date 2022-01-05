@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.db.model.AlbumRepository
+import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
@@ -159,7 +159,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 artistsAreSaved = savedArtists?.let {
                     track.artists.mapNotNull { it.id }.associateWith { id -> savedArtists.contains(id) }
                 },
-                albumIsSaved = albumId?.let { runBlocking { AlbumRepository.isSaved(albumId = albumId) } }
+                albumIsSaved = albumId?.let { runBlocking { SavedAlbumRepository.isSaved(id = albumId) } }
             )
         }
     }
@@ -571,7 +571,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             is Event.ToggleAlbumSaved -> {
-                AlbumRepository.setSaved(albumId = event.albumId, saved = event.save)
+                SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
                 mutateState { it.copy(albumIsSaved = event.save) }
             }
 

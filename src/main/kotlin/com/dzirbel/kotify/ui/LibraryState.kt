@@ -30,6 +30,7 @@ import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.AlbumTable
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistTable
+import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
@@ -124,13 +125,13 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             Event.Load -> {
-                val albumIds = AlbumRepository.getSavedAlbums()
+                val albumIds = SavedAlbumRepository.getLibrary()
                 val albums = AlbumRepository.getCached(ids = albumIds)
 
                 val state = State(
                     artists = LibraryCache.cachedArtists,
                     artistsUpdated = LibraryCache.artistsUpdated,
-                    albumsUpdated = AlbumRepository.savedAlbumsUpdated()?.toEpochMilli(),
+                    albumsUpdated = SavedAlbumRepository.libraryUpdated()?.toEpochMilli(),
                     albums = albumIds.zip(albums),
                     playlistsUpdated = LibraryCache.playlistsUpdated,
                     playlists = LibraryCache.cachedPlaylists,
@@ -165,11 +166,11 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             Event.RefreshSavedAlbums -> {
                 mutateState { it?.copy(refreshingSavedAlbums = true) }
 
-                AlbumRepository.invalidateSavedAlbums()
+                SavedAlbumRepository.invalidateLibrary()
 
-                val albumIds = AlbumRepository.getSavedAlbums()
+                val albumIds = SavedAlbumRepository.getLibrary()
                 val albums = AlbumRepository.getCached(ids = albumIds)
-                val albumsUpdated = AlbumRepository.savedAlbumsUpdated()?.toEpochMilli()
+                val albumsUpdated = SavedAlbumRepository.libraryUpdated()?.toEpochMilli()
 
                 mutateState {
                     it?.copy(
@@ -265,14 +266,14 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.FetchMissingAlbums -> {
-                val albumIds = requireNotNull(AlbumRepository.getSavedAlbumsCached())
+                val albumIds = requireNotNull(SavedAlbumRepository.getLibraryCached())
                 val albums = AlbumRepository.getFull(ids = albumIds.toList())
 
                 mutateState { it?.copy(albums = albumIds.zip(albums)) }
             }
 
             Event.InvalidateAlbums -> {
-                val albumIds = requireNotNull(AlbumRepository.getSavedAlbumsCached())
+                val albumIds = requireNotNull(SavedAlbumRepository.getLibraryCached())
                 AlbumRepository.invalidate(ids = albumIds)
                 val albums = AlbumRepository.getCached(ids = albumIds)
 

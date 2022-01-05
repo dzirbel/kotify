@@ -2,6 +2,8 @@ package com.dzirbel.kotify.db.model
 
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.Repository
+import com.dzirbel.kotify.db.SavedEntityTable
+import com.dzirbel.kotify.db.SavedRepository
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
@@ -32,6 +34,8 @@ object ArtistTable : SpotifyEntityTable(name = "artists") {
         val genre = reference("genre", GenreTable)
         override val primaryKey = PrimaryKey(artist, genre)
     }
+
+    object SavedArtistsTable : SavedEntityTable(name = "saved_artists")
 }
 
 class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable) {
@@ -91,5 +95,28 @@ object ArtistRepository : Repository<Artist, SpotifyArtist>(Artist) {
         // TODO fetch chunks in parallel
         return ids.chunked(size = Spotify.MAX_LIMIT)
             .flatMap { idsChunk -> Spotify.Artists.getArtists(ids = idsChunk) }
+    }
+}
+
+object SavedArtistRepository : SavedRepository<FullSpotifyArtist>(savedEntityTable = ArtistTable.SavedArtistsTable) {
+    override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
+        return Spotify.Follow.isFollowing(type = "artist", ids = ids)
+    }
+
+    override suspend fun pushSaved(ids: List<String>, saved: Boolean) {
+        if (saved) {
+            Spotify.Follow.follow(type = "artist", ids = ids)
+        } else {
+            Spotify.Follow.unfollow(type = "artist", ids = ids)
+        }
+    }
+
+    override suspend fun fetchLibrary(): Iterable<FullSpotifyArtist> {
+        return Spotify.Follow.getFollowedArtists(limit = Spotify.MAX_LIMIT)
+            .fetchAllCustom { Spotify.get<Spotify.ArtistsCursorPagingModel>(it).artists }
+    }
+
+    override fun from(savedNetworkType: FullSpotifyArtist): String? {
+        return Artist.from(savedNetworkType)?.id?.value
     }
 }

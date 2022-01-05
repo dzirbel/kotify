@@ -11,7 +11,7 @@ import java.time.Instant
 import kotlin.properties.ReadOnlyProperty
 
 /**
- * Common table schema for representing the saved/unsaved status of an entity with a string ID.
+ * Common table schema for representing the saved/unsaved status in the user's library of an entity with a string ID.
  *
  * This way, when we fetch the entire set of saved objects we can retain them all, even if they are not each already
  * present in the database.

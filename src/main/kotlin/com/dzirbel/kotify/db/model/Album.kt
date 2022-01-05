@@ -4,6 +4,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedEntityTable
+import com.dzirbel.kotify.db.SavedRepository
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cachedAsList
@@ -135,92 +136,24 @@ object AlbumRepository : Repository<Album, SpotifyAlbum>(Album) {
         return ids.chunked(size = MAX_ALBUM_IDS_LOOKUP)
             .flatMap { idsChunk -> Spotify.Albums.getAlbums(ids = idsChunk) }
     }
+}
 
-    /**
-     * Determines whether [albumId] has been saved to the user's library, from the local database cache. Returns null if
-     * its status is not cached.
-     */
-    suspend fun isSavedCached(albumId: String): Boolean? {
-        return KotifyDatabase.transaction { AlbumTable.SavedAlbumsTable.isSaved(entityId = albumId) }
+object SavedAlbumRepository : SavedRepository<SpotifySavedAlbum>(savedEntityTable = AlbumTable.SavedAlbumsTable) {
+    override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
+        return Spotify.Library.checkAlbums(ids = ids)
     }
 
-    /**
-     * Determines whether the [albumId] has been saved to the user's library, from the local database cache if it is
-     * present there or the Spotify API if it is not.
-     */
-    suspend fun isSaved(albumId: String): Boolean {
-        isSavedCached(albumId)?.let { return it }
-
-        val saved = Spotify.Library.checkAlbums(ids = listOf(albumId)).first()
-
-        KotifyDatabase.transaction {
-            AlbumTable.SavedAlbumsTable.setSaved(entityId = albumId, saved = saved)
-        }
-
-        return saved
+    override suspend fun pushSaved(ids: List<String>, saved: Boolean) {
+        if (saved) Spotify.Library.saveAlbums(ids) else Spotify.Library.removeAlbums(ids)
     }
 
-    /**
-     * Sets whether the [albumId] has been saved to the user's library, and updates the local database to reflect its
-     * new status.
-     */
-    suspend fun setSaved(albumId: String, saved: Boolean) {
-        if (saved) {
-            Spotify.Library.saveAlbums(listOf(albumId))
-        } else {
-            Spotify.Library.removeAlbums(listOf(albumId))
-        }
-
-        KotifyDatabase.transaction {
-            AlbumTable.SavedAlbumsTable.setSaved(entityId = albumId, saved = saved)
-        }
+    override suspend fun fetchLibrary(): Iterable<SpotifySavedAlbum> {
+        return Spotify.Library
+            .getSavedAlbums(limit = Spotify.MAX_LIMIT)
+            .fetchAll<SpotifySavedAlbum>()
     }
 
-    /**
-     * Gets the set of album IDs which are currently saved to the user's library, according to the local database cache.
-     * Returns null if the saved albums have never been updated.
-     */
-    suspend fun getSavedAlbumsCached(): Set<String>? {
-        GlobalUpdateTimesTable.updated(GlobalUpdateTimesTable.Keys.SAVED_ALBUMS) ?: return null
-        return KotifyDatabase.transaction { AlbumTable.SavedAlbumsTable.savedEntityIds() }
-    }
-
-    /**
-     * Gets the last updated time of the set of the user's saved albums, or null if it has never been saved in full.
-     */
-    suspend fun savedAlbumsUpdated(): Instant? {
-        return KotifyDatabase.transaction { GlobalUpdateTimesTable.updated(GlobalUpdateTimesTable.Keys.SAVED_ALBUMS) }
-    }
-
-    /**
-     * Invalidates the global state of all saved albums, i.e. whether the set of the user's saved albums are known. Does
-     * not invalidate the saved status of any particular albums.
-     */
-    suspend fun invalidateSavedAlbums() {
-        return GlobalUpdateTimesTable.invalidate(GlobalUpdateTimesTable.Keys.SAVED_ALBUMS)
-    }
-
-    /**
-     * Retrieves the set of album IDs which are currently saved to the user's library, from the local database cache if
-     * they are present or the Spotify API if not.
-     */
-    suspend fun getSavedAlbums(): Set<String> {
-        val updated = GlobalUpdateTimesTable.updated(GlobalUpdateTimesTable.Keys.SAVED_ALBUMS)
-
-        return if (updated == null) {
-            val spotifySavedAlbums = Spotify.Library
-                .getSavedAlbums(limit = Spotify.MAX_LIMIT)
-                .fetchAll<SpotifySavedAlbum>()
-
-            KotifyDatabase.transaction {
-                spotifySavedAlbums
-                    .mapNotNullTo(mutableSetOf()) { Album.fromSavedAlbum(it)?.id?.value }
-                    .also {
-                        GlobalUpdateTimesTable.setUpdated(GlobalUpdateTimesTable.Keys.SAVED_ALBUMS)
-                    }
-            }
-        } else {
-            KotifyDatabase.transaction { AlbumTable.SavedAlbumsTable.savedEntityIds() }
-        }
+    override fun from(savedNetworkType: SpotifySavedAlbum): String? {
+        return Album.from(savedNetworkType.album)?.id?.value
     }
 }

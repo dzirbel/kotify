@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumRepository
+import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.ui.components.InvalidateButton
@@ -88,7 +89,7 @@ private class AlbumPresenter(
             }
 
             is Event.ToggleSave -> {
-                AlbumRepository.setSaved(albumId = page.albumId, saved = event.save)
+                SavedAlbumRepository.setSaved(id = page.albumId, saved = event.save)
                 mutateState { it?.copy(isSaved = event.save) }
             }
         }

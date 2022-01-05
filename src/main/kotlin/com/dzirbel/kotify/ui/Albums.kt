@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumRepository
+import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
@@ -50,14 +51,14 @@ private class AlbumsPresenter(scope: CoroutineScope) :
                 mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
-                    AlbumRepository.invalidateSavedAlbums()
+                    SavedAlbumRepository.invalidateLibrary()
                 }
 
-                val savedAlbumIds = AlbumRepository.getSavedAlbums()
+                val savedAlbumIds = SavedAlbumRepository.getLibrary()
                 val albums = AlbumRepository.get(ids = savedAlbumIds.toList())
                     .filterNotNull()
                     .sortedBy { it.name }
-                val albumsUpdated = AlbumRepository.savedAlbumsUpdated()
+                val albumsUpdated = SavedAlbumRepository.libraryUpdated()
 
                 SpotifyImageCache.loadFromFileCache(
                     urls = albums.mapNotNull { it.images.firstOrNull()?.url },
@@ -75,7 +76,7 @@ private class AlbumsPresenter(scope: CoroutineScope) :
             }
 
             is Event.ToggleSave -> {
-                AlbumRepository.setSaved(albumId = event.albumId, saved = event.save)
+                SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
                 mutateState {
                     it?.copy(savedAlbumIds = it.savedAlbumIds.plusOrMinus(event.albumId, event.save))
                 }

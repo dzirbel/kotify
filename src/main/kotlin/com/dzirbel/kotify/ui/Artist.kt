@@ -18,6 +18,7 @@ import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistRepository
+import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
@@ -128,7 +129,7 @@ private class ArtistPresenter(
                     )
                 }
 
-                val savedAlbums = AlbumRepository.getSavedAlbumsCached()
+                val savedAlbums = SavedAlbumRepository.getLibraryCached()
 
                 mutateState {
                     State(
@@ -142,7 +143,7 @@ private class ArtistPresenter(
             }
 
             is Event.ToggleSave -> {
-                AlbumRepository.setSaved(albumId = event.albumId, saved = event.save)
+                SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
                 mutateState {
                     it?.copy(savedAlbums = it.savedAlbums?.plusOrMinus(event.albumId, event.save))
                 }
