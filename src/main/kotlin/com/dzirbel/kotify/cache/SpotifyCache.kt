@@ -38,8 +38,6 @@ import kotlinx.serialization.Serializable
 
 object SpotifyCache {
     object GlobalObjects {
-        const val CURRENT_USER_ID = "current-user"
-
         @Serializable
         data class SavedArtists(val ids: Set<String>) : CacheableObject {
             override val id = ID
@@ -440,19 +438,6 @@ object SpotifyCache {
             cache.putAll(tracks.plus(savedTracks))
 
             return savedTracks.ids
-        }
-    }
-
-    object UsersProfile {
-        suspend fun getCurrentUser(): PrivateSpotifyUser {
-            cache.getCachedValue<PrivateSpotifyUser>(GlobalObjects.CURRENT_USER_ID)?.let { return it }
-
-            val user: PrivateSpotifyUser = Spotify.UsersProfile.getCurrentUser()
-
-            // cache the user both under its own id and the current id, this way it can be accessed from either
-            cache.putAll(mapOf(user.id to user, GlobalObjects.CURRENT_USER_ID to user))
-
-            return user
         }
     }
 

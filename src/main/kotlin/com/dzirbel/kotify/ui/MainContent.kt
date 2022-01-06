@@ -27,10 +27,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Artist
-import com.dzirbel.kotify.network.model.PrivateSpotifyUser
+import com.dzirbel.kotify.db.model.User
+import com.dzirbel.kotify.db.model.UserRepository
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -72,7 +72,7 @@ object TracksPage : Page {
 }
 
 private class AuthenticationMenuPresenter(scope: CoroutineScope) :
-    Presenter<PrivateSpotifyUser?, AuthenticationMenuPresenter.Event>(
+    Presenter<User?, AuthenticationMenuPresenter.Event>(
         scope = scope,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load),
@@ -86,7 +86,7 @@ private class AuthenticationMenuPresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                val user = SpotifyCache.UsersProfile.getCurrentUser()
+                val user = UserRepository.getCurrentUser()
 
                 mutateState { user }
             }
@@ -181,7 +181,7 @@ private fun AuthenticationMenuHeader() {
     val currentUser = presenter.state().safeState
     val userError = presenter.state() is Presenter.StateOrError.Error
 
-    val username = if (userError) "<ERROR>" else currentUser?.displayName ?: "<loading>"
+    val username = if (userError) "<ERROR>" else currentUser?.name ?: "<loading>"
     val expandedState = remember { mutableStateOf(false) }
 
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {

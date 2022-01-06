@@ -7,6 +7,7 @@ import com.dzirbel.kotify.db.model.GenreTable
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
 import com.dzirbel.kotify.db.model.ImageTable
 import com.dzirbel.kotify.db.model.TrackTable
+import com.dzirbel.kotify.db.model.UserTable
 import kotlinx.coroutines.asCoroutineDispatcher
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -36,6 +37,9 @@ private val tables = arrayOf(
     ImageTable,
     TrackTable,
     TrackTable.TrackArtistTable,
+    UserTable,
+    UserTable.CurrentUserTable,
+    UserTable.UserImageTable,
 )
 
 /**

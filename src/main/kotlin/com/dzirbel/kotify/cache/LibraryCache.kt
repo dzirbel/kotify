@@ -93,7 +93,6 @@ object LibraryCache {
                 GlobalObjects.SavedArtists.ID,
                 GlobalObjects.SavedPlaylists.ID,
                 GlobalObjects.SavedTracks.ID,
-                GlobalObjects.CURRENT_USER_ID
             )
 
             val savedAlbumsUpdated = runBlocking { SavedAlbumRepository.libraryUpdated() }
@@ -124,6 +123,5 @@ object LibraryCache {
     fun clear() {
         SpotifyCache.invalidate(GlobalObjects.SavedTracks.ID)
         SpotifyCache.invalidate(GlobalObjects.SavedPlaylists.ID)
-        SpotifyCache.invalidate(GlobalObjects.CURRENT_USER_ID)
     }
 }

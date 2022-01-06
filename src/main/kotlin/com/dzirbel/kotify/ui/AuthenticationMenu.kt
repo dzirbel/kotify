@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.cache.LibraryCache
-import com.dzirbel.kotify.network.model.PrivateSpotifyUser
+import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
@@ -20,7 +20,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 private val MAX_WIDTH = 500.dp
 
 @Composable
-fun AuthenticationMenu(user: PrivateSpotifyUser?) {
+fun AuthenticationMenu(user: User?) {
     Column(
         modifier = Modifier.padding(Dimens.space3).widthIn(max = MAX_WIDTH),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2)
@@ -28,7 +28,7 @@ fun AuthenticationMenu(user: PrivateSpotifyUser?) {
         if (user == null) {
             Text("Not authenticated")
         } else {
-            Text("Authenticated as ${user.displayName} [${user.id}]")
+            Text("Authenticated as ${user.name} [${user.id}]")
         }
 
         AccessToken.Cache.token?.let { token ->

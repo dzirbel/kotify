@@ -1,12 +1,20 @@
 package com.dzirbel.kotify.network.model
 
-import com.dzirbel.kotify.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-interface SpotifyUser : CacheableObject {
+interface SpotifyUser : SpotifyObject {
     /** The Spotify user ID for this user. */
     override val id: String
+
+    /** A link to the Web API endpoint for this user. */
+    override val href: String
+
+    /** The object type: "user" */
+    override val type: String
+
+    /** The Spotify URI for this user. */
+    override val uri: String
 
     /** The name displayed on the user’s profile. null if not available. */
     val displayName: String?
@@ -17,17 +25,11 @@ interface SpotifyUser : CacheableObject {
     /** Information about the followers of this user. */
     val followers: SpotifyFollowers?
 
-    /** A link to the Web API endpoint for this user. */
-    val href: String
-
     /** The user’s profile image. */
     val images: List<SpotifyImage>?
 
-    /** The object type: "user" */
-    val type: String
-
-    /** The Spotify URI for this user. */
-    val uri: String
+    override val name: String
+        get() = displayName.orEmpty()
 }
 
 /**
