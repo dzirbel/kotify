@@ -15,7 +15,7 @@ import java.time.Instant
  *
  * For example, sometimes we fetch the set of all saved artists from the Spotify API. We want to save the last time this
  * was done, but it doesn't fit cleanly into any other table. For lack of a better approach, we instead store it in this
- * key-value based table with a specific key in [GlobalUpdateTimesTable.Keys].
+ * key-value based table with a specific key.
  */
 object GlobalUpdateTimesTable : Table(name = "global_update_times") {
     private val key: Column<String> = varchar(name = "key", length = 20).uniqueIndex()
@@ -57,9 +57,5 @@ object GlobalUpdateTimesTable : Table(name = "global_update_times") {
         KotifyDatabase.transaction {
             deleteWhere { GlobalUpdateTimesTable.key eq key }
         }
-    }
-
-    object Keys {
-        const val SAVED_ALBUMS = "saved_albums"
     }
 }

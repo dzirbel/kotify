@@ -76,7 +76,7 @@ abstract class SavableSpotifyEntity(
     id: EntityID<String>,
     table: SpotifyEntityTable,
     private val savedEntityTable: SavedEntityTable,
-    globalUpdateKey: String,
+    globalUpdateKey: String = savedEntityTable.tableName,
 ) : SpotifyEntity(id, table) {
     val isSaved: Boolean? by isSaved<SavableSpotifyEntity>().cachedOutsideTransaction()
     val savedTime: Instant? by savedTime<SavableSpotifyEntity>().cachedOutsideTransaction()

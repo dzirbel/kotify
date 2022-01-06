@@ -57,7 +57,6 @@ class Album(id: EntityID<String>) : SavableSpotifyEntity(
     id = id,
     table = AlbumTable,
     savedEntityTable = AlbumTable.SavedAlbumsTable,
-    globalUpdateKey = GlobalUpdateTimesTable.Keys.SAVED_ALBUMS,
 ) {
     var albumType: SpotifyAlbum.Type? by AlbumTable.albumType
     var releaseDate: String? by AlbumTable.releaseDate
@@ -124,8 +123,6 @@ class Album(id: EntityID<String>) : SavableSpotifyEntity(
     }
 }
 
-// TODO move saved functions to common logic for all saved entities?
-// TODO make the SAVED_ALBUMS a private variable here to guarantee its wrappers are used?
 object AlbumRepository : Repository<Album, SpotifyAlbum>(Album) {
     // most batched calls have a maximum of 50; for albums the maximum is 20
     private const val MAX_ALBUM_IDS_LOOKUP = 20

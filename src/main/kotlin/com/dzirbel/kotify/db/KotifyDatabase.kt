@@ -37,6 +37,7 @@ private val tables = arrayOf(
     ImageTable,
     TrackTable,
     TrackTable.TrackArtistTable,
+    TrackTable.SavedTracksTable,
     UserTable,
     UserTable.CurrentUserTable,
     UserTable.UserImageTable,

@@ -1,13 +1,16 @@
 package com.dzirbel.kotify.db.model
 
 import com.dzirbel.kotify.db.Repository
-import com.dzirbel.kotify.db.SpotifyEntity
+import com.dzirbel.kotify.db.SavableSpotifyEntity
+import com.dzirbel.kotify.db.SavedEntityTable
+import com.dzirbel.kotify.db.SavedRepository
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifySavedTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
@@ -30,9 +33,15 @@ object TrackTable : SpotifyEntityTable(name = "tracks") {
         val artist = reference("artist", ArtistTable)
         override val primaryKey = PrimaryKey(track, artist)
     }
+
+    object SavedTracksTable : SavedEntityTable(name = "saved_tracks")
 }
 
-class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
+class Track(id: EntityID<String>) : SavableSpotifyEntity(
+    id = id,
+    table = TrackTable,
+    savedEntityTable = TrackTable.SavedTracksTable,
+) {
     var discNumber: UInt by TrackTable.discNumber
     var durationMs: ULong by TrackTable.durationMs
     var explicit: Boolean by TrackTable.explicit
@@ -46,6 +55,12 @@ class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
     var artists: List<Artist> by (Artist via TrackTable.TrackArtistTable).cachedAsList()
 
     companion object : SpotifyEntityClass<Track, SpotifyTrack>(TrackTable) {
+        fun fromSavedTrack(spotifySavedTrack: SpotifySavedTrack): Track? {
+            val track = Track.from(spotifySavedTrack.track)
+            track?.setSaved(saved = true, saveTime = Instant.parse(spotifySavedTrack.addedAt))
+            return track
+        }
+
         override fun Track.update(networkModel: SpotifyTrack) {
             discNumber = networkModel.discNumber.toUInt()
             durationMs = networkModel.durationMs.toULong() // TODO use ULong in network model?
@@ -76,4 +91,24 @@ class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
 object TrackRepository : Repository<Track, SpotifyTrack>(Track) {
     override suspend fun fetch(id: String) = Spotify.Tracks.getTrack(id = id)
     override suspend fun fetch(ids: List<String>) = Spotify.Tracks.getTracks(ids = ids)
+}
+
+object SavedTrackRepository : SavedRepository<SpotifySavedTrack>(savedEntityTable = TrackTable.SavedTracksTable) {
+    override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
+        return Spotify.Library.checkTracks(ids = ids)
+    }
+
+    override suspend fun pushSaved(ids: List<String>, saved: Boolean) {
+        if (saved) Spotify.Library.saveTracks(ids) else Spotify.Library.removeTracks(ids)
+    }
+
+    override suspend fun fetchLibrary(): Iterable<SpotifySavedTrack> {
+        return Spotify.Library
+            .getSavedTracks(limit = Spotify.MAX_LIMIT)
+            .fetchAll<SpotifySavedTrack>()
+    }
+
+    override fun from(savedNetworkType: SpotifySavedTrack): String? {
+        return Track.fromSavedTrack(savedNetworkType)?.id?.value
+    }
 }
