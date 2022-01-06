@@ -33,11 +33,11 @@ import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.ArtistTable
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
+import com.dzirbel.kotify.db.model.SavedTrackRepository
+import com.dzirbel.kotify.db.model.Track
+import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
-import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
-import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
-import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
@@ -82,10 +82,10 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
         val playlists: List<LibraryCache.CachedPlaylist>?,
         val playlistsUpdated: Long?,
 
-        val tracks: List<LibraryCache.CachedTrack>?,
+        val tracks: List<Pair<String, Track?>>?,
         val tracksUpdated: Long?,
 
-        val ratedTracks: List<SpotifyTrack>,
+        val ratedTracks: List<Pair<String, Track?>>,
 
         val refreshingSavedArtists: Boolean = false,
         val refreshingArtists: Set<String> = emptySet(),
@@ -127,24 +127,28 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             Event.Load -> {
-                val artistIds = SavedArtistRepository.getLibrary()
-                val artists = ArtistRepository.getCached(ids = artistIds)
+                val savedArtistIds = SavedArtistRepository.getLibraryCached()?.toList()
+                val savedArtists = savedArtistIds?.let { ArtistRepository.getCached(ids = it) }
 
-                val albumIds = SavedAlbumRepository.getLibrary()
-                val albums = AlbumRepository.getCached(ids = albumIds)
+                val savedAlbumIds = SavedAlbumRepository.getLibraryCached()?.toList()
+                val savedAlbums = savedAlbumIds?.let { AlbumRepository.getCached(ids = it) }
+
+                val savedTracksIds = SavedTrackRepository.getLibraryCached()?.toList()
+                val savedTracks = savedTracksIds?.let { TrackRepository.getCached(ids = it) }
+
+                val ratedTrackIds = SpotifyCache.Ratings.ratedTracks().orEmpty().toList()
+                val ratedTracks = TrackRepository.get(ids = ratedTrackIds)
 
                 val state = State(
-                    artists = artistIds.zip(artists),
+                    artists = savedArtistIds?.zip(savedArtists!!),
                     artistsUpdated = SavedArtistRepository.libraryUpdated()?.toEpochMilli(),
-                    albums = albumIds.zip(albums),
+                    albums = savedAlbumIds?.zip(savedAlbums!!),
                     albumsUpdated = SavedAlbumRepository.libraryUpdated()?.toEpochMilli(),
                     playlists = LibraryCache.cachedPlaylists,
                     playlistsUpdated = LibraryCache.playlistsUpdated,
-                    tracks = LibraryCache.cachedTracks,
-                    tracksUpdated = LibraryCache.tracksUpdated,
-                    ratedTracks = SpotifyCache.Ratings.ratedTracks().orEmpty().let { trackIds ->
-                        SpotifyCache.Tracks.getTracks(ids = trackIds.toList())
-                    },
+                    tracks = savedTracksIds?.zip(savedTracks!!),
+                    tracksUpdated = SavedTrackRepository.libraryUpdated()?.toEpochMilli(),
+                    ratedTracks = ratedTrackIds.zip(ratedTracks),
                 )
 
                 mutateState { state }
@@ -189,15 +193,15 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             Event.RefreshSavedTracks -> {
                 mutateState { it?.copy(refreshingSavedTracks = true) }
 
-                SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedTracks.ID)
+                SavedTrackRepository.invalidateLibrary()
 
-                SpotifyCache.Tracks.getSavedTracks()
+                val trackIds = SavedTrackRepository.getLibraryCached()?.toList()
+                val tracks = trackIds?.let { TrackRepository.getCached(ids = it) }
+                val tracksUpdated = SavedTrackRepository.libraryUpdated()?.toEpochMilli()
 
-                val tracks = LibraryCache.cachedTracks
-                val tracksUpdated = LibraryCache.tracksUpdated
                 mutateState {
                     it?.copy(
-                        tracks = tracks,
+                        tracks = trackIds?.zip(tracks!!),
                         tracksUpdated = tracksUpdated,
                         refreshingSavedTracks = false
                     )
@@ -286,19 +290,18 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.FetchMissingTracks -> {
-                val missingIds = requireNotNull(LibraryCache.tracks?.filterValues { it !is FullSpotifyTrack })
-                SpotifyCache.Tracks.getFullTracks(ids = missingIds.keys.toList())
+                val trackIds = requireNotNull(SavedTrackRepository.getLibraryCached()).toList()
+                val tracks = TrackRepository.getFull(ids = trackIds)
 
-                val tracks = LibraryCache.cachedTracks
-                mutateState { it?.copy(tracks = tracks) }
+                mutateState { it?.copy(tracks = trackIds.zip(tracks)) }
             }
 
             Event.InvalidateTracks -> {
-                val ids = requireNotNull(LibraryCache.tracks?.filterValues { it != null })
-                SpotifyCache.invalidate(ids.keys.toList())
+                val trackIds = requireNotNull(SavedTrackRepository.getLibraryCached()).toList()
+                TrackRepository.invalidate(ids = trackIds)
+                val tracks = TrackRepository.getCached(ids = trackIds)
 
-                val tracks = LibraryCache.cachedTracks
-                mutateState { it?.copy(tracks = tracks) }
+                mutateState { it?.copy(tracks = trackIds.zip(tracks)) }
             }
 
             Event.ClearAllRatings -> {
@@ -434,8 +437,8 @@ private val playlistColumns = listOf(
 )
 
 private val ratedTrackColumns = listOf(
-    NameColumn,
-    RatingColumn,
+    NameColumn2,
+    RatingColumn2,
 )
 
 @Composable
@@ -702,9 +705,9 @@ private fun Tracks(state: LibraryStatePresenter.State, presenter: LibraryStatePr
     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             val totalSaved = tracks.size
-            val totalCached = tracks.count { it.track != null }
-            val simplified = tracks.count { it.track is SimplifiedSpotifyTrack }
-            val full = tracks.count { it.track is FullSpotifyTrack }
+            val totalCached = tracks.count { it.second != null }
+            val simplified = tracks.count { it.second != null && it.second?.fullUpdatedTime == null }
+            val full = tracks.count { it.second?.fullUpdatedTime != null }
 
             Text("$totalSaved Saved Tracks", modifier = Modifier.padding(end = Dimens.space3))
 
@@ -909,9 +912,9 @@ private fun Ratings(state: LibraryStatePresenter.State, presenter: LibraryStateP
     if (ratingsExpanded.value) {
         Table(
             columns = ratedTrackColumns,
-            items = ratedTracks,
+            items = ratedTracks.mapNotNull { it.second },
             modifier = Modifier.widthIn(max = RATINGS_TABLE_WIDTH),
-            defaultSortOrder = Sort(RatingColumn, SortOrder.DESCENDING), // sort by rating descending by default
+            defaultSortOrder = Sort(RatingColumn2, SortOrder.DESCENDING), // sort by rating descending by default
         )
     }
 }

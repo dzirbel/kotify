@@ -17,8 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.ui.components.LinkedText
@@ -34,15 +34,17 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.compareToNullable
 import com.dzirbel.kotify.util.formatDuration
+import com.dzirbel.kotify.util.plusOrMinus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /**
  * Temporary duplicate of [trackColumns] while migrating from [SpotifyTrack] to [Track].
  */
 fun trackColumns2(
     pageStack: MutableState<PageStack>,
-    savedTracks: Set<String>? = LibraryCache.savedTracks,
+    savedTracks: Set<String>? = runBlocking { SavedTrackRepository.getLibraryCached() }, // TODO optimize
     includeTrackNumber: Boolean = true,
     includeAlbum: Boolean = true,
     playContextFromIndex: ((Int) -> Player.PlayContext?)?
@@ -130,13 +132,8 @@ class SavedColumn2(savedTracks: Set<String>?) : Column<Track>(name = "Saved", so
             isSaved = savedTracks.value?.contains(trackId)
         ) { save ->
             scope.launch {
-                if (save) {
-                    SpotifyCache.Tracks.saveTrack(id = trackId)
-                    savedTracks.mutate { this?.plus(trackId) }
-                } else {
-                    SpotifyCache.Tracks.unsaveTrack(id = trackId)
-                    savedTracks.mutate { this?.minus(trackId) }
-                }
+                SavedTrackRepository.setSaved(id = trackId, saved = save)
+                savedTracks.mutate { this?.plusOrMinus(trackId, save) }
             }
         }
     }

@@ -1,5 +1,8 @@
 package com.dzirbel.kotify.db
 
+import org.jetbrains.exposed.dao.Entity
+import org.jetbrains.exposed.dao.OptionalReference
+import org.jetbrains.exposed.dao.Reference
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SizedCollection
 import org.jetbrains.exposed.sql.SizedIterable
@@ -24,7 +27,7 @@ fun <T, E> ReadWriteProperty<T, SizedIterable<E>>.cachedAsList(db: Database? = n
 /**
  * Convenience wrapper for [cachedOutsideTransaction] which wraps the same type of property [V].
  */
-fun <T, V : Any> ReadWriteProperty<T, V>.cachedIdentity(db: Database? = null): ReadWriteProperty<T, V> {
+fun <T, V> ReadWriteProperty<T, V>.cachedIdentity(db: Database? = null): ReadWriteProperty<T, V> {
     return cachedOutsideTransaction(baseToDerived = { it }, derivedToBase = { it }, db = db)
 }
 
@@ -40,7 +43,7 @@ fun <T, V : Any> ReadWriteProperty<T, V>.cachedIdentity(db: Database? = null): R
  *
  * TODO unit test
  */
-fun <T, BaseValue : Any, DerivedValue : Any> ReadWriteProperty<T, BaseValue>.cachedOutsideTransaction(
+fun <T, BaseValue, DerivedValue> ReadWriteProperty<T, BaseValue>.cachedOutsideTransaction(
     baseToDerived: (BaseValue) -> DerivedValue,
     derivedToBase: (DerivedValue) -> BaseValue,
     db: Database? = null,
@@ -94,6 +97,54 @@ fun <T, V> ReadOnlyProperty<T, V>.cachedOutsideTransaction(db: Database? = null)
                 transaction(db) { delegate.getValue(thisRef, property) }
                     .also { cachedValue = it }
             }
+        }
+    }
+}
+
+/**
+ * Maps this [Reference] to a [ReadWriteProperty], typically so that [cachedOutsideTransaction] et al can be used with
+ * it.
+ */
+fun <
+    REF : Comparable<REF>,
+    ID : Comparable<ID>,
+    Base : Entity<ID>,
+    Target : Entity<ID>,
+    > Reference<REF, ID, Target>.asReadWriteProperty(): ReadWriteProperty<Base, Target> {
+    val delegate = this
+    return object : ReadWriteProperty<Base, Target> {
+        override fun getValue(thisRef: Base, property: KProperty<*>): Target {
+            with(thisRef) {
+                return delegate.getValue(thisRef, property)
+            }
+        }
+
+        override fun setValue(thisRef: Base, property: KProperty<*>, value: Target) {
+            with(thisRef) {
+                return delegate.setValue(thisRef, property, value)
+            }
+        }
+    }
+}
+
+/**
+ * Maps this [OptionalReference] to a [ReadWriteProperty], typically so that [cachedOutsideTransaction] et al can be
+ * used with it.
+ */
+fun <
+    REF : Comparable<REF>,
+    ID : Comparable<ID>,
+    Base : Entity<ID>,
+    Target : Entity<ID>,
+    > OptionalReference<REF, ID, Target>.asReadWriteProperty(): ReadWriteProperty<Base, Target?> {
+    val delegate = this
+    return object : ReadWriteProperty<Base, Target?> {
+        override fun getValue(thisRef: Base, property: KProperty<*>): Target? {
+            return with(thisRef) { delegate.getValue(thisRef, property) }
+        }
+
+        override fun setValue(thisRef: Base, property: KProperty<*>, value: Target?) {
+            return with(thisRef) { delegate.setValue(thisRef, property, value) }
         }
     }
 }

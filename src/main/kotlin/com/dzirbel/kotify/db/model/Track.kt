@@ -6,7 +6,9 @@ import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SavedRepository
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
+import com.dzirbel.kotify.db.asReadWriteProperty
 import com.dzirbel.kotify.db.cachedAsList
+import com.dzirbel.kotify.db.cachedIdentity
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
@@ -50,7 +52,7 @@ class Track(id: EntityID<String>) : SavableSpotifyEntity(
     var trackNumber: UInt by TrackTable.trackNumber
     var popularity: UInt? by TrackTable.popularity
 
-    var album: Album? by Album optionalReferencedOn TrackTable.album
+    var album: Album? by (Album optionalReferencedOn TrackTable.album).asReadWriteProperty().cachedIdentity()
 
     var artists: List<Artist> by (Artist via TrackTable.TrackArtistTable).cachedAsList()
 
@@ -90,7 +92,11 @@ class Track(id: EntityID<String>) : SavableSpotifyEntity(
 
 object TrackRepository : Repository<Track, SpotifyTrack>(Track) {
     override suspend fun fetch(id: String) = Spotify.Tracks.getTrack(id = id)
-    override suspend fun fetch(ids: List<String>) = Spotify.Tracks.getTracks(ids = ids)
+    override suspend fun fetch(ids: List<String>): List<FullSpotifyTrack> {
+        // TODO fetch chunks in parallel
+        return ids.chunked(size = Spotify.MAX_LIMIT)
+            .flatMap { idsChunk -> Spotify.Tracks.getTracks(ids = idsChunk) }
+    }
 }
 
 object SavedTrackRepository : SavedRepository<SpotifySavedTrack>(savedEntityTable = TrackTable.SavedTracksTable) {

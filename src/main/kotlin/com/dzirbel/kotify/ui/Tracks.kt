@@ -11,12 +11,13 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.network.model.SpotifyTrack
+import com.dzirbel.kotify.db.model.SavedTrackRepository
+import com.dzirbel.kotify.db.model.Track
+import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
-import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +32,7 @@ private class TracksPresenter(scope: CoroutineScope) :
 
     data class State(
         val refreshing: Boolean,
-        val tracks: List<SpotifyTrack>,
+        val tracks: List<Track>,
         val tracksUpdated: Long?
     )
 
@@ -45,18 +46,21 @@ private class TracksPresenter(scope: CoroutineScope) :
                 mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
-                    SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedTracks.ID)
+                    SavedTrackRepository.invalidateLibrary()
                 }
 
-                val tracks = SpotifyCache.Tracks.getSavedTracks()
-                    .map { SpotifyCache.Tracks.getTrack(it) }
+                val trackIds = SavedTrackRepository.getLibrary().toList()
+                val tracks = TrackRepository.get(ids = trackIds)
+                    .filterNotNull()
                     .sortedBy { it.name }
+                tracks.forEach { it.album } // cache album references
+                val tracksUpdated = SavedTrackRepository.libraryUpdated()
 
                 mutateState {
                     State(
                         refreshing = false,
                         tracks = tracks,
-                        tracksUpdated = SpotifyCache.lastUpdated(SpotifyCache.GlobalObjects.SavedTracks.ID)
+                        tracksUpdated = tracksUpdated?.toEpochMilli(),
                     )
                 }
             }
@@ -87,7 +91,7 @@ fun BoxScope.Tracks(pageStack: MutableState<PageStack>) {
 
             // TODO find the context to play tracks from the list of all saved tracks
             Table(
-                columns = trackColumns(pageStack = pageStack, playContextFromIndex = null),
+                columns = trackColumns2(pageStack = pageStack, playContextFromIndex = null),
                 items = state.tracks
             )
         }

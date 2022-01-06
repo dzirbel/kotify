@@ -4,7 +4,6 @@ import com.dzirbel.kotify.cache.SpotifyCache.GlobalObjects
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
-import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.runBlocking
 
@@ -15,12 +14,6 @@ object LibraryCache {
         val updated: Long?,
         val tracks: GlobalObjects.PlaylistTracks?,
         val tracksUpdated: Long?
-    )
-
-    data class CachedTrack(
-        val id: String,
-        val track: SpotifyTrack?,
-        val updated: Long?
     )
 
     val savedPlaylists: Set<String>?
@@ -65,35 +58,10 @@ object LibraryCache {
             }
         }
 
-    val savedTracks: Set<String>?
-        get() = SpotifyCache.getCached<GlobalObjects.SavedTracks>(GlobalObjects.SavedTracks.ID)?.ids
-
-    val tracks: Map<String, SpotifyTrack?>?
-        get() = savedTracks?.let { ids -> ids.zipToMap(SpotifyCache.getCached<SpotifyTrack>(ids)) }
-
-    val tracksUpdated: Long?
-        get() = SpotifyCache.lastUpdated(GlobalObjects.SavedTracks.ID)
-
-    val cachedTracks: List<CachedTrack>?
-        get() {
-            return tracks?.toList()?.let { tracks ->
-                // batch calls for last updates
-                val updated = SpotifyCache.lastUpdated(tracks.map { it.first })
-
-                tracks.mapIndexed { index, (id, track) ->
-                    CachedTrack(id = id, track = track, updated = updated[index])
-                }
-            }
-        }
-
     // TODO also include cache times of individual artists, albums, etc?
     val lastUpdated: Long?
         get() {
-            val ids = listOf(
-                GlobalObjects.SavedArtists.ID,
-                GlobalObjects.SavedPlaylists.ID,
-                GlobalObjects.SavedTracks.ID,
-            )
+            val ids = listOf(GlobalObjects.SavedPlaylists.ID)
 
             val savedAlbumsUpdated = runBlocking { SavedAlbumRepository.libraryUpdated() }
 
@@ -121,7 +89,6 @@ object LibraryCache {
     }
 
     fun clear() {
-        SpotifyCache.invalidate(GlobalObjects.SavedTracks.ID)
         SpotifyCache.invalidate(GlobalObjects.SavedPlaylists.ID)
     }
 }

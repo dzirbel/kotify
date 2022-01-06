@@ -27,7 +27,6 @@ import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyEpisode
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
-import com.dzirbel.kotify.network.model.SpotifySavedTrack
 import com.dzirbel.kotify.network.model.SpotifyShow
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyUser
@@ -39,29 +38,11 @@ import kotlinx.serialization.Serializable
 object SpotifyCache {
     object GlobalObjects {
         @Serializable
-        data class SavedArtists(val ids: Set<String>) : CacheableObject {
-            override val id = ID
-
-            companion object {
-                const val ID = "saved-artists"
-            }
-        }
-
-        @Serializable
         data class SavedPlaylists(val ids: Set<String>) : CacheableObject {
             override val id = ID
 
             companion object {
                 const val ID = "saved-playlists"
-            }
-        }
-
-        @Serializable
-        data class SavedTracks(val ids: Set<String>) : CacheableObject {
-            override val id = ID
-
-            companion object {
-                const val ID = "saved-tracks"
             }
         }
 
@@ -234,65 +215,6 @@ object SpotifyCache {
     inline fun <reified T> getCached(id: String): T? = getCacheObject(id)?.obj as? T
     inline fun <reified T> getCached(ids: Collection<String>): List<T?> = getCacheObjects(ids).map { it?.obj as? T }
 
-    object Artists {
-        suspend fun getArtist(id: String): SpotifyArtist {
-            return cache.get<SpotifyArtist>(id) { Spotify.Artists.getArtist(id) }
-        }
-
-        suspend fun getFullArtist(id: String): FullSpotifyArtist = cache.get(id) { Spotify.Artists.getArtist(id) }
-
-        suspend fun getFullArtists(ids: List<String>): List<FullSpotifyArtist> {
-            return cache.getAll(ids = ids) { missingIds ->
-                missingIds.chunked(size = Spotify.MAX_LIMIT)
-                    .flatMap { Spotify.Artists.getArtists(ids = it) }
-            }
-        }
-
-        suspend fun saveArtist(id: String): Set<String>? {
-            Spotify.Follow.follow(type = "artist", ids = listOf(id))
-
-            return cache.getCached(GlobalObjects.SavedArtists.ID)?.let { artists ->
-                val savedArtists = artists.obj as GlobalObjects.SavedArtists
-
-                savedArtists.ids.plus(id).also { savedIds ->
-                    // don't update the cache time since we haven't actually refreshed the value from the remote
-                    cache.put(
-                        value = savedArtists.copy(ids = savedIds),
-                        cacheTime = artists.cacheTime
-                    )
-                }
-            }
-        }
-
-        suspend fun unsaveArtist(id: String): Set<String>? {
-            Spotify.Follow.unfollow(type = "artist", ids = listOf(id))
-
-            return cache.getCached(GlobalObjects.SavedArtists.ID)?.let { artists ->
-                val savedArtists = artists.obj as GlobalObjects.SavedArtists
-
-                savedArtists.ids.minus(id).also { savedIds ->
-                    // don't update the cache time since we haven't actually refreshed the value from the remote
-                    cache.put(
-                        value = savedArtists.copy(ids = savedIds),
-                        cacheTime = artists.cacheTime
-                    )
-                }
-            }
-        }
-
-        suspend fun getSavedArtists(): Set<String> {
-            cache.getCachedValue<GlobalObjects.SavedArtists>(GlobalObjects.SavedArtists.ID)
-                ?.let { return it.ids }
-
-            val artists = Spotify.Follow.getFollowedArtists(limit = Spotify.MAX_LIMIT)
-                .fetchAllCustom { Spotify.get<Spotify.ArtistsCursorPagingModel>(it).artists }
-            val savedArtists = GlobalObjects.SavedArtists(ids = artists.mapTo(mutableSetOf()) { it.id })
-            cache.putAll(artists.plus(savedArtists))
-
-            return savedArtists.ids
-        }
-    }
-
     object Playlists {
         suspend fun getPlaylist(id: String): SpotifyPlaylist {
             return cache.get<SpotifyPlaylist>(id) { Spotify.Playlists.getPlaylist(id) }
@@ -376,68 +298,6 @@ object SpotifyCache {
                         cache.putAll(tracks.plus(playlistTracks))
                     }
                 }
-        }
-    }
-
-    object Tracks {
-        suspend fun getTrack(id: String): SpotifyTrack = cache.get<SpotifyTrack>(id) { Spotify.Tracks.getTrack(id) }
-        suspend fun getFullTrack(id: String): FullSpotifyTrack = cache.get(id) { Spotify.Tracks.getTrack(id) }
-
-        suspend fun getTracks(ids: List<String>): List<SpotifyTrack> {
-            return cache.getAll<SpotifyTrack>(ids = ids) { missingIds ->
-                missingIds.chunked(size = Spotify.MAX_LIMIT)
-                    .flatMap { idsChunk -> Spotify.Tracks.getTracks(ids = idsChunk) }
-            }
-        }
-
-        suspend fun getFullTracks(ids: List<String>): List<FullSpotifyTrack> {
-            return cache.getAll(ids = ids) { missingIds ->
-                missingIds.chunked(size = Spotify.MAX_LIMIT)
-                    .flatMap { idsChunk -> Spotify.Tracks.getTracks(ids = idsChunk) }
-            }
-        }
-
-        suspend fun saveTrack(id: String): Set<String>? {
-            Spotify.Library.saveTracks(ids = listOf(id))
-
-            return cache.getCached(GlobalObjects.SavedTracks.ID)?.let { tracks ->
-                val savedTracks = tracks.obj as GlobalObjects.SavedTracks
-
-                savedTracks.ids.plus(id).also { savedIds ->
-                    // don't update the cache time since we haven't actually refreshed the value from the remote
-                    cache.put(
-                        value = savedTracks.copy(ids = savedIds),
-                        cacheTime = tracks.cacheTime
-                    )
-                }
-            }
-        }
-
-        suspend fun unsaveTrack(id: String): Set<String>? {
-            Spotify.Library.removeTracks(ids = listOf(id))
-
-            return cache.getCached(GlobalObjects.SavedTracks.ID)?.let { tracks ->
-                val savedTracks = tracks.obj as GlobalObjects.SavedTracks
-
-                savedTracks.ids.minus(id).also { savedIds ->
-                    // don't update the cache time since we haven't actually refreshed the value from the remote
-                    cache.put(
-                        value = savedTracks.copy(ids = savedIds),
-                        cacheTime = tracks.cacheTime
-                    )
-                }
-            }
-        }
-
-        suspend fun getSavedTracks(): Set<String> {
-            cache.getCachedValue<GlobalObjects.SavedTracks>(GlobalObjects.SavedTracks.ID)
-                ?.let { return it.ids }
-
-            val tracks = Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT).fetchAll<SpotifySavedTrack>()
-            val savedTracks = GlobalObjects.SavedTracks(ids = tracks.mapTo(mutableSetOf()) { it.track.id })
-            cache.putAll(tracks.plus(savedTracks))
-
-            return savedTracks.ids
         }
     }
 

@@ -5,6 +5,7 @@ import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
+import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
@@ -45,7 +46,15 @@ internal class BottomPanelPresenterTest {
     @BeforeEach
     fun setup() {
         unmockkAll()
-        mockkObject(Spotify.Player, SpotifyCache, LibraryCache, Player, SavedAlbumRepository, SavedArtistRepository)
+        mockkObject(
+            Spotify.Player,
+            SpotifyCache,
+            LibraryCache,
+            Player,
+            SavedAlbumRepository,
+            SavedArtistRepository,
+            SavedTrackRepository,
+        )
 
         every { Player.currentDevice } returns currentDeviceState
         every { Player.currentTrack } returns currentTrackState
@@ -56,9 +65,11 @@ internal class BottomPanelPresenterTest {
         coEvery { Spotify.Player.getCurrentPlayback() } returns null
         coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returns null
 
-        coEvery { SavedAlbumRepository.isSaved(any()) } returns false
-        coEvery { SavedArtistRepository.getLibraryCached() } returns emptySet()
-        every { LibraryCache.savedTracks } returns emptySet()
+        coEvery { SavedAlbumRepository.isSavedCached(any<String>()) } returns false
+        coEvery { SavedTrackRepository.isSavedCached(any<String>()) } returns false
+        coEvery { SavedArtistRepository.isSavedCached(any<List<String>>()) } answers {
+            List(firstArg<List<String>>().size) { false }
+        }
     }
 
     @AfterEach
@@ -170,9 +181,9 @@ internal class BottomPanelPresenterTest {
                         Player.currentTrack
                         currentTrackState.value = track
 
-                        SavedAlbumRepository.isSaved(playback.item!!.album.id!!)
-                        SavedArtistRepository.getLibraryCached()
-                        LibraryCache.savedTracks
+                        SavedAlbumRepository.isSavedCached(playback.item!!.album.id!!)
+                        SavedTrackRepository.isSavedCached(playback.item!!.album.id!!)
+                        SavedArtistRepository.isSavedCached(any<List<String>>())
                     }
                 }
             }

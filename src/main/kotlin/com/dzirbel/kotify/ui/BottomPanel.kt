@@ -33,10 +33,10 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
+import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
@@ -122,7 +122,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         val savedVolume: Int? = null,
 
         val trackIsSaved: Boolean? = null,
-        val artistsAreSaved: Map<String, Boolean>? = null,
+        val artistsAreSaved: Map<String, Boolean?>? = null,
         val albumIsSaved: Boolean? = null,
 
         val loadingPlayback: Boolean = true,
@@ -148,7 +148,9 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 )
             }
 
-            val savedArtists = runBlocking { SavedArtistRepository.getLibraryCached() }
+            val artistIds = track.artists.mapNotNull { it.id }
+            val artistSaveStates = runBlocking { SavedArtistRepository.isSavedCached(ids = artistIds) }
+
             val albumId = when (track) {
                 is SimplifiedSpotifyTrack -> track.album?.id
                 is FullSpotifyTrack -> track.album.id
@@ -156,11 +158,13 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             }
             return copy(
                 playbackTrack = track,
-                trackIsSaved = LibraryCache.savedTracks?.contains(track.id),
-                artistsAreSaved = savedArtists?.let {
-                    track.artists.mapNotNull { it.id }.associateWith { id -> savedArtists.contains(id) }
+                trackIsSaved = track.id?.let { trackId ->
+                    runBlocking { SavedTrackRepository.isSavedCached(id = trackId) }
                 },
-                albumIsSaved = albumId?.let { runBlocking { SavedAlbumRepository.isSaved(id = albumId) } }
+                artistsAreSaved = artistIds.zip(artistSaveStates).toMap(),
+                albumIsSaved = albumId?.let {
+                    runBlocking { SavedAlbumRepository.isSavedCached(id = albumId) }
+                }
             )
         }
     }
@@ -560,15 +564,8 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             }
 
             is Event.ToggleTrackSaved -> {
-                val savedTrackIds = if (event.save) {
-                    SpotifyCache.Tracks.saveTrack(id = event.trackId)
-                } else {
-                    SpotifyCache.Tracks.unsaveTrack(id = event.trackId)
-                }
-
-                mutateState {
-                    it.copy(trackIsSaved = savedTrackIds?.contains(event.trackId))
-                }
+                SavedTrackRepository.setSaved(id = event.trackId, saved = event.save)
+                mutateState { it.copy(trackIsSaved = event.save) }
             }
 
             is Event.ToggleAlbumSaved -> {
@@ -712,7 +709,7 @@ fun BottomPanel(pageStack: MutableState<PageStack>) {
 private fun CurrentTrack(
     track: SpotifyTrack?,
     trackIsSaved: Boolean?,
-    artistsAreSaved: Map<String, Boolean>?,
+    artistsAreSaved: Map<String, Boolean?>?,
     albumIsSaved: Boolean?,
     presenter: BottomPanelPresenter,
     pageStack: MutableState<PageStack>
