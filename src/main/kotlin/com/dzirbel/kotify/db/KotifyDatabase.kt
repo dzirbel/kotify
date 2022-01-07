@@ -6,6 +6,8 @@ import com.dzirbel.kotify.db.model.ArtistTable
 import com.dzirbel.kotify.db.model.GenreTable
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
 import com.dzirbel.kotify.db.model.ImageTable
+import com.dzirbel.kotify.db.model.PlaylistTable
+import com.dzirbel.kotify.db.model.PlaylistTrackTable
 import com.dzirbel.kotify.db.model.TrackTable
 import com.dzirbel.kotify.db.model.UserTable
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -35,6 +37,10 @@ private val tables = arrayOf(
     GenreTable,
     GlobalUpdateTimesTable,
     ImageTable,
+    PlaylistTable,
+    PlaylistTable.PlaylistImageTable,
+    PlaylistTable.SavedPlaylistsTable,
+    PlaylistTrackTable,
     TrackTable,
     TrackTable.TrackArtistTable,
     TrackTable.SavedTracksTable,
