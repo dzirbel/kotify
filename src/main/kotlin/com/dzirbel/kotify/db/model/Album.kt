@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.db.model
 
+import com.dzirbel.kotify.db.CachedProperty
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
@@ -65,28 +66,35 @@ class Album(id: EntityID<String>) : SavableSpotifyEntity(
     var label: String? by AlbumTable.label
     var popularity: UInt? by AlbumTable.popularity
 
-    var artists: List<Artist> by (Artist via AlbumTable.AlbumArtistTable).cachedAsList()
-    var images: List<Image> by (Image via AlbumTable.AlbumImageTable).cachedAsList()
-    var genres: List<Genre> by (Genre via AlbumTable.AlbumGenreTable).cachedAsList()
-    var tracks: List<Track> by (Track via AlbumTable.AlbumTrackTable).cachedAsList()
+    val artists: CachedProperty<List<Artist>> by (Artist via AlbumTable.AlbumArtistTable).cachedAsList()
+    val images: CachedProperty<List<Image>> by (Image via AlbumTable.AlbumImageTable).cachedAsList()
+    val genres: CachedProperty<List<Genre>> by (Genre via AlbumTable.AlbumGenreTable).cachedAsList()
+    val tracks: CachedProperty<List<Track>> by (Track via AlbumTable.AlbumTrackTable).cachedAsList()
 
     /**
      * Whether all the tracks on this album (or the expected number of tracks) are in the database. Must be called from
      * within a transaction.
      */
     val hasAllTracks: Boolean
-        get() = totalTracks?.let { tracks.size.toUInt() == it } == true
+        get() = totalTracks?.let {
+            println("getting tracks")
+            val x = tracks
+            println("got tracks prop")
+            val y = x.live
+            println("got tracks list")
+            y.size.toUInt() == it
+        } == true
 
     suspend fun getAllTracks(): List<Track> {
         return if (hasAllTracks) {
-            tracks
+            tracks.live
         } else {
             val networkTracks = Spotify.Albums.getAlbumTracks(id = id.value)
                 .fetchAll<SimplifiedSpotifyTrack>()
 
             KotifyDatabase.transaction {
                 networkTracks.mapNotNull { Track.from(it) }
-                    .also { tracks = it }
+                    .also { tracks.set(it) }
             }
         }
     }
@@ -106,8 +114,8 @@ class Album(id: EntityID<String>) : SavableSpotifyEntity(
                 totalTracks = it
             }
 
-            artists = networkModel.artists.mapNotNull { Artist.from(it) }
-            images = networkModel.images.map { Image.from(it) }
+            artists.set(networkModel.artists.mapNotNull { Artist.from(it) })
+            images.set(networkModel.images.map { Image.from(it) })
 
             if (networkModel is FullSpotifyAlbum) {
                 fullUpdatedTime = Instant.now()
@@ -116,8 +124,8 @@ class Album(id: EntityID<String>) : SavableSpotifyEntity(
                 popularity = networkModel.popularity.toUInt()
                 totalTracks = networkModel.tracks.total.toUInt()
 
-                genres = networkModel.genres.map { Genre.from(it) }
-                tracks = networkModel.tracks.items.mapNotNull { Track.from(it) }
+                genres.set(networkModel.genres.map { Genre.from(it) })
+                tracks.set(networkModel.tracks.items.mapNotNull { Track.from(it) })
             }
         }
     }

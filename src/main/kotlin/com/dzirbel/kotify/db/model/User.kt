@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.db.model
 
+import com.dzirbel.kotify.db.CachedProperty
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SpotifyEntity
@@ -36,12 +37,12 @@ class User(id: EntityID<String>) : SpotifyEntity(id = id, table = UserTable) {
     var followersTotal: UInt? by UserTable.followersTotal
     var email: String? by UserTable.email
 
-    var images: List<Image> by (Image via UserTable.UserImageTable).cachedAsList()
+    val images: CachedProperty<List<Image>> by (Image via UserTable.UserImageTable).cachedAsList()
 
     companion object : SpotifyEntityClass<User, SpotifyUser>(UserTable) {
         override fun User.update(networkModel: SpotifyUser) {
             networkModel.images?.let { images ->
-                this.images = images.map { Image.from(it) }
+                this.images.set(images.map { Image.from(it) })
             }
 
             networkModel.followers?.let {
@@ -59,9 +60,13 @@ class User(id: EntityID<String>) : SpotifyEntity(id = id, table = UserTable) {
 object UserRepository : Repository<User, SpotifyUser>(User) {
     override suspend fun fetch(id: String) = Spotify.UsersProfile.getUser(userId = id)
 
+    fun getCurrentUserIdCached(): String? {
+        return UserTable.CurrentUserTable.selectAll().firstOrNull()?.get(UserTable.CurrentUserTable.userId)
+    }
+
     suspend fun getCurrentUserCached(): User? {
         return KotifyDatabase.transaction {
-            UserTable.CurrentUserTable.selectAll().firstOrNull()?.get(UserTable.CurrentUserTable.userId)
+            getCurrentUserIdCached()
                 ?.let { getCached(id = id) }
                 ?.takeIf { it.fullUpdatedTime != null }
         }

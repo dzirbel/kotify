@@ -151,8 +151,8 @@ class ArtistColumn2(
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        return first.artists.joinToString { it.name }
-            .compareTo(second.artists.joinToString { it.name }, ignoreCase = true)
+        return first.artists.cached.joinToString { it.name }
+            .compareTo(second.artists.cached.joinToString { it.name }, ignoreCase = true)
     }
 
     @Composable
@@ -164,7 +164,7 @@ class ArtistColumn2(
                 pageStack.mutate { to(ArtistPage(artistId = artistId)) }
             }
         ) {
-            list(item.artists) { artist ->
+            list(item.artists.cached) { artist ->
                 link(text = artist.name, link = artist.id.value)
             }
         }
@@ -177,7 +177,7 @@ class AlbumColumn2(
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        return first.album?.name.orEmpty().compareTo(second.album?.name.orEmpty(), ignoreCase = true)
+        return first.album.cached?.name.orEmpty().compareTo(second.album.cached?.name.orEmpty(), ignoreCase = true)
     }
 
     @Composable
@@ -189,7 +189,7 @@ class AlbumColumn2(
                 pageStack.mutate { to(AlbumPage(albumId = albumId)) }
             }
         ) {
-            item.album?.let { album ->
+            item.album.cached?.let { album ->
                 link(text = album.name, link = album.id.value)
             }
         }

@@ -1,14 +1,14 @@
 package com.dzirbel.kotify.db.model
 
+import com.dzirbel.kotify.db.CachedProperty
 import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SavedRepository
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
-import com.dzirbel.kotify.db.asReadWriteProperty
+import com.dzirbel.kotify.db.cached
 import com.dzirbel.kotify.db.cachedAsList
-import com.dzirbel.kotify.db.cachedIdentity
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
@@ -52,9 +52,9 @@ class Track(id: EntityID<String>) : SavableSpotifyEntity(
     var trackNumber: UInt by TrackTable.trackNumber
     var popularity: UInt? by TrackTable.popularity
 
-    var album: Album? by (Album optionalReferencedOn TrackTable.album).asReadWriteProperty().cachedIdentity()
+    val album: CachedProperty<Album?> by (Album optionalReferencedOn TrackTable.album).cached()
 
-    var artists: List<Artist> by (Artist via TrackTable.TrackArtistTable).cachedAsList()
+    val artists: CachedProperty<List<Artist>> by (Artist via TrackTable.TrackArtistTable).cachedAsList()
 
     companion object : SpotifyEntityClass<Track, SpotifyTrack>(TrackTable) {
         fun fromSavedTrack(spotifySavedTrack: SpotifySavedTrack): Track? {
@@ -70,11 +70,11 @@ class Track(id: EntityID<String>) : SavableSpotifyEntity(
             local = networkModel.isLocal
             playable = networkModel.isPlayable
             trackNumber = networkModel.trackNumber.toUInt()
-            networkModel.album?.let {
-                album = Album.from(it)
-            }
+            networkModel.album
+                ?.let { Album.from(it) }
+                ?.let { album.set(it) }
 
-            artists = networkModel.artists.mapNotNull { Artist.from(it) }
+            artists.set(networkModel.artists.mapNotNull { Artist.from(it) })
 
             if (networkModel is SimplifiedSpotifyTrack) {
                 networkModel.popularity?.let {

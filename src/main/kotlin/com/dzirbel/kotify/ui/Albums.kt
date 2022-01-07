@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyImageCache
+import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
@@ -60,10 +61,10 @@ private class AlbumsPresenter(scope: CoroutineScope) :
                     .sortedBy { it.name }
                 val albumsUpdated = SavedAlbumRepository.libraryUpdated()
 
-                SpotifyImageCache.loadFromFileCache(
-                    urls = albums.mapNotNull { it.images.firstOrNull()?.url },
-                    scope = scope,
-                )
+                val imageUrls = KotifyDatabase.transaction {
+                    albums.mapNotNull { it.images.live.firstOrNull()?.url }
+                }
+                SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
 
                 mutateState {
                     State(

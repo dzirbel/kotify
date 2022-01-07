@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.db.model
 
+import com.dzirbel.kotify.db.CachedProperty
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
@@ -47,9 +48,9 @@ class Artist(id: EntityID<String>) : SavableSpotifyEntity(
     var followersTotal: UInt? by ArtistTable.followersTotal
     var albumsFetched: Instant? by ArtistTable.albumsFetched
 
-    var images: List<Image> by (Image via ArtistTable.ArtistImageTable).cachedAsList()
-    var genres: List<Genre> by (Genre via ArtistTable.ArtistGenreTable).cachedAsList()
-    var albums: List<Album> by (Album via AlbumTable.AlbumArtistTable).cachedAsList()
+    val images: CachedProperty<List<Image>> by (Image via ArtistTable.ArtistImageTable).cachedAsList()
+    val genres: CachedProperty<List<Genre>> by (Genre via ArtistTable.ArtistGenreTable).cachedAsList()
+    val albums: CachedProperty<List<Album>> by (Album via AlbumTable.AlbumArtistTable).cachedAsList()
 
     val hasAllAlbums: Boolean
         get() = albumsFetched != null
@@ -61,8 +62,8 @@ class Artist(id: EntityID<String>) : SavableSpotifyEntity(
 
                 popularity = networkModel.popularity.toUInt()
                 followersTotal = networkModel.followers.total.toUInt()
-                images = networkModel.images.map { Image.from(it) }
-                genres = networkModel.genres.map { Genre.from(it) }
+                images.set(networkModel.images.map { Image.from(it) })
+                genres.set(networkModel.genres.map { Genre.from(it) })
             }
         }
 
@@ -73,7 +74,7 @@ class Artist(id: EntityID<String>) : SavableSpotifyEntity(
         suspend fun getAllAlbums(artistId: String): List<Album> {
             val artist = KotifyDatabase.transaction { findById(id = artistId) }
             if (artist?.hasAllAlbums == true) {
-                return artist.albums
+                return KotifyDatabase.transaction { artist.albums.live }
             }
 
             val networkAlbums = Spotify.Artists.getArtistAlbums(id = artistId)
@@ -85,7 +86,7 @@ class Artist(id: EntityID<String>) : SavableSpotifyEntity(
                 networkAlbums
                     .mapNotNull { Album.from(it) }
                     .also {
-                        artist?.albums = it
+                        artist?.albums?.set(it)
                         artist?.albumsFetched = Instant.now()
                     }
             }

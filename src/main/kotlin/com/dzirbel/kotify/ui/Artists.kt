@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.dzirbel.kotify.cache.SpotifyImageCache
+import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
@@ -65,10 +66,10 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                     .sortedBy { it.name }
                 val artistsUpdated = SavedArtistRepository.libraryUpdated()
 
-                SpotifyImageCache.loadFromFileCache(
-                    urls = artists.mapNotNull { it.images.firstOrNull()?.url },
-                    scope = scope,
-                )
+                val imageUrls = KotifyDatabase.transaction {
+                    artists.mapNotNull { it.images.live.firstOrNull()?.url }
+                }
+                SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
 
                 mutateState {
                     State(
@@ -142,7 +143,7 @@ private fun ArtistCell(
             .padding(Dimens.space3)
     ) {
         LoadedImage(
-            url = artist.images.firstOrNull()?.url,
+            url = artist.images.cached.firstOrNull()?.url,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 

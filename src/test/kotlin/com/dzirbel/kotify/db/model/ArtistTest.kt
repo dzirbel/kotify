@@ -30,8 +30,8 @@ internal class ArtistTest {
 
         assertThat(artist.popularity).isNull()
         assertThat(artist.followersTotal).isNull()
-        assertThat(transaction { artist.images.toList() }).isEmpty()
-        assertThat(transaction { artist.genres.toList() }).isEmpty()
+        assertThat(transaction { artist.images.live }).isEmpty()
+        assertThat(transaction { artist.genres.live }).isEmpty()
     }
 
     @Test
@@ -69,7 +69,7 @@ internal class ArtistTest {
         assertThat(artist.popularity).isEqualTo(fullSpotifyArtist.popularity.toUInt())
         assertThat(artist.followersTotal).isEqualTo(fullSpotifyArtist.followers.total.toUInt())
 
-        assertThat(transaction { artist.images.toList().map { it.url } }).containsExactly("url 1", "url 2")
-        assertThat(transaction { artist.genres.toList().map { it.name } }).containsExactly("genre 1", "genre 2")
+        assertThat(transaction { artist.images.live.map { it.url } }).containsExactly("url 1", "url 2")
+        assertThat(transaction { artist.genres.live.map { it.name } }).containsExactly("genre 1", "genre 2")
     }
 }

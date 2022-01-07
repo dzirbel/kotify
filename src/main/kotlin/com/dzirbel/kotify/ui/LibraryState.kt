@@ -372,7 +372,7 @@ private val artistColumns = listOf(
     object : ColumnByNumber<Pair<String, Artist?>>(name = "Albums") {
         override fun toNumber(item: Pair<String, Artist?>, index: Int): Int? {
             return item.second?.let { artist ->
-                if (artist.hasAllAlbums) artist.albums.size else null
+                if (artist.hasAllAlbums) artist.albums.cached.size else null
             }
         }
     },
@@ -390,7 +390,7 @@ private val albumColumns = listOf(
 
     object : ColumnByString<Pair<String, Album?>>(name = "Artists") {
         override fun toString(item: Pair<String, Album?>, index: Int): String {
-            return item.second?.artists?.joinToString { it.name }.orEmpty()
+            return item.second?.artists?.cached?.joinToString { it.name }.orEmpty()
         }
     },
 

@@ -123,10 +123,10 @@ private class ArtistPresenter(
                 }
 
                 artistAlbums?.let { albums ->
-                    SpotifyImageCache.loadFromFileCache(
-                        urls = albums.mapNotNull { it.images.firstOrNull()?.url },
-                        scope = scope,
-                    )
+                    val albumUrls = KotifyDatabase.transaction {
+                        albums.mapNotNull { it.images.live.firstOrNull()?.url }
+                    }
+                    SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
                 }
 
                 val savedAlbums = SavedAlbumRepository.getLibraryCached()

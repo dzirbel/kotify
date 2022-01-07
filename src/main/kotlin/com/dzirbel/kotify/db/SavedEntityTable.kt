@@ -78,12 +78,12 @@ abstract class SavableSpotifyEntity(
     private val savedEntityTable: SavedEntityTable,
     globalUpdateKey: String = savedEntityTable.tableName,
 ) : SpotifyEntity(id, table) {
-    val isSaved: Boolean? by isSaved<SavableSpotifyEntity>().cachedOutsideTransaction()
-    val savedTime: Instant? by savedTime<SavableSpotifyEntity>().cachedOutsideTransaction()
-    val savedCheckTime: Instant? by savedCheckTime<SavableSpotifyEntity>(
+    val isSaved: ReadOnlyCachedProperty<Boolean?> by isSaved<SavableSpotifyEntity>().cachedReadOnly()
+    val savedTime: ReadOnlyCachedProperty<Instant?> by savedTime<SavableSpotifyEntity>().cachedReadOnly()
+    val savedCheckTime: ReadOnlyCachedProperty<Instant?> by savedCheckTime<SavableSpotifyEntity>(
         savedEntityTable = savedEntityTable,
         globalUpdateKey = globalUpdateKey,
-    ).cachedOutsideTransaction()
+    ).cachedReadOnly()
 
     /**
      * A [ReadOnlyProperty] which reflects the saved status of a [SavableSpotifyEntity] based on its [savedEntityTable]

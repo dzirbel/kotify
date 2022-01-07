@@ -45,7 +45,7 @@ internal class TrackTest {
         assertThat(track.id.value).isEqualTo(simplifiedSpotifyTrack.id)
         assertThat(track.name).isEqualTo(simplifiedSpotifyTrack.name)
 
-        val artists = transaction { track.artists.map { it.name } }
+        val artists = transaction { track.artists.live.map { it.name } }
         assertThat(artists).containsExactly("artist 1", "artist 2")
     }
 }

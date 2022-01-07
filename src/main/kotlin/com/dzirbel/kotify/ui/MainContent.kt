@@ -87,6 +87,7 @@ private class AuthenticationMenuPresenter(scope: CoroutineScope) :
         when (event) {
             is Event.Load -> {
                 val user = UserRepository.getCurrentUser()
+                user?.images?.loadToCache()
 
                 mutateState { user }
             }
@@ -194,7 +195,7 @@ private fun AuthenticationMenuHeader() {
             onClick = { expandedState.value = !expandedState.value }
         ) {
             LoadedImage(
-                url = currentUser?.images?.firstOrNull()?.url,
+                url = currentUser?.images?.cached?.firstOrNull()?.url,
                 modifier = Modifier.size(Dimens.iconMedium)
             )
 

@@ -66,11 +66,19 @@ private class AlbumPresenter(
                 }
 
                 val album = AlbumRepository.get(id = page.albumId) ?: error("TODO show 404 page") // TODO 404 page
+                KotifyDatabase.transaction {
+                    album.images.loadToCache()
+                    album.artists.loadToCache()
+                }
 
                 pageStack.mutate { withPageTitle(title = page.titleFor(album)) }
 
-                val isSaved = KotifyDatabase.transaction { album.isSaved }
-                val tracks = album.getAllTracks()
+                val isSaved = KotifyDatabase.transaction { album.isSaved.live }
+                val tracks = KotifyDatabase.transaction {
+                    album.getAllTracks()
+                        .onEach { it.artists.loadToCache() }
+                }
+                    .sortedBy { it.trackNumber }
 
                 mutateState {
                     State(
@@ -84,6 +92,9 @@ private class AlbumPresenter(
 
                 val fullTracks = TrackRepository.getFull(ids = tracks.map { it.id.value })
                     .zip(tracks) { fullTrack, existingTrack -> fullTrack ?: existingTrack }
+                KotifyDatabase.transaction {
+                    fullTracks.forEach { it.artists.loadToCache() }
+                }
 
                 mutateState { it?.copy(tracks = fullTracks) }
             }
@@ -108,7 +119,7 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
                     horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    LoadedImage(url = state.album.images.firstOrNull()?.url)
+                    LoadedImage(url = state.album.images.cached.firstOrNull()?.url)
 
                     Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
                         Text(state.album.name, fontSize = Dimens.fontTitle)
@@ -119,7 +130,7 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
                             }
                         ) {
                             text("By ")
-                            list(state.album.artists) { artist ->
+                            list(state.album.artists.cached) { artist ->
                                 link(text = artist.name, link = artist.id.value)
                             }
                         }

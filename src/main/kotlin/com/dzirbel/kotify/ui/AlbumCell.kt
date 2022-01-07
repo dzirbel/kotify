@@ -34,7 +34,7 @@ fun AlbumCell(
             .padding(Dimens.space3)
     ) {
         LoadedImage(
-            url = album.images.firstOrNull()?.url,
+            url = album.images.cached.firstOrNull()?.url,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
