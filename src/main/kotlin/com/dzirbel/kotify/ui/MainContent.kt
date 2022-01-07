@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.User
@@ -87,7 +88,7 @@ private class AuthenticationMenuPresenter(scope: CoroutineScope) :
         when (event) {
             is Event.Load -> {
                 val user = UserRepository.getCurrentUser()
-                user?.images?.loadToCache()
+                KotifyDatabase.transaction { user?.images?.loadToCache() }
 
                 mutateState { user }
             }
