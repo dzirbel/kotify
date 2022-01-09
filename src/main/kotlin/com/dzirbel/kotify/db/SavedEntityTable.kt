@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.db
 
-import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
-import kotlinx.coroutines.runBlocking
+import com.dzirbel.kotify.db.model.GlobalUpdateTimesRepository
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.insert
@@ -17,22 +16,22 @@ import kotlin.properties.ReadOnlyProperty
  * present in the database.
  */
 abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) {
-    val saved: Column<Boolean> = bool("saved").default(true)
+    private val saved: Column<Boolean> = bool("saved").default(true)
 
     /**
      * The time at which the entity was saved, as provided by the Spotify API, or null if it was not saved.
      */
-    val savedTime: Column<Instant?> = timestamp("saved_time").nullable()
+    private val savedTime: Column<Instant?> = timestamp("saved_time").nullable()
 
     /**
      * The last time the saved status was individually checked.
      *
      * For most object types, saved status is often checked globally (i.e. getting the set of all currently saved
-     * objects); that time is stored in [com.dzirbel.kotify.db.model.GlobalUpdateTimesTable]. The individual saved
+     * objects); that time is stored in [com.dzirbel.kotify.db.model.GlobalUpdateTimesRepository]. The individual saved
      * status of an entity may also be checked, which is stored here. The global update time may be more recent than
      * this one, in which case the global one should be used.
      */
-    val savedCheckTime: Column<Instant?> = timestamp("saved_check_time").nullable()
+    private val savedCheckTime: Column<Instant?> = timestamp("saved_check_time").nullable()
 
     /**
      * Determines whether the entity with the given [entityId] is saved, returning null if its status is unknown.
@@ -41,6 +40,15 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
      */
     fun isSaved(entityId: String): Boolean? {
         return select { id eq entityId }.firstOrNull()?.get(saved)
+    }
+
+    /**
+     * Retrieves the last time the save state of the entity with the given [entityId] was individually checked.
+     *
+     * Must be called from within a transaction.
+     */
+    fun savedCheckTime(entityId: String): Instant? {
+        return select { id eq entityId }.firstOrNull()?.get(savedCheckTime)
     }
 
     /**
@@ -91,9 +99,7 @@ abstract class SavableSpotifyEntity(
      */
     private fun <T : SpotifyEntity> isSaved(): ReadOnlyProperty<T, Boolean?> {
         return ReadOnlyProperty { thisRef, _ ->
-            savedEntityTable.select { savedEntityTable.id eq thisRef.id }
-                .firstOrNull()
-                ?.get(savedEntityTable.saved)
+            savedEntityTable.isSaved(entityId = thisRef.id.value)
         }
     }
 
@@ -103,28 +109,24 @@ abstract class SavableSpotifyEntity(
      */
     private fun <T : SpotifyEntity> savedTime(): ReadOnlyProperty<T, Instant?> {
         return ReadOnlyProperty { thisRef, _ ->
-            savedEntityTable.select { savedEntityTable.id eq thisRef.id }
-                .firstOrNull()
-                ?.let { it[savedEntityTable.savedTime] }
+            savedEntityTable.savedCheckTime(entityId = thisRef.id.value)
         }
     }
 
     /**
      * A [ReadOnlyProperty] which reflects the last time the saved status of a [SavableSpotifyEntity] was checked based
      * on its [savedEntityTable] which stores its individual saved-time records and [globalUpdateKey] which is the
-     * [GlobalUpdateTimesTable] key for global saved checks on this entity type.
+     * [GlobalUpdateTimesRepository] key for global saved checks on this entity type.
      */
     private fun <T : SpotifyEntity> savedCheckTime(
         savedEntityTable: SavedEntityTable,
         globalUpdateKey: String,
     ): ReadOnlyProperty<T, Instant?> {
         return ReadOnlyProperty { thisRef, _ ->
-            val entitySavedCheckTime = savedEntityTable.select { savedEntityTable.id eq thisRef.id }
-                .firstOrNull()
-                ?.let { it[savedEntityTable.savedCheckTime] }
+            val entitySavedCheckTime = savedEntityTable.savedCheckTime(entityId = thisRef.id.value)
+            val globalSavedCheckTime = GlobalUpdateTimesRepository.updated(key = globalUpdateKey)
 
-            val globalSavedCheckTime = runBlocking { GlobalUpdateTimesTable.updated(key = globalUpdateKey) }
-
+            // TODO optimize
             listOfNotNull(entitySavedCheckTime, globalSavedCheckTime).maxOrNull()
         }
     }

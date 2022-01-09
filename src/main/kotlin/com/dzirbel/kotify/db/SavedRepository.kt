@@ -1,13 +1,13 @@
 package com.dzirbel.kotify.db
 
-import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
+import com.dzirbel.kotify.db.model.GlobalUpdateTimesRepository
 import java.time.Instant
 
 /**
  * Manages the state of entities which can be saved/unsaved from a user's library.
  *
  * Locally, individual records for each entity is saved in the [savedEntityTable] with the time the entire library was
- * synced saved in the [GlobalUpdateTimesTable] via [libraryUpdateKey].
+ * synced saved in the [GlobalUpdateTimesRepository] via [libraryUpdateKey].
  *
  * TODO unit test
  */
@@ -130,43 +130,44 @@ abstract class SavedRepository<SavedNetworkType>(
      * if it has never been fetched.
      */
     suspend fun libraryUpdated(): Instant? {
-        return KotifyDatabase.transaction { GlobalUpdateTimesTable.updated(libraryUpdateKey) }
+        return KotifyDatabase.transaction { GlobalUpdateTimesRepository.updated(libraryUpdateKey) }
     }
 
     /**
      * Invalidates the library state, i.e. the set of all the user's saved entities, in the local cache.
      */
     suspend fun invalidateLibrary() {
-        GlobalUpdateTimesTable.invalidate(libraryUpdateKey)
+        KotifyDatabase.transaction { GlobalUpdateTimesRepository.invalidate(libraryUpdateKey) }
     }
 
     /**
      * Gets the library of saved entity IDs from the local database cache, or null if it has never been fetched in full.
      */
     suspend fun getLibraryCached(): Set<String>? {
-        GlobalUpdateTimesTable.updated(libraryUpdateKey) ?: return null
-        return KotifyDatabase.transaction { savedEntityTable.savedEntityIds() }
+        return KotifyDatabase.transaction {
+            if (GlobalUpdateTimesRepository.hasBeenUpdated(libraryUpdateKey)) {
+                savedEntityTable.savedEntityIds()
+            } else {
+                null
+            }
+        }
+    }
+
+    /**
+     * Gets the library of saved entity IDs from the remote network, without checking its state in the local database
+     * cache.
+     */
+    suspend fun getLibraryRemote(): Set<String> {
+        val savedNetworkModels = fetchLibrary()
+        return KotifyDatabase.transaction {
+            GlobalUpdateTimesRepository.setUpdated(libraryUpdateKey)
+            savedNetworkModels.mapNotNullTo(mutableSetOf()) { from(it) }
+        }
     }
 
     /**
      * Retrieves the library of saved entity IDs, from the database cache if it is present or from the remote network
      * otherwise.
      */
-    suspend fun getLibrary(): Set<String> {
-        val updated = GlobalUpdateTimesTable.updated(libraryUpdateKey)
-
-        return if (updated == null) {
-            val savedNetworkModels = fetchLibrary()
-
-            KotifyDatabase.transaction {
-                savedNetworkModels
-                    .mapNotNullTo(mutableSetOf()) { from(it) }
-                    .also {
-                        GlobalUpdateTimesTable.setUpdated(libraryUpdateKey)
-                    }
-            }
-        } else {
-            KotifyDatabase.transaction { savedEntityTable.savedEntityIds() }
-        }
-    }
+    suspend fun getLibrary(): Set<String> = getLibraryCached() ?: getLibraryRemote()
 }
