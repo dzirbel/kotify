@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.components.VerticalSpacer
@@ -51,7 +50,7 @@ fun AuthenticationMenu(user: User?) {
         Button(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             onClick = {
-                LibraryCache.clear()
+                // TODO clear saved repositories state
                 AccessToken.Cache.clear()
             },
         ) {

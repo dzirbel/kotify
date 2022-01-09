@@ -30,9 +30,9 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.db.model.UserRepository
-import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.Page
@@ -61,7 +61,7 @@ data class AlbumPage(val albumId: String) : Page {
 }
 
 data class PlaylistPage(val playlistId: String) : Page {
-    fun titleFor(playlist: SpotifyPlaylist) = "Playlist: ${playlist.name}"
+    fun titleFor(playlist: Playlist) = "Playlist: ${playlist.name}"
 }
 
 object LibraryStatePage : Page {

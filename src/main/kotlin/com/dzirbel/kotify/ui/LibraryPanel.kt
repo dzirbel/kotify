@@ -25,15 +25,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import com.dzirbel.kotify.cache.LibraryCache
-import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.network.model.SpotifyPlaylist
+import com.dzirbel.kotify.db.model.Playlist
+import com.dzirbel.kotify.db.model.PlaylistRepository
+import com.dzirbel.kotify.db.model.SavedPlaylistRepository
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.components.VerticalSpacer
-import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.HandleState
@@ -49,7 +48,7 @@ private class LibraryPresenter(scope: CoroutineScope) :
         initialState = null
     ) {
 
-    data class State(val refreshing: Boolean, val playlists: List<SpotifyPlaylist>, val playlistsUpdated: Long?)
+    data class State(val refreshing: Boolean, val playlists: List<Playlist>, val playlistsUpdated: Long?)
 
     sealed class Event {
         class LoadPlaylists(val invalidate: Boolean = false) : Event()
@@ -61,13 +60,15 @@ private class LibraryPresenter(scope: CoroutineScope) :
                 mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
-                    SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedPlaylists.ID)
+                    SavedPlaylistRepository.invalidateLibrary()
                 }
 
-                val playlists = SpotifyCache.Playlists.getSavedPlaylists()
-                    .map { SpotifyCache.Playlists.getPlaylist(it) }
+                // TODO seems to be missing non-full playlists
+                val playlistIds = SavedPlaylistRepository.getLibrary().toList()
+                val playlists = PlaylistRepository.get(ids = playlistIds).filterNotNull()
+                    .sortedBy { it.createdTime }
 
-                val playlistsUpdated = LibraryCache.playlistsUpdated
+                val playlistsUpdated = SavedPlaylistRepository.libraryUpdated()?.toEpochMilli()
 
                 mutateState {
                     State(
@@ -85,7 +86,6 @@ private class LibraryPresenter(scope: CoroutineScope) :
 fun LibraryPanel(pageStack: MutableState<PageStack>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { LibraryPresenter(scope = scope) }
-    val libraryLastUpdated = remember { LibraryCache.lastUpdated }
 
     VerticalScroll {
         Text(
@@ -98,12 +98,6 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space3, vertical = Dimens.space2),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = libraryLastUpdated?.let {
-                    liveRelativeDateText(timestamp = libraryLastUpdated, format = { "Last updated $it" })
-                } ?: "Never updated"
-            )
-
             val moreExpanded = remember { mutableStateOf(false) }
             IconButton(
                 modifier = Modifier.size(Dimens.iconSmall),
@@ -196,13 +190,13 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
 }
 
 @Composable
-private fun PlaylistItem(playlist: SpotifyPlaylist, pageStack: MutableState<PageStack>) {
-    val selected = pageStack.value.current == PlaylistPage(playlistId = playlist.id)
+private fun PlaylistItem(playlist: Playlist, pageStack: MutableState<PageStack>) {
+    val selected = pageStack.value.current == PlaylistPage(playlistId = playlist.id.value)
 
     SimpleTextButton(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
-        onClick = { pageStack.mutate { to(PlaylistPage(playlistId = playlist.id)) } }
+        onClick = { pageStack.mutate { to(PlaylistPage(playlistId = playlist.id.value)) } }
     ) {
         Text(
             text = playlist.name,

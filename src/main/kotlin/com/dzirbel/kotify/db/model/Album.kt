@@ -76,26 +76,22 @@ class Album(id: EntityID<String>) : SavableSpotifyEntity(
      * within a transaction.
      */
     val hasAllTracks: Boolean
-        get() = totalTracks?.let {
-            println("getting tracks")
-            val x = tracks
-            println("got tracks prop")
-            val y = x.live
-            println("got tracks list")
-            y.size.toUInt() == it
-        } == true
+        get() = totalTracks?.let { tracks.live.size.toUInt() == it } == true
 
     suspend fun getAllTracks(): List<Track> {
-        return if (hasAllTracks) {
-            tracks.live
-        } else {
-            val networkTracks = Spotify.Albums.getAlbumTracks(id = id.value)
-                .fetchAll<SimplifiedSpotifyTrack>()
-
-            KotifyDatabase.transaction {
-                networkTracks.mapNotNull { Track.from(it) }
-                    .also { tracks.set(it) }
+        val cachedTracks = KotifyDatabase.transaction {
+            totalTracks?.let { totalTracks ->
+                tracks.live.takeIf { it.size.toUInt() == totalTracks }
             }
+        }
+        cachedTracks?.let { return it }
+
+        val networkTracks = Spotify.Albums.getAlbumTracks(id = id.value)
+            .fetchAll<SimplifiedSpotifyTrack>()
+
+        return KotifyDatabase.transaction {
+            networkTracks.mapNotNull { Track.from(it) }
+                .also { tracks.set(it) }
         }
     }
 

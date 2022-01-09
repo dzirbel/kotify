@@ -23,11 +23,13 @@ import org.jetbrains.exposed.sql.Table
 import java.time.Instant
 
 object PlaylistTable : SpotifyEntityTable(name = "playlists") {
+    private const val SNAPSHOT_ID_LENGTH = 128
+
     val collaborative: Column<Boolean> = bool("collaborative")
     val description: Column<String?> = text("description").nullable()
     val owner: Column<EntityID<String>> = reference("owner", UserTable)
     val public: Column<Boolean?> = bool("public").nullable()
-    val snapshotId: Column<String> = varchar("snapshotId", length = STRING_ID_LENGTH)
+    val snapshotId: Column<String> = varchar("snapshotId", length = SNAPSHOT_ID_LENGTH)
     val followersTotal: Column<UInt?> = uinteger("followers_total").nullable()
     val totalTracks: Column<UInt?> = uinteger("total_tracks").nullable()
 
@@ -55,25 +57,34 @@ class Playlist(id: EntityID<String>) : SavableSpotifyEntity(
     val owner: CachedProperty<User> by (User referencedOn PlaylistTable.owner).cached()
 
     val images: CachedProperty<List<Image>> by (Image via PlaylistTable.PlaylistImageTable).cachedAsList()
-    val playlistTracks: CachedProperty<List<PlaylistTrack>> by (PlaylistTrack via PlaylistTrackTable).cachedAsList()
-    val tracks: ReadOnlyCachedProperty<List<Track>> by (PlaylistTrack via PlaylistTrackTable).cachedReadOnly(
-        baseToDerived = { playlistTracks -> playlistTracks.map { it.track.live } },
-    )
+
+    val playlistTracks: ReadOnlyCachedProperty<List<PlaylistTrack>> by
+    (PlaylistTrack referrersOn PlaylistTrackTable.playlist)
+        .cachedReadOnly(baseToDerived = { it.toList() })
+
+    val tracks: ReadOnlyCachedProperty<List<Track>> by (PlaylistTrack referrersOn PlaylistTrackTable.playlist)
+        .cachedReadOnly(baseToDerived = { playlistTracks -> playlistTracks.map { it.track.live } })
 
     val hasAllTracks: Boolean
         get() = totalTracks?.let { playlistTracks.live.size.toUInt() == it } == true
 
-    suspend fun getAllTracks(): List<PlaylistTrack> {
-        return if (hasAllTracks) {
-            playlistTracks.live
-        } else {
-            val networkTracks = Spotify.Playlists.getPlaylistTracks(playlistId = id.value)
-                .fetchAll<SpotifyPlaylistTrack>()
+    val hasAllTracksCached: Boolean
+        get() = totalTracks?.let { (playlistTracks.cachedOrNull ?: tracks.cached).size.toUInt() == it } == true
 
-            KotifyDatabase.transaction {
-                networkTracks.mapNotNull { PlaylistTrack.from(spotifyPlaylistTrack = it, playlist = this@Playlist) }
-                    .also { playlistTracks.set(it) }
+    suspend fun getAllTracks(): List<PlaylistTrack> {
+        val cachedTracks = KotifyDatabase.transaction {
+            totalTracks?.let { totalTracks ->
+                playlistTracks.live.takeIf { it.size.toUInt() == totalTracks }
             }
+        }
+        cachedTracks?.let { return it }
+
+        val networkTracks = Spotify.Playlists.getPlaylistTracks(playlistId = id.value)
+            .fetchAll<SpotifyPlaylistTrack>()
+
+        return KotifyDatabase.transaction {
+            networkTracks.mapNotNull { PlaylistTrack.from(spotifyPlaylistTrack = it, playlist = this@Playlist) }
+                .onEach { it.playlist.set(this@Playlist) }
         }
     }
 
@@ -99,11 +110,9 @@ class Playlist(id: EntityID<String>) : SavableSpotifyEntity(
                 followersTotal = networkModel.followers.total.toUInt()
 
                 totalTracks = networkModel.tracks.total.toUInt()
-                playlistTracks.set(
-                    networkModel.tracks.items.mapNotNull {
-                        PlaylistTrack.from(spotifyPlaylistTrack = it, playlist = this)
-                    }
-                )
+                networkModel.tracks.items
+                    .mapNotNull { PlaylistTrack.from(spotifyPlaylistTrack = it, playlist = this) }
+                    .onEach { it.playlist.set(this) }
             }
         }
     }

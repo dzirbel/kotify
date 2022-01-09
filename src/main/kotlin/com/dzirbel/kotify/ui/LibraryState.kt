@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
@@ -31,13 +30,15 @@ import com.dzirbel.kotify.db.model.AlbumTable
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.ArtistTable
+import com.dzirbel.kotify.db.model.Playlist
+import com.dzirbel.kotify.db.model.PlaylistRepository
+import com.dzirbel.kotify.db.model.PlaylistTrackTable
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
+import com.dzirbel.kotify.db.model.SavedPlaylistRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.db.model.TrackRepository
-import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
-import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
@@ -79,7 +80,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
         val albums: List<Pair<String, Album?>>?,
         val albumsUpdated: Long?,
 
-        val playlists: List<LibraryCache.CachedPlaylist>?,
+        val playlists: List<Pair<String, Playlist?>>?,
         val playlistsUpdated: Long?,
 
         val tracks: List<Pair<String, Track?>>?,
@@ -136,6 +137,12 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 val savedTracksIds = SavedTrackRepository.getLibraryCached()?.toList()
                 val savedTracks = savedTracksIds?.let { TrackRepository.getCached(ids = it) }
 
+                val savedPlaylistIds = SavedPlaylistRepository.getLibraryCached()?.toList()
+                val savedPlaylists = savedPlaylistIds?.let { PlaylistRepository.getCached(ids = it) }
+                KotifyDatabase.transaction {
+                    savedPlaylists?.onEach { it?.tracks?.loadToCache() }
+                }
+
                 val ratedTrackIds = SpotifyCache.Ratings.ratedTracks().orEmpty().toList()
                 val ratedTracks = TrackRepository.get(ids = ratedTrackIds)
 
@@ -144,8 +151,8 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                     artistsUpdated = SavedArtistRepository.libraryUpdated()?.toEpochMilli(),
                     albums = savedAlbumIds?.zip(savedAlbums!!),
                     albumsUpdated = SavedAlbumRepository.libraryUpdated()?.toEpochMilli(),
-                    playlists = LibraryCache.cachedPlaylists,
-                    playlistsUpdated = LibraryCache.playlistsUpdated,
+                    playlists = savedPlaylistIds?.zip(savedPlaylists!!),
+                    playlistsUpdated = SavedPlaylistRepository.libraryUpdated()?.toEpochMilli(),
                     tracks = savedTracksIds?.zip(savedTracks!!),
                     tracksUpdated = SavedTrackRepository.libraryUpdated()?.toEpochMilli(),
                     ratedTracks = ratedTrackIds.zip(ratedTracks),
@@ -159,7 +166,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
                 SavedArtistRepository.invalidateLibrary()
 
-                val artistIds = SavedArtistRepository.getLibrary()
+                val artistIds = SavedArtistRepository.getLibrary().toList()
                 val artists = ArtistRepository.getCached(ids = artistIds)
                 val artistsUpdated = SavedArtistRepository.libraryUpdated()?.toEpochMilli()
 
@@ -177,7 +184,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
                 SavedAlbumRepository.invalidateLibrary()
 
-                val albumIds = SavedAlbumRepository.getLibrary()
+                val albumIds = SavedAlbumRepository.getLibrary().toList()
                 val albums = AlbumRepository.getCached(ids = albumIds)
                 val albumsUpdated = SavedAlbumRepository.libraryUpdated()?.toEpochMilli()
 
@@ -195,13 +202,13 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
                 SavedTrackRepository.invalidateLibrary()
 
-                val trackIds = SavedTrackRepository.getLibraryCached()?.toList()
-                val tracks = trackIds?.let { TrackRepository.getCached(ids = it) }
+                val trackIds = SavedTrackRepository.getLibrary().toList()
+                val tracks = TrackRepository.getCached(ids = trackIds)
                 val tracksUpdated = SavedTrackRepository.libraryUpdated()?.toEpochMilli()
 
                 mutateState {
                     it?.copy(
-                        tracks = trackIds?.zip(tracks!!),
+                        tracks = trackIds.zip(tracks),
                         tracksUpdated = tracksUpdated,
                         refreshingSavedTracks = false
                     )
@@ -211,15 +218,18 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             Event.RefreshSavedPlaylists -> {
                 mutateState { it?.copy(refreshingSavedPlaylists = true) }
 
-                SpotifyCache.invalidate(SpotifyCache.GlobalObjects.SavedPlaylists.ID)
+                SavedPlaylistRepository.invalidateLibrary()
 
-                SpotifyCache.Playlists.getSavedPlaylists()
+                val playlistIds = SavedPlaylistRepository.getLibrary().toList()
+                val playlists = PlaylistRepository.getCached(ids = playlistIds)
+                KotifyDatabase.transaction {
+                    playlists.onEach { it?.tracks?.loadToCache() }
+                }
+                val playlistsUpdated = SavedPlaylistRepository.libraryUpdated()?.toEpochMilli()
 
-                val playlists = LibraryCache.cachedPlaylists
-                val playlistsUpdated = LibraryCache.playlistsUpdated
                 mutateState {
                     it?.copy(
-                        playlists = playlists,
+                        playlists = playlistIds.zip(playlists),
                         playlistsUpdated = playlistsUpdated,
                         refreshingSavedPlaylists = false
                     )
@@ -310,46 +320,54 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.FetchMissingPlaylists -> {
-                val missingIds = requireNotNull(LibraryCache.playlists?.filterValues { it !is FullSpotifyPlaylist })
-                missingIds.keys
-                    .asFlow()
-                    .flatMapMerge { id ->
-                        flow<Unit> { SpotifyCache.Playlists.getFullPlaylist(id = id) }
-                    }
-                    .collect()
+                val playlistIds = requireNotNull(SavedPlaylistRepository.getLibraryCached()).toList()
+                val playlists = PlaylistRepository.getFull(ids = playlistIds)
+                KotifyDatabase.transaction {
+                    playlists.onEach { it?.tracks?.loadToCache() }
+                }
 
-                val playlists = LibraryCache.cachedPlaylists
-                mutateState { it?.copy(playlists = playlists) }
+                mutateState { it?.copy(playlists = playlistIds.zip(playlists)) }
             }
 
             Event.InvalidatePlaylists -> {
-                val ids = requireNotNull(LibraryCache.playlists?.filterValues { it != null })
-                SpotifyCache.invalidate(ids.keys.toList())
+                val playlistIds = requireNotNull(SavedPlaylistRepository.getLibraryCached()).toList()
+                PlaylistRepository.invalidate(ids = playlistIds)
+                val playlists = PlaylistRepository.getCached(ids = playlistIds)
+                KotifyDatabase.transaction {
+                    playlists.onEach { it?.tracks?.loadToCache() }
+                }
 
-                val playlists = LibraryCache.cachedPlaylists
-                mutateState { it?.copy(playlists = playlists) }
+                mutateState { it?.copy(playlists = playlistIds.zip(playlists)) }
             }
 
             Event.FetchMissingPlaylistTracks -> {
-                val missingIds = requireNotNull(LibraryCache.playlistTracks?.filterValues { it == null })
+                val playlistIds = requireNotNull(SavedPlaylistRepository.getLibraryCached()).toList()
+                val playlists = PlaylistRepository.get(ids = playlistIds)
+                KotifyDatabase.transaction {
+                    playlists.onEach { it?.tracks?.loadToCache() }
+                }
 
-                missingIds.keys
+                // TODO also fetch tracks for playlists not in the database at all
+                val missingTracks = KotifyDatabase.transaction {
+                    playlists.filter { it?.hasAllTracks == false }
+                }
+
+                missingTracks
                     .asFlow()
-                    .flatMapMerge { id ->
-                        flow<Unit> { SpotifyCache.Playlists.getPlaylistTracks(playlistId = id) }
+                    .flatMapMerge { playlist ->
+                        flow<Unit> { playlist?.getAllTracks() }
                     }
                     .collect()
 
-                val playlists = LibraryCache.cachedPlaylists
-                mutateState { it?.copy(playlists = playlists) }
+                mutateState { it?.copy(playlists = playlistIds.zip(playlists)) }
             }
 
             Event.InvalidatePlaylistTracks -> {
-                val ids = requireNotNull(LibraryCache.playlistTracks?.filterValues { it != null })
-                SpotifyCache.invalidate(ids.keys.toList())
+                KotifyDatabase.transaction { PlaylistTrackTable.deleteAll() }
 
-                val playlists = LibraryCache.cachedPlaylists
-                mutateState { it?.copy(playlists = playlists) }
+                val playlistIds = requireNotNull(SavedPlaylistRepository.getLibraryCached()).toList()
+                val playlists = PlaylistRepository.getCached(ids = playlistIds)
+                mutateState { it?.copy(playlists = playlistIds.zip(playlists)) }
             }
         }
     }
@@ -409,36 +427,32 @@ private val albumColumns = listOf(
 
 // TODO allow refreshing playlist/tracks
 private val playlistColumns = listOf(
-    object : ColumnByString<LibraryCache.CachedPlaylist>(name = "Name") {
-        override fun toString(item: LibraryCache.CachedPlaylist, index: Int): String = item.playlist?.name.orEmpty()
+    object : ColumnByString<Pair<String, Playlist?>>(name = "Name") {
+        override fun toString(item: Pair<String, Playlist?>, index: Int): String = item.second?.name.orEmpty()
     },
 
-    object : ColumnByString<LibraryCache.CachedPlaylist>(name = "ID") {
-        override fun toString(item: LibraryCache.CachedPlaylist, index: Int): String = item.id
+    object : ColumnByString<Pair<String, Playlist?>>(name = "ID") {
+        override fun toString(item: Pair<String, Playlist?>, index: Int): String = item.first
     },
 
-    object : ColumnByString<LibraryCache.CachedPlaylist>(name = "Type") {
-        override fun toString(item: LibraryCache.CachedPlaylist, index: Int): String {
-            return item.playlist?.let { it::class.java.simpleName }.orEmpty()
+    object : ColumnByRelativeDateText<Pair<String, Playlist?>>(name = "Playlist updated") {
+        override fun timestampFor(item: Pair<String, Playlist?>, index: Int) = item.second?.updatedTime?.toEpochMilli()
+    },
+
+    object : ColumnByRelativeDateText<Pair<String, Playlist?>>(name = "Full updated") {
+        override fun timestampFor(item: Pair<String, Playlist?>, index: Int): Long? {
+            return item.second?.fullUpdatedTime?.toEpochMilli()
         }
     },
 
-    object : ColumnByRelativeDateText<LibraryCache.CachedPlaylist>(name = "Playlist updated") {
-        override fun timestampFor(item: LibraryCache.CachedPlaylist, index: Int) = item.updated
-    },
-
-    object : ColumnByNumber<LibraryCache.CachedPlaylist>(name = "Tracks") {
-        override fun toNumber(item: LibraryCache.CachedPlaylist, index: Int) = item.tracks?.trackIds?.size
-    },
-
-    object : ColumnByRelativeDateText<LibraryCache.CachedPlaylist>(name = "Tracks updated") {
-        override fun timestampFor(item: LibraryCache.CachedPlaylist, index: Int) = item.tracksUpdated
+    object : ColumnByNumber<Pair<String, Playlist?>>(name = "Tracks") {
+        override fun toNumber(item: Pair<String, Playlist?>, index: Int) = item.second?.totalTracks?.toInt()
     },
 )
 
 private val ratedTrackColumns = listOf(
-    NameColumn2,
-    RatingColumn2,
+    NameColumn,
+    RatingColumn,
 )
 
 @Composable
@@ -785,10 +799,10 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             val totalSaved = playlists.size
-            val totalCached = playlists.count { it.playlist != null }
-            val simplified = playlists.count { it.playlist is SimplifiedSpotifyPlaylist }
-            val full = playlists.count { it.playlist is FullSpotifyPlaylist }
-            val tracks = playlists.count { it.tracks != null }
+            val totalCached = playlists.count { it.second != null }
+            val simplified = playlists.count { it.second != null && it.second?.fullUpdatedTime == null }
+            val full = playlists.count { it.second?.fullUpdatedTime != null }
+            val tracks = playlists.count { it.second?.hasAllTracksCached == true }
 
             Text("$totalSaved Saved Playlists", modifier = Modifier.padding(end = Dimens.space3))
 
@@ -914,7 +928,7 @@ private fun Ratings(state: LibraryStatePresenter.State, presenter: LibraryStateP
             columns = ratedTrackColumns,
             items = ratedTracks.mapNotNull { it.second },
             modifier = Modifier.widthIn(max = RATINGS_TABLE_WIDTH),
-            defaultSortOrder = Sort(RatingColumn2, SortOrder.DESCENDING), // sort by rating descending by default
+            defaultSortOrder = Sort(RatingColumn, SortOrder.DESCENDING), // sort by rating descending by default
         )
     }
 }

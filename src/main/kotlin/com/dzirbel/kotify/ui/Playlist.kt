@@ -14,11 +14,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.cache.LibraryCache
-import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.model.Playlist
+import com.dzirbel.kotify.db.model.PlaylistRepository
+import com.dzirbel.kotify.db.model.PlaylistTrack
+import com.dzirbel.kotify.db.model.SavedPlaylistRepository
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
-import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageStack
@@ -53,9 +54,9 @@ private class PlaylistPresenter(
     data class State(
         val refreshing: Boolean,
         val reordering: Boolean = false,
-        val sorts: List<Sort<SpotifyPlaylistTrack>> = emptyList(),
-        val playlist: FullSpotifyPlaylist,
-        val tracks: List<SpotifyPlaylistTrack>?,
+        val sorts: List<Sort<PlaylistTrack>> = emptyList(),
+        val playlist: Playlist,
+        val tracks: List<PlaylistTrack>?,
         val isSaved: Boolean?,
         val playlistUpdated: Long?,
     )
@@ -63,8 +64,8 @@ private class PlaylistPresenter(
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
         data class ToggleSave(val save: Boolean) : Event()
-        data class SetSorts(val sorts: List<Sort<SpotifyPlaylistTrack>>) : Event()
-        data class Order(val sorts: List<Sort<SpotifyPlaylistTrack>>, val tracks: List<SpotifyPlaylistTrack>) : Event()
+        data class SetSorts(val sorts: List<Sort<PlaylistTrack>>) : Event()
+        data class Order(val sorts: List<Sort<PlaylistTrack>>, val tracks: List<PlaylistTrack>) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -73,44 +74,46 @@ private class PlaylistPresenter(
                 mutateState { it?.copy(refreshing = true) }
 
                 if (event.invalidate) {
-                    SpotifyCache.invalidate(id = page.playlistId)
-                    SpotifyCache.invalidate(
-                        id = SpotifyCache.GlobalObjects.PlaylistTracks.idFor(playlistId = page.playlistId)
-                    )
+                    PlaylistRepository.invalidate(id = page.playlistId)
+                    KotifyDatabase.transaction { PlaylistTrack.invalidate(playlistId = page.playlistId) }
                 }
 
-                val playlist = SpotifyCache.Playlists.getFullPlaylist(id = page.playlistId)
+                val playlist = PlaylistRepository.getFull(id = page.playlistId)
+                    ?: error("TODO show 404 page") // TODO 404 page
                 pageStack.mutate { withPageTitle(title = page.titleFor(playlist)) }
+                val playlistUpdated = playlist.updatedTime.toEpochMilli()
+                KotifyDatabase.transaction {
+                    playlist.owner.loadToCache()
+                    playlist.images.loadToCache()
+                }
 
-                val isSaved = LibraryCache.savedPlaylists?.contains(playlist.id)
+                val isSaved = SavedPlaylistRepository.isSaved(id = playlist.id.value)
 
                 mutateState {
                     State(
                         refreshing = false,
                         playlist = playlist,
-                        playlistUpdated = SpotifyCache.lastUpdated(id = page.playlistId),
+                        playlistUpdated = playlistUpdated,
                         isSaved = isSaved,
                         tracks = null,
                     )
                 }
 
-                val tracks = SpotifyCache.Playlists.getPlaylistTracks(
-                    playlistId = page.playlistId,
-                    paging = playlist.tracks
-                )
+                val tracks = playlist.getAllTracks()
+                KotifyDatabase.transaction {
+                    tracks.forEach {
+                        it.track.loadToCache()
+                        it.track.cached.artists.loadToCache()
+                        it.track.cached.album.loadToCache()
+                    }
+                }
 
                 mutateState { it?.copy(tracks = tracks) }
             }
 
             is Event.ToggleSave -> {
-                val savedPlaylists = if (event.save) {
-                    SpotifyCache.Playlists.savePlaylist(id = page.playlistId)
-                } else {
-                    SpotifyCache.Playlists.unsavePlaylist(id = page.playlistId)
-                }
-
-                val isSaved = savedPlaylists?.contains(page.playlistId)
-                mutateState { it?.copy(isSaved = isSaved) }
+                SavedPlaylistRepository.setSaved(id = page.playlistId, saved = event.save)
+                mutateState { it?.copy(isSaved = event.save) }
             }
 
             is Event.SetSorts -> mutateState { it?.copy(sorts = event.sorts) }
@@ -133,10 +136,10 @@ private class PlaylistPresenter(
                         )
                     }
 
-                    SpotifyCache.invalidate(
-                        id = SpotifyCache.GlobalObjects.PlaylistTracks.idFor(playlistId = page.playlistId)
-                    )
-                    val tracks = SpotifyCache.Playlists.getPlaylistTracks(playlistId = page.playlistId)
+                    KotifyDatabase.transaction { PlaylistTrack.invalidate(playlistId = page.playlistId) }
+                    val playlist = KotifyDatabase.transaction { PlaylistRepository.getCached(id = page.playlistId) }
+                    val tracks = playlist?.getAllTracks()
+                    KotifyDatabase.transaction { tracks?.forEach { it.track.loadToCache() } }
 
                     mutateState { it?.copy(tracks = tracks, reordering = false, sorts = emptyList()) }
                 }
@@ -145,20 +148,16 @@ private class PlaylistPresenter(
     }
 }
 
-private object AddedAtColumn : ColumnByString<SpotifyPlaylistTrack>(name = "Added") {
-    private val SpotifyPlaylistTrack.addedAtTimestamp
+private object AddedAtColumn : ColumnByString<PlaylistTrack>(name = "Added") {
+    // TODO precompute rather than re-parsing each time this is accessed
+    private val PlaylistTrack.addedAtTimestamp
         get() = Instant.parse(addedAt.orEmpty()).toEpochMilli()
 
-    override fun toString(item: SpotifyPlaylistTrack, index: Int): String {
+    override fun toString(item: PlaylistTrack, index: Int): String {
         return formatDateTime(timestamp = item.addedAtTimestamp, includeTime = false)
     }
 
-    override fun compare(
-        first: SpotifyPlaylistTrack,
-        firstIndex: Int,
-        second: SpotifyPlaylistTrack,
-        secondIndex: Int,
-    ): Int {
+    override fun compare(first: PlaylistTrack, firstIndex: Int, second: PlaylistTrack, secondIndex: Int): Int {
         return first.addedAtTimestamp.compareTo(second.addedAtTimestamp)
     }
 }
@@ -175,7 +174,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                     horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    LoadedImage(url = state.playlist.images.firstOrNull()?.url)
+                    LoadedImage(url = state.playlist.images.cached.firstOrNull()?.url)
 
                     Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
                         Text(state.playlist.name, fontSize = Dimens.fontTitle)
@@ -185,17 +184,19 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                             ?.let { Text(it) }
 
                         Text(
-                            "Created by ${state.playlist.owner.displayName}; " +
-                                "${state.playlist.followers.total} followers"
+                            "Created by ${state.playlist.owner.cached.name}; " +
+                                "${state.playlist.followersTotal} followers"
                         )
 
                         val totalDurationMins = remember(state.tracks) {
                             state.tracks?.let { tracks ->
-                                TimeUnit.MILLISECONDS.toMinutes(tracks.sumOf { it.track.durationMs.toInt() }.toLong())
+                                TimeUnit.MILLISECONDS.toMinutes(
+                                    tracks.sumOf { it.track.cached.durationMs.toInt() }.toLong()
+                                )
                             }
                         }
 
-                        Text("${state.playlist.tracks.total} songs, ${totalDurationMins ?: "<loading>"} min")
+                        Text("${state.playlist.totalTracks} songs, ${totalDurationMins ?: "<loading>"} min")
 
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
@@ -250,7 +251,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                             Player.PlayContext.playlistTrack(playlist = state.playlist, index = index)
                         }
                     )
-                        .map { column -> column.mapped<SpotifyPlaylistTrack> { it.track } }
+                        .map { column -> column.mapped<PlaylistTrack> { it.track.cached } }
                         .toMutableList()
                         .apply {
                             add(1, IndexColumn())

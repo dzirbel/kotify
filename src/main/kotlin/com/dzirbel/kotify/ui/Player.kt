@@ -3,12 +3,12 @@ package com.dzirbel.kotify.ui
 import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
-import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -55,13 +55,15 @@ object Player {
             /**
              * Returns a [PlayContext] which plays the given [playlist].
              */
-            fun playlist(playlist: SpotifyPlaylist) = PlayContext(contextUri = playlist.uri)
+            fun playlist(playlist: Playlist) = playlist.uri?.let { PlayContext(contextUri = it) }
 
             /**
              * Returns a [PlayContext] which plays the track at the given [index] on the given [playlist].
              */
-            fun playlistTrack(playlist: SpotifyPlaylist, index: Int): PlayContext {
-                return PlayContext(contextUri = playlist.uri, offset = Spotify.PlaybackOffset(position = index))
+            fun playlistTrack(playlist: Playlist, index: Int): PlayContext? {
+                return playlist.uri?.let {
+                    PlayContext(contextUri = it, offset = Spotify.PlaybackOffset(position = index))
+                }
             }
         }
     }

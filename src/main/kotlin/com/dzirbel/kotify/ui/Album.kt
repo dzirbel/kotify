@@ -74,11 +74,10 @@ private class AlbumPresenter(
                 pageStack.mutate { withPageTitle(title = page.titleFor(album)) }
 
                 val isSaved = KotifyDatabase.transaction { album.isSaved.live }
-                val tracks = KotifyDatabase.transaction {
-                    album.getAllTracks()
-                        .onEach { it.artists.loadToCache() }
+                val tracks = album.getAllTracks().sortedBy { it.trackNumber }
+                KotifyDatabase.transaction {
+                    tracks.onEach { it.artists.loadToCache() }
                 }
-                    .sortedBy { it.trackNumber }
 
                 mutateState {
                     State(
@@ -170,7 +169,7 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
             VerticalSpacer(Dimens.space3)
 
             Table(
-                columns = trackColumns2(
+                columns = trackColumns(
                     pageStack = pageStack,
                     includeAlbum = false,
                     playContextFromIndex = { index ->

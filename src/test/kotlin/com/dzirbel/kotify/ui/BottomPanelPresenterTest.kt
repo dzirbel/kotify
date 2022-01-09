@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui
 
 import androidx.compose.runtime.MutableState
-import com.dzirbel.kotify.cache.LibraryCache
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
@@ -49,7 +48,6 @@ internal class BottomPanelPresenterTest {
         mockkObject(
             Spotify.Player,
             SpotifyCache,
-            LibraryCache,
             Player,
             SavedAlbumRepository,
             SavedArtistRepository,
@@ -74,7 +72,7 @@ internal class BottomPanelPresenterTest {
 
     @AfterEach
     fun finish() {
-        confirmVerified(Spotify.Player, SpotifyCache, LibraryCache, Player)
+        confirmVerified(Spotify.Player, SpotifyCache, Player)
         confirmVerified(currentDeviceState, currentTrackState, isPlayingState, playbackContextState)
     }
 

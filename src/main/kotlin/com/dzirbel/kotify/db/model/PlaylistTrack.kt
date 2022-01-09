@@ -9,6 +9,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
 
 object PlaylistTrackTable : IntIdTable() {
     val addedAd: Column<String?> = varchar("added_at", 20).nullable()
@@ -55,6 +56,11 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
                     isLocal = spotifyPlaylistTrack.isLocal
                 }
             }
+        }
+
+        // TODO move to repository?
+        fun invalidate(playlistId: String) {
+            PlaylistTrackTable.deleteWhere { PlaylistTrackTable.playlist eq playlistId }
         }
     }
 }
