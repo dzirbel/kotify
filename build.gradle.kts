@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
 
 private object Versions {
-    const val coroutines = "1.5.2" // https://github.com/Kotlin/kotlinx.coroutines
+    const val coroutines = "1.6.0" // https://github.com/Kotlin/kotlinx.coroutines
     const val detekt = "1.18.1" // https://github.com/detekt/detekt; also update plugin version
     const val exposed = "0.36.2" // https://github.com/JetBrains/Exposed
     const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco

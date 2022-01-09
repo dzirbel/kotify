@@ -6,7 +6,7 @@ import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.runTest
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -129,7 +129,7 @@ internal class RepositoryTest {
 
     @Test
     fun testGetRemoteNull() {
-        runBlockingTest {
+        runTest {
             val result = TestRepository.getRemote(id = "dne")
             assertThat(result).isNull()
 

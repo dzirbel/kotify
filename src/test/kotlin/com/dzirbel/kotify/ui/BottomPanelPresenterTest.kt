@@ -21,6 +21,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
+import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -98,6 +99,7 @@ internal class BottomPanelPresenterTest {
             coEvery { Spotify.Player.getAvailableDevices() } returns listOf(device1, device2)
 
             presenter.emit(BottomPanelPresenter.Event.LoadDevices())
+            advanceUntilIdle()
 
             assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.copy(devices = listOf(device1, device2)))
 
@@ -125,6 +127,7 @@ internal class BottomPanelPresenterTest {
                     untilVolumeChangeDeviceId = "device_id"
                 )
             )
+            advanceUntilIdle()
 
             assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.copy(devices = listOf(device)))
 
@@ -148,6 +151,7 @@ internal class BottomPanelPresenterTest {
             coEvery { Spotify.Player.getCurrentPlayback() } returns playback
 
             presenter.emit(BottomPanelPresenter.Event.LoadPlayback())
+            advanceUntilIdle()
 
             assertThat(presenter.testState.stateOrThrow).isEqualTo(
                 loadedState.copy(

@@ -5,8 +5,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestCoroutineScope
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -19,14 +20,15 @@ import org.junit.jupiter.params.provider.EnumSource
 fun <S, E, P : Presenter<S, E>> testPresenter(
     createPresenter: CoroutineScope.() -> P,
     beforeOpen: (suspend (P) -> Unit)? = null,
-    block: suspend TestCoroutineScope.(P) -> Unit
+    block: suspend TestScope.(P) -> Unit
 ) {
-    runBlockingTest {
+    runTest {
         val presenter = createPresenter()
 
         beforeOpen?.invoke(presenter)
 
         val job = launch { presenter.open() }
+        advanceUntilIdle()
 
         block(presenter)
 
@@ -95,21 +97,29 @@ internal class PresenterTest {
         testPresenter({ TestPresenter(scope = this, eventMergeStrategy = eventMergeStrategy) }) { presenter ->
             assertThat(presenter.errors).isEmpty()
 
-            coroutineScope { presenter.emit(Event(param = "1", throwable = throwable)) }
+            presenter.emit(Event(param = "1", throwable = throwable))
+            advanceUntilIdle()
+
             assertThrows<Throwable> { presenter.testState.stateOrThrow }
             assertThat(presenter.testState.safeState).isEqualTo(State("initial"))
             assertThat(presenter.errors).hasSize(1)
 
-            coroutineScope { presenter.emit(Event(param = "2")) }
+            presenter.emit(Event(param = "2"))
+            advanceUntilIdle()
+
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 2"))
             assertThat(presenter.errors).hasSize(1)
 
-            coroutineScope { presenter.emit(Event(param = "3", throwable = throwable)) }
+            presenter.emit(Event(param = "3", throwable = throwable))
+            advanceUntilIdle()
+
             assertThrows<Throwable> { presenter.testState.stateOrThrow }
             assertThat(presenter.testState.safeState).isEqualTo(State("initial | 2"))
             assertThat(presenter.errors).hasSize(2)
 
-            coroutineScope { presenter.emit(Event(param = "4")) }
+            presenter.emit(Event(param = "4"))
+            advanceUntilIdle()
+
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 2 | 4"))
             assertThat(presenter.errors).hasSize(2)
         }
@@ -120,32 +130,31 @@ internal class PresenterTest {
     @Suppress("TooGenericExceptionThrown")
     fun testAsyncException(eventMergeStrategy: Presenter.EventMergeStrategy) {
         testPresenter({ TestPresenter(scope = this, eventMergeStrategy = eventMergeStrategy) }) { presenter ->
-            coroutineScope {
-                presenter.emit(
-                    Event(
-                        param = "1",
-                        block = { throw Throwable() }
-                    )
+            presenter.emit(
+                Event(
+                    param = "1",
+                    block = { throw Throwable() }
                 )
+            )
+            advanceUntilIdle()
+            assertThrows<Throwable> { presenter.testState.stateOrThrow }
 
-                assertThrows<Throwable> { presenter.testState.stateOrThrow }
+            presenter.emit(Event(param = "1"))
+            advanceUntilIdle()
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 1"))
 
-                presenter.emit(Event(param = "1"))
-                assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 1"))
-
-                presenter.emit(
-                    Event(
-                        param = "1",
-                        block = {
-                            coroutineScope {
-                                launch { throw Throwable() }
-                            }
+            presenter.emit(
+                Event(
+                    param = "1",
+                    block = {
+                        coroutineScope {
+                            launch { throw Throwable() }
                         }
-                    )
+                    }
                 )
-
-                assertThrows<Throwable> { presenter.testState.stateOrThrow }
-            }
+            )
+            advanceUntilIdle()
+            assertThrows<Throwable> { presenter.testState.stateOrThrow }
         }
     }
 
@@ -156,7 +165,7 @@ internal class PresenterTest {
         ) { presenter ->
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
 
-            launch { presenter.emit(Event("e1", delay = 10)) }
+            presenter.emit(Event("e1", delay = 10))
 
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
             delay(5)
@@ -164,8 +173,8 @@ internal class PresenterTest {
             delay(10)
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
 
-            launch { presenter.emit(Event("e2", delay = 10)) }
-            launch { presenter.emit(Event("e3", delay = 50)) }
+            presenter.emit(Event("e2", delay = 10))
+            presenter.emit(Event("e3", delay = 50))
 
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
             delay(5)
@@ -186,7 +195,7 @@ internal class PresenterTest {
         ) { presenter ->
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
 
-            launch { presenter.emit(Event("e1", delay = 10)) }
+            presenter.emit(Event("e1", delay = 10))
 
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
             delay(5)
@@ -194,8 +203,8 @@ internal class PresenterTest {
             delay(10)
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
 
-            launch { presenter.emit(Event("e2", delay = 10)) }
-            launch { presenter.emit(Event("e3", delay = 50)) }
+            presenter.emit(Event("e2", delay = 10))
+            presenter.emit(Event("e3", delay = 50))
 
             assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
             delay(5)

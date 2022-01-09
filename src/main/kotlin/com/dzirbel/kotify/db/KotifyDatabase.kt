@@ -10,7 +10,8 @@ import com.dzirbel.kotify.db.model.PlaylistTable
 import com.dzirbel.kotify.db.model.PlaylistTrackTable
 import com.dzirbel.kotify.db.model.TrackTable
 import com.dzirbel.kotify.db.model.UserTable
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Transaction
@@ -20,8 +21,6 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.sql.Connection
-import java.util.concurrent.Executors
-import java.util.concurrent.ThreadFactory
 
 private val tables = arrayOf(
     AlbumTable,
@@ -68,12 +67,11 @@ object KotifyDatabase {
         }
     }
 
-    private var dbThread: Thread? = null
-    private val dbThreadFactory = ThreadFactory { runnable ->
-        check(dbThread == null) { "Multiple db threads created" }
-        Thread(runnable).also { dbThread = it }
-    }
-    private val dbDispatcher = Executors.newSingleThreadExecutor(dbThreadFactory).asCoroutineDispatcher()
+    /**
+     * A [CoroutineDispatcher] which is used to execute database transactions, in particular limiting them to run
+     * serially, i.e. with no parallelism.
+     */
+    private val dbDispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1)
 
     /**
      * Creates a transaction on this [db] with appropriate logic; in particular, using the [dbDispatcher] which operates
