@@ -628,9 +628,10 @@ object Fixtures {
             addedAt = "2021-02-21T06:12:22Z",
             description = """
                 NPR's Up First is the news you need to start your day. The three biggest stories of the day, with
-                reporting and analysis from NPR News — in 10 minutes. Available weekdays by 6 a.m. ET, with hosts Rachel
-                Martin, Noel King, Steve Inskeep and A Martinez. Also available on Saturdays by 8 a.m. ET, with Scott
-                Simon. Subscribe and listen, then support your local NPR station at donate.npr.org.
+                reporting and analysis from NPR News — in 10 minutes. Available weekdays by 6 a.m. ET, with hosts Leila
+                Fadel, Steve Inskeep, Rachel Martin and A Martinez. Also available on Saturdays by 8 a.m. ET, with Scott
+                Simon. On Sundays, hear a longer exploration behind the headlines with Rachel Martin, available by
+                8 a.m. ET. Subscribe and listen, then support your local NPR station at donate.npr.org.
                 """
                 .toSingleLine()
         )
