@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.CachedProperty
+import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.cached
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import org.jetbrains.exposed.dao.IntEntity
@@ -28,9 +28,9 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
     var addedAt: String? by PlaylistTrackTable.addedAd
     var isLocal: Boolean by PlaylistTrackTable.isLocal
 
-    val addedBy: CachedProperty<User> by (User referencedOn PlaylistTrackTable.addedBy).cached()
-    val playlist: CachedProperty<Playlist> by (Playlist referencedOn PlaylistTrackTable.playlist).cached()
-    val track: CachedProperty<Track> by (Track referencedOn PlaylistTrackTable.track).cached()
+    val addedBy: ReadWriteCachedProperty<User> by (User referencedOn PlaylistTrackTable.addedBy).cached()
+    val playlist: ReadWriteCachedProperty<Playlist> by (Playlist referencedOn PlaylistTrackTable.playlist).cached()
+    val track: ReadWriteCachedProperty<Track> by (Track referencedOn PlaylistTrackTable.track).cached()
 
     companion object : IntEntityClass<PlaylistTrack>(PlaylistTrackTable) {
         /**

@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.CachedProperty
+import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
@@ -66,10 +66,10 @@ class Album(id: EntityID<String>) : SavableSpotifyEntity(
     var label: String? by AlbumTable.label
     var popularity: UInt? by AlbumTable.popularity
 
-    val artists: CachedProperty<List<Artist>> by (Artist via AlbumTable.AlbumArtistTable).cachedAsList()
-    val images: CachedProperty<List<Image>> by (Image via AlbumTable.AlbumImageTable).cachedAsList()
-    val genres: CachedProperty<List<Genre>> by (Genre via AlbumTable.AlbumGenreTable).cachedAsList()
-    val tracks: CachedProperty<List<Track>> by (Track via AlbumTable.AlbumTrackTable).cachedAsList()
+    val artists: ReadWriteCachedProperty<List<Artist>> by (Artist via AlbumTable.AlbumArtistTable).cachedAsList()
+    val images: ReadWriteCachedProperty<List<Image>> by (Image via AlbumTable.AlbumImageTable).cachedAsList()
+    val genres: ReadWriteCachedProperty<List<Genre>> by (Genre via AlbumTable.AlbumGenreTable).cachedAsList()
+    val tracks: ReadWriteCachedProperty<List<Track>> by (Track via AlbumTable.AlbumTrackTable).cachedAsList()
 
     /**
      * Whether all the tracks on this album (or the expected number of tracks) are in the database. Must be called from

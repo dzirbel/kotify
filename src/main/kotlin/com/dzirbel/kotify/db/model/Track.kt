@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.CachedProperty
+import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedEntityTable
@@ -52,9 +52,9 @@ class Track(id: EntityID<String>) : SavableSpotifyEntity(
     var trackNumber: UInt by TrackTable.trackNumber
     var popularity: UInt? by TrackTable.popularity
 
-    val album: CachedProperty<Album?> by (Album optionalReferencedOn TrackTable.album).cached()
+    val album: ReadWriteCachedProperty<Album?> by (Album optionalReferencedOn TrackTable.album).cached()
 
-    val artists: CachedProperty<List<Artist>> by (Artist via TrackTable.TrackArtistTable).cachedAsList()
+    val artists: ReadWriteCachedProperty<List<Artist>> by (Artist via TrackTable.TrackArtistTable).cachedAsList()
 
     companion object : SpotifyEntityClass<Track, SpotifyTrack>(TrackTable) {
         fun fromSavedTrack(spotifySavedTrack: SpotifySavedTrack): Track? {

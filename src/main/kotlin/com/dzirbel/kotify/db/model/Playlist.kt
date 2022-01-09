@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.CachedProperty
+import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadOnlyCachedProperty
 import com.dzirbel.kotify.db.Repository
@@ -54,9 +54,9 @@ class Playlist(id: EntityID<String>) : SavableSpotifyEntity(
     var followersTotal: UInt? by PlaylistTable.followersTotal
     var totalTracks: UInt? by PlaylistTable.totalTracks
 
-    val owner: CachedProperty<User> by (User referencedOn PlaylistTable.owner).cached()
+    val owner: ReadWriteCachedProperty<User> by (User referencedOn PlaylistTable.owner).cached()
 
-    val images: CachedProperty<List<Image>> by (Image via PlaylistTable.PlaylistImageTable).cachedAsList()
+    val images: ReadWriteCachedProperty<List<Image>> by (Image via PlaylistTable.PlaylistImageTable).cachedAsList()
 
     val playlistTracks: ReadOnlyCachedProperty<List<PlaylistTrack>> by
     (PlaylistTrack referrersOn PlaylistTrackTable.playlist)

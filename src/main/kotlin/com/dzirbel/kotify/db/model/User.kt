@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.CachedProperty
+import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SpotifyEntity
@@ -37,7 +37,7 @@ class User(id: EntityID<String>) : SpotifyEntity(id = id, table = UserTable) {
     var followersTotal: UInt? by UserTable.followersTotal
     var email: String? by UserTable.email
 
-    val images: CachedProperty<List<Image>> by (Image via UserTable.UserImageTable).cachedAsList()
+    val images: ReadWriteCachedProperty<List<Image>> by (Image via UserTable.UserImageTable).cachedAsList()
 
     companion object : SpotifyEntityClass<User, SpotifyUser>(UserTable) {
         override fun User.update(networkModel: SpotifyUser) {

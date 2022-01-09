@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.CachedProperty
+import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
@@ -48,9 +48,9 @@ class Artist(id: EntityID<String>) : SavableSpotifyEntity(
     var followersTotal: UInt? by ArtistTable.followersTotal
     var albumsFetched: Instant? by ArtistTable.albumsFetched
 
-    val images: CachedProperty<List<Image>> by (Image via ArtistTable.ArtistImageTable).cachedAsList()
-    val genres: CachedProperty<List<Genre>> by (Genre via ArtistTable.ArtistGenreTable).cachedAsList()
-    val albums: CachedProperty<List<Album>> by (Album via AlbumTable.AlbumArtistTable).cachedAsList()
+    val images: ReadWriteCachedProperty<List<Image>> by (Image via ArtistTable.ArtistImageTable).cachedAsList()
+    val genres: ReadWriteCachedProperty<List<Genre>> by (Genre via ArtistTable.ArtistGenreTable).cachedAsList()
+    val albums: ReadWriteCachedProperty<List<Album>> by (Album via AlbumTable.AlbumArtistTable).cachedAsList()
 
     val hasAllAlbums: Boolean
         get() = albumsFetched != null
