@@ -51,6 +51,7 @@ internal class KotifyDatabaseTest {
                 }
             }
 
+            @Suppress("SpreadOperator")
             awaitAll(*jobs)
 
             val rows: List<Pair<String, Int>> = KotifyDatabase
