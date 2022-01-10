@@ -59,7 +59,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -123,7 +122,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
 
         val trackIsSaved: Boolean? = null,
         val artistsAreSaved: Map<String, Boolean?>? = null,
-        val albumIsSaved: Boolean? = null,
+        val albumSavedState: androidx.compose.runtime.State<Boolean?>? = null, // TODO rename to avoid package?
 
         val loadingPlayback: Boolean = true,
         val loadingTrackPlayback: Boolean = true,
@@ -144,7 +143,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                     playbackTrack = null,
                     trackIsSaved = null,
                     artistsAreSaved = null,
-                    albumIsSaved = null
+                    albumSavedState = null
                 )
             }
 
@@ -162,8 +161,8 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                     runBlocking { SavedTrackRepository.isSavedCached(id = trackId) }
                 },
                 artistsAreSaved = artistIds.zip(artistSaveStates).toMap(),
-                albumIsSaved = albumId?.let {
-                    runBlocking { SavedAlbumRepository.isSavedCached(id = albumId) }
+                albumSavedState = albumId?.let {
+                    runBlocking { SavedAlbumRepository.savedStateOf(id = it, fetchIfUnknown = false) }
                 }
             )
         }
@@ -568,10 +567,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 mutateState { it.copy(trackIsSaved = event.save) }
             }
 
-            is Event.ToggleAlbumSaved -> {
-                SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
-                mutateState { it.copy(albumIsSaved = event.save) }
-            }
+            is Event.ToggleAlbumSaved -> SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
 
             is Event.ToggleArtistSaved -> {
                 SavedArtistRepository.setSaved(id = event.artistId, saved = event.save)
@@ -614,7 +610,7 @@ fun BottomPanel(pageStack: MutableState<PageStack>) {
                         track = state.playbackTrack,
                         trackIsSaved = state.trackIsSaved,
                         artistsAreSaved = state.artistsAreSaved,
-                        albumIsSaved = state.albumIsSaved,
+                        albumIsSaved = state.albumSavedState?.value,
                         presenter = presenter,
                         pageStack = pageStack
                     )

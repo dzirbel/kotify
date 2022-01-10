@@ -129,6 +129,7 @@ private class ArtistPresenter(
                     SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
                 }
 
+                // TODO state provided by SavedAlbumRepository to auto-refresh on save/unsave of an album?
                 val savedAlbums = SavedAlbumRepository.getLibraryCached()
 
                 mutateState {

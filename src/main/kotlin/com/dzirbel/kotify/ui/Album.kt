@@ -47,7 +47,7 @@ private class AlbumPresenter(
         val refreshing: Boolean,
         val album: Album,
         val tracks: List<Track>,
-        val isSaved: Boolean?,
+        val isSavedState: androidx.compose.runtime.State<Boolean?>, // TODO rename to avoid package?
         val albumUpdated: Instant,
     )
 
@@ -73,7 +73,8 @@ private class AlbumPresenter(
 
                 pageStack.mutate { withPageTitle(title = page.titleFor(album)) }
 
-                val isSaved = KotifyDatabase.transaction { album.isSaved.live }
+                val isSavedState = SavedAlbumRepository.savedStateOf(id = page.albumId, fetchIfUnknown = true)
+
                 val tracks = album.getAllTracks().sortedBy { it.trackNumber }
                 KotifyDatabase.transaction {
                     tracks.onEach { it.artists.loadToCache() }
@@ -84,7 +85,7 @@ private class AlbumPresenter(
                         refreshing = false,
                         album = album,
                         tracks = tracks,
-                        isSaved = isSaved,
+                        isSavedState = isSavedState,
                         albumUpdated = album.updatedTime,
                     )
                 }
@@ -98,10 +99,7 @@ private class AlbumPresenter(
                 mutateState { it?.copy(tracks = fullTracks) }
             }
 
-            is Event.ToggleSave -> {
-                SavedAlbumRepository.setSaved(id = page.albumId, saved = event.save)
-                mutateState { it?.copy(isSaved = event.save) }
-            }
+            is Event.ToggleSave -> SavedAlbumRepository.setSaved(id = page.albumId, saved = event.save)
         }
     }
 }
@@ -148,7 +146,7 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
                             horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            ToggleSaveButton(isSaved = state.isSaved, size = Dimens.iconMedium) {
+                            ToggleSaveButton(isSaved = state.isSavedState.value, size = Dimens.iconMedium) {
                                 presenter.emitAsync(AlbumPresenter.Event.ToggleSave(save = it))
                             }
 

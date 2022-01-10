@@ -55,6 +55,7 @@ private class AlbumsPresenter(scope: CoroutineScope) :
                     SavedAlbumRepository.invalidateLibrary()
                 }
 
+                // TODO state provided by SavedAlbumRepository to auto-refresh on save/unsave of an album?
                 val savedAlbumIds = SavedAlbumRepository.getLibrary()
                 val albums = AlbumRepository.get(ids = savedAlbumIds.toList())
                     .filterNotNull()

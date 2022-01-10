@@ -163,7 +163,7 @@ internal class BottomPanelPresenterTest {
                     playbackCurrentDevice = playback?.device,
                     playbackTrack = playback?.item,
                     trackIsSaved = playback?.item?.let { false },
-                    albumIsSaved = playback?.item?.let { false },
+                    albumSavedState = playback?.item?.let { SavedAlbumRepository.savedStateOf(id = it.id) },
                     artistsAreSaved = playback?.item?.let { emptyMap() },
                 )
             )
