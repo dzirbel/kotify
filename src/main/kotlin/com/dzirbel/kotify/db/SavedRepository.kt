@@ -194,6 +194,13 @@ abstract class SavedRepository<SavedNetworkType>(
     }
 
     /**
+     * Clears the cache of states used by [savedStateOf], for use in tests.
+     */
+    fun clearStates() {
+        states.clear()
+    }
+
+    /**
      * Saves the entity with the given [id] to the user's library, both via a remote call and in the local cache.
      */
     suspend fun save(id: String) = setSaved(id = id, saved = true)

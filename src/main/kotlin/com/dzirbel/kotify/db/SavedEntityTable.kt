@@ -6,6 +6,7 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.update
 import java.time.Instant
 import kotlin.properties.ReadOnlyProperty
 
@@ -58,14 +59,25 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
      * Must be called from within a transaction.
      */
     fun setSaved(entityId: String, saved: Boolean, savedTime: Instant?, savedCheckTime: Instant = Instant.now()) {
-        select { id eq entityId }
-            .firstOrNull()
-            ?: insert {
-                it[id] = entityId
+        if (select { id eq entityId }.any()) {
+            update(where = { id eq entityId }) {
                 it[this.saved] = saved
-                it[this.savedTime] = savedTime?.takeIf { saved }
+                if (saved) {
+                    // only update savedTime if we have a fresh value
+                    savedTime?.let { savedTime -> it[this.savedTime] = savedTime }
+                } else {
+                    it[this.savedTime] = null
+                }
                 it[this.savedCheckTime] = savedCheckTime
             }
+        } else {
+            insert {
+                it[id] = entityId
+                it[this.saved] = saved
+                it[this.savedTime] = savedTime
+                it[this.savedCheckTime] = savedCheckTime
+            }
+        }
     }
 
     /**
