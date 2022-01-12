@@ -2,7 +2,7 @@ package com.dzirbel.kotify.db.model
 
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
-import com.dzirbel.kotify.db.Repository
+import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
@@ -127,7 +127,7 @@ class Album(id: EntityID<String>) : SavableSpotifyEntity(
     }
 }
 
-object AlbumRepository : Repository<Album, SpotifyAlbum>(Album) {
+object AlbumRepository : DatabaseRepository<Album, SpotifyAlbum>(Album) {
     // most batched calls have a maximum of 50; for albums the maximum is 20
     private const val MAX_ALBUM_IDS_LOOKUP = 20
 

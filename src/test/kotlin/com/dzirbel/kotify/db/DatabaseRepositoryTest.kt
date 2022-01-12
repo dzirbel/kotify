@@ -50,7 +50,7 @@ class TestEntity(id: EntityID<String>) : SpotifyEntity(id = id, table = TestEnti
     }
 }
 
-private object TestRepository : Repository<TestEntity, TestNetworkModel>(TestEntity) {
+private object TestRepository : DatabaseRepository<TestEntity, TestNetworkModel>(TestEntity) {
     val fetchedIds: MutableList<String> = mutableListOf()
     val batchFetchedIds: MutableList<List<String>> = mutableListOf()
 
@@ -89,7 +89,7 @@ private val remoteModels = mapOf(
     ),
 )
 
-internal class RepositoryTest {
+internal class DatabaseRepositoryTest {
     @BeforeEach
     fun setup() {
         transaction(KotifyDatabase.db) {
@@ -188,7 +188,7 @@ internal class RepositoryTest {
     fun testGetBatched() {
         runBlocking {
             val cachedValue = remoteModels.entries.first()
-            transaction(KotifyDatabase.db) { TestRepository.put(cachedValue.value) }
+            transaction(KotifyDatabase.db) { TestEntity.from(cachedValue.value) }
 
             val result = TestRepository.get(ids = remoteModels.keys.toList())
             assertThat(result).hasSize(remoteModels.size)
@@ -212,7 +212,7 @@ internal class RepositoryTest {
         runBlocking {
             assertThat(TestRepository.getCached(id = id)).isNull()
 
-            transaction(KotifyDatabase.db) { TestRepository.put(requireNotNull(remoteModels[id])) }
+            transaction(KotifyDatabase.db) { TestEntity.from(requireNotNull(remoteModels[id])) }
 
             assertThat(TestRepository.getCached(id = id)).isNotNull()
 

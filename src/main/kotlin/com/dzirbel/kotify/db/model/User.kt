@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.ReadWriteCachedProperty
+import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.db.Repository
+import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
@@ -57,7 +57,7 @@ class User(id: EntityID<String>) : SpotifyEntity(id = id, table = UserTable) {
     }
 }
 
-object UserRepository : Repository<User, SpotifyUser>(User) {
+object UserRepository : DatabaseRepository<User, SpotifyUser>(User) {
     override suspend fun fetch(id: String) = Spotify.UsersProfile.getUser(userId = id)
 
     fun getCurrentUserIdCached(): String? {
@@ -79,7 +79,7 @@ object UserRepository : Repository<User, SpotifyUser>(User) {
             UserTable.CurrentUserTable.insert {
                 it[userId] = user.id
             }
-            put(user)
+            User.from(user)
         }
     }
 

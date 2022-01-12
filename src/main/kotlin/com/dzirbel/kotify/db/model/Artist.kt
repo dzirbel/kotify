@@ -2,7 +2,7 @@ package com.dzirbel.kotify.db.model
 
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
-import com.dzirbel.kotify.db.Repository
+import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
@@ -94,7 +94,7 @@ class Artist(id: EntityID<String>) : SavableSpotifyEntity(
     }
 }
 
-object ArtistRepository : Repository<Artist, SpotifyArtist>(Artist) {
+object ArtistRepository : DatabaseRepository<Artist, SpotifyArtist>(Artist) {
     override suspend fun fetch(id: String) = Spotify.Artists.getArtist(id = id)
     override suspend fun fetch(ids: List<String>): List<SpotifyArtist?> {
         // TODO fetch chunks in parallel

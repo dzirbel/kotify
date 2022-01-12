@@ -35,8 +35,8 @@ abstract class SpotifyEntity(id: EntityID<String>, table: SpotifyEntityTable) : 
 /**
  * Base [EntityClass] which serves as the companion object for a [SpotifyEntityTable].
  *
- * Contains common functionality to power a [Repository] based on this table type, in particular to convert network
- * models of [NetworkType] to database models of [EntityType].
+ * Contains common functionality to power a [DatabaseRepository] based on this table type, in particular to convert
+ * network models of [NetworkType] to database models of [EntityType].
  */
 abstract class SpotifyEntityClass<EntityType : SpotifyEntity, NetworkType : SpotifyObject>(table: SpotifyEntityTable) :
     EntityClass<String, EntityType>(table) {
@@ -80,5 +80,5 @@ abstract class SpotifyEntityClass<EntityType : SpotifyEntity, NetworkType : Spot
      *
      * Must be called from within a transaction.
      */
-    fun from(networkModels: List<NetworkType>): List<EntityType?> = networkModels.map { from(it) }
+    fun from(networkModels: List<NetworkType?>): List<EntityType?> = networkModels.map { it?.let { from(it) } }
 }

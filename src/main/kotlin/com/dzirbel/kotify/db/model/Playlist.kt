@@ -3,7 +3,7 @@ package com.dzirbel.kotify.db.model
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadOnlyCachedProperty
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
-import com.dzirbel.kotify.db.Repository
+import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
@@ -118,7 +118,7 @@ class Playlist(id: EntityID<String>) : SavableSpotifyEntity(
     }
 }
 
-object PlaylistRepository : Repository<Playlist, SpotifyPlaylist>(Playlist) {
+object PlaylistRepository : DatabaseRepository<Playlist, SpotifyPlaylist>(Playlist) {
     override suspend fun fetch(id: String) = Spotify.Playlists.getPlaylist(playlistId = id)
 }
 
