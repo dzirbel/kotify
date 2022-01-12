@@ -3,8 +3,8 @@ package com.dzirbel.kotify.db.model
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
+import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
-import com.dzirbel.kotify.db.SavedRepository
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cached
@@ -99,7 +99,9 @@ object TrackRepository : Repository<Track, SpotifyTrack>(Track) {
     }
 }
 
-object SavedTrackRepository : SavedRepository<SpotifySavedTrack>(savedEntityTable = TrackTable.SavedTracksTable) {
+object SavedTrackRepository : SavedDatabaseRepository<SpotifySavedTrack>(
+    savedEntityTable = TrackTable.SavedTracksTable,
+) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
         return Spotify.Library.checkTracks(ids = ids)
     }

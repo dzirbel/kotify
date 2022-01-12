@@ -5,7 +5,6 @@ import com.dzirbel.kotify.util.CaseInsensitiveEnumSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-@Suppress("ComplexInterface")
 interface SpotifyAlbum : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the album. */
     override val href: String?

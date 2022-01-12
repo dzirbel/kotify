@@ -4,7 +4,6 @@ import com.dzirbel.kotify.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-@Suppress("ComplexInterface")
 interface SpotifyPlaylist : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the playlist. */
     override val href: String

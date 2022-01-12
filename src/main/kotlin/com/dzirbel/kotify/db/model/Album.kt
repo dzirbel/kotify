@@ -1,11 +1,11 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.Repository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
+import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
-import com.dzirbel.kotify.db.SavedRepository
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cachedAsList
@@ -139,7 +139,9 @@ object AlbumRepository : Repository<Album, SpotifyAlbum>(Album) {
     }
 }
 
-object SavedAlbumRepository : SavedRepository<SpotifySavedAlbum>(savedEntityTable = AlbumTable.SavedAlbumsTable) {
+object SavedAlbumRepository : SavedDatabaseRepository<SpotifySavedAlbum>(
+    savedEntityTable = AlbumTable.SavedAlbumsTable,
+) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
         return Spotify.Library.checkAlbums(ids = ids)
     }

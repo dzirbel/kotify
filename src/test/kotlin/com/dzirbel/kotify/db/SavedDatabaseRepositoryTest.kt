@@ -22,7 +22,7 @@ data class TestSavedNetworkModel(val id: String)
 
 object TestSavedEntityTable : SavedEntityTable()
 
-object TestSavedRepository : SavedRepository<TestSavedNetworkModel>(savedEntityTable = TestSavedEntityTable) {
+object TestSavedRepository : SavedDatabaseRepository<TestSavedNetworkModel>(savedEntityTable = TestSavedEntityTable) {
     private val fetchedIds: MutableList<List<String>> = mutableListOf()
     private val pushedIds: MutableList<Pair<List<String>, Boolean>> = mutableListOf()
     private var libraryFetches = 0
@@ -74,7 +74,7 @@ object TestSavedRepository : SavedRepository<TestSavedNetworkModel>(savedEntityT
 
 private val remoteLibrary = listOf("saved-1", "saved-2", "saved-3")
 
-internal class SavedRepositoryTest {
+internal class SavedDatabaseRepositoryTest {
     @BeforeEach
     fun setup() {
         transaction(KotifyDatabase.db) {
@@ -288,8 +288,8 @@ internal class SavedRepositoryTest {
     }
 
     /**
-     * Test that [SavedRepository] does not hold strong references to its saved states, so they can be garbage collected
-     * when the callers no longer reference them (or in this case, only reference them weakly).
+     * Test that [SavedDatabaseRepository] does not hold strong references to its saved states, so they can be garbage
+     * collected when the callers no longer reference them (or in this case, only reference them weakly).
      *
      * This test runs until the reference is cleared, so it will time out if it is never cleared. Since garbage
      * collection is non-deterministic, this is not a perfect solution but the behavior is important to test.

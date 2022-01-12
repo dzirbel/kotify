@@ -7,7 +7,6 @@ import kotlinx.serialization.Serializable
 /**
  * Shared properties for Track objects; see [SimplifiedSpotifyTrack] and [FullSpotifyTrack].
  */
-@Suppress("ComplexInterface")
 interface SpotifyTrack : SpotifyObject {
     /** A link to the Web API endpoint providing full details of the track. */
     override val href: String?

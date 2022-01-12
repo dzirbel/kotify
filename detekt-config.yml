@@ -50,7 +50,7 @@ complexity:
     active: true
     threshold: 4
   ComplexInterface:
-    active: true
+    active: false
     threshold: 10
     includeStaticDeclarations: false
     includePrivateDeclarations: false
@@ -111,7 +111,7 @@ complexity:
     excludes: ['**/test/**', '**/testFixtures/**']
     thresholdInFiles: 25
     thresholdInClasses: 25
-    thresholdInInterfaces: 10
+    thresholdInInterfaces: 25
     thresholdInObjects: 100
     thresholdInEnums: 10
     ignoreDeprecated: false
