@@ -174,7 +174,7 @@ internal class SavedRepositoryTest {
             remoteLibrary.forEach { id ->
                 assertThat(TestSavedRepository.isSavedCached(id = id)).isTrue()
             }
-            assertThat(TestSavedRepository.isSavedCached(id = "unsaved")).isNull()
+            assertThat(TestSavedRepository.isSavedCached(id = "unsaved")).isFalse()
 
             TestSavedRepository.assertCalls(libraryFetches = 1, fromIds = remoteLibrary)
 
@@ -209,6 +209,7 @@ internal class SavedRepositoryTest {
             remoteLibrary.forEach { id ->
                 assertThat(TestSavedRepository.isSavedCached(id = id)).isTrue()
             }
+            assertThat(TestSavedRepository.isSavedCached(id = "unsaved")).isNull()
         }
     }
 
@@ -227,7 +228,7 @@ internal class SavedRepositoryTest {
                 .containsExactlyElementsIn(remoteLibrary.plus("saved-x").minus("saved-1"))
 
             TestSavedRepository.savedOverrides["saved-y"] = true
-            TestSavedRepository.isSaved(id = "saved-y")
+            TestSavedRepository.isSavedRemote(id = "saved-y")
             assertThat(TestSavedRepository.getLibraryCached())
                 .containsExactlyElementsIn(remoteLibrary.plus("saved-x").minus("saved-1").plus("saved-y"))
         }

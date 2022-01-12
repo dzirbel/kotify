@@ -128,7 +128,11 @@ abstract class SavedRepository<SavedNetworkType>(
      */
     suspend fun isSavedCached(ids: List<String>): List<Boolean?> {
         return KotifyDatabase.transaction {
-            ids.map { id -> savedEntityTable.isSaved(entityId = id) }
+            val hasFetchedLibrary = GlobalUpdateTimesRepository.hasBeenUpdated(libraryUpdateKey)
+            // if we've fetched the entire library, then any saved entity not present in the table is unsaved (or was
+            // when the library was fetched)
+            val default = if (hasFetchedLibrary) false else null
+            ids.map { id -> savedEntityTable.isSaved(entityId = id) ?: default }
         }
             .also { results ->
                 if (listeners.isNotEmpty()) {
