@@ -70,7 +70,6 @@ fun formatDateTime(
         !includeDate && includeTime && includeMillis -> formatTimeMillis
         includeDate && !includeTime && !includeMillis -> formatDate
         !includeDate && includeTime && !includeMillis -> formatTime
-        !includeDate && !includeTime && includeMillis -> error("unsupported: cannot include only millis")
         else -> error("unsupported: must include some field")
     }
 
