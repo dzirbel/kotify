@@ -148,7 +148,7 @@ abstract class SavableSpotifyEntity(
      *
      * Must be called from within a transaction.
      */
-    fun setSaved(saved: Boolean, saveTime: Instant = Instant.now(), savedCheckTime: Instant = Instant.now()) {
+    fun setSaved(saved: Boolean, saveTime: Instant? = Instant.now(), savedCheckTime: Instant = Instant.now()) {
         savedEntityTable.setSaved(
             entityId = id.value,
             saved = saved,

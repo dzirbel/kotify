@@ -1,9 +1,9 @@
 package com.dzirbel.kotify.db.model
 
+import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadOnlyCachedProperty
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
-import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
@@ -152,6 +152,6 @@ object SavedPlaylistRepository : SavedDatabaseRepository<SpotifyPlaylist>(
     }
 
     override fun from(savedNetworkType: SpotifyPlaylist): String? {
-        return Playlist.from(networkModel = savedNetworkType)?.id?.value
+        return Playlist.from(savedNetworkType)?.id?.value
     }
 }

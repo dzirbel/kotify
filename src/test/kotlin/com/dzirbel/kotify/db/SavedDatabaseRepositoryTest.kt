@@ -46,7 +46,6 @@ object TestSavedRepository : SavedDatabaseRepository<TestSavedNetworkModel>(save
 
     override fun from(savedNetworkType: TestSavedNetworkModel): String {
         fromIds.add(savedNetworkType.id)
-        TestSavedEntityTable.setSaved(entityId = savedNetworkType.id, saved = true, savedTime = Instant.EPOCH)
         return savedNetworkType.id
     }
 

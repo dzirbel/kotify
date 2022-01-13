@@ -63,7 +63,6 @@ private class LibraryPresenter(scope: CoroutineScope) :
                     SavedPlaylistRepository.invalidateLibrary()
                 }
 
-                // TODO seems to be missing non-full playlists
                 val playlistIds = SavedPlaylistRepository.getLibrary().toList()
                 val playlists = PlaylistRepository.get(ids = playlistIds).filterNotNull()
                     .sortedBy { it.createdTime }

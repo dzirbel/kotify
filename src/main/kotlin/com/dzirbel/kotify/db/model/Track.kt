@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.DatabaseRepository
+import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
@@ -57,12 +57,6 @@ class Track(id: EntityID<String>) : SavableSpotifyEntity(
     val artists: ReadWriteCachedProperty<List<Artist>> by (Artist via TrackTable.TrackArtistTable).cachedAsList()
 
     companion object : SpotifyEntityClass<Track, SpotifyTrack>(TrackTable) {
-        fun fromSavedTrack(spotifySavedTrack: SpotifySavedTrack): Track? {
-            val track = Track.from(spotifySavedTrack.track)
-            track?.setSaved(saved = true, saveTime = Instant.parse(spotifySavedTrack.addedAt))
-            return track
-        }
-
         override fun Track.update(networkModel: SpotifyTrack) {
             discNumber = networkModel.discNumber.toUInt()
             durationMs = networkModel.durationMs.toULong() // TODO use ULong in network model?
@@ -117,6 +111,6 @@ object SavedTrackRepository : SavedDatabaseRepository<SpotifySavedTrack>(
     }
 
     override fun from(savedNetworkType: SpotifySavedTrack): String? {
-        return Track.fromSavedTrack(savedNetworkType)?.id?.value
+        return Track.from(savedNetworkType.track)?.id?.value
     }
 }

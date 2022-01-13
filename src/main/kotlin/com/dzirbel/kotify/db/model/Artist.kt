@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.db.model
 
+import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
-import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
@@ -124,7 +124,6 @@ object SavedArtistRepository : SavedDatabaseRepository<FullSpotifyArtist>(
     }
 
     override fun from(savedNetworkType: FullSpotifyArtist): String? {
-        ArtistTable.SavedArtistsTable.setSaved(entityId = savedNetworkType.id, saved = true, savedTime = null)
         return Artist.from(savedNetworkType)?.id?.value
     }
 }

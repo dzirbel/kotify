@@ -184,6 +184,9 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         return KotifyDatabase.transaction {
             GlobalUpdateTimesRepository.setUpdated(libraryUpdateKey)
             savedNetworkModels.mapNotNullTo(mutableSetOf()) { from(it) }
+                .onEach { id ->
+                    savedEntityTable.setSaved(entityId = id, saved = true, savedTime = null)
+                }
         }
             .also { library ->
                 listeners.forEach {
