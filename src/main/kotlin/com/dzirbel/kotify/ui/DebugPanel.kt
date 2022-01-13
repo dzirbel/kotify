@@ -92,7 +92,7 @@ private val networkSettings = mutableStateOf(NetworkSettings())
 private val cacheSettings = mutableStateOf(CacheSettings())
 private val imageCacheSettings = mutableStateOf(ImageCacheSettings())
 private val uiSettings = mutableStateOf(UISettings())
-private val scrollStates = DebugTab.values().associate { it to ScrollState(0) }
+private val scrollStates = DebugTab.values().associateWith { ScrollState(0) }
 
 @Composable
 fun DebugPanel() {
