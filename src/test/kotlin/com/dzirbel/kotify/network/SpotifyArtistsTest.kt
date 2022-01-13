@@ -48,8 +48,8 @@ internal class SpotifyArtistsTest {
         }
 
         if (albums.size != artistProperties.albums.size) {
-            val expectedIds = artistProperties.albums.map { it.id }
-            val actualIds = albums.map { it.id }
+            val expectedIds = artistProperties.albums.mapTo(mutableSetOf()) { it.id }
+            val actualIds = albums.mapTo(mutableSetOf()) { it.id }
             val idToName = artistProperties.albums.associate { it.id to it.name }
                 .plus(albums.associate { it.id to it.name })
 
