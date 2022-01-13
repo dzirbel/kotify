@@ -13,7 +13,7 @@ private object Versions {
     const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco
     const val junit4 = "4.13.2" // https://junit.org/junit4/
     const val junit5 = "5.8.2" // https://junit.org/junit5/
-    const val kotlinxSerialization = "1.3.1" // https://github.com/Kotlin/kotlinx.serialization
+    const val kotlinxSerialization = "1.3.2" // https://github.com/Kotlin/kotlinx.serialization
     const val slf4j = "1.7.32" // http://www.slf4j.org/
     const val sqliteJdbc = "3.36.0.3" // https://github.com/xerial/sqlite-jdbc
     const val ktor = "1.6.7" // https://ktor.io/changelog/
