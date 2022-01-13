@@ -30,10 +30,10 @@ data class RelativeTimeInfo(
             else -> error("unexpected TimeUnit $unit")
         }
 
-        val unitFormatted = if (abs(amount) == 1L) timeUnitName else timeUnitName + "s"
-        val amountFormatted = if (amount == 0L) "<1" else abs(amount).toString()
+        val absAmount = abs(amount)
+        val unitFormatted = if (absAmount == 1L) timeUnitName else timeUnitName + "s"
 
-        return if (amount < 0) "$amountFormatted $unitFormatted ago" else "in $amountFormatted $unitFormatted"
+        return if (amount < 0) "$absAmount $unitFormatted ago" else "in $absAmount $unitFormatted"
     }
 
     companion object {
