@@ -121,7 +121,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         // non-null when muted, saves the previous volume percent
         val savedVolume: Int? = null,
 
-        val trackIsSaved: Boolean? = null,
+        val trackSavedState: State<Boolean?>? = null,
         val artistSavedStates: Map<String, State<Boolean?>>? = null,
         val albumSavedState: State<Boolean?>? = null,
 
@@ -142,7 +142,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             if (track == null) {
                 return copy(
                     playbackTrack = null,
-                    trackIsSaved = null,
+                    trackSavedState = null,
                     artistSavedStates = null,
                     albumSavedState = null
                 )
@@ -162,8 +162,8 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             }
             return copy(
                 playbackTrack = track,
-                trackIsSaved = track.id?.let { trackId ->
-                    runBlocking { SavedTrackRepository.isSavedCached(id = trackId) }
+                trackSavedState = track.id?.let { trackId ->
+                    runBlocking { SavedTrackRepository.savedStateOf(id = trackId) }
                 },
                 artistSavedStates = artistSavedStates,
                 albumSavedState = albumId?.let {
@@ -567,10 +567,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 }
             }
 
-            is Event.ToggleTrackSaved -> {
-                SavedTrackRepository.setSaved(id = event.trackId, saved = event.save)
-                mutateState { it.copy(trackIsSaved = event.save) }
-            }
+            is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.save)
 
             is Event.ToggleAlbumSaved -> SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
 
@@ -605,7 +602,7 @@ fun BottomPanel(pageStack: MutableState<PageStack>) {
                 Column {
                     CurrentTrack(
                         track = state.playbackTrack,
-                        trackIsSaved = state.trackIsSaved,
+                        trackIsSaved = state.trackSavedState?.value,
                         artistsAreSaved = state.artistSavedStates?.mapValues { it.value.value },
                         albumIsSaved = state.albumSavedState?.value,
                         presenter = presenter,

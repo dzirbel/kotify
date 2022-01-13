@@ -45,12 +45,7 @@ internal class BottomPanelPresenterTest {
     @BeforeEach
     fun setup() {
         unmockkAll()
-        mockkObject(
-            Spotify.Player,
-            SpotifyCache,
-            Player,
-            SavedTrackRepository,
-        )
+        mockkObject(Spotify.Player, SpotifyCache, Player)
 
         every { Player.currentDevice } returns currentDeviceState
         every { Player.currentTrack } returns currentTrackState
@@ -60,8 +55,6 @@ internal class BottomPanelPresenterTest {
         coEvery { Spotify.Player.getAvailableDevices() } returns emptyList()
         coEvery { Spotify.Player.getCurrentPlayback() } returns null
         coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returns null
-
-        coEvery { SavedTrackRepository.isSavedCached(any<String>()) } returns false
     }
 
     @AfterEach
@@ -155,7 +148,7 @@ internal class BottomPanelPresenterTest {
                     playbackRepeatState = playback?.repeatState,
                     playbackCurrentDevice = playback?.device,
                     playbackTrack = playback?.item,
-                    trackIsSaved = playback?.item?.let { false },
+                    trackSavedState = playback?.item?.let { SavedTrackRepository.savedStateOf(id = it.id) },
                     albumSavedState = playback?.item?.let { SavedAlbumRepository.savedStateOf(id = it.id) },
                     artistSavedStates = playback?.item?.let { emptyMap() },
                 )
@@ -175,8 +168,6 @@ internal class BottomPanelPresenterTest {
 
                         Player.currentTrack
                         currentTrackState.value = track
-
-                        SavedTrackRepository.isSavedCached(playback.item!!.album.id!!)
                     }
                 }
             }
