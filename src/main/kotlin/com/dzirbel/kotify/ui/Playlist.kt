@@ -10,6 +10,7 @@ import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -57,7 +58,7 @@ private class PlaylistPresenter(
         val sorts: List<Sort<PlaylistTrack>> = emptyList(),
         val playlist: Playlist,
         val tracks: List<PlaylistTrack>?,
-        val isSaved: Boolean?,
+        val isSavedState: State<Boolean?>,
         val playlistUpdated: Long?,
     )
 
@@ -87,14 +88,14 @@ private class PlaylistPresenter(
                     playlist.images.loadToCache()
                 }
 
-                val isSaved = SavedPlaylistRepository.isSaved(id = playlist.id.value)
+                val isSavedState = SavedPlaylistRepository.savedStateOf(id = playlist.id.value, fetchIfUnknown = true)
 
                 mutateState {
                     ViewModel(
                         refreshing = false,
                         playlist = playlist,
                         playlistUpdated = playlistUpdated,
-                        isSaved = isSaved,
+                        isSavedState = isSavedState,
                         tracks = null,
                     )
                 }
@@ -111,10 +112,7 @@ private class PlaylistPresenter(
                 mutateState { it?.copy(tracks = tracks) }
             }
 
-            is Event.ToggleSave -> {
-                SavedPlaylistRepository.setSaved(id = page.playlistId, saved = event.save)
-                mutateState { it?.copy(isSaved = event.save) }
-            }
+            is Event.ToggleSave -> SavedPlaylistRepository.setSaved(id = page.playlistId, saved = event.save)
 
             is Event.SetSorts -> mutateState { it?.copy(sorts = event.sorts) }
 
@@ -202,7 +200,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                             horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            ToggleSaveButton(isSaved = state.isSaved, size = Dimens.iconMedium) {
+                            ToggleSaveButton(isSaved = state.isSavedState.value, size = Dimens.iconMedium) {
                                 presenter.emitAsync(PlaylistPresenter.Event.ToggleSave(save = it))
                             }
 
