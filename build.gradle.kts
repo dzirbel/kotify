@@ -13,7 +13,6 @@ private object Versions {
     const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco
     const val junit4 = "4.13.2" // https://junit.org/junit4/
     const val junit5 = "5.8.2" // https://junit.org/junit5/
-    const val kotlinReflect = "1.5.31" // should match kotlin version
     const val kotlinxSerialization = "1.3.1" // https://github.com/Kotlin/kotlinx.serialization
     const val slf4j = "1.7.32" // http://www.slf4j.org/
     const val sqliteJdbc = "3.36.0.3" // https://github.com/xerial/sqlite-jdbc
@@ -25,10 +24,10 @@ private object Versions {
 
 plugins {
     // https://kotlinlang.org/releases.html
-    kotlin("jvm") version "1.5.31"
+    kotlin("jvm") version "1.6.10"
 
     // https://github.com/Kotlin/kotlinx.serialization
-    kotlin("plugin.serialization") version "1.5.31"
+    kotlin("plugin.serialization") version "1.6.10"
 
     // https://github.com/detekt/detekt; also update dependency version
     id("io.gitlab.arturbosch.detekt") version "1.18.1"
@@ -37,7 +36,7 @@ plugins {
     id("name.remal.check-dependency-updates") version "1.5.0"
 
     // https://github.com/jetbrains/compose-jb
-    id("org.jetbrains.compose") version "1.0.0"
+    id("org.jetbrains.compose") version "1.0.1"
 
     `java-test-fixtures`
 
