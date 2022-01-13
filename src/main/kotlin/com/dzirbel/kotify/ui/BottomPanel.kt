@@ -122,7 +122,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         val savedVolume: Int? = null,
 
         val trackIsSaved: Boolean? = null,
-        val artistsAreSaved: Map<String, Boolean?>? = null,
+        val artistSavedStates: Map<String, State<Boolean?>>? = null,
         val albumSavedState: State<Boolean?>? = null,
 
         val loadingPlayback: Boolean = true,
@@ -143,13 +143,17 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 return copy(
                     playbackTrack = null,
                     trackIsSaved = null,
-                    artistsAreSaved = null,
+                    artistSavedStates = null,
                     albumSavedState = null
                 )
             }
 
             val artistIds = track.artists.mapNotNull { it.id }
-            val artistSaveStates = runBlocking { SavedArtistRepository.isSavedCached(ids = artistIds) }
+            val artistSavedStates = runBlocking {
+                artistIds.associateWith { artistId ->
+                    SavedArtistRepository.savedStateOf(artistId, fetchIfUnknown = false)
+                }
+            }
 
             val albumId = when (track) {
                 is SimplifiedSpotifyTrack -> track.album?.id
@@ -161,7 +165,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 trackIsSaved = track.id?.let { trackId ->
                     runBlocking { SavedTrackRepository.isSavedCached(id = trackId) }
                 },
-                artistsAreSaved = artistIds.zip(artistSaveStates).toMap(),
+                artistSavedStates = artistSavedStates,
                 albumSavedState = albumId?.let {
                     runBlocking { SavedAlbumRepository.savedStateOf(id = it, fetchIfUnknown = false) }
                 }
@@ -570,15 +574,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
 
             is Event.ToggleAlbumSaved -> SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
 
-            is Event.ToggleArtistSaved -> {
-                SavedArtistRepository.setSaved(id = event.artistId, saved = event.save)
-                mutateState {
-                    it.copy(
-                        artistsAreSaved = it.artistsAreSaved
-                            ?.plus(event.artistId to event.save)
-                    )
-                }
-            }
+            is Event.ToggleArtistSaved -> SavedArtistRepository.setSaved(id = event.artistId, saved = event.save)
         }
     }
 
@@ -610,7 +606,7 @@ fun BottomPanel(pageStack: MutableState<PageStack>) {
                     CurrentTrack(
                         track = state.playbackTrack,
                         trackIsSaved = state.trackIsSaved,
-                        artistsAreSaved = state.artistsAreSaved,
+                        artistsAreSaved = state.artistSavedStates?.mapValues { it.value.value },
                         albumIsSaved = state.albumSavedState?.value,
                         presenter = presenter,
                         pageStack = pageStack

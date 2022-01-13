@@ -3,7 +3,6 @@ package com.dzirbel.kotify.ui
 import androidx.compose.runtime.MutableState
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
-import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
@@ -50,8 +49,6 @@ internal class BottomPanelPresenterTest {
             Spotify.Player,
             SpotifyCache,
             Player,
-            SavedAlbumRepository,
-            SavedArtistRepository,
             SavedTrackRepository,
         )
 
@@ -64,11 +61,7 @@ internal class BottomPanelPresenterTest {
         coEvery { Spotify.Player.getCurrentPlayback() } returns null
         coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returns null
 
-        coEvery { SavedAlbumRepository.isSavedCached(any<String>()) } returns false
         coEvery { SavedTrackRepository.isSavedCached(any<String>()) } returns false
-        coEvery { SavedArtistRepository.isSavedCached(any<List<String>>()) } answers {
-            List(firstArg<List<String>>().size) { false }
-        }
     }
 
     @AfterEach
@@ -164,7 +157,7 @@ internal class BottomPanelPresenterTest {
                     playbackTrack = playback?.item,
                     trackIsSaved = playback?.item?.let { false },
                     albumSavedState = playback?.item?.let { SavedAlbumRepository.savedStateOf(id = it.id) },
-                    artistsAreSaved = playback?.item?.let { emptyMap() },
+                    artistSavedStates = playback?.item?.let { emptyMap() },
                 )
             )
 
@@ -183,9 +176,7 @@ internal class BottomPanelPresenterTest {
                         Player.currentTrack
                         currentTrackState.value = track
 
-                        SavedAlbumRepository.isSavedCached(playback.item!!.album.id!!)
                         SavedTrackRepository.isSavedCached(playback.item!!.album.id!!)
-                        SavedArtistRepository.isSavedCached(any<List<String>>())
                     }
                 }
             }
