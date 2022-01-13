@@ -61,14 +61,13 @@ fun trackColumns(
 
 /**
  * A [Column] which displays the current play state of a [SpotifyTrack] with an icon, and allows playing a
- * [SpotifyTrack] via the [playContext].
+ * [SpotifyTrack] via the [playContextFromIndex].
  */
 class PlayingColumn(
     /**
-     * Returns a [Player.PlayContext] to play when the user selects the given [track] at the given [index] in the
-     * column.
+     * Returns a [Player.PlayContext] to play when the user selects the track at the given index in the column.
      */
-    private val playContextFromIndex: (Int) -> Player.PlayContext?
+    private val playContextFromIndex: (index: Int) -> Player.PlayContext?
 ) : Column<Track>(name = "Currently playing", sortable = false) {
     override val width = ColumnWidth.Fill()
     override val cellAlignment = Alignment.Center
