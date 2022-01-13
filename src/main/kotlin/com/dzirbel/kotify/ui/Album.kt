@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -35,7 +36,7 @@ private class AlbumPresenter(
     private val page: AlbumPage,
     private val pageStack: MutableState<PageStack>,
     scope: CoroutineScope
-) : Presenter<AlbumPresenter.State?, AlbumPresenter.Event>(
+) : Presenter<AlbumPresenter.ViewModel?, AlbumPresenter.Event>(
     scope = scope,
     key = page.albumId,
     eventMergeStrategy = EventMergeStrategy.LATEST,
@@ -43,11 +44,11 @@ private class AlbumPresenter(
     initialState = null,
 ) {
 
-    data class State(
+    data class ViewModel(
         val refreshing: Boolean,
         val album: Album,
         val tracks: List<Track>,
-        val isSavedState: androidx.compose.runtime.State<Boolean?>, // TODO rename to avoid package?
+        val isSavedState: State<Boolean?>,
         val albumUpdated: Instant,
     )
 
@@ -81,7 +82,7 @@ private class AlbumPresenter(
                 }
 
                 mutateState {
-                    State(
+                    ViewModel(
                         refreshing = false,
                         album = album,
                         tracks = tracks,

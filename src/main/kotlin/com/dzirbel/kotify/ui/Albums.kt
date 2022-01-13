@@ -27,14 +27,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
 private class AlbumsPresenter(scope: CoroutineScope) :
-    Presenter<AlbumsPresenter.State?, AlbumsPresenter.Event>(
+    Presenter<AlbumsPresenter.ViewModel?, AlbumsPresenter.Event>(
         scope = scope,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load(invalidate = false)),
         initialState = null
     ) {
 
-    data class State(
+    data class ViewModel(
         val refreshing: Boolean,
         val albums: List<Album>,
         val savedAlbumIds: Set<String>,
@@ -68,7 +68,7 @@ private class AlbumsPresenter(scope: CoroutineScope) :
                 SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
 
                 mutateState {
-                    State(
+                    ViewModel(
                         refreshing = false,
                         albums = albums,
                         savedAlbumIds = savedAlbumIds,

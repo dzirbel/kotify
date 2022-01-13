@@ -33,13 +33,13 @@ import com.dzirbel.kotify.util.plusOrMinus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
-private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.State?, ArtistsPresenter.Event>(
+private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewModel?, ArtistsPresenter.Event>(
     scope = scope,
     eventMergeStrategy = EventMergeStrategy.LATEST,
     startingEvents = listOf(Event.Load(invalidate = false)),
     initialState = null
 ) {
-    data class State(
+    data class ViewModel(
         val refreshing: Boolean,
         val artists: List<Artist>,
         val savedArtistIds: Set<String>,
@@ -72,7 +72,7 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                 SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
 
                 mutateState {
-                    State(
+                    ViewModel(
                         refreshing = false,
                         artists = artists,
                         savedArtistIds = savedArtistIds,

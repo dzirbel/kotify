@@ -31,7 +31,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * The presenter continually listens for [events] and processes them via [reactTo], which calls [mutateState] to update
  * the view [state].
  */
-abstract class Presenter<State, Event : Any> constructor(
+abstract class Presenter<ViewModel, Event : Any> constructor(
     /**
      * The [CoroutineScope] under which this presenter operates, typically bound to the UI's point in the composition
      * (i.e. from [androidx.compose.runtime.rememberCoroutineScope]).
@@ -39,9 +39,9 @@ abstract class Presenter<State, Event : Any> constructor(
     protected val scope: CoroutineScope,
 
     /**
-     * The initial [State] of the content.
+     * The initial [ViewModel] of the content.
      */
-    initialState: State,
+    initialState: ViewModel,
 
     /**
      * An optional key by which the event flow collection is remembered; the same event flow will be used as long as
@@ -115,7 +115,7 @@ abstract class Presenter<State, Event : Any> constructor(
     /**
      * Exposes the current state for tests, where the composable [state] cannot be called.
      */
-    internal val testState: StateOrError<State>
+    internal val testState: StateOrError<ViewModel>
         get() = synchronized(this) { stateFlow.value }
 
     /**
@@ -125,7 +125,7 @@ abstract class Presenter<State, Event : Any> constructor(
      * Ideally we might use a simpler mechanism to represent the state, but e.g. [androidx.compose.runtime.MutableState]
      * does not allow writes during a snapshot and so cannot support arbitrary concurrency.
      */
-    private val stateFlow = MutableStateFlow<StateOrError<State>>(State(initialState))
+    private val stateFlow = MutableStateFlow<StateOrError<ViewModel>>(State(initialState))
 
     private val events = MutableSharedFlow<Event>()
 
@@ -142,9 +142,10 @@ abstract class Presenter<State, Event : Any> constructor(
      * The core event [Flow], which includes emitting [startingEvents], reacting to events according to the
      * [eventMergeStrategy] with [reactTo], and catching errors.
      *
-     * This must be its own function to allow restarting the event flow on error by making a recursive call to [flow].
+     * This must be its own function to allow restarting the event flow on error by making a recursive call to
+     * [eventFlow].
      */
-    private fun flow(startingEvents: List<Event>? = this.startingEvents): Flow<Event> {
+    private fun eventFlow(startingEvents: List<Event>? = this.startingEvents): Flow<Event> {
         return events
             .onStart { startingEvents?.forEach { emit(it) } }
             .onEach { Logger.UI.handleEvent(presenter = this, event = it) }
@@ -152,7 +153,7 @@ abstract class Presenter<State, Event : Any> constructor(
             .let { flow -> reactTo(flow) }
             .catch {
                 onError(it)
-                emitAll(flow(null))
+                emitAll(eventFlow(null))
             }
     }
 
@@ -165,7 +166,7 @@ abstract class Presenter<State, Event : Any> constructor(
      * its state as a composition-aware state.
      */
     internal suspend fun open() {
-        flow().collect()
+        eventFlow().collect()
     }
 
     /**
@@ -177,10 +178,10 @@ abstract class Presenter<State, Event : Any> constructor(
 
     /**
      * Listens and handles events for this presenter and returns its current state. This function is appropriate to be
-     * called in a composition and returns a composition-aware state.
+     * called in a [Composable] function and returns a composition-aware state.
      */
     @Composable
-    fun state(context: CoroutineContext = EmptyCoroutineContext): StateOrError<State> {
+    fun state(context: CoroutineContext = EmptyCoroutineContext): StateOrError<ViewModel> {
         remember(key) {
             scope.launch(context = context) {
                 open()
@@ -223,7 +224,7 @@ abstract class Presenter<State, Event : Any> constructor(
      * This method is thread-safe and may be called concurrently, but must block to allow only a single concurrent
      * writer of the state.
      */
-    protected fun mutateState(transform: (State) -> State?) {
+    protected fun mutateState(transform: (ViewModel) -> ViewModel?) {
         contract {
             callsInPlace(transform, InvocationKind.EXACTLY_ONCE)
         }
@@ -249,6 +250,10 @@ abstract class Presenter<State, Event : Any> constructor(
         }
     }
 
+    /**
+     * Handles the given flow of [events], by default according to the [eventMergeStrategy] and [reactTo] for each
+     * event in the flow.
+     */
     open fun reactTo(events: Flow<Event>): Flow<Event> {
         return when (eventMergeStrategy) {
             EventMergeStrategy.LATEST -> events.transformLatest { reactTo(it) }

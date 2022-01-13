@@ -35,7 +35,7 @@ private class ArtistPresenter(
     private val page: ArtistPage,
     private val pageStack: MutableState<PageStack>,
     scope: CoroutineScope
-) : Presenter<ArtistPresenter.State?, ArtistPresenter.Event>(
+) : Presenter<ArtistPresenter.ViewModel?, ArtistPresenter.Event>(
     scope = scope,
     key = page.artistId,
     eventMergeStrategy = EventMergeStrategy.LATEST,
@@ -50,7 +50,7 @@ private class ArtistPresenter(
     initialState = null
 ) {
 
-    data class State(
+    data class ViewModel(
         val artist: Artist,
         val refreshingArtist: Boolean,
         val artistAlbums: List<Album>,
@@ -133,7 +133,7 @@ private class ArtistPresenter(
                 val savedAlbums = SavedAlbumRepository.getLibraryCached()
 
                 mutateState {
-                    State(
+                    ViewModel(
                         artist = artist ?: it?.artist ?: error("no artist"),
                         refreshingArtist = false,
                         artistAlbums = checkNotNull(artistAlbums ?: it?.artistAlbums),

@@ -23,14 +23,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
 private class TracksPresenter(scope: CoroutineScope) :
-    Presenter<TracksPresenter.State?, TracksPresenter.Event>(
+    Presenter<TracksPresenter.ViewModel?, TracksPresenter.Event>(
         scope = scope,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load(invalidate = false)),
         initialState = null
     ) {
 
-    data class State(
+    data class ViewModel(
         val refreshing: Boolean,
         val tracks: List<Track>,
         val tracksUpdated: Long?
@@ -57,7 +57,7 @@ private class TracksPresenter(scope: CoroutineScope) :
                 val tracksUpdated = SavedTrackRepository.libraryUpdated()
 
                 mutateState {
-                    State(
+                    ViewModel(
                         refreshing = false,
                         tracks = tracks,
                         tracksUpdated = tracksUpdated?.toEpochMilli(),

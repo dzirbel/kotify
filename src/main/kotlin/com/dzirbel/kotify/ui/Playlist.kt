@@ -43,7 +43,7 @@ private class PlaylistPresenter(
     private val page: PlaylistPage,
     private val pageStack: MutableState<PageStack>,
     scope: CoroutineScope,
-) : Presenter<PlaylistPresenter.State?, PlaylistPresenter.Event>(
+) : Presenter<PlaylistPresenter.ViewModel?, PlaylistPresenter.Event>(
     scope = scope,
     key = page.playlistId,
     eventMergeStrategy = EventMergeStrategy.LATEST,
@@ -51,7 +51,7 @@ private class PlaylistPresenter(
     initialState = null
 ) {
 
-    data class State(
+    data class ViewModel(
         val refreshing: Boolean,
         val reordering: Boolean = false,
         val sorts: List<Sort<PlaylistTrack>> = emptyList(),
@@ -90,7 +90,7 @@ private class PlaylistPresenter(
                 val isSaved = SavedPlaylistRepository.isSaved(id = playlist.id.value)
 
                 mutateState {
-                    State(
+                    ViewModel(
                         refreshing = false,
                         playlist = playlist,
                         playlistUpdated = playlistUpdated,

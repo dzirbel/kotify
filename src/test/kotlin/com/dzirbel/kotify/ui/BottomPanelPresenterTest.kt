@@ -205,8 +205,8 @@ internal class BottomPanelPresenterTest {
     }
 
     companion object {
-        private val loadingState = BottomPanelPresenter.State()
-        private val loadedState = BottomPanelPresenter.State(
+        private val loadingState = BottomPanelPresenter.ViewModel()
+        private val loadedState = BottomPanelPresenter.ViewModel(
             loadingPlayback = false,
             loadingTrackPlayback = false,
             loadingDevices = false,

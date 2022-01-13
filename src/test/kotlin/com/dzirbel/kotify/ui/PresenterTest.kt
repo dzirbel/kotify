@@ -39,7 +39,7 @@ fun <S, E, P : Presenter<S, E>> testPresenter(
 }
 
 internal class PresenterTest {
-    private data class State(val field: String)
+    private data class ViewModel(val field: String)
     private data class Event(
         val param: String,
         val delay: Long? = null,
@@ -51,11 +51,11 @@ internal class PresenterTest {
         scope: CoroutineScope,
         eventMergeStrategy: EventMergeStrategy = EventMergeStrategy.MERGE,
         startingEvents: List<Event>? = null
-    ) : Presenter<State, Event>(
+    ) : Presenter<ViewModel, Event>(
         eventMergeStrategy = eventMergeStrategy,
         startingEvents = startingEvents,
         scope = scope,
-        initialState = State("initial")
+        initialState = ViewModel("initial")
     ) {
 
         override suspend fun reactTo(event: Event) {
@@ -79,14 +79,14 @@ internal class PresenterTest {
                 presenter.emit(Event("e1"))
             }
         ) { presenter ->
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial"))
         }
     }
 
     @Test
     fun testStartingEvents() {
         testPresenter({ TestPresenter(scope = this, startingEvents = listOf(Event("e1"), Event("e2"))) }) { presenter ->
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1 | e2"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1 | e2"))
         }
     }
 
@@ -101,26 +101,26 @@ internal class PresenterTest {
             advanceUntilIdle()
 
             assertThrows<Throwable> { presenter.testState.stateOrThrow }
-            assertThat(presenter.testState.safeState).isEqualTo(State("initial"))
+            assertThat(presenter.testState.safeState).isEqualTo(ViewModel("initial"))
             assertThat(presenter.errors).hasSize(1)
 
             presenter.emit(Event(param = "2"))
             advanceUntilIdle()
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 2"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | 2"))
             assertThat(presenter.errors).hasSize(1)
 
             presenter.emit(Event(param = "3", throwable = throwable))
             advanceUntilIdle()
 
             assertThrows<Throwable> { presenter.testState.stateOrThrow }
-            assertThat(presenter.testState.safeState).isEqualTo(State("initial | 2"))
+            assertThat(presenter.testState.safeState).isEqualTo(ViewModel("initial | 2"))
             assertThat(presenter.errors).hasSize(2)
 
             presenter.emit(Event(param = "4"))
             advanceUntilIdle()
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 2 | 4"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | 2 | 4"))
             assertThat(presenter.errors).hasSize(2)
         }
     }
@@ -141,7 +141,7 @@ internal class PresenterTest {
 
             presenter.emit(Event(param = "1"))
             advanceUntilIdle()
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | 1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | 1"))
 
             presenter.emit(
                 Event(
@@ -163,28 +163,28 @@ internal class PresenterTest {
         testPresenter(
             { TestPresenter(scope = this, eventMergeStrategy = Presenter.EventMergeStrategy.MERGE) }
         ) { presenter ->
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial"))
 
             presenter.emit(Event("e1", delay = 10))
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial"))
             delay(5)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial"))
             delay(10)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1"))
 
             presenter.emit(Event("e2", delay = 10))
             presenter.emit(Event("e3", delay = 50))
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1"))
             delay(5)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1"))
             delay(10)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1 | e2"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1 | e2"))
             delay(20)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1 | e2"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1 | e2"))
             delay(20)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1 | e2 | e3"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1 | e2 | e3"))
         }
     }
 
@@ -193,28 +193,28 @@ internal class PresenterTest {
         testPresenter(
             { TestPresenter(scope = this, eventMergeStrategy = Presenter.EventMergeStrategy.LATEST) }
         ) { presenter ->
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial"))
 
             presenter.emit(Event("e1", delay = 10))
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial"))
             delay(5)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial"))
             delay(10)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1"))
 
             presenter.emit(Event("e2", delay = 10))
             presenter.emit(Event("e3", delay = 50))
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1"))
             delay(5)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1"))
             delay(10)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1"))
             delay(20)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1"))
             delay(20)
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(State("initial | e1 | e3"))
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1 | e3"))
         }
     }
 }

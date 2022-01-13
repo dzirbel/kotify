@@ -64,14 +64,14 @@ import org.jetbrains.exposed.sql.update
 private val RATINGS_TABLE_WIDTH = 750.dp
 
 private class LibraryStatePresenter(scope: CoroutineScope) :
-    Presenter<LibraryStatePresenter.State?, LibraryStatePresenter.Event>(
+    Presenter<LibraryStatePresenter.ViewModel?, LibraryStatePresenter.Event>(
         scope = scope,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load),
         initialState = null
     ) {
 
-    data class State(
+    data class ViewModel(
         // pair artistId, artist? in case we have the ID cached but not artist
         val artists: List<Pair<String, Artist?>>?,
         val artistsUpdated: Long?,
@@ -146,7 +146,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                 val ratedTrackIds = SpotifyCache.Ratings.ratedTracks().orEmpty().toList()
                 val ratedTracks = TrackRepository.get(ids = ratedTrackIds)
 
-                val state = State(
+                val state = ViewModel(
                     artists = savedArtistIds?.zip(savedArtists!!),
                     artistsUpdated = SavedArtistRepository.libraryUpdated()?.toEpochMilli(),
                     albums = savedAlbumIds?.zip(savedAlbums!!),
@@ -486,7 +486,7 @@ fun BoxScope.LibraryState(pageStack: MutableState<PageStack>) {
 }
 
 @Composable
-private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStatePresenter) {
+private fun Artists(state: LibraryStatePresenter.ViewModel, presenter: LibraryStatePresenter) {
     val artists = state.artists
 
     if (artists == null) {
@@ -612,7 +612,7 @@ private fun Artists(state: LibraryStatePresenter.State, presenter: LibraryStateP
 }
 
 @Composable
-private fun Albums(state: LibraryStatePresenter.State, presenter: LibraryStatePresenter) {
+private fun Albums(state: LibraryStatePresenter.ViewModel, presenter: LibraryStatePresenter) {
     val albums = state.albums
 
     if (albums == null) {
@@ -700,7 +700,7 @@ private fun Albums(state: LibraryStatePresenter.State, presenter: LibraryStatePr
 }
 
 @Composable
-private fun Tracks(state: LibraryStatePresenter.State, presenter: LibraryStatePresenter) {
+private fun Tracks(state: LibraryStatePresenter.ViewModel, presenter: LibraryStatePresenter) {
     val tracks = state.tracks
 
     if (tracks == null) {
@@ -778,7 +778,7 @@ private fun Tracks(state: LibraryStatePresenter.State, presenter: LibraryStatePr
 }
 
 @Composable
-private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStatePresenter) {
+private fun Playlists(state: LibraryStatePresenter.ViewModel, presenter: LibraryStatePresenter) {
     val playlists = state.playlists
 
     if (playlists == null) {
@@ -904,7 +904,7 @@ private fun Playlists(state: LibraryStatePresenter.State, presenter: LibraryStat
 }
 
 @Composable
-private fun Ratings(state: LibraryStatePresenter.State, presenter: LibraryStatePresenter) {
+private fun Ratings(state: LibraryStatePresenter.ViewModel, presenter: LibraryStatePresenter) {
     val ratedTracks = state.ratedTracks
 
     val ratingsExpanded = remember { mutableStateOf(false) }

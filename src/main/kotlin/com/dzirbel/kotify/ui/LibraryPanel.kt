@@ -41,14 +41,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
 private class LibraryPresenter(scope: CoroutineScope) :
-    Presenter<LibraryPresenter.State?, LibraryPresenter.Event>(
+    Presenter<LibraryPresenter.ViewModel?, LibraryPresenter.Event>(
         scope = scope,
         eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.LoadPlaylists()),
         initialState = null
     ) {
 
-    data class State(val refreshing: Boolean, val playlists: List<Playlist>, val playlistsUpdated: Long?)
+    data class ViewModel(val refreshing: Boolean, val playlists: List<Playlist>, val playlistsUpdated: Long?)
 
     sealed class Event {
         class LoadPlaylists(val invalidate: Boolean = false) : Event()
@@ -71,7 +71,7 @@ private class LibraryPresenter(scope: CoroutineScope) :
                 val playlistsUpdated = SavedPlaylistRepository.libraryUpdated()?.toEpochMilli()
 
                 mutateState {
-                    State(
+                    ViewModel(
                         refreshing = false,
                         playlists = playlists,
                         playlistsUpdated = playlistsUpdated

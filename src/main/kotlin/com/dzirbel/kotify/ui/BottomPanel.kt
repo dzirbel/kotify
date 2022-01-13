@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -82,11 +83,11 @@ private const val CENTER_CONTROLS_WEIGHT = 0.5f
 private const val PROGRESS_SLIDER_UPDATE_DELAY_MS = 50L
 
 internal class BottomPanelPresenter(scope: CoroutineScope) :
-    Presenter<BottomPanelPresenter.State, BottomPanelPresenter.Event>(
+    Presenter<BottomPanelPresenter.ViewModel, BottomPanelPresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.LoadDevices(), Event.LoadPlayback(), Event.LoadTrackPlayback()),
         eventMergeStrategy = EventMergeStrategy.LATEST,
-        initialState = State()
+        initialState = ViewModel()
     ) {
 
     private val job: Job
@@ -106,7 +107,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         job.cancel()
     }
 
-    data class State(
+    data class ViewModel(
         val playbackTrack: SpotifyTrack? = null,
         val playbackProgressMs: Long? = null,
         val playbackIsPlaying: Boolean? = null,
@@ -122,7 +123,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
 
         val trackIsSaved: Boolean? = null,
         val artistsAreSaved: Map<String, Boolean?>? = null,
-        val albumSavedState: androidx.compose.runtime.State<Boolean?>? = null, // TODO rename to avoid package?
+        val albumSavedState: State<Boolean?>? = null,
 
         val loadingPlayback: Boolean = true,
         val loadingTrackPlayback: Boolean = true,
@@ -137,7 +138,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         val currentDevice: SpotifyPlaybackDevice?
             get() = selectedDevice ?: playbackCurrentDevice ?: devices?.firstOrNull()
 
-        fun withTrack(track: SpotifyTrack?): State {
+        fun withTrack(track: SpotifyTrack?): ViewModel {
             if (track == null) {
                 return copy(
                     playbackTrack = null,
@@ -809,7 +810,7 @@ private fun CurrentTrack(
 }
 
 @Composable
-private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
+private fun PlayerControls(state: BottomPanelPresenter.ViewModel, presenter: BottomPanelPresenter) {
     val controlsEnabled = !state.loadingPlayback
 
     val playing = state.playbackIsPlaying == true
@@ -890,7 +891,7 @@ private fun PlayerControls(state: BottomPanelPresenter.State, presenter: BottomP
 }
 
 @Composable
-private fun TrackProgress(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
+private fun TrackProgress(state: BottomPanelPresenter.ViewModel, presenter: BottomPanelPresenter) {
     if (state.playbackIsPlaying == null || state.playbackProgressMs == null || state.playbackTrack == null) {
         SeekableSlider(progress = null)
     } else {
@@ -944,7 +945,7 @@ private fun TrackProgress(state: BottomPanelPresenter.State, presenter: BottomPa
 }
 
 @Composable
-private fun VolumeControls(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
+private fun VolumeControls(state: BottomPanelPresenter.ViewModel, presenter: BottomPanelPresenter) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         val devices = state.devices
         val currentDevice = devices?.firstOrNull()
@@ -1047,7 +1048,7 @@ private fun VolumeControls(state: BottomPanelPresenter.State, presenter: BottomP
 }
 
 @Composable
-private fun DeviceControls(state: BottomPanelPresenter.State, presenter: BottomPanelPresenter) {
+private fun DeviceControls(state: BottomPanelPresenter.ViewModel, presenter: BottomPanelPresenter) {
     val devices = state.devices
     val currentDevice = state.currentDevice
     val dropdownEnabled = devices != null && devices.size > 1
