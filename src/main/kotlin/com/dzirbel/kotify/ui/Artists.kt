@@ -17,6 +17,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import com.dzirbel.kotify.cache.SavedRepository
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Artist
@@ -29,9 +30,11 @@ import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.plusOrMinus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 
 private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewModel?, ArtistsPresenter.Event>(
     scope = scope,
@@ -48,7 +51,20 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
+        data class ReactToArtistsSaved(val artistIds: List<String>, val saved: Boolean) : Event()
         data class ToggleSave(val artistId: String, val save: Boolean) : Event()
+    }
+
+    override fun eventFlows(): Iterable<Flow<Event>> {
+        return listOf(
+            SavedArtistRepository.eventsFlow()
+                .filterIsInstance<SavedRepository.Event.SetSaved>()
+                .map { Event.ReactToArtistsSaved(artistIds = it.ids, saved = it.saved) },
+
+            SavedArtistRepository.eventsFlow()
+                .filterIsInstance<SavedRepository.Event.QueryLibraryRemote>()
+                .map { Event.Load(invalidate = false) },
+        )
     }
 
     override suspend fun reactTo(event: Event) {
@@ -61,15 +77,9 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                 }
 
                 val savedArtistIds = SavedArtistRepository.getLibrary()
-                val artists = ArtistRepository.getFull(ids = savedArtistIds.toList())
-                    .filterNotNull()
+                val artists = fetchArtists(artistIds = savedArtistIds.toList())
                     .sortedBy { it.name }
                 val artistsUpdated = SavedArtistRepository.libraryUpdated()
-
-                val imageUrls = KotifyDatabase.transaction {
-                    artists.mapNotNull { it.images.live.firstOrNull()?.url }
-                }
-                SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
 
                 mutateState {
                     ViewModel(
@@ -81,13 +91,55 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                 }
             }
 
-            is Event.ToggleSave -> {
-                SavedArtistRepository.setSaved(id = event.artistId, saved = event.save)
-                mutateState {
-                    it?.copy(savedArtistIds = it.savedArtistIds.plusOrMinus(event.artistId, event.save))
+            is Event.ReactToArtistsSaved -> {
+                if (event.saved) {
+                    // if an artist has been saved but is now missing from the grid of artists, load and add it
+                    val stateArtists = queryState { it?.artists }.orEmpty()
+
+                    val missingArtistIds: List<String> = event.artistIds
+                        .minus(stateArtists.mapTo(mutableSetOf()) { it.id.value })
+
+                    if (missingArtistIds.isNotEmpty()) {
+                        val missingArtists = fetchArtists(artistIds = missingArtistIds)
+
+                        // TODO insert at sorted indexes rather than sorting the whole list?
+                        val allArtists = stateArtists
+                            .plus(missingArtists)
+                            .sortedBy { it.name }
+
+                        mutateState {
+                            it?.copy(artists = allArtists, savedArtistIds = it.savedArtistIds.plus(event.artistIds))
+                        }
+                    } else {
+                        mutateState {
+                            it?.copy(savedArtistIds = it.savedArtistIds.plus(event.artistIds))
+                        }
+                    }
+                } else {
+                    // if an artist has been unsaved, retain the grid of artists but toggle its save state
+                    mutateState {
+                        it?.copy(savedArtistIds = it.savedArtistIds.minus(event.artistIds.toSet()))
+                    }
                 }
             }
+
+            is Event.ToggleSave -> SavedArtistRepository.setSaved(id = event.artistId, saved = event.save)
         }
+    }
+
+    /**
+     * Loads the full [Artist] objects from the [ArtistRepository] and does common initialization - caching their images
+     * from the database and warming the image cache.
+     */
+    private suspend fun fetchArtists(artistIds: List<String>): List<Artist> {
+        val artists = ArtistRepository.getFull(ids = artistIds).filterNotNull()
+
+        val imageUrls = KotifyDatabase.transaction {
+            artists.mapNotNull { it.images.live.firstOrNull()?.url }
+        }
+        SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
+
+        return artists
     }
 }
 

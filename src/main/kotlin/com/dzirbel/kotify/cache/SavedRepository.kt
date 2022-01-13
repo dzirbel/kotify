@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.cache
 
 import androidx.compose.runtime.State
+import kotlinx.coroutines.flow.SharedFlow
 import java.time.Instant
 
 /**
@@ -10,41 +11,47 @@ import java.time.Instant
  * itself implementation agnostic.
  */
 interface SavedRepository {
-    interface Listener {
-        data class QueryEvent(val id: String, val result: Boolean?)
+    /**
+     * Wraps the [result] of querying the saved state of [id].
+     */
+    data class QueryEvent(val id: String, val result: Boolean?)
+
+    sealed class Event {
+        /**
+         * Emitted when cached saved states are queried, with [events] as the result.
+         */
+        data class QueryCached(val events: List<QueryEvent>) : Event()
 
         /**
-         * Invoked when cached saved states are queried, with [events] as the result.
+         * Emitted when remote saved states are queried, with [events] as the result.
          */
-        fun onQueryCached(events: List<QueryEvent>) {}
+        data class QueryRemote(val events: List<QueryEvent>) : Event()
 
         /**
-         * Invoked when remote saved states are queried, with [events] as the result.
+         * Emitted when the saved state of [ids] is set to [saved].
          */
-        fun onQueryRemote(events: List<QueryEvent>) {}
+        data class SetSaved(val ids: List<String>, val saved: Boolean) : Event()
 
         /**
-         * Invoked when the saved state of [ids] is set to [saved].
+         * Emitted when the cached saved library is invalidated.
          */
-        fun onSetSaved(ids: List<String>, saved: Boolean) {}
+        object InvalidateLibrary : Event()
 
         /**
-         * Invoked when the cached saved library is invalidated.
+         * Emitted when the cached saved library is queried, with [library] as the result.
          */
-        fun onInvalidateLibrary() {}
+        data class QueryLibraryCached(val library: Set<String>?) : Event()
 
         /**
-         * Invoked when the cached saved library is queried, with [library] as the result.
+         * Emitted when the remote saved library is queried, with [library] as the result.
          */
-        fun onQueryLibraryCached(library: Set<String>?) {}
-
-        /**
-         * Invoked when the remote saved library is queried, with [library] as the result.
-         */
-        fun onQueryLibraryRemote(library: Set<String>) {}
+        data class QueryLibraryRemote(val library: Set<String>) : Event()
     }
 
-    fun addListener(listener: Listener)
+    /**
+     * A [SharedFlow] of [Event]s which can be used to react to updates to the [SavedRepository].
+     */
+    fun eventsFlow(): SharedFlow<Event>
 
     /**
      * Determines whether [id] has been saved to the user's library, from the local cache. Returns null if its status is

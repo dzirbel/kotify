@@ -5,6 +5,9 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.cache.SavedRepository
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import java.lang.ref.WeakReference
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -17,35 +20,9 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     private val savedEntityTable: SavedEntityTable,
     private val libraryUpdateKey: String = savedEntityTable.tableName,
 ) : SavedRepository {
-    private val listeners = mutableListOf<SavedRepository.Listener>()
-
     private val states = ConcurrentHashMap<String, WeakReference<MutableState<Boolean?>>>()
 
-    init {
-        // Use a Listener to keep states up-to-date with data from the remote. Is optimistic that cached values in the
-        // database never change (i.e. onQueryCached is not used to update states).
-        addListener(
-            object : SavedRepository.Listener {
-                override fun onQueryRemote(events: List<SavedRepository.Listener.QueryEvent>) {
-                    events.forEach { event ->
-                        states[event.id]?.get()?.value = event.result
-                    }
-                }
-
-                override fun onSetSaved(ids: List<String>, saved: Boolean) {
-                    ids.forEach { id ->
-                        states[id]?.get()?.value = saved
-                    }
-                }
-
-                override fun onQueryLibraryRemote(library: Set<String>) {
-                    for ((id, reference) in states.entries) {
-                        reference.get()?.value = library.contains(id)
-                    }
-                }
-            }
-        )
-    }
+    private val events = MutableSharedFlow<SavedRepository.Event>()
 
     /**
      * Fetches the saved state of each of the given [ids] via a remote call to the network.
@@ -75,9 +52,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
      */
     protected abstract fun from(savedNetworkType: SavedNetworkType): String?
 
-    final override fun addListener(listener: SavedRepository.Listener) {
-        listeners.add(listener)
-    }
+    override fun eventsFlow(): SharedFlow<SavedRepository.Event> = events.asSharedFlow()
 
     final override suspend fun isSavedCached(ids: List<String>): List<Boolean?> {
         return KotifyDatabase.transaction {
@@ -88,14 +63,10 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             ids.map { id -> savedEntityTable.isSaved(entityId = id) ?: default }
         }
             .also { results ->
-                if (listeners.isNotEmpty()) {
-                    val events = ids.zip(results) { id, result ->
-                        SavedRepository.Listener.QueryEvent(id = id, result = result)
-                    }
-                    listeners.forEach {
-                        it.onQueryCached(events)
-                    }
+                val queryEvents = ids.zip(results) { id, result ->
+                    SavedRepository.QueryEvent(id = id, result = result)
                 }
+                events.emit(SavedRepository.Event.QueryCached(queryEvents))
             }
     }
 
@@ -106,12 +77,9 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = null)
         }
 
-        if (listeners.isNotEmpty()) {
-            val events = listOf(SavedRepository.Listener.QueryEvent(id = id, result = saved))
-            listeners.forEach {
-                it.onQueryRemote(events)
-            }
-        }
+        states[id]?.get()?.value = saved
+        val queryEvents = listOf(SavedRepository.QueryEvent(id = id, result = saved))
+        events.emit(SavedRepository.Event.QueryRemote(queryEvents))
 
         return saved
     }
@@ -147,9 +115,10 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             ids.forEach { id -> savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = Instant.now()) }
         }
 
-        listeners.forEach {
-            it.onSetSaved(ids = ids, saved = saved)
+        ids.forEach { id ->
+            states[id]?.get()?.value = saved
         }
+        events.emit(SavedRepository.Event.SetSaved(ids = ids, saved = saved))
     }
 
     final override suspend fun libraryUpdated(): Instant? {
@@ -159,9 +128,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     final override suspend fun invalidateLibrary() {
         KotifyDatabase.transaction { GlobalUpdateTimesRepository.invalidate(libraryUpdateKey) }
 
-        listeners.forEach {
-            it.onInvalidateLibrary()
-        }
+        events.emit(SavedRepository.Event.InvalidateLibrary)
     }
 
     final override suspend fun getLibraryCached(): Set<String>? {
@@ -173,9 +140,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             }
         }
             .also { library ->
-                listeners.forEach {
-                    it.onQueryLibraryCached(library = library)
-                }
+                events.emit(SavedRepository.Event.QueryLibraryCached(library = library))
             }
     }
 
@@ -189,9 +154,10 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
                 }
         }
             .also { library ->
-                listeners.forEach {
-                    it.onQueryLibraryRemote(library = library)
+                for ((id, reference) in states.entries) {
+                    reference.get()?.value = library.contains(id)
                 }
+                events.emit(SavedRepository.Event.QueryLibraryRemote(library = library))
             }
     }
 }

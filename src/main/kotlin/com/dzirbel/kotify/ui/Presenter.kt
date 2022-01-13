@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.transformLatest
@@ -146,7 +147,7 @@ abstract class Presenter<ViewModel, Event : Any> constructor(
      * [eventFlow].
      */
     private fun eventFlow(startingEvents: List<Event>? = this.startingEvents): Flow<Event> {
-        return events
+        return (eventFlows()?.plus(events)?.merge() ?: events)
             .onStart { startingEvents?.forEach { emit(it) } }
             .onEach { Logger.UI.handleEvent(presenter = this, event = it) }
             .onEach { assertNotOnUIThread() }
@@ -175,6 +176,12 @@ abstract class Presenter<ViewModel, Event : Any> constructor(
      * Typically only used to cleanup from tests.
      */
     override fun close() {}
+
+    /**
+     * Optionally returns a set of [Flow]s of [Event]s which are incorporated into the event stream. This allows the
+     * presenter to react to streams of external data in the same way as events from [emit].
+     */
+    open fun eventFlows(): Iterable<Flow<Event>>? = null
 
     /**
      * Listens and handles events for this presenter and returns its current state. This function is appropriate to be
@@ -237,6 +244,22 @@ abstract class Presenter<ViewModel, Event : Any> constructor(
                     Logger.UI.handleState(presenter = this, state = transformed)
                     stateFlow.value = State(transformed)
                 }
+        }
+    }
+
+    /**
+     * Fetches the current [state] in order use some of its values for processing without immediately mutating it.
+     *
+     * The last non-error state will be passed as the parameter of [transform].
+     *
+     * This method is thread-safe and may be called concurrently, but must block to avoid concurrent writes with
+     * [mutateState].
+     *
+     * TODO can this be un-synchronized?
+     */
+    protected fun <T> queryState(transform: (ViewModel) -> T): T {
+        return synchronized(this) {
+            transform(stateFlow.value.safeState)
         }
     }
 
