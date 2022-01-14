@@ -5,8 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Theme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.swing.Swing
 import java.io.File
 
 private val resourcesDir = File("src/test/resources")
@@ -35,16 +39,21 @@ fun Any.screenshotTest(
     val multipleColorSets = colorsSet.size > 1
     var recordedScreenshots = false
     for (colors in colorsSet) {
-        val window = ImageComposeScene(width = windowWidth, height = windowHeight)
-        window.setContent {
-            Theme.apply(colors = colors) {
-                Box(Modifier.background(colors.surface3)) {
-                    content()
+        Settings.current // trigger a settings load outside of UI thread
+        // run in AWT thread as a workaround to https://github.com/JetBrains/compose-jb/issues/1691
+        val screenshotData = runBlocking(Dispatchers.Swing) {
+            val window = ImageComposeScene(width = windowWidth, height = windowHeight)
+            window.setContent {
+                Theme.apply(colors = colors) {
+                    Box(Modifier.background(colors.surface3)) {
+                        content()
+                    }
                 }
             }
+
+            window.render().encodeToData()
         }
 
-        val screenshotData = window.render().encodeToData()
         requireNotNull(screenshotData) { "failed to encode screenshot to data" }
         val screenshotBytes = screenshotData.bytes
 
