@@ -30,6 +30,7 @@ import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.plusSorted
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -101,11 +102,7 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
 
                     if (missingArtistIds.isNotEmpty()) {
                         val missingArtists = fetchArtists(artistIds = missingArtistIds)
-
-                        // TODO insert at sorted indexes rather than sorting the whole list?
-                        val allArtists = stateArtists
-                            .plus(missingArtists)
-                            .sortedBy { it.name }
+                        val allArtists = stateArtists.plusSorted(missingArtists) { it.name }
 
                         mutateState {
                             it?.copy(artists = allArtists, savedArtistIds = it.savedArtistIds.plus(event.artistIds))

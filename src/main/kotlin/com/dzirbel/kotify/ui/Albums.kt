@@ -23,6 +23,7 @@ import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.util.plusSorted
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -96,11 +97,7 @@ private class AlbumsPresenter(scope: CoroutineScope) :
 
                     if (missingAlbumIds.isNotEmpty()) {
                         val missingAlbums = fetchAlbums(albumIds = missingAlbumIds)
-
-                        // TODO insert at sorted indexes rather than sorting the whole list?
-                        val allAlbums = stateAlbums
-                            .plus(missingAlbums)
-                            .sortedBy { it.name }
+                        val allAlbums = stateAlbums.plusSorted(missingAlbums) { it.name }
 
                         mutateState {
                             it?.copy(albums = allAlbums, savedAlbumIds = it.savedAlbumIds.plus(event.albumIds))
