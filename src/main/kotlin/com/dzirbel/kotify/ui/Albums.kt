@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.cache.SavedRepository
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
@@ -22,9 +23,11 @@ import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.util.plusOrMinus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
 
 private class AlbumsPresenter(scope: CoroutineScope) :
     Presenter<AlbumsPresenter.ViewModel?, AlbumsPresenter.Event>(
@@ -43,7 +46,20 @@ private class AlbumsPresenter(scope: CoroutineScope) :
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
+        data class ReactToAlbumsSaved(val albumIds: List<String>, val saved: Boolean) : Event()
         data class ToggleSave(val albumId: String, val save: Boolean) : Event()
+    }
+
+    override fun eventFlows(): Iterable<Flow<Event>> {
+        return listOf(
+            SavedAlbumRepository.eventsFlow()
+                .filterIsInstance<SavedRepository.Event.SetSaved>()
+                .map { Event.ReactToAlbumsSaved(albumIds = it.ids, saved = it.saved) },
+
+            SavedAlbumRepository.eventsFlow()
+                .filterIsInstance<SavedRepository.Event.QueryLibraryRemote>()
+                .map { Event.Load(invalidate = false) },
+        )
     }
 
     override suspend fun reactTo(event: Event) {
@@ -55,35 +71,70 @@ private class AlbumsPresenter(scope: CoroutineScope) :
                     SavedAlbumRepository.invalidateLibrary()
                 }
 
-                // TODO state provided by SavedAlbumRepository to auto-refresh on save/unsave of an album?
                 val savedAlbumIds = SavedAlbumRepository.getLibrary()
-                val albums = AlbumRepository.get(ids = savedAlbumIds.toList())
-                    .filterNotNull()
+                val albums = fetchAlbums(albumIds = savedAlbumIds.toList())
                     .sortedBy { it.name }
                 val albumsUpdated = SavedAlbumRepository.libraryUpdated()
-
-                val imageUrls = KotifyDatabase.transaction {
-                    albums.mapNotNull { it.images.live.firstOrNull()?.url }
-                }
-                SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
 
                 mutateState {
                     ViewModel(
                         refreshing = false,
                         albums = albums,
                         savedAlbumIds = savedAlbumIds,
-                        albumsUpdated = albumsUpdated?.toEpochMilli()
+                        albumsUpdated = albumsUpdated?.toEpochMilli(),
                     )
                 }
             }
 
-            is Event.ToggleSave -> {
-                SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
-                mutateState {
-                    it?.copy(savedAlbumIds = it.savedAlbumIds.plusOrMinus(event.albumId, event.save))
+            is Event.ReactToAlbumsSaved -> {
+                if (event.saved) {
+                    // if an album has been saved but is now missing from the grid of albums, load and add it
+                    val stateAlbums = queryState { it?.albums }.orEmpty()
+
+                    val missingAlbumIds: List<String> = event.albumIds
+                        .minus(stateAlbums.mapTo(mutableSetOf()) { it.id.value })
+
+                    if (missingAlbumIds.isNotEmpty()) {
+                        val missingAlbums = fetchAlbums(albumIds = missingAlbumIds)
+
+                        // TODO insert at sorted indexes rather than sorting the whole list?
+                        val allAlbums = stateAlbums
+                            .plus(missingAlbums)
+                            .sortedBy { it.name }
+
+                        mutateState {
+                            it?.copy(albums = allAlbums, savedAlbumIds = it.savedAlbumIds.plus(event.albumIds))
+                        }
+                    } else {
+                        mutateState {
+                            it?.copy(savedAlbumIds = it.savedAlbumIds.plus(event.albumIds))
+                        }
+                    }
+                } else {
+                    // if an album has been unsaved, retain the grid of albums but toggle its save state
+                    mutateState {
+                        it?.copy(savedAlbumIds = it.savedAlbumIds.minus(event.albumIds.toSet()))
+                    }
                 }
             }
+
+            is Event.ToggleSave -> SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
         }
+    }
+
+    /**
+     * Loads the full [Album] objects from the [AlbumRepository] and does common initialization - caching their images
+     * from the database and warming the image cache.
+     */
+    private suspend fun fetchAlbums(albumIds: List<String>): List<Album> {
+        val albums = AlbumRepository.getFull(ids = albumIds).filterNotNull()
+
+        val imageUrls = KotifyDatabase.transaction {
+            albums.mapNotNull { it.images.live.firstOrNull()?.url }
+        }
+        SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
+
+        return albums
     }
 }
 
