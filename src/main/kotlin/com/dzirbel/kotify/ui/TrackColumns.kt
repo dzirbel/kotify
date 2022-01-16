@@ -14,11 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyCache
-import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.ui.components.LinkedText
@@ -34,22 +32,19 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.compareToNullable
 import com.dzirbel.kotify.util.formatDuration
-import com.dzirbel.kotify.util.plusOrMinus
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 fun trackColumns(
     pageStack: MutableState<PageStack>,
-    savedTracks: Set<String>? = runBlocking { SavedTrackRepository.getLibraryCached() }, // TODO optimize
+    savedTracks: Set<String>?,
+    onSetTrackSaved: (trackId: String, saved: Boolean) -> Unit,
     includeTrackNumber: Boolean = true,
     includeAlbum: Boolean = true,
-    playContextFromIndex: ((Int) -> Player.PlayContext?)?
+    playContextFromIndex: ((Int) -> Player.PlayContext?)?,
 ): List<Column<Track>> {
     return listOfNotNull(
         playContextFromIndex?.let { PlayingColumn(playContextFromIndex = it) },
         TrackNumberColumn.takeIf { includeTrackNumber },
-        SavedColumn(savedTracks = savedTracks),
+        SavedColumn(savedTracks = savedTracks, onSetTrackSaved = onSetTrackSaved),
         NameColumn,
         ArtistColumn(pageStack),
         AlbumColumn(pageStack).takeIf { includeAlbum },
@@ -108,9 +103,10 @@ class PlayingColumn(
     }
 }
 
-class SavedColumn(savedTracks: Set<String>?) : Column<Track>(name = "Saved", sortable = false) {
-    private val savedTracks = mutableStateOf(savedTracks)
-
+class SavedColumn(
+    private val savedTracks: Set<String>?,
+    private val onSetTrackSaved: (trackId: String, saved: Boolean) -> Unit,
+) : Column<Track>(name = "Saved", sortable = false) {
     override val width = ColumnWidth.Fill()
 
     @Composable
@@ -122,15 +118,11 @@ class SavedColumn(savedTracks: Set<String>?) : Column<Track>(name = "Saved", sor
     override fun item(item: Track, index: Int) {
         val trackId = item.id.value
 
-        val scope = rememberCoroutineScope { Dispatchers.IO }
         ToggleSaveButton(
             modifier = Modifier.padding(Dimens.space2),
-            isSaved = savedTracks.value?.contains(trackId)
+            isSaved = savedTracks?.contains(trackId),
         ) { save ->
-            scope.launch {
-                SavedTrackRepository.setSaved(id = trackId, saved = save)
-                savedTracks.mutate { this?.plusOrMinus(trackId, save) }
-            }
+            onSetTrackSaved(trackId, save)
         }
     }
 }

@@ -84,9 +84,21 @@ interface SavedRepository {
      * garbage-collected).
      *
      * If [fetchIfUnknown] is true, the saved state will be fetched from the remote state if it is not cached (i.e.
-     * null). Otherwise, the returned state may be null.
+     * null). Otherwise, the returned state may have a null value.
      */
     suspend fun savedStateOf(id: String, fetchIfUnknown: Boolean = false): State<Boolean?>
+
+    /**
+     * Returns a [State] reflecting the live state of the user's library as entity IDs.
+     *
+     * The returned [State] must be the same object between calls.
+     *
+     * If [fetchIfUnknown] is true, the library state will be fetched from the remote data source if it is not cached
+     * (i.e. null). Otherwise, the returned state may have a null value.
+     *
+     * TODO unit test
+     */
+    suspend fun libraryState(fetchIfUnknown: Boolean = false): State<Set<String>?>
 
     /**
      * Saves the entity with the given [id] to the user's library, both via a remote call and in the local cache.

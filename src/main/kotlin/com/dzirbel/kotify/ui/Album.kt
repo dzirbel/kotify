@@ -17,6 +17,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
+import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.ui.components.InvalidateButton
@@ -48,6 +49,7 @@ private class AlbumPresenter(
         val refreshing: Boolean,
         val album: Album,
         val tracks: List<Track>,
+        val savedTracksState: State<Set<String>?>,
         val isSavedState: State<Boolean?>,
         val albumUpdated: Instant,
     )
@@ -55,6 +57,7 @@ private class AlbumPresenter(
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
         data class ToggleSave(val save: Boolean) : Event()
+        data class ToggleTrackSaved(val trackId: String, val saved: Boolean) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -74,18 +77,20 @@ private class AlbumPresenter(
 
                 pageStack.mutate { withPageTitle(title = page.titleFor(album)) }
 
-                val isSavedState = SavedAlbumRepository.savedStateOf(id = page.albumId, fetchIfUnknown = true)
-
                 val tracks = album.getAllTracks().sortedBy { it.trackNumber }
                 KotifyDatabase.transaction {
                     tracks.onEach { it.artists.loadToCache() }
                 }
+
+                val isSavedState = SavedAlbumRepository.savedStateOf(id = page.albumId, fetchIfUnknown = true)
+                val savedTracksState = SavedTrackRepository.libraryState()
 
                 mutateState {
                     ViewModel(
                         refreshing = false,
                         album = album,
                         tracks = tracks,
+                        savedTracksState = savedTracksState,
                         isSavedState = isSavedState,
                         albumUpdated = album.updatedTime,
                     )
@@ -101,6 +106,8 @@ private class AlbumPresenter(
             }
 
             is Event.ToggleSave -> SavedAlbumRepository.setSaved(id = page.albumId, saved = event.save)
+
+            is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.saved)
         }
     }
 }
@@ -170,6 +177,10 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
             Table(
                 columns = trackColumns(
                     pageStack = pageStack,
+                    savedTracks = state.savedTracksState.value,
+                    onSetTrackSaved = { trackId, saved ->
+                        presenter.emitAsync(AlbumPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))
+                    },
                     includeAlbum = false,
                     playContextFromIndex = { index ->
                         Player.PlayContext.albumTrack(album = state.album, index = index)

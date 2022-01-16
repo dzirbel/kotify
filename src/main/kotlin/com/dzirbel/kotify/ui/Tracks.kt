@@ -45,6 +45,7 @@ private class TracksPresenter(scope: CoroutineScope) :
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
+        data class ToggleTrackSaved(val trackId: String, val saved: Boolean) : Event()
         data class ReactToTracksSaved(val trackIds: List<String>, val saved: Boolean) : Event()
     }
 
@@ -111,6 +112,8 @@ private class TracksPresenter(scope: CoroutineScope) :
                     }
                 }
             }
+
+            is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.saved)
         }
     }
 
@@ -147,6 +150,9 @@ fun BoxScope.Tracks(pageStack: MutableState<PageStack>) {
                 columns = trackColumns(
                     pageStack = pageStack,
                     savedTracks = state.savedTrackIds,
+                    onSetTrackSaved = { trackId, saved ->
+                        presenter.emitAsync(TracksPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))
+                    },
                     playContextFromIndex = null,
                 ),
                 items = state.tracks

@@ -20,6 +20,7 @@ import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.PlaylistRepository
 import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.db.model.SavedPlaylistRepository
+import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -58,6 +59,7 @@ private class PlaylistPresenter(
         val sorts: List<Sort<PlaylistTrack>> = emptyList(),
         val playlist: Playlist,
         val tracks: List<PlaylistTrack>?,
+        val savedTracksState: State<Set<String>?>,
         val isSavedState: State<Boolean?>,
         val playlistUpdated: Long?,
     )
@@ -65,6 +67,7 @@ private class PlaylistPresenter(
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
         data class ToggleSave(val save: Boolean) : Event()
+        data class ToggleTrackSaved(val trackId: String, val saved: Boolean) : Event()
         data class SetSorts(val sorts: List<Sort<PlaylistTrack>>) : Event()
         data class Order(val sorts: List<Sort<PlaylistTrack>>, val tracks: List<PlaylistTrack>) : Event()
     }
@@ -89,6 +92,7 @@ private class PlaylistPresenter(
                 }
 
                 val isSavedState = SavedPlaylistRepository.savedStateOf(id = playlist.id.value, fetchIfUnknown = true)
+                val savedTracksState = SavedTrackRepository.libraryState()
 
                 mutateState {
                     ViewModel(
@@ -97,6 +101,7 @@ private class PlaylistPresenter(
                         playlistUpdated = playlistUpdated,
                         isSavedState = isSavedState,
                         tracks = null,
+                        savedTracksState = savedTracksState,
                     )
                 }
 
@@ -107,6 +112,8 @@ private class PlaylistPresenter(
             }
 
             is Event.ToggleSave -> SavedPlaylistRepository.setSaved(id = page.playlistId, saved = event.save)
+
+            is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.saved)
 
             is Event.SetSorts -> mutateState { it?.copy(sorts = event.sorts) }
 
@@ -248,6 +255,12 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                 val columns = remember(pageStack) {
                     trackColumns(
                         pageStack = pageStack,
+                        savedTracks = state.savedTracksState.value,
+                        onSetTrackSaved = { trackId, saved ->
+                            presenter.emitAsync(
+                                PlaylistPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved)
+                            )
+                        },
                         includeTrackNumber = false,
                         playContextFromIndex = { index ->
                             Player.PlayContext.playlistTrack(playlist = state.playlist, index = index)

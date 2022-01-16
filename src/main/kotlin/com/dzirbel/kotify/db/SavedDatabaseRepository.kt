@@ -5,6 +5,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.cache.SavedRepository
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesRepository
+import com.dzirbel.kotify.util.plusOrMinus
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -21,6 +22,9 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     private val libraryUpdateKey: String = savedEntityTable.tableName,
 ) : SavedRepository {
     private val states = ConcurrentHashMap<String, WeakReference<MutableState<Boolean?>>>()
+
+    private var libraryStateInitialized = false
+    private val libraryState: MutableState<Set<String>?> = mutableStateOf(null)
 
     private val events = MutableSharedFlow<SavedRepository.Event>()
 
@@ -78,6 +82,9 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         }
 
         states[id]?.get()?.value = saved
+        libraryState.value?.let { library ->
+            libraryState.value = library.plusOrMinus(value = id, condition = saved)
+        }
         val queryEvents = listOf(SavedRepository.QueryEvent(id = id, result = saved))
         events.emit(SavedRepository.Event.QueryRemote(queryEvents))
 
@@ -101,6 +108,21 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         return state
     }
 
+    final override suspend fun libraryState(fetchIfUnknown: Boolean): State<Set<String>?> {
+        // library state has never been loaded, i.e. the database has never been checked; load it from cache now
+        if (!libraryStateInitialized) {
+            getLibraryCached()
+            assert(libraryStateInitialized)
+        }
+
+        // if the library state is still missing and fetchIfUnknown is true, fetch from the remote
+        if (fetchIfUnknown && libraryState.value == null) {
+            getLibraryRemote()
+        }
+
+        return libraryState // TODO return read-only copy?
+    }
+
     /**
      * Clears the cache of states used by [savedStateOf], for use in tests.
      */
@@ -117,6 +139,9 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
         ids.forEach { id ->
             states[id]?.get()?.value = saved
+        }
+        libraryState.value?.let { library ->
+            libraryState.value = library.plusOrMinus(elements = ids, condition = saved)
         }
         events.emit(SavedRepository.Event.SetSaved(ids = ids, saved = saved))
     }
@@ -140,6 +165,9 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             }
         }
             .also { library ->
+                libraryStateInitialized = true
+                libraryState.value = library
+
                 events.emit(SavedRepository.Event.QueryLibraryCached(library = library))
             }
     }
@@ -157,6 +185,10 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
                 for ((id, reference) in states.entries) {
                     reference.get()?.value = library.contains(id)
                 }
+
+                libraryStateInitialized = true
+                libraryState.value = library
+
                 events.emit(SavedRepository.Event.QueryLibraryRemote(library = library))
             }
     }
