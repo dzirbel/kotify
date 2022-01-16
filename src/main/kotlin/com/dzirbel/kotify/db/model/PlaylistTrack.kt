@@ -48,6 +48,14 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
                 }
         }
 
+        /**
+         * Converts the given [spotifyPlaylistTrack] into an [PlaylistTrack] with the given [playlist], either creating
+         * a new entity or updating the existing one based on the new network values.
+         *
+         * Returns null if a [Track] could not be created from the [spotifyPlaylistTrack].
+         *
+         * Must be called from within a transaction.
+         */
         fun from(spotifyPlaylistTrack: SpotifyPlaylistTrack, playlist: Playlist): PlaylistTrack? {
             return Track.from(spotifyPlaylistTrack.track)?.let { track ->
                 recordFor(track = track, playlist = playlist).apply {
@@ -58,7 +66,12 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
             }
         }
 
-        // TODO move to repository?
+        /**
+         * Invalidates all [PlaylistTrack]s in the playlist with the given [playlistId], removing them from the
+         * database.
+         *
+         * Must be called from within a transaction.
+         */
         fun invalidate(playlistId: String) {
             PlaylistTrackTable.deleteWhere { PlaylistTrackTable.playlist eq playlistId }
         }

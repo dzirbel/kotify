@@ -101,13 +101,7 @@ private class PlaylistPresenter(
                 }
 
                 val tracks = playlist.getAllTracks()
-                KotifyDatabase.transaction {
-                    tracks.forEach {
-                        it.track.loadToCache()
-                        it.track.cached.artists.loadToCache()
-                        it.track.cached.album.loadToCache()
-                    }
-                }
+                loadTracksToCache(tracks)
 
                 mutateState { it?.copy(tracks = tracks) }
             }
@@ -135,12 +129,22 @@ private class PlaylistPresenter(
                     }
 
                     KotifyDatabase.transaction { PlaylistTrack.invalidate(playlistId = page.playlistId) }
-                    val playlist = KotifyDatabase.transaction { PlaylistRepository.getCached(id = page.playlistId) }
+                    val playlist = PlaylistRepository.getCached(id = page.playlistId)
                     val tracks = playlist?.getAllTracks()
-                    KotifyDatabase.transaction { tracks?.forEach { it.track.loadToCache() } }
+                    tracks?.let { loadTracksToCache(it) }
 
                     mutateState { it?.copy(tracks = tracks, reordering = false, sorts = emptyList()) }
                 }
+            }
+        }
+    }
+
+    private suspend fun loadTracksToCache(tracks: List<PlaylistTrack>) {
+        KotifyDatabase.transaction {
+            tracks.forEach {
+                it.track.loadToCache()
+                it.track.cached.artists.loadToCache()
+                it.track.cached.album.loadToCache()
             }
         }
     }

@@ -84,7 +84,6 @@ class Playlist(id: EntityID<String>) : SavableSpotifyEntity(
 
         return KotifyDatabase.transaction {
             networkTracks.mapNotNull { PlaylistTrack.from(spotifyPlaylistTrack = it, playlist = this@Playlist) }
-                .onEach { it.playlist.set(this@Playlist) }
         }
     }
 
@@ -110,9 +109,7 @@ class Playlist(id: EntityID<String>) : SavableSpotifyEntity(
                 followersTotal = networkModel.followers.total.toUInt()
 
                 totalTracks = networkModel.tracks.total.toUInt()
-                networkModel.tracks.items
-                    .mapNotNull { PlaylistTrack.from(spotifyPlaylistTrack = it, playlist = this) }
-                    .onEach { it.playlist.set(this) }
+                networkModel.tracks.items.mapNotNull { PlaylistTrack.from(spotifyPlaylistTrack = it, playlist = this) }
             }
         }
     }
