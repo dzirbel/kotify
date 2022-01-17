@@ -34,10 +34,12 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dzirbel.kotify.cache.Rating
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
+import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
@@ -50,6 +52,7 @@ import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.RefreshIcon
 import com.dzirbel.kotify.ui.components.SeekableSlider
 import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.components.StarRating
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -125,6 +128,8 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         val artistSavedStates: Map<String, State<Boolean?>>? = null,
         val albumSavedState: State<Boolean?>? = null,
 
+        val trackRatingState: State<Rating?>? = null,
+
         val loadingPlayback: Boolean = true,
         val loadingTrackPlayback: Boolean = true,
         val loadingDevices: Boolean = true,
@@ -160,11 +165,19 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 is FullSpotifyTrack -> track.album.id
                 else -> null
             }
+
+            val trackRatingState = track.id?.let { trackId ->
+                runBlocking {
+                    TrackRatingRepository.ratingState(id = trackId)
+                }
+            }
+
             return copy(
                 playbackTrack = track,
                 trackSavedState = track.id?.let { trackId ->
                     runBlocking { SavedTrackRepository.savedStateOf(id = trackId) }
                 },
+                trackRatingState = trackRatingState,
                 artistSavedStates = artistSavedStates,
                 albumSavedState = albumId?.let {
                     runBlocking { SavedAlbumRepository.savedStateOf(id = it, fetchIfUnknown = false) }
@@ -204,6 +217,8 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         class ToggleTrackSaved(val trackId: String, val save: Boolean) : Event()
         class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
         class ToggleArtistSaved(val artistId: String, val save: Boolean) : Event()
+
+        class RateTrack(val trackId: String, val rating: Rating?) : Event()
     }
 
     override fun reactTo(events: Flow<Event>): Flow<Event> {
@@ -224,6 +239,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             events.filterIsInstance<Event.ToggleTrackSaved>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.ToggleAlbumSaved>().transformLatest { reactTo(it) },
             events.filterIsInstance<Event.ToggleArtistSaved>().transformLatest { reactTo(it) },
+            events.filterIsInstance<Event.RateTrack>().transformLatest { reactTo(it) },
         )
     }
 
@@ -572,6 +588,8 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
             is Event.ToggleAlbumSaved -> SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
 
             is Event.ToggleArtistSaved -> SavedArtistRepository.setSaved(id = event.artistId, saved = event.save)
+
+            is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
         }
     }
 
@@ -603,6 +621,7 @@ fun BottomPanel(pageStack: MutableState<PageStack>) {
                     CurrentTrack(
                         track = state.playbackTrack,
                         trackIsSaved = state.trackSavedState?.value,
+                        trackRating = state.trackRatingState?.value,
                         artistsAreSaved = state.artistSavedStates?.mapValues { it.value.value },
                         albumIsSaved = state.albumSavedState?.value,
                         presenter = presenter,
@@ -699,6 +718,7 @@ fun BottomPanel(pageStack: MutableState<PageStack>) {
 private fun CurrentTrack(
     track: SpotifyTrack?,
     trackIsSaved: Boolean?,
+    trackRating: Rating?,
     artistsAreSaved: Map<String, Boolean?>?,
     albumIsSaved: Boolean?,
     presenter: BottomPanelPresenter,
@@ -731,7 +751,17 @@ private fun CurrentTrack(
                         }
                     }
 
-                    TrackStarRating(trackId = track.id)
+                    StarRating(
+                        rating = trackRating,
+                        enabled = track.id != null,
+                        onRate = { rating ->
+                            track.id?.let { trackId ->
+                                presenter.emitAsync(
+                                    BottomPanelPresenter.Event.RateTrack(trackId = trackId, rating = rating)
+                                )
+                            }
+                        },
+                    )
                 }
 
                 VerticalSpacer(Dimens.space3)

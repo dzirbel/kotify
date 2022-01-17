@@ -12,15 +12,17 @@ import androidx.compose.material.ContentAlpha
 import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.cache.Rating
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.StarRating
 import com.dzirbel.kotify.ui.components.hoverState
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
@@ -37,6 +39,8 @@ fun trackColumns(
     pageStack: MutableState<PageStack>,
     savedTracks: Set<String>?,
     onSetTrackSaved: (trackId: String, saved: Boolean) -> Unit,
+    trackRatings: Map<String, State<Rating?>>?,
+    onRateTrack: (trackId: String, rating: Rating?) -> Unit,
     includeTrackNumber: Boolean = true,
     includeAlbum: Boolean = true,
     playContextFromIndex: ((Int) -> Player.PlayContext?)?,
@@ -48,7 +52,7 @@ fun trackColumns(
         NameColumn,
         ArtistColumn(pageStack),
         AlbumColumn(pageStack).takeIf { includeAlbum },
-        RatingColumn,
+        RatingColumn(trackRatings = trackRatings, onRateTrack = onRateTrack),
         DurationColumn,
         PopularityColumn,
     )
@@ -230,20 +234,25 @@ object PopularityColumn : Column<Track>(name = "Popularity", sortable = true) {
     }
 }
 
-object RatingColumn : Column<Track>(name = "Rating", sortable = true) {
+class RatingColumn(
+    private val trackRatings: Map<String, State<Rating?>>?,
+    private val onRateTrack: (trackId: String, rating: Rating?) -> Unit,
+) : Column<Track>(name = "Rating", sortable = true) {
     override val width: ColumnWidth = ColumnWidth.Fill()
     override val cellAlignment = Alignment.Center
 
     @Composable
     override fun item(item: Track, index: Int) {
-        TrackStarRating(trackId = item.id.value, modifier = Modifier.padding(horizontal = Dimens.space3))
+        val trackId = item.id.value
+        StarRating(
+            rating = trackRatings?.get(trackId)?.value,
+            onRate = { rating -> onRateTrack(trackId, rating) },
+        )
     }
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        val firstRating = first.id.value.let { SpotifyCache.Ratings.getRating(trackId = it) }
-            ?.let { it.rating.toDouble() / it.maxRating }
-        val secondRating = second.id.value.let { SpotifyCache.Ratings.getRating(trackId = it) }
-            ?.let { it.rating.toDouble() / it.maxRating }
+        val firstRating = trackRatings?.get(first.id.value)?.value?.ratingPercent
+        val secondRating = trackRatings?.get(second.id.value)?.value?.ratingPercent
 
         return firstRating.compareToNullable(secondRating)
     }

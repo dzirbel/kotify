@@ -15,6 +15,7 @@ import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,7 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.cache.Rating
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumRepository
@@ -38,6 +39,7 @@ import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.db.model.SavedPlaylistRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.Track
+import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.InvalidateButton
@@ -87,6 +89,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
         val tracksUpdated: Long?,
 
         val ratedTracks: List<Pair<String, Track?>>,
+        val trackRatings: Map<String, State<Rating?>>,
 
         val refreshingSavedArtists: Boolean = false,
         val refreshingArtists: Set<String> = emptySet(),
@@ -118,6 +121,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
         object InvalidateTracks : Event()
 
         object ClearAllRatings : Event()
+        data class RateTrack(val trackId: String, val rating: Rating?) : Event()
 
         object FetchMissingPlaylists : Event()
         object InvalidatePlaylists : Event()
@@ -143,8 +147,9 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                     savedPlaylists?.onEach { it?.tracks?.loadToCache() }
                 }
 
-                val ratedTrackIds = SpotifyCache.Ratings.ratedTracks().orEmpty().toList()
+                val ratedTrackIds = TrackRatingRepository.ratedEntities().toList()
                 val ratedTracks = TrackRepository.get(ids = ratedTrackIds)
+                val trackRatings = ratedTrackIds.associateWith { TrackRatingRepository.ratingState(it) }
 
                 val state = ViewModel(
                     artists = savedArtistIds?.zip(savedArtists!!),
@@ -156,6 +161,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
                     tracks = savedTracksIds?.zip(savedTracks!!),
                     tracksUpdated = SavedTrackRepository.libraryUpdated()?.toEpochMilli(),
                     ratedTracks = ratedTrackIds.zip(ratedTracks),
+                    trackRatings = trackRatings,
                 )
 
                 mutateState { state }
@@ -315,9 +321,11 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.ClearAllRatings -> {
-                SpotifyCache.Ratings.clearAllRatings()
+                TrackRatingRepository.clearAllRatings()
                 mutateState { it?.copy(ratedTracks = emptyList()) }
             }
+
+            is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
 
             Event.FetchMissingPlaylists -> {
                 val playlistIds = requireNotNull(SavedPlaylistRepository.getLibraryCached()).toList()
@@ -448,11 +456,6 @@ private val playlistColumns = listOf(
     object : ColumnByNumber<Pair<String, Playlist?>>(name = "Tracks") {
         override fun toNumber(item: Pair<String, Playlist?>, index: Int) = item.second?.totalTracks?.toInt()
     },
-)
-
-private val ratedTrackColumns = listOf(
-    NameColumn,
-    RatingColumn,
 )
 
 @Composable
@@ -924,11 +927,20 @@ private fun Ratings(state: LibraryStatePresenter.ViewModel, presenter: LibrarySt
     }
 
     if (ratingsExpanded.value) {
+        val ratingColumn = remember {
+            RatingColumn(
+                trackRatings = state.trackRatings,
+                onRateTrack = { trackId, rating ->
+                    presenter.emitAsync(LibraryStatePresenter.Event.RateTrack(trackId = trackId, rating = rating))
+                },
+            )
+        }
+
         Table(
-            columns = ratedTrackColumns,
+            columns = listOf(NameColumn, ratingColumn),
             items = ratedTracks.mapNotNull { it.second },
             modifier = Modifier.widthIn(max = RATINGS_TABLE_WIDTH),
-            defaultSortOrder = Sort(RatingColumn, SortOrder.DESCENDING), // sort by rating descending by default
+            defaultSortOrder = Sort(ratingColumn, SortOrder.DESCENDING), // sort by rating descending by default
         )
     }
 }

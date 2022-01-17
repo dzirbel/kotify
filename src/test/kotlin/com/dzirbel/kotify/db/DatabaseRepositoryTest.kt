@@ -3,6 +3,7 @@ package com.dzirbel.kotify.db
 import com.dzirbel.kotify.network.model.SpotifyObject
 import com.google.common.collect.Range
 import com.google.common.truth.Truth.assertThat
+import io.ktor.util.collections.ConcurrentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -51,8 +52,8 @@ class TestEntity(id: EntityID<String>) : SpotifyEntity(id = id, table = TestEnti
 }
 
 private object TestRepository : DatabaseRepository<TestEntity, TestNetworkModel>(TestEntity) {
-    val fetchedIds: MutableList<String> = mutableListOf()
-    val batchFetchedIds: MutableList<List<String>> = mutableListOf()
+    val fetchedIds: MutableList<String> = ConcurrentList()
+    val batchFetchedIds: MutableList<List<String>> = ConcurrentList()
 
     override suspend fun fetch(id: String): TestNetworkModel? {
         fetchedIds.add(id)

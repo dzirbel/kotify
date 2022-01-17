@@ -13,12 +13,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.cache.Rating
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.Track
+import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LinkedText
@@ -36,7 +38,7 @@ import java.util.concurrent.TimeUnit
 private class AlbumPresenter(
     private val page: AlbumPage,
     private val pageStack: MutableState<PageStack>,
-    scope: CoroutineScope
+    scope: CoroutineScope,
 ) : Presenter<AlbumPresenter.ViewModel?, AlbumPresenter.Event>(
     scope = scope,
     key = page.albumId,
@@ -50,6 +52,7 @@ private class AlbumPresenter(
         val album: Album,
         val tracks: List<Track>,
         val savedTracksState: State<Set<String>?>,
+        val trackRatings: Map<String, State<Rating?>>,
         val isSavedState: State<Boolean?>,
         val albumUpdated: Instant,
     )
@@ -58,6 +61,7 @@ private class AlbumPresenter(
         data class Load(val invalidate: Boolean) : Event()
         data class ToggleSave(val save: Boolean) : Event()
         data class ToggleTrackSaved(val trackId: String, val saved: Boolean) : Event()
+        data class RateTrack(val trackId: String, val rating: Rating?) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -84,6 +88,9 @@ private class AlbumPresenter(
 
                 val isSavedState = SavedAlbumRepository.savedStateOf(id = page.albumId, fetchIfUnknown = true)
                 val savedTracksState = SavedTrackRepository.libraryState()
+                val trackRatings = tracks
+                    .map { it.id.value }
+                    .associateWith { trackId -> TrackRatingRepository.ratingState(trackId) }
 
                 mutateState {
                     ViewModel(
@@ -91,6 +98,7 @@ private class AlbumPresenter(
                         album = album,
                         tracks = tracks,
                         savedTracksState = savedTracksState,
+                        trackRatings = trackRatings,
                         isSavedState = isSavedState,
                         albumUpdated = album.updatedTime,
                     )
@@ -108,6 +116,8 @@ private class AlbumPresenter(
             is Event.ToggleSave -> SavedAlbumRepository.setSaved(id = page.albumId, saved = event.save)
 
             is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.saved)
+
+            is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
         }
     }
 }
@@ -180,6 +190,10 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
                     savedTracks = state.savedTracksState.value,
                     onSetTrackSaved = { trackId, saved ->
                         presenter.emitAsync(AlbumPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))
+                    },
+                    trackRatings = state.trackRatings,
+                    onRateTrack = { trackId, rating ->
+                        presenter.emitAsync(AlbumPresenter.Event.RateTrack(trackId = trackId, rating = rating))
                     },
                     includeAlbum = false,
                     playContextFromIndex = { index ->

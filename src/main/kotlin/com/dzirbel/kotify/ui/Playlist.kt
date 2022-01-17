@@ -15,12 +15,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.cache.Rating
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.PlaylistRepository
 import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.db.model.SavedPlaylistRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
+import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -59,6 +61,7 @@ private class PlaylistPresenter(
         val sorts: List<Sort<PlaylistTrack>> = emptyList(),
         val playlist: Playlist,
         val tracks: List<PlaylistTrack>?,
+        val trackRatings: Map<String, State<Rating?>>?,
         val savedTracksState: State<Set<String>?>,
         val isSavedState: State<Boolean?>,
         val playlistUpdated: Long?,
@@ -68,6 +71,7 @@ private class PlaylistPresenter(
         data class Load(val invalidate: Boolean) : Event()
         data class ToggleSave(val save: Boolean) : Event()
         data class ToggleTrackSaved(val trackId: String, val saved: Boolean) : Event()
+        data class RateTrack(val trackId: String, val rating: Rating?) : Event()
         data class SetSorts(val sorts: List<Sort<PlaylistTrack>>) : Event()
         data class Order(val sorts: List<Sort<PlaylistTrack>>, val tracks: List<PlaylistTrack>) : Event()
     }
@@ -101,19 +105,25 @@ private class PlaylistPresenter(
                         playlistUpdated = playlistUpdated,
                         isSavedState = isSavedState,
                         tracks = null,
+                        trackRatings = null,
                         savedTracksState = savedTracksState,
                     )
                 }
 
                 val tracks = playlist.getAllTracks()
                 loadTracksToCache(tracks)
+                val trackRatings = tracks
+                    .map { it.track.cached.id.value }
+                    .associateWith { trackId -> TrackRatingRepository.ratingState(trackId) }
 
-                mutateState { it?.copy(tracks = tracks) }
+                mutateState { it?.copy(tracks = tracks, trackRatings = trackRatings) }
             }
 
             is Event.ToggleSave -> SavedPlaylistRepository.setSaved(id = page.playlistId, saved = event.save)
 
             is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.saved)
+
+            is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
 
             is Event.SetSorts -> mutateState { it?.copy(sorts = event.sorts) }
 
@@ -260,6 +270,10 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                             presenter.emitAsync(
                                 PlaylistPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved)
                             )
+                        },
+                        trackRatings = state.trackRatings,
+                        onRateTrack = { trackId, rating ->
+                            presenter.emitAsync(PlaylistPresenter.Event.RateTrack(trackId = trackId, rating = rating))
                         },
                         includeTrackNumber = false,
                         playContextFromIndex = { index ->

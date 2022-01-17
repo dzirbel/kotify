@@ -8,13 +8,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.cache.Rating
 import com.dzirbel.kotify.cache.SavedRepository
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.Track
+import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageStack
@@ -40,12 +43,14 @@ private class TracksPresenter(scope: CoroutineScope) :
         val refreshing: Boolean,
         val tracks: List<Track>,
         val savedTrackIds: Set<String>,
+        val trackRatings: Map<String, State<Rating?>>?,
         val tracksUpdated: Long?,
     )
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
         data class ToggleTrackSaved(val trackId: String, val saved: Boolean) : Event()
+        data class RateTrack(val trackId: String, val rating: Rating?) : Event()
         data class ReactToTracksSaved(val trackIds: List<String>, val saved: Boolean) : Event()
     }
 
@@ -74,12 +79,16 @@ private class TracksPresenter(scope: CoroutineScope) :
                 val tracks = fetchTracks(trackIds = trackIds.toList())
                     .sortedBy { it.name }
                 val tracksUpdated = SavedTrackRepository.libraryUpdated()
+                val trackRatings = tracks
+                    .map { it.id.value }
+                    .associateWith { trackId -> TrackRatingRepository.ratingState(trackId) }
 
                 mutateState {
                     ViewModel(
                         refreshing = false,
                         tracks = tracks,
                         savedTrackIds = trackIds,
+                        trackRatings = trackRatings,
                         tracksUpdated = tracksUpdated?.toEpochMilli(),
                     )
                 }
@@ -114,6 +123,8 @@ private class TracksPresenter(scope: CoroutineScope) :
             }
 
             is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.saved)
+
+            is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
         }
     }
 
@@ -152,6 +163,10 @@ fun BoxScope.Tracks(pageStack: MutableState<PageStack>) {
                     savedTracks = state.savedTrackIds,
                     onSetTrackSaved = { trackId, saved ->
                         presenter.emitAsync(TracksPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))
+                    },
+                    trackRatings = state.trackRatings,
+                    onRateTrack = { trackId, rating ->
+                        presenter.emitAsync(TracksPresenter.Event.RateTrack(trackId = trackId, rating = rating))
                     },
                     playContextFromIndex = null,
                 ),

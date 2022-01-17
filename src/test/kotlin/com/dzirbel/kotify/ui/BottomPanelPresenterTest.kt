@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableState
 import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
+import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
@@ -149,6 +150,7 @@ internal class BottomPanelPresenterTest {
                     playbackCurrentDevice = playback?.device,
                     playbackTrack = playback?.item,
                     trackSavedState = playback?.item?.let { SavedTrackRepository.savedStateOf(id = it.id) },
+                    trackRatingState = playback?.item?.let { TrackRatingRepository.ratingState(id = it.id) },
                     albumSavedState = playback?.item?.let { SavedAlbumRepository.savedStateOf(id = it.id) },
                     artistSavedStates = playback?.item?.let { emptyMap() },
                 )

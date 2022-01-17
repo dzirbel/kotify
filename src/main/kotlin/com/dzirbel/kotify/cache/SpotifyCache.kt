@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.cache
 
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -29,40 +28,8 @@ import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyUser
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 
 object SpotifyCache {
-    object GlobalObjects {
-        @Serializable
-        data class TrackRating(
-            val trackId: String,
-            val rating: Int,
-            val maxRating: Int,
-        ) : CacheableObject {
-            init {
-                require(rating in 1..maxRating)
-            }
-
-            override val id: String
-                get() = idFor(trackId)
-
-            companion object {
-                fun idFor(trackId: String) = "track-rating-$trackId"
-            }
-        }
-
-        @Serializable
-        data class RatedTracks(
-            val trackIds: Set<String>
-        ) : CacheableObject {
-            override val id = ID
-
-            companion object {
-                const val ID = "rated-tracks"
-            }
-        }
-    }
-
     private val cacheFile = Application.cacheDir.resolve("cache.json.gzip")
 
     private val cache = Cache(
@@ -179,38 +146,4 @@ object SpotifyCache {
 
     inline fun <reified T> getCached(id: String): T? = getCacheObject(id)?.obj as? T
     inline fun <reified T> getCached(ids: Collection<String>): List<T?> = getCacheObjects(ids).map { it?.obj as? T }
-
-    object Ratings {
-        fun ratingState(trackId: String): State<CacheObject?> = cache.stateOf(GlobalObjects.TrackRating.idFor(trackId))
-
-        fun getRating(trackId: String): GlobalObjects.TrackRating? {
-            return cache.getCachedValue<GlobalObjects.TrackRating>(GlobalObjects.TrackRating.idFor(trackId))
-        }
-
-        fun setRating(trackId: String, rating: GlobalObjects.TrackRating) {
-            cache.putAll(
-                mapOf(
-                    GlobalObjects.TrackRating.idFor(trackId) to rating,
-                    GlobalObjects.RatedTracks.ID to GlobalObjects.RatedTracks(ratedTracks().orEmpty().plus(trackId)),
-                )
-            )
-        }
-
-        fun clearRating(trackId: String) {
-            cache.invalidate(GlobalObjects.TrackRating.idFor(trackId))
-            cache.put(GlobalObjects.RatedTracks.ID, GlobalObjects.RatedTracks(ratedTracks().orEmpty().minus(trackId)))
-        }
-
-        fun ratedTracks(): Set<String>? {
-            return cache.getCachedValue<GlobalObjects.RatedTracks>(GlobalObjects.RatedTracks.ID)?.trackIds
-        }
-
-        fun clearAllRatings() {
-            ratedTracks()?.let { trackIds ->
-                cache.invalidate(
-                    trackIds.map { GlobalObjects.TrackRating.idFor(it) }.plus(GlobalObjects.RatedTracks.ID)
-                )
-            }
-        }
-    }
 }
