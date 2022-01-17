@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.network
 
 import com.dzirbel.kotify.Fixtures
-import com.dzirbel.kotify.properties.ShowProperties
 import com.dzirbel.kotify.TAG_NETWORK
+import com.dzirbel.kotify.properties.ShowProperties
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag

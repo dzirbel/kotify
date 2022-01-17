@@ -342,19 +342,17 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                         emit(event.copy(retries = event.retries - 1))
                     }
 
-                    else -> {
-                        mutateState {
-                            it
-                                .withTrack(track = playback.item)
-                                .copy(
-                                    playbackProgressMs = playback.progressMs,
-                                    playbackIsPlaying = playback.isPlaying,
-                                    playbackShuffleState = playback.shuffleState,
-                                    playbackRepeatState = playback.repeatState,
-                                    playbackCurrentDevice = playback.device,
-                                    loadingPlayback = false
-                                )
-                        }
+                    else -> mutateState {
+                        it
+                            .withTrack(track = playback.item)
+                            .copy(
+                                playbackProgressMs = playback.progressMs,
+                                playbackIsPlaying = playback.isPlaying,
+                                playbackShuffleState = playback.shuffleState,
+                                playbackRepeatState = playback.repeatState,
+                                playbackCurrentDevice = playback.device,
+                                loadingPlayback = false
+                            )
                     }
                 }
             }

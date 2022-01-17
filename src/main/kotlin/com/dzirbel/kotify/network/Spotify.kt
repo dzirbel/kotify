@@ -1308,6 +1308,7 @@ object Spotify {
          *
          * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-list-users-playlists
          *
+         * @param userId The user's Spotify user ID.
          * @param limit Optional. The maximum number of playlists to return. Default: 20. Minimum: 1. Maximum: 50.
          * @param offset Optional. The index of the first playlist to return. Default: 0 (the first object). Maximum
          *  offset: 100.000. Use with limit to get the next set of playlists.
@@ -1569,6 +1570,7 @@ object Spotify {
          *
          * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-playlists-tracks
          *
+         * @param playlistId The Spotify ID of the playlist.
          * @param fields Optional. Filters for the query: a comma-separated list of the fields to return. If omitted,
          *  all fields are returned. For example, to get just the total number of tracks and the request limit:
          *  fields=total,limit

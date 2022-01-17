@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.db
 
-import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.network.model.SpotifyObject
+import com.dzirbel.kotify.repository.Repository
 
 /**
  * A [Repository] which uses database entities [EntityType] as its local cache.

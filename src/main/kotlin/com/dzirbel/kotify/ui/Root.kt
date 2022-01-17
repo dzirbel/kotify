@@ -8,8 +8,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
 import com.dzirbel.kotify.ui.components.panel.PanelSize
 import com.dzirbel.kotify.ui.components.panel.SidePanel

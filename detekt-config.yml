@@ -33,6 +33,10 @@ comments:
   EndOfSentenceFormat:
     active: false
     endOfSentenceFormat: '([.?!][ \t\n\r\f<])|([.?!:]$)'
+  OutdatedDocumentation:
+    active: true
+    matchTypeParameters: true
+    matchDeclarationsOrder: true
   UndocumentedPublicClass:
     active: false
     searchInNestedClass: true
@@ -92,7 +96,7 @@ complexity:
     active: false
     threshold: 6
   NamedArguments:
-    active: false # does not ignore vararg functions, e.g. listOf(1, 2, 3, 4)
+    active: true
     threshold: 3
   NestedBlockDepth:
     active: true
@@ -122,6 +126,12 @@ coroutines:
   active: true
   GlobalCoroutineUsage:
     active: false
+  InjectDispatcher:
+    active: false
+    dispatcherNames:
+      - 'IO'
+      - 'Default'
+      - 'Unconfined'
   RedundantSuspendModifier:
     active: true
   SleepInsteadOfDelay:
@@ -256,9 +266,9 @@ formatting:
     autoCorrect: true
     insertFinalNewLine: true
   ImportOrdering:
-    active: false
+    active: true
     autoCorrect: true
-    layout: 'idea'
+    layout: '*,java.**,javax.**,kotlin.**,^'
   Indentation:
     active: true
     autoCorrect: true
@@ -402,6 +412,9 @@ naming:
   InvalidPackageDeclaration:
     active: true
     rootPackage: ''
+  LambdaParameterNaming:
+    active: true
+    parameterPattern: '[a-z][A-Za-z0-9]*|_'
   MatchingDeclarationName:
     active: false
     mustBeFirst: true
@@ -497,9 +510,11 @@ potential-bugs:
   LateinitUsage:
     active: false
     excludes: ['**/test/**', '**/testFixtures/**']
-    excludeAnnotatedProperties: []
+    ignoreAnnotated: []
     ignoreOnClassesPattern: ''
   MapGetWithNotNullAssertionOperator:
+    active: true
+  MissingPackageDeclaration:
     active: true
   MissingWhenCase:
     active: true
@@ -584,7 +599,7 @@ style:
     ignoreOverridableFunction: true
     ignoreActualFunction: true
     excludedFunctions: 'describeContents'
-    excludeAnnotatedFunction:
+    ignoreAnnotated:
       - 'dagger.Provides'
   LibraryCodeMustSpecifyReturnType:
     active: true
@@ -672,10 +687,10 @@ style:
     active: true
   UnderscoresInNumericLiterals:
     active: true
-    acceptableDecimalLength: 5
+    acceptableLength: 5
   UnnecessaryAbstractClass:
     active: true
-    excludeAnnotatedClasses:
+    ignoreAnnotated:
       - 'dagger.Module'
   UnnecessaryAnnotationUseSiteTarget:
     active: true
@@ -698,6 +713,8 @@ style:
   UnusedPrivateMember:
     active: true
     allowedNames: '(_|ignored|expected|serialVersionUID)'
+  UseAnyOrNoneInsteadOfFind:
+    active: true
   UseArrayLiteralsInAnnotations:
     active: true
   UseCheckNotNull:
@@ -706,7 +723,7 @@ style:
     active: true
   UseDataClass:
     active: true
-    excludeAnnotatedClasses: []
+    ignoreAnnotated: []
     allowVars: false
   UseEmptyCounterpart:
     active: true

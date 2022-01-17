@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.properties
 
-import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
+import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.google.common.truth.Truth.assertThat
 
 data class ArtistProperties(

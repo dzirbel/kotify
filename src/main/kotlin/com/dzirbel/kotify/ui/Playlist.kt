@@ -15,7 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.PlaylistRepository
@@ -24,6 +23,7 @@ import com.dzirbel.kotify.db.model.SavedPlaylistRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageStack

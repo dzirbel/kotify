@@ -1,9 +1,9 @@
 package com.dzirbel.kotify.properties
 
-import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
-import com.dzirbel.kotify.network.model.SpotifySavedAlbum
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.network.model.SpotifySavedAlbum
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.runBlocking

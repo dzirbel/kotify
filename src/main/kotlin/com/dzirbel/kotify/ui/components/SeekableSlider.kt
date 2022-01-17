@@ -36,6 +36,9 @@ val DEFAULT_SEEK_TARGET_SIZE = 12.dp
  * A horizontal slider which displays a [progress] state and can be seeked by dragging or clicking.
  *
  * @param progress the current progress in the slider, or null to disable the slider
+ * @param sliderWidth the width of the slider, or null for [Dp.Unspecified]
+ * @param sliderHeight the height of the slider, by default [DEFAULT_SLIDER_HEIGHT]
+ * @param seekTargetSize the size of the seek touch-target, by default [DEFAULT_SEEK_TARGET_SIZE]
  * @param dragKey an optional key which maintains the state of dragging in the slider; when this value changes the drag
  *  state will be reset
  * @param leftContent optional content placed to the left of the slider
