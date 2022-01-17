@@ -2,9 +2,7 @@ package com.dzirbel.kotify
 
 import com.dzirbel.kotify.Logger.Event
 import com.dzirbel.kotify.Logger.Network.intercept
-import com.dzirbel.kotify.cache.CacheEvent
 import com.dzirbel.kotify.cache.ImageCacheEvent
-import com.dzirbel.kotify.network.model.SpotifyObject
 import com.dzirbel.kotify.ui.Presenter
 import com.dzirbel.kotify.util.ellipsize
 import kotlinx.coroutines.GlobalScope
@@ -91,48 +89,6 @@ sealed class Logger(private val tag: String) {
 
         private fun httpResponse(response: Response, duration: Duration) {
             log { listOf(Event("<< ${response.code} ${response.request.method} ${response.request.url} in $duration")) }
-        }
-    }
-
-    /**
-     * A global [Logger] which logs events from the [com.dzirbel.kotify.cache.SpotifyCache].
-     */
-    object Cache : Logger("CACHE") {
-        fun handleCacheEvents(cacheEvents: List<CacheEvent>) {
-            log {
-                cacheEvents.map { cacheEvent ->
-                    val message = when (cacheEvent) {
-                        is CacheEvent.Load ->
-                            "LOAD from ${cacheEvent.file} in ${cacheEvent.duration} (${cacheEvent.errors.size} errors)"
-                        is CacheEvent.Save -> "SAVE to ${cacheEvent.file} in ${cacheEvent.duration}"
-                        is CacheEvent.Dump -> "DUMP"
-                        is CacheEvent.Clear -> "CLEAR"
-                        is CacheEvent.Hit -> {
-                            val nameSuffix = (cacheEvent.value.obj as? SpotifyObject)?.name?.let { " ($it)" }.orEmpty()
-                            "HIT ${cacheEvent.id}: ${cacheEvent.value.type}" + nameSuffix
-                        }
-                        is CacheEvent.Miss -> "MISS ${cacheEvent.id}"
-                        is CacheEvent.Update -> {
-                            val previousSuffix = cacheEvent.previous?.type?.let { " (was $it)" }.orEmpty()
-                            "PUT ${cacheEvent.id}: ${cacheEvent.new.type}" + previousSuffix
-                        }
-                        is CacheEvent.Invalidate -> "INVALIDATE ${cacheEvent.id} (was ${cacheEvent.value.type})"
-                    }
-
-                    val type = when (cacheEvent) {
-                        is CacheEvent.Dump -> Event.Type.INFO
-                        is CacheEvent.Clear -> Event.Type.WARNING
-                        is CacheEvent.Hit -> Event.Type.SUCCESS
-                        is CacheEvent.Invalidate -> Event.Type.INFO
-                        is CacheEvent.Load -> Event.Type.INFO
-                        is CacheEvent.Miss -> Event.Type.WARNING
-                        is CacheEvent.Save -> Event.Type.INFO
-                        is CacheEvent.Update -> Event.Type.INFO
-                    }
-
-                    Event(message = message, type = type)
-                }
-            }
         }
     }
 

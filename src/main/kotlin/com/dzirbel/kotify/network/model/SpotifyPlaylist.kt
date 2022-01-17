@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.network.model
 
-import com.dzirbel.kotify.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -99,10 +98,7 @@ data class FullSpotifyPlaylist(
 
     /** Information about the tracks of the playlist. */
     val tracks: Paging<SpotifyPlaylistTrack>
-) : SpotifyPlaylist {
-    override val cacheableObjects: Collection<CacheableObject>
-        get() = tracks.items.map { it.track } // TODO doesn't cache tracks beyond the first page
-}
+) : SpotifyPlaylist
 
 /** Undocumented model. */
 @Serializable

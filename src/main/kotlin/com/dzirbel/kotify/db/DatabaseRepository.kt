@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.db
 
-import com.dzirbel.kotify.cache.Repository
+import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.network.model.SpotifyObject
 
 /**

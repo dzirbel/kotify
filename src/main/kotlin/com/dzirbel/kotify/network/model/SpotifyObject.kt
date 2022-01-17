@@ -1,13 +1,11 @@
 package com.dzirbel.kotify.network.model
 
-import com.dzirbel.kotify.cache.CacheableObject
-
 /**
  * Common interface for properties found in most Spotify network objects.
  */
-interface SpotifyObject : CacheableObject {
+interface SpotifyObject {
     /** The Spotify ID for the object. */
-    override val id: String?
+    val id: String?
 
     /** A link to the Web API endpoint providing full details of the object. */
     val href: String?

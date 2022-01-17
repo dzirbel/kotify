@@ -34,17 +34,18 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dzirbel.kotify.cache.Rating
-import com.dzirbel.kotify.cache.SpotifyCache
+import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
+import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyTrack
+import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -312,7 +313,10 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 }
                 playback?.item?.let { track ->
                     Player.currentTrack.value = track
-                    SpotifyCache.put(track)
+
+                    // cache track in database or update stored data
+                    // TODO runBlocking hack for tests
+                    runBlocking { KotifyDatabase.transaction { Track.from(track) } }
                 }
 
                 when {
@@ -339,6 +343,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                     }
 
                     else -> {
+                        println("adding track")
                         mutateState {
                             it
                                 .withTrack(track = playback.item)
@@ -375,7 +380,10 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                 }
                 trackPlayback?.item?.let { track ->
                     Player.currentTrack.value = track
-                    SpotifyCache.put(track)
+
+                    // cache track in database or update stored data
+                    // TODO runBlocking hack for tests
+                    runBlocking { KotifyDatabase.transaction { Track.from(track) } }
                 }
 
                 when {

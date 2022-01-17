@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.network.model
 
-import com.dzirbel.kotify.cache.CacheableObject
 import com.dzirbel.kotify.util.CaseInsensitiveEnumSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -99,10 +98,7 @@ data class SimplifiedSpotifyAlbum(
      */
     @SerialName("album_group")
     val albumGroup: SpotifyAlbum.Type? = null
-) : SpotifyAlbum {
-    override val cacheableObjects: Collection<CacheableObject>
-        get() = artists
-}
+) : SpotifyAlbum
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-albumobject
@@ -148,10 +144,7 @@ data class FullSpotifyAlbum(
 
     /** The tracks of the album. */
     val tracks: Paging<SimplifiedSpotifyTrack>
-) : SpotifyAlbum {
-    override val cacheableObjects: Collection<CacheableObject>
-        get() = artists.plus(tracks.items) // TODO doesn't cache tracks beyond the first page
-}
+) : SpotifyAlbum
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-savedalbumobject
@@ -167,10 +160,4 @@ data class SpotifySavedAlbum(
 
     /** Information about the album. */
     val album: FullSpotifyAlbum
-) : CacheableObject {
-    override val id: String?
-        get() = null
-
-    override val cacheableObjects
-        get() = setOf(album)
-}
+)

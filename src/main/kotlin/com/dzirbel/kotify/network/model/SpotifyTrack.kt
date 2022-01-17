@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.network.model
 
-import com.dzirbel.kotify.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -115,10 +114,7 @@ data class SimplifiedSpotifyTrack(
 
     /** Undocumented field. */
     val popularity: Int? = null
-) : SpotifyTrack {
-    override val cacheableObjects: Collection<CacheableObject>
-        get() = album?.let { setOf(it) } ?: emptySet()
-}
+) : SpotifyTrack
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-trackobject
@@ -163,10 +159,7 @@ data class FullSpotifyTrack(
      * popularity value may lag actual popularity by a few days: the value is not updated in real time.
      */
     val popularity: Int
-) : SpotifyTrack {
-    override val cacheableObjects: Collection<CacheableObject>
-        get() = setOf(album)
-}
+) : SpotifyTrack
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-savedtrackobject
@@ -182,9 +175,4 @@ data class SpotifySavedTrack(
 
     /** Information about the track. */
     val track: FullSpotifyTrack
-) : CacheableObject {
-    override val id: String? = null
-
-    override val cacheableObjects: Collection<CacheableObject>
-        get() = setOf(track)
-}
+)

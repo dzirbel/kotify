@@ -4,7 +4,6 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
@@ -38,8 +37,6 @@ fun main(args: Array<String>) {
 
     // clear non-refreshable tokens from tests
     AccessToken.Cache.requireRefreshable()
-
-    SpotifyCache.load()
 
     application {
         Window(

@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.cache
+package com.dzirbel.kotify.repository
 
 import com.dzirbel.kotify.util.zipEach
 

@@ -3,8 +3,8 @@ package com.dzirbel.kotify.db.model
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import com.dzirbel.kotify.cache.Rating
-import com.dzirbel.kotify.cache.RatingRepository
+import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.repository.RatingRepository
 import com.dzirbel.kotify.db.KotifyDatabase
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable

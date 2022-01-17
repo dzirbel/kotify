@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.cache
+package com.dzirbel.kotify.repository
 
 import androidx.compose.runtime.State
 import kotlinx.coroutines.flow.SharedFlow

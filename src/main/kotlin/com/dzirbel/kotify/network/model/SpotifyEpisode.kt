@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.network.model
 
-import com.dzirbel.kotify.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -125,7 +124,4 @@ data class FullSpotifyEpisode(
 
     /** The show on which the episode belongs. */
     val show: SimplifiedSpotifyShow
-) : SpotifyEpisode {
-    override val cacheableObjects: Collection<CacheableObject>
-        get() = setOf(show)
-}
+) : SpotifyEpisode

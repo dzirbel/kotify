@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.network.model
 
-import com.dzirbel.kotify.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -32,14 +31,4 @@ data class SpotifyPlaylistTrack(
 
     /** Undocumented field. */
     @SerialName("video_thumbnail") val videoThumbnail: Map<String, String?>? = null
-) : CacheableObject {
-    override val id
-        get() = track.id?.let { idFor(trackId = it) }
-
-    override val cacheableObjects: Collection<CacheableObject>
-        get() = listOf(track)
-
-    companion object {
-        fun idFor(trackId: String): String = "playlist-track-$trackId"
-    }
-}
+)

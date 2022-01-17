@@ -29,7 +29,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.Logger
-import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
@@ -47,9 +46,9 @@ import com.dzirbel.kotify.util.formatByteSize
 import com.dzirbel.kotify.util.formatDateTime
 import kotlinx.coroutines.flow.map
 
+// TODO add tab for database operations
 private enum class DebugTab(val tabName: String, val log: Logger) {
     NETWORK("Network", Logger.Network),
-    CACHE("Cache", Logger.Cache),
     IMAGE_CACHE("Images", Logger.ImageCache),
     UI("UI", Logger.UI)
 }
@@ -60,17 +59,6 @@ private data class NetworkSettings(
     val filterApi: Boolean = false,
     val filterIncoming: Boolean = false,
     val filterOutgoing: Boolean = false
-)
-
-private data class CacheSettings(
-    val includeLoad: Boolean = true,
-    val includeSave: Boolean = true,
-    val includeDump: Boolean = true,
-    val includeClear: Boolean = true,
-    val includeHit: Boolean = true,
-    val includeMiss: Boolean = true,
-    val includePut: Boolean = true,
-    val includeInvalidate: Boolean = true
 )
 
 private data class ImageCacheSettings(
@@ -89,7 +77,6 @@ private data class UISettings(
 // not part of the composition in order to retain values if the panel is hidden
 private val tab = mutableStateOf(DebugTab.values().first())
 private val networkSettings = mutableStateOf(NetworkSettings())
-private val cacheSettings = mutableStateOf(CacheSettings())
 private val imageCacheSettings = mutableStateOf(ImageCacheSettings())
 private val uiSettings = mutableStateOf(UISettings())
 private val scrollStates = DebugTab.values().associateWith { ScrollState(0) }
@@ -108,7 +95,6 @@ fun DebugPanel() {
 
             when (tab.value) {
                 DebugTab.NETWORK -> NetworkTab()
-                DebugTab.CACHE -> CacheTab()
                 DebugTab.IMAGE_CACHE -> ImageCacheTab()
                 DebugTab.UI -> UITab()
             }
@@ -211,113 +197,6 @@ private fun NetworkTab() {
         }
 
         allow
-    }
-}
-
-@Composable
-private fun CacheTab() {
-    Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
-        val size = SpotifyCache.size
-        val sizeOnDisk = SpotifyCache.sizeOnDisk
-        val sizeOnDiskFormatted = remember(sizeOnDisk) { formatByteSize(sizeOnDisk) }
-
-        Text("$size cached objects; $sizeOnDiskFormatted on disk")
-
-        VerticalSpacer(Dimens.space2)
-
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { SpotifyCache.clear() }
-        ) {
-            Text("Clear cache")
-        }
-
-        VerticalSpacer(Dimens.space2)
-
-        CheckboxWithLabel(
-            modifier = Modifier.fillMaxWidth(),
-            checked = cacheSettings.value.includeLoad,
-            onCheckedChange = { cacheSettings.mutate { copy(includeLoad = it) } },
-            label = { Text("Include LOAD events") }
-        )
-
-        VerticalSpacer(Dimens.space2)
-
-        CheckboxWithLabel(
-            modifier = Modifier.fillMaxWidth(),
-            checked = cacheSettings.value.includeSave,
-            onCheckedChange = { cacheSettings.mutate { copy(includeSave = it) } },
-            label = { Text("Include SAVE events") }
-        )
-
-        VerticalSpacer(Dimens.space2)
-
-        CheckboxWithLabel(
-            modifier = Modifier.fillMaxWidth(),
-            checked = cacheSettings.value.includeDump,
-            onCheckedChange = { cacheSettings.mutate { copy(includeDump = it) } },
-            label = { Text("Include DUMP events") }
-        )
-
-        VerticalSpacer(Dimens.space2)
-
-        CheckboxWithLabel(
-            modifier = Modifier.fillMaxWidth(),
-            checked = cacheSettings.value.includeClear,
-            onCheckedChange = { cacheSettings.mutate { copy(includeClear = it) } },
-            label = { Text("Include CLEAR events") }
-        )
-
-        VerticalSpacer(Dimens.space2)
-
-        CheckboxWithLabel(
-            modifier = Modifier.fillMaxWidth(),
-            checked = cacheSettings.value.includeHit,
-            onCheckedChange = { cacheSettings.mutate { copy(includeHit = it) } },
-            label = { Text("Include HIT events") }
-        )
-
-        VerticalSpacer(Dimens.space2)
-
-        CheckboxWithLabel(
-            modifier = Modifier.fillMaxWidth(),
-            checked = cacheSettings.value.includeMiss,
-            onCheckedChange = { cacheSettings.mutate { copy(includeMiss = it) } },
-            label = { Text("Include MISS events") }
-        )
-
-        VerticalSpacer(Dimens.space2)
-
-        CheckboxWithLabel(
-            modifier = Modifier.fillMaxWidth(),
-            checked = cacheSettings.value.includePut,
-            onCheckedChange = { cacheSettings.mutate { copy(includePut = it) } },
-            label = { Text("Include PUT events") }
-        )
-
-        VerticalSpacer(Dimens.space2)
-
-        CheckboxWithLabel(
-            modifier = Modifier.fillMaxWidth(),
-            checked = cacheSettings.value.includeInvalidate,
-            onCheckedChange = { cacheSettings.mutate { copy(includeInvalidate = it) } },
-            label = { Text("Include INVALIDATE events") }
-        )
-    }
-
-    val scrollState = scrollStates.getValue(DebugTab.CACHE)
-    EventList(log = Logger.Cache, key = cacheSettings.value, scrollState = scrollState) { event ->
-        when {
-            event.message.startsWith("LOAD") -> cacheSettings.value.includeLoad
-            event.message.startsWith("SAVE") -> cacheSettings.value.includeSave
-            event.message.startsWith("DUMP") -> cacheSettings.value.includeDump
-            event.message.startsWith("CLEAR") -> cacheSettings.value.includeClear
-            event.message.startsWith("HIT") -> cacheSettings.value.includeHit
-            event.message.startsWith("MISS") -> cacheSettings.value.includeMiss
-            event.message.startsWith("PUT") -> cacheSettings.value.includePut
-            event.message.startsWith("INVALIDATE") -> cacheSettings.value.includeInvalidate
-            else -> true
-        }
     }
 }
 

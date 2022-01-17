@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui
 
 import androidx.compose.runtime.MutableState
-import com.dzirbel.kotify.cache.SpotifyCache
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
@@ -46,7 +45,7 @@ internal class BottomPanelPresenterTest {
     @BeforeEach
     fun setup() {
         unmockkAll()
-        mockkObject(Spotify.Player, SpotifyCache, Player)
+        mockkObject(Spotify.Player, Player)
 
         every { Player.currentDevice } returns currentDeviceState
         every { Player.currentTrack } returns currentTrackState
@@ -60,7 +59,7 @@ internal class BottomPanelPresenterTest {
 
     @AfterEach
     fun finish() {
-        confirmVerified(Spotify.Player, SpotifyCache, Player)
+        confirmVerified(Spotify.Player, Player)
         confirmVerified(currentDeviceState, currentTrackState, isPlayingState, playbackContextState)
     }
 
@@ -166,8 +165,6 @@ internal class BottomPanelPresenterTest {
                     playbackContextState.value = playback.context
 
                     playback.item?.let { track ->
-                        SpotifyCache.put(track)
-
                         Player.currentTrack
                         currentTrackState.value = track
                     }

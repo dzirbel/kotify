@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.network.model
 
-import com.dzirbel.kotify.cache.CacheableObject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -107,10 +106,7 @@ data class FullSpotifyShow(
     override val uri: String,
 
     val episodes: Paging<SimplifiedSpotifyEpisode>
-) : SpotifyShow {
-    override val cacheableObjects: Collection<CacheableObject>
-        get() = episodes.items // TODO doesn't cache episodes beyond the first page
-}
+) : SpotifyShow
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-savedshowobject
@@ -126,9 +122,4 @@ data class SpotifySavedShow(
 
     /** Information about the show. */
     val show: SimplifiedSpotifyShow
-) : CacheableObject {
-    override val id: String? = null
-
-    override val cacheableObjects: Collection<CacheableObject>
-        get() = setOf(show)
-}
+)
