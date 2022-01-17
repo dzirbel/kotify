@@ -290,7 +290,7 @@ object Fixtures {
                 AlbumProperties("4J53FaRZIbr95I6TzZw4Xr", "It Doesn't Matter Two (Lockdown Version)"),
                 AlbumProperties("69fr2Pcl9qaDIHPG2OovIS", "Funeral Songs"),
                 AlbumProperties("374PwdVlct4JejdqIfZksY", "Afscheid"),
-                AlbumProperties("3P39JR7Kqv8z6CnW5C53Ux", "REMIXES"),
+                AlbumProperties("3P39JR7Kqv8z6CnW5C53Ux", "Remixes"),
                 AlbumProperties("7Jr3AHWcPDUAQx3gGFO4lD", "No Absolution"),
                 AlbumProperties("1H5k5QgsFjnMPzlXfWq8QH", "Death Stranding (Songs from the Video Game)"),
                 AlbumProperties("1ZFgVY4Op7A4oSAx2EALVj", "Into Eternity"),
