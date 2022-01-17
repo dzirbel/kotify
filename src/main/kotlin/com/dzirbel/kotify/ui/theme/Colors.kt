@@ -84,10 +84,12 @@ enum class Colors(
     }
 
     companion object {
-        var current: Colors
+        // TODO move to composition-local provider?
+        val current: Colors
             get() = Settings.current.colors
-            set(value) {
-                Settings.mutate { copy(colors = value) }
-            }
+
+        fun setCurrent(colors: Colors, saveOnChange: Boolean = true) {
+            Settings.mutate(saveOnChange = saveOnChange) { copy(colors = colors) }
+        }
     }
 }

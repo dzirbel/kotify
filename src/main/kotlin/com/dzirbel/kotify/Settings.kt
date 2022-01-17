@@ -40,15 +40,17 @@ object Settings {
         get() = state.value
 
     /**
-     * Changes the current [SettingsData] as applied by [block], and saves the resulting value to disk in the
-     * background.
+     * Changes the current [SettingsData] as applied by [block], and if [saveOnChange] is true saves the resulting value
+     * to disk in the background.
      */
-    fun mutate(block: SettingsData.() -> SettingsData) {
+    fun mutate(saveOnChange: Boolean = true, block: SettingsData.() -> SettingsData) {
         val original = state.value
         val new = original.block()
         if (new != original) {
             state.value = new
-            save(data = new)
+            if (saveOnChange) {
+                save(data = new)
+            }
         }
     }
 

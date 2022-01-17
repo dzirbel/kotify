@@ -11,7 +11,7 @@ fun ThemeSwitcher(modifier: Modifier = Modifier) {
     IconButton(
         modifier = modifier,
         onClick = {
-            Colors.current = if (isLight) Colors.DARK else Colors.LIGHT
+            Colors.setCurrent(if (isLight) Colors.DARK else Colors.LIGHT)
         }
     ) {
         CachedIcon(

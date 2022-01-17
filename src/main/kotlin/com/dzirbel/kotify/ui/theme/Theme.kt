@@ -10,7 +10,6 @@ object Theme {
      */
     @Composable
     fun apply(colors: Colors = Colors.current, content: @Composable () -> Unit) {
-        Colors.current = colors
         colors.applyColors {
             Dimens.applyDimens {
                 CompositionLocalProvider(LocalMinimumTouchTargetEnforcement provides false) {
