@@ -9,7 +9,7 @@ import java.util.Properties
 private object Versions {
     const val coroutines = "1.6.0" // https://github.com/Kotlin/kotlinx.coroutines
     const val detekt = "1.18.1" // https://github.com/detekt/detekt; also update plugin version
-    const val exposed = "0.36.2" // https://github.com/JetBrains/Exposed
+    const val exposed = "0.37.3" // https://github.com/JetBrains/Exposed
     const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco
     const val junit4 = "4.13.2" // https://junit.org/junit4/
     const val junit5 = "5.8.2" // https://junit.org/junit5/
