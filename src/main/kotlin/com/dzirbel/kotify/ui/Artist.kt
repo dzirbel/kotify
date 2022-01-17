@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -25,7 +26,6 @@ import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.plusOrMinus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -54,7 +54,7 @@ private class ArtistPresenter(
         val artist: Artist,
         val refreshingArtist: Boolean,
         val artistAlbums: List<Album>,
-        val savedAlbums: Set<String>?,
+        val savedAlbumsState: State<Set<String>?>,
         val refreshingArtistAlbums: Boolean,
     )
 
@@ -129,26 +129,20 @@ private class ArtistPresenter(
                     SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
                 }
 
-                // TODO state provided by SavedAlbumRepository to auto-refresh on save/unsave of an album?
-                val savedAlbums = SavedAlbumRepository.getLibraryCached()
+                val savedAlbumsState = SavedAlbumRepository.libraryState()
 
                 mutateState {
                     ViewModel(
                         artist = artist ?: it?.artist ?: error("no artist"),
                         refreshingArtist = false,
                         artistAlbums = checkNotNull(artistAlbums ?: it?.artistAlbums),
-                        savedAlbums = savedAlbums,
+                        savedAlbumsState = savedAlbumsState,
                         refreshingArtistAlbums = false
                     )
                 }
             }
 
-            is Event.ToggleSave -> {
-                SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
-                mutateState {
-                    it?.copy(savedAlbums = it.savedAlbums?.plusOrMinus(event.albumId, event.save))
-                }
-            }
+            is Event.ToggleSave -> SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
         }
     }
 }
@@ -215,7 +209,7 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
             ) { album ->
                 AlbumCell(
                     album = album,
-                    isSaved = state.savedAlbums?.contains(album.id.value),
+                    isSaved = state.savedAlbumsState.value?.contains(album.id.value),
                     pageStack = pageStack,
                     onToggleSave = { save ->
                         presenter.emitAsync(ArtistPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
