@@ -343,7 +343,6 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                     }
 
                     else -> {
-                        println("adding track")
                         mutateState {
                             it
                                 .withTrack(track = playback.item)
