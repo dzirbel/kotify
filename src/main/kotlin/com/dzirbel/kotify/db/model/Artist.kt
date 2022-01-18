@@ -3,9 +3,9 @@ package com.dzirbel.kotify.db.model
 import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
-import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
+import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cachedAsList
@@ -39,11 +39,7 @@ object ArtistTable : SpotifyEntityTable(name = "artists") {
     object SavedArtistsTable : SavedEntityTable(name = "saved_artists")
 }
 
-class Artist(id: EntityID<String>) : SavableSpotifyEntity(
-    id = id,
-    table = ArtistTable,
-    savedEntityTable = ArtistTable.SavedArtistsTable,
-) {
+class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable) {
     var popularity: UInt? by ArtistTable.popularity
     var followersTotal: UInt? by ArtistTable.followersTotal
     var albumsFetched: Instant? by ArtistTable.albumsFetched

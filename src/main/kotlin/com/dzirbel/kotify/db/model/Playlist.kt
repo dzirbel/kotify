@@ -4,9 +4,9 @@ import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadOnlyCachedProperty
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
-import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
+import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cached
@@ -42,11 +42,7 @@ object PlaylistTable : SpotifyEntityTable(name = "playlists") {
     object SavedPlaylistsTable : SavedEntityTable(name = "saved_playlists")
 }
 
-class Playlist(id: EntityID<String>) : SavableSpotifyEntity(
-    id = id,
-    table = PlaylistTable,
-    savedEntityTable = PlaylistTable.SavedPlaylistsTable,
-) {
+class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTable) {
     var collaborative: Boolean by PlaylistTable.collaborative
     var description: String? by PlaylistTable.description
     var public: Boolean? by PlaylistTable.public

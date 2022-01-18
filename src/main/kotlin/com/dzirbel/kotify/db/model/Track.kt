@@ -2,9 +2,9 @@ package com.dzirbel.kotify.db.model
 
 import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
-import com.dzirbel.kotify.db.SavableSpotifyEntity
 import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
+import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cached
@@ -39,11 +39,7 @@ object TrackTable : SpotifyEntityTable(name = "tracks") {
     object SavedTracksTable : SavedEntityTable(name = "saved_tracks")
 }
 
-class Track(id: EntityID<String>) : SavableSpotifyEntity(
-    id = id,
-    table = TrackTable,
-    savedEntityTable = TrackTable.SavedTracksTable,
-) {
+class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
     var discNumber: UInt by TrackTable.discNumber
     var durationMs: ULong by TrackTable.durationMs
     var explicit: Boolean by TrackTable.explicit
