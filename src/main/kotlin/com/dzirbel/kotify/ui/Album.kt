@@ -75,7 +75,7 @@ private class AlbumPresenter(
 
                 val album = AlbumRepository.get(id = page.albumId) ?: error("TODO show 404 page") // TODO 404 page
                 KotifyDatabase.transaction {
-                    album.images.loadToCache()
+                    album.largestImage.loadToCache()
                     album.artists.loadToCache()
                 }
 
@@ -134,7 +134,7 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
                     horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    LoadedImage(url = state.album.images.cached.firstOrNull()?.url)
+                    LoadedImage(url = state.album.largestImage.cached?.url)
 
                     Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
                         Text(state.album.name, fontSize = Dimens.fontTitle)

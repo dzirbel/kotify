@@ -53,6 +53,8 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
     val owner: ReadWriteCachedProperty<User> by (User referencedOn PlaylistTable.owner).cached()
 
     val images: ReadWriteCachedProperty<List<Image>> by (Image via PlaylistTable.PlaylistImageTable).cachedAsList()
+    val largestImage: ReadOnlyCachedProperty<Image?> by (Image via PlaylistTable.PlaylistImageTable)
+        .cachedReadOnly { it.largest() }
 
     val playlistTracks: ReadOnlyCachedProperty<List<PlaylistTrack>> by
     (PlaylistTrack referrersOn PlaylistTrackTable.playlist)

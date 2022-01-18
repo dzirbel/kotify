@@ -2,6 +2,7 @@ package com.dzirbel.kotify.db.model
 
 import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.ReadOnlyCachedProperty
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SavedDatabaseRepository
 import com.dzirbel.kotify.db.SavedEntityTable
@@ -9,6 +10,7 @@ import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cachedAsList
+import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
@@ -66,6 +68,9 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
     val images: ReadWriteCachedProperty<List<Image>> by (Image via AlbumTable.AlbumImageTable).cachedAsList()
     val genres: ReadWriteCachedProperty<List<Genre>> by (Genre via AlbumTable.AlbumGenreTable).cachedAsList()
     val tracks: ReadWriteCachedProperty<List<Track>> by (Track via AlbumTable.AlbumTrackTable).cachedAsList()
+
+    val largestImage: ReadOnlyCachedProperty<Image?> by (Image via AlbumTable.AlbumImageTable)
+        .cachedReadOnly { it.largest() }
 
     /**
      * Whether all the tracks on this album (or the expected number of tracks) are in the database. Must be called from

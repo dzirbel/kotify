@@ -132,7 +132,18 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
         val artists = ArtistRepository.getFull(ids = artistIds).filterNotNull()
 
         val imageUrls = KotifyDatabase.transaction {
-            artists.mapNotNull { it.images.live.firstOrNull()?.url }
+            artists.mapNotNull { artist ->
+                artist.largestImage.live?.url
+                /*artist.images.live
+                    .also {
+                        println("${artist.name} : ${it.size} images")
+                        it.forEach { image ->
+                            println(" > ${image.url} : ${image.width}x${image.height}")
+                        }
+                    }
+                    .firstOrNull()
+                    ?.url*/
+            }
         }
         SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
 
@@ -192,7 +203,7 @@ private fun ArtistCell(
             .padding(Dimens.space3)
     ) {
         LoadedImage(
-            url = artist.images.cached.firstOrNull()?.url,
+            url = artist.largestImage.cached?.url,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 

@@ -92,7 +92,7 @@ private class PlaylistPresenter(
                 val playlistUpdated = playlist.updatedTime.toEpochMilli()
                 KotifyDatabase.transaction {
                     playlist.owner.loadToCache()
-                    playlist.images.loadToCache()
+                    playlist.largestImage.loadToCache()
                 }
 
                 val isSavedState = SavedPlaylistRepository.savedStateOf(id = playlist.id.value, fetchIfUnknown = true)
@@ -193,7 +193,7 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
                     horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    LoadedImage(url = state.playlist.images.cached.firstOrNull()?.url)
+                    LoadedImage(url = state.playlist.largestImage.cached?.url)
 
                     Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
                         Text(state.playlist.name, fontSize = Dimens.fontTitle)
