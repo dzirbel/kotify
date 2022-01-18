@@ -115,19 +115,16 @@ val testLocal = tasks.create<Test>("testLocal") {
     useJUnitPlatform {
         excludeTags("network")
     }
-    finalizedBy("jacocoTestReportLocal")
 }
 
 val testIntegration = tasks.create<Test>("testIntegration") {
     useJUnitPlatform {
         includeTags("network")
     }
-    finalizedBy("jacocoTestReportIntegration")
 }
 
 tasks.test {
     useJUnitPlatform()
-    finalizedBy(tasks.jacocoTestReport)
 }
 
 tasks.withType<Test>().configureEach {
