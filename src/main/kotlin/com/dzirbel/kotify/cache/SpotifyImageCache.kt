@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -51,7 +52,7 @@ object SpotifyImageCache {
     data class State(
         val inMemoryCount: Int = totalCompleted.get(),
         val diskCount: Int = IMAGES_DIR.list()?.size ?: 0,
-        val totalDiskSize: Int = IMAGES_DIR.listFiles()?.sumOf { it.length().toInt() } ?: 0
+        val totalDiskSize: Int = IMAGES_DIR.listFiles()?.sumOf { it.length().toInt() } ?: 0,
     )
 
     private const val SPOTIFY_IMAGE_URL_PREFIX = "https://i.scdn.co/image/"
@@ -75,7 +76,7 @@ object SpotifyImageCache {
      * Clears the in-memory and disk cache.
      */
     fun clear(scope: CoroutineScope = GlobalScope, deleteFileCache: Boolean = true) {
-        scope.launch {
+        scope.launch(Dispatchers.IO) {
             imageJobs.clear()
             totalCompleted.set(0)
             if (deleteFileCache) {
@@ -89,9 +90,10 @@ object SpotifyImageCache {
      * Immediately returns the in-memory cached [ImageBitmap] for [url], if there is one.
      */
     fun getInMemory(url: String): ImageBitmap? {
-        return imageJobs[url]?.getCompleted()?.also {
-            Logger.ImageCache.handleImageCacheEvent(ImageCacheEvent.InMemory(url = url))
-        }
+        val job = imageJobs[url]
+        val bitmap = runCatching { job?.getCompleted() }.getOrNull()
+        Logger.ImageCache.handleImageCacheEvent(ImageCacheEvent.InMemory(url = url))
+        return bitmap
     }
 
     /**
@@ -104,17 +106,19 @@ object SpotifyImageCache {
             if (!imageJobs.containsKey(url)) {
                 jobs.add(
                     scope.launch(Dispatchers.IO) {
+                        assertNotOnUIThread()
                         val (_, image) = fromFileCache(url)
-                        if (image != null) {
-                            @Suppress("DeferredResultUnused")
-                            imageJobs.computeIfAbsent(url) { CompletableDeferred(image) }
+
+                        // only add to imageJobs if the image was in the file cache
+                        if (image != null && !imageJobs.containsKey(url)) {
+                            imageJobs[url] = CompletableDeferred(image)
                         }
                     }
                 )
             }
         }
 
-        jobs.forEach { it.join() }
+        jobs.joinAll()
     }
 
     /**
@@ -124,7 +128,7 @@ object SpotifyImageCache {
         url: String,
         scope: CoroutineScope,
         context: CoroutineContext = EmptyCoroutineContext,
-        client: OkHttpClient = Spotify.configuration.okHttpClient
+        client: OkHttpClient = Spotify.configuration.okHttpClient,
     ): ImageBitmap? {
         val deferred = imageJobs.computeIfAbsent(url) {
             scope.async(context = context) {
@@ -177,7 +181,6 @@ object SpotifyImageCache {
 
         return client.newCall(request).await()
             .use { response ->
-                @Suppress("BlockingMethodInNonBlockingContext")
                 response.body?.bytes()
             }
             ?.takeIf { bytes -> bytes.isNotEmpty() }
