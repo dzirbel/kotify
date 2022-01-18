@@ -32,9 +32,6 @@ plugins {
     // https://github.com/detekt/detekt; also update dependency version
     id("io.gitlab.arturbosch.detekt") version "1.19.0"
 
-    // https://plugins.gradle.org/plugin/name.remal.check-dependency-updates
-    id("name.remal.check-dependency-updates") version "1.5.0"
-
     // https://github.com/jetbrains/compose-jb
     id("org.jetbrains.compose") version "1.0.1"
 
