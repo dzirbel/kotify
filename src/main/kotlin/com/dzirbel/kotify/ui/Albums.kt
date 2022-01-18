@@ -42,7 +42,7 @@ private class AlbumsPresenter(scope: CoroutineScope) :
         val refreshing: Boolean,
         val albums: List<Album>,
         val savedAlbumIds: Set<String>,
-        val albumsUpdated: Long?
+        val albumsUpdated: Long?,
     )
 
     sealed class Event {

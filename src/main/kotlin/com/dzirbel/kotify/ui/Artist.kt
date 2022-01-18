@@ -34,7 +34,7 @@ import kotlinx.coroutines.coroutineScope
 private class ArtistPresenter(
     private val page: ArtistPage,
     private val pageStack: MutableState<PageStack>,
-    scope: CoroutineScope
+    scope: CoroutineScope,
 ) : Presenter<ArtistPresenter.ViewModel?, ArtistPresenter.Event>(
     scope = scope,
     key = page.artistId,

@@ -18,7 +18,7 @@ internal class StringUtilsTest {
         val formatted: String,
         val includeDate: Boolean,
         val includeTime: Boolean,
-        val includeMillis: Boolean
+        val includeMillis: Boolean,
     )
 
     data class FormatDurationCase(val duration: Duration, val formatted: String)

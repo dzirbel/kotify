@@ -12,5 +12,5 @@ data class SpotifyResumePoint(
     @SerialName("fully_played") val fullyPlayed: Boolean,
 
     /** The user’s most recent position in the episode in milliseconds. */
-    @SerialName("resume_position_ms") val resumePositionMs: Int
+    @SerialName("resume_position_ms") val resumePositionMs: Int,
 )

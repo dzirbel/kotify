@@ -29,5 +29,5 @@ data class SpotifyRecommendationSeed(
     val initialPoolSize: Int,
 
     /** The entity type of this seed. One of artist, track or genre. */
-    val type: String
+    val type: String,
 )

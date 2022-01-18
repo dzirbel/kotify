@@ -98,7 +98,7 @@ private class LibraryStatePresenter(scope: CoroutineScope) :
 
         val refreshingSavedTracks: Boolean = false,
 
-        val refreshingSavedPlaylists: Boolean = false
+        val refreshingSavedPlaylists: Boolean = false,
     )
 
     sealed class Event {

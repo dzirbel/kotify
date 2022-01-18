@@ -219,7 +219,7 @@ private fun MaxWidthButton(
     text: String,
     selected: Boolean,
     contentPadding: PaddingValues = PaddingValues(all = Dimens.space3),
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     SimpleTextButton(
         modifier = Modifier.fillMaxWidth(),

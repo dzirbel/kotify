@@ -26,7 +26,7 @@ sealed class Logger(private val tag: String) {
     data class Event(
         val message: String,
         val type: Type = Type.INFO,
-        val time: Long = System.currentTimeMillis()
+        val time: Long = System.currentTimeMillis(),
     ) {
         enum class Type {
             INFO, SUCCESS, WARNING, ERROR

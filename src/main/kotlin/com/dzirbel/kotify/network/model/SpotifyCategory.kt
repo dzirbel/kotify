@@ -17,5 +17,5 @@ data class SpotifyCategory(
     val id: String,
 
     /** The name of the category. */
-    val name: String
+    val name: String,
 )

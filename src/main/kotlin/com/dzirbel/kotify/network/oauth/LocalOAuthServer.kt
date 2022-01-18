@@ -18,7 +18,7 @@ import okhttp3.HttpUrl
 class LocalOAuthServer(
     port: Int = DEFAULT_PORT,
     private val state: String,
-    private val callback: suspend (Result) -> Unit
+    private val callback: suspend (Result) -> Unit,
 ) {
     private val server = embeddedServer(Netty, port = port) {
         routing {

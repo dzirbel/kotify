@@ -21,7 +21,7 @@ import java.util.concurrent.Executors
 object Settings {
     @Serializable
     data class SettingsData(
-        val colors: Colors = Colors.DARK
+        val colors: Colors = Colors.DARK,
     )
 
     private val state by lazy { mutableStateOf(load() ?: SettingsData()) }

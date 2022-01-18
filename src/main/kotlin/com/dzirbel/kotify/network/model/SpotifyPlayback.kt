@@ -18,7 +18,7 @@ data class SpotifyPlayback(
     @SerialName("shuffle_state") val shuffleState: Boolean,
     @SerialName("repeat_state") val repeatState: String,
     val context: SpotifyPlaybackContext?,
-    val actions: JsonObject? = null
+    val actions: JsonObject? = null,
 )
 
 /**
@@ -32,7 +32,7 @@ data class SpotifyTrackPlayback(
     @SerialName("currently_playing_type") val currentlyPlayingType: String,
     val item: FullSpotifyTrack?,
     val context: SpotifyPlaybackContext?,
-    val actions: JsonObject? = null
+    val actions: JsonObject? = null,
 )
 
 /**
@@ -46,7 +46,7 @@ data class SpotifyPlaybackDevice(
     @SerialName("is_private_session") val isPrivateSession: Boolean?,
     val name: String,
     val type: String,
-    @SerialName("volume_percent") val volumePercent: Int
+    @SerialName("volume_percent") val volumePercent: Int,
 )
 
 /**
@@ -57,7 +57,7 @@ data class SpotifyPlaybackContext(
     val uri: String,
     @SerialName("external_urls") val externalUrls: SpotifyExternalUrl,
     val href: String,
-    val type: String
+    val type: String,
 )
 
 /**
@@ -67,5 +67,5 @@ data class SpotifyPlaybackContext(
 data class SpotifyPlayHistoryObject(
     val track: FullSpotifyTrack,
     @SerialName("played_at") val playedAt: String,
-    val context: SpotifyPlaybackContext
+    val context: SpotifyPlaybackContext,
 )

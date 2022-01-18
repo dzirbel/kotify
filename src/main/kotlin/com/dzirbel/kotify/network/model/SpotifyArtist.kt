@@ -33,7 +33,7 @@ data class SimplifiedSpotifyArtist(
     override val id: String? = null,
     override val name: String,
     override val type: String,
-    override val uri: String? = null
+    override val uri: String? = null,
 ) : SpotifyArtist
 
 /**
@@ -64,5 +64,5 @@ data class FullSpotifyArtist(
      * The popularity of the artist. The value will be between 0 and 100, with 100 being the most popular. The artist’s
      * popularity is calculated from the popularity of all the artist’s tracks.
      */
-    val popularity: Int
+    val popularity: Int,
 ) : SpotifyArtist

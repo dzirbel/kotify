@@ -94,7 +94,7 @@ data class SimplifiedSpotifyEpisode(
     override val languages: List<String>,
     @SerialName("release_date") override val releaseDate: String,
     @SerialName("release_date_precision") override val releaseDatePrecision: String,
-    @SerialName("resume_point") override val resumePoint: SpotifyResumePoint? = null
+    @SerialName("resume_point") override val resumePoint: SpotifyResumePoint? = null,
 ) : SpotifyEpisode
 
 /**
@@ -123,5 +123,5 @@ data class FullSpotifyEpisode(
     @SerialName("resume_point") override val resumePoint: SpotifyResumePoint? = null,
 
     /** The show on which the episode belongs. */
-    val show: SimplifiedSpotifyShow
+    val show: SimplifiedSpotifyShow,
 ) : SpotifyEpisode

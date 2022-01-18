@@ -8,5 +8,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SpotifyExternalUrl(
     /** The Spotify URL for the object. */
-    val spotify: String? = null
+    val spotify: String? = null,
 )

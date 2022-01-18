@@ -57,7 +57,7 @@ data class Paging<T>(
     val previous: String? = null,
 
     /** The maximum number of items available to return. */
-    val total: Int
+    val total: Int,
 ) : Pageable<T>() {
     override val hasNext: Boolean
         get() = next != null
@@ -71,7 +71,7 @@ data class Paging<T>(
 
     // TODO document/clean up
     inline fun <reified S : T> fetchAllCustom(
-        fetchNext: (String) -> Paging<S>
+        fetchNext: (String) -> Paging<S>,
     ): List<T> {
         return fetchAll<Paging<S>> { paging -> paging.next?.let { fetchNext(it) } }
     }
@@ -98,7 +98,7 @@ data class CursorPaging<T>(
     val cursors: Cursor,
 
     /** The total number of items available to return. */
-    val total: Int
+    val total: Int,
 ) : Pageable<T>() {
     override val hasNext: Boolean
         get() = next != null
@@ -113,7 +113,7 @@ data class CursorPaging<T>(
 
     // TODO document/clean up
     inline fun <reified S : T> fetchAllCustom(
-        fetchNext: (String) -> CursorPaging<S>
+        fetchNext: (String) -> CursorPaging<S>,
     ): List<T> {
         return fetchAll<CursorPaging<S>> { paging -> paging.next?.let { fetchNext(it) } }
     }
@@ -125,5 +125,5 @@ data class CursorPaging<T>(
 @Serializable
 data class Cursor(
     /** The cursor to use as key to find the next page of items. */
-    val after: String? = null
+    val after: String? = null,
 )

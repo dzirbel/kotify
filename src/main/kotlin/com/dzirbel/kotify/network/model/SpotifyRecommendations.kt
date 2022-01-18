@@ -11,5 +11,5 @@ data class SpotifyRecommendations(
     val seeds: List<SpotifyRecommendationSeed>,
 
     /** An array of track object (simplified) ordered according to the parameters supplied. */
-    val tracks: List<SimplifiedSpotifyTrack>
+    val tracks: List<SimplifiedSpotifyTrack>,
 )

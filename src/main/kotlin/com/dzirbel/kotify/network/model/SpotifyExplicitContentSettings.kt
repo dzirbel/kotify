@@ -12,5 +12,5 @@ data class SpotifyExplicitContentSettings(
     @SerialName("filter_enabled") val filterEnabled: Boolean,
 
     /** When true, indicates that the explicit content setting is locked and can’t be changed by the user. */
-    @SerialName("filter_locked") val filterLocked: Boolean
+    @SerialName("filter_locked") val filterLocked: Boolean,
 )

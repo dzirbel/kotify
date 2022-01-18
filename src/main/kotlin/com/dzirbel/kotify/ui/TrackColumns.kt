@@ -66,7 +66,7 @@ class PlayingColumn(
     /**
      * Returns a [Player.PlayContext] to play when the user selects the track at the given index in the column.
      */
-    private val playContextFromIndex: (index: Int) -> Player.PlayContext?
+    private val playContextFromIndex: (index: Int) -> Player.PlayContext?,
 ) : Column<Track>(name = "Currently playing", sortable = false) {
     override val width = ColumnWidth.Fill()
     override val cellAlignment = Alignment.Center

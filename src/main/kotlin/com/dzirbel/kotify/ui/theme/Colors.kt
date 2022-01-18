@@ -24,7 +24,7 @@ enum class Colors(
     val star: Color,
     private val scrollBarHover: Color,
     private val scrollBarUnhover: Color,
-    private val materialColors: androidx.compose.material.Colors
+    private val materialColors: androidx.compose.material.Colors,
 ) {
     DARK(
         surface1 = Color(0x42, 0x42, 0x42),

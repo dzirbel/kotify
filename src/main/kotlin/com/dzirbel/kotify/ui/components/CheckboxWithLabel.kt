@@ -18,7 +18,7 @@ fun CheckboxWithLabel(
     modifier: Modifier = Modifier,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    label: @Composable RowScope.() -> Unit
+    label: @Composable RowScope.() -> Unit,
 ) {
     Row(
         modifier = modifier

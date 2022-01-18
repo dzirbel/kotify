@@ -66,7 +66,7 @@ abstract class Column<T>(val name: String, val sortable: Boolean) {
         onSetSort: (SortOrder?) -> Unit,
         header: String = name,
         sortable: Boolean = this.sortable,
-        padding: Dp = Dimens.space3
+        padding: Dp = Dimens.space3,
     ) {
         if (sortable) {
             SimpleTextButton(

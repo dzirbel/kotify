@@ -25,7 +25,7 @@ import com.dzirbel.kotify.ui.util.HandleState
 fun <T> BoxScope.ScrollingPage(
     scrollState: ScrollState,
     presenter: Presenter<T?, *>,
-    content: @Composable (T) -> Unit
+    content: @Composable (T) -> Unit,
 ) {
     HandleState(
         state = { presenter.state() },

@@ -14,5 +14,5 @@ data class SpotifyExternalId(
     val isrc: String? = null,
 
     /** Universal Product Code */
-    val upc: String? = null
+    val upc: String? = null,
 )

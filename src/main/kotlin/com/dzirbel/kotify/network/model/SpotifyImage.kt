@@ -14,5 +14,5 @@ data class SpotifyImage(
     val url: String,
 
     /** The image width in pixels. If unknown: null or not returned. */
-    val width: Int? = null
+    val width: Int? = null,
 )

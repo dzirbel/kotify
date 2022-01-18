@@ -139,7 +139,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         val togglingRepeat: Boolean = false,
         val togglingPlayback: Boolean = false,
         val skippingPrevious: Boolean = false,
-        val skippingNext: Boolean = false
+        val skippingNext: Boolean = false,
     ) {
         val currentDevice: SpotifyPlaybackDevice?
             get() = selectedDevice ?: playbackCurrentDevice ?: devices?.firstOrNull()
@@ -191,14 +191,14 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         data class LoadDevices(
             val untilVolumeChange: Boolean = false,
             val untilVolumeChangeDeviceId: String? = null,
-            val retries: Int = 5
+            val retries: Int = 5,
         ) : Event()
 
         data class LoadPlayback(
             val untilIsPlayingChange: Boolean = false,
             val untilShuffleStateChange: Boolean = false,
             val untilRepeatStateChange: Boolean = false,
-            val retries: Int = 5
+            val retries: Int = 5,
         ) : Event()
 
         class LoadTrackPlayback(val untilTrackChange: Boolean = false, val retries: Int = 5) : Event()
@@ -727,7 +727,7 @@ private fun CurrentTrack(
     artistsAreSaved: Map<String, Boolean?>?,
     albumIsSaved: Boolean?,
     presenter: BottomPanelPresenter,
-    pageStack: MutableState<PageStack>
+    pageStack: MutableState<PageStack>,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space4)) {
         val album = (track as? FullSpotifyTrack)?.album ?: (track as? SimplifiedSpotifyTrack)?.album

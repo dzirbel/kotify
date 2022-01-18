@@ -23,7 +23,7 @@ class PageStack private constructor(
     val pages: List<Page>,
     val pageTitles: List<String?>,
     private val scrollStates: List<ScrollState>,
-    val currentIndex: Int
+    val currentIndex: Int,
 ) {
     init {
         require(currentIndex in pages.indices) { "index out of bounds: $currentIndex not in ${pages.indices}" }

@@ -13,7 +13,7 @@ data class PlaylistProperties(
     val description: String,
     val tracks: List<TrackProperties>? = null,
     val public: Boolean? = false,
-    val owner: String = Fixtures.userDisplayName
+    val owner: String = Fixtures.userDisplayName,
 ) : ObjectProperties(type = "playlist") {
     fun check(playlist: SpotifyPlaylist) {
         super.check(playlist)

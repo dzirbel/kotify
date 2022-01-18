@@ -108,7 +108,7 @@ object Player {
     fun play(
         context: PlayContext? = null,
         resumeIfSameContext: Boolean = true,
-        scope: CoroutineScope = GlobalScope
+        scope: CoroutineScope = GlobalScope,
     ): Boolean {
         currentDevice.value?.let { device ->
             scope.launch {

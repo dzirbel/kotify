@@ -11,5 +11,5 @@ data class SpotifyTimeInterval(
     val duration: Float,
 
     /** The confidence, from 0.0 to 1.0, of the reliability of the interval. */
-    val confidence: Float
+    val confidence: Float,
 )

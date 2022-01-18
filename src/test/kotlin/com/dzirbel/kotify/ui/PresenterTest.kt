@@ -20,7 +20,7 @@ import org.junit.jupiter.params.provider.EnumSource
 fun <S, E, P : Presenter<S, E>> testPresenter(
     createPresenter: CoroutineScope.() -> P,
     beforeOpen: (suspend (P) -> Unit)? = null,
-    block: suspend TestScope.(P) -> Unit
+    block: suspend TestScope.(P) -> Unit,
 ) {
     runTest {
         val presenter = createPresenter()
@@ -44,13 +44,13 @@ internal class PresenterTest {
         val param: String,
         val delay: Long? = null,
         val throwable: Throwable? = null,
-        val block: (suspend () -> Unit)? = null
+        val block: (suspend () -> Unit)? = null,
     )
 
     private class TestPresenter(
         scope: CoroutineScope,
         eventMergeStrategy: EventMergeStrategy = EventMergeStrategy.MERGE,
-        startingEvents: List<Event>? = null
+        startingEvents: List<Event>? = null,
     ) : Presenter<ViewModel, Event>(
         eventMergeStrategy = eventMergeStrategy,
         startingEvents = startingEvents,

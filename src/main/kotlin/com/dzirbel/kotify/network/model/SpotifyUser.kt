@@ -44,7 +44,7 @@ data class PublicSpotifyUser(
     override val id: String,
     override val images: List<SpotifyImage>? = null,
     override val type: String,
-    override val uri: String
+    override val uri: String,
 ) : SpotifyUser
 
 /**
@@ -85,5 +85,5 @@ data class PrivateSpotifyUser(
      * the same as "free".)
      * This field is only available when the current user has granted access to the user-read-private scope.
      */
-    val product: String? = null
+    val product: String? = null,
 ) : SpotifyUser

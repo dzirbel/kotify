@@ -28,7 +28,7 @@ fun SimpleTextButton(
     backgroundColor: Color = Color.Transparent,
     textColor: Color = if (backgroundColor == Color.Transparent) Colors.current.text else Colors.current.textOnSurface,
     onClick: () -> Unit,
-    content: @Composable RowScope.() -> Unit
+    content: @Composable RowScope.() -> Unit,
 ) {
     TextButton(
         modifier = modifier

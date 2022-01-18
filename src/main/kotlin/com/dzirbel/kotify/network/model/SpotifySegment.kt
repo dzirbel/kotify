@@ -51,5 +51,5 @@ data class SpotifySegment(
      * Timbre is the quality of a musical note or sound that distinguishes different types of musical instruments, or
      * voices. Timbre vectors are best used in comparison with each other.
      */
-    val timbre: List<Float>
+    val timbre: List<Float>,
 )

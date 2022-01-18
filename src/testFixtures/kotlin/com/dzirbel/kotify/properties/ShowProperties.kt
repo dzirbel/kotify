@@ -12,7 +12,7 @@ data class ShowProperties(
     val saved: Boolean,
     val addedAt: String? = null,
     private val languages: List<String>? = null,
-    private val mediaType: String = "audio"
+    private val mediaType: String = "audio",
 ) : ObjectProperties(type = "show") {
     fun check(show: SpotifyShow) {
         super.check(show)

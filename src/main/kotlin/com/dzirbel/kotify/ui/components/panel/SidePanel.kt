@@ -36,7 +36,7 @@ fun SidePanel(
         .background(Colors.current.surface3),
     splitterViewParams: SplitterViewParams = SplitterViewParams(),
     panelContent: @Composable () -> Unit,
-    mainContent: @Composable () -> Unit
+    mainContent: @Composable () -> Unit,
 ) {
     val splitterOrientation = when (direction) {
         PanelDirection.LEFT, PanelDirection.RIGHT -> Orientation.Vertical

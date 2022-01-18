@@ -58,7 +58,7 @@ data class AuthenticationState(
     val clientId: String = OAuth.DEFAULT_CLIENT_ID,
     val port: Int = LocalOAuthServer.DEFAULT_PORT,
     val scopes: Set<String> = OAuth.DEFAULT_SCOPES,
-    val manualRedirectUrl: String = ""
+    val manualRedirectUrl: String = "",
 )
 
 private val MIN_WIDTH = 500.dp

@@ -42,7 +42,7 @@ data class AccessToken(
     val scope: String? = null,
     @SerialName("expires_in") val expiresIn: Long,
     @SerialName("refresh_token") val refreshToken: String? = null,
-    val received: Long = System.currentTimeMillis()
+    val received: Long = System.currentTimeMillis(),
 ) {
     val isExpired
         get() = System.currentTimeMillis() >= received + TimeUnit.SECONDS.toMillis(expiresIn)

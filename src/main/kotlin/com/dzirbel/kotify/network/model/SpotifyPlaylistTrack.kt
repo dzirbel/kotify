@@ -30,5 +30,5 @@ data class SpotifyPlaylistTrack(
     @SerialName("primary_color") val primaryColor: String? = null,
 
     /** Undocumented field. */
-    @SerialName("video_thumbnail") val videoThumbnail: Map<String, String?>? = null
+    @SerialName("video_thumbnail") val videoThumbnail: Map<String, String?>? = null,
 )

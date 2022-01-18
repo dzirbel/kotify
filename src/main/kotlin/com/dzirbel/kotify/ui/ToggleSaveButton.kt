@@ -17,7 +17,7 @@ fun ToggleSaveButton(
     isSaved: Boolean?,
     modifier: Modifier = Modifier,
     size: Dp = Dimens.iconSmall,
-    onSave: (Boolean) -> Unit
+    onSave: (Boolean) -> Unit,
 ) {
     val expectedState = remember(isSaved) { mutableStateOf(isSaved) }
     IconButton(

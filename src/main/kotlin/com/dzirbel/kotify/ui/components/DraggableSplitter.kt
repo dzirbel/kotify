@@ -25,7 +25,7 @@ import java.awt.Cursor
 data class SplitterViewParams(
     val dragTargetWidth: Dp = Dimens.space3,
     val lineWidth: Dp = Dimens.divider,
-    val lineColor: Color = Colors.current.dividerColor
+    val lineColor: Color = Colors.current.dividerColor,
 )
 
 /**
@@ -37,7 +37,7 @@ fun DraggableSplitter(
     orientation: Orientation,
     resizeEnabled: Boolean = true,
     params: SplitterViewParams = SplitterViewParams(),
-    onResize: (delta: Dp) -> Unit
+    onResize: (delta: Dp) -> Unit,
 ) {
     val resizing = remember { mutableStateOf(false) }
 

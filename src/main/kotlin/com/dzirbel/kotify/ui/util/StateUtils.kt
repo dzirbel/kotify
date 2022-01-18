@@ -28,7 +28,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 fun <T> callbackAsState(
     context: CoroutineContext = EmptyCoroutineContext,
     key: Any,
-    callback: suspend () -> T?
+    callback: suspend () -> T?,
 ): State<T?> {
     return produceState<T?>(initialValue = null, key1 = key) {
         if (context == EmptyCoroutineContext) {
@@ -52,7 +52,7 @@ fun <T> callbackAsState(
 fun <T> Flow<T>.collectAsStateSwitchable(
     initial: () -> T,
     key: Any?,
-    context: CoroutineContext = Dispatchers.IO
+    context: CoroutineContext = Dispatchers.IO,
 ): State<T> {
     // copied from internal compose code
     class ProduceStateScopeImpl<T>(state: MutableState<T>, override val coroutineContext: CoroutineContext) :
@@ -112,7 +112,7 @@ fun <T> HandleState(
     state: @Composable () -> Presenter.StateOrError<T?>,
     onError: @Composable (Throwable) -> Unit,
     onLoading: @Composable () -> Unit,
-    onSuccess: @Composable (T) -> Unit
+    onSuccess: @Composable (T) -> Unit,
 ) {
     when (val stateOrError = state()) {
         is Presenter.StateOrError.Error -> onError(stateOrError.throwable)

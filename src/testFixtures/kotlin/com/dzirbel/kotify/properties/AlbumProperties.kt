@@ -14,7 +14,7 @@ data class AlbumProperties(
     val addedAt: String? = null,
     val totalTracks: Int? = null,
     val albumType: SpotifyAlbum.Type? = SpotifyAlbum.Type.ALBUM,
-    val genres: List<String> = emptyList()
+    val genres: List<String> = emptyList(),
 ) : ObjectProperties(type = "album") {
     fun check(album: SpotifyAlbum) {
         super.check(album)

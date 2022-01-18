@@ -58,20 +58,20 @@ private const val MAX_EVENTS = 500
 private data class NetworkSettings(
     val filterApi: Boolean = false,
     val filterIncoming: Boolean = false,
-    val filterOutgoing: Boolean = false
+    val filterOutgoing: Boolean = false,
 )
 
 private data class ImageCacheSettings(
     val includeInMemory: Boolean = true,
     val includeOnDisk: Boolean = true,
-    val includeMiss: Boolean = true
+    val includeMiss: Boolean = true,
 )
 
 private data class UISettings(
     val includeStates: Boolean = true,
     val includeEvents: Boolean = true,
     val includeErrors: Boolean = true,
-    val presenterRegex: String = ""
+    val presenterRegex: String = "",
 )
 
 // not part of the composition in order to retain values if the panel is hidden
@@ -334,7 +334,7 @@ private fun EventList(
     log: Logger,
     key: Any,
     scrollState: ScrollState = rememberScrollState(0),
-    filter: (Logger.Event) -> Boolean = { true }
+    filter: (Logger.Event) -> Boolean = { true },
 ) {
     val events = log.eventsFlow
         .map { it.filter(filter).take(MAX_EVENTS) }

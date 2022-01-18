@@ -74,7 +74,7 @@ data class SimplifiedSpotifyPlaylist(
     @SerialName("snapshot_id") override val snapshotId: String,
 
     /** Undocumented field. */
-    val tracks: SpotifyPlaylistTracks?
+    val tracks: SpotifyPlaylistTracks?,
 ) : SpotifyPlaylist
 
 @Serializable
@@ -97,12 +97,12 @@ data class FullSpotifyPlaylist(
     val followers: SpotifyFollowers,
 
     /** Information about the tracks of the playlist. */
-    val tracks: Paging<SpotifyPlaylistTrack>
+    val tracks: Paging<SpotifyPlaylistTrack>,
 ) : SpotifyPlaylist
 
 /** Undocumented model. */
 @Serializable
 data class SpotifyPlaylistTracks(
     val href: String,
-    val total: Int
+    val total: Int,
 )

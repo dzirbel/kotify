@@ -39,5 +39,5 @@ data class SpotifyAudioAnalysis(
     val tatums: List<SpotifyTimeInterval>,
 
     /** Undocumented field. */
-    val track: JsonObject? = null
+    val track: JsonObject? = null,
 )

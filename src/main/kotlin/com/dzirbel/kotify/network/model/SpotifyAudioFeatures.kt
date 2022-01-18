@@ -108,5 +108,5 @@ data class SpotifyAudioFeatures(
      * more positive (e.g. happy, cheerful, euphoric), while tracks with low valence sound more negative (e.g. sad,
      * depressed, angry).
      */
-    val valence: Float
+    val valence: Float,
 )

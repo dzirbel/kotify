@@ -14,7 +14,7 @@ data class TrackProperties(
     val isLocal: Boolean = false,
     val trackNumber: Int,
     val addedBy: String? = null,
-    val addedAt: String? = null
+    val addedAt: String? = null,
 ) : ObjectProperties(type = "track", hrefNull = isLocal) {
     fun check(track: SpotifyTrack) {
         super.check(track)

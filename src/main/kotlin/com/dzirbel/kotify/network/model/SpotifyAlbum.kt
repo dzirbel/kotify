@@ -97,7 +97,7 @@ data class SimplifiedSpotifyAlbum(
      * "appears_on". Compare to album_type this field represents relationship between the artist and the album.
      */
     @SerialName("album_group")
-    val albumGroup: SpotifyAlbum.Type? = null
+    val albumGroup: SpotifyAlbum.Type? = null,
 ) : SpotifyAlbum
 
 /**
@@ -143,7 +143,7 @@ data class FullSpotifyAlbum(
     val popularity: Int,
 
     /** The tracks of the album. */
-    val tracks: Paging<SimplifiedSpotifyTrack>
+    val tracks: Paging<SimplifiedSpotifyTrack>,
 ) : SpotifyAlbum
 
 /**
@@ -159,5 +159,5 @@ data class SpotifySavedAlbum(
     @SerialName("added_at") val addedAt: String,
 
     /** Information about the album. */
-    val album: FullSpotifyAlbum
+    val album: FullSpotifyAlbum,
 )

@@ -14,7 +14,7 @@ class MockRequestInterceptor(
     var responseMessage: String = "OK",
     responseBody: ResponseBody = "".toResponseBody("text/plain".toMediaType()),
     var delayMs: Long? = null,
-    val requests: MutableList<Request> = mutableListOf()
+    val requests: MutableList<Request> = mutableListOf(),
 ) {
     val client: OkHttpClient
         get() = OkHttpClient.Builder().addInterceptor(::intercept).build()

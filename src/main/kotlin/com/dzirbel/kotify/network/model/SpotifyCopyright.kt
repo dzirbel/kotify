@@ -11,5 +11,5 @@ data class SpotifyCopyright(
     val text: String,
 
     /** The type of copyright: C = the copyright, P = the sound recording (performance) copyright. */
-    val type: String
+    val type: String,
 )

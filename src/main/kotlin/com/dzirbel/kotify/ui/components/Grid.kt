@@ -33,7 +33,7 @@ fun <E> Grid(
     verticalSpacing: Dp = Dimens.space3,
     cellAlignment: Alignment = Alignment.Center,
     columns: Int? = null,
-    elementContent: @Composable (E) -> Unit
+    elementContent: @Composable (E) -> Unit,
 ) {
     require(columns == null || columns > 0) { "columns must be positive; got $columns" }
     val layoutDirection = LocalLayoutDirection.current

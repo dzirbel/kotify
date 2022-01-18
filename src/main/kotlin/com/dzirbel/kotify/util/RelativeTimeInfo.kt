@@ -14,7 +14,7 @@ import kotlin.math.abs
 data class RelativeTimeInfo(
     val unit: TimeUnit,
     val amount: Long,
-    val msUntilNextIncrement: Long
+    val msUntilNextIncrement: Long,
 ) {
     /**
      * Returns a user-readable format of this [RelativeTimeInfo].

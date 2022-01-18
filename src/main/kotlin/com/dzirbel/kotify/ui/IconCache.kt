@@ -34,7 +34,7 @@ fun CachedIcon(
     size: Dp = Dimens.iconMedium,
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
-    tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+    tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
 ) {
     Icon(
         painter = IconCache.load(name, size = size),

@@ -28,5 +28,5 @@ data class SpotifyTrackLink(
     /**
      * The Spotify URI for the track.
      */
-    val uri: String
+    val uri: String,
 )

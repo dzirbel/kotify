@@ -14,5 +14,5 @@ data class SpotifyFollowers(
     val href: String? = null,
 
     /** The total number of followers. */
-    val total: Int
+    val total: Int,
 )

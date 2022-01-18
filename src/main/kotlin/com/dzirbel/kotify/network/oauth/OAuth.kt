@@ -25,7 +25,7 @@ class OAuth private constructor(
     private val clientId: String,
     private val codeVerifier: String,
     private val redirectUri: String,
-    val authorizationUrl: HttpUrl
+    val authorizationUrl: HttpUrl,
 ) {
     val error = mutableStateOf<Throwable?>(null)
     val result = mutableStateOf<LocalOAuthServer.Result?>(null)
@@ -152,7 +152,7 @@ class OAuth private constructor(
         fun start(
             clientId: String = DEFAULT_CLIENT_ID,
             scopes: Set<String> = DEFAULT_SCOPES,
-            port: Int = LocalOAuthServer.DEFAULT_PORT
+            port: Int = LocalOAuthServer.DEFAULT_PORT,
         ): OAuth {
             val state = generateState()
             val codeChallenge = CodeChallenge.generate()
@@ -203,7 +203,7 @@ class OAuth private constructor(
             scopes: Set<String>,
             redirectUri: String,
             codeChallenge: CodeChallenge,
-            state: String
+            state: String,
         ): HttpUrl {
             return "https://accounts.spotify.com/authorize".toHttpUrl()
                 .newBuilder()

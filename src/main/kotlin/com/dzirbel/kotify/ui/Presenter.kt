@@ -61,7 +61,7 @@ abstract class Presenter<ViewModel, Event : Any> constructor(
     /**
      * An optional list of events which should be emitted at the beginning of the event flow, e.g. to load content.
      */
-    private val startingEvents: List<Event>? = null
+    private val startingEvents: List<Event>? = null,
 ) : Closeable {
     /**
      * Determines how concurrent events are merged, i.e. when a new event is emitted before the previous event was fully
@@ -137,7 +137,9 @@ abstract class Presenter<ViewModel, Event : Any> constructor(
      */
     var errors: List<Throwable>
         get() = errorsFlow.value
-        set(value) { errorsFlow.value = value }
+        set(value) {
+            errorsFlow.value = value
+        }
 
     /**
      * The core event [Flow], which includes emitting [startingEvents], reacting to events according to the

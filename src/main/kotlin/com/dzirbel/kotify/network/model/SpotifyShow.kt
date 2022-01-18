@@ -79,7 +79,7 @@ data class SimplifiedSpotifyShow(
     override val publisher: String,
     @SerialName("total_episodes") override val totalEpisodes: Int,
     override val type: String,
-    override val uri: String
+    override val uri: String,
 ) : SpotifyShow
 
 /**
@@ -105,7 +105,7 @@ data class FullSpotifyShow(
     override val type: String,
     override val uri: String,
 
-    val episodes: Paging<SimplifiedSpotifyEpisode>
+    val episodes: Paging<SimplifiedSpotifyEpisode>,
 ) : SpotifyShow
 
 /**
@@ -121,5 +121,5 @@ data class SpotifySavedShow(
     @SerialName("added_at") val addedAt: String,
 
     /** Information about the show. */
-    val show: SimplifiedSpotifyShow
+    val show: SimplifiedSpotifyShow,
 )

@@ -78,7 +78,7 @@ fun LinkedText(
     unhoveredSpanStyle: SpanStyle = SpanStyle(),
     hoveredSpanStyle: SpanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
     onClickLink: (String) -> Unit = { openInBrowser(it) },
-    elements: LinkElementScope.() -> Unit
+    elements: LinkElementScope.() -> Unit,
 ) {
     val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
 
@@ -142,7 +142,7 @@ fun LinkedText(
 private class LinkElementBuilder(
     private val hoveredOffset: Int?,
     private val unhoveredSpanStyle: SpanStyle,
-    private val hoveredSpanStyle: SpanStyle
+    private val hoveredSpanStyle: SpanStyle,
 ) : LinkElementScope {
     private val builder = AnnotatedString.Builder()
     private var currentOffset = 0

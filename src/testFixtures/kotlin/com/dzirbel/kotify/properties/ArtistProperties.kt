@@ -8,7 +8,7 @@ data class ArtistProperties(
     override val id: String,
     override val name: String,
     val albums: List<AlbumProperties>,
-    val genres: List<String> = emptyList()
+    val genres: List<String> = emptyList(),
 ) : ObjectProperties(type = "artist") {
     fun check(artist: SpotifyArtist) {
         super.check(artist)

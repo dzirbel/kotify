@@ -7,7 +7,7 @@ import com.google.common.truth.Truth.assertThat
 abstract class ObjectProperties(
     private val type: String,
     private val hrefNull: Boolean = false,
-    private val uriNull: Boolean = false
+    private val uriNull: Boolean = false,
 ) {
     abstract val id: String?
     abstract val name: String

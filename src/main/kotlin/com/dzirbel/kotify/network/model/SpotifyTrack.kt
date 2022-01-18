@@ -113,7 +113,7 @@ data class SimplifiedSpotifyTrack(
     val externalIds: SpotifyExternalId? = null,
 
     /** Undocumented field. */
-    val popularity: Int? = null
+    val popularity: Int? = null,
 ) : SpotifyTrack
 
 /**
@@ -158,7 +158,7 @@ data class FullSpotifyTrack(
      * independently. Artist and album popularity is derived mathematically from track popularity. Note that the
      * popularity value may lag actual popularity by a few days: the value is not updated in real time.
      */
-    val popularity: Int
+    val popularity: Int,
 ) : SpotifyTrack
 
 /**
@@ -174,5 +174,5 @@ data class SpotifySavedTrack(
     @SerialName("added_at") val addedAt: String,
 
     /** Information about the track. */
-    val track: FullSpotifyTrack
+    val track: FullSpotifyTrack,
 )

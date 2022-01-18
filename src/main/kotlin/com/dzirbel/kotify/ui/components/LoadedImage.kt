@@ -28,7 +28,7 @@ fun LoadedImage(
     size: Dp = Dimens.contentImage,
     modifier: Modifier = Modifier,
     scope: CoroutineScope = rememberCoroutineScope { Dispatchers.IO },
-    contentDescription: String? = null
+    contentDescription: String? = null,
 ) {
     val imageState = url?.let {
         // shortcut the happy path where the image is in memory and doesn't need a recomposition to load it

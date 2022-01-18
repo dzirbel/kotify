@@ -61,7 +61,7 @@ fun formatDateTime(
     includeTime: Boolean = true,
     includeMillis: Boolean = false,
     locale: Locale = Locale.getDefault(),
-    zone: ZoneId = ZoneId.systemDefault()
+    zone: ZoneId = ZoneId.systemDefault(),
 ): String {
     val formatter = when {
         includeDate && includeTime && includeMillis -> formatDateTimeMillis

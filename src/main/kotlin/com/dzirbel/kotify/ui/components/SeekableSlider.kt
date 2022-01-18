@@ -58,7 +58,7 @@ fun SeekableSlider(
     dragKey: Any? = null,
     leftContent: (@Composable () -> Unit)? = null,
     rightContent: (@Composable () -> Unit)? = null,
-    onSeek: (seekPercent: Float) -> Unit = { }
+    onSeek: (seekPercent: Float) -> Unit = { },
 ) {
     progress?.let { require(it in 0f..1f) }
 

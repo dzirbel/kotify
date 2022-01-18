@@ -66,5 +66,5 @@ data class SpotifySection(
      * The confidence, from 0.0 to 1.0, of the reliability of the time_signature. Sections with time signature changes
      * may correspond to low values in this field.
      */
-    @SerialName("time_signature_confidence") val timeSignatureConfidence: Float
+    @SerialName("time_signature_confidence") val timeSignatureConfidence: Float,
 )

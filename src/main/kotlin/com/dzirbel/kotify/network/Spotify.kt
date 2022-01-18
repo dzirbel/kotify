@@ -50,7 +50,7 @@ import java.util.Locale
 object Spotify {
     data class Configuration(
         val okHttpClient: OkHttpClient = OkHttpClient(),
-        val oauthOkHttpClient: OkHttpClient = OkHttpClient()
+        val oauthOkHttpClient: OkHttpClient = OkHttpClient(),
     )
 
     var configuration: Configuration = Configuration()
@@ -120,7 +120,7 @@ object Spotify {
     suspend inline fun <reified In : Any?, reified Out> post(
         path: String,
         jsonBody: In,
-        queryParams: Map<String, String?>? = null
+        queryParams: Map<String, String?>? = null,
     ): Out {
         return request(
             method = "POST",
@@ -133,7 +133,7 @@ object Spotify {
     suspend inline fun <reified In : Any?, reified Out> put(
         path: String,
         jsonBody: In,
-        queryParams: Map<String, String?>? = null
+        queryParams: Map<String, String?>? = null,
     ): Out {
         return request(
             method = "PUT",
@@ -146,7 +146,7 @@ object Spotify {
     suspend inline fun <reified In : Any?, reified Out> delete(
         path: String,
         jsonBody: In,
-        queryParams: Map<String, String?>? = null
+        queryParams: Map<String, String?>? = null,
     ): Out {
         return request(
             method = "DELETE",
@@ -160,7 +160,7 @@ object Spotify {
         method: String,
         path: String,
         queryParams: Map<String, String?>? = null,
-        body: RequestBody? = null
+        body: RequestBody? = null,
     ): T {
         assertNotOnUIThread()
 
@@ -231,7 +231,7 @@ object Spotify {
             id: String,
             limit: Int? = null,
             offset: Int? = null,
-            market: String? = null
+            market: String? = null,
         ): Paging<SimplifiedSpotifyTrack> {
             return get(
                 "albums/$id/tracks",
@@ -309,7 +309,7 @@ object Spotify {
             includeGroups: List<SpotifyAlbum.Type>? = null,
             country: String? = null,
             limit: Int? = null,
-            offset: Int? = null
+            offset: Int? = null,
         ): Paging<SimplifiedSpotifyAlbum> {
             return get(
                 "artists/$id/albums",
@@ -386,7 +386,7 @@ object Spotify {
             categoryId: String,
             country: String? = null,
             limit: Int? = null,
-            offset: Int? = null
+            offset: Int? = null,
         ): Paging<SimplifiedSpotifyPlaylist> {
             return get<PlaylistPagingModel>(
                 "browse/categories/$categoryId/playlists",
@@ -417,7 +417,7 @@ object Spotify {
             country: String? = null,
             locale: String? = null,
             limit: Int? = null,
-            offset: Int? = null
+            offset: Int? = null,
         ): Paging<SpotifyCategory> {
             return get<CategoriesModel>(
                 "browse/categories",
@@ -459,7 +459,7 @@ object Spotify {
             country: String? = null,
             timestamp: String? = null,
             limit: Int? = null,
-            offset: Int? = null
+            offset: Int? = null,
         ): Paging<SimplifiedSpotifyPlaylist> {
             return get<PlaylistPagingModel>(
                 "browse/featured-playlists",
@@ -489,7 +489,7 @@ object Spotify {
         suspend fun getNewReleases(
             country: String? = null,
             limit: Int? = null,
-            offset: Int? = null
+            offset: Int? = null,
         ): Paging<SimplifiedSpotifyAlbum> {
             return get<AlbumsPagingModel>(
                 "browse/new-releases",
@@ -532,7 +532,7 @@ object Spotify {
             seedArtists: List<String>,
             seedGenres: List<String>,
             seedTracks: List<String>,
-            tunableTrackAttributes: Map<String, String> = emptyMap()
+            tunableTrackAttributes: Map<String, String> = emptyMap(),
         ): SpotifyRecommendations {
             return get(
                 "recommendations",
@@ -735,7 +735,7 @@ object Spotify {
         suspend fun getSavedAlbums(
             limit: Int? = null,
             offset: Int? = null,
-            market: String? = null
+            market: String? = null,
         ): Paging<SpotifySavedAlbum> {
             return get(
                 "me/albums",
@@ -800,7 +800,7 @@ object Spotify {
         suspend fun getSavedTracks(
             limit: Int? = null,
             offset: Int? = null,
-            market: String? = null
+            market: String? = null,
         ): Paging<SpotifySavedTrack> {
             return get(
                 "me/tracks",
@@ -945,7 +945,7 @@ object Spotify {
         suspend fun topArtists(
             limit: Int? = null,
             offset: Int? = null,
-            timeRange: TimeRange? = null
+            timeRange: TimeRange? = null,
         ): Paging<FullSpotifyArtist> {
             return get(
                 "me/top/artists",
@@ -977,7 +977,7 @@ object Spotify {
         suspend fun topTracks(
             limit: Int? = null,
             offset: Int? = null,
-            timeRange: TimeRange? = null
+            timeRange: TimeRange? = null,
         ): Paging<FullSpotifyTrack> {
             return get(
                 "me/top/tracks",
@@ -1035,7 +1035,7 @@ object Spotify {
             @Serializable
             data class Body(
                 @SerialName("device_ids") val deviceIds: List<String>,
-                val play: String? = null
+                val play: String? = null,
             )
 
             return put("me/player", jsonBody = Body(deviceIds = deviceIds, play = play))
@@ -1069,7 +1069,7 @@ object Spotify {
          */
         suspend fun getCurrentlyPlayingTrack(
             market: String? = null,
-            additionalTypes: List<String>? = null
+            additionalTypes: List<String>? = null,
         ): SpotifyTrackPlayback? {
             return get(
                 "me/player/currently-playing",
@@ -1094,14 +1094,14 @@ object Spotify {
             contextUri: String? = null,
             uris: List<String>? = null,
             offset: PlaybackOffset? = null,
-            positionMs: Int? = null
+            positionMs: Int? = null,
         ) {
             @Serializable
             data class Body(
                 @SerialName("context_uri") val contextUri: String? = null,
                 @SerialName("uris") val uris: List<String>? = null,
                 @SerialName("offset") val offset: PlaybackOffset? = null,
-                @SerialName("position_ms") val positionMs: Int? = null
+                @SerialName("position_ms") val positionMs: Int? = null,
             )
 
             return put(
@@ -1253,7 +1253,7 @@ object Spotify {
         suspend fun getRecentlyPlayedTracks(
             limit: Int? = null,
             after: Long? = null,
-            before: Long? = null
+            before: Long? = null,
         ): CursorPaging<SpotifyPlayHistoryObject> {
             return get(
                 "me/player/recently-played",
@@ -1341,7 +1341,7 @@ object Spotify {
             name: String,
             public: Boolean? = null,
             collaborative: Boolean? = null,
-            description: String? = null
+            description: String? = null,
         ): FullSpotifyPlaylist {
             return post(
                 "users/$userId/playlists",
@@ -1371,14 +1371,14 @@ object Spotify {
             name: String? = null,
             public: Boolean? = null,
             collaborative: Boolean? = null,
-            description: String? = null
+            description: String? = null,
         ) {
             @Serializable
             data class Body(
                 val name: String? = null,
                 val public: Boolean? = null,
                 val collaborative: Boolean? = null,
-                val description: String? = null
+                val description: String? = null,
             )
 
             return put(
@@ -1407,7 +1407,7 @@ object Spotify {
         suspend fun addItemsToPlaylist(
             playlistId: String,
             position: Int? = null,
-            uris: List<String>
+            uris: List<String>,
         ): String {
             @Serializable
             data class Body(val position: Int? = null, val uris: List<String>)
@@ -1439,14 +1439,14 @@ object Spotify {
             rangeStart: Int? = null,
             insertBefore: Int? = null,
             rangeLength: Int? = null,
-            snapshotId: String? = null
+            snapshotId: String? = null,
         ): String {
             @Serializable
             data class Body(
                 @SerialName("range_start") val rangeStart: Int? = null,
                 @SerialName("insert_before") val insertBefore: Int? = null,
                 @SerialName("range_length") val rangeLength: Int? = null,
-                @SerialName("snapshot_id") val snapshotId: String? = null
+                @SerialName("snapshot_id") val snapshotId: String? = null,
             )
 
             return put<Body, SnaphshotId>(
@@ -1553,7 +1553,7 @@ object Spotify {
             playlistId: String,
             fields: List<String>? = null,
             market: String? = null,
-            additionalTypes: List<String>? = null
+            additionalTypes: List<String>? = null,
         ): FullSpotifyPlaylist {
             return get(
                 "playlists/$playlistId",
@@ -1599,7 +1599,7 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null,
             market: String? = null,
-            additionalTypes: List<String>? = null
+            additionalTypes: List<String>? = null,
         ): Paging<SpotifyPlaylistTrack> {
             return get(
                 "playlists/$playlistId/tracks",
@@ -1628,7 +1628,7 @@ object Spotify {
             val tracks: Paging<FullSpotifyTrack>? = null,
             val playlists: Paging<SimplifiedSpotifyPlaylist>? = null,
             val shows: Paging<SimplifiedSpotifyShow>? = null,
-            val episodes: Paging<SimplifiedSpotifyEpisode>? = null
+            val episodes: Paging<SimplifiedSpotifyEpisode>? = null,
         )
 
         /**
@@ -1664,7 +1664,7 @@ object Spotify {
             market: String? = null,
             limit: Int? = null,
             offset: Int? = null,
-            includeExternal: String? = null
+            includeExternal: String? = null,
         ): SearchResults {
             return get(
                 "search",
@@ -1741,7 +1741,7 @@ object Spotify {
             id: String,
             limit: Int? = null,
             offset: Int? = null,
-            market: String? = null
+            market: String? = null,
         ): Paging<SimplifiedSpotifyEpisode> {
             return get(
                 "shows/$id/episodes",
