@@ -2,11 +2,13 @@ package com.dzirbel.kotify.db.model
 
 import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.ReadOnlyCachedProperty
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cachedAsList
+import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.PrivateSpotifyUser
 import com.dzirbel.kotify.network.model.SpotifyUser
@@ -38,6 +40,8 @@ class User(id: EntityID<String>) : SpotifyEntity(id = id, table = UserTable) {
     var email: String? by UserTable.email
 
     val images: ReadWriteCachedProperty<List<Image>> by (Image via UserTable.UserImageTable).cachedAsList()
+    val thumbnailImage: ReadOnlyCachedProperty<Image?> by (Image via UserTable.UserImageTable)
+        .cachedReadOnly { it.smallest() }
 
     companion object : SpotifyEntityClass<User, SpotifyUser>(UserTable) {
         override fun User.update(networkModel: SpotifyUser) {

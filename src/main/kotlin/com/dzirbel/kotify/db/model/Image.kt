@@ -12,11 +12,21 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.times
 import java.util.UUID
 
 /**
- * Returns the [Image] with the largest width x height in this [SizedIterable], or none if it is empty.
+ * Returns the [Image] with the largest width x height in this [SizedIterable], or null if it is empty.
  */
 fun SizedIterable<Image>.largest(): Image? {
     return this
         .orderBy(ImageTable.width.times(ImageTable.height) to SortOrder.DESC)
+        .limit(1)
+        .firstOrNull()
+}
+
+/**
+ * Returns the [Image] with the smallest width x height in this [SizedIterable], or null if it is empty.
+ */
+fun SizedIterable<Image>.smallest(): Image? {
+    return this
+        .orderBy(ImageTable.width.times(ImageTable.height) to SortOrder.ASC)
         .limit(1)
         .firstOrNull()
 }

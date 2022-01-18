@@ -88,7 +88,9 @@ private class AuthenticationMenuPresenter(scope: CoroutineScope) :
         when (event) {
             is Event.Load -> {
                 val user = UserRepository.getCurrentUser()
-                KotifyDatabase.transaction { user?.images?.loadToCache() }
+                user?.let {
+                    KotifyDatabase.transaction { user.thumbnailImage.loadToCache() }
+                }
 
                 mutateState { user }
             }
@@ -196,7 +198,7 @@ private fun AuthenticationMenuHeader() {
             onClick = { expandedState.value = !expandedState.value }
         ) {
             LoadedImage(
-                url = currentUser?.images?.cached?.firstOrNull()?.url,
+                url = currentUser?.thumbnailImage?.cached?.url,
                 modifier = Modifier.size(Dimens.iconMedium)
             )
 
