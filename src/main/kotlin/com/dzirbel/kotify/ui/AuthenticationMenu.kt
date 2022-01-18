@@ -7,14 +7,18 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Dimens
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 private val MAX_WIDTH = 500.dp
 
@@ -47,11 +51,14 @@ fun AuthenticationMenu(user: User?) {
 
         VerticalSpacer(Dimens.space2)
 
+        val scope = rememberCoroutineScope { Dispatchers.IO }
         Button(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             onClick = {
-                // TODO clear saved repositories state
-                AccessToken.Cache.clear()
+                scope.launch {
+                    KotifyDatabase.clearSaved()
+                    AccessToken.Cache.clear()
+                }
             },
         ) {
             Text("Sign out")

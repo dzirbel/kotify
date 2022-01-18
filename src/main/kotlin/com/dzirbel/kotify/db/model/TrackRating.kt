@@ -29,6 +29,7 @@ object TrackRatingTable : IntIdTable() {
 }
 
 // TODO extract to abstract class if we ever need to re-use logic
+// TODO make track ratings user-specific (i.e. save user ID alongside rating and only show ratings by logged-in user)
 object TrackRatingRepository : RatingRepository {
     private val states = ConcurrentHashMap<String, WeakReference<MutableState<Rating?>>>()
 

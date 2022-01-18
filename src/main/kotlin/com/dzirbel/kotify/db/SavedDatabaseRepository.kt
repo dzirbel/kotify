@@ -9,6 +9,7 @@ import com.dzirbel.kotify.util.plusOrMinus
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import org.jetbrains.exposed.sql.deleteAll
 import java.lang.ref.WeakReference
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -191,5 +192,13 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
                 events.emit(SavedRepository.Event.QueryLibraryRemote(library = library))
             }
+    }
+
+    final override suspend fun invalidateAll() {
+        KotifyDatabase.transaction {
+            GlobalUpdateTimesRepository.invalidate(libraryUpdateKey)
+            savedEntityTable.deleteAll()
+        }
+        states.clear()
     }
 }

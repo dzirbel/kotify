@@ -157,4 +157,9 @@ interface SavedRepository {
      * Retrieves the library of saved entity IDs, from the cache if it is present or from the remote network otherwise.
      */
     suspend fun getLibrary(): Set<String> = getLibraryCached() ?: getLibraryRemote()
+
+    /**
+     * Invalidates the library and saved state of all entities, typically for use when the user logs out.
+     */
+    suspend fun invalidateAll()
 }

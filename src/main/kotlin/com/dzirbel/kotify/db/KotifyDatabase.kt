@@ -8,6 +8,10 @@ import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
 import com.dzirbel.kotify.db.model.ImageTable
 import com.dzirbel.kotify.db.model.PlaylistTable
 import com.dzirbel.kotify.db.model.PlaylistTrackTable
+import com.dzirbel.kotify.db.model.SavedAlbumRepository
+import com.dzirbel.kotify.db.model.SavedArtistRepository
+import com.dzirbel.kotify.db.model.SavedPlaylistRepository
+import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingTable
 import com.dzirbel.kotify.db.model.TrackTable
 import com.dzirbel.kotify.db.model.UserTable
@@ -90,5 +94,15 @@ object KotifyDatabase {
         transaction(db) {
             tables.forEach { it.deleteAll() }
         }
+    }
+
+    /**
+     * Invalidates the saved state of all savable entities, typically for use when the user logs out.
+     */
+    suspend fun clearSaved() {
+        SavedArtistRepository.invalidateAll()
+        SavedAlbumRepository.invalidateAll()
+        SavedTrackRepository.invalidateAll()
+        SavedPlaylistRepository.invalidateAll()
     }
 }
