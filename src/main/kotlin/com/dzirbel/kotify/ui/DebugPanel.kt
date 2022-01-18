@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -28,7 +29,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.rememberWindowState
+import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.Logger
+import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
@@ -38,8 +45,13 @@ import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
+import com.dzirbel.kotify.ui.components.panel.PanelDirection
+import com.dzirbel.kotify.ui.components.panel.PanelSize
+import com.dzirbel.kotify.ui.components.panel.SidePanel
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.Theme
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatByteSize
@@ -81,11 +93,66 @@ private val imageCacheSettings = mutableStateOf(ImageCacheSettings())
 private val uiSettings = mutableStateOf(UISettings())
 private val scrollStates = DebugTab.values().associateWith { ScrollState(0) }
 
+private val debugPanelSize = PanelSize(
+    initialSize = FixedOrPercent.Fixed(400.dp),
+    minPanelSizeDp = 125.dp,
+    minContentSizePercent = 0.5f
+)
+
+/**
+ * Wraps the debug panel in either a separate window or side panel if open, according to [Settings], and displays the
+ * main [content].
+ */
 @Composable
-fun DebugPanel() {
-    Column {
+fun DebugPanelOrWindow(content: @Composable () -> Unit) {
+    if (Settings.current.debugPanelOpen) {
+        if (Settings.current.debugPanelDetached) {
+            content()
+
+            Window(
+                title = "${Application.name} debug tools",
+                state = rememberWindowState(placement = WindowPlacement.Maximized),
+                onCloseRequest = {
+                    Settings.mutate { copy(debugPanelOpen = false) }
+                },
+            ) {
+                Theme.apply {
+                    DebugPanelContent(Modifier.background(Colors.current.surface3))
+                }
+            }
+        } else {
+            SidePanel(
+                direction = PanelDirection.RIGHT,
+                panelSize = debugPanelSize,
+                panelContent = { DebugPanelContent() },
+                mainContent = content,
+            )
+        }
+    } else {
+        content()
+    }
+}
+
+@Composable
+private fun DebugPanelContent(modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
         Column(Modifier.fillMaxHeight().weight(1f)) {
             Row(Modifier.fillMaxWidth()) {
+                IconButton(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    onClick = {
+                        Settings.mutate { copy(debugPanelDetached = !debugPanelDetached) }
+                    }
+                ) {
+                    val detached = Settings.current.debugPanelDetached
+                    CachedIcon(
+                        name = if (detached) "view-sidebar" else "open-in-new",
+                        modifier = Modifier.padding(horizontal = Dimens.space3),
+                        size = Dimens.iconSmall,
+                        contentDescription = if (detached) "Attach to sidebar" else "Open in new window",
+                    )
+                }
+
                 DebugTab.values().forEach {
                     TabButton(tab = it, currentTab = tab)
                 }

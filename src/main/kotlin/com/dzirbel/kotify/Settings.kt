@@ -22,6 +22,8 @@ object Settings {
     @Serializable
     data class SettingsData(
         val colors: Colors = Colors.DARK,
+        val debugPanelOpen: Boolean = false,
+        val debugPanelDetached: Boolean = false,
     )
 
     private val state by lazy { mutableStateOf(load() ?: SettingsData()) }

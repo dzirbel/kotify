@@ -14,43 +14,31 @@ import com.dzirbel.kotify.ui.components.panel.PanelDirection
 import com.dzirbel.kotify.ui.components.panel.PanelSize
 import com.dzirbel.kotify.ui.components.panel.SidePanel
 
+private val leftPanelSize = PanelSize(
+    initialSize = FixedOrPercent.Fixed(300.dp),
+    minPanelSizeDp = 150.dp,
+    minContentSizePercent = 0.7f
+)
+
 @Suppress("MagicNumber")
 @Composable
 fun Root() {
     if (AccessToken.Cache.hasToken) {
-        val leftPanelSize = PanelSize(
-            initialSize = FixedOrPercent.Fixed(300.dp),
-            minPanelSizeDp = 150.dp,
-            minContentSizePercent = 0.7f
-        )
-
-        val rightPanelSize = PanelSize(
-            initialSize = FixedOrPercent.Fixed(400.dp),
-            minPanelSizeDp = 125.dp,
-            minContentSizePercent = 0.5f
-        )
-
         val pageStack = remember { mutableStateOf(PageStack(ArtistsPage)) }
 
-        SidePanel(
-            direction = PanelDirection.RIGHT,
-            panelSize = rightPanelSize,
-            panelEnabled = KeyboardShortcuts.debugShown,
-            panelContent = { DebugPanel() },
-            mainContent = {
-                Column {
-                    SidePanel(
-                        modifier = Modifier.fillMaxHeight().weight(1f),
-                        direction = PanelDirection.LEFT,
-                        panelSize = leftPanelSize,
-                        panelContent = { LibraryPanel(pageStack = pageStack) },
-                        mainContent = { MainContent(pageStack = pageStack) }
-                    )
+        DebugPanelOrWindow {
+            Column {
+                SidePanel(
+                    modifier = Modifier.fillMaxHeight().weight(1f),
+                    direction = PanelDirection.LEFT,
+                    panelSize = leftPanelSize,
+                    panelContent = { LibraryPanel(pageStack = pageStack) },
+                    mainContent = { MainContent(pageStack = pageStack) }
+                )
 
-                    BottomPanel(pageStack = pageStack)
-                }
+                BottomPanel(pageStack = pageStack)
             }
-        )
+        }
     } else {
         AuthenticationView()
     }
