@@ -130,7 +130,12 @@ private class TracksPresenter(scope: CoroutineScope) :
 
     private suspend fun fetchTracks(trackIds: List<String>): List<Track> {
         val tracks = TrackRepository.get(ids = trackIds).filterNotNull()
-        KotifyDatabase.transaction { tracks.forEach { it.album.loadToCache() } }
+        KotifyDatabase.transaction {
+            tracks.forEach { track ->
+                track.album.loadToCache()
+                track.artists.loadToCache()
+            }
+        }
         return tracks
     }
 }
