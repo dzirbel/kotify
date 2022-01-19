@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Theme
 import kotlinx.coroutines.Dispatchers
@@ -39,12 +38,10 @@ fun Any.screenshotTest(
     val multipleColorSets = colorsSet.size > 1
     var recordedScreenshots = false
     for (colors in colorsSet) {
-        Settings.current // trigger a settings load outside of UI thread
         // run in AWT thread as a workaround to https://github.com/JetBrains/compose-jb/issues/1691
         val screenshotData = runBlocking(Dispatchers.Swing) {
             val window = ImageComposeScene(width = windowWidth, height = windowHeight)
             window.setContent {
-                Colors.setCurrent(colors = colors, saveOnChange = false)
                 Theme.apply(colors = colors) {
                     Box(Modifier.background(colors.surface3)) {
                         content()

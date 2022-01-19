@@ -33,8 +33,8 @@ import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.components.VerticalSpacer
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.HandleState
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
@@ -120,7 +120,7 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
             }
         }
 
-        Box(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
+        Box(Modifier.height(Dimens.divider).fillMaxWidth().background(LocalColors.current.dividerColor))
 
         VerticalSpacer(Dimens.space3)
 
@@ -162,7 +162,7 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
             }
         )
 
-        Box(Modifier.height(Dimens.divider).fillMaxWidth().background(Colors.current.dividerColor))
+        Box(Modifier.height(Dimens.divider).fillMaxWidth().background(LocalColors.current.dividerColor))
 
         VerticalSpacer(Dimens.space3)
 
@@ -173,7 +173,7 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
                     imageVector = Icons.Default.Warning,
                     contentDescription = null,
                     modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally),
-                    tint = Colors.current.error
+                    tint = LocalColors.current.error
                 )
             },
             onLoading = {
@@ -208,7 +208,7 @@ private fun PlaylistItem(playlist: Playlist, pageStack: MutableState<PageStack>)
                 name = "volume-up",
                 size = Dimens.fontBodyDp,
                 contentDescription = "Volume",
-                tint = Colors.current.primary,
+                tint = LocalColors.current.primary,
             )
         }
     }

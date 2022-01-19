@@ -9,8 +9,12 @@ import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.dzirbel.kotify.Settings
+
+val LocalColors: ProvidableCompositionLocal<Colors> = compositionLocalOf { Settings.colors }
 
 @Suppress("MagicNumber", "LongParameterList")
 enum class Colors(
@@ -77,19 +81,10 @@ enum class Colors(
             LocalScrollbarStyle provides defaultScrollbarStyle().copy(
                 hoverColor = scrollBarHover,
                 unhoverColor = scrollBarUnhover
-            )
+            ),
+            LocalColors provides this,
         ) {
             MaterialTheme(colors = materialColors, content = content)
-        }
-    }
-
-    companion object {
-        // TODO move to composition-local provider?
-        val current: Colors
-            get() = Settings.current.colors
-
-        fun setCurrent(colors: Colors, saveOnChange: Boolean = true) {
-            Settings.mutate(saveOnChange = saveOnChange) { copy(colors = colors) }
         }
     }
 }

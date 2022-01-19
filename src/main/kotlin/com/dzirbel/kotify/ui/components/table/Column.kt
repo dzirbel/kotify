@@ -12,8 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.components.SimpleTextButton
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 
 /**
  * Represents a single column in a [Table].
@@ -91,7 +91,7 @@ abstract class Column<T>(val name: String, val sortable: Boolean) {
                     imageVector = sortOrder.icon,
                     contentDescription = null,
                     modifier = Modifier.size(Dimens.iconSmall),
-                    tint = Colors.current.highlighted(sortOrder != null, otherwise = Color.Transparent)
+                    tint = LocalColors.current.highlighted(sortOrder != null, otherwise = Color.Transparent)
                 )
             }
         } else {

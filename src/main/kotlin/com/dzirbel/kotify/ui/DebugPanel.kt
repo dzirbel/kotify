@@ -49,8 +49,8 @@ import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
 import com.dzirbel.kotify.ui.components.panel.PanelSize
 import com.dzirbel.kotify.ui.components.panel.SidePanel
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.Theme
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.mutate
@@ -105,19 +105,19 @@ private val debugPanelSize = PanelSize(
  */
 @Composable
 fun DebugPanelOrWindow(content: @Composable () -> Unit) {
-    if (Settings.current.debugPanelOpen) {
-        if (Settings.current.debugPanelDetached) {
+    if (Settings.debugPanelOpen) {
+        if (Settings.debugPanelDetached) {
             content()
 
             Window(
                 title = "${Application.name} debug tools",
                 state = rememberWindowState(placement = WindowPlacement.Maximized),
                 onCloseRequest = {
-                    Settings.mutate { copy(debugPanelOpen = false) }
+                    Settings.debugPanelOpen = false
                 },
             ) {
                 Theme.apply {
-                    DebugPanelContent(Modifier.background(Colors.current.surface3))
+                    DebugPanelContent(Modifier.background(LocalColors.current.surface3))
                 }
             }
         } else {
@@ -141,10 +141,10 @@ private fun DebugPanelContent(modifier: Modifier = Modifier) {
                 IconButton(
                     modifier = Modifier.align(Alignment.CenterVertically),
                     onClick = {
-                        Settings.mutate { copy(debugPanelDetached = !debugPanelDetached) }
+                        Settings.debugPanelDetached = !Settings.debugPanelDetached
                     }
                 ) {
-                    val detached = Settings.current.debugPanelDetached
+                    val detached = Settings.debugPanelDetached
                     CachedIcon(
                         name = if (detached) "view-sidebar" else "open-in-new",
                         modifier = Modifier.padding(horizontal = Dimens.space3),
@@ -183,7 +183,7 @@ private fun RowScope.TabButton(tab: DebugTab, currentTab: MutableState<DebugTab>
     SimpleTextButton(
         onClick = { currentTab.value = tab },
         modifier = Modifier.fillMaxWidth().weight(1f),
-        backgroundColor = if (currentTab.value == tab) Colors.current.primary else Color.Transparent
+        backgroundColor = if (currentTab.value == tab) LocalColors.current.primary else Color.Transparent
     ) {
         Text(tab.tabName)
     }
@@ -191,7 +191,7 @@ private fun RowScope.TabButton(tab: DebugTab, currentTab: MutableState<DebugTab>
 
 @Composable
 private fun NetworkTab() {
-    Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
+    Column(Modifier.fillMaxWidth().background(LocalColors.current.surface3).padding(Dimens.space3)) {
         val delay = remember { mutableStateOf(DelayInterceptor.delayMs.toString()) }
         val appliedDelay = remember { mutableStateOf(true) }
 
@@ -269,7 +269,7 @@ private fun NetworkTab() {
 
 @Composable
 private fun ImageCacheTab() {
-    Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
+    Column(Modifier.fillMaxWidth().background(LocalColors.current.surface3).padding(Dimens.space3)) {
         val inMemoryCount = SpotifyImageCache.state.inMemoryCount
         val diskCount = SpotifyImageCache.state.diskCount
         val totalDiskSize = SpotifyImageCache.state.totalDiskSize
@@ -330,7 +330,7 @@ private fun ImageCacheTab() {
 
 @Composable
 private fun UITab() {
-    Column(Modifier.fillMaxWidth().background(Colors.current.surface3).padding(Dimens.space3)) {
+    Column(Modifier.fillMaxWidth().background(LocalColors.current.surface3).padding(Dimens.space3)) {
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
             value = uiSettings.value.presenterRegex,
@@ -422,10 +422,10 @@ private fun EventList(
                         contentDescription = null,
                         modifier = Modifier.size(Dimens.iconSmall).align(Alignment.Top),
                         tint = when (event.type) {
-                            Logger.Event.Type.INFO -> Colors.current.text
+                            Logger.Event.Type.INFO -> LocalColors.current.text
                             Logger.Event.Type.SUCCESS -> Color.Green
                             Logger.Event.Type.WARNING -> Color.Yellow
-                            Logger.Event.Type.ERROR -> Colors.current.error
+                            Logger.Event.Type.ERROR -> LocalColors.current.error
                         }
                     )
 

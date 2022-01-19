@@ -51,8 +51,8 @@ import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.Sort
 import com.dzirbel.kotify.ui.components.table.SortOrder
 import com.dzirbel.kotify.ui.components.table.Table
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.asFlow
@@ -469,19 +469,19 @@ fun BoxScope.LibraryState(pageStack: MutableState<PageStack>) {
 
             Artists(state, presenter)
 
-            Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Colors.current.dividerColor))
+            Box(Modifier.fillMaxWidth().height(Dimens.divider).background(LocalColors.current.dividerColor))
 
             Albums(state, presenter)
 
-            Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Colors.current.dividerColor))
+            Box(Modifier.fillMaxWidth().height(Dimens.divider).background(LocalColors.current.dividerColor))
 
             Tracks(state, presenter)
 
-            Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Colors.current.dividerColor))
+            Box(Modifier.fillMaxWidth().height(Dimens.divider).background(LocalColors.current.dividerColor))
 
             Playlists(state, presenter)
 
-            Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Colors.current.dividerColor))
+            Box(Modifier.fillMaxWidth().height(Dimens.divider).background(LocalColors.current.dividerColor))
 
             Ratings(state, presenter)
         }

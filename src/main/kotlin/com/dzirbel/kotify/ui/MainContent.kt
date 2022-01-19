@@ -38,8 +38,8 @@ import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.Page
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.SimpleTextButton
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -102,7 +102,7 @@ private class AuthenticationMenuPresenter(scope: CoroutineScope) :
 fun MainContent(pageStack: MutableState<PageStack>) {
     Column {
         Row(
-            modifier = Modifier.fillMaxWidth().background(Colors.current.surface1),
+            modifier = Modifier.fillMaxWidth().background(LocalColors.current.surface1),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {

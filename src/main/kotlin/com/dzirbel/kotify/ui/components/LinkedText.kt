@@ -22,6 +22,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import com.dzirbel.kotify.ui.theme.Colors
+import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.openInBrowser
 
 private const val ANNOTATION_TAG_LINK = "link"
@@ -62,7 +63,8 @@ interface LinkElementScope {
  * A common [SpanStyle] which corresponds to the common URL hyperlink style, underlined and colored with
  * [Colors.primary].
  */
-val HyperlinkSpanStyle = SpanStyle(color = Colors.current.primary, textDecoration = TextDecoration.Underline)
+@Composable
+fun HyperlinkSpanStyle() = SpanStyle(color = LocalColors.current.primary, textDecoration = TextDecoration.Underline)
 
 /**
  * Displays text build by [elements] with embedded links, allowing styling the links based on the hover state of the

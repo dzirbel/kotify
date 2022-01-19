@@ -17,8 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.ui.components.VerticalScroll
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.HandleState
 
 @Composable
@@ -35,18 +35,18 @@ fun <T> BoxScope.ScrollingPage(
                     imageVector = Icons.Default.Warning,
                     contentDescription = "Error",
                     modifier = Modifier.size(Dimens.iconHuge).align(Alignment.CenterHorizontally),
-                    tint = Colors.current.error
+                    tint = LocalColors.current.error
                 )
 
                 Text(
                     text = "Encountered an error: ${throwable.message}",
-                    color = Colors.current.error,
+                    color = LocalColors.current.error,
                     fontSize = Dimens.fontTitle
                 )
 
                 Text(
                     text = throwable.stackTraceToString(),
-                    color = Colors.current.error,
+                    color = LocalColors.current.error,
                     fontFamily = FontFamily.Monospace
                 )
 

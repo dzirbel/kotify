@@ -25,8 +25,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 import kotlin.math.roundToInt
 
 val DEFAULT_SLIDER_HEIGHT = 4.dp
@@ -125,7 +125,7 @@ fun SeekableSlider(
                 Modifier
                     .fillMaxSize()
                     .clip(roundedCornerShape)
-                    .background(Colors.current.surface1)
+                    .background(LocalColors.current.surface1)
             )
 
             if (progress != null) {
@@ -136,7 +136,7 @@ fun SeekableSlider(
                             Modifier
                                 .fillMaxWidth(fraction = progress)
                                 .clip(roundedCornerShape)
-                                .background(Colors.current.highlighted(highlight = hoverState.value))
+                                .background(LocalColors.current.highlighted(highlight = hoverState.value))
                         )
 
                         if (hoverState.value) {
@@ -145,7 +145,7 @@ fun SeekableSlider(
                                 Modifier
                                     .size(seekTargetSize)
                                     .clip(CircleShape)
-                                    .background(Colors.current.text)
+                                    .background(LocalColors.current.text)
                                     .draggable(
                                         state = rememberDraggableState {
                                             drag.value += it

@@ -55,8 +55,8 @@ import com.dzirbel.kotify.ui.components.SeekableSlider
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.StarRating
 import com.dzirbel.kotify.ui.components.VerticalSpacer
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
 import kotlinx.coroutines.CoroutineScope
@@ -615,12 +615,12 @@ fun BottomPanel(pageStack: MutableState<PageStack>) {
     val state = presenter.state().safeState
 
     Column(Modifier.fillMaxWidth().wrapContentHeight()) {
-        Box(Modifier.fillMaxWidth().height(Dimens.divider).background(Colors.current.dividerColor))
+        Box(Modifier.fillMaxWidth().height(Dimens.divider).background(LocalColors.current.dividerColor))
 
         val layoutDirection = LocalLayoutDirection.current
 
         Layout(
-            modifier = Modifier.background(Colors.current.surface2).padding(Dimens.space3),
+            modifier = Modifier.background(LocalColors.current.surface2).padding(Dimens.space3),
             content = {
                 Column {
                     CurrentTrack(
@@ -856,7 +856,7 @@ private fun PlayerControls(state: BottomPanelPresenter.ViewModel, presenter: Bot
                 name = "shuffle",
                 size = Dimens.iconSmall,
                 contentDescription = "Shuffle",
-                tint = Colors.current.highlighted(highlight = shuffling)
+                tint = LocalColors.current.highlighted(highlight = shuffling)
             )
         }
 
@@ -912,7 +912,7 @@ private fun PlayerControls(state: BottomPanelPresenter.ViewModel, presenter: Bot
                 name = if (repeatState == "track") "repeat-one" else "repeat",
                 size = Dimens.iconSmall,
                 contentDescription = "Repeat",
-                tint = Colors.current.highlighted(highlight = repeatState == "track" || repeatState == "context"),
+                tint = LocalColors.current.highlighted(highlight = repeatState == "track" || repeatState == "context"),
             )
         }
     }
@@ -1042,7 +1042,7 @@ private fun VolumeControls(state: BottomPanelPresenter.ViewModel, presenter: Bot
                     imageVector = Icons.Filled.Warning,
                     contentDescription = "Refresh",
                     modifier = Modifier.size(Dimens.iconMedium),
-                    tint = Colors.current.error
+                    tint = LocalColors.current.error
                 )
 
                 DropdownMenu(
@@ -1059,7 +1059,7 @@ private fun VolumeControls(state: BottomPanelPresenter.ViewModel, presenter: Bot
                             Modifier
                                 .fillMaxWidth()
                                 .height(Dimens.divider)
-                                .background(Colors.current.dividerColor)
+                                .background(LocalColors.current.dividerColor)
                         )
                     }
 
@@ -1108,11 +1108,11 @@ private fun DeviceControls(state: BottomPanelPresenter.ViewModel, presenter: Bot
             // use a custom layout in order to match width with height, which doesn't seem to be possible any other
             // way (e.g. aspectRatio() modifier)
             Layout(
-                modifier = Modifier.background(color = Colors.current.primary, shape = CircleShape),
+                modifier = Modifier.background(color = LocalColors.current.primary, shape = CircleShape),
                 content = {
                     Text(
                         text = devices.size.toString(),
-                        color = Colors.current.textOnSurface,
+                        color = LocalColors.current.textOnSurface,
                         textAlign = TextAlign.Center,
                         letterSpacing = 0.sp // hack - ideally wouldn't be necessary
                     )

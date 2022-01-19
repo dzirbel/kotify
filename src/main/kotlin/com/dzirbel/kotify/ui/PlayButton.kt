@@ -5,8 +5,8 @@ import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 
 @Composable
 fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
@@ -23,7 +23,7 @@ fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
             name = if (playing) "pause-circle-outline" else "play-circle-outline",
             size = size,
             contentDescription = "Play",
-            tint = Colors.current.highlighted(highlight = matchesContext)
+            tint = LocalColors.current.highlighted(highlight = matchesContext)
         )
     }
 }

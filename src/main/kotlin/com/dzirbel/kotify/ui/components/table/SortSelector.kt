@@ -22,8 +22,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.components.SimpleTextButton
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 
 @Composable
 fun <T> SortSelector(
@@ -39,7 +39,7 @@ fun <T> SortSelector(
         sorts.forEachIndexed { index, sort ->
             Row(
                 modifier = Modifier.background(
-                    color = Colors.current.surface2,
+                    color = LocalColors.current.surface2,
                     shape = RoundedCornerShape(size = Dimens.cornerSize)
                 ),
                 verticalAlignment = Alignment.CenterVertically,
@@ -64,7 +64,7 @@ fun <T> SortSelector(
                         imageVector = sort.sortOrder.icon,
                         contentDescription = null,
                         modifier = Modifier.size(Dimens.iconSmall),
-                        tint = Colors.current.primary,
+                        tint = LocalColors.current.primary,
                     )
                 }
 

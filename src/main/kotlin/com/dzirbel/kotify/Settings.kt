@@ -1,5 +1,6 @@
 package com.dzirbel.kotify
 
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.Settings.SettingsData
 import com.dzirbel.kotify.ui.theme.Colors
@@ -12,6 +13,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import java.util.concurrent.Executors
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 
 /**
  * Saves global settings as [SettingsData] objects in JSON.
@@ -26,7 +29,20 @@ object Settings {
         val debugPanelDetached: Boolean = false,
     )
 
-    private val state by lazy { mutableStateOf(load() ?: SettingsData()) }
+    private var nullableSettings: SettingsData? = null
+    private var settings: SettingsData
+        get() = nullableSettings ?: (load() ?: SettingsData()).also { nullableSettings = it }
+        set(value) {
+            val changed = nullableSettings != value
+            nullableSettings = value
+            if (changed) {
+                save(value)
+            }
+        }
+
+    var colors: Colors by setting(init = { colors }, mutateSettings = { copy(colors = it) })
+    var debugPanelOpen: Boolean by setting(init = { debugPanelOpen }, mutateSettings = { copy(debugPanelOpen = it) })
+    var debugPanelDetached by setting(init = { debugPanelDetached }, mutateSettings = { copy(debugPanelDetached = it) })
 
     private val ioCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val settingsFile by lazy { Application.settingsDir.resolve("settings.json") }
@@ -36,24 +52,33 @@ object Settings {
     }
 
     /**
-     * The current state of [SettingsData], backed by a [androidx.compose.runtime.MutableState].
+     * Wraps an individual setting in its own backing [MutableState] with initial value provided by [init] and which
+     * updates [settings] when it is set.
      */
-    val current: SettingsData
-        get() = state.value
+    private fun <T, V> setting(
+        init: SettingsData.() -> V,
+        mutateSettings: SettingsData.(V) -> SettingsData,
+    ): ReadWriteProperty<T, V> {
+        return object : ReadWriteProperty<T, V> {
+            private var nullableState: MutableState<V>? = null
+            private val state: MutableState<V>
+                get() = nullableState ?: mutableStateOf(settings.init()).also { nullableState = it }
 
-    /**
-     * Changes the current [SettingsData] as applied by [block], and if [saveOnChange] is true saves the resulting value
-     * to disk in the background.
-     */
-    fun mutate(saveOnChange: Boolean = true, block: SettingsData.() -> SettingsData) {
-        val original = state.value
-        val new = original.block()
-        if (new != original) {
-            state.value = new
-            if (saveOnChange) {
-                save(data = new)
+            override fun getValue(thisRef: T, property: KProperty<*>): V = state.value
+
+            override fun setValue(thisRef: T, property: KProperty<*>, value: V) {
+                state.value = value
+                settings = settings.mutateSettings(value)
             }
         }
+    }
+
+    /**
+     * Ensures that the settings are loaded from the [settingsFile], i.e. loads them if they have not been loaded or
+     * does nothing if they have already been loaded.
+     */
+    fun ensureLoaded() {
+        settings
     }
 
     private fun load(): SettingsData? {

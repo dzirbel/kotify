@@ -5,14 +5,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 
 /**
  * A divider which has [Dimens.divider] height, fills the maximum width, and uses [color] background color.
  */
 @Composable
-fun HorizontalDivider(color: Color = Colors.current.dividerColor) {
+fun HorizontalDivider(color: Color = LocalColors.current.dividerColor) {
     Layout(
         modifier = Modifier.background(color),
         content = {},
@@ -26,7 +26,7 @@ fun HorizontalDivider(color: Color = Colors.current.dividerColor) {
  * A divider which has [Dimens.divider] width, fills the maximum height, and uses [color] background color.
  */
 @Composable
-fun VerticalDivider(color: Color = Colors.current.dividerColor) {
+fun VerticalDivider(color: Color = LocalColors.current.dividerColor) {
     Layout(
         modifier = Modifier.background(color),
         content = {},

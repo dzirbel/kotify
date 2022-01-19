@@ -18,7 +18,7 @@ object KeyboardShortcuts {
         if (event.type != KeyEventType.KeyUp) return false
 
         when (event.key) {
-            Key.F12 -> Settings.mutate { copy(debugPanelOpen = !debugPanelOpen) }
+            Key.F12 -> Settings.debugPanelOpen = !Settings.debugPanelOpen
             Key.Spacebar -> Player.togglePlayback()
             else -> return false
         }

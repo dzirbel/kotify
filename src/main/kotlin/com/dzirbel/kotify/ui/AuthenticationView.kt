@@ -44,8 +44,8 @@ import com.dzirbel.kotify.ui.components.HyperlinkSpanStyle
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.getClipboard
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.setClipboard
@@ -69,7 +69,7 @@ fun AuthenticationView() {
     val state = remember { mutableStateOf(AuthenticationState()) }
     val scrollState: ScrollState = rememberScrollState(0)
 
-    Box(Modifier.fillMaxSize().background(Colors.current.surface2)) {
+    Box(Modifier.fillMaxSize().background(LocalColors.current.surface2)) {
         Box(Modifier.verticalScroll(scrollState).fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -159,7 +159,7 @@ private fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
             }
         )
 
-        LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle, hoveredSpanStyle = HyperlinkSpanStyle) {
+        LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle(), hoveredSpanStyle = HyperlinkSpanStyle()) {
             text(
                 "The Spotify application client ID to authenticate with, through which API requests are made. See the "
             )
@@ -213,7 +213,7 @@ private fun ColumnScope.Welcome(state: MutableState<AuthenticationState>) {
             }
         }
 
-        LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle, hoveredSpanStyle = HyperlinkSpanStyle) {
+        LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle(), hoveredSpanStyle = HyperlinkSpanStyle()) {
             text(
                 "The authentication scopes that this application requests; if some are not granted parts of the " +
                     "application may not work. See the "
@@ -244,11 +244,11 @@ private fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAut
     if (oauth.error.value == null) {
         Text("Authentication in progress. Accept the OAuth request from Spotify in your browser to continue.")
     } else {
-        Text("Error during authentication!", color = Colors.current.error, fontSize = Dimens.fontTitle)
+        Text("Error during authentication!", color = LocalColors.current.error, fontSize = Dimens.fontTitle)
 
         Text(
             text = oauth.error.value!!.stackTraceToString(),
-            color = Colors.current.error,
+            color = LocalColors.current.error,
             fontFamily = FontFamily.Monospace
         )
     }
@@ -347,7 +347,7 @@ private fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAut
         message?.let {
             VerticalSpacer(Dimens.space3)
 
-            Text(it, color = Colors.current.error)
+            Text(it, color = LocalColors.current.error)
         }
     }
 }

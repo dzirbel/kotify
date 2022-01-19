@@ -13,8 +13,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.isSpecified
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.util.compareInOrder
 import kotlin.math.roundToInt
 
@@ -104,7 +104,7 @@ fun <T> Table(
             }
 
             repeat(numDividers) {
-                Box(Modifier.background(Colors.current.dividerColor))
+                Box(Modifier.background(LocalColors.current.dividerColor))
             }
         },
         measurePolicy = { measurables, constraints ->

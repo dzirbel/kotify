@@ -12,8 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 
 /**
  * A wrapper around [TextButton] which applies standard colors, padding, and corners.
@@ -26,7 +26,11 @@ fun SimpleTextButton(
     enforceMinWidth: Boolean = true,
     enforceMinHeight: Boolean = false,
     backgroundColor: Color = Color.Transparent,
-    textColor: Color = if (backgroundColor == Color.Transparent) Colors.current.text else Colors.current.textOnSurface,
+    textColor: Color = if (backgroundColor == Color.Transparent) {
+        LocalColors.current.text
+    } else {
+        LocalColors.current.textOnSurface
+    },
     onClick: () -> Unit,
     content: @Composable RowScope.() -> Unit,
 ) {

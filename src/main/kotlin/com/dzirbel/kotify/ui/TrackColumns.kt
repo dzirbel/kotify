@@ -29,8 +29,8 @@ import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.ColumnWidth
 import com.dzirbel.kotify.ui.components.table.SortOrder
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.compareToNullable
 import com.dzirbel.kotify.util.formatDuration
@@ -85,7 +85,7 @@ class PlayingColumn(
                     name = "volume-up",
                     size = Dimens.fontBodyDp,
                     contentDescription = "Playing",
-                    tint = Colors.current.primary,
+                    tint = LocalColors.current.primary,
                 )
             } else {
                 if (hoverState.value) {
@@ -98,7 +98,7 @@ class PlayingColumn(
                             name = "play-circle-outline",
                             size = Dimens.fontBodyDp,
                             contentDescription = "Play",
-                            tint = Colors.current.primary,
+                            tint = LocalColors.current.primary,
                         )
                     }
                 }
@@ -209,12 +209,12 @@ object PopularityColumn : Column<Track>(name = "Popularity", sortable = true) {
     @Composable
     override fun item(item: Track, index: Int) {
         val popularity = item.popularity?.toInt() ?: 0
-        val color = Colors.current.text.copy(alpha = ContentAlpha.disabled)
+        val color = LocalColors.current.text.copy(alpha = ContentAlpha.disabled)
 
         Box(
             Modifier
                 .padding(Dimens.space3)
-                .background(Colors.current.surface2)
+                .background(LocalColors.current.surface2)
                 .height(Dimens.fontBodyDp)
                 .fillMaxWidth()
                 .border(width = Dimens.divider, color = color)

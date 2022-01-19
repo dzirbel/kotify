@@ -19,7 +19,7 @@ fun main(args: Array<String>) {
         settingsPath = args.getOrNull(1)
     )
 
-    Settings.current // trigger a settings load
+    Settings.ensureLoaded()
 
     KotifyDatabase.db // initialize database connection and create schema
 
