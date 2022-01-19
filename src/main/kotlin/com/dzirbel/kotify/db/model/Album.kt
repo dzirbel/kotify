@@ -16,6 +16,7 @@ import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
+import com.dzirbel.kotify.util.flatMapParallel
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
@@ -128,9 +129,8 @@ object AlbumRepository : DatabaseRepository<Album, SpotifyAlbum>(Album) {
 
     override suspend fun fetch(id: String) = Spotify.Albums.getAlbum(id = id)
     override suspend fun fetch(ids: List<String>): List<SpotifyAlbum?> {
-        // TODO fetch chunks in parallel
         return ids.chunked(size = MAX_ALBUM_IDS_LOOKUP)
-            .flatMap { idsChunk -> Spotify.Albums.getAlbums(ids = idsChunk) }
+            .flatMapParallel { idsChunk -> Spotify.Albums.getAlbums(ids = idsChunk) }
     }
 }
 

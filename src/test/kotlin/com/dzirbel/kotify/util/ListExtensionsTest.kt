@@ -1,9 +1,16 @@
 package com.dzirbel.kotify.util
 
+import com.google.common.collect.Range
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import kotlin.math.max
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 internal class ListExtensionsTest {
     data class PlusSortedCase(val list: List<String>, val elements: List<String>)
@@ -33,6 +40,33 @@ internal class ListExtensionsTest {
         assertThat(listOf("aa", "b").isSortedBy { it.length }).isFalse()
 
         assertThat(listOf("a", "bb", "cccc").isSortedBy { it.length }).isTrue()
+    }
+
+    @RepeatedTest(3)
+    fun flatMapParallel() {
+        val baseList = listOf(1, 3, 4, 10)
+        fun transform(n: Int) = List(n) { x -> n * (x + 1) }
+
+        var maxDelayMs = 0
+        val result = runBlocking {
+            val start = TimeSource.Monotonic.markNow()
+            val result = baseList
+                .flatMapParallel { n ->
+                    val delay = 100 - n * 10
+                    maxDelayMs = max(maxDelayMs, delay)
+
+                    delay(delay.toLong())
+
+                    transform(n)
+                }
+
+            val duration = start.elapsedNow()
+            assertThat(duration).isIn(Range.closed(maxDelayMs.milliseconds, (maxDelayMs * 2).milliseconds))
+
+            result
+        }
+
+        assertThat(result).isEqualTo(baseList.flatMap { transform(it) })
     }
 
     /**

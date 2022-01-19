@@ -17,6 +17,7 @@ import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
+import com.dzirbel.kotify.util.mapParallel
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
@@ -125,19 +126,17 @@ object SavedPlaylistRepository : SavedDatabaseRepository<SpotifyPlaylist>(
             KotifyDatabase.transaction { UserRepository.getCurrentUserIdCached() }
         ) { "no logged-in user" }
 
-        // TODO fetch in parallel
-        return ids.map { id ->
+        return ids.mapParallel { id ->
             Spotify.Follow.isFollowingPlaylist(playlistId = id, userIds = listOf(userId))
                 .first()
         }
     }
 
     override suspend fun pushSaved(ids: List<String>, saved: Boolean) {
-        // TODO push in parallel
         if (saved) {
-            ids.forEach { id -> Spotify.Follow.followPlaylist(playlistId = id) }
+            ids.mapParallel { id -> Spotify.Follow.followPlaylist(playlistId = id) }
         } else {
-            ids.forEach { id -> Spotify.Follow.unfollowPlaylist(playlistId = id) }
+            ids.mapParallel { id -> Spotify.Follow.unfollowPlaylist(playlistId = id) }
         }
     }
 
