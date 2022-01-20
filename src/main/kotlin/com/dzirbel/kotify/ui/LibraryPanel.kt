@@ -87,16 +87,17 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
     val presenter = remember { LibraryPresenter(scope = scope) }
 
     VerticalScroll {
-        Text(
-            text = "Library",
-            fontSize = Dimens.fontTitle,
-            modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3)
-        )
-
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space3, vertical = Dimens.space2),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth().padding(Dimens.space3),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
+            Text(
+                text = "Library",
+                fontSize = Dimens.fontTitle,
+                modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3)
+            )
+
             val moreExpanded = remember { mutableStateOf(false) }
             IconButton(
                 modifier = Modifier.size(Dimens.iconSmall),
