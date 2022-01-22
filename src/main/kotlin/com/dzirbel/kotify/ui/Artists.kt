@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -12,11 +11,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Artist
@@ -28,6 +29,7 @@ import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.plusSorted
@@ -134,15 +136,6 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
         val imageUrls = KotifyDatabase.transaction {
             artists.mapNotNull { artist ->
                 artist.largestImage.live?.url
-                /*artist.images.live
-                    .also {
-                        println("${artist.name} : ${it.size} images")
-                        it.forEach { image ->
-                            println(" > ${image.url} : ${image.width}x${image.height}")
-                        }
-                    }
-                    .firstOrNull()
-                    ?.url*/
             }
         }
         SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
@@ -156,9 +149,12 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { ArtistsPresenter(scope = scope) }
 
-    ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
+    ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter, padding = 0.dp) { state ->
         Column {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
                 Text("Artists", fontSize = Dimens.fontTitle)
 
                 Column {
@@ -172,17 +168,23 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
 
             VerticalSpacer(Dimens.space3)
 
+            val selectedArtist = remember { mutableStateOf<Artist?>(null) }
             Grid(
                 elements = state.artists,
+                selectedElement = selectedArtist.value,
                 horizontalSpacing = Dimens.space2,
                 verticalSpacing = Dimens.space3,
                 cellAlignment = Alignment.TopCenter,
+                detailInsertContent = { artist -> ArtistDetailInsert(artist) },
             ) { artist ->
                 ArtistCell(
                     artist = artist,
                     savedArtists = state.savedArtistIds,
                     presenter = presenter,
-                    pageStack = pageStack
+                    pageStack = pageStack,
+                    onRightClick = {
+                        selectedArtist.value = artist.takeIf { selectedArtist.value != it }
+                    }
                 )
             }
         }
@@ -195,11 +197,17 @@ private fun ArtistCell(
     savedArtists: Set<String>,
     presenter: ArtistsPresenter,
     pageStack: MutableState<PageStack>,
+    onRightClick: () -> Unit,
 ) {
     Column(
         Modifier
             .clip(RoundedCornerShape(Dimens.cornerSize))
-            .clickable { pageStack.mutate { to(ArtistPage(artistId = artist.id.value)) } }
+            .rightLeftClickable(
+                onLeftClick = {
+                    pageStack.mutate { to(ArtistPage(artistId = artist.id.value)) }
+                },
+                onRightClick = onRightClick,
+            )
             .padding(Dimens.space3)
     ) {
         LoadedImage(
@@ -222,5 +230,14 @@ private fun ArtistCell(
 
             PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
         }
+    }
+}
+
+@Composable
+private fun ArtistDetailInsert(artist: Artist) {
+    Row(modifier = Modifier.padding(Dimens.space4), horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+        LoadedImage(url = artist.largestImage.cached?.url)
+
+        Text(artist.name)
     }
 }

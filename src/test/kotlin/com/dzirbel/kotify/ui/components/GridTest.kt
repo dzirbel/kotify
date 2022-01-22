@@ -18,6 +18,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.theme.Colors
+import com.dzirbel.kotify.ui.theme.Theme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -39,16 +40,18 @@ internal class GridTest {
         val elements = listOf(1, 2, 3)
 
         rule.setContent {
-            Grid(
-                elements = elements,
-                columns = columns,
-                horizontalSpacing = horizontalSpacing,
-                verticalSpacing = verticalSpacing,
-            ) { element ->
-                Text(
-                    text = element.toString(),
-                    modifier = Modifier.fillMaxWidth().height(elementHeight)
-                )
+            Theme.apply(colors = Colors.DARK) {
+                Grid(
+                    elements = elements,
+                    columns = columns,
+                    horizontalSpacing = horizontalSpacing,
+                    verticalSpacing = verticalSpacing,
+                ) { element ->
+                    Text(
+                        text = element.toString(),
+                        modifier = Modifier.fillMaxWidth().height(elementHeight)
+                    )
+                }
             }
         }
 

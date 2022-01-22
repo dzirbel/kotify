@@ -16,7 +16,7 @@ import com.dzirbel.kotify.Settings
 
 val LocalColors: ProvidableCompositionLocal<Colors> = compositionLocalOf { Settings.colors }
 
-@Suppress("MagicNumber", "LongParameterList")
+@Suppress("MagicNumber")
 enum class Colors(
     val surface1: Color,
     val surface2: Color,

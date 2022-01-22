@@ -86,7 +86,7 @@ complexity:
     ignoreAnnotated: []
     excludes: ['**/test/**', '**/testFixtures/**']
   LongParameterList:
-    active: true
+    active: false
     functionThreshold: 10
     constructorThreshold: 10
     ignoreDefaultParameters: false

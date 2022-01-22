@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
@@ -25,6 +26,7 @@ import com.dzirbel.kotify.ui.util.HandleState
 fun <T> BoxScope.ScrollingPage(
     scrollState: ScrollState,
     presenter: Presenter<T?, *>,
+    padding: Dp = Dimens.space4,
     content: @Composable (T) -> Unit,
 ) {
     HandleState(
@@ -62,7 +64,7 @@ fun <T> BoxScope.ScrollingPage(
         },
         onSuccess = {
             VerticalScroll(scrollState = scrollState) {
-                Box(Modifier.padding(Dimens.space4)) {
+                Box(Modifier.padding(padding)) {
                     content(it)
                 }
             }
