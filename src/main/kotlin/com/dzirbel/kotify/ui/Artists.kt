@@ -17,7 +17,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Artist
@@ -149,44 +148,39 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { ArtistsPresenter(scope = scope) }
 
-    ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter, padding = 0.dp) { state ->
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text("Artists", fontSize = Dimens.fontTitle)
+    ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text("Artists", fontSize = Dimens.fontTitle)
 
-                Column {
-                    InvalidateButton(
-                        refreshing = state.refreshing,
-                        updated = state.artistsUpdated,
-                        onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) }
-                    )
-                }
-            }
-
-            VerticalSpacer(Dimens.space3)
-
-            val selectedArtist = remember { mutableStateOf<Artist?>(null) }
-            Grid(
-                elements = state.artists,
-                selectedElement = selectedArtist.value,
-                horizontalSpacing = Dimens.space2,
-                verticalSpacing = Dimens.space3,
-                cellAlignment = Alignment.TopCenter,
-                detailInsertContent = { artist -> ArtistDetailInsert(artist) },
-            ) { artist ->
-                ArtistCell(
-                    artist = artist,
-                    savedArtists = state.savedArtistIds,
-                    presenter = presenter,
-                    pageStack = pageStack,
-                    onRightClick = {
-                        selectedArtist.value = artist.takeIf { selectedArtist.value != it }
-                    }
+            Column {
+                InvalidateButton(
+                    refreshing = state.refreshing,
+                    updated = state.artistsUpdated,
+                    onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) }
                 )
             }
+        }
+
+        VerticalSpacer(Dimens.space3)
+
+        val selectedArtist = remember { mutableStateOf<Artist?>(null) }
+        Grid(
+            elements = state.artists,
+            selectedElement = selectedArtist.value,
+            detailInsertContent = { artist -> ArtistDetailInsert(artist) },
+        ) { artist ->
+            ArtistCell(
+                artist = artist,
+                savedArtists = state.savedArtistIds,
+                presenter = presenter,
+                pageStack = pageStack,
+                onRightClick = {
+                    selectedArtist.value = artist.takeIf { selectedArtist.value != it }
+                }
+            )
         }
     }
 }

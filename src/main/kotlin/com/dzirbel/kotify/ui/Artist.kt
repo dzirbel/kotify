@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -153,69 +154,62 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
     val presenter = remember(page) { ArtistPresenter(page = page, pageStack = pageStack, scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
-        val artist = state.artist
-        val albums = state.artistAlbums
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(state.artist.name, fontSize = Dimens.fontTitle)
 
-        Column {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(artist.name, fontSize = Dimens.fontTitle)
-
-                Column {
-                    InvalidateButton(
-                        modifier = Modifier.align(Alignment.End),
-                        refreshing = state.refreshingArtist,
-                        updated = state.artist.updatedTime.toEpochMilli(),
-                        updatedFormat = { "Artist last updated $it" },
-                        updatedFallback = "Artist never updated",
-                        onClick = {
-                            presenter.emitAsync(
-                                ArtistPresenter.Event.Load(
-                                    refreshArtist = true,
-                                    invalidateArtist = true,
-                                    refreshArtistAlbums = false,
-                                    invalidateArtistAlbums = false
-                                )
+            Column {
+                InvalidateButton(
+                    modifier = Modifier.align(Alignment.End),
+                    refreshing = state.refreshingArtist,
+                    updated = state.artist.updatedTime.toEpochMilli(),
+                    updatedFormat = { "Artist last updated $it" },
+                    updatedFallback = "Artist never updated",
+                    onClick = {
+                        presenter.emitAsync(
+                            ArtistPresenter.Event.Load(
+                                refreshArtist = true,
+                                invalidateArtist = true,
+                                refreshArtistAlbums = false,
+                                invalidateArtistAlbums = false
                             )
-                        }
-                    )
+                        )
+                    }
+                )
 
-                    InvalidateButton(
-                        modifier = Modifier.align(Alignment.End),
-                        refreshing = state.refreshingArtistAlbums,
-                        updated = state.artist.albumsFetched?.toEpochMilli(),
-                        updatedFormat = { "Albums last updated $it" },
-                        updatedFallback = "Albums never updated",
-                        onClick = {
-                            presenter.emitAsync(
-                                ArtistPresenter.Event.Load(
-                                    refreshArtist = false,
-                                    invalidateArtist = false,
-                                    refreshArtistAlbums = true,
-                                    invalidateArtistAlbums = true
-                                )
+                InvalidateButton(
+                    modifier = Modifier.align(Alignment.End),
+                    refreshing = state.refreshingArtistAlbums,
+                    updated = state.artist.albumsFetched?.toEpochMilli(),
+                    updatedFormat = { "Albums last updated $it" },
+                    updatedFallback = "Albums never updated",
+                    onClick = {
+                        presenter.emitAsync(
+                            ArtistPresenter.Event.Load(
+                                refreshArtist = false,
+                                invalidateArtist = false,
+                                refreshArtistAlbums = true,
+                                invalidateArtistAlbums = true
                             )
-                        }
-                    )
-                }
-            }
-
-            VerticalSpacer(Dimens.space3)
-
-            Grid(
-                elements = albums,
-                horizontalSpacing = Dimens.space2,
-                verticalSpacing = Dimens.space3,
-                cellAlignment = Alignment.TopCenter,
-            ) { album ->
-                AlbumCell(
-                    album = album,
-                    isSaved = state.savedAlbumsState.value?.contains(album.id.value),
-                    pageStack = pageStack,
-                    onToggleSave = { save ->
-                        presenter.emitAsync(ArtistPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
+                        )
                     }
                 )
             }
+        }
+
+        VerticalSpacer(Dimens.space3)
+
+        Grid(elements = state.artistAlbums) { album ->
+            AlbumCell(
+                album = album,
+                isSaved = state.savedAlbumsState.value?.contains(album.id.value),
+                pageStack = pageStack,
+                onToggleSave = { save ->
+                    presenter.emitAsync(ArtistPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
+                }
+            )
         }
     }
 }

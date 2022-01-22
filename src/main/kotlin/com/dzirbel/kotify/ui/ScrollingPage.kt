@@ -1,10 +1,9 @@
 package com.dzirbel.kotify.ui
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
@@ -16,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
@@ -26,8 +24,7 @@ import com.dzirbel.kotify.ui.util.HandleState
 fun <T> BoxScope.ScrollingPage(
     scrollState: ScrollState,
     presenter: Presenter<T?, *>,
-    padding: Dp = Dimens.space4,
-    content: @Composable (T) -> Unit,
+    content: @Composable ColumnScope.(T) -> Unit,
 ) {
     HandleState(
         state = { presenter.state() },
@@ -63,11 +60,7 @@ fun <T> BoxScope.ScrollingPage(
             CircularProgressIndicator(Modifier.size(Dimens.iconHuge).align(Alignment.Center))
         },
         onSuccess = {
-            VerticalScroll(scrollState = scrollState) {
-                Box(Modifier.padding(padding)) {
-                    content(it)
-                }
-            }
+            VerticalScroll(scrollState = scrollState, content = { content(it) })
         }
     )
 }

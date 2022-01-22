@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -146,37 +147,38 @@ fun BoxScope.Tracks(pageStack: MutableState<PageStack>) {
     val presenter = remember { TracksPresenter(scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
-        Column {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Tracks", fontSize = Dimens.fontTitle)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text("Tracks", fontSize = Dimens.fontTitle)
 
-                Column {
-                    InvalidateButton(
-                        refreshing = state.refreshing,
-                        updated = state.tracksUpdated,
-                        onClick = { presenter.emitAsync(TracksPresenter.Event.Load(invalidate = true)) }
-                    )
-                }
+            Column {
+                InvalidateButton(
+                    refreshing = state.refreshing,
+                    updated = state.tracksUpdated,
+                    onClick = { presenter.emitAsync(TracksPresenter.Event.Load(invalidate = true)) }
+                )
             }
-
-            VerticalSpacer(Dimens.space3)
-
-            // TODO find the context to play tracks from the list of all saved tracks
-            Table(
-                columns = trackColumns(
-                    pageStack = pageStack,
-                    savedTracks = state.savedTrackIds,
-                    onSetTrackSaved = { trackId, saved ->
-                        presenter.emitAsync(TracksPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))
-                    },
-                    trackRatings = state.trackRatings,
-                    onRateTrack = { trackId, rating ->
-                        presenter.emitAsync(TracksPresenter.Event.RateTrack(trackId = trackId, rating = rating))
-                    },
-                    playContextFromIndex = null,
-                ),
-                items = state.tracks
-            )
         }
+
+        VerticalSpacer(Dimens.space3)
+
+        // TODO find the context to play tracks from the list of all saved tracks
+        Table(
+            columns = trackColumns(
+                pageStack = pageStack,
+                savedTracks = state.savedTrackIds,
+                onSetTrackSaved = { trackId, saved ->
+                    presenter.emitAsync(TracksPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))
+                },
+                trackRatings = state.trackRatings,
+                onRateTrack = { trackId, rating ->
+                    presenter.emitAsync(TracksPresenter.Event.RateTrack(trackId = trackId, rating = rating))
+                },
+                playContextFromIndex = null,
+            ),
+            items = state.tracks
+        )
     }
 }

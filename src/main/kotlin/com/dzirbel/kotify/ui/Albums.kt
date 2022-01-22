@@ -5,12 +5,12 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
@@ -141,36 +141,32 @@ fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
     val presenter = remember { AlbumsPresenter(scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
-        Column {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Albums", fontSize = Dimens.fontTitle)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text("Albums", fontSize = Dimens.fontTitle)
 
-                Column {
-                    InvalidateButton(
-                        refreshing = state.refreshing,
-                        updated = state.albumsUpdated,
-                        onClick = { presenter.emitAsync(AlbumsPresenter.Event.Load(invalidate = true)) }
-                    )
-                }
-            }
-
-            VerticalSpacer(Dimens.space3)
-
-            Grid(
-                elements = state.albums,
-                horizontalSpacing = Dimens.space2,
-                verticalSpacing = Dimens.space3,
-                cellAlignment = Alignment.TopCenter,
-            ) { album ->
-                AlbumCell(
-                    album = album,
-                    isSaved = state.savedAlbumIds.contains(album.id.value),
-                    pageStack = pageStack,
-                    onToggleSave = { save ->
-                        presenter.emitAsync(AlbumsPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
-                    }
+            Column {
+                InvalidateButton(
+                    refreshing = state.refreshing,
+                    updated = state.albumsUpdated,
+                    onClick = { presenter.emitAsync(AlbumsPresenter.Event.Load(invalidate = true)) }
                 )
             }
+        }
+
+        VerticalSpacer(Dimens.space3)
+
+        Grid(elements = state.albums) { album ->
+            AlbumCell(
+                album = album,
+                isSaved = state.savedAlbumIds.contains(album.id.value),
+                pageStack = pageStack,
+                onToggleSave = { save ->
+                    presenter.emitAsync(AlbumsPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
+                }
+            )
         }
     }
 }

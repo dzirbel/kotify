@@ -104,9 +104,9 @@ fun <E> Grid(
     elements: List<E>,
     selectedElement: E? = null,
     modifier: Modifier = Modifier,
-    horizontalSpacing: Dp = Dimens.space3,
+    horizontalSpacing: Dp = Dimens.space2,
     verticalSpacing: Dp = Dimens.space3,
-    cellAlignment: Alignment = Alignment.Center,
+    cellAlignment: Alignment = Alignment.TopCenter,
     columns: Int? = null,
     detailInsertBackground: Color = LocalColors.current.surface2,
     detailInsertBorder: Color = LocalColors.current.dividerColor,
@@ -276,7 +276,7 @@ fun <E> Grid(
 
                 detailInsertPlaceable = insertMeasurables[1].measure(constraints)
 
-                totalHeight += detailInsertPlaceable.height
+                totalHeight += detailInsertPlaceable.height + verticalSpacingPx.roundToInt()
             } else {
                 selectedElementRowIndex = null
                 selectedElementColIndex = null

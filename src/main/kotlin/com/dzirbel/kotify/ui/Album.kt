@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -128,80 +129,81 @@ fun BoxScope.Album(pageStack: MutableState<PageStack>, page: AlbumPage) {
     val presenter = remember(page) { AlbumPresenter(page = page, pageStack = pageStack, scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
-        Column {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    LoadedImage(url = state.album.largestImage.cached?.url)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LoadedImage(url = state.album.largestImage.cached?.url)
 
-                    Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-                        Text(state.album.name, fontSize = Dimens.fontTitle)
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+                    Text(state.album.name, fontSize = Dimens.fontTitle)
 
-                        LinkedText(
-                            onClickLink = { artistId ->
-                                pageStack.mutate { to(ArtistPage(artistId = artistId)) }
-                            }
-                        ) {
-                            text("By ")
-                            list(state.album.artists.cached) { artist ->
-                                link(text = artist.name, link = artist.id.value)
-                            }
+                    LinkedText(
+                        onClickLink = { artistId ->
+                            pageStack.mutate { to(ArtistPage(artistId = artistId)) }
+                        }
+                    ) {
+                        text("By ")
+                        list(state.album.artists.cached) { artist ->
+                            link(text = artist.name, link = artist.id.value)
+                        }
+                    }
+
+                    state.album.releaseDate?.let {
+                        Text(it)
+                    }
+
+                    val totalDurationMins = remember(state.tracks) {
+                        TimeUnit.MILLISECONDS.toMinutes(state.tracks.sumOf { it.durationMs.toInt() }.toLong())
+                    }
+
+                    Text("${state.album.totalTracks} songs, $totalDurationMins min")
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ToggleSaveButton(isSaved = state.isSavedState.value, size = Dimens.iconMedium) {
+                            presenter.emitAsync(AlbumPresenter.Event.ToggleSave(save = it))
                         }
 
-                        state.album.releaseDate?.let {
-                            Text(it)
-                        }
-
-                        val totalDurationMins = remember(state.tracks) {
-                            TimeUnit.MILLISECONDS.toMinutes(state.tracks.sumOf { it.durationMs.toInt() }.toLong())
-                        }
-
-                        Text("${state.album.totalTracks} songs, $totalDurationMins min")
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ToggleSaveButton(isSaved = state.isSavedState.value, size = Dimens.iconMedium) {
-                                presenter.emitAsync(AlbumPresenter.Event.ToggleSave(save = it))
-                            }
-
-                            PlayButton(context = Player.PlayContext.album(state.album))
-                        }
+                        PlayButton(context = Player.PlayContext.album(state.album))
                     }
                 }
-
-                InvalidateButton(
-                    refreshing = state.refreshing,
-                    updated = state.albumUpdated.toEpochMilli(),
-                    updatedFormat = { "Album last updated $it" },
-                    updatedFallback = "Album never updated",
-                    onClick = { presenter.emitAsync(AlbumPresenter.Event.Load(invalidate = true)) }
-                )
             }
 
-            VerticalSpacer(Dimens.space3)
-
-            Table(
-                columns = trackColumns(
-                    pageStack = pageStack,
-                    savedTracks = state.savedTracksState.value,
-                    onSetTrackSaved = { trackId, saved ->
-                        presenter.emitAsync(AlbumPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))
-                    },
-                    trackRatings = state.trackRatings,
-                    onRateTrack = { trackId, rating ->
-                        presenter.emitAsync(AlbumPresenter.Event.RateTrack(trackId = trackId, rating = rating))
-                    },
-                    includeAlbum = false,
-                    playContextFromIndex = { index ->
-                        Player.PlayContext.albumTrack(album = state.album, index = index)
-                    }
-                ),
-                items = state.tracks
+            InvalidateButton(
+                refreshing = state.refreshing,
+                updated = state.albumUpdated.toEpochMilli(),
+                updatedFormat = { "Album last updated $it" },
+                updatedFallback = "Album never updated",
+                onClick = { presenter.emitAsync(AlbumPresenter.Event.Load(invalidate = true)) }
             )
         }
+
+        VerticalSpacer(Dimens.space3)
+
+        Table(
+            columns = trackColumns(
+                pageStack = pageStack,
+                savedTracks = state.savedTracksState.value,
+                onSetTrackSaved = { trackId, saved ->
+                    presenter.emitAsync(AlbumPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))
+                },
+                trackRatings = state.trackRatings,
+                onRateTrack = { trackId, rating ->
+                    presenter.emitAsync(AlbumPresenter.Event.RateTrack(trackId = trackId, rating = rating))
+                },
+                includeAlbum = false,
+                playContextFromIndex = { index ->
+                    Player.PlayContext.albumTrack(album = state.album, index = index)
+                }
+            ),
+            items = state.tracks
+        )
     }
 }
