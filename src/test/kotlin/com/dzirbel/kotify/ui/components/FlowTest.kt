@@ -62,6 +62,7 @@ internal class FlowTest {
 
     companion object {
         @JvmStatic
+        @Suppress("UnnecessaryParentheses")
         fun screenshotTestCases(): List<ScreenshotTestCase> {
             return listOf(
                 ScreenshotTestCase(filename = "single-row", elements = 3),

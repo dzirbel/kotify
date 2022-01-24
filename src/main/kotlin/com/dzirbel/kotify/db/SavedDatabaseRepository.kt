@@ -59,6 +59,12 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
     override fun eventsFlow(): SharedFlow<SavedRepository.Event> = events.asSharedFlow()
 
+    override suspend fun savedTimeCached(id: String): Instant? {
+        return KotifyDatabase.transaction {
+            savedEntityTable.savedTime(entityId = id)
+        }
+    }
+
     final override suspend fun isSavedCached(ids: List<String>): List<Boolean?> {
         return KotifyDatabase.transaction {
             val hasFetchedLibrary = GlobalUpdateTimesRepository.hasBeenUpdated(libraryUpdateKey)

@@ -43,6 +43,7 @@ object Dimens {
 
     // size of common images - album art, artist image, etc
     val contentImage = 200.dp
+    val contentImageSmall = 80.dp
 
     private val scrollbarWidth = 12.dp
 

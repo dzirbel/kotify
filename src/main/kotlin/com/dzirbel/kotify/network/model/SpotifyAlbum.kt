@@ -95,6 +95,8 @@ data class SimplifiedSpotifyAlbum(
     /**
      * The field is present when getting an artist’s albums. Possible values are "album", "single", "compilation",
      * "appears_on". Compare to album_type this field represents relationship between the artist and the album.
+     *
+     * TODO store this alongside artist-album relations
      */
     @SerialName("album_group")
     val albumGroup: SpotifyAlbum.Type? = null,

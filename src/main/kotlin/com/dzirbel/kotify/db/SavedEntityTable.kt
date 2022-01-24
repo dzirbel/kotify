@@ -40,6 +40,11 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
         return select { id eq entityId }.firstOrNull()?.get(saved)
     }
 
+    // TODO document
+    fun savedTime(entityId: String): Instant? {
+        return select { id eq entityId }.firstOrNull()?.get(savedTime)
+    }
+
     /**
      * Retrieves the last time the save state of the entity with the given [entityId] was individually checked.
      *

@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -19,14 +20,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistRepository
+import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.components.Pill
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -37,6 +42,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
+import java.time.Instant
 
 private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewModel?, ArtistsPresenter.Event>(
     scope = scope,
@@ -44,17 +50,27 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
     startingEvents = listOf(Event.Load(invalidate = false)),
     initialState = null
 ) {
+    data class ArtistDetails(
+        val savedTime: Instant?,
+        val genres: List<String>,
+        val albums: List<Album>?,
+    )
+
     data class ViewModel(
         val refreshing: Boolean,
         val artists: List<Artist>,
+        val artistDetails: Map<String, ArtistDetails>,
         val savedArtistIds: Set<String>,
+        val savedAlbumsState: State<Set<String>?>? = null,
         val artistsUpdated: Long?,
     )
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
+        data class LoadArtistDetails(val artistId: String) : Event()
         data class ReactToArtistsSaved(val artistIds: List<String>, val saved: Boolean) : Event()
         data class ToggleSave(val artistId: String, val save: Boolean) : Event()
+        data class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
     }
 
     override fun eventFlows(): Iterable<Flow<Event>> {
@@ -87,8 +103,52 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                     ViewModel(
                         refreshing = false,
                         artists = artists,
+                        artistDetails = it?.artistDetails.orEmpty(),
                         savedArtistIds = savedArtistIds,
                         artistsUpdated = artistsUpdated?.toEpochMilli(),
+                    )
+                }
+            }
+
+            is Event.LoadArtistDetails -> {
+                // don't load details again if already in the state
+                if (queryState { it?.artistDetails }?.containsKey(event.artistId) == true) return
+
+                val artist = queryState { it?.artists }?.find { it.id.value == event.artistId }
+                    ?: ArtistRepository.getCached(id = event.artistId)
+                requireNotNull(artist) { "could not resolve artist for ${event.artistId}" }
+
+                val savedTime = SavedArtistRepository.savedTimeCached(id = event.artistId)
+                val genres = KotifyDatabase
+                    .transaction { artist.genres.live }
+                    .map { it.name }
+                    .sorted()
+
+                val details = ArtistDetails(
+                    savedTime = savedTime,
+                    genres = genres,
+                    albums = null
+                )
+
+                mutateState {
+                    it?.copy(artistDetails = it.artistDetails.plus(event.artistId to details))
+                }
+
+                val albums = Artist.getAllAlbums(artistId = event.artistId)
+                KotifyDatabase.transaction {
+                    albums.forEach { it.largestImage.loadToCache() }
+                }
+
+                val savedAlbumsState = if (queryState { it?.savedAlbumsState } == null) {
+                    SavedAlbumRepository.libraryState()
+                } else {
+                    null
+                }
+
+                mutateState {
+                    it?.copy(
+                        artistDetails = it.artistDetails.plus(event.artistId to details.copy(albums = albums)),
+                        savedAlbumsState = savedAlbumsState ?: it.savedAlbumsState,
                     )
                 }
             }
@@ -122,6 +182,8 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
             }
 
             is Event.ToggleSave -> SavedArtistRepository.setSaved(id = event.artistId, saved = event.save)
+
+            is Event.ToggleAlbumSaved -> SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
         }
     }
 
@@ -170,7 +232,9 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
         Grid(
             elements = state.artists,
             selectedElement = selectedArtist.value,
-            detailInsertContent = { artist -> ArtistDetailInsert(artist) },
+            detailInsertContent = { artist ->
+                ArtistDetailInsert(artist = artist, presenter = presenter, state = state, pageStack = pageStack)
+            },
         ) { artist ->
             ArtistCell(
                 artist = artist,
@@ -178,6 +242,7 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
                 presenter = presenter,
                 pageStack = pageStack,
                 onRightClick = {
+                    presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
                     selectedArtist.value = artist.takeIf { selectedArtist.value != it }
                 }
             )
@@ -227,11 +292,56 @@ private fun ArtistCell(
     }
 }
 
+private const val DETAILS_COLUMN_WEIGHT = 0.3f
+private const val DETAILS_ALBUMS_WEIGHT = 0.7f
+
 @Composable
-private fun ArtistDetailInsert(artist: Artist) {
+private fun ArtistDetailInsert(
+    artist: Artist,
+    presenter: ArtistsPresenter,
+    state: ArtistsPresenter.ViewModel,
+    pageStack: MutableState<PageStack>,
+) {
     Row(modifier = Modifier.padding(Dimens.space4), horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+        val artistDetails = state.artistDetails[artist.id.value]
+
         LoadedImage(url = artist.largestImage.cached?.url)
 
-        Text(artist.name)
+        Column(
+            modifier = Modifier.weight(weight = DETAILS_COLUMN_WEIGHT),
+            verticalArrangement = Arrangement.spacedBy(Dimens.space2),
+        ) {
+            Text(artist.name, fontSize = Dimens.fontTitle)
+
+            artistDetails?.let {
+                artistDetails.savedTime?.let { savedTime ->
+                    Text("Saved $savedTime") // TODO improve datetime formatting
+                }
+
+                Flow {
+                    artistDetails.genres.forEach { genre ->
+                        Pill(text = genre)
+                    }
+                }
+            }
+        }
+
+        artistDetails?.albums?.let { albums ->
+            Grid(
+                modifier = Modifier.weight(DETAILS_ALBUMS_WEIGHT),
+                elements = albums,
+            ) { album ->
+                SmallAlbumCell(
+                    album = album,
+                    isSaved = state.savedAlbumsState?.value?.contains(album.id.value),
+                    pageStack = pageStack,
+                    onToggleSave = { save ->
+                        presenter.emitAsync(
+                            ArtistsPresenter.Event.ToggleAlbumSaved(albumId = album.id.value, save = save)
+                        )
+                    }
+                )
+            }
+        }
     }
 }
