@@ -4,11 +4,11 @@ import com.dzirbel.kotify.Logger.Event
 import com.dzirbel.kotify.Logger.Network.intercept
 import com.dzirbel.kotify.cache.ImageCacheEvent
 import com.dzirbel.kotify.ui.Presenter
-import com.dzirbel.kotify.util.ellipsize
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
+import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -16,15 +16,17 @@ import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
 /**
- * A simple in-memory log of [Event]s, which can be [log]ed variously throughout the application and retrieved to be
- * exposed in the UI by [events] and [eventsFlow].
+ * A simple in-memory log of [Event]s storing arbitrary data of type [T], which can be [log]ed variously throughout the
+ * application and retrieved to be exposed in the UI by [eventsFlow].
  */
-sealed class Logger(private val tag: String) {
+sealed class Logger<T> {
     /**
      * A single event that can be logged.
      */
-    data class Event(
-        val message: String,
+    data class Event<T>(
+        val title: String,
+        val content: String? = null,
+        val data: T,
         val type: Type = Type.INFO,
         val time: Long = System.currentTimeMillis(),
     ) {
@@ -33,46 +35,49 @@ sealed class Logger(private val tag: String) {
         }
     }
 
-    private val _events = mutableListOf<Event>()
-    val events: List<Event>
-        get() = _events.toList()
+    private val events = mutableListOf<Event<T>>()
+    private val mutableEventsFlow = MutableSharedFlow<List<Event<T>>>(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
-    private val _eventsFlow = MutableSharedFlow<List<Event>>()
-    val eventsFlow = _eventsFlow.asSharedFlow()
+    /**
+     * A [SharedFlow] view of the events held by this logged. Replays the current list of events to new subscribers.
+     */
+    val eventsFlow: SharedFlow<List<Event<T>>>
+        get() = mutableEventsFlow.asSharedFlow()
 
-    protected fun log(lazyEvents: () -> List<Event>) {
-        GlobalScope.launch {
-            val newEvents = lazyEvents()
-
-            val allEvents = synchronized(_events) {
-                _events.addAll(0, newEvents)
-                _events.toList()
-            }
-
-            _eventsFlow.emit(allEvents)
-
-            if (logToConsole) {
-                newEvents.forEach { event ->
-                    println("$tag ${event.message}")
-                }
-            }
+    protected fun log(newEvent: Event<T>) {
+        synchronized(events) {
+            events.add(newEvent)
+            mutableEventsFlow.tryEmit(ArrayList(events))
         }
     }
 
     fun clear() {
-        GlobalScope.launch {
-            synchronized(_events) {
-                _events.clear()
-            }
-
-            _eventsFlow.emit(listOf())
+        synchronized(events) {
+            events.clear()
         }
+
+        mutableEventsFlow.tryEmit(emptyList())
     }
 
     /**
      * A global [Logger] which can [intercept] OkHttp requests and log events for each of them.
      */
-    object Network : Logger("NETWORK") {
+    object Network : Logger<Network.EventData>() {
+        data class EventData(val isSpotifyApi: Boolean, val isRequest: Boolean, val isResponse: Boolean)
+
+        private fun Headers.toContentString(): String {
+            val headers = this
+            return buildString {
+                headers.forEach { (name, value) ->
+                    append("$name : $value")
+                    appendLine()
+                }
+            }
+        }
+
         fun intercept(chain: Interceptor.Chain): Response {
             val request = chain.request()
             httpRequest(request)
@@ -84,78 +89,106 @@ sealed class Logger(private val tag: String) {
         }
 
         private fun httpRequest(request: Request) {
-            log { listOf(Event(">> ${request.method} ${request.url}")) }
+            log(
+                Event(
+                    title = ">> ${request.method} ${request.url}",
+                    content = request.headers.toContentString(),
+                    data = EventData(
+                        isSpotifyApi = request.url.host == "api.spotify.com",
+                        isRequest = true,
+                        isResponse = false,
+                    )
+                )
+            )
         }
 
         private fun httpResponse(response: Response, duration: Duration) {
-            log { listOf(Event("<< ${response.code} ${response.request.method} ${response.request.url} in $duration")) }
+            log(
+                Event(
+                    title = "<< ${response.code} ${response.request.method} ${response.request.url} in $duration",
+                    content = buildString {
+                        append("Message: ${response.message}")
+                        if (response.headers.any()) {
+                            appendLine()
+                            appendLine()
+
+                            append(response.headers.toContentString())
+                        }
+                    },
+                    data = EventData(
+                        isSpotifyApi = response.request.url.host == "api.spotify.com",
+                        isRequest = false,
+                        isResponse = true,
+                    )
+                )
+            )
         }
     }
 
     /**
      * A global [Logger] which logs events from the [com.dzirbel.kotify.cache.SpotifyImageCache].
      */
-    object ImageCache : Logger("IMAGE CACHE") {
+    object ImageCache : Logger<Unit>() {
         fun handleImageCacheEvent(imageCacheEvent: ImageCacheEvent) {
-            log {
-                val message = when (imageCacheEvent) {
-                    is ImageCacheEvent.InMemory -> "IN-MEMORY ${imageCacheEvent.url}"
-                    is ImageCacheEvent.OnDisk ->
-                        "ON-DISK ${imageCacheEvent.url} as ${imageCacheEvent.cacheFile} " +
-                            "(loaded file in ${imageCacheEvent.duration})"
-                    is ImageCacheEvent.Fetch ->
-                        "MISS ${imageCacheEvent.url} in ${imageCacheEvent.duration}" +
-                            imageCacheEvent.cacheFile?.let { " (saved to $it)" }
-                }
-
-                val type = when (imageCacheEvent) {
-                    is ImageCacheEvent.InMemory -> Event.Type.SUCCESS
-                    is ImageCacheEvent.OnDisk -> Event.Type.INFO
-                    is ImageCacheEvent.Fetch -> Event.Type.WARNING
-                }
-
-                listOf(Event(message = message, type = type))
+            val title = when (imageCacheEvent) {
+                is ImageCacheEvent.InMemory -> "IN-MEMORY ${imageCacheEvent.url}"
+                is ImageCacheEvent.OnDisk ->
+                    "ON-DISK ${imageCacheEvent.url} as ${imageCacheEvent.cacheFile} " +
+                        "(loaded file in ${imageCacheEvent.duration})"
+                is ImageCacheEvent.Fetch ->
+                    "MISS ${imageCacheEvent.url} in ${imageCacheEvent.duration}" +
+                        imageCacheEvent.cacheFile?.let { " (saved to $it)" }
             }
+
+            val type = when (imageCacheEvent) {
+                is ImageCacheEvent.InMemory -> Event.Type.SUCCESS
+                is ImageCacheEvent.OnDisk -> Event.Type.INFO
+                is ImageCacheEvent.Fetch -> Event.Type.WARNING
+            }
+
+            log(Event(title = title, type = type, data = Unit))
         }
     }
 
-    object UI : Logger("UI") {
-        private const val MAX_STATE_LENGTH = 200
+    object UI : Logger<UI.EventData>() {
+        enum class EventType {
+            ERROR, STATE, EVENT
+        }
+
+        data class EventData(val presenterClass: String?, val type: EventType)
 
         fun handleError(presenter: Presenter<*, *>, throwable: Throwable) {
-            if (logToConsole) {
-                throwable.printStackTrace()
-            }
-
-            log {
-                listOf(
-                    Event(
-                        message = "[${presenter::class.simpleName}] Error -> $throwable",
-                        type = Event.Type.WARNING
-                    )
+            val presenterClass = presenter::class.simpleName
+            log(
+                Event(
+                    title = "[$presenterClass] ERROR ${throwable::class.simpleName} : ${throwable.message}",
+                    content = throwable.stackTraceToString(),
+                    type = Event.Type.WARNING,
+                    data = EventData(presenterClass = presenterClass, type = EventType.ERROR),
                 )
-            }
+            )
         }
 
-        fun handleState(presenter: Presenter<*, *>, state: Any) {
-            log {
-                listOf(
-                    Event(
-                        message = "[${presenter::class.simpleName}] State -> " +
-                            state.toString().ellipsize(MAX_STATE_LENGTH)
-                    )
+        fun handleState(presenter: Presenter<*, *>, state: Any, stateCount: Int) {
+            val presenterClass = presenter::class.simpleName
+            log(
+                Event(
+                    title = "[$presenterClass] STATE #$stateCount ${state::class.simpleName}",
+                    content = state.toString(),
+                    data = EventData(presenterClass = presenterClass, type = EventType.STATE),
                 )
-            }
+            )
         }
 
-        fun handleEvent(presenter: Presenter<*, *>, event: Any) {
-            log {
-                listOf(Event(message = "[${presenter::class.simpleName}] Event -> $event"))
-            }
+        fun handleEvent(presenter: Presenter<*, *>, event: Any, eventCount: Int) {
+            val presenterClass = presenter::class.simpleName
+            log(
+                Event(
+                    title = "[$presenterClass] EVENT #$eventCount ${event::class.simpleName}",
+                    content = event.toString(),
+                    data = EventData(presenterClass = presenterClass, type = EventType.EVENT),
+                )
+            )
         }
-    }
-
-    companion object {
-        var logToConsole = false
     }
 }

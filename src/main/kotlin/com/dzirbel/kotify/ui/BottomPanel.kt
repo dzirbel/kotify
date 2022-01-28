@@ -222,6 +222,9 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         class RateTrack(val trackId: String, val rating: Rating?) : Event()
     }
 
+    // TODO consolidate this in a new EventMergeStrategy
+    // this implementation re-subscribes to the events flow many times (causing it to re-emit starting events, although
+    // they are generally ignored)
     override fun reactTo(events: Flow<Event>): Flow<Event> {
         return merge(
             events.filterIsInstance<Event.LoadDevices>().transformLatest { reactTo(it) },
@@ -277,6 +280,7 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
                     expectedChangeDevice != null &&
                     expectedChangeDevice.volumePercent == previousVolume
                 ) {
+                    delay(REFRESH_BUFFER_MS)
                     emit(event.copy(retries = event.retries - 1))
                 } else {
                     val currentDevice: SpotifyPlaybackDevice?

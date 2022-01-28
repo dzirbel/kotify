@@ -2,6 +2,7 @@ package com.dzirbel.kotify.ui
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Button
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
@@ -19,6 +22,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -38,10 +43,8 @@ import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.network.DelayInterceptor
-import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
 import com.dzirbel.kotify.ui.components.HorizontalDivider
-import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.components.VerticalSpacer
@@ -49,17 +52,20 @@ import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
 import com.dzirbel.kotify.ui.components.panel.PanelSize
 import com.dzirbel.kotify.ui.components.panel.SidePanel
+import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.Theme
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.ui.util.setClipboard
 import com.dzirbel.kotify.util.formatByteSize
 import com.dzirbel.kotify.util.formatDateTime
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.map
 
 // TODO add tab for database operations
-private enum class DebugTab(val tabName: String, val log: Logger) {
+private enum class DebugTab(val tabName: String, val log: Logger<*>) {
     NETWORK("Network", Logger.Network),
     IMAGE_CACHE("Images", Logger.ImageCache),
     UI("UI", Logger.UI)
@@ -94,9 +100,9 @@ private val uiSettings = mutableStateOf(UISettings())
 private val scrollStates = DebugTab.values().associateWith { ScrollState(0) }
 
 private val debugPanelSize = PanelSize(
-    initialSize = FixedOrPercent.Fixed(400.dp),
-    minPanelSizeDp = 125.dp,
-    minContentSizePercent = 0.5f
+    initialSize = FixedOrPercent.Fixed(500.dp),
+    minPanelSizeDp = 300.dp,
+    minContentSizePercent = 0.5f,
 )
 
 /**
@@ -249,21 +255,9 @@ private fun NetworkTab() {
 
     val scrollState = scrollStates.getValue(DebugTab.NETWORK)
     EventList(log = Logger.Network, key = networkSettings.value, scrollState = scrollState) { event ->
-        var allow = true
-
-        if (networkSettings.value.filterApi) {
-            allow = allow && event.message.contains(Spotify.API_URL)
-        }
-
-        if (networkSettings.value.filterIncoming) {
-            allow = allow && event.message.startsWith("<< ")
-        }
-
-        if (networkSettings.value.filterOutgoing) {
-            allow = allow && event.message.startsWith(">> ")
-        }
-
-        allow
+        (!networkSettings.value.filterApi || event.data.isSpotifyApi) &&
+            (!networkSettings.value.filterIncoming || event.data.isResponse) &&
+            (!networkSettings.value.filterOutgoing || event.data.isRequest)
     }
 }
 
@@ -319,10 +313,10 @@ private fun ImageCacheTab() {
 
     val scrollState = scrollStates.getValue(DebugTab.IMAGE_CACHE)
     EventList(log = Logger.ImageCache, key = imageCacheSettings.value, scrollState = scrollState) { event ->
-        when {
-            event.message.startsWith("IN-MEMORY") -> imageCacheSettings.value.includeInMemory
-            event.message.startsWith("ON-DISK") -> imageCacheSettings.value.includeOnDisk
-            event.message.startsWith("MISS") -> imageCacheSettings.value.includeMiss
+        when (event.type) {
+            Logger.Event.Type.SUCCESS -> imageCacheSettings.value.includeInMemory
+            Logger.Event.Type.INFO -> imageCacheSettings.value.includeOnDisk
+            Logger.Event.Type.WARNING -> imageCacheSettings.value.includeMiss
             else -> true
         }
     }
@@ -371,25 +365,20 @@ private fun UITab() {
         )
     }
 
-    val eventMessageRegex = remember { """\[(.*)] (.*) -> .*""".toRegex() }
     val scrollState = scrollStates.getValue(DebugTab.UI)
+    val presenterRegex = uiSettings.value.presenterRegex
+        .takeIf { it.isNotEmpty() }
+        ?.toRegex(RegexOption.IGNORE_CASE)
     EventList(log = Logger.UI, key = uiSettings.value, scrollState = scrollState) { event ->
-        val match = eventMessageRegex.matchEntire(event.message)!!
-
-        val includeEventType = when (val eventType = match.groupValues[2]) {
-            "State" -> uiSettings.value.includeStates
-            "Event" -> uiSettings.value.includeEvents
-            "Error" -> uiSettings.value.includeErrors
-            else -> error("unexpected event type: $eventType")
+        val includeEventType = when (event.data.type) {
+            Logger.UI.EventType.STATE -> uiSettings.value.includeStates
+            Logger.UI.EventType.EVENT -> uiSettings.value.includeEvents
+            Logger.UI.EventType.ERROR -> uiSettings.value.includeErrors
         }
 
         if (includeEventType) {
-            val presenterRegex = uiSettings.value.presenterRegex
-                .takeIf { it.isNotEmpty() }
-                ?.toRegex(RegexOption.IGNORE_CASE)
-
-            val presenterClass = match.groupValues[1]
-            presenterRegex?.containsMatchIn(presenterClass) != false
+            val presenterClass = event.data.presenterClass
+            presenterClass != null && presenterRegex?.containsMatchIn(presenterClass) != false
         } else {
             false
         }
@@ -397,59 +386,116 @@ private fun UITab() {
 }
 
 @Composable
-private fun EventList(
-    log: Logger,
+private fun <T> EventList(
+    log: Logger<T>,
     key: Any,
     scrollState: ScrollState = rememberScrollState(0),
-    filter: (Logger.Event) -> Boolean = { true },
+    filter: (Logger.Event<T>) -> Boolean = { true },
 ) {
-    val events = log.eventsFlow
-        .map { it.filter(filter).take(MAX_EVENTS) }
-        .collectAsStateSwitchable(initial = { log.events.filter(filter).take(MAX_EVENTS) }, key = key)
-        .value
-
     VerticalScroll(scrollState = scrollState) {
-        events.forEachIndexed { index, event ->
-            Column(Modifier.padding(Dimens.space2).fillMaxWidth()) {
-                Row {
-                    Icon(
-                        imageVector = when (event.type) {
-                            Logger.Event.Type.INFO -> Icons.Default.Info
-                            Logger.Event.Type.SUCCESS -> Icons.Default.Check
-                            Logger.Event.Type.WARNING -> Icons.Default.Warning
-                            Logger.Event.Type.ERROR -> Icons.Default.Close
-                        },
-                        contentDescription = null,
-                        modifier = Modifier.size(Dimens.iconSmall).align(Alignment.Top),
-                        tint = when (event.type) {
-                            Logger.Event.Type.INFO -> LocalColors.current.text
-                            Logger.Event.Type.SUCCESS -> Color.Green
-                            Logger.Event.Type.WARNING -> Color.Yellow
-                            Logger.Event.Type.ERROR -> LocalColors.current.error
-                        }
-                    )
+        val flow: SharedFlow<List<Logger.Event<T>>> = remember(key) { log.eventsFlow }
+        val events: List<Logger.Event<T>> = flow
+            .map { it.filter(filter).take(MAX_EVENTS) }
+            .collectAsStateSwitchable(initial = { flow.replayCache.firstOrNull().orEmpty() }, key = key)
+            .value
 
-                    HorizontalSpacer(Dimens.space1)
-
-                    Text(
-                        text = event.message,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                }
-
-                VerticalSpacer(Dimens.space1)
-
-                Text(
-                    text = remember(event.time) { formatDateTime(event.time, includeMillis = true) },
-                    fontSize = Dimens.fontCaption,
-                    fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.padding(Dimens.space2).align(Alignment.End)
-                )
-            }
+        events.asReversed().forEachIndexed { index, event ->
+            EventItem(event)
 
             if (index != events.lastIndex) {
                 HorizontalDivider()
             }
         }
+    }
+}
+
+@Composable
+fun <T> EventItem(event: Logger.Event<T>) {
+    val canExpand = !event.content.isNullOrBlank()
+
+    // TODO doesn't retain state when adding new events to the list
+    val expandedState = if (canExpand) remember(event) { mutableStateOf(false) } else null
+    val expanded = expandedState?.value == true
+
+    val rightClickMenuExpanded = remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .let {
+                if (canExpand) {
+                    it.rightLeftClickable(
+                        onLeftClick = { expandedState?.value = !expanded },
+                        onRightClick = { rightClickMenuExpanded.value = true },
+                    )
+                } else {
+                    it
+                }
+            }
+            .padding(Dimens.space2)
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Dimens.space1),
+    ) {
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            DropdownMenu(
+                expanded = rightClickMenuExpanded.value,
+                onDismissRequest = { rightClickMenuExpanded.value = false },
+            ) {
+                DropdownMenuItem(
+                    onClick = {
+                        setClipboard(contents = event.content.orEmpty())
+                        rightClickMenuExpanded.value = false
+                    }
+                ) {
+                    Text("Copy contents to clipboard")
+                }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space1), modifier = Modifier.weight(1f)) {
+                Icon(
+                    imageVector = when (event.type) {
+                        Logger.Event.Type.INFO -> Icons.Default.Info
+                        Logger.Event.Type.SUCCESS -> Icons.Default.Check
+                        Logger.Event.Type.WARNING -> Icons.Default.Warning
+                        Logger.Event.Type.ERROR -> Icons.Default.Close
+                    },
+                    contentDescription = null,
+                    modifier = Modifier.size(Dimens.iconSmall).align(Alignment.Top),
+                    tint = when (event.type) {
+                        Logger.Event.Type.INFO -> LocalColors.current.text
+                        Logger.Event.Type.SUCCESS -> Color.Green
+                        Logger.Event.Type.WARNING -> Color.Yellow
+                        Logger.Event.Type.ERROR -> LocalColors.current.error
+                    },
+                )
+
+                Text(
+                    text = event.title,
+                    fontFamily = FontFamily.Monospace,
+                )
+            }
+
+            if (canExpand) {
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                    contentDescription = null,
+                    modifier = Modifier.size(Dimens.iconSmall),
+                )
+            }
+        }
+
+        if (expanded) {
+            Text(
+                text = event.content.orEmpty(),
+                fontFamily = FontFamily.Monospace,
+                modifier = Modifier.padding(start = Dimens.space3),
+            )
+        }
+
+        Text(
+            text = remember(event.time) { formatDateTime(event.time, includeMillis = true) },
+            fontSize = Dimens.fontCaption,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier.padding(Dimens.space2).align(Alignment.End),
+        )
     }
 }

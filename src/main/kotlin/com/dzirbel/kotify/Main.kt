@@ -23,8 +23,6 @@ fun main(args: Array<String>) {
 
     KotifyDatabase.db // initialize database connection and create schema
 
-    Logger.logToConsole = false
-
     val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(Logger.Network::intercept)
         .addInterceptor(DelayInterceptor)

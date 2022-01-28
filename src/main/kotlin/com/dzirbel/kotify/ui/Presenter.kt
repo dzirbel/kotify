@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import java.io.Closeable
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.coroutines.CoroutineContext
@@ -128,6 +129,9 @@ abstract class Presenter<ViewModel, Event : Any> constructor(
      */
     private val stateFlow = MutableStateFlow<StateOrError<ViewModel>>(State(initialState))
 
+    private var stateCount = AtomicInteger(0)
+    private var eventCount = AtomicInteger(0)
+
     private val events = MutableSharedFlow<Event>()
 
     private val errorsFlow = MutableStateFlow<List<Throwable>>(emptyList())
@@ -151,8 +155,10 @@ abstract class Presenter<ViewModel, Event : Any> constructor(
     private fun eventFlow(startingEvents: List<Event>? = this.startingEvents): Flow<Event> {
         return (eventFlows()?.plus(events)?.merge() ?: events)
             .onStart { startingEvents?.forEach { emit(it) } }
-            .onEach { Logger.UI.handleEvent(presenter = this, event = it) }
-            .onEach { assertNotOnUIThread() }
+            .onEach {
+                assertNotOnUIThread()
+                Logger.UI.handleEvent(presenter = this, event = it, eventCount = eventCount.incrementAndGet())
+            }
             .let { flow -> reactTo(flow) }
             .catch {
                 onError(it)
@@ -243,7 +249,11 @@ abstract class Presenter<ViewModel, Event : Any> constructor(
             transform(lastState)
                 ?.takeIf { it != lastState }
                 ?.let { transformed ->
-                    Logger.UI.handleState(presenter = this, state = transformed)
+                    Logger.UI.handleState(
+                        presenter = this,
+                        state = transformed,
+                        stateCount = stateCount.incrementAndGet(),
+                    )
                     stateFlow.value = State(transformed)
                 }
         }
