@@ -53,7 +53,10 @@ interface SavedRepository {
      */
     fun eventsFlow(): SharedFlow<Event>
 
-    // TODO document
+    /**
+     * Determines the [Instant] at which [id] was saved to the user's library, from the local cache. Returns null if it
+     * is unsaved or its status is unknown.
+     */
     suspend fun savedTimeCached(id: String): Instant?
 
     /**

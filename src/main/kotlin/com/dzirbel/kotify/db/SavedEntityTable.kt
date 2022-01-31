@@ -17,7 +17,8 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
     private val saved: Column<Boolean> = bool("saved").default(true)
 
     /**
-     * The time at which the entity was saved, as provided by the Spotify API, or null if it was not saved.
+     * The time at which the entity was saved, as provided by the Spotify API, or null if it was not saved or its save
+     * time is unknown.
      */
     private val savedTime: Column<Instant?> = timestamp("saved_time").nullable()
 
@@ -40,7 +41,10 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
         return select { id eq entityId }.firstOrNull()?.get(saved)
     }
 
-    // TODO document
+    /**
+     * Returns the [Instant] at which the entity with the given [entityId] was saved, or null if has not been saved or
+     * its save time is unknown.
+     */
     fun savedTime(entityId: String): Instant? {
         return select { id eq entityId }.firstOrNull()?.get(savedTime)
     }
