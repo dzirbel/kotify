@@ -39,7 +39,6 @@ private class ArtistPresenter(
 ) : Presenter<ArtistPresenter.ViewModel?, ArtistPresenter.Event>(
     scope = scope,
     key = page.artistId,
-    eventMergeStrategy = EventMergeStrategy.LATEST,
     startingEvents = listOf(
         Event.Load(
             refreshArtist = true,

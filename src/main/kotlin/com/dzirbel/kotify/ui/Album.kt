@@ -43,7 +43,6 @@ private class AlbumPresenter(
 ) : Presenter<AlbumPresenter.ViewModel?, AlbumPresenter.Event>(
     scope = scope,
     key = page.albumId,
-    eventMergeStrategy = EventMergeStrategy.LATEST,
     startingEvents = listOf(Event.Load(invalidate = false)),
     initialState = null,
 ) {

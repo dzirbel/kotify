@@ -51,7 +51,6 @@ private class PlaylistPresenter(
 ) : Presenter<PlaylistPresenter.ViewModel?, PlaylistPresenter.Event>(
     scope = scope,
     key = page.playlistId,
-    eventMergeStrategy = EventMergeStrategy.LATEST,
     startingEvents = listOf(Event.Load(invalidate = false)),
     initialState = null
 ) {

@@ -46,7 +46,6 @@ import java.time.Instant
 
 private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewModel?, ArtistsPresenter.Event>(
     scope = scope,
-    eventMergeStrategy = EventMergeStrategy.LATEST,
     startingEvents = listOf(Event.Load(invalidate = false)),
     initialState = null
 ) {

@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.map
 private class TracksPresenter(scope: CoroutineScope) :
     Presenter<TracksPresenter.ViewModel?, TracksPresenter.Event>(
         scope = scope,
-        eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load(invalidate = false)),
         initialState = null
     ) {

@@ -43,7 +43,6 @@ import kotlinx.coroutines.Dispatchers
 private class LibraryPresenter(scope: CoroutineScope) :
     Presenter<LibraryPresenter.ViewModel?, LibraryPresenter.Event>(
         scope = scope,
-        eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.LoadPlaylists()),
         initialState = null
     ) {

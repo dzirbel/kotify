@@ -33,7 +33,6 @@ import kotlinx.coroutines.flow.map
 private class AlbumsPresenter(scope: CoroutineScope) :
     Presenter<AlbumsPresenter.ViewModel?, AlbumsPresenter.Event>(
         scope = scope,
-        eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load(invalidate = false)),
         initialState = null
     ) {

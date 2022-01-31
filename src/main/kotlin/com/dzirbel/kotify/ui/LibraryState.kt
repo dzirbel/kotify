@@ -68,7 +68,6 @@ private val RATINGS_TABLE_WIDTH = 750.dp
 private class LibraryStatePresenter(scope: CoroutineScope) :
     Presenter<LibraryStatePresenter.ViewModel?, LibraryStatePresenter.Event>(
         scope = scope,
-        eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load),
         initialState = null
     ) {

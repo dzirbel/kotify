@@ -63,12 +63,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
@@ -90,7 +86,6 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
     Presenter<BottomPanelPresenter.ViewModel, BottomPanelPresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.LoadDevices(), Event.LoadPlayback(), Event.LoadTrackPlayback()),
-        eventMergeStrategy = EventMergeStrategy.LATEST,
         initialState = ViewModel()
     ) {
 
@@ -220,31 +215,6 @@ internal class BottomPanelPresenter(scope: CoroutineScope) :
         class ToggleArtistSaved(val artistId: String, val save: Boolean) : Event()
 
         class RateTrack(val trackId: String, val rating: Rating?) : Event()
-    }
-
-    // TODO consolidate this in a new EventMergeStrategy
-    // this implementation re-subscribes to the events flow many times (causing it to re-emit starting events, although
-    // they are generally ignored)
-    override fun reactTo(events: Flow<Event>): Flow<Event> {
-        return merge(
-            events.filterIsInstance<Event.LoadDevices>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.LoadPlayback>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.LoadTrackPlayback>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.Play>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.Pause>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.SkipNext>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.SkipPrevious>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.ToggleShuffle>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.SetRepeat>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.SetVolume>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.ToggleMuteVolume>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.SeekTo>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.SelectDevice>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.ToggleTrackSaved>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.ToggleAlbumSaved>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.ToggleArtistSaved>().transformLatest { reactTo(it) },
-            events.filterIsInstance<Event.RateTrack>().transformLatest { reactTo(it) },
-        )
     }
 
     override suspend fun reactTo(event: Event) {

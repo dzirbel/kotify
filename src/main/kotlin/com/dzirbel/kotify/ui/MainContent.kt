@@ -75,7 +75,6 @@ object TracksPage : Page {
 private class AuthenticationMenuPresenter(scope: CoroutineScope) :
     Presenter<User?, AuthenticationMenuPresenter.Event>(
         scope = scope,
-        eventMergeStrategy = EventMergeStrategy.LATEST,
         startingEvents = listOf(Event.Load),
         initialState = null
     ) {
