@@ -12,6 +12,10 @@ import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
+import org.jetbrains.exposed.sql.SqlLogger
+import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.statements.StatementContext
+import org.jetbrains.exposed.sql.statements.expandArgs
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
@@ -120,6 +124,20 @@ sealed class Logger<T> {
                         isRequest = false,
                         isResponse = true,
                     )
+                )
+            )
+        }
+    }
+
+    object Database : Logger<Unit>(), SqlLogger {
+        override fun log(context: StatementContext, transaction: Transaction) {
+            val tables = context.statement.targets.joinToString { it.tableName }
+            val transactionData = "#${transaction.statementCount} in ${transaction.id}"
+            log(
+                Event(
+                    title = "$transactionData : ${context.statement.type} $tables [${transaction.duration}ms]",
+                    content = context.expandArgs(transaction),
+                    data = Unit,
                 )
             )
         }

@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.db
 
 import com.dzirbel.kotify.Application
+import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.db.model.AlbumTable
 import com.dzirbel.kotify.db.model.ArtistTable
 import com.dzirbel.kotify.db.model.GenreTable
@@ -18,6 +19,7 @@ import com.dzirbel.kotify.db.model.UserTable
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.deleteAll
@@ -65,7 +67,13 @@ object KotifyDatabase {
     val db: Database by lazy {
         TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED
 
-        Database.connect("jdbc:sqlite:${dbFile.absolutePath}", driver = "org.sqlite.JDBC").also {
+        Database.connect(
+            url = "jdbc:sqlite:${dbFile.absolutePath}",
+            driver = "org.sqlite.JDBC",
+            databaseConfig = DatabaseConfig {
+                sqlLogger = Logger.Database
+            },
+        ).also {
             transaction(it) {
                 @Suppress("SpreadOperator")
                 SchemaUtils.createMissingTablesAndColumns(*tables)

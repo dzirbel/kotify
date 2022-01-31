@@ -64,9 +64,9 @@ import com.dzirbel.kotify.util.formatDateTime
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.map
 
-// TODO add tab for database operations
 private enum class DebugTab(val tabName: String, val log: Logger<*>) {
     NETWORK("Network", Logger.Network),
+    DATABASE("Database", Logger.Database),
     IMAGE_CACHE("Images", Logger.ImageCache),
     UI("UI", Logger.UI)
 }
@@ -168,6 +168,7 @@ private fun DebugPanelContent(modifier: Modifier = Modifier) {
 
             when (tab.value) {
                 DebugTab.NETWORK -> NetworkTab()
+                DebugTab.DATABASE -> DatabaseTab()
                 DebugTab.IMAGE_CACHE -> ImageCacheTab()
                 DebugTab.UI -> UITab()
             }
@@ -259,6 +260,12 @@ private fun NetworkTab() {
             (!networkSettings.value.filterIncoming || event.data.isResponse) &&
             (!networkSettings.value.filterOutgoing || event.data.isRequest)
     }
+}
+
+@Composable
+private fun DatabaseTab() {
+    val scrollState = scrollStates.getValue(DebugTab.UI)
+    EventList(log = Logger.Database, key = Unit, scrollState = scrollState)
 }
 
 @Composable
