@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
@@ -26,6 +27,7 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.reflect.KClass
 
 /**
  * A presenter abstraction which controls the state of a particular piece of the UI.
@@ -57,7 +59,7 @@ abstract class Presenter<ViewModel, Event : Any> constructor(
      * The strategy by which to handle concurrent events, i.e. events whose processing (via [reactTo]) has not completed
      * before the next event is emitted.
      */
-    private val eventMergeStrategy: EventMergeStrategy = EventMergeStrategy.MERGE,
+    private val eventMergeStrategy: EventMergeStrategy = EventMergeStrategy.LATEST_BY_CLASS,
 
     /**
      * An optional list of events which should be emitted at the beginning of the event flow, e.g. to load content.
@@ -77,7 +79,13 @@ abstract class Presenter<ViewModel, Event : Any> constructor(
         /**
          * All events are processed concurrently.
          */
-        MERGE
+        MERGE,
+
+        /**
+         * Only the latest event of each class is processed; processing of previous events of a particular class is
+         * cancelled when a new event of that class arrives. Events of different types are processed concurrently.
+         */
+        LATEST_BY_CLASS,
     }
 
     /**
@@ -289,8 +297,37 @@ abstract class Presenter<ViewModel, Event : Any> constructor(
      * Handles the given flow of [events], by default according to the [eventMergeStrategy] and [reactTo] for each
      * event in the flow.
      */
-    open fun reactTo(events: Flow<Event>): Flow<Event> {
+    fun reactTo(events: Flow<Event>): Flow<Event> {
         return when (eventMergeStrategy) {
+            EventMergeStrategy.LATEST_BY_CLASS -> {
+                // map event classes to the MutableSharedFlow on which events of that class are emitted
+                val mutableSharedFlowMap = mutableMapOf<KClass<out Event>, MutableSharedFlow<Event>>()
+
+                events.flatMapMerge { event ->
+                    val eventClass = event::class
+
+                    synchronized(mutableSharedFlowMap) {
+                        if (mutableSharedFlowMap.containsKey(eventClass)) {
+                            // if this event class has already been included in the flatMap, we need to avoid merging it
+                            // in again (but still need to emit to its MutableSharedFlow below)
+                            emptyFlow()
+                        } else {
+                            // if this is the first event of this class, create a new MutableSharedFlow to contain its
+                            // events; use a replay to avoid missing the first event which is emitted below
+                            MutableSharedFlow<Event>(replay = 1)
+                                .also { mutableSharedFlowMap[eventClass] = it }
+                                .transformLatest<Event, Event> { reactTo(it) }
+                        }
+                    }
+                        .also {
+                            // finally, emit the event to the MutableSharedFlow which handles its event class
+                            requireNotNull(mutableSharedFlowMap[eventClass]) {
+                                "missing MutableSharedFlow for $eventClass"
+                            }
+                                .emit(event)
+                        }
+                }
+            }
             EventMergeStrategy.LATEST -> events.transformLatest { reactTo(it) }
             EventMergeStrategy.MERGE -> events.flatMapMerge {
                 flow<Event> { reactTo(it) }.catch { onError(it) }
