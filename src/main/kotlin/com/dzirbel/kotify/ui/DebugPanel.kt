@@ -111,31 +111,26 @@ private val debugPanelSize = PanelSize(
  */
 @Composable
 fun DebugPanelOrWindow(content: @Composable () -> Unit) {
-    if (Settings.debugPanelOpen) {
-        if (Settings.debugPanelDetached) {
-            content()
+    SidePanel(
+        direction = PanelDirection.RIGHT,
+        panelSize = debugPanelSize,
+        panelEnabled = Settings.debugPanelOpen && !Settings.debugPanelDetached,
+        panelContent = { DebugPanelContent() },
+        mainContent = content,
+    )
 
-            Window(
-                title = "${Application.name} debug tools",
-                state = rememberWindowState(placement = WindowPlacement.Maximized),
-                onCloseRequest = {
-                    Settings.debugPanelOpen = false
-                },
-            ) {
-                Theme.apply {
-                    DebugPanelContent(Modifier.background(LocalColors.current.surface3))
-                }
+    if (Settings.debugPanelOpen && Settings.debugPanelDetached) {
+        Window(
+            title = "${Application.name} debug tools",
+            state = rememberWindowState(placement = WindowPlacement.Maximized),
+            onCloseRequest = {
+                Settings.debugPanelOpen = false
+            },
+        ) {
+            Theme.apply {
+                DebugPanelContent(Modifier.background(LocalColors.current.surface3))
             }
-        } else {
-            SidePanel(
-                direction = PanelDirection.RIGHT,
-                panelSize = debugPanelSize,
-                panelContent = { DebugPanelContent() },
-                mainContent = content,
-            )
         }
-    } else {
-        content()
     }
 }
 
