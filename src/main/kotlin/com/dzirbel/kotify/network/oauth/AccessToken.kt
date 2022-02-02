@@ -146,7 +146,6 @@ data class AccessToken(
             val token = token ?: return null
 
             if (token.isExpired) {
-                log("Current access token is expired; refreshing")
                 refresh(clientId)
             }
 
@@ -239,6 +238,7 @@ data class AccessToken(
             token?.refreshToken?.let { refreshToken ->
                 val job = synchronized(this) {
                     refreshJob ?: GlobalScope.async {
+                        log("Current access token is expired; refreshing")
                         fetchRefresh(refreshToken = refreshToken, clientId = clientId)
                         refreshJob = null
                     }.also { refreshJob = it }
