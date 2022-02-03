@@ -15,6 +15,7 @@ import okhttp3.Response
 import org.jetbrains.exposed.sql.SqlLogger
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.statements.StatementContext
+import org.jetbrains.exposed.sql.statements.StatementInterceptor
 import org.jetbrains.exposed.sql.statements.expandArgs
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
@@ -129,15 +130,48 @@ sealed class Logger<T> {
         }
     }
 
-    object Database : Logger<Unit>(), SqlLogger {
+    object Database : Logger<Database.EventType>(), SqlLogger, StatementInterceptor {
+        enum class EventType {
+            STATEMENT, TRANSACTION
+        }
+
+        private val transactionMap = mutableMapOf<String, MutableList<StatementContext>>()
+        private val closedTransactions = mutableSetOf<String>()
+        private var transactionCount: Int = 0
+
+        fun registerTransaction(transaction: Transaction) {
+            transaction.registerInterceptor(this)
+            transactionMap[transaction.id] = mutableListOf()
+        }
+
+        override fun beforeCommit(transaction: Transaction) {
+            closedTransactions.add(transaction.id)
+            transactionCount++
+            transactionMap.remove(transaction.id)?.let { statements ->
+                val transactionData = "Transaction #$transactionCount ${transaction.id}"
+                log(
+                    Event(
+                        title = "$transactionData (${statements.size}) [${transaction.duration}ms]",
+                        content = statements.joinToString(separator = "\n\n") { it.expandArgs(transaction) },
+                        data = EventType.TRANSACTION,
+                    )
+                )
+            }
+        }
+
         override fun log(context: StatementContext, transaction: Transaction) {
+            require(transaction.id !in closedTransactions) { "transaction ${transaction.id} was already closed" }
+
+            transactionMap[transaction.id]?.add(context)
+
             val tables = context.statement.targets.joinToString { it.tableName }
             val transactionData = "#${transaction.statementCount} in ${transaction.id}"
+
             log(
                 Event(
                     title = "$transactionData : ${context.statement.type} $tables [${transaction.duration}ms]",
                     content = context.expandArgs(transaction),
-                    data = Unit,
+                    data = EventType.STATEMENT,
                 )
             )
         }

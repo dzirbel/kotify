@@ -79,6 +79,10 @@ private data class NetworkSettings(
     val filterOutgoing: Boolean = false,
 )
 
+private data class DatabaseSettings(
+    val groupByTransaction: Boolean = true,
+)
+
 private data class ImageCacheSettings(
     val includeInMemory: Boolean = true,
     val includeOnDisk: Boolean = true,
@@ -95,6 +99,7 @@ private data class UISettings(
 // not part of the composition in order to retain values if the panel is hidden
 private val tab = mutableStateOf(DebugTab.values().first())
 private val networkSettings = mutableStateOf(NetworkSettings())
+private val databaseSettings = mutableStateOf(DatabaseSettings())
 private val imageCacheSettings = mutableStateOf(ImageCacheSettings())
 private val uiSettings = mutableStateOf(UISettings())
 private val scrollStates = DebugTab.values().associateWith { ScrollState(0) }
@@ -259,8 +264,23 @@ private fun NetworkTab() {
 
 @Composable
 private fun DatabaseTab() {
+    val groupByTransaction = databaseSettings.value.groupByTransaction
+    Column(Modifier.fillMaxWidth().background(LocalColors.current.surface3).padding(Dimens.space3)) {
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = groupByTransaction,
+            onCheckedChange = { databaseSettings.mutate { copy(groupByTransaction = it) } },
+            label = { Text("Group by transaction") },
+        )
+    }
+
     val scrollState = scrollStates.getValue(DebugTab.UI)
-    EventList(log = Logger.Database, key = Unit, scrollState = scrollState)
+    EventList(log = Logger.Database, key = Unit, scrollState = scrollState) { event ->
+        when (event.data) {
+            Logger.Database.EventType.STATEMENT -> !groupByTransaction
+            Logger.Database.EventType.TRANSACTION -> groupByTransaction
+        }
+    }
 }
 
 @Composable
@@ -398,7 +418,10 @@ private fun <T> EventList(
         val flow: SharedFlow<List<Logger.Event<T>>> = remember(key) { log.eventsFlow }
         val events: List<Logger.Event<T>> = flow
             .map { it.filter(filter).take(MAX_EVENTS) }
-            .collectAsStateSwitchable(initial = { flow.replayCache.firstOrNull().orEmpty() }, key = key)
+            .collectAsStateSwitchable(
+                initial = { flow.replayCache.firstOrNull().orEmpty().filter(filter).take(MAX_EVENTS) },
+                key = key,
+            )
             .value
 
         events.asReversed().forEachIndexed { index, event ->

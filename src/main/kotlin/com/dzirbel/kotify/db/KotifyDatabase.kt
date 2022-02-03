@@ -92,7 +92,14 @@ object KotifyDatabase {
      * on a single thread to avoid database locking.
      */
     suspend fun <T> transaction(statement: suspend Transaction.() -> T): T {
-        return newSuspendedTransaction(context = dbDispatcher, db = db, statement = statement)
+        return newSuspendedTransaction(
+            context = dbDispatcher,
+            db = db,
+            statement = {
+                Logger.Database.registerTransaction(this)
+                statement()
+            },
+        )
     }
 
     /**
