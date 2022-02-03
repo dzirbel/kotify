@@ -67,6 +67,16 @@ sealed class Logger<T> {
         mutableEventsFlow.tryEmit(emptyList())
     }
 
+    object Events : Logger<Unit>() {
+        fun info(title: String, content: String? = null) {
+            log(Event(title = title, content = content, type = Event.Type.INFO, data = Unit))
+        }
+
+        fun warn(title: String, content: String? = null) {
+            log(Event(title = title, content = content, type = Event.Type.WARNING, data = Unit))
+        }
+    }
+
     /**
      * A global [Logger] which can [intercept] OkHttp requests and log events for each of them.
      */

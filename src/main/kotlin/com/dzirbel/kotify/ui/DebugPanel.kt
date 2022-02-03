@@ -65,6 +65,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.map
 
 private enum class DebugTab(val tabName: String, val log: Logger<*>) {
+    EVENTS("Events", Logger.Events),
     NETWORK("Network", Logger.Network),
     DATABASE("Database", Logger.Database),
     IMAGE_CACHE("Images", Logger.ImageCache),
@@ -167,6 +168,7 @@ private fun DebugPanelContent(modifier: Modifier = Modifier) {
             HorizontalDivider()
 
             when (tab.value) {
+                DebugTab.EVENTS -> EventsTab()
                 DebugTab.NETWORK -> NetworkTab()
                 DebugTab.DATABASE -> DatabaseTab()
                 DebugTab.IMAGE_CACHE -> ImageCacheTab()
@@ -194,6 +196,12 @@ private fun RowScope.TabButton(tab: DebugTab, currentTab: MutableState<DebugTab>
     ) {
         Text(tab.tabName)
     }
+}
+
+@Composable
+private fun EventsTab() {
+    val scrollState = scrollStates.getValue(DebugTab.EVENTS)
+    EventList(log = Logger.Events, key = Unit, scrollState = scrollState)
 }
 
 @Composable

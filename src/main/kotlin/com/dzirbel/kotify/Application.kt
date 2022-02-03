@@ -35,7 +35,7 @@ object Application {
     val cacheDir: File by lazy {
         _cacheDir ?: File(".kotify/test-cache")
             .also { it.mkdirs() }
-            .also { println("Using test cache directory ${it.absolutePath}") }
+            .also { Logger.Events.info("Using test cache directory ${it.absolutePath}") }
     }
 
     /**
@@ -44,7 +44,7 @@ object Application {
     val settingsDir: File by lazy {
         _settingsDir ?: File(".kotify/test-settings")
             .also { it.mkdirs() }
-            .also { println("Using test settings directory ${it.absolutePath}") }
+            .also { Logger.Events.info("Using test settings directory ${it.absolutePath}") }
     }
 
     private val userHome by lazy { File(System.getProperty("user.home")) }
@@ -83,7 +83,7 @@ object Application {
         }
 
         val os = currentOs
-        println(
+        Logger.Events.info(
             "Detected operating system: ${os?.name?.lowercase(Locale.getDefault())?.capitalize()} " +
                 "(os.name: ${System.getProperty("os.name")})"
         )
@@ -108,7 +108,7 @@ object Application {
             File(override)
                 .also { it.mkdirs() }
                 .takeIfIsWriteableDirectory(directoryName = "given cache")
-                ?.also { println("Using given cache directory ${it.absolutePath}") }
+                ?.also { Logger.Events.info("Using given cache directory ${it.absolutePath}") }
                 ?.let { return it }
         }
 
@@ -131,10 +131,10 @@ object Application {
             }
             ?.also { it.mkdirs() }
             ?.takeIfIsWriteableDirectory(directoryName = "resolved cache")
-            ?.also { println("Using system cache directory ${it.absolutePath}") }
+            ?.also { Logger.Events.info("Using system cache directory ${it.absolutePath}") }
             ?: File(".").resolve("cache")
                 .also { it.mkdirs() }
-                .also { println("Using backup cache directory ${it.absolutePath}") }
+                .also { Logger.Events.info("Using backup cache directory ${it.absolutePath}") }
     }
 
     /**
@@ -154,7 +154,7 @@ object Application {
             File(override)
                 .also { it.mkdirs() }
                 .takeIfIsWriteableDirectory(directoryName = "given settings")
-                ?.also { println("Using given settings directory ${it.absolutePath}") }
+                ?.also { Logger.Events.info("Using given settings directory ${it.absolutePath}") }
                 ?.let { return it }
         }
 
@@ -179,10 +179,10 @@ object Application {
             }
             ?.also { it.mkdirs() }
             ?.takeIfIsWriteableDirectory(directoryName = "resolved settings")
-            ?.also { println("Using system settings directory ${it.absolutePath}") }
+            ?.also { Logger.Events.info("Using system settings directory ${it.absolutePath}") }
             ?: File(".").resolve("settings")
                 .also { it.mkdirs() }
-                .also { println("Using backup settings directory ${it.absolutePath}") }
+                .also { Logger.Events.info("Using backup settings directory ${it.absolutePath}") }
     }
 
     /**
@@ -192,11 +192,11 @@ object Application {
     private fun File.takeIfIsWriteableDirectory(directoryName: String): File? {
         return when {
             !isDirectory -> {
-                println("${directoryName.capitalize()} directory $absolutePath does not exist")
+                Logger.Events.warn("${directoryName.capitalize()} directory $absolutePath does not exist")
                 null
             }
             !canWrite() -> {
-                println("Cannot write to $directoryName directory $absolutePath")
+                Logger.Events.warn("Cannot write to $directoryName directory $absolutePath")
                 null
             }
             else -> this

@@ -88,10 +88,12 @@ object Settings {
                 .takeIf { it.isFile }
                 ?.inputStream()
                 ?.use { json.decodeFromStream<SettingsData>(it) }
-                ?.also { println("Loaded settings from ${settingsFile.absolutePath}") }
+                ?.also { Logger.Events.info("Loaded settings from ${settingsFile.absolutePath}") }
         } catch (ex: Throwable) {
-            System.err.println("Error loading settings from ${settingsFile.absolutePath}; reverting to defaults")
-            ex.printStackTrace()
+            Logger.Events.warn(
+                title = "Error loading settings from ${settingsFile.absolutePath}; reverting to defaults",
+                content = ex.stackTraceToString(),
+            )
             null
         }
     }
@@ -104,10 +106,12 @@ object Settings {
                 settingsFile.outputStream().use { outputStream ->
                     json.encodeToStream(data, outputStream)
                 }
-                println("Saved settings to ${settingsFile.absolutePath}")
+                Logger.Events.info("Saved settings to ${settingsFile.absolutePath}")
             } catch (ex: Throwable) {
-                System.err.println("Error saving settings to ${settingsFile.absolutePath}")
-                ex.printStackTrace()
+                Logger.Events.warn(
+                    title = "Error saving settings to ${settingsFile.absolutePath}",
+                    content = ex.stackTraceToString(),
+                )
             }
         }
     }

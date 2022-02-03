@@ -2,6 +2,7 @@ package com.dzirbel.kotify.network.oauth
 
 import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.Application
+import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.await
 import com.dzirbel.kotify.network.bodyFromJson
@@ -121,7 +122,7 @@ data class AccessToken(
          */
         fun requireRefreshable() {
             if (token?.refreshToken == null) {
-                log("Current token is not refreshable, clearing")
+                Logger.Events.warn("Current token is not refreshable, clearing")
                 clear()
             }
         }
@@ -156,7 +157,7 @@ data class AccessToken(
          * Puts the given [AccessToken] in the cache, immediately writing it to disk.
          */
         fun put(accessToken: AccessToken) {
-            log("Putting new access token")
+            Logger.Events.info("Putting new access token")
             token = accessToken
             save(accessToken)
         }
@@ -167,7 +168,7 @@ data class AccessToken(
         fun clear() {
             token = null
             Files.deleteIfExists(file.toPath())
-            log("Cleared access token")
+            Logger.Events.info("Cleared access token")
         }
 
         /**
@@ -185,7 +186,7 @@ data class AccessToken(
             file.outputStream().use { outputStream ->
                 json.encodeToStream(token, outputStream)
             }
-            log("Saved access token to $file")
+            Logger.Events.info("Saved access token to $file")
         }
 
         /**
@@ -195,9 +196,9 @@ data class AccessToken(
             return try {
                 file.inputStream()
                     .use { json.decodeFromStream<AccessToken>(it) }
-                    .also { log("Loaded access token from $file") }
+                    .also { Logger.Events.info("Loaded access token from $file") }
             } catch (_: FileNotFoundException) {
-                null.also { log("No saved access token at $file") }
+                null.also { Logger.Events.info("No saved access token at $file") }
             }
         }
 
@@ -229,7 +230,7 @@ data class AccessToken(
                 }
 
                 token?.let {
-                    log("Got refreshed access token")
+                    Logger.Events.info("Got refreshed access token")
                     this.token = it
                     save(it)
                 }
@@ -238,19 +239,13 @@ data class AccessToken(
             token?.refreshToken?.let { refreshToken ->
                 val job = synchronized(this) {
                     refreshJob ?: GlobalScope.async {
-                        log("Current access token is expired; refreshing")
+                        Logger.Events.info("Current access token is expired; refreshing")
                         fetchRefresh(refreshToken = refreshToken, clientId = clientId)
                         refreshJob = null
                     }.also { refreshJob = it }
                 }
 
                 job.join()
-            }
-        }
-
-        private fun log(message: String) {
-            if (log) {
-                println(message)
             }
         }
 

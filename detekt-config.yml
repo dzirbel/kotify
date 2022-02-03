@@ -582,8 +582,10 @@ style:
       - 'com.google.common.truth.Truth' # import assertThat() directly
     forbiddenPatterns: ''
   ForbiddenMethodCall:
-    active: false
-    methods: []
+    active: true # TODO does not appear to work at all
+    methods:
+      - 'kotlin.io.print'
+      - 'kotlin.io.println'
   ForbiddenPublicDataClass:
     active: false
     excludes: ['**']
