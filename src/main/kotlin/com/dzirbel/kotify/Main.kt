@@ -1,5 +1,6 @@
 package com.dzirbel.kotify
 
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
@@ -40,7 +41,7 @@ fun main(args: Array<String>) {
         Window(
             onCloseRequest = ::exitApplication,
             title = "${Application.name} ${Application.version}",
-            state = rememberWindowState(placement = WindowPlacement.Maximized),
+            state = rememberWindowState(placement = WindowPlacement.Maximized, size = DpSize.Unspecified),
             onKeyEvent = KeyboardShortcuts::handle
         ) {
             Theme.apply { Root() }
