@@ -52,9 +52,16 @@ sealed class Logger<T> {
     val eventsFlow: SharedFlow<List<Event<T>>>
         get() = mutableEventsFlow.asSharedFlow()
 
-    protected fun log(newEvent: Event<T>) {
+    protected fun log(
+        title: String,
+        content: String? = null,
+        data: T,
+        type: Event.Type = Event.Type.INFO,
+        time: Long = System.currentTimeMillis(),
+    ) {
+        val event = Event(title = title, content = content, data = data, type = type, time = time)
         synchronized(events) {
-            events.add(newEvent)
+            events.add(event)
             mutableEventsFlow.tryEmit(ArrayList(events))
         }
     }
@@ -69,11 +76,11 @@ sealed class Logger<T> {
 
     object Events : Logger<Unit>() {
         fun info(title: String, content: String? = null) {
-            log(Event(title = title, content = content, type = Event.Type.INFO, data = Unit))
+            log(title = title, content = content, type = Event.Type.INFO, data = Unit)
         }
 
         fun warn(title: String, content: String? = null) {
-            log(Event(title = title, content = content, type = Event.Type.WARNING, data = Unit))
+            log(title = title, content = content, type = Event.Type.WARNING, data = Unit)
         }
     }
 
@@ -105,36 +112,32 @@ sealed class Logger<T> {
 
         private fun httpRequest(request: Request) {
             log(
-                Event(
-                    title = ">> ${request.method} ${request.url}",
-                    content = request.headers.toContentString(),
-                    data = EventData(
-                        isSpotifyApi = request.url.host == "api.spotify.com",
-                        isRequest = true,
-                        isResponse = false,
-                    )
+                title = ">> ${request.method} ${request.url}",
+                content = request.headers.toContentString(),
+                data = EventData(
+                    isSpotifyApi = request.url.host == "api.spotify.com",
+                    isRequest = true,
+                    isResponse = false,
                 )
             )
         }
 
         private fun httpResponse(response: Response, duration: Duration) {
             log(
-                Event(
-                    title = "<< ${response.code} ${response.request.method} ${response.request.url} in $duration",
-                    content = buildString {
-                        append("Message: ${response.message}")
-                        if (response.headers.any()) {
-                            appendLine()
-                            appendLine()
+                title = "<< ${response.code} ${response.request.method} ${response.request.url} in $duration",
+                content = buildString {
+                    append("Message: ${response.message}")
+                    if (response.headers.any()) {
+                        appendLine()
+                        appendLine()
 
-                            append(response.headers.toContentString())
-                        }
-                    },
-                    data = EventData(
-                        isSpotifyApi = response.request.url.host == "api.spotify.com",
-                        isRequest = false,
-                        isResponse = true,
-                    )
+                        append(response.headers.toContentString())
+                    }
+                },
+                data = EventData(
+                    isSpotifyApi = response.request.url.host == "api.spotify.com",
+                    isRequest = false,
+                    isResponse = true,
                 )
             )
         }
@@ -160,11 +163,9 @@ sealed class Logger<T> {
             transactionMap.remove(transaction.id)?.let { statements ->
                 val transactionData = "Transaction #$transactionCount ${transaction.id}"
                 log(
-                    Event(
-                        title = "$transactionData (${statements.size}) [${transaction.duration}ms]",
-                        content = statements.joinToString(separator = "\n\n") { it.expandArgs(transaction) },
-                        data = EventType.TRANSACTION,
-                    )
+                    title = "$transactionData (${statements.size}) [${transaction.duration}ms]",
+                    content = statements.joinToString(separator = "\n\n") { it.expandArgs(transaction) },
+                    data = EventType.TRANSACTION,
                 )
             }
         }
@@ -178,11 +179,9 @@ sealed class Logger<T> {
             val transactionData = "#${transaction.statementCount} in ${transaction.id}"
 
             log(
-                Event(
-                    title = "$transactionData : ${context.statement.type} $tables [${transaction.duration}ms]",
-                    content = context.expandArgs(transaction),
-                    data = EventType.STATEMENT,
-                )
+                title = "$transactionData : ${context.statement.type} $tables [${transaction.duration}ms]",
+                content = context.expandArgs(transaction),
+                data = EventType.STATEMENT,
             )
         }
     }
@@ -208,7 +207,7 @@ sealed class Logger<T> {
                 is ImageCacheEvent.Fetch -> Event.Type.WARNING
             }
 
-            log(Event(title = title, type = type, data = Unit))
+            log(title = title, type = type, data = Unit)
         }
     }
 
@@ -222,34 +221,28 @@ sealed class Logger<T> {
         fun handleError(presenter: Presenter<*, *>, throwable: Throwable) {
             val presenterClass = presenter::class.simpleName
             log(
-                Event(
-                    title = "[$presenterClass] ERROR ${throwable::class.simpleName} : ${throwable.message}",
-                    content = throwable.stackTraceToString(),
-                    type = Event.Type.WARNING,
-                    data = EventData(presenterClass = presenterClass, type = EventType.ERROR),
-                )
+                title = "[$presenterClass] ERROR ${throwable::class.simpleName} : ${throwable.message}",
+                content = throwable.stackTraceToString(),
+                type = Event.Type.WARNING,
+                data = EventData(presenterClass = presenterClass, type = EventType.ERROR),
             )
         }
 
         fun handleState(presenter: Presenter<*, *>, state: Any, stateCount: Int) {
             val presenterClass = presenter::class.simpleName
             log(
-                Event(
-                    title = "[$presenterClass] STATE #$stateCount ${state::class.simpleName}",
-                    content = state.toString(),
-                    data = EventData(presenterClass = presenterClass, type = EventType.STATE),
-                )
+                title = "[$presenterClass] STATE #$stateCount ${state::class.simpleName}",
+                content = state.toString(),
+                data = EventData(presenterClass = presenterClass, type = EventType.STATE),
             )
         }
 
         fun handleEvent(presenter: Presenter<*, *>, event: Any, eventCount: Int) {
             val presenterClass = presenter::class.simpleName
             log(
-                Event(
-                    title = "[$presenterClass] EVENT #$eventCount ${event::class.simpleName}",
-                    content = event.toString(),
-                    data = EventData(presenterClass = presenterClass, type = EventType.EVENT),
-                )
+                title = "[$presenterClass] EVENT #$eventCount ${event::class.simpleName}",
+                content = event.toString(),
+                data = EventData(presenterClass = presenterClass, type = EventType.EVENT),
             )
         }
     }
