@@ -519,7 +519,7 @@ object Fixtures {
                     "5QkqgBLXsymXJKWaagawSY",
                     "Indie Love",
                     totalTracks = 19,
-                    albumType = SpotifyAlbum.Type.ALBUM,
+                    albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
                 AlbumProperties(
                     "3rM6kWYqHb7RW1nWWxJF41",
