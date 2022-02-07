@@ -525,7 +525,7 @@ object Fixtures {
                     "3rM6kWYqHb7RW1nWWxJF41",
                     "Twisted",
                     totalTracks = 19,
-                    albumType = SpotifyAlbum.Type.ALBUM,
+                    albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
                 AlbumProperties(
                     "0HojjwZyJFH4nywrYGfwMJ",
