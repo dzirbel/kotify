@@ -1,8 +1,13 @@
 package com.dzirbel.kotify.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,32 +49,58 @@ import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
-object ArtistsPage : Page {
-    override fun toString() = "Saved Artists"
-}
-
 data class ArtistPage(val artistId: String) : Page {
     fun titleFor(artist: Artist) = "Artist: ${artist.name}"
+
+    @Composable
+    override fun BoxScope.content(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit) {
+        Artist(pageStack, this@ArtistPage)
+    }
 }
 
 object AlbumsPage : Page {
     override fun toString() = "Saved Albums"
+
+    @Composable
+    override fun BoxScope.content(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit) {
+        Albums(pageStack)
+    }
 }
 
 data class AlbumPage(val albumId: String) : Page {
     fun titleFor(album: Album) = "Album: ${album.name}"
+
+    @Composable
+    override fun BoxScope.content(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit) {
+        Album(pageStack, this@AlbumPage)
+    }
 }
 
 data class PlaylistPage(val playlistId: String) : Page {
     fun titleFor(playlist: Playlist) = "Playlist: ${playlist.name}"
+
+    @Composable
+    override fun BoxScope.content(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit) {
+        Playlist(pageStack, this@PlaylistPage)
+    }
 }
 
 object LibraryStatePage : Page {
     override fun toString() = "Library State"
+
+    @Composable
+    override fun BoxScope.content(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit) {
+        LibraryState(pageStack)
+    }
 }
 
 object TracksPage : Page {
     override fun toString() = "Saved Tracks"
+
+    @Composable
+    override fun BoxScope.content(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit) {
+        Tracks(pageStack)
+    }
 }
 
 private class AuthenticationMenuPresenter(scope: CoroutineScope) :
@@ -100,6 +131,9 @@ private class AuthenticationMenuPresenter(scope: CoroutineScope) :
 @Composable
 fun MainContent(pageStack: MutableState<PageStack>) {
     Column {
+        val page = pageStack.value.current
+        val headerVisibleState = remember(page) { MutableTransitionState(false) }
+
         Row(
             modifier = Modifier.fillMaxWidth().background(LocalColors.current.surface1),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -158,19 +192,18 @@ fun MainContent(pageStack: MutableState<PageStack>) {
                 }
             }
 
+            AnimatedVisibility(visibleState = headerVisibleState, enter = fadeIn(), exit = fadeOut()) {
+                with(page) {
+                    headerContent(pageStack)
+                }
+            }
+
             AuthenticationMenuHeader()
         }
 
         Box(Modifier.fillMaxSize().weight(1f)) {
-            when (val current = pageStack.value.current) {
-                ArtistsPage -> Artists(pageStack)
-                AlbumsPage -> Albums(pageStack)
-                TracksPage -> Tracks(pageStack)
-                is AlbumPage -> Album(pageStack, current)
-                is ArtistPage -> Artist(pageStack, current)
-                is PlaylistPage -> Playlist(pageStack, current)
-                LibraryStatePage -> LibraryState(pageStack)
-                else -> error("unknown page type: ${pageStack.value.current}")
+            with(page) {
+                content(pageStack = pageStack, toggleHeader = { headerVisibleState.targetState = it })
             }
         }
     }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -30,6 +31,7 @@ import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
+import com.dzirbel.kotify.ui.components.Page
 import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.Pill
 import com.dzirbel.kotify.ui.components.VerticalSpacer
@@ -44,11 +46,26 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 
-private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewModel?, ArtistsPresenter.Event>(
-    scope = scope,
-    startingEvents = listOf(Event.Load(invalidate = false)),
-    initialState = null
-) {
+object ArtistsPage : Page {
+    override fun toString() = "Saved Artists"
+
+    @Composable
+    override fun BoxScope.content(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit) {
+        Artists(pageStack, toggleHeader)
+    }
+
+    @Composable
+    override fun RowScope.headerContent(pageStack: MutableState<PageStack>) {
+        Text("Artists")
+    }
+}
+
+private class ArtistsPresenter(scope: CoroutineScope) :
+    RemoteStatePresenter<ArtistsPresenter.ViewModel, ArtistsPresenter.Event>(
+        scope = scope,
+        startingEvents = listOf(Event.Load(invalidate = false)),
+    ) {
+
     data class ArtistDetails(
         val savedTime: Instant?,
         val genres: List<String>,
@@ -87,7 +104,7 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateState { it?.copy(refreshing = true) }
+                mutateLoadedState { it.copy(refreshing = true) }
 
                 if (event.invalidate) {
                     SavedArtistRepository.invalidateLibrary()
@@ -98,7 +115,7 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                     .sortedBy { it.name }
                 val artistsUpdated = SavedArtistRepository.libraryUpdated()
 
-                mutateState {
+                initializeLoadedState {
                     ViewModel(
                         refreshing = false,
                         artists = artists,
@@ -111,9 +128,9 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
 
             is Event.LoadArtistDetails -> {
                 // don't load details again if already in the state
-                if (queryState { it?.artistDetails }?.containsKey(event.artistId) == true) return
+                if (queryState { it.viewModel?.artistDetails }?.containsKey(event.artistId) == true) return
 
-                val artist = queryState { it?.artists }?.find { it.id.value == event.artistId }
+                val artist = queryState { it.viewModel?.artists }?.find { it.id.value == event.artistId }
                     ?: ArtistRepository.getCached(id = event.artistId)
                 requireNotNull(artist) { "could not resolve artist for ${event.artistId}" }
 
@@ -129,8 +146,8 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                     albums = null
                 )
 
-                mutateState {
-                    it?.copy(artistDetails = it.artistDetails.plus(event.artistId to details))
+                mutateLoadedState {
+                    it.copy(artistDetails = it.artistDetails.plus(event.artistId to details))
                 }
 
                 val albums = Artist.getAllAlbums(artistId = event.artistId)
@@ -138,14 +155,14 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                     albums.forEach { it.largestImage.loadToCache() }
                 }
 
-                val savedAlbumsState = if (queryState { it?.savedAlbumsState } == null) {
+                val savedAlbumsState = if (queryState { it.viewModel?.savedAlbumsState } == null) {
                     SavedAlbumRepository.libraryState()
                 } else {
                     null
                 }
 
-                mutateState {
-                    it?.copy(
+                mutateLoadedState {
+                    it.copy(
                         artistDetails = it.artistDetails.plus(event.artistId to details.copy(albums = albums)),
                         savedAlbumsState = savedAlbumsState ?: it.savedAlbumsState,
                     )
@@ -155,7 +172,7 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
             is Event.ReactToArtistsSaved -> {
                 if (event.saved) {
                     // if an artist has been saved but is now missing from the grid of artists, load and add it
-                    val stateArtists = queryState { it?.artists }.orEmpty()
+                    val stateArtists = queryState { it.viewModel?.artists }.orEmpty()
 
                     val missingArtistIds: List<String> = event.artistIds
                         .minus(stateArtists.mapTo(mutableSetOf()) { it.id.value })
@@ -164,18 +181,18 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
                         val missingArtists = fetchArtists(artistIds = missingArtistIds)
                         val allArtists = stateArtists.plusSorted(missingArtists) { it.name }
 
-                        mutateState {
-                            it?.copy(artists = allArtists, savedArtistIds = it.savedArtistIds.plus(event.artistIds))
+                        mutateLoadedState {
+                            it.copy(artists = allArtists, savedArtistIds = it.savedArtistIds.plus(event.artistIds))
                         }
                     } else {
-                        mutateState {
-                            it?.copy(savedArtistIds = it.savedArtistIds.plus(event.artistIds))
+                        mutateLoadedState {
+                            it.copy(savedArtistIds = it.savedArtistIds.plus(event.artistIds))
                         }
                     }
                 } else {
                     // if an artist has been unsaved, retain the grid of artists but toggle its save state
-                    mutateState {
-                        it?.copy(savedArtistIds = it.savedArtistIds.minus(event.artistIds.toSet()))
+                    mutateLoadedState {
+                        it.copy(savedArtistIds = it.savedArtistIds.minus(event.artistIds.toSet()))
                     }
                 }
             }
@@ -205,28 +222,33 @@ private class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresent
 }
 
 @Composable
-fun BoxScope.Artists(pageStack: MutableState<PageStack>) {
+private fun BoxScope.Artists(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { ArtistsPresenter(scope = scope) }
 
-    ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text("Artists", fontSize = Dimens.fontTitle)
+    StandardPage(
+        scrollState = pageStack.value.currentScrollState,
+        presenter = presenter,
+        header = { state ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    modifier = Modifier.padding(Dimens.space4),
+                    text = "Artists",
+                    fontSize = Dimens.fontTitle,
+                )
 
-            Column {
                 InvalidateButton(
                     refreshing = state.refreshing,
                     updated = state.artistsUpdated,
                     onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) }
                 )
             }
-        }
-
-        VerticalSpacer(Dimens.space3)
-
+        },
+        onHeaderVisibilityChanged = { toggleHeader(!it) },
+    ) { state ->
         val selectedArtist = remember { mutableStateOf<Artist?>(null) }
         Grid(
             elements = state.artists,

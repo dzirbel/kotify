@@ -1,11 +1,31 @@
 package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 
 /**
- * A marker interface for pages in a [PageStack].
+ * Represents a page in a [PageStack] and how they are rendered.
  */
-interface Page
+interface Page {
+    /**
+     * The main content for this [Page].
+     *
+     * May call [toggleHeader] to toggle the visibility of [headerContent] in the top navigation bar, typically when the
+     * user scrolls past an inset header in the page.
+     */
+    @Composable
+    fun BoxScope.content(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit)
+
+    /**
+     * Optional content displayed in the top navigation bar, typically when the user scrolls past an inset header in the
+     * page content.
+     */
+    @Composable
+    fun RowScope.headerContent(pageStack: MutableState<PageStack>) {}
+}
 
 /**
  * A simple, immutable stack of [Page]s that can be navigated between.
