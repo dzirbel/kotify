@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui
 
+import com.dzirbel.kotify.ui.framework.Presenter
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope

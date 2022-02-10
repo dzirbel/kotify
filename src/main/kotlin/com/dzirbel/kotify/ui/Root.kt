@@ -1,7 +1,10 @@
 package com.dzirbel.kotify.ui
 
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,33 +16,62 @@ import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
 import com.dzirbel.kotify.ui.components.panel.PanelSize
 import com.dzirbel.kotify.ui.components.panel.SidePanel
+import com.dzirbel.kotify.ui.page.artists.ArtistsPage
+import com.dzirbel.kotify.ui.panel.debug.DebugPanel
+import com.dzirbel.kotify.ui.panel.library.LibraryPanel
+import com.dzirbel.kotify.ui.panel.navigation.NavigationPanel
+import com.dzirbel.kotify.ui.player.PlayerPanel
+import com.dzirbel.kotify.ui.unauthenticated.Unauthenticated
 
-private val leftPanelSize = PanelSize(
+private val libraryPanelSize = PanelSize(
     initialSize = FixedOrPercent.Fixed(300.dp),
     minPanelSizeDp = 150.dp,
     minContentSizePercent = 0.7f
 )
 
-@Suppress("MagicNumber")
 @Composable
 fun Root() {
     if (AccessToken.Cache.hasToken) {
         val pageStack = remember { mutableStateOf(PageStack(ArtistsPage)) }
 
-        DebugPanelOrWindow {
+        DebugPanel {
             Column {
                 SidePanel(
                     modifier = Modifier.fillMaxHeight().weight(1f),
                     direction = PanelDirection.LEFT,
-                    panelSize = leftPanelSize,
+                    panelSize = libraryPanelSize,
                     panelContent = { LibraryPanel(pageStack = pageStack) },
-                    mainContent = { MainContent(pageStack = pageStack) }
+                    mainContent = {
+                        Column {
+                            val page = pageStack.value.current
+                            val headerVisibleState = remember(page) { MutableTransitionState(false) }
+
+                            NavigationPanel(
+                                pageStack = pageStack,
+                                headerVisibleState = headerVisibleState,
+                                headerContent = {
+                                    with(page) {
+                                        headerContent(pageStack)
+                                    }
+                                },
+                            )
+
+                            Box(Modifier.fillMaxSize().weight(1f)) {
+                                with(page) {
+                                    content(
+                                        pageStack = pageStack,
+                                        toggleHeader = { headerVisibleState.targetState = it },
+                                    )
+                                }
+                            }
+                        }
+                    }
                 )
 
-                BottomPanel(pageStack = pageStack)
+                PlayerPanel(pageStack = pageStack)
             }
         }
     } else {
-        AuthenticationView()
+        Unauthenticated()
     }
 }

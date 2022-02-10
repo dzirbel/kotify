@@ -3,7 +3,7 @@ package com.dzirbel.kotify
 import com.dzirbel.kotify.Logger.Event
 import com.dzirbel.kotify.Logger.Network.intercept
 import com.dzirbel.kotify.cache.ImageCacheEvent
-import com.dzirbel.kotify.ui.Presenter
+import com.dzirbel.kotify.ui.framework.Presenter
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow

@@ -1,12 +1,18 @@
 package com.dzirbel.kotify.ui
 
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import com.dzirbel.kotify.ui.components.Page
 import com.dzirbel.kotify.ui.components.PageStack
 import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.Test
 
 internal class PageStackTest {
-    private data class TestPage(val id: Int) : Page
+    private data class TestPage(val id: Int) : Page {
+        @Composable
+        override fun BoxScope.content(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit) {}
+    }
 
     @Test
     fun testSingleton() {
