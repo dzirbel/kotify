@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui.page.album
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
@@ -11,15 +10,14 @@ import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.repository.Rating
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.framework.Presenter
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
 class AlbumPresenter(
     private val page: AlbumPage,
-    private val pageStack: MutableState<PageStack>,
     scope: CoroutineScope,
 ) : Presenter<AlbumPresenter.ViewModel?, AlbumPresenter.Event>(
     scope = scope,

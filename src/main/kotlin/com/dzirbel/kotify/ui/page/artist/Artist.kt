@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -16,16 +15,16 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.components.AlbumCell
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.framework.ScrollingPage
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlinx.coroutines.Dispatchers
 
 @Composable
-fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
+fun BoxScope.Artist(page: ArtistPage) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember(page) { ArtistPresenter(page = page, pageStack = pageStack, scope = scope) }
+    val presenter = remember(page) { ArtistPresenter(page = page, scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
         Row(
@@ -79,7 +78,6 @@ fun BoxScope.Artist(pageStack: MutableState<PageStack>, page: ArtistPage) {
             AlbumCell(
                 album = album,
                 isSaved = state.savedAlbumsState.value?.contains(album.id.value),
-                pageStack = pageStack,
                 onToggleSave = { save ->
                     presenter.emitAsync(ArtistPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
                 }

@@ -18,7 +18,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -28,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.InvalidateButton
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.components.VerticalSpacer
@@ -37,6 +35,7 @@ import com.dzirbel.kotify.ui.page.artists.ArtistsPage
 import com.dzirbel.kotify.ui.page.library.LibraryStatePage
 import com.dzirbel.kotify.ui.page.playlist.PlaylistPage
 import com.dzirbel.kotify.ui.page.tracks.TracksPage
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
@@ -45,7 +44,7 @@ import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.Dispatchers
 
 @Composable
-fun LibraryPanel(pageStack: MutableState<PageStack>) {
+fun LibraryPanel() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { LibraryPanelPresenter(scope = scope) }
 
@@ -146,14 +145,14 @@ fun LibraryPanel(pageStack: MutableState<PageStack>) {
                 )
             },
             onSuccess = { state ->
-                state.playlists.forEach { playlist -> PlaylistItem(playlist, pageStack) }
+                state.playlists.forEach { playlist -> PlaylistItem(playlist) }
             }
         )
     }
 }
 
 @Composable
-private fun PlaylistItem(playlist: Playlist, pageStack: MutableState<PageStack>) {
+private fun PlaylistItem(playlist: Playlist) {
     val selected = pageStack.value.current == PlaylistPage(playlistId = playlist.id.value)
 
     SimpleTextButton(

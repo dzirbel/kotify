@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui.page.artist
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
@@ -9,8 +8,8 @@ import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.framework.Presenter
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +18,6 @@ import kotlinx.coroutines.coroutineScope
 
 class ArtistPresenter(
     private val page: ArtistPage,
-    private val pageStack: MutableState<PageStack>,
     scope: CoroutineScope,
 ) : Presenter<ArtistPresenter.ViewModel?, ArtistPresenter.Event>(
     scope = scope,

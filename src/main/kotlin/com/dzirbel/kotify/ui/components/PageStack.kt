@@ -4,7 +4,6 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 
 /**
  * Represents a page in a [PageStack] and how they are rendered.
@@ -17,14 +16,14 @@ interface Page {
      * user scrolls past an inset header in the page.
      */
     @Composable
-    fun BoxScope.content(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit)
+    fun BoxScope.content(toggleHeader: (Boolean) -> Unit)
 
     /**
      * Optional content displayed in the top navigation bar, typically when the user scrolls past an inset header in the
      * page content.
      */
     @Composable
-    fun RowScope.headerContent(pageStack: MutableState<PageStack>) {}
+    fun RowScope.headerContent() {}
 }
 
 /**

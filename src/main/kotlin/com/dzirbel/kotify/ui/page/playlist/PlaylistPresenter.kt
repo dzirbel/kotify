@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui.page.playlist
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Playlist
@@ -11,9 +10,9 @@ import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.repository.Rating
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.table.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.ReorderCalculator
 import com.dzirbel.kotify.util.compareInOrder
@@ -21,7 +20,6 @@ import kotlinx.coroutines.CoroutineScope
 
 class PlaylistPresenter(
     private val page: PlaylistPage,
-    private val pageStack: MutableState<PageStack>,
     scope: CoroutineScope,
 ) : Presenter<PlaylistPresenter.ViewModel?, PlaylistPresenter.Event>(
     scope = scope,

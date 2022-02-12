@@ -21,7 +21,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -50,7 +49,6 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.RefreshIcon
 import com.dzirbel.kotify.ui.components.SeekableSlider
 import com.dzirbel.kotify.ui.components.SimpleTextButton
@@ -60,6 +58,7 @@ import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.mutate
@@ -587,7 +586,7 @@ internal class PlayerPanelPresenter(scope: CoroutineScope) :
 }
 
 @Composable
-fun PlayerPanel(pageStack: MutableState<PageStack>) {
+fun PlayerPanel() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { PlayerPanelPresenter(scope) }
 
@@ -609,7 +608,6 @@ fun PlayerPanel(pageStack: MutableState<PageStack>) {
                         artistsAreSaved = state.artistSavedStates?.mapValues { it.value.value },
                         albumIsSaved = state.albumSavedState?.value,
                         presenter = presenter,
-                        pageStack = pageStack
                     )
                 }
 
@@ -706,7 +704,6 @@ private fun CurrentTrack(
     artistsAreSaved: Map<String, Boolean?>?,
     albumIsSaved: Boolean?,
     presenter: PlayerPanelPresenter,
-    pageStack: MutableState<PageStack>,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space4)) {
         val album = (track as? FullSpotifyTrack)?.album ?: (track as? SimplifiedSpotifyTrack)?.album

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,6 +27,7 @@ import com.dzirbel.kotify.ui.components.table.ColumnWidth
 import com.dzirbel.kotify.ui.components.table.SortOrder
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
@@ -36,7 +36,6 @@ import com.dzirbel.kotify.util.compareToNullable
 import com.dzirbel.kotify.util.formatDuration
 
 fun trackColumns(
-    pageStack: MutableState<PageStack>,
     savedTracks: Set<String>?,
     onSetTrackSaved: (trackId: String, saved: Boolean) -> Unit,
     trackRatings: Map<String, State<Rating?>>?,
@@ -50,8 +49,8 @@ fun trackColumns(
         TrackNumberColumn.takeIf { includeTrackNumber },
         SavedColumn(savedTracks = savedTracks, onSetTrackSaved = onSetTrackSaved),
         NameColumn,
-        ArtistColumn(pageStack),
-        AlbumColumn(pageStack).takeIf { includeAlbum },
+        ArtistColumn,
+        AlbumColumn.takeIf { includeAlbum },
         RatingColumn(trackRatings = trackRatings, onRateTrack = onRateTrack),
         DurationColumn,
         PopularityColumn,
@@ -137,9 +136,7 @@ object NameColumn : ColumnByString<Track>(name = "Title") {
     override fun toString(item: Track, index: Int) = item.name
 }
 
-class ArtistColumn(
-    private val pageStack: MutableState<PageStack>,
-) : Column<Track>(name = "Artist", sortable = true) {
+object ArtistColumn : Column<Track>(name = "Artist", sortable = true) {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
@@ -163,9 +160,7 @@ class ArtistColumn(
     }
 }
 
-class AlbumColumn(
-    private val pageStack: MutableState<PageStack>,
-) : Column<Track>(name = "Album", sortable = true) {
+object AlbumColumn : Column<Track>(name = "Album", sortable = true) {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {

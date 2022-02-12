@@ -8,21 +8,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.components.InvalidateButton
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.components.trackColumns
 import com.dzirbel.kotify.ui.framework.ScrollingPage
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlinx.coroutines.Dispatchers
 
 @Composable
-fun BoxScope.Tracks(pageStack: MutableState<PageStack>) {
+fun BoxScope.Tracks() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { TracksPresenter(scope = scope) }
 
@@ -47,7 +46,6 @@ fun BoxScope.Tracks(pageStack: MutableState<PageStack>) {
         // TODO find the context to play tracks from the list of all saved tracks
         Table(
             columns = trackColumns(
-                pageStack = pageStack,
                 savedTracks = state.savedTrackIds,
                 onSetTrackSaved = { trackId, saved ->
                     presenter.emitAsync(TracksPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))

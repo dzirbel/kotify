@@ -10,7 +10,6 @@ import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -18,7 +17,6 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
@@ -28,6 +26,7 @@ import com.dzirbel.kotify.ui.components.table.SortSelector
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.components.trackColumns
 import com.dzirbel.kotify.ui.framework.ScrollingPage
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.util.formatDateTime
@@ -50,9 +49,9 @@ private object AddedAtColumn : ColumnByString<PlaylistTrack>(name = "Added") {
 }
 
 @Composable
-fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
+fun BoxScope.Playlist(page: PlaylistPage) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember(page) { PlaylistPresenter(page = page, pageStack = pageStack, scope = scope) }
+    val presenter = remember(page) { PlaylistPresenter(page = page, scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
         Row(
@@ -134,7 +133,6 @@ fun BoxScope.Playlist(pageStack: MutableState<PageStack>, page: PlaylistPage) {
         } else {
             val columns = remember(pageStack) {
                 trackColumns(
-                    pageStack = pageStack,
                     savedTracks = state.savedTracksState.value,
                     onSetTrackSaved = { trackId, saved ->
                         presenter.emitAsync(

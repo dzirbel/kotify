@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,7 +21,6 @@ import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.Pill
 import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.SmallAlbumCell
@@ -31,13 +29,14 @@ import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.framework.StandardPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.Dispatchers
 
 @Composable
-fun BoxScope.Artists(pageStack: MutableState<PageStack>, toggleHeader: (Boolean) -> Unit) {
+fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { ArtistsPresenter(scope = scope) }
 
@@ -69,14 +68,13 @@ fun BoxScope.Artists(pageStack: MutableState<PageStack>, toggleHeader: (Boolean)
             elements = state.artists,
             selectedElement = selectedArtist.value,
             detailInsertContent = { artist ->
-                ArtistDetailInsert(artist = artist, presenter = presenter, state = state, pageStack = pageStack)
+                ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
             },
         ) { artist ->
             ArtistCell(
                 artist = artist,
                 savedArtists = state.savedArtistIds,
                 presenter = presenter,
-                pageStack = pageStack,
                 onRightClick = {
                     presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
                     selectedArtist.value = artist.takeIf { selectedArtist.value != it }
@@ -91,7 +89,6 @@ private fun ArtistCell(
     artist: Artist,
     savedArtists: Set<String>,
     presenter: ArtistsPresenter,
-    pageStack: MutableState<PageStack>,
     onRightClick: () -> Unit,
 ) {
     Column(
@@ -136,7 +133,6 @@ private fun ArtistDetailInsert(
     artist: Artist,
     presenter: ArtistsPresenter,
     state: ArtistsPresenter.ViewModel,
-    pageStack: MutableState<PageStack>,
 ) {
     Row(modifier = Modifier.padding(Dimens.space4), horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
         val artistDetails = state.artistDetails[artist.id.value]
@@ -170,7 +166,6 @@ private fun ArtistDetailInsert(
                 SmallAlbumCell(
                     album = album,
                     isSaved = state.savedAlbumsState?.value?.contains(album.id.value),
-                    pageStack = pageStack,
                     onToggleSave = { save ->
                         presenter.emitAsync(
                             ArtistsPresenter.Event.ToggleAlbumSaved(albumId = album.id.value, save = save)

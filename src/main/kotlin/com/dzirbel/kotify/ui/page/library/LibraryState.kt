@@ -14,7 +14,6 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -29,7 +28,6 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.NameColumn
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.RatingColumn
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
@@ -39,6 +37,7 @@ import com.dzirbel.kotify.ui.components.table.Sort
 import com.dzirbel.kotify.ui.components.table.SortOrder
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.framework.ScrollingPage
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import kotlinx.coroutines.Dispatchers
@@ -123,7 +122,7 @@ private val playlistColumns = listOf(
 )
 
 @Composable
-fun BoxScope.LibraryState(pageStack: MutableState<PageStack>) {
+fun BoxScope.LibraryState() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { LibraryStatePresenter(scope = scope) }
 

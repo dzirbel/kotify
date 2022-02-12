@@ -21,21 +21,19 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.List
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.ProjectGithubIcon
 import com.dzirbel.kotify.ui.components.ThemeSwitcher
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.mutate
 
 @Composable
 fun NavigationPanel(
-    pageStack: MutableState<PageStack>,
     headerVisibleState: MutableTransitionState<Boolean>,
     headerContent: @Composable RowScope.() -> Unit,
 ) {
@@ -44,7 +42,7 @@ fun NavigationPanel(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NavigationButtons(pageStack)
+        NavigationButtons()
 
         AnimatedVisibility(visibleState = headerVisibleState, enter = fadeIn(), exit = fadeOut()) {
             headerContent()
@@ -61,7 +59,7 @@ fun NavigationPanel(
 }
 
 @Composable
-private fun NavigationButtons(pageStack: MutableState<PageStack>) {
+private fun NavigationButtons() {
     Row(Modifier.padding(Dimens.space2)) {
         IconButton(
             enabled = pageStack.value.hasPrevious,

@@ -8,21 +8,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.components.AlbumCell
 import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.framework.ScrollingPage
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlinx.coroutines.Dispatchers
 
 @Composable
-fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
+fun BoxScope.Albums() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { AlbumsPresenter(scope = scope) }
 
@@ -48,7 +47,6 @@ fun BoxScope.Albums(pageStack: MutableState<PageStack>) {
             AlbumCell(
                 album = album,
                 isSaved = state.savedAlbumIds.contains(album.id.value),
-                pageStack = pageStack,
                 onToggleSave = { save ->
                     presenter.emitAsync(AlbumsPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
                 }
