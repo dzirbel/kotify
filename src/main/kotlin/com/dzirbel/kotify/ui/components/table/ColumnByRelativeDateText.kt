@@ -6,6 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
+import com.dzirbel.kotify.ui.components.sort.SortOrder
+import com.dzirbel.kotify.ui.components.sort.SortableProperty
 import com.dzirbel.kotify.ui.theme.Dimens
 
 /**
@@ -13,17 +15,19 @@ import com.dzirbel.kotify.ui.theme.Dimens
  */
 abstract class ColumnByRelativeDateText<T>(
     name: String,
-    sortable: Boolean = true,
     private val padding: Dp = Dimens.space3,
-) : Column<T>(name = name, sortable = sortable) {
+) : Column<T>(name = name) {
+    override val sortableProperty = object : SortableProperty<T>(sortTitle = name) {
+        override fun compare(first: IndexedValue<T>, second: IndexedValue<T>): Int {
+            return (timestampFor(first.value, first.index) ?: 0)
+                .compareTo(timestampFor(second.value, second.index) ?: 0)
+        }
+    }
+
     /**
      * Returns the timestamp of the content to be rendered as a relative date.
      */
     abstract fun timestampFor(item: T, index: Int): Long?
-
-    override fun compare(first: T, firstIndex: Int, second: T, secondIndex: Int): Int {
-        return (timestampFor(first, firstIndex) ?: 0).compareTo(timestampFor(second, secondIndex) ?: 0)
-    }
 
     @Composable
     override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {

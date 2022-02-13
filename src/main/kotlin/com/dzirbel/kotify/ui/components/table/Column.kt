@@ -12,13 +12,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.components.sort.SortOrder
+import com.dzirbel.kotify.ui.components.sort.SortableProperty
+import com.dzirbel.kotify.ui.components.sort.icon
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 
 /**
  * Represents a single column in a [Table].
  */
-abstract class Column<T>(val name: String, val sortable: Boolean) {
+abstract class Column<T>(val name: String) {
     /**
      * The policy by which the width of the column is measured.
      */
@@ -35,13 +38,9 @@ abstract class Column<T>(val name: String, val sortable: Boolean) {
     open val headerAlignment: Alignment = Alignment.BottomStart
 
     /**
-     * Compares two elements in the column, returning a negative number if [first] should be placed before [second] and
-     * a positive number if [second] should be placed before [first], and 0 if another comparison should be used to
-     * tiebreak.
+     * Determines how elements should be sorted by this column, or null if the data cannot be sorted by this column.
      */
-    open fun compare(first: T, firstIndex: Int, second: T, secondIndex: Int): Int {
-        error("Column $this cannot be sorted")
-    }
+    open val sortableProperty: SortableProperty<T>? = null
 
     /**
      * The content for the header of this column.
@@ -58,17 +57,16 @@ abstract class Column<T>(val name: String, val sortable: Boolean) {
     abstract fun item(item: T, index: Int)
 
     /**
-     * The standard table header with a text [header] and which may be sorted if [sortable] is true.
+     * The standard table header with a text [header] and which may be sorted if [sortableProperty] is non-null.
      */
     @Composable
     fun standardHeader(
         sortOrder: SortOrder?,
         onSetSort: (SortOrder?) -> Unit,
         header: String = name,
-        sortable: Boolean = this.sortable,
         padding: Dp = Dimens.space3,
     ) {
-        if (sortable) {
+        if (sortableProperty != null) {
             SimpleTextButton(
                 contentPadding = PaddingValues(end = padding),
                 onClick = {
@@ -103,20 +101,22 @@ abstract class Column<T>(val name: String, val sortable: Boolean) {
      * Creates a new [Column] from this [Column] with the same values, but mapped with [mapper]. This is convenient for
      * reusing a [Column] with a different type of item but the same content.
      */
-    fun <R> mapped(name: String = this.name, sortable: Boolean = this.sortable, mapper: (R) -> T): Column<R> {
+    fun <R> mapped(name: String = this.name, mapper: (R) -> T): Column<R> {
         val base = this
-        return object : Column<R>(name = name, sortable = sortable) {
+        return object : Column<R>(name = name) {
             override val width = base.width
             override val cellAlignment = base.cellAlignment
             override val headerAlignment = base.headerAlignment
 
-            override fun compare(first: R, firstIndex: Int, second: R, secondIndex: Int): Int {
-                return base.compare(
-                    first = mapper(first),
-                    firstIndex = firstIndex,
-                    second = mapper(second),
-                    secondIndex = secondIndex
-                )
+            override val sortableProperty: SortableProperty<R>? = base.sortableProperty?.let { baseSortProperty ->
+                object : SortableProperty<R>(sortTitle = name) {
+                    override fun compare(first: IndexedValue<R>, second: IndexedValue<R>): Int {
+                        return baseSortProperty.compare(
+                            first = IndexedValue(index = first.index, value = mapper(first.value)),
+                            second = IndexedValue(index = second.index, value = mapper(second.value)),
+                        )
+                    }
+                }
             }
 
             @Composable

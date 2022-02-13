@@ -30,11 +30,11 @@ import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.NameColumn
 import com.dzirbel.kotify.ui.components.RatingColumn
 import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.components.sort.Sort
+import com.dzirbel.kotify.ui.components.sort.SortOrder
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByRelativeDateText
 import com.dzirbel.kotify.ui.components.table.ColumnByString
-import com.dzirbel.kotify.ui.components.table.Sort
-import com.dzirbel.kotify.ui.components.table.SortOrder
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.framework.ScrollingPage
 import com.dzirbel.kotify.ui.pageStack
@@ -603,7 +603,8 @@ private fun Ratings(state: LibraryStatePresenter.ViewModel, presenter: LibrarySt
             columns = listOf(NameColumn, ratingColumn),
             items = ratedTracks.mapNotNull { it.second },
             modifier = Modifier.widthIn(max = RATINGS_TABLE_WIDTH),
-            defaultSortOrder = Sort(ratingColumn, SortOrder.DESCENDING), // sort by rating descending by default
+            // sort by rating descending by default
+            defaultSortOrder = Sort(ratingColumn.sortableProperty, SortOrder.DESCENDING),
         )
     }
 }

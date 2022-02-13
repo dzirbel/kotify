@@ -20,11 +20,12 @@ import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.components.sort.SortOrder
+import com.dzirbel.kotify.ui.components.sort.SortableProperty
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.ColumnWidth
-import com.dzirbel.kotify.ui.components.table.SortOrder
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
@@ -66,7 +67,7 @@ class PlayingColumn(
      * Returns a [Player.PlayContext] to play when the user selects the track at the given index in the column.
      */
     private val playContextFromIndex: (index: Int) -> Player.PlayContext?,
-) : Column<Track>(name = "Currently playing", sortable = false) {
+) : Column<Track>(name = "Currently playing") {
     override val width = ColumnWidth.Fill()
     override val cellAlignment = Alignment.Center
 
@@ -109,7 +110,7 @@ class PlayingColumn(
 class SavedColumn(
     private val savedTracks: Set<String>?,
     private val onSetTrackSaved: (trackId: String, saved: Boolean) -> Unit,
-) : Column<Track>(name = "Saved", sortable = false) {
+) : Column<Track>(name = "Saved") {
     override val width = ColumnWidth.Fill()
 
     @Composable
@@ -136,12 +137,14 @@ object NameColumn : ColumnByString<Track>(name = "Title") {
     override fun toString(item: Track, index: Int) = item.name
 }
 
-object ArtistColumn : Column<Track>(name = "Artist", sortable = true) {
+object ArtistColumn : Column<Track>(name = "Artist") {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        return first.artists.cached.joinToString { it.name }
-            .compareTo(second.artists.cached.joinToString { it.name }, ignoreCase = true)
+    override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
+        override fun compare(first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
+            return first.value.artists.cached.joinToString { it.name }
+                .compareTo(second.value.artists.cached.joinToString { it.name }, ignoreCase = true)
+        }
     }
 
     @Composable
@@ -160,11 +163,14 @@ object ArtistColumn : Column<Track>(name = "Artist", sortable = true) {
     }
 }
 
-object AlbumColumn : Column<Track>(name = "Album", sortable = true) {
+object AlbumColumn : Column<Track>(name = "Album") {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        return first.album.cached?.name.orEmpty().compareTo(second.album.cached?.name.orEmpty(), ignoreCase = true)
+    override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
+        override fun compare(first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
+            return first.value.album.cached?.name.orEmpty()
+                .compareTo(second.value.album.cached?.name.orEmpty(), ignoreCase = true)
+        }
     }
 
     @Composable
@@ -186,20 +192,28 @@ object AlbumColumn : Column<Track>(name = "Album", sortable = true) {
 object DurationColumn : ColumnByString<Track>(name = "Duration") {
     override val cellAlignment = Alignment.TopEnd
 
-    override fun toString(item: Track, index: Int) = formatDuration(item.durationMs.toLong())
-
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        return first.durationMs.compareTo(second.durationMs)
+    override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
+        override fun compare(first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
+            return first.value.durationMs.compareTo(second.value.durationMs)
+        }
     }
+
+    override fun toString(item: Track, index: Int) = formatDuration(item.durationMs.toLong())
 }
 
-object TrackNumberColumn : ColumnByNumber<Track>(name = "#", sortable = true) {
+object TrackNumberColumn : ColumnByNumber<Track>(name = "#") {
     override fun toNumber(item: Track, index: Int) = item.trackNumber.toInt()
 }
 
-object PopularityColumn : Column<Track>(name = "Popularity", sortable = true) {
+object PopularityColumn : Column<Track>(name = "Popularity") {
     override val width: ColumnWidth = ColumnWidth.MatchHeader
     override val cellAlignment = Alignment.TopEnd
+
+    override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
+        override fun compare(first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
+            return first.value.popularity.compareToNullable(second.value.popularity)
+        }
+    }
 
     @Composable
     override fun item(item: Track, index: Int) {
@@ -223,18 +237,23 @@ object PopularityColumn : Column<Track>(name = "Popularity", sortable = true) {
             )
         }
     }
-
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        return first.popularity.compareToNullable(second.popularity)
-    }
 }
 
 class RatingColumn(
     private val trackRatings: Map<String, State<Rating?>>?,
     private val onRateTrack: (trackId: String, rating: Rating?) -> Unit,
-) : Column<Track>(name = "Rating", sortable = true) {
+) : Column<Track>(name = "Rating") {
     override val width: ColumnWidth = ColumnWidth.Fill()
     override val cellAlignment = Alignment.Center
+
+    override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
+        override fun compare(first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
+            val firstRating = trackRatings?.get(first.value.id.value)?.value?.ratingPercent
+            val secondRating = trackRatings?.get(second.value.id.value)?.value?.ratingPercent
+
+            return firstRating.compareToNullable(secondRating)
+        }
+    }
 
     @Composable
     override fun item(item: Track, index: Int) {
@@ -243,12 +262,5 @@ class RatingColumn(
             rating = trackRatings?.get(trackId)?.value,
             onRate = { rating -> onRateTrack(trackId, rating) },
         )
-    }
-
-    override fun compare(first: Track, firstIndex: Int, second: Track, secondIndex: Int): Int {
-        val firstRating = trackRatings?.get(first.id.value)?.value?.ratingPercent
-        val secondRating = trackRatings?.get(second.id.value)?.value?.ratingPercent
-
-        return firstRating.compareToNullable(secondRating)
     }
 }

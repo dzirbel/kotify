@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.components.table
+package com.dzirbel.kotify.ui.components.sort
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +27,7 @@ import com.dzirbel.kotify.ui.theme.LocalColors
 
 @Composable
 fun <T> SortSelector(
-    columns: List<Column<T>>,
+    sortProperties: List<SortableProperty<T>>,
     sorts: List<Sort<T>>,
     onSetSort: (List<Sort<T>>) -> Unit,
 ) {
@@ -58,7 +58,7 @@ fun <T> SortSelector(
                         onSetSort(sorts.toMutableList().apply { set(index, flipped) })
                     }
                 ) {
-                    Text(sort.column.name)
+                    Text(sort.sortableProperty.sortTitle)
 
                     Icon(
                         imageVector = sort.sortOrder.icon,
@@ -93,13 +93,12 @@ fun <T> SortSelector(
 
         val addDropdownExpanded = remember { mutableStateOf(false) }
 
-        val sortableColumns = remember(sorts, columns) {
-            val sortColumns = sorts.mapTo(mutableSetOf()) { it.column }
-            columns.filter { it.sortable && it !in sortColumns }
+        val sortableProperties = remember(sorts, sortProperties) {
+            sortProperties.minus(sorts.mapTo(mutableSetOf()) { it.sortableProperty })
         }
 
         IconButton(
-            enabled = sortableColumns.isNotEmpty(),
+            enabled = sortableProperties.isNotEmpty(),
             onClick = { addDropdownExpanded.value = true },
         ) {
             Icon(
@@ -113,16 +112,16 @@ fun <T> SortSelector(
             expanded = addDropdownExpanded.value,
             onDismissRequest = { addDropdownExpanded.value = false }
         ) {
-            sortableColumns.forEach { column ->
+            sortableProperties.forEach { property ->
                 DropdownMenuItem(
                     onClick = {
                         addDropdownExpanded.value = false
 
-                        val newSort = Sort(column = column, sortOrder = SortOrder.ASCENDING)
+                        val newSort = Sort(sortableProperty = property, sortOrder = SortOrder.ASCENDING)
                         onSetSort(sorts.plus(newSort))
                     }
                 ) {
-                    Text(column.name)
+                    Text(property.sortTitle)
                 }
             }
         }

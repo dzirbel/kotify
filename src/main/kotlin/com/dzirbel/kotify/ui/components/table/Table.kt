@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.isSpecified
+import com.dzirbel.kotify.ui.components.sort.Sort
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.util.compareInOrder
@@ -88,8 +89,10 @@ fun <T> Table(
                 columns.forEach { column ->
                     Box {
                         column.header(
-                            sortOrder = sorts.firstOrNull { it.column == column }?.sortOrder,
-                            onSetSort = { onSetSort(it?.let { Sort(column, it) }) },
+                            sortOrder = sorts.firstOrNull { it.sortableProperty == column.sortableProperty }?.sortOrder,
+                            onSetSort = { sortOrder ->
+                                onSetSort(sortOrder?.let { column.sortableProperty?.let { Sort(it, sortOrder) } })
+                            },
                         )
                     }
                 }

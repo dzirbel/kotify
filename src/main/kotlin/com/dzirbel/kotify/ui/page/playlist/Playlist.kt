@@ -20,9 +20,10 @@ import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.sort.SortSelector
+import com.dzirbel.kotify.ui.components.sort.SortableProperty
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.IndexColumn
-import com.dzirbel.kotify.ui.components.table.SortSelector
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.components.trackColumns
 import com.dzirbel.kotify.ui.framework.ScrollingPage
@@ -39,12 +40,14 @@ private object AddedAtColumn : ColumnByString<PlaylistTrack>(name = "Added") {
     private val PlaylistTrack.addedAtTimestamp
         get() = Instant.parse(addedAt.orEmpty()).toEpochMilli()
 
-    override fun toString(item: PlaylistTrack, index: Int): String {
-        return formatDateTime(timestamp = item.addedAtTimestamp, includeTime = false)
+    override val sortableProperty = object : SortableProperty<PlaylistTrack>(sortTitle = name) {
+        override fun compare(first: IndexedValue<PlaylistTrack>, second: IndexedValue<PlaylistTrack>): Int {
+            return first.value.addedAtTimestamp.compareTo(second.value.addedAtTimestamp)
+        }
     }
 
-    override fun compare(first: PlaylistTrack, firstIndex: Int, second: PlaylistTrack, secondIndex: Int): Int {
-        return first.addedAtTimestamp.compareTo(second.addedAtTimestamp)
+    override fun toString(item: PlaylistTrack, index: Int): String {
+        return formatDateTime(timestamp = item.addedAtTimestamp, includeTime = false)
     }
 }
 
@@ -160,7 +163,7 @@ fun BoxScope.Playlist(page: PlaylistPage) {
 
             // TODO move into playlist header and align right
             SortSelector(
-                columns = columns,
+                sortProperties = columns.mapNotNull { it.sortableProperty },
                 sorts = state.sorts,
                 onSetSort = { sorts -> presenter.emitAsync(PlaylistPresenter.Event.SetSorts(sorts = sorts)) }
             )

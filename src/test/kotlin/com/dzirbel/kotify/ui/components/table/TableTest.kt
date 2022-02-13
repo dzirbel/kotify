@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.dzirbel.kotify.ui.components.sort.SortOrder
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.theme.Dimens
 import org.junit.jupiter.params.ParameterizedTest
@@ -63,7 +64,7 @@ internal class TableTest {
                             override fun toString(item: String, index: Int) = item
                         },
 
-                        object : Column<String>(name = "Col 2", sortable = false) {
+                        object : Column<String>(name = "Col 2") {
                             override val width = ColumnWidth.Weighted(weight = 1f)
                             override val cellAlignment = Alignment.BottomEnd
 
@@ -91,7 +92,7 @@ internal class TableTest {
                     columns = listOf(
                         IndexColumn(),
 
-                        object : Column<Int>(name = "Unused", sortable = false) {
+                        object : Column<Int>(name = "Unused") {
                             override val width = ColumnWidth.Fixed(50.dp)
                             override val cellAlignment = Alignment.Center
                             override val headerAlignment = Alignment.Center
@@ -111,7 +112,7 @@ internal class TableTest {
                             }
                         },
 
-                        object : Column<Int>(name = "Unused", sortable = false) {
+                        object : Column<Int>(name = "Unused") {
                             override val width = ColumnWidth.MatchHeader
                             override val cellAlignment = Alignment.Center
                             override val headerAlignment = Alignment.Center
