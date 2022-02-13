@@ -38,8 +38,8 @@ fun BoxScope.Artist(page: ArtistPage) {
                     modifier = Modifier.align(Alignment.End),
                     refreshing = state.refreshingArtist,
                     updated = state.artist.updatedTime.toEpochMilli(),
-                    updatedFormat = { "Artist last updated $it" },
-                    updatedFallback = "Artist never updated",
+                    updatedFormat = { "Artist synced $it" },
+                    updatedFallback = "Artist never synced",
                     onClick = {
                         presenter.emitAsync(
                             ArtistPresenter.Event.Load(
@@ -56,8 +56,8 @@ fun BoxScope.Artist(page: ArtistPage) {
                     modifier = Modifier.align(Alignment.End),
                     refreshing = state.refreshingArtistAlbums,
                     updated = state.artist.albumsFetched?.toEpochMilli(),
-                    updatedFormat = { "Albums last updated $it" },
-                    updatedFallback = "Albums never updated",
+                    updatedFormat = { "Albums synced $it" },
+                    updatedFallback = "Albums never synced",
                     onClick = {
                         presenter.emitAsync(
                             ArtistPresenter.Event.Load(

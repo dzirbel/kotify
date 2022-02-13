@@ -32,6 +32,7 @@ object Dimens {
     val divider = 1.dp
 
     // font sizes - all text must use one of these sizes
+    val fontHuge = 36.sp
     val fontTitle = 24.sp
     val fontBody = 14.sp
     val fontSmall = 12.sp

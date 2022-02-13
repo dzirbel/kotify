@@ -159,7 +159,7 @@ private fun Artists(state: LibraryStatePresenter.ViewModel, presenter: LibrarySt
         InvalidateButton(
             refreshing = state.refreshingSavedArtists,
             updated = state.artistsUpdated,
-            updatedFallback = "Artists never updated",
+            updatedFallback = "Artists never synced",
             iconSize = Dimens.iconTiny
         ) {
             presenter.emitAsync(LibraryStatePresenter.Event.RefreshSavedArtists)
@@ -285,7 +285,7 @@ private fun Albums(state: LibraryStatePresenter.ViewModel, presenter: LibrarySta
         InvalidateButton(
             refreshing = state.refreshingSavedAlbums,
             updated = state.albumsUpdated,
-            updatedFallback = "Albums never updated",
+            updatedFallback = "Albums never synced",
             iconSize = Dimens.iconTiny
         ) {
             presenter.emitAsync(LibraryStatePresenter.Event.RefreshSavedAlbums)
@@ -373,7 +373,7 @@ private fun Tracks(state: LibraryStatePresenter.ViewModel, presenter: LibrarySta
         InvalidateButton(
             refreshing = state.refreshingSavedTracks,
             updated = state.tracksUpdated,
-            updatedFallback = "Tracks never updated",
+            updatedFallback = "Tracks never synced",
             iconSize = Dimens.iconTiny
         ) {
             presenter.emitAsync(LibraryStatePresenter.Event.RefreshSavedTracks)
@@ -451,7 +451,7 @@ private fun Playlists(state: LibraryStatePresenter.ViewModel, presenter: Library
         InvalidateButton(
             refreshing = state.refreshingSavedPlaylists,
             updated = state.playlistsUpdated,
-            updatedFallback = "Playlists never updated",
+            updatedFallback = "Playlists never synced",
             iconSize = Dimens.iconTiny
         ) {
             presenter.emitAsync(LibraryStatePresenter.Event.RefreshSavedPlaylists)
