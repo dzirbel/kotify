@@ -4,12 +4,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import com.dzirbel.kotify.ui.theme.Dimens
 
 /**
@@ -39,16 +41,17 @@ fun InvalidateButton(
     updatedFormat: (String) -> String = { "Synced $it" },
     updatedFallback: String = "Never synced",
     contentPadding: PaddingValues = PaddingValues(Dimens.space3),
-    iconSize: Dp = Dimens.iconMedium,
+    fontSize: TextUnit = LocalTextStyle.current.fontSize,
     onClick: () -> Unit,
 ) {
     SimpleTextButton(
         modifier = modifier,
         enabled = !refreshing,
         contentPadding = contentPadding,
-        onClick = onClick
+        onClick = onClick,
     ) {
         Text(
+            fontSize = fontSize,
             text = updated?.let {
                 liveRelativeDateText(timestamp = updated, format = updatedFormat)
             } ?: updatedFallback
@@ -56,6 +59,6 @@ fun InvalidateButton(
 
         HorizontalSpacer(Dimens.space2)
 
-        RefreshIcon(refreshing = refreshing, size = iconSize)
+        RefreshIcon(refreshing = refreshing, size = Dimens.iconSizeFor(fontSize))
     }
 }

@@ -7,6 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -61,5 +62,13 @@ object Dimens {
             LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(thickness = scrollbarWidth),
             content = content
         )
+    }
+
+    /**
+     * Returns a [Dp] equivalent for the given [fontSize], to be used for icons embedded in text of [fontSize].
+     */
+    @Composable
+    fun iconSizeFor(fontSize: TextUnit): Dp {
+        return with(LocalDensity.current) { fontSize.toDp() } + space2
     }
 }

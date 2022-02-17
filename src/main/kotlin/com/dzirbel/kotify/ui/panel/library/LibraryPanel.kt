@@ -119,7 +119,6 @@ fun LibraryPanel() {
             refreshing = refreshing,
             updated = stateOrError.safeState?.playlistsUpdated,
             contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
-            iconSize = Dimens.iconSmall,
             onClick = {
                 presenter.emitAsync(LibraryPanelPresenter.Event.LoadPlaylists(invalidate = true))
             }
