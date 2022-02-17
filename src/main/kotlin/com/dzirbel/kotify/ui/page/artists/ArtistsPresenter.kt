@@ -9,6 +9,9 @@ import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.ui.components.sort.Sort
+import com.dzirbel.kotify.ui.components.sort.SortOrder
+import com.dzirbel.kotify.ui.components.sort.sortedBy
 import com.dzirbel.kotify.ui.framework.RemoteStatePresenter
 import com.dzirbel.kotify.util.plusSorted
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +34,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
 
     data class ViewModel(
         val refreshing: Boolean,
+        val sorts: List<Sort<Artist>>,
         val artists: List<Artist>,
         val artistDetails: Map<String, ArtistDetails>,
         val savedArtistIds: Set<String>,
@@ -44,6 +48,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
         data class ReactToArtistsSaved(val artistIds: List<String>, val saved: Boolean) : Event()
         data class ToggleSave(val artistId: String, val save: Boolean) : Event()
         data class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
+        data class SetSorts(val sorts: List<Sort<Artist>>) : Event()
     }
 
     override fun eventFlows(): Iterable<Flow<Event>> {
@@ -69,13 +74,15 @@ class ArtistsPresenter(scope: CoroutineScope) :
 
                 val savedArtistIds = SavedArtistRepository.getLibrary()
                 val artists = fetchArtists(artistIds = savedArtistIds.toList())
-                    .sortedBy { it.name }
                 val artistsUpdated = SavedArtistRepository.libraryUpdated()
 
                 initializeLoadedState {
+                    val sorts = it?.sorts ?: listOf(Sort(SortArtistByName, SortOrder.ASCENDING))
+
                     ViewModel(
                         refreshing = false,
-                        artists = artists,
+                        sorts = sorts,
+                        artists = artists.sortedBy(sorts),
                         artistDetails = it?.artistDetails.orEmpty(),
                         savedArtistIds = savedArtistIds,
                         artistsUpdated = artistsUpdated?.toEpochMilli(),
@@ -156,6 +163,10 @@ class ArtistsPresenter(scope: CoroutineScope) :
             is Event.ToggleSave -> SavedArtistRepository.setSaved(id = event.artistId, saved = event.save)
 
             is Event.ToggleAlbumSaved -> SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
+
+            is Event.SetSorts -> mutateLoadedState {
+                it.copy(sorts = event.sorts, artists = it.artists.sortedBy(event.sorts))
+            }
         }
     }
 

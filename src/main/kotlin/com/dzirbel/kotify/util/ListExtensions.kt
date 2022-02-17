@@ -26,6 +26,21 @@ fun <T, R : Comparable<R>> List<T>.plusSorted(elements: List<T>, selector: (T) -
     return result
 }
 
+/**
+ * Returns a new [List] containing the elements of this [List] except for the element at [index].
+ */
+fun <T> List<T>.minusAt(index: Int): List<T> {
+    require(index in indices)
+
+    val result = ArrayList<T>(size)
+    forEachIndexed { i, element ->
+        if (i != index) {
+            result.add(element)
+        }
+    }
+    return result
+}
+
 suspend fun <T, R> List<T>.mapParallel(transform: suspend (T) -> R): List<R> {
     return coroutineScope {
         map { element ->

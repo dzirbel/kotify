@@ -16,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Grid
@@ -27,13 +28,35 @@ import com.dzirbel.kotify.ui.components.SmallAlbumCell
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.rightLeftClickable
+import com.dzirbel.kotify.ui.components.sort.SortOrder
+import com.dzirbel.kotify.ui.components.sort.SortSelector
+import com.dzirbel.kotify.ui.components.sort.SortableProperty
 import com.dzirbel.kotify.ui.framework.StandardPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.compareToNullable
 import kotlinx.coroutines.Dispatchers
+
+val SortArtistByName = object : SortableProperty<Artist>(
+    sortTitle = "Artist Name",
+    defaultOrder = SortOrder.ASCENDING,
+) {
+    override fun compare(first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
+        return first.value.name.compareTo(second.value.name)
+    }
+}
+
+val SortArtistByPopularity = object : SortableProperty<Artist>(
+    sortTitle = "Artist Popularity",
+    defaultOrder = SortOrder.DESCENDING,
+) {
+    override fun compare(first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
+        return first.value.popularity.compareToNullable(second.value.popularity)
+    }
+}
 
 @Composable
 fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
@@ -48,11 +71,24 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(
-                    modifier = Modifier.padding(Dimens.space4),
-                    text = "Artists",
-                    fontSize = Dimens.fontTitle,
-                )
+                Column(modifier = Modifier.padding(Dimens.space4)) {
+                    Text(
+                        text = "Artists",
+                        fontSize = Dimens.fontHuge,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    SortSelector(
+                        sortProperties = listOf(
+                            SortArtistByName,
+                            SortArtistByPopularity,
+                        ),
+                        sorts = state.sorts,
+                        onSetSort = {
+                            presenter.emitAsync(ArtistsPresenter.Event.SetSorts(sorts = it))
+                        },
+                    )
+                }
 
                 InvalidateButton(
                     refreshing = state.refreshing,
@@ -63,7 +99,7 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
         },
         onHeaderVisibilityChanged = { toggleHeader(!it) },
     ) { state ->
-        val selectedArtist = remember { mutableStateOf<Artist?>(null) }
+        val selectedArtist = remember(state.sorts) { mutableStateOf<Artist?>(null) }
         Grid(
             elements = state.artists,
             selectedElement = selectedArtist.value,

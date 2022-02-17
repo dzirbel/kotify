@@ -57,6 +57,33 @@ fun BoxScope.Playlist(page: PlaylistPage) {
     val presenter = remember(page) { PlaylistPresenter(page = page, scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
+        val columns = remember(pageStack) {
+            trackColumns(
+                savedTracks = state.savedTracksState.value,
+                onSetTrackSaved = { trackId, saved ->
+                    presenter.emitAsync(
+                        PlaylistPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved)
+                    )
+                },
+                trackRatings = state.trackRatings,
+                onRateTrack = { trackId, rating ->
+                    presenter.emitAsync(PlaylistPresenter.Event.RateTrack(trackId = trackId, rating = rating))
+                },
+                includeTrackNumber = false,
+                playContextFromIndex = { index ->
+                    Player.PlayContext.playlistTrack(playlist = state.playlist, index = index)
+                }
+            )
+                .map { column -> column.mapped<PlaylistTrack> { it.track.cached } }
+                .toMutableList()
+                .apply {
+                    add(1, IndexColumn())
+
+                    @Suppress("MagicNumber")
+                    add(6, AddedAtColumn)
+                }
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -100,20 +127,30 @@ fun BoxScope.Playlist(page: PlaylistPage) {
                         PlayButton(context = Player.PlayContext.playlist(state.playlist))
                     }
 
-                    Button(
-                        enabled = state.sorts.isNotEmpty() && state.tracks != null && !state.reordering,
-                        onClick = {
-                            state.tracks?.let { tracks ->
-                                presenter.emitAsync(
-                                    PlaylistPresenter.Event.Order(sorts = state.sorts, tracks = tracks)
-                                )
+                    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space2)) {
+                        SortSelector(
+                            sortProperties = columns.mapNotNull { it.sortableProperty },
+                            sorts = state.sorts,
+                            onSetSort = { sorts ->
+                                presenter.emitAsync(PlaylistPresenter.Event.SetSorts(sorts = sorts))
+                            },
+                        )
+
+                        Button(
+                            enabled = state.sorts.isNotEmpty() && state.tracks != null && !state.reordering,
+                            onClick = {
+                                state.tracks?.let { tracks ->
+                                    presenter.emitAsync(
+                                        PlaylistPresenter.Event.Order(sorts = state.sorts, tracks = tracks)
+                                    )
+                                }
+                            },
+                        ) {
+                            if (state.reordering) {
+                                Text("Reordering...")
+                            } else {
+                                Text("Set current order as playlist order")
                             }
-                        },
-                    ) {
-                        if (state.reordering) {
-                            Text("Reordering...")
-                        } else {
-                            Text("Set current order as playlist order")
                         }
                     }
                 }
@@ -134,40 +171,6 @@ fun BoxScope.Playlist(page: PlaylistPage) {
         if (tracks == null) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {
-            val columns = remember(pageStack) {
-                trackColumns(
-                    savedTracks = state.savedTracksState.value,
-                    onSetTrackSaved = { trackId, saved ->
-                        presenter.emitAsync(
-                            PlaylistPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved)
-                        )
-                    },
-                    trackRatings = state.trackRatings,
-                    onRateTrack = { trackId, rating ->
-                        presenter.emitAsync(PlaylistPresenter.Event.RateTrack(trackId = trackId, rating = rating))
-                    },
-                    includeTrackNumber = false,
-                    playContextFromIndex = { index ->
-                        Player.PlayContext.playlistTrack(playlist = state.playlist, index = index)
-                    }
-                )
-                    .map { column -> column.mapped<PlaylistTrack> { it.track.cached } }
-                    .toMutableList()
-                    .apply {
-                        add(1, IndexColumn())
-
-                        @Suppress("MagicNumber")
-                        add(6, AddedAtColumn)
-                    }
-            }
-
-            // TODO move into playlist header and align right
-            SortSelector(
-                sortProperties = columns.mapNotNull { it.sortableProperty },
-                sorts = state.sorts,
-                onSetSort = { sorts -> presenter.emitAsync(PlaylistPresenter.Event.SetSorts(sorts = sorts)) }
-            )
-
             Table(
                 columns = columns,
                 items = tracks,
