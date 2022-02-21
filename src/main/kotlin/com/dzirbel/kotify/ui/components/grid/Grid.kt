@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.components
+package com.dzirbel.kotify.ui.components.grid
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.AnimationConstants

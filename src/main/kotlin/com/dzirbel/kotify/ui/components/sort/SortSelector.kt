@@ -76,13 +76,7 @@ fun <T> SortSelector(
                 SortSelectorButton(
                     onClick = {
                         // flip the sort at this index
-                        val flipped = sort.copy(
-                            sortOrder = when (sort.sortOrder) {
-                                SortOrder.ASCENDING -> SortOrder.DESCENDING
-                                SortOrder.DESCENDING -> SortOrder.ASCENDING
-                            }
-                        )
-
+                        val flipped = sort.copy(sortOrder = sort.sortOrder.flipped)
                         onSetSort(sorts.toMutableList().apply { set(index, flipped) })
                     },
                 ) {

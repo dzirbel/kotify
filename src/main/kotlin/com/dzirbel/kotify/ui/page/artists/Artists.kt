@@ -19,7 +19,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.ui.components.Flow
-import com.dzirbel.kotify.ui.components.Grid
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.Pill
@@ -27,6 +26,11 @@ import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.SmallAlbumCell
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.grid.DivisionSelector
+import com.dzirbel.kotify.ui.components.grid.Grid
+import com.dzirbel.kotify.ui.components.grid.GridElements
+import com.dzirbel.kotify.ui.components.grid.GridWithDivisions
+import com.dzirbel.kotify.ui.components.grid.SimpleGridDivider
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.components.sort.SortOrder
 import com.dzirbel.kotify.ui.components.sort.SortSelector
@@ -58,6 +62,29 @@ val SortArtistByPopularity = object : SortableProperty<Artist>(
     }
 }
 
+data class ArtistNameDivider(
+    override val sortOrder: SortOrder = SortOrder.ASCENDING,
+) : SimpleGridDivider<Artist>("Name") {
+    override fun divisionFor(element: Artist): String {
+        val firstChar = element.name[0]
+        return if (firstChar.isLetter()) firstChar.uppercaseChar().toString() else "#"
+    }
+
+    override fun withSortOrder(sortOrder: SortOrder) = copy(sortOrder = sortOrder)
+}
+
+// TODO temp divider for testing
+data class ArtistNameDivider2(
+    override val sortOrder: SortOrder = SortOrder.ASCENDING,
+) : SimpleGridDivider<Artist>("Last Char") {
+    override fun divisionFor(element: Artist): String {
+        val lastChar = element.name.last()
+        return if (lastChar.isLetter()) lastChar.uppercaseChar().toString() else "#"
+    }
+
+    override fun withSortOrder(sortOrder: SortOrder) = copy(sortOrder = sortOrder)
+}
+
 @Composable
 fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
@@ -71,7 +98,10 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column(modifier = Modifier.padding(Dimens.space4)) {
+                Column(
+                    modifier = Modifier.padding(Dimens.space4),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.space2),
+                ) {
                     Text(
                         text = "Artists",
                         fontSize = Dimens.fontHuge,
@@ -88,6 +118,14 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
                             presenter.emitAsync(ArtistsPresenter.Event.SetSorts(sorts = it))
                         },
                     )
+
+                    DivisionSelector(
+                        dividers = listOf(ArtistNameDivider(), ArtistNameDivider2()),
+                        currentDivider = state.divider,
+                        onSelectDivider = {
+                            presenter.emitAsync(ArtistsPresenter.Event.SetDivider(divider = it))
+                        },
+                    )
                 }
 
                 InvalidateButton(
@@ -99,23 +137,46 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
         },
         onHeaderVisibilityChanged = { toggleHeader(!it) },
     ) { state ->
-        val selectedArtist = remember(state.sorts) { mutableStateOf<Artist?>(null) }
-        Grid(
-            elements = state.artists,
-            selectedElement = selectedArtist.value,
-            detailInsertContent = { artist ->
-                ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
-            },
-        ) { artist ->
-            ArtistCell(
-                artist = artist,
-                savedArtists = state.savedArtistIds,
-                presenter = presenter,
-                onRightClick = {
-                    presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
-                    selectedArtist.value = artist.takeIf { selectedArtist.value != it }
+        val selectedArtist = remember(state.sorts, state.divider) { mutableStateOf<Artist?>(null) }
+
+        when (state.artists) {
+            is GridElements.PlainList ->
+                Grid(
+                    elements = state.artists.elements,
+                    selectedElement = selectedArtist.value,
+                    detailInsertContent = { artist ->
+                        ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
+                    },
+                ) { artist ->
+                    ArtistCell(
+                        artist = artist,
+                        savedArtists = state.savedArtistIds,
+                        presenter = presenter,
+                        onRightClick = {
+                            presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
+                            selectedArtist.value = artist.takeIf { selectedArtist.value != it }
+                        }
+                    )
                 }
-            )
+
+            is GridElements.DividedList<Artist> ->
+                GridWithDivisions(
+                    elements = state.artists,
+                    selectedElement = selectedArtist.value,
+                    detailInsertContent = { artist ->
+                        ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
+                    },
+                ) { artist ->
+                    ArtistCell(
+                        artist = artist,
+                        savedArtists = state.savedArtistIds,
+                        presenter = presenter,
+                        onRightClick = {
+                            presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
+                            selectedArtist.value = artist.takeIf { selectedArtist.value != it }
+                        }
+                    )
+                }
         }
     }
 }

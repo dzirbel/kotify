@@ -9,6 +9,8 @@ import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.ui.components.grid.GridDivider
+import com.dzirbel.kotify.ui.components.grid.GridElements
 import com.dzirbel.kotify.ui.components.sort.Sort
 import com.dzirbel.kotify.ui.components.sort.SortOrder
 import com.dzirbel.kotify.ui.components.sort.sortedBy
@@ -35,7 +37,8 @@ class ArtistsPresenter(scope: CoroutineScope) :
     data class ViewModel(
         val refreshing: Boolean,
         val sorts: List<Sort<Artist>>,
-        val artists: List<Artist>,
+        val artists: GridElements<Artist>,
+        val divider: GridDivider<Artist>?,
         val artistDetails: Map<String, ArtistDetails>,
         val savedArtistIds: Set<String>,
         val savedAlbumsState: State<Set<String>?>? = null,
@@ -49,6 +52,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
         data class ToggleSave(val artistId: String, val save: Boolean) : Event()
         data class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
         data class SetSorts(val sorts: List<Sort<Artist>>) : Event()
+        data class SetDivider(val divider: GridDivider<Artist>?) : Event()
     }
 
     override fun eventFlows(): Iterable<Flow<Event>> {
@@ -78,11 +82,21 @@ class ArtistsPresenter(scope: CoroutineScope) :
 
                 initializeLoadedState {
                     val sorts = it?.sorts ?: listOf(Sort(SortArtistByName, SortOrder.ASCENDING))
+                    val divider = it?.divider
 
                     ViewModel(
                         refreshing = false,
                         sorts = sorts,
-                        artists = artists.sortedBy(sorts),
+                        artists = if (divider == null) {
+                            GridElements.PlainList(artists.sortedBy(sorts))
+                        } else {
+                            GridElements.DividedList.fromList(
+                                elements = artists,
+                                divider = divider,
+                                sorts = sorts,
+                            )
+                        },
+                        divider = divider,
                         artistDetails = it?.artistDetails.orEmpty(),
                         savedArtistIds = savedArtistIds,
                         artistsUpdated = artistsUpdated?.toEpochMilli(),
@@ -94,7 +108,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
                 // don't load details again if already in the state
                 if (queryState { it.viewModel?.artistDetails }?.containsKey(event.artistId) == true) return
 
-                val artist = queryState { it.viewModel?.artists }?.find { it.id.value == event.artistId }
+                val artist = queryState { it.viewModel?.artists }?.elements?.find { it.id.value == event.artistId }
                     ?: ArtistRepository.getCached(id = event.artistId)
                 requireNotNull(artist) { "could not resolve artist for ${event.artistId}" }
 
@@ -135,7 +149,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
             is Event.ReactToArtistsSaved -> {
                 if (event.saved) {
                     // if an artist has been saved but is now missing from the grid of artists, load and add it
-                    val stateArtists = queryState { it.viewModel?.artists }.orEmpty()
+                    val stateArtists = queryState { it.viewModel?.artists }?.elements.orEmpty()
 
                     val missingArtistIds: List<String> = event.artistIds
                         .minus(stateArtists.mapTo(mutableSetOf()) { it.id.value })
@@ -145,7 +159,10 @@ class ArtistsPresenter(scope: CoroutineScope) :
                         val allArtists = stateArtists.plusSorted(missingArtists) { it.name }
 
                         mutateLoadedState {
-                            it.copy(artists = allArtists, savedArtistIds = it.savedArtistIds.plus(event.artistIds))
+                            it.copy(
+                                artists = it.artists.withElements(allArtists),
+                                savedArtistIds = it.savedArtistIds.plus(event.artistIds),
+                            )
                         }
                     } else {
                         mutateLoadedState {
@@ -165,7 +182,17 @@ class ArtistsPresenter(scope: CoroutineScope) :
             is Event.ToggleAlbumSaved -> SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
 
             is Event.SetSorts -> mutateLoadedState {
-                it.copy(sorts = event.sorts, artists = it.artists.sortedBy(event.sorts))
+                it.copy(
+                    sorts = event.sorts,
+                    artists = it.artists.sortedBy(event.sorts)
+                )
+            }
+
+            is Event.SetDivider -> mutateLoadedState {
+                it.copy(
+                    divider = event.divider,
+                    artists = it.artists.withDivider(event.divider)
+                )
             }
         }
     }

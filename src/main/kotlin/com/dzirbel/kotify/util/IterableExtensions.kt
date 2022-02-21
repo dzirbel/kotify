@@ -27,6 +27,20 @@ fun <A, B> Iterable<A>.zipToMap(other: Iterable<B>): Map<A, B> {
 }
 
 /**
+ * Associates values in this [Iterable] by the key returned by [keySelector], concatenating values with the same key
+ * into a [List] (preserving order in the source [Iterable]).
+ */
+fun <T, K> Iterable<T>.associateByCombiningIntoList(keySelector: (T) -> K): Map<K, List<T>> {
+    val map = mutableMapOf<K, MutableList<T>>()
+    for (element in this) {
+        val key = keySelector(element)
+        map[key]?.add(element)
+            ?: run { map[key] = mutableListOf(element) }
+    }
+    return map
+}
+
+/**
  * Returns a copy of this [Set] with [value] added if [condition] is true or remove if it is false.
  */
 fun <T> Set<T>.plusOrMinus(value: T, condition: Boolean): Set<T> = if (condition) plus(value) else minus(value)

@@ -14,7 +14,7 @@ data class Sort<T>(val sortableProperty: SortableProperty<T>, val sortOrder: Sor
         }
 }
 
-fun <T> List<T>.sortedBy(sorts: List<Sort<T>>): List<T> {
+fun <T> Iterable<T>.sortedBy(sorts: List<Sort<T>>): List<T> {
     // TODO avoid mapping to remove index
     return withIndex().sortedWith(sorts.asComparator()).map { it.value }
 }

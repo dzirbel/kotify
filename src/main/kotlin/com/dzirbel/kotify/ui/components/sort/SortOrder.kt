@@ -7,6 +7,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class SortOrder { ASCENDING, DESCENDING }
 
+val SortOrder.flipped: SortOrder
+    get() {
+        return when (this) {
+            SortOrder.ASCENDING -> SortOrder.DESCENDING
+            SortOrder.DESCENDING -> SortOrder.ASCENDING
+        }
+    }
+
 val SortOrder?.icon: ImageVector
     get() {
         return when (this) {
