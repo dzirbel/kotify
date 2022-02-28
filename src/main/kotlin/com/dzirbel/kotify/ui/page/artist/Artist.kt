@@ -74,7 +74,7 @@ fun BoxScope.Artist(page: ArtistPage) {
 
         VerticalSpacer(Dimens.space3)
 
-        Grid(elements = state.artistAlbums) { album ->
+        Grid(elements = state.artistAlbums) { _, album ->
             AlbumCell(
                 album = album,
                 isSaved = state.savedAlbumsState.value?.contains(album.id.value),

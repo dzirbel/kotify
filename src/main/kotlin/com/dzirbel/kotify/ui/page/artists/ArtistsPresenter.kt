@@ -12,8 +12,8 @@ import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
-import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.framework.RemoteStatePresenter
+import com.dzirbel.kotify.ui.page.albums.SortAlbumsByName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -29,7 +29,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
     data class ArtistDetails(
         val savedTime: Instant?,
         val genres: List<String>,
-        val albums: List<Album>?,
+        val albums: ListAdapter<Album>?,
     )
 
     data class ViewModel(
@@ -79,12 +79,11 @@ class ArtistsPresenter(scope: CoroutineScope) :
                 val artistsUpdated = SavedArtistRepository.libraryUpdated()
 
                 initializeLoadedState {
-                    val sorts = it?.artists?.sorts ?: listOf(Sort(SortArtistByName, SortOrder.ASCENDING))
+                    val sorts = it?.artists?.sorts ?: listOf(Sort(SortArtistByName))
                     val divider = it?.artists?.divider
 
                     ViewModel(
                         refreshing = false,
-                        // TODO combine calls
                         artists = ListAdapter(artists)
                             .withDivider(divider)
                             .withSort(sorts),
@@ -120,6 +119,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
                 }
 
                 val albums = Artist.getAllAlbums(artistId = event.artistId)
+                val albumsAdapter = ListAdapter(albums).withSort(listOf(Sort(SortAlbumsByName)))
                 KotifyDatabase.transaction {
                     albums.forEach { it.largestImage.loadToCache() }
                 }
@@ -132,7 +132,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
 
                 mutateLoadedState {
                     it.copy(
-                        artistDetails = it.artistDetails.plus(event.artistId to details.copy(albums = albums)),
+                        artistDetails = it.artistDetails.plus(event.artistId to details.copy(albums = albumsAdapter)),
                         savedAlbumsState = savedAlbumsState ?: it.savedAlbumsState,
                     )
                 }

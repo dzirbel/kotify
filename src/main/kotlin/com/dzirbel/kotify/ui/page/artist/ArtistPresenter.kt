@@ -8,6 +8,7 @@ import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.util.mutate
@@ -36,7 +37,7 @@ class ArtistPresenter(
     data class ViewModel(
         val artist: Artist,
         val refreshingArtist: Boolean,
-        val artistAlbums: List<Album>,
+        val artistAlbums: ListAdapter<Album>,
         val savedAlbumsState: State<Set<String>?>,
         val refreshingArtistAlbums: Boolean,
     )
@@ -118,7 +119,9 @@ class ArtistPresenter(
                     ViewModel(
                         artist = artist ?: it?.artist ?: error("no artist"),
                         refreshingArtist = false,
-                        artistAlbums = checkNotNull(artistAlbums ?: it?.artistAlbums),
+                        artistAlbums = checkNotNull(
+                            artistAlbums?.let { ListAdapter(artistAlbums) } ?: it?.artistAlbums
+                        ),
                         savedAlbumsState = savedAlbumsState,
                         refreshingArtistAlbums = false
                     )

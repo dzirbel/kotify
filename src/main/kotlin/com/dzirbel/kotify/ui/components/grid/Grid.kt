@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import kotlin.math.ceil
@@ -89,20 +90,21 @@ private class FlaredBottomRoundedRect(val cornerSize: Dp, val bottomPadding: Dp 
  * A simple two-dimensional grid layout, which arranges [cellContent] for each [elements] as a table.
  *
  * The layout always expands vertically to fit all the [elements]. Each column has the width of the widest
- * [cellContent]; each row the height of the tallest [cellContent] in that row. The number of columns will equal
- * [columns] if provided, otherwise it will be the maximum number of contents that can fit.
+ * [cellContent] in that column; each row the height of the tallest [cellContent] in that row. The number of columns
+ * will equal [columns] if provided, otherwise it will be the maximum number of contents that can fit.
  *
  * [horizontalSpacing] and [verticalSpacing] will be added between columns and rows, respectively, including before the
  * first row/column and after the last row/column.
  *
- * A [selectedElement] may be provided along with [detailInsertContent] to display an insert below the row of the
- * [selectedElement] with some extra content for it.
+ * A [selectedElementIndex] may be provided along with [detailInsertContent] to display an insert below the row of the
+ * [selectedElementIndex] with some extra content for it. This corresponds to the index of the selected element in the
+ * canonical order of [elements].
  */
 @Composable
 @Suppress("UnnecessaryParentheses")
 fun <E> Grid(
-    elements: List<E>,
-    selectedElement: E? = null,
+    elements: ListAdapter<E>,
+    selectedElementIndex: Int? = null,
     modifier: Modifier = Modifier,
     horizontalSpacing: Dp = Dimens.space2,
     verticalSpacing: Dp = Dimens.space3,
@@ -112,41 +114,45 @@ fun <E> Grid(
     detailInsertBorder: Color = LocalColors.current.dividerColor,
     detailInsertCornerSize: Dp = Dimens.cornerSize * 2,
     detailInsertAnimationDurationMs: Int = AnimationConstants.DefaultDurationMillis,
-    detailInsertContent: @Composable ((E) -> Unit)? = null,
-    cellContent: @Composable (element: E) -> Unit,
+    detailInsertContent: @Composable ((elementIndex: Int, element: E) -> Unit)? = null,
+    cellContent: @Composable (elementIndex: Int, element: E) -> Unit,
 ) {
     require(columns == null || columns > 0) { "columns must be positive; got $columns" }
 
     val layoutDirection = LocalLayoutDirection.current
 
     val insertAnimationState = remember { MutableTransitionState(false) }
-    insertAnimationState.targetState = selectedElement != null
+    insertAnimationState.targetState = selectedElementIndex != null
 
     // keeps track of the last selected element (or null if an element has never been selected) - this is used to
     // continue displaying it as it is being animated out
-    val lastSelectedElement = remember { mutableStateOf(selectedElement) }
-    if (selectedElement != null) {
-        lastSelectedElement.value = selectedElement
+    val lastSelectedElementIndexState = remember { mutableStateOf(selectedElementIndex) }
+    if (selectedElementIndex != null) {
+        lastSelectedElementIndexState.value = selectedElementIndex
     }
+    val lastSelectedElementIndex: Int? = lastSelectedElementIndexState.value
 
-    val currentDetailElement = lastSelectedElement.value
-    val currentDetailElementIndex = currentDetailElement?.let {
-        remember(elements, currentDetailElement) {
-            elements.indexOf(it).also { index ->
-                require(index >= 0) { "could not find selected element $selectedElement in elements" }
-            }
-        }
-    }
+    val divisions = elements.divisions
 
     Layout(
         content = {
-            elements.forEach { element ->
+            elements.forEachIndexed { index, element ->
                 Box {
-                    cellContent(element)
+                    cellContent(index, element)
                 }
             }
 
-            if (detailInsertContent != null && currentDetailElement != null) {
+            elements.divider?.let { divider ->
+                divisions.forEach { division ->
+                    Box {
+                        divider.headerContent(
+                            division = requireNotNull(division.key) { "null division with a divider" }
+                        )
+                    }
+                }
+            }
+
+            if (detailInsertContent != null && lastSelectedElementIndex != null) {
                 AnimatedVisibility(
                     visibleState = insertAnimationState,
                     enter = fadeIn(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
@@ -187,14 +193,14 @@ fun <E> Grid(
                             .border(width = Dimens.divider, color = detailInsertBorder)
                             .fillMaxWidth()
                     ) {
-                        detailInsertContent(currentDetailElement)
+                        detailInsertContent(lastSelectedElementIndex, elements[lastSelectedElementIndex])
                     }
                 }
             }
         },
         modifier = modifier,
         measurePolicy = { measurables, constraints ->
-            val cellMeasurables = measurables.take(elements.size)
+            val cellMeasurables = measurables.subList(fromIndex = 0, toIndex = elements.size)
 
             val horizontalSpacingPx: Float = horizontalSpacing.toPx()
             val verticalSpacingPx: Float = verticalSpacing.toPx()
@@ -222,8 +228,6 @@ fun <E> Grid(
             // truncate any "fractional column"
             val cols: Int = columns
                 ?: ((constraints.maxWidth - horizontalSpacingPx) / columnWidthWithSpacing).toInt().coerceAtLeast(1)
-            // number of rows is the number of cells divided by number of columns, rounded up
-            val rows: Int = ceil(elements.size.toFloat() / cols).toInt()
 
             // now we need to account for that "fractional column" by adding some "extra" to each column spacing,
             // distributed among each spacing (note: we cannot add this extra to the columns rather than the spacing
@@ -238,16 +242,37 @@ fun <E> Grid(
             val horizontalSpacingPxWithExtra: Float = horizontalSpacingPx + extra
             val columnWidthWithSpacingAndExtra: Float = maxCellWidth + horizontalSpacingPxWithExtra
 
-            // total used height is the sum of the row heights (each of which being the maximum element height in the
-            // row) plus the total vertical spacing (the vertical spacing per row times the number of rows plus 1, to
-            // include the trailing space)
-            var totalHeight = (verticalSpacingPx * (rows + 1)).roundToInt()
-            val rowHeights = Array(rows) { row ->
-                cellPlaceables.subList(fromIndex = row * cols, toIndex = ((row + 1) * cols).coerceAtMost(elements.size))
-                    .maxOf { it.height }
-                    .also { totalHeight += it }
+            val divisionElements = divisions.values.toList()
+
+            var totalHeight = 0
+
+            // division -> [heights of rows in that division]
+            val rowHeights: Array<IntArray> = Array(divisions.size) { divisionIndex ->
+                val division = divisionElements[divisionIndex]
+
+                // number of rows is the number of cells in the division divided by number of columns, rounded up
+                val divisionRows = ceil(division.size.toFloat() / cols).toInt()
+                totalHeight += (verticalSpacingPx * (divisionRows + 1)).roundToInt()
+
+                // height of each division row is the maximum height of placeables in that row
+                IntArray(divisionRows) { row ->
+                    division.subList(
+                        fromIndex = row * cols,
+                        toIndex = ((row + 1) * cols).coerceAtMost(division.size),
+                    )
+                        .maxOf { cellPlaceables[it.index].height }
+                        .also { totalHeight += it }
+                }
             }
 
+            val dividerPlaceables = elements.divider
+                ?.let { measurables.subList(fromIndex = elements.size, toIndex = elements.size + divisions.size) }
+                ?.map { measurable ->
+                    measurable.measure(constraints)
+                        .also { totalHeight += it.height }
+                }
+
+            val selectedElementDivisionIndex: Int?
             val selectedElementRowIndex: Int?
             val selectedElementColIndex: Int?
             val detailInsertPlaceable: Placeable?
@@ -255,12 +280,21 @@ fun <E> Grid(
 
             // ensure we have exactly 2 insert measurables; in rare cases if the animation is toggled on or off we can
             // just 1
-            if (measurables.size - elements.size == 2) {
-                val insertMeasurables = measurables.takeLast(2)
+            if (measurables.size - cellMeasurables.size - (dividerPlaceables?.size ?: 0) == 2) {
+                val insertMeasurables = measurables.subList(
+                    fromIndex = measurables.size - 2,
+                    toIndex = measurables.size,
+                )
 
-                requireNotNull(currentDetailElementIndex)
-                selectedElementRowIndex = currentDetailElementIndex / cols
-                selectedElementColIndex = currentDetailElementIndex % cols
+                requireNotNull(lastSelectedElementIndex)
+                val selectedElementDivision = elements.divisionOf(lastSelectedElementIndex)
+                selectedElementDivisionIndex = divisions.keys.indexOf(selectedElementDivision)
+                val division = requireNotNull(divisions[selectedElementDivision]) { "null selected element division" }
+                val indexInDivision = division.indexOfFirst { it.index == lastSelectedElementIndex }
+                require(indexInDivision >= 0) { "selected element not found in its division" }
+
+                selectedElementRowIndex = indexInDivision / cols
+                selectedElementColIndex = indexInDivision % cols
 
                 // background highlight on the selected item:
                 // - has extra maxWidth since otherwise during the animation the flared base is clipped
@@ -269,7 +303,7 @@ fun <E> Grid(
                 selectedItemBackgroundPlaceable = insertMeasurables[0].measure(
                     constraints.copy(
                         maxWidth = maxCellWidth + detailInsertCornerSize.roundToPx() * 2,
-                        maxHeight = rowHeights[selectedElementRowIndex] +
+                        maxHeight = rowHeights[selectedElementDivisionIndex][selectedElementRowIndex] +
                             (verticalSpacingPx + Dimens.divider.toPx()).roundToInt(),
                     )
                 )
@@ -278,6 +312,7 @@ fun <E> Grid(
 
                 totalHeight += detailInsertPlaceable.height + verticalSpacingPx.roundToInt()
             } else {
+                selectedElementDivisionIndex = null
                 selectedElementRowIndex = null
                 selectedElementColIndex = null
                 detailInsertPlaceable = null
@@ -285,48 +320,62 @@ fun <E> Grid(
             }
 
             layout(constraints.maxWidth, totalHeight) {
-                // keep track of the y for each row; start at the spacing to include the top spacing
-                var y = verticalSpacingPx
-                for (rowIndex in 0 until rows) {
-                    val rowHeight = rowHeights[rowIndex]
-                    val roundedY = y.roundToInt()
+                var y = 0f
 
-                    // place the insert before the row so that the selected item background is drawn on top of it
-                    if (rowIndex == selectedElementRowIndex) {
-                        detailInsertPlaceable!!.place(
-                            x = 0,
-                            y = (y + rowHeight + verticalSpacingPx).roundToInt(),
-                        )
+                divisionElements.forEachIndexed { divisionIndex, division ->
+                    dividerPlaceables?.get(divisionIndex)?.let {
+                        it.place(x = 0, y = y.roundToInt())
+                        y += it.height
                     }
 
-                    for (colIndex in 0 until cols) {
-                        cellPlaceables.getOrNull(colIndex + rowIndex * cols)?.let { placeable ->
-                            val baseX = (horizontalSpacingPxWithExtra + (colIndex * columnWidthWithSpacingAndExtra))
-                                .roundToInt()
+                    y += verticalSpacingPx
 
-                            if (rowIndex == selectedElementRowIndex && colIndex == selectedElementColIndex) {
-                                // adjust x to account for flared base
-                                selectedItemBackgroundPlaceable!!.place(
-                                    x = baseX - detailInsertCornerSize.roundToPx(),
-                                    y = y.roundToInt(),
-                                )
-                            }
+                    rowHeights[divisionIndex].forEachIndexed { rowIndex, rowHeight ->
+                        val roundedY = y.roundToInt()
 
-                            // adjust the element based on its alignment and place it
-                            val alignment = cellAlignment.align(
-                                size = IntSize(width = placeable.width, height = placeable.height),
-                                space = IntSize(width = maxCellWidth, height = rowHeight),
-                                layoutDirection = layoutDirection,
+                        // whether the selected item insert should be placed in this row
+                        val insertInRow = divisionIndex == selectedElementDivisionIndex &&
+                            rowIndex == selectedElementRowIndex
+
+                        // place the insert before the row so that the selected item background is drawn on top of it
+                        if (insertInRow) {
+                            detailInsertPlaceable!!.place(
+                                x = 0,
+                                y = (y + rowHeight + verticalSpacingPx).roundToInt(),
                             )
-
-                            placeable.place(x = baseX + alignment.x, y = roundedY + alignment.y)
                         }
-                    }
 
-                    y += rowHeight + verticalSpacingPx
+                        for (colIndex in 0 until cols) {
+                            // getOrNull in case the column exceeds the number of elements in the last row
+                            division.getOrNull(colIndex + rowIndex * cols)?.index?.let { elementIndex ->
+                                val placeable = cellPlaceables[elementIndex]
+                                val baseX = (horizontalSpacingPxWithExtra + (colIndex * columnWidthWithSpacingAndExtra))
+                                    .roundToInt()
 
-                    if (rowIndex == selectedElementRowIndex) {
-                        y += detailInsertPlaceable!!.height + verticalSpacingPx
+                                if (insertInRow && colIndex == selectedElementColIndex) {
+                                    // adjust x to account for flared base
+                                    selectedItemBackgroundPlaceable!!.place(
+                                        x = baseX - detailInsertCornerSize.roundToPx(),
+                                        y = y.roundToInt(),
+                                    )
+                                }
+
+                                // adjust the element based on its alignment and place it
+                                val alignment = cellAlignment.align(
+                                    size = IntSize(width = placeable.width, height = placeable.height),
+                                    space = IntSize(width = maxCellWidth, height = rowHeight),
+                                    layoutDirection = layoutDirection,
+                                )
+
+                                placeable.place(x = baseX + alignment.x, y = roundedY + alignment.y)
+                            }
+                        }
+
+                        y += rowHeight + verticalSpacingPx
+
+                        if (insertInRow) {
+                            y += detailInsertPlaceable!!.height + verticalSpacingPx
+                        }
                     }
                 }
             }

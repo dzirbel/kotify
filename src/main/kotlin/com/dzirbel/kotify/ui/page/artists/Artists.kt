@@ -32,7 +32,6 @@ import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortSelector
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.grid.Grid
-import com.dzirbel.kotify.ui.components.grid.GridWithDivisions
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.framework.StandardPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
@@ -136,22 +135,22 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
         },
         onHeaderVisibilityChanged = { toggleHeader(!it) },
     ) { state ->
-        val selectedArtist = remember(state.artists.sorts, state.artists.divider) { mutableStateOf<Artist?>(null) }
+        val selectedArtistIndex = remember(state.artists.sorts, state.artists.divider) { mutableStateOf<Int?>(null) }
 
-        GridWithDivisions(
+        Grid(
             elements = state.artists,
-            selectedElement = selectedArtist.value,
-            detailInsertContent = { artist ->
+            selectedElementIndex = selectedArtistIndex.value,
+            detailInsertContent = { _, artist ->
                 ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
             },
-        ) { artist ->
+        ) { index, artist ->
             ArtistCell(
                 artist = artist,
                 savedArtists = state.savedArtistIds,
                 presenter = presenter,
                 onRightClick = {
                     presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
-                    selectedArtist.value = artist.takeIf { selectedArtist.value != it }
+                    selectedArtistIndex.value = index.takeIf { selectedArtistIndex.value != it }
                 }
             )
         }
@@ -236,7 +235,7 @@ private fun ArtistDetailInsert(
             Grid(
                 modifier = Modifier.weight(DETAILS_ALBUMS_WEIGHT),
                 elements = albums,
-            ) { album ->
+            ) { _, album ->
                 SmallAlbumCell(
                     album = album,
                     isSaved = state.savedAlbumsState?.value?.contains(album.id.value),

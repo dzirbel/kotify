@@ -2,7 +2,10 @@ package com.dzirbel.kotify.ui.components.adapter
 
 import com.dzirbel.kotify.util.compareInOrder
 
-data class Sort<T>(val sortableProperty: SortableProperty<T>, val sortOrder: SortOrder) {
+data class Sort<T>(
+    val sortableProperty: SortableProperty<T>,
+    val sortOrder: SortOrder = sortableProperty.defaultOrder,
+) {
     /**
      * Returns a [Comparator] which compares indexed elements of type [T] according to [SortableProperty.compare] and
      * [sortOrder].

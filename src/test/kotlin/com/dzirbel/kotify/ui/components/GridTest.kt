@@ -16,6 +16,7 @@ import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.theme.Colors
@@ -38,7 +39,7 @@ internal class GridTest {
         val horizontalSpacing = 10.dp
         val verticalSpacing = 5.dp
         val elementHeight = 20.dp
-        val elements = listOf(1, 2, 3)
+        val elements = ListAdapter(listOf(1, 2, 3))
 
         rule.setContent {
             Theme.apply(colors = Colors.DARK) {
@@ -47,7 +48,7 @@ internal class GridTest {
                     columns = columns,
                     horizontalSpacing = horizontalSpacing,
                     verticalSpacing = verticalSpacing,
-                ) { element ->
+                ) { _, element ->
                     Text(
                         text = element.toString(),
                         modifier = Modifier.fillMaxWidth().height(elementHeight)
@@ -87,12 +88,12 @@ internal class GridTest {
         screenshotTest(filename = case.filename, colorsSet = setOf(Colors.LIGHT)) {
             Grid(
                 modifier = Modifier.background(Color.Green),
-                elements = List(50) { it },
+                elements = ListAdapter(List(50) { it }),
                 columns = case.columns,
                 horizontalSpacing = 10.dp,
                 verticalSpacing = 5.dp,
                 cellAlignment = case.alignment,
-            ) { index ->
+            ) { _, index ->
                 Box(
                     modifier = Modifier
                         .background(Color.Black)

@@ -6,8 +6,9 @@ import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter
+import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
-import com.dzirbel.kotify.util.plusSorted
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -22,7 +23,7 @@ class AlbumsPresenter(scope: CoroutineScope) :
 
     data class ViewModel(
         val refreshing: Boolean,
-        val albums: List<Album>,
+        val albums: ListAdapter<Album>,
         val savedAlbumIds: Set<String>,
         val albumsUpdated: Long?,
     )
@@ -56,13 +57,13 @@ class AlbumsPresenter(scope: CoroutineScope) :
 
                 val savedAlbumIds = SavedAlbumRepository.getLibrary()
                 val albums = fetchAlbums(albumIds = savedAlbumIds.toList())
-                    .sortedBy { it.name }
                 val albumsUpdated = SavedAlbumRepository.libraryUpdated()
 
                 mutateState {
                     ViewModel(
                         refreshing = false,
-                        albums = albums,
+                        albums = ListAdapter(albums)
+                            .withSort(listOf(Sort(SortAlbumsByName))),
                         savedAlbumIds = savedAlbumIds,
                         albumsUpdated = albumsUpdated?.toEpochMilli(),
                     )
@@ -72,14 +73,14 @@ class AlbumsPresenter(scope: CoroutineScope) :
             is Event.ReactToAlbumsSaved -> {
                 if (event.saved) {
                     // if an album has been saved but is now missing from the grid of albums, load and add it
-                    val stateAlbums = queryState { it?.albums }.orEmpty()
+                    val stateAlbums = queryState { it?.albums } ?: return
 
                     val missingAlbumIds: List<String> = event.albumIds
                         .minus(stateAlbums.mapTo(mutableSetOf()) { it.id.value })
 
                     if (missingAlbumIds.isNotEmpty()) {
                         val missingAlbums = fetchAlbums(albumIds = missingAlbumIds)
-                        val allAlbums = stateAlbums.plusSorted(missingAlbums) { it.name }
+                        val allAlbums = stateAlbums.plusElements(missingAlbums)
 
                         mutateState {
                             it?.copy(albums = allAlbums, savedAlbumIds = it.savedAlbumIds.plus(event.albumIds))
