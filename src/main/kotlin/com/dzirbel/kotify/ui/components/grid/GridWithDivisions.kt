@@ -7,6 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 
@@ -14,7 +15,7 @@ import com.dzirbel.kotify.ui.theme.LocalColors
 //  divisions change or are added/removed
 @Composable
 fun <E> GridWithDivisions(
-    elements: GridElements.DividedList<E>,
+    elements: ListAdapter<E>,
     selectedElement: E? = null,
     modifier: Modifier = Modifier,
     horizontalSpacing: Dp = Dimens.space2,
@@ -29,17 +30,16 @@ fun <E> GridWithDivisions(
     cellContent: @Composable (element: E) -> Unit,
 ) {
     val divisions = elements.divisions
-    val divider = elements.divider
-
-    if (divisions.isEmpty()) return
 
     Column {
         for (division in divisions) {
-            divider.headerContent(division)
+            division.key?.let { key ->
+                elements.divider?.headerContent(key)
+            }
 
             Grid(
-                elements = division.elements,
-                selectedElement = selectedElement,
+                elements = division.value,
+                selectedElement = selectedElement.takeIf { it in division.value },
                 modifier = modifier,
                 horizontalSpacing = horizontalSpacing,
                 verticalSpacing = verticalSpacing,

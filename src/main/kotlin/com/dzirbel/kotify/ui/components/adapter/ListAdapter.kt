@@ -49,6 +49,8 @@ class ListAdapter<E> private constructor(
      * it also is required to determine the [Divider.divisionComparator] of [divisions].
      */
     val divider: Divider<E>?,
+
+    val filter: ((E) -> Boolean)?,
 ) {
     private data class ElementData<E>(
         val element: E,
@@ -113,20 +115,22 @@ class ListAdapter<E> private constructor(
         sortIndexes = null,
         sorts = null,
         divider = null,
+        filter = null,
     )
 
     /**
      * Returns a copy of this [ListAdapter] with the given [filter] applied, i.e. only elements which satisfy [filter]
      * will be included in its [divisions].
      */
-    fun withFilter(filter: (element: E) -> Boolean): ListAdapter<E> {
+    fun withFilter(filter: ((element: E) -> Boolean)?): ListAdapter<E> {
         return ListAdapter(
             elements = elements.map {
-                it.copy(filtered = filter(it.element))
+                it.copy(filtered = filter?.invoke(it.element) != false)
             },
             sortIndexes = sortIndexes,
             sorts = sorts,
             divider = divider,
+            filter = filter,
         )
     }
 
@@ -142,6 +146,7 @@ class ListAdapter<E> private constructor(
             sortIndexes = sortIndexes,
             sorts = sorts,
             divider = divider,
+            filter = filter,
         )
     }
 
@@ -177,6 +182,27 @@ class ListAdapter<E> private constructor(
             sortIndexes = sortIndexes,
             sorts = sorts,
             divider = divider,
+            filter = filter,
         )
+    }
+
+    fun plusElements(newElements: List<E>): ListAdapter<E> {
+        // TODO add filtering, divisions, and sort indexes for new elements
+        val newElementData = newElements.map { element ->
+            ElementData(
+                element = element,
+                filtered = filter?.invoke(element) != false,
+                division = divider?.divisionFor(element),
+            )
+        }
+
+        return ListAdapter(
+            elements = this.elements.plus(newElementData),
+            sortIndexes = null,
+            sorts = null,
+            divider = divider,
+            filter = filter,
+        )
+            .withSort(sorts)
     }
 }

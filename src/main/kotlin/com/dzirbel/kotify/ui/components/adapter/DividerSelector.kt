@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.components.grid
+package com.dzirbel.kotify.ui.components.adapter
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,16 +23,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.SimpleTextButton
-import com.dzirbel.kotify.ui.components.adapter.flipped
-import com.dzirbel.kotify.ui.components.adapter.icon
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 
 @Composable
-fun <E> DivisionSelector(
-    dividers: List<GridDivider<E>>,
-    currentDivider: GridDivider<E>?,
-    onSelectDivider: (GridDivider<E>?) -> Unit,
+fun <E> DividerSelector(
+    dividers: List<Divider<E>>,
+    currentDivider: Divider<E>?,
+    onSelectDivider: (Divider<E>?) -> Unit,
 ) {
     Row(
         modifier = Modifier.background(
@@ -87,14 +85,16 @@ fun <E> DivisionSelector(
         if (currentDivider != null) {
             SimpleTextButton(
                 onClick = {
-                    onSelectDivider(currentDivider.withSortOrder(sortOrder = currentDivider.sortOrder.flipped))
+                    onSelectDivider(
+                        currentDivider.withDivisionSortOrder(sortOrder = currentDivider.divisionSortOrder.flipped)
+                    )
                 },
                 contentPadding = PaddingValues(all = Dimens.space2),
                 enforceMinWidth = false,
                 enforceMinHeight = true,
             ) {
                 Icon(
-                    imageVector = currentDivider.sortOrder.icon,
+                    imageVector = currentDivider.divisionSortOrder.icon,
                     contentDescription = null,
                     modifier = Modifier.size(Dimens.iconSmall),
                     tint = LocalColors.current.primary,

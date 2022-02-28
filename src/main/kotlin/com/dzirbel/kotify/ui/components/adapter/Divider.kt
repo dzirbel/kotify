@@ -5,7 +5,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import com.dzirbel.kotify.ui.components.grid.GridDivision
 import com.dzirbel.kotify.ui.theme.Dimens
 
 abstract class Divider<E>(
@@ -20,8 +19,8 @@ abstract class Divider<E>(
     abstract fun withDivisionSortOrder(sortOrder: SortOrder): Divider<E>
 
     @Composable
-    open fun headerContent(division: GridDivision<E>) {
-        standardHeaderContent(divisionHeader = division.header)
+    open fun headerContent(division: String) {
+        standardHeaderContent(divisionHeader = division)
     }
 
     @Composable

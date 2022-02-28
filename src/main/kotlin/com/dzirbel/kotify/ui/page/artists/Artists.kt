@@ -26,14 +26,13 @@ import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.SmallAlbumCell
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.adapter.Divider
+import com.dzirbel.kotify.ui.components.adapter.DividerSelector
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortSelector
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
-import com.dzirbel.kotify.ui.components.grid.DivisionSelector
 import com.dzirbel.kotify.ui.components.grid.Grid
-import com.dzirbel.kotify.ui.components.grid.GridElements
 import com.dzirbel.kotify.ui.components.grid.GridWithDivisions
-import com.dzirbel.kotify.ui.components.grid.SimpleGridDivider
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.framework.StandardPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
@@ -62,27 +61,27 @@ val SortArtistByPopularity = object : SortableProperty<Artist>(
     }
 }
 
-data class ArtistNameDivider(
-    override val sortOrder: SortOrder = SortOrder.ASCENDING,
-) : SimpleGridDivider<Artist>("Name") {
+class ArtistNameDivider(
+    divisionSortOrder: SortOrder = SortOrder.ASCENDING,
+) : Divider<Artist>(dividerTitle = "Name", divisionSortOrder = divisionSortOrder) {
     override fun divisionFor(element: Artist): String {
         val firstChar = element.name[0]
         return if (firstChar.isLetter()) firstChar.uppercaseChar().toString() else "#"
     }
 
-    override fun withSortOrder(sortOrder: SortOrder) = copy(sortOrder = sortOrder)
+    override fun withDivisionSortOrder(sortOrder: SortOrder) = ArtistNameDivider(divisionSortOrder = sortOrder)
 }
 
 // TODO temp divider for testing
-data class ArtistNameDivider2(
-    override val sortOrder: SortOrder = SortOrder.ASCENDING,
-) : SimpleGridDivider<Artist>("Last Char") {
+class ArtistNameDivider2(
+    divisionSortOrder: SortOrder = SortOrder.ASCENDING,
+) : Divider<Artist>(dividerTitle = "Last Char", divisionSortOrder = divisionSortOrder) {
     override fun divisionFor(element: Artist): String {
         val lastChar = element.name.last()
         return if (lastChar.isLetter()) lastChar.uppercaseChar().toString() else "#"
     }
 
-    override fun withSortOrder(sortOrder: SortOrder) = copy(sortOrder = sortOrder)
+    override fun withDivisionSortOrder(sortOrder: SortOrder) = ArtistNameDivider2(divisionSortOrder = sortOrder)
 }
 
 @Composable
@@ -113,15 +112,15 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
                             SortArtistByName,
                             SortArtistByPopularity,
                         ),
-                        sorts = state.sorts,
+                        sorts = state.artists.sorts,
                         onSetSort = {
                             presenter.emitAsync(ArtistsPresenter.Event.SetSorts(sorts = it))
                         },
                     )
 
-                    DivisionSelector(
+                    DividerSelector(
                         dividers = listOf(ArtistNameDivider(), ArtistNameDivider2()),
-                        currentDivider = state.divider,
+                        currentDivider = state.artists.divider,
                         onSelectDivider = {
                             presenter.emitAsync(ArtistsPresenter.Event.SetDivider(divider = it))
                         },
@@ -137,46 +136,24 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
         },
         onHeaderVisibilityChanged = { toggleHeader(!it) },
     ) { state ->
-        val selectedArtist = remember(state.sorts, state.divider) { mutableStateOf<Artist?>(null) }
+        val selectedArtist = remember(state.artists.sorts, state.artists.divider) { mutableStateOf<Artist?>(null) }
 
-        when (state.artists) {
-            is GridElements.PlainList ->
-                Grid(
-                    elements = state.artists.elements,
-                    selectedElement = selectedArtist.value,
-                    detailInsertContent = { artist ->
-                        ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
-                    },
-                ) { artist ->
-                    ArtistCell(
-                        artist = artist,
-                        savedArtists = state.savedArtistIds,
-                        presenter = presenter,
-                        onRightClick = {
-                            presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
-                            selectedArtist.value = artist.takeIf { selectedArtist.value != it }
-                        }
-                    )
+        GridWithDivisions(
+            elements = state.artists,
+            selectedElement = selectedArtist.value,
+            detailInsertContent = { artist ->
+                ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
+            },
+        ) { artist ->
+            ArtistCell(
+                artist = artist,
+                savedArtists = state.savedArtistIds,
+                presenter = presenter,
+                onRightClick = {
+                    presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
+                    selectedArtist.value = artist.takeIf { selectedArtist.value != it }
                 }
-
-            is GridElements.DividedList<Artist> ->
-                GridWithDivisions(
-                    elements = state.artists,
-                    selectedElement = selectedArtist.value,
-                    detailInsertContent = { artist ->
-                        ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
-                    },
-                ) { artist ->
-                    ArtistCell(
-                        artist = artist,
-                        savedArtists = state.savedArtistIds,
-                        presenter = presenter,
-                        onRightClick = {
-                            presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
-                            selectedArtist.value = artist.takeIf { selectedArtist.value != it }
-                        }
-                    )
-                }
+            )
         }
     }
 }

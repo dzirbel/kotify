@@ -30,7 +30,7 @@ import com.dzirbel.kotify.util.minusAt
 fun <T> SortSelector(
     allowEmpty: Boolean = false,
     sortProperties: List<SortableProperty<T>>,
-    sorts: List<Sort<T>>,
+    sorts: List<Sort<T>>?,
     onSetSort: (List<Sort<T>>) -> Unit,
 ) {
     Row(
@@ -46,7 +46,7 @@ fun <T> SortSelector(
             modifier = Modifier.padding(horizontal = Dimens.space2),
         )
 
-        sorts.forEachIndexed { index, sort ->
+        sorts?.forEachIndexed { index, sort ->
             Row {
                 val changeDropdownExpanded = remember { mutableStateOf(false) }
                 SortSelectorButton(
@@ -108,7 +108,7 @@ fun <T> SortSelector(
             }
         }
 
-        if (sortProperties.size > sorts.size) {
+        if (sorts != null && sortProperties.size > sorts.size) {
             val addDropdownExpanded = remember { mutableStateOf(false) }
             SortSelectorButton(onClick = { addDropdownExpanded.value = true }) {
                 Icon(
