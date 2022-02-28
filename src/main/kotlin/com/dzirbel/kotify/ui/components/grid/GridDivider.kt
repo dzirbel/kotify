@@ -13,6 +13,15 @@ interface GridDivider<E> {
     val dividerTitle: String
     val sortOrder: SortOrder
 
+    val divisionComparator: Comparator<String>
+        get() = Comparator.naturalOrder<String>()
+            .let {
+                when (sortOrder) {
+                    SortOrder.ASCENDING -> it
+                    SortOrder.DESCENDING -> it.reversed()
+                }
+            }
+
     @Composable
     fun headerContent(division: GridDivision<E>) {
         standardHeaderContent(divisionHeader = division.header)

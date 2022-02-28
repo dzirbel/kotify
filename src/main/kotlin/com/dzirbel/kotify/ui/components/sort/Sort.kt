@@ -24,7 +24,5 @@ fun <T> List<Sort<T>>.asComparator(): Comparator<IndexedValue<T>> {
         return Comparator { o1, o2 -> o1.index.compareTo(o2.index) }
     }
 
-    return map { sort -> sort.comparator }
-        .compareInOrder()
-        .thenComparing { o1, o2 -> o1.index.compareTo(o2.index) }
+    return map { sort -> sort.comparator }.compareInOrder()
 }
