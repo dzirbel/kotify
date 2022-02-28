@@ -33,7 +33,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version "1.19.0"
 
     // https://github.com/jetbrains/compose-jb
-    id("org.jetbrains.compose") version "1.0.1"
+    id("org.jetbrains.compose") version "1.1.0"
 
     `java-test-fixtures`
 
