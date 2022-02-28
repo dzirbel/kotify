@@ -10,7 +10,7 @@ import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.repository.Rating
-import com.dzirbel.kotify.ui.components.sort.Sort
+import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.util.mutate

@@ -1,8 +1,5 @@
-package com.dzirbel.kotify.ui.components.grid
+package com.dzirbel.kotify.ui.components.adapter
 
-import com.dzirbel.kotify.ui.components.sort.Sort
-import com.dzirbel.kotify.ui.components.sort.SortOrder
-import com.dzirbel.kotify.ui.components.sort.SortableProperty
 import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.Test
 
@@ -21,9 +18,9 @@ internal class ListAdapterTest {
         }
     }
 
-    private class Mod3Divider(override val sortOrder: SortOrder) : SimpleGridDivider<Int>(dividerTitle = "mod 3") {
+    private class Mod3Divider(divisionSortOrder: SortOrder) : Divider<Int>("mod 3", divisionSortOrder) {
         override fun divisionFor(element: Int) = (element % 3).toString()
-        override fun withSortOrder(sortOrder: SortOrder) = error("unimplemented")
+        override fun withDivisionSortOrder(sortOrder: SortOrder) = error("unimplemented")
     }
 
     @Test
@@ -64,10 +61,7 @@ internal class ListAdapterTest {
     @Test
     fun testDivided() {
         val elementsDescending = ListAdapter(list)
-            .withDivisions(
-                divisionFor = { (it % 3).toString() },
-                divider = Mod3Divider(sortOrder = SortOrder.DESCENDING),
-            )
+            .withDivider(Mod3Divider(divisionSortOrder = SortOrder.DESCENDING))
 
         assertThat(elementsDescending.divisions)
             .containsExactly(
@@ -78,10 +72,7 @@ internal class ListAdapterTest {
             .inOrder()
 
         val elementsAscending = elementsDescending
-            .withDivisions(
-                divisionFor = { (it % 3).toString() },
-                divider = Mod3Divider(sortOrder = SortOrder.ASCENDING),
-            )
+            .withDivider(Mod3Divider(divisionSortOrder = SortOrder.ASCENDING))
 
         assertThat(elementsAscending.divisions)
             .containsExactly(
@@ -99,10 +90,7 @@ internal class ListAdapterTest {
         val elements = ListAdapter(list)
             .withFilter(predicate)
             .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
-            .withDivisions(
-                divisionFor = { (it % 3).toString() },
-                divider = Mod3Divider(sortOrder = SortOrder.DESCENDING),
-            )
+            .withDivider(Mod3Divider(divisionSortOrder = SortOrder.DESCENDING))
 
         assertThat(elements.divisions)
             .containsExactly(
@@ -115,7 +103,7 @@ internal class ListAdapterTest {
         val elementsPlain = elements
             .withFilter { true }
             .withSort(null)
-            .withDivisions(null, null)
+            .withDivider(null)
 
         assertThat(elementsPlain.divisions)
             .isEqualTo(mapOf(null to list))

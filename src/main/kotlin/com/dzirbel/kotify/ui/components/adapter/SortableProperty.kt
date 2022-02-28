@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.components.sort
+package com.dzirbel.kotify.ui.components.adapter
 
 /**
  * Represents an abstract property of a collection of data (e.g. table or grid) which specifies how its elements of type

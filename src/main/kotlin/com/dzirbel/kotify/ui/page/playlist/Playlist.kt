@@ -20,8 +20,8 @@ import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
-import com.dzirbel.kotify.ui.components.sort.SortSelector
-import com.dzirbel.kotify.ui.components.sort.SortableProperty
+import com.dzirbel.kotify.ui.components.adapter.SortSelector
+import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.IndexColumn
 import com.dzirbel.kotify.ui.components.table.Table

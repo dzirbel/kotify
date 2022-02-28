@@ -5,7 +5,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import com.dzirbel.kotify.ui.components.sort.SortOrder
+import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.util.associateByCombiningIntoList
 

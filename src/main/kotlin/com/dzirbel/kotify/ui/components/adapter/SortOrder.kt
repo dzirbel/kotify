@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.components.sort
+package com.dzirbel.kotify.ui.components.adapter
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -23,3 +23,10 @@ val SortOrder?.icon: ImageVector
             null -> Icons.Default.KeyboardArrowUp
         }
     }
+
+fun <T : Comparable<T>> SortOrder.naturalOrder(): Comparator<T> {
+    return when (this) {
+        SortOrder.ASCENDING -> Comparator.naturalOrder()
+        SortOrder.DESCENDING -> Comparator.reverseOrder()
+    }
+}

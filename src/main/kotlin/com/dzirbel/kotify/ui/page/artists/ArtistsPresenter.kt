@@ -9,11 +9,11 @@ import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.ui.components.adapter.Sort
+import com.dzirbel.kotify.ui.components.adapter.SortOrder
+import com.dzirbel.kotify.ui.components.adapter.sortedBy
 import com.dzirbel.kotify.ui.components.grid.GridDivider
 import com.dzirbel.kotify.ui.components.grid.GridElements
-import com.dzirbel.kotify.ui.components.sort.Sort
-import com.dzirbel.kotify.ui.components.sort.SortOrder
-import com.dzirbel.kotify.ui.components.sort.sortedBy
 import com.dzirbel.kotify.ui.framework.RemoteStatePresenter
 import com.dzirbel.kotify.util.plusSorted
 import kotlinx.coroutines.CoroutineScope

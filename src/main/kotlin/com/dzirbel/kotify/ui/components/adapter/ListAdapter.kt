@@ -1,8 +1,6 @@
-package com.dzirbel.kotify.ui.components.grid
+package com.dzirbel.kotify.ui.components.adapter
 
-import com.dzirbel.kotify.ui.components.grid.ListAdapter.ElementData
-import com.dzirbel.kotify.ui.components.sort.Sort
-import com.dzirbel.kotify.ui.components.sort.asComparator
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter.ElementData
 import java.util.TreeMap
 
 /**
@@ -43,14 +41,14 @@ class ListAdapter<E> private constructor(
     val sorts: List<Sort<E>>?,
 
     /**
-     * The currently applied [GridDivider] determining how elements are grouped into [divisions].
+     * The currently applied [Divider] determining how elements are grouped into [divisions].
      *
      * Null when the elements should not have any divisions, i.e. a single null key in [divisions].
      *
      * Like [sorts], keeping this as a field is convenient to encapsulate the state of elements for external users, but
-     * it also is required to determine the [GridDivider.divisionComparator] of [divisions].
+     * it also is required to determine the [Divider.divisionComparator] of [divisions].
      */
-    val divider: GridDivider<E>?,
+    val divider: Divider<E>?,
 ) {
     private data class ElementData<E>(
         val element: E,
@@ -62,8 +60,8 @@ class ListAdapter<E> private constructor(
         val filtered: Boolean,
 
         /**
-         * The division key assigned to this element by the currently applied [GridDivider] which determines its
-         * placement in [divisions], or null if there is no currently applied divider.
+         * The division key assigned to this element by the currently applied [divider] which determines its placement
+         * in [divisions], or null if there is no currently applied divider.
          */
         val division: String?,
     )
@@ -73,8 +71,8 @@ class ListAdapter<E> private constructor(
      * filtered elements in that division.
      *
      * If there are no divisions applied, the returned map will contain a single null key with all the elements.
-     * Otherwise the map will be a [java.util.SortedMap] sorted according to the currently applied [GridDivider]'s
-     * ordering of divisions, so the map's iteration order should be used.
+     * Otherwise the map will be a [java.util.SortedMap] sorted according to the currently applied [divider]'s ordering
+     * of divisions, so the map's iteration order should be used.
      *
      * While sorting is pre-computed every time a new sort order is applied, the division arrangement is recalculated
      * for each new [ListAdapter] on the first call to [divisions]. This is (as far as I can tell) necessary at least
@@ -134,14 +132,12 @@ class ListAdapter<E> private constructor(
 
     /**
      * Returns a copy of this [ListAdapter] with the given [divider] applied, i.e. elements will be grouped according
-     * to [divisionFor] in its [divisions], or undivided if [divider] is null.
-     *
-     * TODO merge divisionFor into the divider itself
+     * to [Divider.divisionFor] in its [divisions], or undivided if [divider] is null.
      */
-    fun withDivisions(divisionFor: ((element: E) -> String)?, divider: GridDivider<E>?): ListAdapter<E> {
+    fun withDivider(divider: Divider<E>?): ListAdapter<E> {
         return ListAdapter(
             elements = elements.map {
-                it.copy(division = divisionFor?.invoke(it.element))
+                it.copy(division = divider?.divisionFor(it.element))
             },
             sortIndexes = sortIndexes,
             sorts = sorts,

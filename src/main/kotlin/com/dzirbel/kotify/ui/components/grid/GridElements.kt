@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.ui.components.grid
 
-import com.dzirbel.kotify.ui.components.sort.Sort
-import com.dzirbel.kotify.ui.components.sort.sortedBy
+import com.dzirbel.kotify.ui.components.adapter.Sort
+import com.dzirbel.kotify.ui.components.adapter.sortedBy
 
 sealed class GridElements<T> {
     abstract val elements: List<T>

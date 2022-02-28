@@ -23,8 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.SimpleTextButton
-import com.dzirbel.kotify.ui.components.sort.flipped
-import com.dzirbel.kotify.ui.components.sort.icon
+import com.dzirbel.kotify.ui.components.adapter.flipped
+import com.dzirbel.kotify.ui.components.adapter.icon
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 

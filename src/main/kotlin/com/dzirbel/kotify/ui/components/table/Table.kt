@@ -13,7 +13,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.isSpecified
-import com.dzirbel.kotify.ui.components.sort.Sort
+import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.util.compareInOrder

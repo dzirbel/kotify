@@ -20,8 +20,8 @@ import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.CachedIcon
-import com.dzirbel.kotify.ui.components.sort.SortOrder
-import com.dzirbel.kotify.ui.components.sort.SortableProperty
+import com.dzirbel.kotify.ui.components.adapter.SortOrder
+import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByString

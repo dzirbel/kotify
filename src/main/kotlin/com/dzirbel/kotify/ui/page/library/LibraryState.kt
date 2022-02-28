@@ -30,8 +30,8 @@ import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.NameColumn
 import com.dzirbel.kotify.ui.components.RatingColumn
 import com.dzirbel.kotify.ui.components.SimpleTextButton
-import com.dzirbel.kotify.ui.components.sort.Sort
-import com.dzirbel.kotify.ui.components.sort.SortOrder
+import com.dzirbel.kotify.ui.components.adapter.Sort
+import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByRelativeDateText
 import com.dzirbel.kotify.ui.components.table.ColumnByString

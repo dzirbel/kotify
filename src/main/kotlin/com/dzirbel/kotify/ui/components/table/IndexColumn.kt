@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.ui.components.table
 
-import com.dzirbel.kotify.ui.components.sort.SortableProperty
+import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 
 /**
  * A standard [Column] which displays a 1-based index for each row.

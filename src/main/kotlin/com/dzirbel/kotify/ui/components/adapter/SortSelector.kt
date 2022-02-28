@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.components.sort
+package com.dzirbel.kotify.ui.components.adapter
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
