@@ -39,12 +39,6 @@ fun <E> DividerSelector(
         ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CachedIcon(
-            name = "horizontal-split",
-            size = Dimens.iconSmall,
-            modifier = Modifier.padding(horizontal = Dimens.space2),
-        )
-
         val dropdownExpanded = remember { mutableStateOf(false) }
         SimpleTextButton(
             onClick = {
@@ -54,6 +48,12 @@ fun <E> DividerSelector(
             enforceMinWidth = false,
             enforceMinHeight = true,
         ) {
+            CachedIcon(
+                name = "horizontal-split",
+                size = Dimens.iconSmall,
+                modifier = Modifier.padding(end = Dimens.space2),
+            )
+
             if (currentDivider == null) {
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                     Text(

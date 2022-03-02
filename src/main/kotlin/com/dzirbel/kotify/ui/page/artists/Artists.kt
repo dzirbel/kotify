@@ -136,7 +136,7 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
                             SortArtistByName,
                             SortArtistByPopularity,
                         ),
-                        sorts = state.artists.sorts,
+                        sorts = state.artists.sorts.orEmpty(),
                         onSetSort = {
                             presenter.emitAsync(ArtistsPresenter.Event.SetSorts(sorts = it))
                         },

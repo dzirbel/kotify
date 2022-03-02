@@ -30,7 +30,7 @@ import com.dzirbel.kotify.util.minusAt
 fun <T> SortSelector(
     allowEmpty: Boolean = false,
     sortProperties: List<SortableProperty<T>>,
-    sorts: List<Sort<T>>?,
+    sorts: List<Sort<T>>,
     onSetSort: (List<Sort<T>>) -> Unit,
 ) {
     Row(
@@ -40,19 +40,29 @@ fun <T> SortSelector(
         ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CachedIcon(
-            name = "sort",
-            size = Dimens.iconSmall,
-            modifier = Modifier.padding(horizontal = Dimens.space2),
-        )
+        if (sorts.isEmpty()) {
+            CachedIcon(
+                name = "sort",
+                size = Dimens.iconSmall,
+                modifier = Modifier.padding(horizontal = Dimens.space2),
+            )
+        }
 
-        sorts?.forEachIndexed { index, sort ->
+        sorts.forEachIndexed { index, sort ->
             Row {
                 val changeDropdownExpanded = remember { mutableStateOf(false) }
                 SortSelectorButton(
                     contentPadding = PaddingValues(horizontal = Dimens.space3),
                     onClick = { changeDropdownExpanded.value = true },
                 ) {
+                    if (index == 0) {
+                        CachedIcon(
+                            name = "sort",
+                            size = Dimens.iconSmall,
+                            modifier = Modifier.padding(end = Dimens.space2),
+                        )
+                    }
+
                     Text(sort.sortableProperty.sortTitle)
 
                     SortPickerDropdown(
@@ -108,10 +118,7 @@ fun <T> SortSelector(
             }
         }
 
-        if (sorts != null &&
-            sortProperties.size > sorts.size &&
-            sorts.lastOrNull()?.sortableProperty?.terminal != true
-        ) {
+        if (sortProperties.size > sorts.size && sorts.lastOrNull()?.sortableProperty?.terminal != true) {
             val addDropdownExpanded = remember { mutableStateOf(false) }
             SortSelectorButton(onClick = { addDropdownExpanded.value = true }) {
                 Icon(

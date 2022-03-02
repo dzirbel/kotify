@@ -132,6 +132,7 @@ fun BoxScope.Playlist(page: PlaylistPage) {
                         SortSelector(
                             sortProperties = columns.mapNotNull { it.sortableProperty },
                             sorts = state.sorts,
+                            allowEmpty = true,
                             onSetSort = { sorts ->
                                 presenter.emitAsync(PlaylistPresenter.Event.SetSorts(sorts = sorts))
                             },
