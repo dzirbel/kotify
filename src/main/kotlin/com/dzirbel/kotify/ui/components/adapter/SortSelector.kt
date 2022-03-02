@@ -108,7 +108,10 @@ fun <T> SortSelector(
             }
         }
 
-        if (sorts != null && sortProperties.size > sorts.size) {
+        if (sorts != null &&
+            sortProperties.size > sorts.size &&
+            sorts.lastOrNull()?.sortableProperty?.terminal != true
+        ) {
             val addDropdownExpanded = remember { mutableStateOf(false) }
             SortSelectorButton(onClick = { addDropdownExpanded.value = true }) {
                 Icon(

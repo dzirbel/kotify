@@ -47,6 +47,7 @@ import kotlinx.coroutines.Dispatchers
 val SortArtistByName = object : SortableProperty<Artist>(
     sortTitle = "Artist Name",
     defaultOrder = SortOrder.ASCENDING,
+    terminal = true,
 ) {
     override fun compare(first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
         return first.value.name.compareTo(second.value.name)
