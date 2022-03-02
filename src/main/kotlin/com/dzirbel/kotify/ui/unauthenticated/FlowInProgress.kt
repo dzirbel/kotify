@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
@@ -30,7 +31,7 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
     if (oauth.error.value == null) {
         Text("Authentication in progress. Accept the OAuth request from Spotify in your browser to continue.")
     } else {
-        Text("Error during authentication!", color = LocalColors.current.error, fontSize = Dimens.fontTitle)
+        Text("Error during authentication!", color = LocalColors.current.error, style = MaterialTheme.typography.h5)
 
         Text(
             text = oauth.error.value!!.stackTraceToString(),

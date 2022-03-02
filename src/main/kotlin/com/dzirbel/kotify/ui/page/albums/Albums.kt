@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -42,7 +43,7 @@ fun BoxScope.Albums() {
             modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("Albums", fontSize = Dimens.fontTitle)
+            Text("Albums", style = MaterialTheme.typography.h5)
 
             Column {
                 InvalidateButton(

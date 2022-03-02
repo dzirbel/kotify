@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -54,7 +55,7 @@ fun NetworkTab(scrollState: ScrollState) {
                     .also { appliedDelay.value = it != null }
             },
             label = {
-                Text("Network delay (ms)", fontSize = Dimens.fontCaption)
+                Text("Network delay (ms)", style = MaterialTheme.typography.overline)
             }
         )
 

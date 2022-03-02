@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -94,7 +95,7 @@ fun SmallAlbumCell(
 
         Text(
             text = album.name,
-            fontSize = Dimens.fontCaption,
+            style = MaterialTheme.typography.overline,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.widthIn(max = Dimens.contentImageSmall),

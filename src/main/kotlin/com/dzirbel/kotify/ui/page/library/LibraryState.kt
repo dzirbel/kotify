@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -128,7 +129,7 @@ fun BoxScope.LibraryState() {
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-            Text("Library State", fontSize = Dimens.fontTitle)
+            Text("Library State", style = MaterialTheme.typography.h5)
 
             Artists(state, presenter)
 

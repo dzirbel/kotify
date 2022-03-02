@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
@@ -32,7 +33,7 @@ import com.dzirbel.kotify.ui.util.mutate
 
 @Composable
 fun ColumnScope.LandingPage(state: MutableState<AuthenticationState>) {
-    Text("Welcome to ${Application.name}!", fontSize = Dimens.fontTitle)
+    Text("Welcome to ${Application.name}!", style = MaterialTheme.typography.h5)
 
     VerticalSpacer(Dimens.space3)
 
@@ -130,7 +131,7 @@ fun ColumnScope.LandingPage(state: MutableState<AuthenticationState>) {
         VerticalSpacer(Dimens.space3)
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Scopes", fontSize = Dimens.fontTitle)
+            Text("Scopes", style = MaterialTheme.typography.h5)
 
             IconButton(
                 enabled = state.value.scopes != OAuth.DEFAULT_SCOPES,

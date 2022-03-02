@@ -3,11 +3,13 @@ package com.dzirbel.kotify.ui.page.artists
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -16,9 +18,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.ui.components.Flow
+import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.Pill
@@ -96,14 +98,36 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column(
-                    modifier = Modifier.padding(Dimens.space4),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.space2),
-                ) {
+                Column(modifier = Modifier.padding(Dimens.space4)) {
                     Text(
                         text = "Artists",
-                        fontSize = Dimens.fontHuge,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.h4,
+                    )
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("${state.artists.size} saved artists", modifier = Modifier.padding(end = Dimens.space2))
+
+                        Interpunct()
+
+                        InvalidateButton(
+                            refreshing = state.refreshing,
+                            updated = state.artistsUpdated,
+                            contentPadding = PaddingValues(all = Dimens.space2),
+                            onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) }
+                        )
+                    }
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+                    modifier = Modifier.padding(Dimens.space4),
+                ) {
+                    DividerSelector(
+                        dividers = listOf(ArtistNameDivider(), ArtistNameDivider2()),
+                        currentDivider = state.artists.divider,
+                        onSelectDivider = {
+                            presenter.emitAsync(ArtistsPresenter.Event.SetDivider(divider = it))
+                        },
                     )
 
                     SortSelector(
@@ -116,21 +140,7 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
                             presenter.emitAsync(ArtistsPresenter.Event.SetSorts(sorts = it))
                         },
                     )
-
-                    DividerSelector(
-                        dividers = listOf(ArtistNameDivider(), ArtistNameDivider2()),
-                        currentDivider = state.artists.divider,
-                        onSelectDivider = {
-                            presenter.emitAsync(ArtistsPresenter.Event.SetDivider(divider = it))
-                        },
-                    )
                 }
-
-                InvalidateButton(
-                    refreshing = state.refreshing,
-                    updated = state.artistsUpdated,
-                    onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) }
-                )
             }
         },
         onHeaderVisibilityChanged = { toggleHeader(!it) },
@@ -216,7 +226,7 @@ private fun ArtistDetailInsert(
             modifier = Modifier.weight(weight = DETAILS_COLUMN_WEIGHT),
             verticalArrangement = Arrangement.spacedBy(Dimens.space2),
         ) {
-            Text(artist.name, fontSize = Dimens.fontTitle)
+            Text(artist.name, style = MaterialTheme.typography.h5)
 
             artistDetails?.let {
                 artistDetails.savedTime?.let { savedTime ->

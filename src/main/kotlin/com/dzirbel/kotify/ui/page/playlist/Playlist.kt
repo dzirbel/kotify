@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -95,7 +96,7 @@ fun BoxScope.Playlist(page: PlaylistPage) {
                 LoadedImage(url = state.playlist.largestImage.cached?.url)
 
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-                    Text(state.playlist.name, fontSize = Dimens.fontTitle)
+                    Text(state.playlist.name, style = MaterialTheme.typography.h5)
 
                     state.playlist.description
                         ?.takeIf { it.isNotEmpty() }

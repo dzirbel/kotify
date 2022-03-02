@@ -2,14 +2,13 @@ package com.dzirbel.kotify.ui.theme
 
 import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 object Dimens {
     // space constants - all spacing between elements must use one of these values
@@ -32,13 +31,6 @@ object Dimens {
     // divider size - all dividers between elements must use this width/height
     val divider = 1.dp
 
-    // font sizes - all text must use one of these sizes
-    val fontHuge = 36.sp
-    val fontTitle = 24.sp
-    val fontBody = 14.sp
-    val fontSmall = 12.sp
-    val fontCaption = 10.sp
-
     private var fontDpInitialized = false
     var fontBodyDp: Dp = 0.dp
         private set
@@ -54,11 +46,11 @@ object Dimens {
         // convenience calculation of dp sizes of fonts, for easy of use outside of composable context
         if (!fontDpInitialized) {
             fontDpInitialized = true
-            fontBodyDp = with(LocalDensity.current) { fontBody.toDp() }
+            fontBodyDp = with(LocalDensity.current) { MaterialTheme.typography.body2.fontSize.toDp() }
         }
 
         CompositionLocalProvider(
-            LocalTextStyle provides TextStyle(fontSize = fontBody),
+            LocalTextStyle provides MaterialTheme.typography.body2,
             LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(thickness = scrollbarWidth),
             content = content
         )
@@ -69,6 +61,6 @@ object Dimens {
      */
     @Composable
     fun iconSizeFor(fontSize: TextUnit): Dp {
-        return with(LocalDensity.current) { fontSize.toDp() } + space2
+        return with(LocalDensity.current) { fontSize.toDp() }
     }
 }

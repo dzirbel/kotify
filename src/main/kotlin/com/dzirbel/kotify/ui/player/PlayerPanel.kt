@@ -16,7 +16,7 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -748,7 +748,7 @@ private fun CurrentTrack(
                 VerticalSpacer(Dimens.space3)
 
                 Row(verticalAlignment = Alignment.Top) {
-                    Text("by ", fontSize = Dimens.fontSmall)
+                    Text("by ", style = MaterialTheme.typography.caption)
 
                     Column {
                         track.artists.forEach { artist ->
@@ -758,7 +758,7 @@ private fun CurrentTrack(
                             ) {
                                 LinkedText(
                                     key = artist.id,
-                                    style = LocalTextStyle.current.copy(fontSize = Dimens.fontSmall),
+                                    style = MaterialTheme.typography.caption,
                                     onClickLink = { artistId ->
                                         pageStack.mutate { to(ArtistPage(artistId = artistId)) }
                                     }
@@ -790,7 +790,7 @@ private fun CurrentTrack(
                     ) {
                         LinkedText(
                             key = album.id,
-                            style = LocalTextStyle.current.copy(fontSize = Dimens.fontSmall),
+                            style = MaterialTheme.typography.caption,
                             onClickLink = { albumId ->
                                 pageStack.mutate { to(AlbumPage(albumId = albumId)) }
                             }
@@ -931,12 +931,12 @@ private fun TrackProgress(state: PlayerPanelPresenter.ViewModel, presenter: Play
             progress = progress.toFloat() / track.durationMs,
             dragKey = state,
             leftContent = {
-                Text(text = remember(progress) { formatDuration(progress) }, fontSize = Dimens.fontCaption)
+                Text(text = remember(progress) { formatDuration(progress) }, style = MaterialTheme.typography.overline)
             },
             rightContent = {
                 Text(
                     text = remember(track.durationMs) { formatDuration(track.durationMs) },
-                    fontSize = Dimens.fontCaption
+                    style = MaterialTheme.typography.overline,
                 )
             },
             onSeek = { seekPercent ->

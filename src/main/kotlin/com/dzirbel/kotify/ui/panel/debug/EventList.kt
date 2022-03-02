@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -151,8 +152,7 @@ private fun <T> EventItem(event: Logger.Event<T>) {
 
         Text(
             text = remember(event.time) { formatDateTime(event.time, includeMillis = true) },
-            fontSize = Dimens.fontCaption,
-            fontFamily = FontFamily.Monospace,
+            style = MaterialTheme.typography.overline.copy(fontFamily = FontFamily.Monospace),
             modifier = Modifier.padding(Dimens.space2).align(Alignment.End),
         )
     }

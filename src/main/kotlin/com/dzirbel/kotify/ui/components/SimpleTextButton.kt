@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.LocalContentAlpha
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -59,6 +61,10 @@ fun SimpleTextButton(
             disabledContentColor = textColor.copy(alpha = LocalContentAlpha.current)
         ),
         onClick = onClick,
-        content = content
+        content = {
+            ProvideTextStyle(MaterialTheme.typography.body2) {
+                content()
+            }
+        },
     )
 }

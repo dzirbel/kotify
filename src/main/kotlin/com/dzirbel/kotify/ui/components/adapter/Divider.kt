@@ -1,10 +1,10 @@
 package com.dzirbel.kotify.ui.components.adapter
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.ui.theme.Dimens
 
 abstract class Divider<E>(
@@ -29,8 +29,7 @@ abstract class Divider<E>(
             // TODO add underline
             Text(
                 text = divisionHeader,
-                fontSize = Dimens.fontTitle,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.h5,
                 modifier = Modifier.padding(horizontal = Dimens.space4, vertical = Dimens.space2),
             )
         }

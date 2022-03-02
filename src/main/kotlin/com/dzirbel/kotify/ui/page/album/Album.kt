@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -46,7 +47,7 @@ fun BoxScope.Album(page: AlbumPage) {
                 LoadedImage(url = state.album.largestImage.cached?.url)
 
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-                    Text(state.album.name, fontSize = Dimens.fontTitle)
+                    Text(state.album.name, style = MaterialTheme.typography.h5)
 
                     LinkedText(
                         onClickLink = { artistId ->

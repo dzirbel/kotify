@@ -14,6 +14,7 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -56,7 +57,7 @@ fun LibraryPanel() {
         ) {
             Text(
                 text = "Library",
-                fontSize = Dimens.fontTitle,
+                style = MaterialTheme.typography.h5,
                 modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3)
             )
 
@@ -109,7 +110,7 @@ fun LibraryPanel() {
 
         Text(
             modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3),
-            fontSize = Dimens.fontTitle,
+            style = MaterialTheme.typography.h5,
             text = "Playlists"
         )
 

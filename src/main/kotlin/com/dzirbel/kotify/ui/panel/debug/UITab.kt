@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +38,7 @@ fun UITab(scrollState: ScrollState) {
                 uiSettings.mutate { copy(presenterRegex = it) }
             },
             label = {
-                Text("Presenter class regex (case insensitive)", fontSize = Dimens.fontCaption)
+                Text("Presenter class regex (case insensitive)", style = MaterialTheme.typography.overline)
             }
         )
 
