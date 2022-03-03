@@ -35,7 +35,7 @@ class ListAdapter<E> private constructor(
      *
      * Null when the elements should retain their canonical order.
      *
-     * This is retained as a field for convenience to encapsulation the state of the elements for external users and in
+     * This is retained as a field for convenience to encapsulate the state of the elements for external users and in
      * order to properly sort newly added elements (e.g. [plusElements]).
      */
     val sorts: List<Sort<E>>?,
@@ -45,7 +45,7 @@ class ListAdapter<E> private constructor(
      *
      * Null when the elements should not have any divisions, i.e. a single null key in [divisions].
      *
-     * This is retained as a field for convenience to encapsulation the state of the elements for external users and in
+     * This is retained as a field for convenience to encapsulate the state of the elements for external users and in
      * order to properly group newly added elements (e.g. [plusElements]).
      */
     val divider: Divider<E>?,
@@ -58,6 +58,13 @@ class ListAdapter<E> private constructor(
      * This is retained as a field in order to properly filter new added elements (e.g. [plusElements]).
      */
     private val filter: ((E) -> Boolean)?,
+
+    /**
+     * An optional string associated with the [filter], typically a string which must match some property on elements.
+     *
+     * Retained as a field for convenience to encapsulate the state of elements for external users.
+     */
+    val filterString: String?,
 ) : Iterable<E> {
     private data class ElementData<E>(
         val element: E,
@@ -128,6 +135,7 @@ class ListAdapter<E> private constructor(
         sorts = null,
         divider = null,
         filter = null,
+        filterString = null,
     )
 
     /**
@@ -158,7 +166,7 @@ class ListAdapter<E> private constructor(
      * Returns a copy of this [ListAdapter] with the given [filter] applied, i.e. only elements which satisfy [filter]
      * will be included in its [divisions].
      */
-    fun withFilter(filter: ((element: E) -> Boolean)?): ListAdapter<E> {
+    fun withFilter(filterString: String? = null, filter: ((element: E) -> Boolean)?): ListAdapter<E> {
         return ListAdapter(
             elements = elements.map {
                 it.copy(filtered = filter?.invoke(it.element) != false)
@@ -167,6 +175,26 @@ class ListAdapter<E> private constructor(
             sorts = sorts,
             divider = divider,
             filter = filter,
+            filterString = filterString,
+        )
+    }
+
+    /**
+     * Returns a copy of this [ListAdapter], filtering only elements whose [elementProperty] contains [filterString],
+     * optionally ignoring case.
+     */
+    fun withFilterByString(
+        filterString: String?,
+        ignoreCase: Boolean = true,
+        elementProperty: (E) -> String,
+    ): ListAdapter<E> {
+        return withFilter(
+            filterString = filterString,
+            filter = filterString?.let {
+                { element ->
+                    elementProperty(element).contains(filterString, ignoreCase = ignoreCase)
+                }
+            }
         )
     }
 
@@ -183,6 +211,7 @@ class ListAdapter<E> private constructor(
             sorts = sorts,
             divider = divider,
             filter = filter,
+            filterString = filterString,
         )
     }
 
@@ -219,6 +248,7 @@ class ListAdapter<E> private constructor(
             sorts = sorts,
             divider = divider,
             filter = filter,
+            filterString = filterString,
         )
     }
 
@@ -242,6 +272,7 @@ class ListAdapter<E> private constructor(
             sorts = null,
             divider = divider,
             filter = filter,
+            filterString = filterString,
         )
             .withSort(sorts)
     }

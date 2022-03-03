@@ -52,10 +52,19 @@ internal class ListAdapterTest {
         val predicate: (Int) -> Boolean = { it % 2 == 0 }
 
         val elements = ListAdapter(list)
-            .withFilter(predicate)
+            .withFilter(filter = predicate)
 
         assertThat(elements.divisions)
             .isEqualTo(mapOf(null to list.withIndex().filter { predicate(it.value) }))
+    }
+
+    @Test
+    fun testFilterByString() {
+        val elements = ListAdapter(list)
+            .withFilterByString(filterString = "0", elementProperty = { it.toString() })
+
+        assertThat(elements.divisions)
+            .isEqualTo(mapOf(null to list.withIndex().filter { it.toString().contains('0') }))
     }
 
     @Test
@@ -109,7 +118,7 @@ internal class ListAdapterTest {
         val predicate: (Int) -> Boolean = { it % 2 == 0 }
 
         val elements = ListAdapter(list)
-            .withFilter(predicate)
+            .withFilter(filter = predicate)
             .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
             .withDivider(Mod3Divider(divisionSortOrder = SortOrder.DESCENDING))
 
@@ -135,7 +144,7 @@ internal class ListAdapterTest {
         val predicate: (Int) -> Boolean = { it % 2 == 0 }
 
         val elements = ListAdapter(listOf(0, 1, 2, 3, 4, 5, 16, 17, 18, 19, 20))
-            .withFilter(predicate)
+            .withFilter(filter = predicate)
             .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
             .withDivider(Mod3Divider(divisionSortOrder = SortOrder.DESCENDING))
             .plusElements(listOf(6, 7, 50))
