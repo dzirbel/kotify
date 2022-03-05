@@ -15,15 +15,6 @@ private val formatTime = DateTimeFormatter.ofPattern("HH:mm:ss")
 private val formatTimeMillis = DateTimeFormatter.ofPattern("HH:mm:ss.SSS")
 
 /**
- * Returns a copy of this string trimmed to [maxChars] with an ellipsis (...) appended if the original string exceeded
- * [maxChars].
- */
-fun String.ellipsize(maxChars: Int): String {
-    @Suppress("MagicNumber")
-    return if (length > maxChars) take(maxChars - 3) + "..." else this
-}
-
-/**
  * Returns a copy of this string with its first character capitalized.
  */
 fun String.capitalize(locale: Locale = Locale.getDefault()): String {

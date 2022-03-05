@@ -42,6 +42,21 @@ internal class ListExtensionsTest {
         assertThat(listOf("a", "bb", "cccc").isSortedBy { it.length }).isTrue()
     }
 
+    @Test
+    fun testMinusAt() {
+        assertThat(listOf(1, 2, 3, 4).minusAt(0))
+            .containsExactly(2, 3, 4)
+            .inOrder()
+
+        assertThat(listOf(1, 2, 3, 4).minusAt(3))
+            .containsExactly(1, 2, 3)
+            .inOrder()
+
+        assertThat(listOf(1, 2, 3, 4).minusAt(2))
+            .containsExactly(1, 2, 4)
+            .inOrder()
+    }
+
     @RepeatedTest(3)
     fun flatMapParallel() {
         val baseList = listOf(1, 3, 4, 10)

@@ -32,7 +32,7 @@ fun <T, R : Comparable<R>> List<T>.plusSorted(elements: List<T>, selector: (T) -
 fun <T> List<T>.minusAt(index: Int): List<T> {
     require(index in indices)
 
-    val result = ArrayList<T>(size)
+    val result = ArrayList<T>(size - 1)
     forEachIndexed { i, element ->
         if (i != index) {
             result.add(element)
@@ -41,6 +41,9 @@ fun <T> List<T>.minusAt(index: Int): List<T> {
     return result
 }
 
+/**
+ * Maps values in this [List] via [transform], computing each transformation in parallel.
+ */
 suspend fun <T, R> List<T>.mapParallel(transform: suspend (T) -> R): List<R> {
     return coroutineScope {
         map { element ->
@@ -50,6 +53,9 @@ suspend fun <T, R> List<T>.mapParallel(transform: suspend (T) -> R): List<R> {
         .map { it.await() }
 }
 
+/**
+ * Flat maps values in this [List] via [transform], computing each transformation in parallel.
+ */
 suspend fun <T, R> List<T>.flatMapParallel(transform: suspend (T) -> List<R>): List<R> {
     return mapParallel(transform).flatten()
 }
