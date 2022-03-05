@@ -52,9 +52,9 @@ import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.RefreshIcon
 import com.dzirbel.kotify.ui.components.SeekableSlider
 import com.dzirbel.kotify.ui.components.SimpleTextButton
-import com.dzirbel.kotify.ui.components.StarRating
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.star.StarRating
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage

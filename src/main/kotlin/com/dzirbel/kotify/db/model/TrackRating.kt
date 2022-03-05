@@ -6,9 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.RatingRepository
+import com.dzirbel.kotify.util.zipEach
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.Max
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.deleteAll
@@ -50,6 +52,21 @@ object TrackRatingRepository : RatingRepository {
                 .firstOrNull()
                 ?.asRating()
         }
+    }
+
+    override suspend fun lastRatingsOf(ids: List<String>): List<Rating?> {
+        // map by ID to ensure returned results are in the same order as the inputs
+        val mapById: Map<String, ResultRow> = KotifyDatabase.transaction {
+            TrackRatingTable
+                .select { TrackRatingTable.track inList ids }
+                .groupBy(TrackRatingTable.track)
+                .having {
+                    TrackRatingTable.rateTime eq Max(TrackRatingTable.rateTime, TrackRatingTable.rateTime.columnType)
+                }
+        }
+            .associateBy { it[TrackRatingTable.track].value }
+
+        return ids.map { id -> mapById[id]?.asRating() }
     }
 
     override suspend fun allRatingsOf(id: String): List<Rating> {
@@ -111,6 +128,36 @@ object TrackRatingRepository : RatingRepository {
         val state = mutableStateOf(rating)
         states[id] = WeakReference(state)
         return state
+    }
+
+    // TODO attempt to share logic from Repository.get()?
+    override suspend fun ratingStates(ids: List<String>): List<State<Rating?>> {
+        val missingIndices = ArrayList<IndexedValue<String>>()
+
+        val existingStates = ids.mapIndexedTo(ArrayList(ids.size)) { index, id ->
+            val state = states[id]?.get()
+            if (state == null) {
+                missingIndices.add(IndexedValue(index = index, value = id))
+            }
+
+            state
+        }
+
+        if (missingIndices.isEmpty()) {
+            @Suppress("UNCHECKED_CAST")
+            return existingStates as List<State<Rating?>>
+        }
+
+        val newStates = KotifyDatabase.transaction { lastRatingsOf(ids = missingIndices.map { it.value }) }
+            .map { mutableStateOf(it) }
+
+        missingIndices.zipEach(newStates) { indexedValue, state ->
+            states[indexedValue.value] = WeakReference(state)
+            existingStates[indexedValue.index] = state
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        return existingStates as List<State<Rating?>>
     }
 
     override suspend fun clearAllRatings() {

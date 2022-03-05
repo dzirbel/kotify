@@ -19,6 +19,7 @@ import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.components.trackColumns
 import com.dzirbel.kotify.ui.framework.ScrollingPage
@@ -80,6 +81,8 @@ fun BoxScope.Album(page: AlbumPage) {
 
                         PlayButton(context = Player.PlayContext.album(state.album))
                     }
+
+                    AverageStarRating(ratings = state.trackRatings.values.map { it.value })
                 }
             }
 

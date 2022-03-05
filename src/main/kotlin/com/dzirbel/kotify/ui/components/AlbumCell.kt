@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
@@ -28,6 +30,8 @@ import com.dzirbel.kotify.ui.util.mutate
 fun AlbumCell(
     album: Album,
     isSaved: Boolean?,
+    showRating: Boolean = false,
+    ratings: List<Rating?>? = null,
     onToggleSave: (Boolean) -> Unit,
 ) {
     Column(
@@ -51,6 +55,10 @@ fun AlbumCell(
             ToggleSaveButton(isSaved = isSaved) { onToggleSave(it) }
 
             PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)
+        }
+
+        if (showRating) {
+            AverageStarRating(ratings = ratings)
         }
     }
 }

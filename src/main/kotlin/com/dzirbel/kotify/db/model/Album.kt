@@ -20,6 +20,7 @@ import com.dzirbel.kotify.util.flatMapParallel
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.select
 import java.time.Instant
 
 object AlbumTable : SpotifyEntityTable(name = "albums") {
@@ -69,6 +70,19 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
     val images: ReadWriteCachedProperty<List<Image>> by (Image via AlbumTable.AlbumImageTable).cachedAsList()
     val genres: ReadWriteCachedProperty<List<Genre>> by (Genre via AlbumTable.AlbumGenreTable).cachedAsList()
     val tracks: ReadWriteCachedProperty<List<Track>> by (Track via AlbumTable.AlbumTrackTable).cachedAsList()
+
+    /**
+     * IDs of the tracks on this album, if [hasAllTracks] is true, otherwise null.
+     */
+    val trackIds: ReadOnlyCachedProperty<List<String>?> = ReadOnlyCachedProperty {
+        if (hasAllTracks) {
+            AlbumTable.AlbumTrackTable
+                .select { AlbumTable.AlbumTrackTable.album eq id }
+                .map { it[AlbumTable.AlbumTrackTable.track].value }
+        } else {
+            null
+        }
+    }
 
     val largestImage: ReadOnlyCachedProperty<Image?> by (Image via AlbumTable.AlbumImageTable)
         .cachedReadOnly { it.largest() }

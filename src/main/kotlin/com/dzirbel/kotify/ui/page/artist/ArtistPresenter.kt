@@ -8,6 +8,8 @@ import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
+import com.dzirbel.kotify.db.model.TrackRatingRepository
+import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.pageStack
@@ -38,6 +40,7 @@ class ArtistPresenter(
         val artist: Artist,
         val refreshingArtist: Boolean,
         val artistAlbums: ListAdapter<Album>,
+        val albumRatings: Map<String, List<State<Rating?>?>?>,
         val savedAlbumsState: State<Set<String>?>,
         val refreshingArtistAlbums: Boolean,
     )
@@ -115,6 +118,14 @@ class ArtistPresenter(
 
                 val savedAlbumsState = SavedAlbumRepository.libraryState()
 
+                val albumRatings = artistAlbums?.let {
+                    KotifyDatabase.transaction {
+                        artistAlbums.associate { album ->
+                            album.id.value to album.trackIds.live?.let { TrackRatingRepository.ratingStates(ids = it) }
+                        }
+                    }
+                }
+
                 mutateState {
                     ViewModel(
                         artist = artist ?: it?.artist ?: error("no artist"),
@@ -122,6 +133,7 @@ class ArtistPresenter(
                         artistAlbums = checkNotNull(
                             artistAlbums?.let { ListAdapter(artistAlbums) } ?: it?.artistAlbums
                         ),
+                        albumRatings = checkNotNull(albumRatings ?: it?.albumRatings),
                         savedAlbumsState = savedAlbumsState,
                         refreshingArtistAlbums = false
                     )

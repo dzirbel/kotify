@@ -41,6 +41,24 @@ fun <T, K> Iterable<T>.associateByCombiningIntoList(keySelector: (T) -> K): Map<
 }
 
 /**
+ * Calculates the mean value among the numeric value provided by [toDouble] among non-null values in this [Iterable], or
+ * null if there are no such values.
+ */
+fun <T : Any> Iterable<T?>.averageOrNull(toDouble: (T) -> Double): Double? {
+    var total = 0.0
+    var count = 0
+
+    for (element in this) {
+        if (element != null) {
+            total += toDouble(element)
+            count++
+        }
+    }
+
+    return if (count == 0) null else total / count
+}
+
+/**
  * Returns a copy of this [Set] with [value] added if [condition] is true or remove if it is false.
  */
 fun <T> Set<T>.plusOrMinus(value: T, condition: Boolean): Set<T> = if (condition) plus(value) else minus(value)

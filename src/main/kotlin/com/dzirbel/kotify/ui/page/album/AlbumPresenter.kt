@@ -13,6 +13,7 @@ import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
@@ -67,9 +68,9 @@ class AlbumPresenter(
 
                 val isSavedState = SavedAlbumRepository.savedStateOf(id = page.albumId, fetchIfUnknown = true)
                 val savedTracksState = SavedTrackRepository.libraryState()
-                val trackRatings = tracks
-                    .map { it.id.value }
-                    .associateWith { trackId -> TrackRatingRepository.ratingState(trackId) }
+
+                val trackIds = tracks.map { it.id.value }
+                val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
 
                 mutateState {
                     ViewModel(

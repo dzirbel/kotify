@@ -11,8 +11,26 @@ data class Rating(val rating: Int, val maxRating: Int = DEFAULT_MAX_RATING, val 
     val ratingPercent: Double
         get() = rating.toDouble() / maxRating
 
+    /**
+     * Calculates the relative rating scaled to the given [maxRating], e.g. if this [Rating] is 7/10 and the given
+     * [maxRating] is 5, the returned value will be 3.5.
+     */
+    fun ratingRelativeToMax(maxRating: Int): Double {
+        if (maxRating == this.maxRating) return rating.toDouble()
+        @Suppress("UnnecessaryParentheses")
+        return (maxRating.toDouble() / this.maxRating) * rating
+    }
+
     companion object {
+        /**
+         * Default max value (number of stars) for individually rated items.
+         */
         const val DEFAULT_MAX_RATING = 10
+
+        /**
+         * Default max value (number of stars) for ratings shown as averages.
+         */
+        const val DEFAULT_MAX_AVERAGE_RATING = 5
     }
 }
 
@@ -27,6 +45,11 @@ interface RatingRepository {
      * the entity.
      */
     suspend fun lastRatingOf(id: String): Rating?
+
+    /**
+     * Retrieves the most recent [Rating] for each of the entities with the given [ids].
+     */
+    suspend fun lastRatingsOf(ids: List<String>): List<Rating?>
 
     /**
      * Retrieves the rating history of the entity with the given [id], i.e. all the ratings the user has given it,
@@ -53,7 +76,12 @@ interface RatingRepository {
      * The returned [State] must be the same object between calls for as long as it stays in context (i.e. is not
      * garbage-collected).
      */
-    suspend fun ratingState(id: String): State<Rating?>
+    suspend fun ratingState(id: String): State<Rating?> = ratingStates(listOf(id))[0]
+
+    /**
+     * Returns [State]s reflecting the live rating states of the entities with the given [ids].
+     */
+    suspend fun ratingStates(ids: List<String>): List<State<Rating?>>
 
     /**
      * Removes all ratings for all entities.
