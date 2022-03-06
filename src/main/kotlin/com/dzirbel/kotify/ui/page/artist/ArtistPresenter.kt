@@ -40,7 +40,7 @@ class ArtistPresenter(
         val artist: Artist,
         val refreshingArtist: Boolean,
         val artistAlbums: ListAdapter<Album>,
-        val albumRatings: Map<String, List<State<Rating?>?>?>,
+        val albumRatings: Map<String, List<State<Rating?>>?>,
         val savedAlbumsState: State<Set<String>?>,
         val refreshingArtistAlbums: Boolean,
     )
@@ -121,7 +121,7 @@ class ArtistPresenter(
                 val albumRatings = artistAlbums?.let {
                     KotifyDatabase.transaction {
                         artistAlbums.associate { album ->
-                            album.id.value to album.trackIds.live?.let { TrackRatingRepository.ratingStates(ids = it) }
+                            album.id.value to album.trackIds.live.let { TrackRatingRepository.ratingStates(ids = it) }
                         }
                     }
                 }

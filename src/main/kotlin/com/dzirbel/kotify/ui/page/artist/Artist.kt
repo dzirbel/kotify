@@ -80,7 +80,7 @@ fun BoxScope.Artist(page: ArtistPage) {
                 album = album,
                 isSaved = state.savedAlbumsState.value?.contains(album.id.value),
                 showRating = true,
-                ratings = state.albumRatings[album.id.value]?.map { it?.value },
+                ratings = state.albumRatings[album.id.value]?.map { it.value },
                 onToggleSave = { save ->
                     presenter.emitAsync(ArtistPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
                 }

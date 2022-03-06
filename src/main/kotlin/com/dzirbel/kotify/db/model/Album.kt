@@ -72,16 +72,13 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
     val tracks: ReadWriteCachedProperty<List<Track>> by (Track via AlbumTable.AlbumTrackTable).cachedAsList()
 
     /**
-     * IDs of the tracks on this album, if [hasAllTracks] is true, otherwise null.
+     * IDs of the tracks on this album; not guaranteed to contain all the tracks, just the ones in
+     * [AlbumTable.AlbumTrackTable].
      */
-    val trackIds: ReadOnlyCachedProperty<List<String>?> = ReadOnlyCachedProperty {
-        if (hasAllTracks) {
-            AlbumTable.AlbumTrackTable
-                .select { AlbumTable.AlbumTrackTable.album eq id }
-                .map { it[AlbumTable.AlbumTrackTable.track].value }
-        } else {
-            null
-        }
+    val trackIds: ReadOnlyCachedProperty<List<String>> = ReadOnlyCachedProperty {
+        AlbumTable.AlbumTrackTable
+            .select { AlbumTable.AlbumTrackTable.album eq id }
+            .map { it[AlbumTable.AlbumTrackTable.track].value }
     }
 
     val largestImage: ReadOnlyCachedProperty<Image?> by (Image via AlbumTable.AlbumImageTable)

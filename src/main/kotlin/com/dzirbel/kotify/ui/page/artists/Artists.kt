@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.InvalidateButton
@@ -36,12 +38,14 @@ import com.dzirbel.kotify.ui.components.adapter.SortSelector
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.rightLeftClickable
+import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.framework.StandardPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.averageOrNull
 import com.dzirbel.kotify.util.compareToNullable
 import kotlinx.coroutines.Dispatchers
 
@@ -61,6 +65,18 @@ val SortArtistByPopularity = object : SortableProperty<Artist>(
 ) {
     override fun compare(first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
         return first.value.popularity.compareToNullable(second.value.popularity)
+    }
+}
+
+class SortAristByRating(private val artistRatings: Map<String, List<State<Rating?>>?>) : SortableProperty<Artist>(
+    sortTitle = "Artist Rating",
+    defaultOrder = SortOrder.DESCENDING,
+) {
+    override fun compare(first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
+        val firstRating = artistRatings[first.value.id.value]?.averageOrNull { it.value?.ratingPercent }
+        val secondRating = artistRatings[second.value.id.value]?.averageOrNull { it.value?.ratingPercent }
+
+        return firstRating.compareToNullable(secondRating)
     }
 }
 
@@ -143,6 +159,7 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
                         sortProperties = listOf(
                             SortArtistByName,
                             SortArtistByPopularity,
+                            SortAristByRating(artistRatings = state.artistRatings),
                         ),
                         sorts = state.artists.sorts.orEmpty(),
                         onSetSort = {
@@ -166,6 +183,7 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
             ArtistCell(
                 artist = artist,
                 savedArtists = state.savedArtistIds,
+                artistRatings = state.artistRatings[artist.id.value],
                 presenter = presenter,
                 onRightClick = {
                     presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
@@ -180,6 +198,7 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
 private fun ArtistCell(
     artist: Artist,
     savedArtists: Set<String>,
+    artistRatings: List<State<Rating?>>?,
     presenter: ArtistsPresenter,
     onRightClick: () -> Unit,
 ) {
@@ -214,6 +233,8 @@ private fun ArtistCell(
 
             PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
         }
+
+        AverageStarRating(ratings = artistRatings?.map { it.value })
     }
 }
 

@@ -38,13 +38,13 @@ fun <T> Iterable<T>.sumOfNullable(map: (T) -> Float?): Float {
  * Calculates the mean value among the numeric value provided by [toDouble] among non-null values in this [Iterable], or
  * null if there are no such values.
  */
-fun <T : Any> Iterable<T?>.averageOrNull(toDouble: (T) -> Double): Double? {
+fun <T : Any> Iterable<T?>.averageOrNull(toDouble: (T) -> Double?): Double? {
     var total = 0.0
     var count = 0
 
     for (element in this) {
-        if (element != null) {
-            total += toDouble(element)
+        element?.let(toDouble)?.let {
+            total += it
             count++
         }
     }

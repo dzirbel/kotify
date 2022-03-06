@@ -8,6 +8,8 @@ import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
+import com.dzirbel.kotify.db.model.TrackRatingRepository
+import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
@@ -36,6 +38,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
         val refreshing: Boolean,
         val artists: ListAdapter<Artist>,
         val artistsById: Map<String, Artist>,
+        val artistRatings: Map<String, List<State<Rating?>>?>,
         val artistDetails: Map<String, ArtistDetails>,
         val savedArtistIds: Set<String>,
         val savedAlbumsState: State<Set<String>?>? = null,
@@ -79,6 +82,12 @@ class ArtistsPresenter(scope: CoroutineScope) :
                 val artistsById = artists.associateBy { it.id.value }
                 val artistsUpdated = SavedArtistRepository.libraryUpdated()
 
+                val artistRatings = KotifyDatabase.transaction {
+                    artists.associate { artist ->
+                        artist.id.value to artist.trackIds.live.let { TrackRatingRepository.ratingStates(ids = it) }
+                    }
+                }
+
                 initializeLoadedState {
                     ViewModel(
                         refreshing = false,
@@ -88,6 +97,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
                             defaultSort = listOf(Sort(SortArtistByName)),
                         ),
                         artistsById = artistsById,
+                        artistRatings = artistRatings,
                         artistDetails = it?.artistDetails.orEmpty(),
                         savedArtistIds = savedArtistIds,
                         artistsUpdated = artistsUpdated?.toEpochMilli(),
