@@ -23,8 +23,8 @@ import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.adapter.SortSelector
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
+import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByString
-import com.dzirbel.kotify.ui.components.table.IndexColumn
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.components.trackColumns
 import com.dzirbel.kotify.ui.framework.ScrollingPage
@@ -52,13 +52,20 @@ private object AddedAtColumn : ColumnByString<PlaylistTrack>(name = "Added") {
     }
 }
 
+private object PlaylistTrackIndexColumn : ColumnByNumber<PlaylistTrack>(name = "#") {
+    // disable sorting by the index column since it is the default order
+    override val sortableProperty: SortableProperty<PlaylistTrack>? = null
+
+    override fun toNumber(item: PlaylistTrack, index: Int) = item.indexOnPlaylist.toInt() + 1
+}
+
 @Composable
 fun BoxScope.Playlist(page: PlaylistPage) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember(page) { PlaylistPresenter(page = page, scope = scope) }
 
     ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
-        val columns = remember(pageStack) {
+        val columns = remember(pageStack.value) {
             trackColumns(
                 savedTracks = state.savedTracksState.value,
                 onSetTrackSaved = { trackId, saved ->
@@ -78,7 +85,7 @@ fun BoxScope.Playlist(page: PlaylistPage) {
                 .map { column -> column.mapped<PlaylistTrack> { it.track.cached } }
                 .toMutableList()
                 .apply {
-                    add(1, IndexColumn())
+                    add(1, PlaylistTrackIndexColumn)
 
                     @Suppress("MagicNumber")
                     add(6, AddedAtColumn)

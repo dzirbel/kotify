@@ -20,6 +20,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.util.mapParallel
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.Table
 import java.time.Instant
 
@@ -61,6 +62,12 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
     (PlaylistTrack referrersOn PlaylistTrackTable.playlist)
         .cachedReadOnly(baseToDerived = { it.toList() })
 
+    val playlistTracksInOrder: ReadOnlyCachedProperty<List<PlaylistTrack>> = ReadOnlyCachedProperty {
+        PlaylistTrack.find { PlaylistTrackTable.playlist eq this@Playlist.id }
+            .orderBy(PlaylistTrackTable.indexOnPlaylist to SortOrder.ASC)
+            .toList()
+    }
+
     val tracks: ReadOnlyCachedProperty<List<Track>> by (PlaylistTrack referrersOn PlaylistTrackTable.playlist)
         .cachedReadOnly(baseToDerived = { playlistTracks -> playlistTracks.map { it.track.live } })
 
@@ -73,7 +80,7 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
     suspend fun getAllTracks(): List<PlaylistTrack> {
         val cachedTracks = KotifyDatabase.transaction {
             totalTracks?.let { totalTracks ->
-                playlistTracks.live.takeIf { it.size.toUInt() == totalTracks }
+                playlistTracksInOrder.live.takeIf { it.size.toUInt() == totalTracks }
             }
         }
         cachedTracks?.let { return it }
@@ -82,7 +89,9 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
             .fetchAll<SpotifyPlaylistTrack>()
 
         return KotifyDatabase.transaction {
-            networkTracks.mapNotNull { PlaylistTrack.from(spotifyPlaylistTrack = it, playlist = this@Playlist) }
+            networkTracks.mapIndexedNotNull { index, track ->
+                PlaylistTrack.from(spotifyPlaylistTrack = track, playlist = this@Playlist, index = index)
+            }
         }
     }
 
@@ -108,7 +117,9 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
                 followersTotal = networkModel.followers.total.toUInt()
 
                 totalTracks = networkModel.tracks.total.toUInt()
-                networkModel.tracks.items.mapNotNull { PlaylistTrack.from(spotifyPlaylistTrack = it, playlist = this) }
+                networkModel.tracks.items.mapIndexedNotNull { index, track ->
+                    PlaylistTrack.from(spotifyPlaylistTrack = track, playlist = this, index = index)
+                }
             }
         }
     }
