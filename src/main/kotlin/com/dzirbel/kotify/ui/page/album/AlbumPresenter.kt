@@ -10,6 +10,8 @@ import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter
+import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.util.mutate
@@ -30,7 +32,7 @@ class AlbumPresenter(
     data class ViewModel(
         val refreshing: Boolean,
         val album: Album,
-        val tracks: List<Track>,
+        val tracks: ListAdapter<Track>,
         val savedTracksState: State<Set<String>?>,
         val trackRatings: Map<String, State<Rating?>>,
         val isSavedState: State<Boolean?>,
@@ -39,6 +41,7 @@ class AlbumPresenter(
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
+        data class SetSort(val sorts: List<Sort<Track>>) : Event()
         data class ToggleSave(val save: Boolean) : Event()
         data class ToggleTrackSaved(val trackId: String, val saved: Boolean) : Event()
         data class RateTrack(val trackId: String, val rating: Rating?) : Event()
@@ -76,7 +79,7 @@ class AlbumPresenter(
                     ViewModel(
                         refreshing = false,
                         album = album,
-                        tracks = tracks,
+                        tracks = ListAdapter.from(tracks, baseAdapter = it?.tracks),
                         savedTracksState = savedTracksState,
                         trackRatings = trackRatings,
                         isSavedState = isSavedState,
@@ -90,7 +93,11 @@ class AlbumPresenter(
                     fullTracks.forEach { it.artists.loadToCache() }
                 }
 
-                mutateState { it?.copy(tracks = fullTracks) }
+                mutateState { it?.copy(tracks = ListAdapter.from(fullTracks, baseAdapter = it.tracks)) }
+            }
+
+            is Event.SetSort -> mutateState {
+                it?.copy(tracks = it.tracks.withSort(event.sorts))
             }
 
             is Event.ToggleSave -> SavedAlbumRepository.setSaved(id = page.albumId, saved = event.save)

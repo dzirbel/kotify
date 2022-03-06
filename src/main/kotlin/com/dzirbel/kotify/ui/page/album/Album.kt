@@ -112,7 +112,10 @@ fun BoxScope.Album(page: AlbumPage) {
                     Player.PlayContext.albumTrack(album = state.album, index = index)
                 }
             ),
-            items = state.tracks
+            items = state.tracks,
+            onSetSort = {
+                presenter.emitAsync(AlbumPresenter.Event.SetSort(listOfNotNull(it)))
+            },
         )
     }
 }

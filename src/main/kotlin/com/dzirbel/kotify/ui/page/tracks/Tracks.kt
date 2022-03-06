@@ -57,7 +57,10 @@ fun BoxScope.Tracks() {
                 },
                 playContextFromIndex = null,
             ),
-            items = state.tracks
+            items = state.tracks,
+            onSetSort = {
+                // TODO allow sorting saved tracks list
+            }
         )
     }
 }

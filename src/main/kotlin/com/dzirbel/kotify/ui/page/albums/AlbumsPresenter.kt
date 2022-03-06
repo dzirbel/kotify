@@ -62,8 +62,11 @@ class AlbumsPresenter(scope: CoroutineScope) :
                 mutateState {
                     ViewModel(
                         refreshing = false,
-                        albums = ListAdapter(albums)
-                            .withSort(listOf(Sort(SortAlbumsByName))),
+                        albums = ListAdapter.from(
+                            elements = albums,
+                            baseAdapter = it?.albums,
+                            defaultSort = listOf(Sort(SortAlbumsByName)),
+                        ),
                         savedAlbumIds = savedAlbumIds,
                         albumsUpdated = albumsUpdated?.toEpochMilli(),
                     )

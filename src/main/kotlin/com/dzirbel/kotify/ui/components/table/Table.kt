@@ -3,9 +3,6 @@ package com.dzirbel.kotify.ui.components.table
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
@@ -13,30 +10,13 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.isSpecified
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.util.compareInOrder
+import com.dzirbel.kotify.util.coerceAtLeastNullable
+import com.dzirbel.kotify.util.sumOfNullable
 import kotlin.math.roundToInt
-
-@Composable
-fun <T> Table(
-    columns: List<Column<T>>,
-    items: List<T>,
-    includeHeader: Boolean = true,
-    modifier: Modifier = Modifier,
-    defaultSortOrder: Sort<T>? = null,
-) {
-    val sortState: MutableState<Sort<T>?> = remember { mutableStateOf(defaultSortOrder) }
-    Table(
-        columns = columns,
-        items = items,
-        includeHeader = includeHeader,
-        modifier = modifier,
-        sorts = listOfNotNull(sortState.value),
-        onSetSort = { sortState.value = it },
-    )
-}
 
 /**
  * A table layout which renders [items] in a set of [columns]. Each [Column] determines how the content for the row
@@ -44,43 +24,25 @@ fun <T> Table(
  * [Column.width].
  *
  * Columns can optionally display a header row if [includeHeader] is true.
+ *
+ * TODO support adapter divisions in a table (currently the divider content is not inserted between them)
  */
 @Composable
 @Suppress("UnnecessaryParentheses")
 fun <T> Table(
     columns: List<Column<T>>,
-    items: List<T>,
+    items: ListAdapter<T>,
     includeHeader: Boolean = true,
     modifier: Modifier = Modifier,
-    sorts: List<Sort<T>>,
     onSetSort: (Sort<T>?) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
 
     val numCols = columns.size
-    val numRows = items.size + if (includeHeader) 1 else 0
-    val numDividers = numRows - 1
+    val numRows = items.size
+    val numDividers = (numRows + if (includeHeader) 1 else 0) - 1
 
-    // map from original row index to its index when sorted
-    val sortedIndexMap: IntArray = remember(sorts, items) {
-        val indexed = if (sorts.isEmpty()) {
-            IntArray(items.size) { it }
-        } else {
-            val comparator = sorts.map { it.comparator }.compareInOrder()
-
-            val indexedArray = Array(items.size) { index -> IndexedValue(index = index, value = items[index]) }
-            indexedArray.sortWith(comparator)
-
-            IntArray(indexedArray.size) { indexedArray[it].index }
-        }
-
-        if (includeHeader) {
-            // prepend 0 and increment all the other indexes to account for the header row
-            IntArray(indexed.size + 1) { if (it == 0) 0 else indexed[it - 1] + 1 }
-        } else {
-            indexed
-        }
-    }
+    val divisions = items.divisions
 
     Layout(
         modifier = modifier,
@@ -89,7 +51,9 @@ fun <T> Table(
                 columns.forEach { column ->
                     Box {
                         column.header(
-                            sortOrder = sorts.firstOrNull { it.sortableProperty == column.sortableProperty }?.sortOrder,
+                            sortOrder = items.sorts
+                                ?.firstOrNull { it.sortableProperty == column.sortableProperty }
+                                ?.sortOrder,
                             onSetSort = { sortOrder ->
                                 onSetSort(sortOrder?.let { column.sortableProperty?.let { Sort(it, sortOrder) } })
                             },
@@ -111,147 +75,210 @@ fun <T> Table(
             }
         },
         measurePolicy = { measurables, constraints ->
-            val numNonDividers = measurables.size - numDividers
+            val headerMeasurables = if (includeHeader) measurables.subList(fromIndex = 0, toIndex = numCols) else null
+            var measurablesIndex = headerMeasurables?.size ?: 0
+            val cellMeasurables = measurables.subList(
+                fromIndex = measurablesIndex,
+                toIndex = measurablesIndex + numRows * numCols,
+            )
+            measurablesIndex += cellMeasurables.size
+            val dividerMeasurables = measurables.subList(
+                fromIndex = measurablesIndex,
+                toIndex = measurablesIndex + numDividers,
+            )
+            measurablesIndex += numDividers
+            check(measurablesIndex == measurables.size) // all measurables have been accounted for
 
-            // row index -> the indexes of the measurables/placeables for the items in each row
-            val indexesForRow: Array<IntRange> = Array(sortedIndexMap.size) { index ->
-                val row = sortedIndexMap[index]
-                (row * numCols) until ((row + 1) * numCols)
-            }
+            // computes the index in cellMeasurables/cellPlaceables for the given row/col indices
+            fun cellPlaceablesIndex(row: Int, col: Int): Int = col + (numCols * row)
 
-            // column index -> the indexes of the measurables/placeables for the items in each column
-            val indexesForCol: Array<IntArray> = Array(numCols) { col ->
-                IntArray(numRows) { row -> col + (numCols * row) }
-            }
-
-            val columnWidths: Array<ColumnWidth> = Array(numCols) { col -> columns[col].width }
-            var remainingWidth: Float = constraints.maxWidth.toFloat()
+            // total width used by non-weighted columns, to distribute the weighted ones
+            var usedWidth = 0f
             // column width in pixels after it has been measured
             val colWidths: Array<Float?> = arrayOfNulls(numCols)
-            // index of placeable is the same as the index of the measurable
-            val placeables: Array<Placeable?> = arrayOfNulls(numNonDividers)
+
+            val headerPlaceables = headerMeasurables?.let { arrayOfNulls<Placeable>(it.size) }
+            val cellPlaceables = arrayOfNulls<Placeable>(cellMeasurables.size)
 
             // 1: first measure the fixed columns and those determined by header width
-            columnWidths.forEachIndexed { colIndex, columnSize ->
-                if (columnSize is ColumnWidth.Fixed) {
-                    val width = columnSize.width.toPx()
+            columns.forEachIndexed { colIndex, column ->
+                val columnWidth = column.width
+                if (columnWidth is ColumnWidth.Fixed) {
+                    val width = columnWidth.width.toPx()
                     colWidths[colIndex] = width
-                    remainingWidth -= width
+                    usedWidth += width
 
-                    indexesForCol[colIndex].forEach { index ->
-                        placeables[index] = measurables[index].measure(Constraints(maxWidth = width.roundToInt()))
+                    val colConstraints = Constraints(maxWidth = width.roundToInt())
+                    if (includeHeader) {
+                        headerPlaceables!![colIndex] = headerMeasurables[colIndex].measure(colConstraints)
                     }
-                } else if (columnSize is ColumnWidth.MatchHeader) {
+
+                    repeat(numRows) { row ->
+                        val index = cellPlaceablesIndex(row = row, col = colIndex)
+                        cellPlaceables[index] = cellMeasurables[index].measure(colConstraints)
+                    }
+                } else if (columnWidth is ColumnWidth.MatchHeader) {
                     check(includeHeader) { "cannot use ${ColumnWidth.MatchHeader} without a header" }
 
-                    val headerIndex = indexesForCol[colIndex].first()
-                    val headerPlaceable = measurables[headerIndex].measure(Constraints())
-                    placeables[headerIndex] = headerPlaceable
-                    val width = headerPlaceable.width
+                    val headerPlaceable = headerMeasurables!![colIndex].measure(Constraints())
+                    headerPlaceables!![colIndex] = headerPlaceable
+                    val headerWidth = headerPlaceable.width
 
-                    colWidths[colIndex] = width.toFloat()
-                    remainingWidth -= width
+                    colWidths[colIndex] = headerWidth.toFloat()
+                    usedWidth += headerWidth
 
-                    indexesForCol[colIndex].drop(1).forEach { index ->
-                        placeables[index] = measurables[index].measure(Constraints(maxWidth = width))
+                    val colConstraints = Constraints(maxWidth = headerWidth)
+                    repeat(numRows) { row ->
+                        val index = cellPlaceablesIndex(row = row, col = colIndex)
+                        cellPlaceables[index] = cellMeasurables[index].measure(colConstraints)
                     }
                 }
             }
 
             // 2: then measure the fill columns
-            columnWidths.forEachIndexed { colIndex, columnSize ->
-                if (columnSize is ColumnWidth.Fill) {
-                    val min = if (columnSize.minWidth.isSpecified) columnSize.minWidth.roundToPx() else 0
-                    val max = if (columnSize.maxWidth.isSpecified) {
-                        columnSize.maxWidth.roundToPx()
+            columns.forEachIndexed { colIndex, column ->
+                val columnWidth = column.width
+                if (columnWidth is ColumnWidth.Fill) {
+                    val min = if (columnWidth.minWidth.isSpecified) columnWidth.minWidth.roundToPx() else 0
+                    val max = if (columnWidth.maxWidth.isSpecified) {
+                        columnWidth.maxWidth.roundToPx()
                     } else {
                         Constraints.Infinity
                     }
+                    val colConstraints = Constraints(minWidth = min, maxWidth = max)
 
-                    val colWidth = indexesForCol[colIndex].maxOf { index ->
-                        measurables[index].measure(Constraints(minWidth = min, maxWidth = max))
-                            .also { placeables[index] = it }
+                    val colWidth = (0 until numRows).maxOf { row ->
+                        val index = cellPlaceablesIndex(row = row, col = colIndex)
+                        cellMeasurables[index].measure(colConstraints)
+                            .also { cellPlaceables[index] = it }
                             .width
                     }
+                        .coerceAtLeastNullable(
+                            headerMeasurables?.get(colIndex)?.measure(colConstraints)
+                                ?.also { headerPlaceables!![colIndex] = it }
+                                ?.width
+                        )
 
                     colWidths[colIndex] = colWidth.toFloat()
-                    remainingWidth -= colWidth
+                    usedWidth += colWidth
                 }
             }
 
             // 3: finally measure the weighted columns with the remaining space
-            var totalWeight = 0f
-            columnWidths.forEach {
-                if (it is ColumnWidth.Weighted) {
-                    totalWeight += it.weight
-                }
-            }
+            val totalWeight = columns.sumOfNullable { (it.width as? ColumnWidth.Weighted)?.weight }
+            if (totalWeight > 0) {
+                val remainingWidth = constraints.maxWidth - usedWidth
+                columns.forEachIndexed { colIndex, column ->
+                    val columnWidth = column.width
+                    if (columnWidth is ColumnWidth.Weighted) {
+                        val colWidth = (columnWidth.weight / totalWeight) * remainingWidth
+                        colWidths[colIndex] = colWidth
+                        val colConstraints = Constraints(maxWidth = colWidth.roundToInt().coerceAtLeast(0))
 
-            columnWidths.forEachIndexed { colIndex, columnSize ->
-                if (columnSize is ColumnWidth.Weighted) {
-                    val colWidth = ((columnSize.weight / totalWeight) * remainingWidth)
-                    colWidths[colIndex] = colWidth
+                        if (includeHeader) {
+                            headerPlaceables!![colIndex] = headerMeasurables[colIndex].measure(colConstraints)
+                        }
 
-                    indexesForCol[colIndex].forEach { index ->
-                        placeables[index] = measurables[index].measure(
-                            Constraints(maxWidth = colWidth.roundToInt().coerceAtLeast(0))
-                        )
+                        repeat(numRows) { row ->
+                            val index = cellPlaceablesIndex(row = row, col = colIndex)
+                            cellPlaceables[index] = cellMeasurables[index].measure(colConstraints)
+                        }
                     }
                 }
+                usedWidth = constraints.maxWidth.toFloat()
             }
+
+            // array values should be initialized by now; avoid null assertions
+            @Suppress("UNCHECKED_CAST")
+            cellPlaceables as Array<Placeable>
+            @Suppress("UNCHECKED_CAST", "CastToNullableType")
+            headerPlaceables as Array<Placeable>?
+            @Suppress("UNCHECKED_CAST")
+            colWidths as Array<Float>
 
             // height of each row is the maximum height of the cell in the group; total height is used for the layout
             var totalHeight = 0
-            val rowHeights = Array(numRows) { rowIndex ->
-                indexesForRow[rowIndex].maxOf { placeables[it]!!.height }
-                    .also { totalHeight += it }
+
+            val headerHeight = headerPlaceables?.maxOf { it.height } ?: 0
+            totalHeight += headerHeight
+
+            val divisionElements = divisions.values.toList()
+
+            // division -> [heights of rows in that division]
+            val rowHeights: Array<IntArray> = Array(divisions.size) { divisionIndex ->
+                val division = divisionElements[divisionIndex]
+
+                IntArray(division.size) { row ->
+                    (0 until numCols).maxOf { col ->
+                        cellPlaceables[cellPlaceablesIndex(row = division[row].index, col = col)].height
+                    }
+                        .also { totalHeight += it }
+                }
             }
 
             val dividerHeightPx = Dimens.divider.roundToPx()
+            val dividerConstraints = Constraints.fixed(width = usedWidth.roundToInt(), height = dividerHeightPx)
             val dividerPlaceables = Array(numDividers) { index ->
-                measurables[numNonDividers + index].measure(
-                    Constraints.fixed(width = constraints.maxWidth, height = dividerHeightPx)
-                ).also { totalHeight += it.height }
+                dividerMeasurables[index].measure(dividerConstraints)
+                    .also { totalHeight += it.height }
             }
 
-            layout(constraints.maxWidth, totalHeight) {
+            layout(usedWidth.roundToInt(), totalHeight) {
                 var y = 0
-                var rowIndex = 0
+                var dividerIndex = 0
 
-                indexesForRow.forEach { rowIndexes ->
-                    var col = 0
-                    var x = 0
-                    rowIndexes.forEach { placeableIndex ->
-                        val placeable = placeables[placeableIndex]!!
-
-                        val alignment = if (rowIndex == 0 && includeHeader) {
-                            columns[col].headerAlignment
-                        } else {
-                            columns[col].cellAlignment
-                        }
-
-                        val colWidth = colWidths[col]!!.roundToInt()
-                        val offset = alignment.align(
+                if (includeHeader) {
+                    var headerX = 0
+                    headerPlaceables!!.forEachIndexed { col, placeable ->
+                        val colWidth = colWidths[col].roundToInt()
+                        val offset = columns[col].headerAlignment.align(
                             size = IntSize(width = placeable.width, height = placeable.height),
-                            space = IntSize(width = colWidth, height = rowHeights[rowIndex]),
+                            space = IntSize(width = colWidth, height = headerHeight),
                             layoutDirection = layoutDirection,
                         )
 
-                        placeable.place(x = x + offset.x, y = y + offset.y)
+                        placeable.place(x = headerX + offset.x, y = offset.y)
 
-                        x += colWidth
-                        col++
+                        headerX += colWidth
                     }
 
-                    y += rowHeights[rowIndex]
+                    y += headerHeight
 
-                    if (rowIndex < numDividers) {
-                        val dividerPlaceable = dividerPlaceables[rowIndex]
-                        dividerPlaceable.place(x = 0, y = y)
-                        y += dividerPlaceable.height
+                    // place divider under the header
+                    val dividerPlaceable = dividerPlaceables[dividerIndex]
+                    dividerPlaceable.place(x = 0, y = y)
+                    y += dividerPlaceable.height
+                    dividerIndex++
+                }
+
+                divisionElements.forEachIndexed { divisionIndex, division ->
+                    rowHeights[divisionIndex].forEachIndexed { rowIndex, rowHeight ->
+                        val elementIndex = division[rowIndex].index
+                        var x = 0
+                        repeat(numCols) { colIndex ->
+                            val placeable = cellPlaceables[cellPlaceablesIndex(row = elementIndex, col = colIndex)]
+
+                            val colWidth = colWidths[colIndex].roundToInt()
+                            val offset = columns[colIndex].cellAlignment.align(
+                                size = IntSize(width = placeable.width, height = placeable.height),
+                                space = IntSize(width = colWidth, height = rowHeight),
+                                layoutDirection = layoutDirection,
+                            )
+
+                            placeable.place(x = x + offset.x, y = y + offset.y)
+
+                            x += colWidth
+                        }
+
+                        y += rowHeight
+
+                        if (dividerIndex < numDividers) {
+                            val dividerPlaceable = dividerPlaceables[dividerIndex]
+                            dividerPlaceable.place(x = 0, y = y)
+                            y += dividerPlaceable.height
+                            dividerIndex++
+                        }
                     }
-
-                    rowIndex++
                 }
             }
         }

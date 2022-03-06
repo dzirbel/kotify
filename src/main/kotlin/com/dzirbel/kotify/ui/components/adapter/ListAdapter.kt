@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui.components.adapter
 
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter.ElementData
+import com.dzirbel.kotify.ui.theme.Dimens.divider
 import java.util.TreeMap
 
 /**
@@ -126,18 +127,6 @@ class ListAdapter<E> private constructor(
         }
     }
 
-    // TODO accept sorts, divider, filter as well?
-    constructor(elements: Collection<E>) : this(
-        elements = elements.map { element ->
-            ElementData(element = element, filtered = true, division = null)
-        },
-        sortIndexes = null,
-        sorts = null,
-        divider = null,
-        filter = null,
-        filterString = null,
-    )
-
     /**
      * Returns the element at the given [index] in the canonical order.
      */
@@ -224,6 +213,8 @@ class ListAdapter<E> private constructor(
      * order of equal elements according to the last sort order when a new one is applied.
      */
     fun withSort(sorts: List<Sort<E>>?): ListAdapter<E> {
+        if (sorts == this.sorts) return this
+
         val sortIndexes = sorts?.let {
             val sortComparator = sorts.asComparator()
             val mappedComparator = Comparator<IndexedValue<ElementData<E>>> { o1, o2 ->
@@ -275,5 +266,35 @@ class ListAdapter<E> private constructor(
             filterString = filterString,
         )
             .withSort(sorts)
+    }
+
+    companion object {
+        /**
+         * Creates a new [ListAdapter] from the given [elements].
+         *
+         * Optionally applies properties (sort, divider, filter) from [baseAdapter] or [defaultSort] if there is no
+         * [baseAdapter].
+         */
+        fun <E> from(
+            elements: List<E>,
+            baseAdapter: ListAdapter<E>? = null,
+            defaultSort: List<Sort<E>>? = null,
+        ): ListAdapter<E> {
+            return ListAdapter(
+                elements = elements.map { element ->
+                    ElementData(
+                        element = element,
+                        filtered = baseAdapter?.filter?.invoke(element) != false,
+                        division = baseAdapter?.divider?.divisionFor(element),
+                    )
+                },
+                sortIndexes = null,
+                sorts = null,
+                divider = baseAdapter?.divider,
+                filter = baseAdapter?.filter,
+                filterString = baseAdapter?.filterString,
+            )
+                .withSort(baseAdapter?.sorts ?: defaultSort)
+        }
     }
 }

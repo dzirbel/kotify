@@ -131,7 +131,10 @@ class ArtistPresenter(
                         artist = artist ?: it?.artist ?: error("no artist"),
                         refreshingArtist = false,
                         artistAlbums = checkNotNull(
-                            artistAlbums?.let { ListAdapter(artistAlbums) } ?: it?.artistAlbums
+                            // apply new elements if we have them, otherwise keep existing adapter
+                            artistAlbums
+                                ?.let { _ -> ListAdapter.from(artistAlbums, baseAdapter = it?.artistAlbums) }
+                                ?: it?.artistAlbums
                         ),
                         albumRatings = checkNotNull(albumRatings ?: it?.albumRatings),
                         savedAlbumsState = savedAlbumsState,

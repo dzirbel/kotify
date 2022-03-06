@@ -26,6 +26,14 @@ fun <A, B> Iterable<A>.zipToMap(other: Iterable<B>): Map<A, B> {
     return map
 }
 
+fun <T> Iterable<T>.sumOfNullable(map: (T) -> Float?): Float {
+    var total = 0f
+    for (element in this) {
+        map(element)?.let { total += it }
+    }
+    return total
+}
+
 /**
  * Calculates the mean value among the numeric value provided by [toDouble] among non-null values in this [Iterable], or
  * null if there are no such values.

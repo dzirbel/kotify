@@ -31,6 +31,7 @@ import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.NameColumn
 import com.dzirbel.kotify.ui.components.RatingColumn
 import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
@@ -272,7 +273,7 @@ private fun Artists(state: LibraryStatePresenter.ViewModel, presenter: LibrarySt
     }
 
     if (artistsExpanded.value) {
-        Table(columns = artistColumns, items = artists.toList())
+        Table(columns = artistColumns, items = ListAdapter.from(artists.toList()), onSetSort = {})
     }
 }
 
@@ -358,7 +359,7 @@ private fun Albums(state: LibraryStatePresenter.ViewModel, presenter: LibrarySta
     }
 
     if (albumsExpanded.value) {
-        Table(columns = albumColumns, items = albums)
+        Table(columns = albumColumns, items = ListAdapter.from(albums), onSetSort = {})
     }
 }
 
@@ -558,7 +559,7 @@ private fun Playlists(state: LibraryStatePresenter.ViewModel, presenter: Library
     }
 
     if (playlistsExpanded.value) {
-        Table(columns = playlistColumns, items = playlists.toList())
+        Table(columns = playlistColumns, items = ListAdapter.from(playlists.toList()), onSetSort = {})
     }
 }
 
@@ -594,10 +595,12 @@ private fun Ratings(state: LibraryStatePresenter.ViewModel, presenter: LibrarySt
 
         Table(
             columns = listOf(NameColumn, ratingColumn),
-            items = ratedTracks.mapNotNull { it.second },
+            items = ListAdapter.from(
+                elements = ratedTracks.mapNotNull { it.second },
+                defaultSort = listOf(Sort(ratingColumn.sortableProperty, SortOrder.DESCENDING)),
+            ),
             modifier = Modifier.widthIn(max = RATINGS_TABLE_WIDTH),
-            // sort by rating descending by default
-            defaultSortOrder = Sort(ratingColumn.sortableProperty, SortOrder.DESCENDING),
+            onSetSort = {},
         )
     }
 }

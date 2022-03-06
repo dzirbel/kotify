@@ -80,14 +80,13 @@ class ArtistsPresenter(scope: CoroutineScope) :
                 val artistsUpdated = SavedArtistRepository.libraryUpdated()
 
                 initializeLoadedState {
-                    val sorts = it?.artists?.sorts ?: listOf(Sort(SortArtistByName))
-                    val divider = it?.artists?.divider
-
                     ViewModel(
                         refreshing = false,
-                        artists = ListAdapter(artists)
-                            .withDivider(divider)
-                            .withSort(sorts),
+                        artists = ListAdapter.from(
+                            baseAdapter = it?.artists,
+                            elements = artists,
+                            defaultSort = listOf(Sort(SortArtistByName)),
+                        ),
                         artistsById = artistsById,
                         artistDetails = it?.artistDetails.orEmpty(),
                         savedArtistIds = savedArtistIds,
@@ -120,7 +119,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
                 }
 
                 val albums = Artist.getAllAlbums(artistId = event.artistId)
-                val albumsAdapter = ListAdapter(albums).withSort(listOf(Sort(SortAlbumsByName)))
+                val albumsAdapter = ListAdapter.from(albums, defaultSort = listOf(Sort(SortAlbumsByName)))
                 KotifyDatabase.transaction {
                     albums.forEach { it.largestImage.loadToCache() }
                 }

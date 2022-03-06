@@ -8,8 +8,9 @@ import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.framework.Presenter
-import com.dzirbel.kotify.util.plusSorted
+import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -23,7 +24,8 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
 
     data class ViewModel(
         val refreshing: Boolean,
-        val tracks: List<Track>,
+        val tracks: ListAdapter<Track>,
+        val tracksById: Map<String, Track>,
         val savedTrackIds: Set<String>,
         val trackRatings: Map<String, State<Rating?>>?,
         val tracksUpdated: Long?,
@@ -57,19 +59,18 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                     SavedTrackRepository.invalidateLibrary()
                 }
 
-                val trackIds = SavedTrackRepository.getLibrary()
-                val tracks = fetchTracks(trackIds = trackIds.toList())
-                    .sortedBy { it.name }
+                val trackIds = SavedTrackRepository.getLibrary().toList()
+                val tracks = fetchTracks(trackIds = trackIds)
+                val tracksById = tracks.associateBy { it.id.value }
                 val tracksUpdated = SavedTrackRepository.libraryUpdated()
-                val trackRatings = tracks
-                    .map { it.id.value }
-                    .associateWith { trackId -> TrackRatingRepository.ratingState(trackId) }
+                val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
 
                 mutateState {
                     ViewModel(
                         refreshing = false,
-                        tracks = tracks,
-                        savedTrackIds = trackIds,
+                        tracks = ListAdapter.from(tracks, baseAdapter = it?.tracks),
+                        tracksById = tracksById,
+                        savedTrackIds = trackIds.toSet(),
                         trackRatings = trackRatings,
                         tracksUpdated = tracksUpdated?.toEpochMilli(),
                     )
@@ -79,17 +80,21 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
             is Event.ReactToTracksSaved -> {
                 if (event.saved) {
                     // if an track has been saved but is now missing from the table of tracks, load and add it
-                    val stateTracks = queryState { it?.tracks }.orEmpty()
+                    val stateTracks = queryState { it?.tracksById }?.keys.orEmpty()
 
                     val missingTrackIds: List<String> = event.trackIds
-                        .minus(stateTracks.mapTo(mutableSetOf()) { it.id.value })
+                        .minus(stateTracks)
 
                     if (missingTrackIds.isNotEmpty()) {
                         val missingTracks = fetchTracks(trackIds = missingTrackIds)
-                        val allTracks = stateTracks.plusSorted(missingTracks) { it.name }
+                        val missingTracksById = missingTracks.associateBy { it.id.value }
 
                         mutateState {
-                            it?.copy(tracks = allTracks, savedTrackIds = it.savedTrackIds.plus(event.trackIds))
+                            it?.copy(
+                                tracksById = it.tracksById.plus(missingTracksById),
+                                tracks = it.tracks.plusElements(missingTracks),
+                                savedTrackIds = it.savedTrackIds.plus(event.trackIds),
+                            )
                         }
                     } else {
                         mutateState {

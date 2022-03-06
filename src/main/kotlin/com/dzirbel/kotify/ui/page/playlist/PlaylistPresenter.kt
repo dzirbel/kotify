@@ -10,6 +10,7 @@ import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.pageStack
@@ -31,9 +32,8 @@ class PlaylistPresenter(
     data class ViewModel(
         val refreshing: Boolean,
         val reordering: Boolean = false,
-        val sorts: List<Sort<PlaylistTrack>> = emptyList(),
         val playlist: Playlist,
-        val tracks: List<PlaylistTrack>?,
+        val tracks: ListAdapter<PlaylistTrack>?,
         val trackRatings: Map<String, State<Rating?>>?,
         val savedTracksState: State<Set<String>?>,
         val isSavedState: State<Boolean?>,
@@ -46,7 +46,7 @@ class PlaylistPresenter(
         data class ToggleTrackSaved(val trackId: String, val saved: Boolean) : Event()
         data class RateTrack(val trackId: String, val rating: Rating?) : Event()
         data class SetSorts(val sorts: List<Sort<PlaylistTrack>>) : Event()
-        data class Order(val sorts: List<Sort<PlaylistTrack>>, val tracks: List<PlaylistTrack>) : Event()
+        data class Order(val tracks: ListAdapter<PlaylistTrack>) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -89,7 +89,12 @@ class PlaylistPresenter(
                     .map { it.track.cached.id.value }
                     .associateWith { trackId -> TrackRatingRepository.ratingState(trackId) }
 
-                mutateState { it?.copy(tracks = tracks, trackRatings = trackRatings) }
+                mutateState {
+                    it?.copy(
+                        tracks = ListAdapter.from(tracks, baseAdapter = it.tracks),
+                        trackRatings = trackRatings,
+                    )
+                }
             }
 
             is Event.ToggleSave -> SavedPlaylistRepository.setSaved(id = page.playlistId, saved = event.save)
@@ -98,12 +103,12 @@ class PlaylistPresenter(
 
             is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
 
-            is Event.SetSorts -> mutateState { it?.copy(sorts = event.sorts) }
+            is Event.SetSorts -> mutateState { it?.copy(tracks = it.tracks?.withSort(event.sorts)) }
 
             is Event.Order -> {
                 val ops = ReorderCalculator.calculateReorderOperations(
                     list = event.tracks.withIndex().toList(),
-                    comparator = event.sorts.map { it.comparator }.compareInOrder(),
+                    comparator = event.tracks.sorts.orEmpty().map { it.comparator }.compareInOrder(),
                 )
 
                 if (ops.isNotEmpty()) {
@@ -123,7 +128,13 @@ class PlaylistPresenter(
                     val tracks = playlist?.getAllTracks()
                     tracks?.let { loadTracksToCache(it) }
 
-                    mutateState { it?.copy(tracks = tracks, reordering = false, sorts = emptyList()) }
+                    mutateState {
+                        it?.copy(
+                            // resets adapter state (sort, filter, etc); ideally might only reset sort
+                            tracks = tracks?.let { ListAdapter.from(tracks) },
+                            reordering = false,
+                        )
+                    }
                 }
             }
         }

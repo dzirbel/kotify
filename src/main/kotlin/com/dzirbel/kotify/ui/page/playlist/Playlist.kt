@@ -131,7 +131,7 @@ fun BoxScope.Playlist(page: PlaylistPage) {
                     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space2)) {
                         SortSelector(
                             sortProperties = columns.mapNotNull { it.sortableProperty },
-                            sorts = state.sorts,
+                            sorts = state.tracks?.sorts.orEmpty(),
                             allowEmpty = true,
                             onSetSort = { sorts ->
                                 presenter.emitAsync(PlaylistPresenter.Event.SetSorts(sorts = sorts))
@@ -139,12 +139,10 @@ fun BoxScope.Playlist(page: PlaylistPage) {
                         )
 
                         Button(
-                            enabled = state.sorts.isNotEmpty() && state.tracks != null && !state.reordering,
+                            enabled = !state.tracks?.sorts.isNullOrEmpty() && state.tracks != null && !state.reordering,
                             onClick = {
                                 state.tracks?.let { tracks ->
-                                    presenter.emitAsync(
-                                        PlaylistPresenter.Event.Order(sorts = state.sorts, tracks = tracks)
-                                    )
+                                    presenter.emitAsync(PlaylistPresenter.Event.Order(tracks = tracks))
                                 }
                             },
                         ) {
@@ -176,7 +174,6 @@ fun BoxScope.Playlist(page: PlaylistPage) {
             Table(
                 columns = columns,
                 items = tracks,
-                sorts = state.sorts,
                 onSetSort = { sort ->
                     presenter.emitAsync(PlaylistPresenter.Event.SetSorts(sorts = listOfNotNull(sort)))
                 },

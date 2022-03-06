@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -34,7 +35,7 @@ internal class TableTest {
         screenshotTest(filename = testCase.filename, windowHeight = testCase.windowHeight) {
             @Composable
             fun <T> ScreenshotTestCase<T>.Table() {
-                Table(columns = columns, items = items)
+                Table(columns = columns, items = ListAdapter.from(items), onSetSort = {})
             }
 
             testCase.Table()
