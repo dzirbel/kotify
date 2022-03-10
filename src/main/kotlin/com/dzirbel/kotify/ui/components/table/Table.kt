@@ -147,12 +147,14 @@ fun <T> Table(
                     }
                     val colConstraints = Constraints(minWidth = min, maxWidth = max)
 
-                    val colWidth = (0 until numRows).maxOf { row ->
+                    val colWidth = (0 until numRows).maxOfOrNull { row ->
                         val index = cellPlaceablesIndex(row = row, col = colIndex)
                         cellMeasurables[index].measure(colConstraints)
                             .also { cellPlaceables[index] = it }
                             .width
                     }
+                        ?: columnWidth.minWidth.takeIf { it.isSpecified }?.roundToPx()
+                        ?: 0
                         .coerceAtLeastNullable(
                             headerMeasurables?.get(colIndex)?.measure(colConstraints)
                                 ?.also { headerPlaceables!![colIndex] = it }
@@ -245,10 +247,12 @@ fun <T> Table(
                     y += headerHeight
 
                     // place divider under the header
-                    val dividerPlaceable = dividerPlaceables[dividerIndex]
-                    dividerPlaceable.place(x = 0, y = y)
-                    y += dividerPlaceable.height
-                    dividerIndex++
+                    if (dividerPlaceables.isNotEmpty()) {
+                        val dividerPlaceable = dividerPlaceables[dividerIndex]
+                        dividerPlaceable.place(x = 0, y = y)
+                        y += dividerPlaceable.height
+                        dividerIndex++
+                    }
                 }
 
                 divisionElements.forEachIndexed { divisionIndex, division ->
