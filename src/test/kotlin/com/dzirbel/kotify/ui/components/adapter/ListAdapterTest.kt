@@ -18,9 +18,11 @@ internal class ListAdapterTest {
         }
     }
 
-    private class Mod3Divider(divisionSortOrder: SortOrder) : Divider<Int>("mod 3", divisionSortOrder) {
-        override fun divisionFor(element: Int) = (element % 3).toString()
-        override fun withDivisionSortOrder(sortOrder: SortOrder) = error("unimplemented")
+    private object Mod3Divider : Divider<Int>("mod 3") {
+        override fun divisionFor(element: Int): Int = element % 3
+        override fun compareDivisions(sortOrder: SortOrder, first: Any, second: Any): Int {
+            return sortOrder.compare(first as Int, second as Int)
+        }
     }
 
     @Test
@@ -91,24 +93,24 @@ internal class ListAdapterTest {
     @Test
     fun testDivided() {
         val elementsDescending = ListAdapter.from(list)
-            .withDivider(Mod3Divider(divisionSortOrder = SortOrder.DESCENDING))
+            .withDivider(Mod3Divider, SortOrder.DESCENDING)
 
         assertThat(elementsDescending.divisions)
             .containsExactly(
-                "2", list.filter { it % 3 == 2 }.map { IndexedValue(it, it) },
-                "1", list.filter { it % 3 == 1 }.map { IndexedValue(it, it) },
-                "0", list.filter { it % 3 == 0 }.map { IndexedValue(it, it) },
+                2, list.filter { it % 3 == 2 }.map { IndexedValue(it, it) },
+                1, list.filter { it % 3 == 1 }.map { IndexedValue(it, it) },
+                0, list.filter { it % 3 == 0 }.map { IndexedValue(it, it) },
             )
             .inOrder()
 
         val elementsAscending = elementsDescending
-            .withDivider(Mod3Divider(divisionSortOrder = SortOrder.ASCENDING))
+            .withDivider(Mod3Divider, SortOrder.ASCENDING)
 
         assertThat(elementsAscending.divisions)
             .containsExactly(
-                "0", list.filter { it % 3 == 0 }.map { IndexedValue(it, it) },
-                "1", list.filter { it % 3 == 1 }.map { IndexedValue(it, it) },
-                "2", list.filter { it % 3 == 2 }.map { IndexedValue(it, it) },
+                0, list.filter { it % 3 == 0 }.map { IndexedValue(it, it) },
+                1, list.filter { it % 3 == 1 }.map { IndexedValue(it, it) },
+                2, list.filter { it % 3 == 2 }.map { IndexedValue(it, it) },
             )
             .inOrder()
     }
@@ -120,20 +122,20 @@ internal class ListAdapterTest {
         val elements = ListAdapter.from(list)
             .withFilter(filter = predicate)
             .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
-            .withDivider(Mod3Divider(divisionSortOrder = SortOrder.DESCENDING))
+            .withDivider(Mod3Divider, SortOrder.DESCENDING)
 
         assertThat(elements.divisions)
             .containsExactly(
-                "2", listOf(14, 8, 2).map { IndexedValue(it, it) },
-                "1", listOf(16, 10, 4).map { IndexedValue(it, it) },
-                "0", listOf(18, 12, 6, 0).map { IndexedValue(it, it) },
+                2, listOf(14, 8, 2).map { IndexedValue(it, it) },
+                1, listOf(16, 10, 4).map { IndexedValue(it, it) },
+                0, listOf(18, 12, 6, 0).map { IndexedValue(it, it) },
             )
             .inOrder()
 
         val elementsPlain = elements
             .withFilter { true }
             .withSort(null)
-            .withDivider(null)
+            .withDivider(null, null)
 
         assertThat(elementsPlain.divisions)
             .isEqualTo(mapOf(null to list.withIndex().toList()))
@@ -146,14 +148,14 @@ internal class ListAdapterTest {
         val elements = ListAdapter.from(listOf(0, 1, 2, 3, 4, 5, 16, 17, 18, 19, 20))
             .withFilter(filter = predicate)
             .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
-            .withDivider(Mod3Divider(divisionSortOrder = SortOrder.DESCENDING))
+            .withDivider(Mod3Divider, SortOrder.DESCENDING)
             .plusElements(listOf(6, 7, 50))
 
         assertThat(elements.divisions)
             .containsExactly(
-                "2", listOf(IndexedValue(13, 50), IndexedValue(10, 20), IndexedValue(2, 2)),
-                "1", listOf(IndexedValue(6, 16), IndexedValue(4, 4)),
-                "0", listOf(IndexedValue(8, 18), IndexedValue(11, 6), IndexedValue(0, 0)),
+                2, listOf(IndexedValue(13, 50), IndexedValue(10, 20), IndexedValue(2, 2)),
+                1, listOf(IndexedValue(6, 16), IndexedValue(4, 4)),
+                0, listOf(IndexedValue(8, 18), IndexedValue(11, 6), IndexedValue(0, 0)),
             )
             .inOrder()
     }

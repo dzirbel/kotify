@@ -9,18 +9,19 @@ import com.dzirbel.kotify.ui.theme.Dimens
 
 abstract class Divider<E>(
     val dividerTitle: String,
-    val divisionSortOrder: SortOrder = SortOrder.ASCENDING,
+    val defaultDivisionSortOrder: SortOrder = SortOrder.ASCENDING,
 ) {
-    val divisionComparator: Comparator<String>
-        get() = divisionSortOrder.naturalOrder()
+    fun divisionComparator(sortOrder: SortOrder): Comparator<Any> {
+        return Comparator { o1, o2 -> compareDivisions(sortOrder, o1, o2) }
+    }
 
-    abstract fun divisionFor(element: E): String
+    abstract fun compareDivisions(sortOrder: SortOrder, first: Any, second: Any): Int
 
-    abstract fun withDivisionSortOrder(sortOrder: SortOrder): Divider<E>
+    abstract fun divisionFor(element: E): Any
 
     @Composable
-    open fun headerContent(division: String) {
-        standardHeaderContent(divisionHeader = division)
+    open fun headerContent(division: Any) {
+        standardHeaderContent(divisionHeader = division.toString())
     }
 
     @Composable
@@ -33,5 +34,13 @@ abstract class Divider<E>(
                 modifier = Modifier.padding(horizontal = Dimens.space4, vertical = Dimens.space2),
             )
         }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return (other as? Divider<*>)?.dividerTitle?.equals(dividerTitle) == true
+    }
+
+    override fun hashCode(): Int {
+        return dividerTitle.hashCode()
     }
 }

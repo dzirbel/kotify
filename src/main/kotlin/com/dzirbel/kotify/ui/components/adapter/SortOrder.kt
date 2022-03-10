@@ -24,9 +24,10 @@ val SortOrder?.icon: ImageVector
         }
     }
 
-fun <T : Comparable<T>> SortOrder.naturalOrder(): Comparator<T> {
+fun <T : Comparable<T>> SortOrder.compare(o1: T, o2: T): Int {
+    val comparison = o1.compareTo(o2)
     return when (this) {
-        SortOrder.ASCENDING -> Comparator.naturalOrder()
-        SortOrder.DESCENDING -> Comparator.reverseOrder()
+        SortOrder.ASCENDING -> comparison
+        SortOrder.DESCENDING -> -comparison
     }
 }

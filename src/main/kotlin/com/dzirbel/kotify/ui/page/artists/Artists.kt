@@ -36,6 +36,7 @@ import com.dzirbel.kotify.ui.components.adapter.FilterTextField
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortSelector
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
+import com.dzirbel.kotify.ui.components.adapter.compare
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
@@ -48,6 +49,7 @@ import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.averageOrNull
 import com.dzirbel.kotify.util.compareToNullable
 import kotlinx.coroutines.Dispatchers
+import kotlin.math.floor
 
 val SortArtistByName = object : SortableProperty<Artist>(
     sortTitle = "Artist Name",
@@ -80,27 +82,57 @@ class SortAristByRating(private val artistRatings: Map<String, List<State<Rating
     }
 }
 
-class ArtistNameDivider(
-    divisionSortOrder: SortOrder = SortOrder.ASCENDING,
-) : Divider<Artist>(dividerTitle = "Name", divisionSortOrder = divisionSortOrder) {
+class ArtistNameDivider : Divider<Artist>(dividerTitle = "Name") {
+    override fun compareDivisions(sortOrder: SortOrder, first: Any, second: Any): Int {
+        return sortOrder.compare(first as String, second as String)
+    }
+
     override fun divisionFor(element: Artist): String {
         val firstChar = element.name[0]
         return if (firstChar.isLetter()) firstChar.uppercaseChar().toString() else "#"
     }
-
-    override fun withDivisionSortOrder(sortOrder: SortOrder) = ArtistNameDivider(divisionSortOrder = sortOrder)
 }
 
-// TODO temp divider for testing
-class ArtistNameDivider2(
-    divisionSortOrder: SortOrder = SortOrder.ASCENDING,
-) : Divider<Artist>(dividerTitle = "Last Char", divisionSortOrder = divisionSortOrder) {
-    override fun divisionFor(element: Artist): String {
-        val lastChar = element.name.last()
-        return if (lastChar.isLetter()) lastChar.uppercaseChar().toString() else "#"
+class ArtistRatingDivider(
+    private val artistRatings: Map<String, List<State<Rating?>>?>,
+) : Divider<Artist>(dividerTitle = "Rating", defaultDivisionSortOrder = SortOrder.DESCENDING) {
+    override fun compareDivisions(sortOrder: SortOrder, first: Any, second: Any): Int {
+        return when {
+            first is String && second is String -> 0
+            first is String -> 1
+            second is String -> -1
+            else -> sortOrder.compare(first as Double, second as Double)
+        }
     }
 
-    override fun withDivisionSortOrder(sortOrder: SortOrder) = ArtistNameDivider2(divisionSortOrder = sortOrder)
+    override fun divisionFor(element: Artist): Any {
+        return artistRatings[element.id.value]
+            ?.averageOrNull { it.value?.ratingPercent }
+            ?.let { average ->
+                floor(average * Rating.DEFAULT_MAX_AVERAGE_RATING * DIVIDING_FRACTION) / DIVIDING_FRACTION
+            }
+            ?: "Unrated"
+    }
+
+    @Composable
+    override fun headerContent(division: Any) {
+        val title = when (division) {
+            is String -> division
+            is Double -> "%.1f - %.1f".format(division, division + 1.0 / DIVIDING_FRACTION)
+            else -> error("")
+        }
+
+        standardHeaderContent(divisionHeader = title)
+    }
+
+    companion object {
+        /**
+         * Determines what ranges ratings are grouped into, inverted. E.g. with a fraction of 4 ranges will be
+         * 0.0 - 0.25, 0.25 - 0.5, 0.5 - 0.75, 0.75 - 1.0, etc. Note that the rounding of the header strings may make
+         * some groupings unclear.
+         */
+        private const val DIVIDING_FRACTION = 2
+    }
 }
 
 @Composable
@@ -148,10 +180,16 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
                     )
 
                     DividerSelector(
-                        dividers = listOf(ArtistNameDivider(), ArtistNameDivider2()),
+                        dividers = listOf(ArtistNameDivider(), ArtistRatingDivider(state.artistRatings)),
                         currentDivider = state.artists.divider,
-                        onSelectDivider = {
-                            presenter.emitAsync(ArtistsPresenter.Event.SetDivider(divider = it))
+                        currentDividerSortOrder = state.artists.dividerSortOrder,
+                        onSelectDivider = { divider, dividerSortOrder ->
+                            presenter.emitAsync(
+                                ArtistsPresenter.Event.SetDivider(
+                                    divider = divider,
+                                    dividerSortOrder = dividerSortOrder,
+                                )
+                            )
                         },
                     )
 

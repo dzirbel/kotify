@@ -52,6 +52,13 @@ class ListAdapter<E> private constructor(
     val divider: Divider<E>?,
 
     /**
+     * The [SortOrder] by which divisions provided by [divider] should be ordered.
+     *
+     * Null when [divider] is null or when the [Divider.defaultDivisionSortOrder] should be used.
+     */
+    val dividerSortOrder: SortOrder?,
+
+    /**
      * The currently applied filtering predicate determining which elements should be displayed.
      *
      * Null when no filter is applied, i.e. all elements should be shown.
@@ -80,7 +87,7 @@ class ListAdapter<E> private constructor(
          * The division key assigned to this element by the currently applied [divider] which determines its placement
          * in [divisions], or null if there is no currently applied divider.
          */
-        val division: String?,
+        val division: Any?,
     )
 
     val size = elements.size
@@ -98,7 +105,7 @@ class ListAdapter<E> private constructor(
      * in cases when either the divider or sort order are changed, but perhaps could be avoided for changes to just the
      * filter, etc.
      */
-    val divisions: Map<out String?, List<IndexedValue<E>>> by lazy {
+    val divisions: Map<out Any?, List<IndexedValue<E>>> by lazy {
         val indices = sortIndexes ?: elements.indices
         if (divider == null) {
             mutableMapOf(
@@ -110,7 +117,8 @@ class ListAdapter<E> private constructor(
                 }
             )
         } else {
-            val map = TreeMap<String, MutableList<IndexedValue<E>>>(divider.divisionComparator)
+            val comparator = divider.divisionComparator(dividerSortOrder ?: divider.defaultDivisionSortOrder)
+            val map = TreeMap<Any, MutableList<IndexedValue<E>>>(comparator)
 
             indices.forEach { index ->
                 val elementData = elements[index]
@@ -135,7 +143,7 @@ class ListAdapter<E> private constructor(
     /**
      * Returns the division for the element at the given [index] in the canonical order.
      */
-    fun divisionOf(index: Int): String? = elements[index].division
+    fun divisionOf(index: Int): Any? = elements[index].division
 
     override fun iterator(): Iterator<E> {
         elements.iterator()
@@ -163,6 +171,7 @@ class ListAdapter<E> private constructor(
             sortIndexes = sortIndexes,
             sorts = sorts,
             divider = divider,
+            dividerSortOrder = dividerSortOrder,
             filter = filter,
             filterString = filterString,
         )
@@ -191,7 +200,7 @@ class ListAdapter<E> private constructor(
      * Returns a copy of this [ListAdapter] with the given [divider] applied, i.e. elements will be grouped according
      * to [Divider.divisionFor] in its [divisions], or undivided if [divider] is null.
      */
-    fun withDivider(divider: Divider<E>?): ListAdapter<E> {
+    fun withDivider(divider: Divider<E>?, dividerSortOrder: SortOrder?): ListAdapter<E> {
         return ListAdapter(
             elements = elements.map {
                 it.copy(division = divider?.divisionFor(it.element))
@@ -199,6 +208,7 @@ class ListAdapter<E> private constructor(
             sortIndexes = sortIndexes,
             sorts = sorts,
             divider = divider,
+            dividerSortOrder = dividerSortOrder,
             filter = filter,
             filterString = filterString,
         )
@@ -238,6 +248,7 @@ class ListAdapter<E> private constructor(
             sortIndexes = sortIndexes,
             sorts = sorts,
             divider = divider,
+            dividerSortOrder = dividerSortOrder,
             filter = filter,
             filterString = filterString,
         )
@@ -262,6 +273,7 @@ class ListAdapter<E> private constructor(
             sortIndexes = null,
             sorts = null,
             divider = divider,
+            dividerSortOrder = dividerSortOrder,
             filter = filter,
             filterString = filterString,
         )
@@ -291,6 +303,7 @@ class ListAdapter<E> private constructor(
                 sortIndexes = null,
                 sorts = null,
                 divider = baseAdapter?.divider,
+                dividerSortOrder = baseAdapter?.dividerSortOrder,
                 filter = baseAdapter?.filter,
                 filterString = baseAdapter?.filterString,
             )

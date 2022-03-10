@@ -14,6 +14,7 @@ import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
+import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.framework.RemoteStatePresenter
 import com.dzirbel.kotify.ui.page.albums.SortAlbumsByName
 import kotlinx.coroutines.CoroutineScope
@@ -52,7 +53,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
         data class ToggleSave(val artistId: String, val save: Boolean) : Event()
         data class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
         data class SetSorts(val sorts: List<Sort<Artist>>) : Event()
-        data class SetDivider(val divider: Divider<Artist>?) : Event()
+        data class SetDivider(val divider: Divider<Artist>?, val dividerSortOrder: SortOrder?) : Event()
         data class SetFilter(val filter: String?) : Event()
     }
 
@@ -189,7 +190,9 @@ class ArtistsPresenter(scope: CoroutineScope) :
             }
 
             is Event.SetDivider -> mutateLoadedState {
-                it.copy(artists = it.artists.withDivider(event.divider))
+                it.copy(
+                    artists = it.artists.withDivider(divider = event.divider, dividerSortOrder = event.dividerSortOrder)
+                )
             }
 
             is Event.SetFilter -> mutateLoadedState {

@@ -30,7 +30,8 @@ import com.dzirbel.kotify.ui.theme.LocalColors
 fun <E> DividerSelector(
     dividers: List<Divider<E>>,
     currentDivider: Divider<E>?,
-    onSelectDivider: (Divider<E>?) -> Unit,
+    currentDividerSortOrder: SortOrder?,
+    onSelectDivider: (Divider<E>?, SortOrder?) -> Unit,
 ) {
     Row(
         modifier = Modifier.background(
@@ -72,7 +73,7 @@ fun <E> DividerSelector(
                             onClick = {
                                 dropdownExpanded.value = false
 
-                                onSelectDivider(divider)
+                                onSelectDivider(divider, divider.defaultDivisionSortOrder)
                             }
                         ) {
                             Text(divider.dividerTitle)
@@ -85,16 +86,14 @@ fun <E> DividerSelector(
         if (currentDivider != null) {
             SimpleTextButton(
                 onClick = {
-                    onSelectDivider(
-                        currentDivider.withDivisionSortOrder(sortOrder = currentDivider.divisionSortOrder.flipped)
-                    )
+                    onSelectDivider(currentDivider, currentDividerSortOrder?.flipped)
                 },
                 contentPadding = PaddingValues(all = Dimens.space2),
                 enforceMinWidth = false,
                 enforceMinHeight = true,
             ) {
                 Icon(
-                    imageVector = currentDivider.divisionSortOrder.icon,
+                    imageVector = currentDividerSortOrder.icon,
                     contentDescription = null,
                     modifier = Modifier.size(Dimens.iconSmall),
                     tint = LocalColors.current.primary,
@@ -102,7 +101,7 @@ fun <E> DividerSelector(
             }
 
             SimpleTextButton(
-                onClick = { onSelectDivider(null) },
+                onClick = { onSelectDivider(null, null) },
                 contentPadding = PaddingValues(all = Dimens.space2),
                 enforceMinWidth = false,
                 enforceMinHeight = true,
