@@ -168,7 +168,7 @@ internal class PlayerPanelPresenter(scope: CoroutineScope) :
 
             val trackRatingState = track.id?.let { trackId ->
                 runBlocking {
-                    TrackRatingRepository.ratingState(id = trackId)
+                    KotifyDatabase.transaction { TrackRatingRepository.ratingState(id = trackId) }
                 }
             }
 

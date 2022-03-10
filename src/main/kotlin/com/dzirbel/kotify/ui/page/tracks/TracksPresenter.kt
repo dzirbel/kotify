@@ -63,7 +63,9 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                 val tracks = fetchTracks(trackIds = trackIds)
                 val tracksById = tracks.associateBy { it.id.value }
                 val tracksUpdated = SavedTrackRepository.libraryUpdated()
-                val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
+                val trackRatings = KotifyDatabase.transaction {
+                    trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
+                }
 
                 mutateState {
                     ViewModel(
