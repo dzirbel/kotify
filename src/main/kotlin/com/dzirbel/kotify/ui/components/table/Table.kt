@@ -147,7 +147,7 @@ fun <T> Table(
                     }
                     val colConstraints = Constraints(minWidth = min, maxWidth = max)
 
-                    val colWidth = (0 until numRows).maxOfOrNull { row ->
+                    val maxCellWidth = (0 until numRows).maxOfOrNull { row ->
                         val index = cellPlaceablesIndex(row = row, col = colIndex)
                         cellMeasurables[index].measure(colConstraints)
                             .also { cellPlaceables[index] = it }
@@ -155,6 +155,8 @@ fun <T> Table(
                     }
                         ?: columnWidth.minWidth.takeIf { it.isSpecified }?.roundToPx()
                         ?: 0
+
+                    val colWidth = maxCellWidth
                         .coerceAtLeastNullable(
                             headerMeasurables?.get(colIndex)?.measure(colConstraints)
                                 ?.also { headerPlaceables!![colIndex] = it }
