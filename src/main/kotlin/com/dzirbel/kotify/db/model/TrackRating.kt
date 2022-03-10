@@ -44,38 +44,32 @@ object TrackRatingRepository : RatingRepository {
     }
 
     override suspend fun lastRatingOf(id: String): Rating? {
-        return KotifyDatabase.transaction {
-            TrackRatingTable
-                .select { TrackRatingTable.track eq id }
-                .orderBy(TrackRatingTable.rateTime to SortOrder.DESC)
-                .limit(1)
-                .firstOrNull()
-                ?.asRating()
-        }
+        return TrackRatingTable
+            .select { TrackRatingTable.track eq id }
+            .orderBy(TrackRatingTable.rateTime to SortOrder.DESC)
+            .limit(1)
+            .firstOrNull()
+            ?.asRating()
     }
 
     override suspend fun lastRatingsOf(ids: List<String>): List<Rating?> {
         // map by ID to ensure returned results are in the same order as the inputs
-        val mapById: Map<String, ResultRow> = KotifyDatabase.transaction {
-            TrackRatingTable
-                .select { TrackRatingTable.track inList ids }
-                .groupBy(TrackRatingTable.track)
-                .having {
-                    TrackRatingTable.rateTime eq Max(TrackRatingTable.rateTime, TrackRatingTable.rateTime.columnType)
-                }
-        }
+        val mapById: Map<String, ResultRow> = TrackRatingTable
+            .select { TrackRatingTable.track inList ids }
+            .groupBy(TrackRatingTable.track)
+            .having {
+                TrackRatingTable.rateTime eq Max(TrackRatingTable.rateTime, TrackRatingTable.rateTime.columnType)
+            }
             .associateBy { it[TrackRatingTable.track].value }
 
         return ids.map { id -> mapById[id]?.asRating() }
     }
 
     override suspend fun allRatingsOf(id: String): List<Rating> {
-        return KotifyDatabase.transaction {
-            TrackRatingTable
-                .select { TrackRatingTable.track eq id }
-                .orderBy(TrackRatingTable.rateTime to SortOrder.DESC)
-                .map { it.asRating() }
-        }
+        return TrackRatingTable
+            .select { TrackRatingTable.track eq id }
+            .orderBy(TrackRatingTable.rateTime to SortOrder.DESC)
+            .map { it.asRating() }
     }
 
     override suspend fun rate(id: String, rating: Rating?) {
@@ -148,10 +142,10 @@ object TrackRatingRepository : RatingRepository {
             return existingStates as List<State<Rating?>>
         }
 
-        val newStates = KotifyDatabase.transaction { lastRatingsOf(ids = missingIndices.map { it.value }) }
-            .map { mutableStateOf(it) }
+        val missingRatings = lastRatingsOf(ids = missingIndices.map { it.value })
 
-        missingIndices.zipEach(newStates) { indexedValue, state ->
+        missingIndices.zipEach(missingRatings) { indexedValue, rating ->
+            val state = mutableStateOf(rating)
             states[indexedValue.value] = WeakReference(state)
             existingStates[indexedValue.index] = state
         }

@@ -69,11 +69,9 @@ object UserRepository : DatabaseRepository<User, SpotifyUser>(User) {
     }
 
     suspend fun getCurrentUserCached(): User? {
-        return KotifyDatabase.transaction {
-            getCurrentUserIdCached()
-                ?.let { getCached(id = id) }
-                ?.takeIf { it.fullUpdatedTime != null }
-        }
+        return KotifyDatabase.transaction { getCurrentUserIdCached() }
+            ?.let { id -> getCached(id = id) }
+            ?.takeIf { it.fullUpdatedTime != null }
     }
 
     suspend fun getCurrentUserRemote(): User? {

@@ -26,6 +26,7 @@ import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.transactionManager
 import java.io.File
 import java.sql.Connection
 
@@ -92,6 +93,8 @@ object KotifyDatabase {
      * on a single thread to avoid database locking.
      */
     suspend fun <T> transaction(statement: suspend Transaction.() -> T): T {
+        check(db.transactionManager.currentOrNull() == null) { "transaction already in progress" }
+
         return newSuspendedTransaction(
             context = dbDispatcher,
             db = db,
