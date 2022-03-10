@@ -35,7 +35,7 @@ import kotlin.reflect.KClass
  * The presenter continually listens for [events] and processes them via [reactTo], which calls [mutateState] to update
  * the view [state].
  */
-abstract class Presenter<ViewModel, Event : Any> constructor(
+abstract class Presenter<ViewModel, Event : Any>(
     /**
      * The [CoroutineScope] under which this presenter operates, typically bound to the UI's point in the composition
      * (i.e. from [androidx.compose.runtime.rememberCoroutineScope]).
