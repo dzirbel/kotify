@@ -7,14 +7,14 @@ internal class ListAdapterTest {
     private val list = List(20) { it }
 
     private val naturalOrder = object : SortableProperty<Int>(sortTitle = "natural order") {
-        override fun compare(first: IndexedValue<Int>, second: IndexedValue<Int>): Int {
-            return first.value.compareTo(second.value)
+        override fun compare(sortOrder: SortOrder, first: IndexedValue<Int>, second: IndexedValue<Int>): Int {
+            return sortOrder.compare(first.value, second.value)
         }
     }
 
     private val orderByMod2 = object : SortableProperty<Int>(sortTitle = "mod 2 order") {
-        override fun compare(first: IndexedValue<Int>, second: IndexedValue<Int>): Int {
-            return (first.value % 2).compareTo(second.value % 2)
+        override fun compare(sortOrder: SortOrder, first: IndexedValue<Int>, second: IndexedValue<Int>): Int {
+            return sortOrder.compare(first.value % 2, second.value % 2)
         }
     }
 

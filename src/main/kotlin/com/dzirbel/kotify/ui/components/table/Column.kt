@@ -110,8 +110,9 @@ abstract class Column<T>(val name: String) {
 
             override val sortableProperty: SortableProperty<R>? = base.sortableProperty?.let { baseSortProperty ->
                 object : SortableProperty<R>(sortTitle = name) {
-                    override fun compare(first: IndexedValue<R>, second: IndexedValue<R>): Int {
+                    override fun compare(sortOrder: SortOrder, first: IndexedValue<R>, second: IndexedValue<R>): Int {
                         return baseSortProperty.compare(
+                            sortOrder = sortOrder,
                             first = IndexedValue(index = first.index, value = mapper(first.value)),
                             second = IndexedValue(index = second.index, value = mapper(second.value)),
                         )

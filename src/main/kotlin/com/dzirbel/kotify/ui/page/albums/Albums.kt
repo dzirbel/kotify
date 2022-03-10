@@ -18,6 +18,7 @@ import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
+import com.dzirbel.kotify.ui.components.adapter.compare
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.framework.ScrollingPage
 import com.dzirbel.kotify.ui.pageStack
@@ -29,8 +30,8 @@ val SortAlbumsByName = object : SortableProperty<Album>(
     defaultOrder = SortOrder.ASCENDING,
     terminal = true,
 ) {
-    override fun compare(first: IndexedValue<Album>, second: IndexedValue<Album>): Int {
-        return first.value.name.compareTo(second.value.name)
+    override fun compare(sortOrder: SortOrder, first: IndexedValue<Album>, second: IndexedValue<Album>): Int {
+        return sortOrder.compare(first.value.name, second.value.name)
     }
 }
 

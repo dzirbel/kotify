@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
+import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Dimens
 
@@ -15,12 +16,16 @@ import com.dzirbel.kotify.ui.theme.Dimens
  */
 abstract class ColumnByRelativeDateText<T>(
     name: String,
+    private val nullsFirst: Boolean = false,
     private val padding: Dp = Dimens.space3,
 ) : Column<T>(name = name) {
     override val sortableProperty = object : SortableProperty<T>(sortTitle = name) {
-        override fun compare(first: IndexedValue<T>, second: IndexedValue<T>): Int {
-            return (timestampFor(first.value, first.index) ?: 0)
-                .compareTo(timestampFor(second.value, second.index) ?: 0)
+        override fun compare(sortOrder: SortOrder, first: IndexedValue<T>, second: IndexedValue<T>): Int {
+            return sortOrder.compareNullable(
+                timestampFor(first.value, first.index),
+                timestampFor(second.value, second.index),
+                nullsFirst = nullsFirst,
+            )
         }
     }
 

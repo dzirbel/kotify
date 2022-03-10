@@ -11,10 +11,7 @@ data class Sort<T>(
      * [sortOrder].
      */
     val comparator: Comparator<IndexedValue<T>>
-        get() {
-            return Comparator(sortableProperty::compare)
-                .let { if (sortOrder == SortOrder.DESCENDING) it.reversed() else it }
-        }
+        get() = Comparator { o1, o2 -> sortableProperty.compare(sortOrder, o1, o2) }
 }
 
 fun <T> Iterable<T>.sortedBy(sorts: List<Sort<T>>): List<T> {

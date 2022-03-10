@@ -21,8 +21,10 @@ import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortSelector
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
+import com.dzirbel.kotify.ui.components.adapter.compare
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.Table
@@ -42,8 +44,12 @@ private object AddedAtColumn : ColumnByString<PlaylistTrack>(name = "Added") {
         get() = Instant.parse(addedAt.orEmpty()).toEpochMilli()
 
     override val sortableProperty = object : SortableProperty<PlaylistTrack>(sortTitle = name) {
-        override fun compare(first: IndexedValue<PlaylistTrack>, second: IndexedValue<PlaylistTrack>): Int {
-            return first.value.addedAtTimestamp.compareTo(second.value.addedAtTimestamp)
+        override fun compare(
+            sortOrder: SortOrder,
+            first: IndexedValue<PlaylistTrack>,
+            second: IndexedValue<PlaylistTrack>,
+        ): Int {
+            return sortOrder.compare(first.value.addedAtTimestamp, second.value.addedAtTimestamp)
         }
     }
 

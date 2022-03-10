@@ -15,5 +15,5 @@ abstract class SortableProperty<E>(
      */
     val terminal: Boolean = false,
 ) {
-    abstract fun compare(first: IndexedValue<E>, second: IndexedValue<E>): Int
+    abstract fun compare(sortOrder: SortOrder, first: IndexedValue<E>, second: IndexedValue<E>): Int
 }

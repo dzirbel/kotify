@@ -24,10 +24,39 @@ val SortOrder?.icon: ImageVector
         }
     }
 
-fun <T : Comparable<T>> SortOrder.compare(o1: T, o2: T): Int {
-    val comparison = o1.compareTo(o2)
+/**
+ * Returns the comparison of [first] and [second] relative to this [SortOrder] (i.e. their natural order if it is
+ * [SortOrder.ASCENDING] or their reversed order if it is [SortOrder.DESCENDING].
+ */
+fun <T : Comparable<T>> SortOrder.compare(first: T, second: T): Int {
+    val comparison = first.compareTo(second)
     return when (this) {
         SortOrder.ASCENDING -> comparison
         SortOrder.DESCENDING -> -comparison
+    }
+}
+
+/**
+ * Returns the comparison of [first] and [second] relative to this [SortOrder], optionally ignoring case per
+ * [ignoreCase].
+ */
+fun SortOrder.compare(first: String, second: String, ignoreCase: Boolean = false): Int {
+    val comparison = first.compareTo(second, ignoreCase = ignoreCase)
+    return when (this) {
+        SortOrder.ASCENDING -> comparison
+        SortOrder.DESCENDING -> -comparison
+    }
+}
+
+/**
+ * Returns the comparison of [first] and [second] relative to this [SortOrder] for non-null elements, and placing nulls
+ * either first or last depending on [nullsFirst].
+ */
+fun <T : Comparable<T>> SortOrder.compareNullable(first: T?, second: T?, nullsFirst: Boolean = false): Int {
+    return when {
+        first != null && second != null -> compare(first, second)
+        first != null -> if (nullsFirst) 1 else -1 // other is null
+        second != null -> if (nullsFirst) -1 else 1 // this is null
+        else -> 0 // both null -> equal
     }
 }

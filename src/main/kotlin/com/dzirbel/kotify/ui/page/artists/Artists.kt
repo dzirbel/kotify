@@ -37,6 +37,7 @@ import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortSelector
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.adapter.compare
+import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
@@ -47,7 +48,6 @@ import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.averageOrNull
-import com.dzirbel.kotify.util.compareToNullable
 import kotlinx.coroutines.Dispatchers
 import kotlin.math.floor
 
@@ -56,8 +56,8 @@ val SortArtistByName = object : SortableProperty<Artist>(
     defaultOrder = SortOrder.ASCENDING,
     terminal = true,
 ) {
-    override fun compare(first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
-        return first.value.name.compareTo(second.value.name)
+    override fun compare(sortOrder: SortOrder, first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
+        return sortOrder.compare(first.value.name, second.value.name)
     }
 }
 
@@ -65,8 +65,8 @@ val SortArtistByPopularity = object : SortableProperty<Artist>(
     sortTitle = "Artist Popularity",
     defaultOrder = SortOrder.DESCENDING,
 ) {
-    override fun compare(first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
-        return first.value.popularity.compareToNullable(second.value.popularity)
+    override fun compare(sortOrder: SortOrder, first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
+        return sortOrder.compareNullable(first.value.popularity, second.value.popularity)
     }
 }
 
@@ -74,11 +74,11 @@ class SortAristByRating(private val artistRatings: Map<String, List<State<Rating
     sortTitle = "Artist Rating",
     defaultOrder = SortOrder.DESCENDING,
 ) {
-    override fun compare(first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
+    override fun compare(sortOrder: SortOrder, first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
         val firstRating = artistRatings[first.value.id.value]?.averageOrNull { it.value?.ratingPercent }
         val secondRating = artistRatings[second.value.id.value]?.averageOrNull { it.value?.ratingPercent }
 
-        return firstRating.compareToNullable(secondRating)
+        return sortOrder.compareNullable(firstRating, secondRating)
     }
 }
 

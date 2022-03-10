@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
+import com.dzirbel.kotify.ui.components.adapter.compare
 import com.dzirbel.kotify.ui.theme.Dimens
 
 /**
@@ -14,8 +15,12 @@ import com.dzirbel.kotify.ui.theme.Dimens
  */
 abstract class ColumnByString<T>(name: String, private val padding: Dp = Dimens.space3) : Column<T>(name = name) {
     override val sortableProperty = object : SortableProperty<T>(sortTitle = name) {
-        override fun compare(first: IndexedValue<T>, second: IndexedValue<T>): Int {
-            return toString(first.value, first.index).compareTo(toString(second.value, second.index), ignoreCase = true)
+        override fun compare(sortOrder: SortOrder, first: IndexedValue<T>, second: IndexedValue<T>): Int {
+            return sortOrder.compare(
+                first = toString(first.value, first.index),
+                second = toString(second.value, second.index),
+                ignoreCase = true,
+            )
         }
     }
 

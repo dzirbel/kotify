@@ -22,6 +22,8 @@ import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
+import com.dzirbel.kotify.ui.components.adapter.compare
+import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.star.StarRating
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
@@ -34,7 +36,6 @@ import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.compareToNullable
 import com.dzirbel.kotify.util.formatDuration
 
 fun trackColumns(
@@ -142,9 +143,12 @@ object ArtistColumn : Column<Track>(name = "Artist") {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
-        override fun compare(first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
-            return first.value.artists.cached.joinToString { it.name }
-                .compareTo(second.value.artists.cached.joinToString { it.name }, ignoreCase = true)
+        override fun compare(sortOrder: SortOrder, first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
+            return sortOrder.compare(
+                first = first.value.artists.cached.joinToString { it.name },
+                second = second.value.artists.cached.joinToString { it.name },
+                ignoreCase = true,
+            )
         }
     }
 
@@ -168,9 +172,12 @@ object AlbumColumn : Column<Track>(name = "Album") {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
-        override fun compare(first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
-            return first.value.album.cached?.name.orEmpty()
-                .compareTo(second.value.album.cached?.name.orEmpty(), ignoreCase = true)
+        override fun compare(sortOrder: SortOrder, first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
+            return sortOrder.compare(
+                first = first.value.album.cached?.name.orEmpty(),
+                second = second.value.album.cached?.name.orEmpty(),
+                ignoreCase = true,
+            )
         }
     }
 
@@ -194,8 +201,8 @@ object DurationColumn : ColumnByString<Track>(name = "Duration") {
     override val cellAlignment = Alignment.TopEnd
 
     override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
-        override fun compare(first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
-            return first.value.durationMs.compareTo(second.value.durationMs)
+        override fun compare(sortOrder: SortOrder, first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
+            return sortOrder.compare(first.value.durationMs, second.value.durationMs)
         }
     }
 
@@ -211,8 +218,8 @@ object PopularityColumn : Column<Track>(name = "Popularity") {
     override val cellAlignment = Alignment.TopEnd
 
     override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
-        override fun compare(first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
-            return first.value.popularity.compareToNullable(second.value.popularity)
+        override fun compare(sortOrder: SortOrder, first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
+            return sortOrder.compareNullable(first.value.popularity, second.value.popularity)
         }
     }
 
@@ -248,11 +255,11 @@ class RatingColumn(
     override val cellAlignment = Alignment.Center
 
     override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
-        override fun compare(first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
+        override fun compare(sortOrder: SortOrder, first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
             val firstRating = trackRatings?.get(first.value.id.value)?.value?.ratingPercent
             val secondRating = trackRatings?.get(second.value.id.value)?.value?.ratingPercent
 
-            return firstRating.compareToNullable(secondRating)
+            return sortOrder.compareNullable(firstRating, secondRating)
         }
     }
 
