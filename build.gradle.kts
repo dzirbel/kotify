@@ -6,34 +6,12 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
 
-private object Versions {
-    const val coroutines = "1.6.0" // https://github.com/Kotlin/kotlinx.coroutines
-    const val detekt = "1.19.0" // https://github.com/detekt/detekt; also update plugin version
-    const val exposed = "0.37.3" // https://github.com/JetBrains/Exposed
-    const val jacoco = "0.8.7" // https://github.com/jacoco/jacoco
-    const val junit4 = "4.13.2" // https://junit.org/junit4/
-    const val junit5 = "5.8.2" // https://junit.org/junit5/
-    const val kotlinxSerialization = "1.3.2" // https://github.com/Kotlin/kotlinx.serialization
-    const val slf4j = "1.7.32" // http://www.slf4j.org/
-    const val sqliteJdbc = "3.36.0.3" // https://github.com/xerial/sqlite-jdbc
-    const val ktor = "1.6.7" // https://ktor.io/changelog/
-    const val mockk = "1.12.2" // https://github.com/mockk/mockk
-    const val okhttp = "4.9.2" // https://square.github.io/okhttp
-    const val truth = "1.1.3" // https://github.com/google/truth
-}
-
 plugins {
-    // https://kotlinlang.org/releases.html
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version deps.versions.kotlin.get()
+    kotlin("plugin.serialization") version deps.versions.kotlin.get()
 
-    // https://github.com/Kotlin/kotlinx.serialization
-    kotlin("plugin.serialization") version "1.6.10"
-
-    // https://github.com/detekt/detekt; also update dependency version
-    id("io.gitlab.arturbosch.detekt") version "1.19.0"
-
-    // https://github.com/jetbrains/compose-jb
-    id("org.jetbrains.compose") version "1.1.0"
+    alias(deps.plugins.detekt)
+    alias(deps.plugins.compose)
 
     `java-test-fixtures`
 
@@ -53,38 +31,34 @@ repositories {
 dependencies {
     implementation(compose.desktop.currentOs)
 
-    implementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
-    implementation("io.ktor", "ktor-server-netty", Versions.ktor)
-    implementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
-    implementation("org.jetbrains.kotlinx", "kotlinx-serialization-json", Versions.kotlinxSerialization)
-    implementation("org.slf4j", "slf4j-nop", Versions.slf4j)
+    implementation(deps.okhttp)
+    implementation(deps.ktor.netty)
+    implementation(deps.coroutines.core)
+    implementation(deps.kotlinx.serialization)
+    implementation(deps.slf4j.nop)
 
-    implementation("org.jetbrains.exposed:exposed-core:${Versions.exposed}")
-    implementation("org.jetbrains.exposed:exposed-dao:${Versions.exposed}")
-    implementation("org.jetbrains.exposed:exposed-jdbc:${Versions.exposed}")
-    implementation("org.jetbrains.exposed:exposed-java-time:${Versions.exposed}")
-    implementation("org.xerial:sqlite-jdbc:${Versions.sqliteJdbc}")
+    implementation(deps.bundles.exposed)
+    implementation(deps.sqlite.jdbc)
 
-    testImplementation("org.jetbrains.kotlinx", "kotlinx-coroutines-test", Versions.coroutines)
-    testImplementation("org.junit.jupiter", "junit-jupiter-api", Versions.junit5)
-    testImplementation("org.junit.jupiter", "junit-jupiter-params", Versions.junit5)
-    testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", Versions.junit5)
+    testImplementation(deps.coroutines.test)
+    testImplementation(deps.bundles.junit5.api)
+    testRuntimeOnly(deps.junit5.engine)
 
     // JUnit 4 is required to run Compose tests
-    testCompileOnly("junit", "junit", Versions.junit4)
-    testRuntimeOnly("org.junit.vintage", "junit-vintage-engine", Versions.junit5)
-    testImplementation(compose("org.jetbrains.compose.ui:ui-test-junit4"))
+    testCompileOnly(deps.junit4)
+    testRuntimeOnly(deps.junit5.vintage.engine)
+    testImplementation(deps.compose.test.junit4)
 
-    testImplementation("com.google.truth", "truth", Versions.truth)
-    testImplementation("io.mockk", "mockk", Versions.mockk)
+    testImplementation(deps.truth)
+    testImplementation(deps.mockk)
 
     testFixturesImplementation(compose.desktop.currentOs)
-    testFixturesImplementation("org.jetbrains.kotlinx", "kotlinx-serialization-json", Versions.kotlinxSerialization) // TODO necessary for the opt-in
-    testFixturesImplementation("com.squareup.okhttp3", "okhttp", Versions.okhttp)
-    testFixturesImplementation("org.jetbrains.kotlinx", "kotlinx-coroutines-core", Versions.coroutines)
-    testFixturesImplementation("com.google.truth", "truth", Versions.truth)
+    testFixturesImplementation(deps.kotlinx.serialization) // TODO necessary for the opt-in
+    testFixturesImplementation(deps.okhttp)
+    testFixturesImplementation(deps.coroutines.core)
+    testFixturesImplementation(deps.truth)
 
-    detektPlugins("io.gitlab.arturbosch.detekt", "detekt-formatting", Versions.detekt)
+    detektPlugins(deps.detekt.formatting)
 }
 
 tasks.withType<KotlinCompile>().configureEach {
@@ -133,7 +107,7 @@ tasks.withType<Test>().configureEach {
 }
 
 jacoco {
-    toolVersion = Versions.jacoco
+    toolVersion = deps.versions.jacoco.get()
 }
 
 tasks.create<JacocoReport>("jacocoTestReportLocal") {
