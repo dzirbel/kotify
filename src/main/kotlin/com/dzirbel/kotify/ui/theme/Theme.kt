@@ -14,7 +14,7 @@ object Theme {
         colors.applyColors {
             Dimens.applyDimens {
                 CompositionLocalProvider(LocalMinimumTouchTargetEnforcement provides false) {
-                    content()
+                    LocalColors.current.withSurface(increment = 0, content = content)
                 }
             }
         }

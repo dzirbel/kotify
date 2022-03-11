@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -30,6 +29,7 @@ import com.dzirbel.kotify.ui.components.ThemeSwitcher
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.mutate
 
 @Composable
@@ -37,23 +37,25 @@ fun NavigationPanel(
     headerVisibleState: MutableTransitionState<Boolean>,
     headerContent: @Composable RowScope.() -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().background(LocalColors.current.surface1),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        NavigationButtons()
+    LocalColors.current.withSurface {
+        Row(
+            modifier = Modifier.fillMaxWidth().surfaceBackground(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            NavigationButtons()
 
-        AnimatedVisibility(visibleState = headerVisibleState, enter = fadeIn(), exit = fadeOut()) {
-            headerContent()
-        }
+            AnimatedVisibility(visibleState = headerVisibleState, enter = fadeIn(), exit = fadeOut()) {
+                headerContent()
+            }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-            ThemeSwitcher(modifier = Modifier.align(Alignment.CenterVertically))
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+                ThemeSwitcher(modifier = Modifier.align(Alignment.CenterVertically))
 
-            ProjectGithubIcon(modifier = Modifier.align(Alignment.CenterVertically))
+                ProjectGithubIcon(modifier = Modifier.align(Alignment.CenterVertically))
 
-            CurrentUser()
+                CurrentUser()
+            }
         }
     }
 }

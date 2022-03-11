@@ -35,6 +35,7 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
 
@@ -228,21 +229,23 @@ object PopularityColumn : Column<Track>(name = "Popularity") {
         val popularity = item.popularity?.toInt() ?: 0
         val color = LocalColors.current.text.copy(alpha = ContentAlpha.disabled)
 
-        Box(
-            Modifier
-                .padding(Dimens.space3)
-                .background(LocalColors.current.surface2)
-                .height(Dimens.fontBodyDp)
-                .fillMaxWidth()
-                .border(width = Dimens.divider, color = color)
-        ) {
+        LocalColors.current.withSurface {
             Box(
-                @Suppress("MagicNumber")
                 Modifier
-                    .background(color)
-                    .fillMaxHeight()
-                    .fillMaxWidth(fraction = popularity / 100f)
-            )
+                    .padding(Dimens.space3)
+                    .surfaceBackground()
+                    .height(Dimens.fontBodyDp)
+                    .fillMaxWidth()
+                    .border(width = Dimens.divider, color = color)
+            ) {
+                Box(
+                    @Suppress("MagicNumber")
+                    Modifier
+                        .background(color)
+                        .fillMaxHeight()
+                        .fillMaxWidth(fraction = popularity / 100f)
+                )
+            }
         }
     }
 }

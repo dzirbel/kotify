@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.ui.Alignment
@@ -12,6 +11,7 @@ import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.surfaceBackground
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -42,19 +42,21 @@ internal class FlowTest {
     fun testScreenshot(case: ScreenshotTestCase) {
         screenshotTest(filename = case.filename, windowWidth = 500, windowHeight = 250, colorsSet = colorsSet) {
             Flow(
-                modifier = Modifier.padding(Dimens.space3).background(LocalColors.current.surface3),
+                modifier = Modifier.padding(Dimens.space3),
                 verticalAlignment = case.alignment,
             ) {
                 List(case.elements) { index ->
-                    Text(
-                        text = "element ${index + 1}",
-                        modifier = Modifier
-                            .background(LocalColors.current.surface1)
-                            .padding(
-                                horizontal = Dimens.space2,
-                                vertical = Dimens.space2 + case.verticalPadding(index),
-                            ),
-                    )
+                    LocalColors.current.withSurface(increment = Colors.INCREMENT_LARGE) {
+                        Text(
+                            text = "element ${index + 1}",
+                            modifier = Modifier
+                                .surfaceBackground()
+                                .padding(
+                                    horizontal = Dimens.space2,
+                                    vertical = Dimens.space2 + case.verticalPadding(index),
+                                ),
+                        )
+                    }
                 }
             }
         }

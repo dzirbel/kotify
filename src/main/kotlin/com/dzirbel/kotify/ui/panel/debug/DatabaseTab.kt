@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.panel.debug
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,7 +11,6 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.mutate
 
 private data class DatabaseSettings(
@@ -24,7 +22,7 @@ private val databaseSettings = mutableStateOf(DatabaseSettings())
 @Composable
 fun DatabaseTab(scrollState: ScrollState) {
     val groupByTransaction = databaseSettings.value.groupByTransaction
-    Column(Modifier.fillMaxWidth().background(LocalColors.current.surface3).padding(Dimens.space3)) {
+    Column(Modifier.fillMaxWidth().padding(Dimens.space3)) {
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
             checked = groupByTransaction,

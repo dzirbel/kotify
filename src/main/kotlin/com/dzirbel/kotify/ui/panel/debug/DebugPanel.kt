@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.panel.debug
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -33,6 +32,7 @@ import com.dzirbel.kotify.ui.components.panel.SidePanel
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.Theme
+import com.dzirbel.kotify.ui.theme.surfaceBackground
 
 enum class DebugTab(val tabName: String, val log: Logger<*>) {
     EVENTS("Events", Logger.Events),
@@ -75,19 +75,15 @@ fun DebugPanel(content: @Composable () -> Unit) {
             },
         ) {
             Theme.apply {
-                DebugPanelContent(
-                    tab = tab,
-                    scrollState = scrollState,
-                    modifier = Modifier.background(LocalColors.current.surface3),
-                )
+                DebugPanelContent(tab = tab, scrollState = scrollState)
             }
         }
     }
 }
 
 @Composable
-private fun DebugPanelContent(tab: MutableState<DebugTab>, scrollState: ScrollState, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
+private fun DebugPanelContent(tab: MutableState<DebugTab>, scrollState: ScrollState) {
+    Column(modifier = Modifier.surfaceBackground()) {
         Column(Modifier.fillMaxHeight().weight(1f)) {
             Row(Modifier.fillMaxWidth()) {
                 IconButton(

@@ -40,6 +40,7 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.HandleState
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.Dispatchers
@@ -49,105 +50,107 @@ fun LibraryPanel() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { LibraryPanelPresenter(scope = scope) }
 
-    VerticalScroll {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(Dimens.space3),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Library",
-                style = MaterialTheme.typography.h5,
-                modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3)
-            )
-
-            val moreExpanded = remember { mutableStateOf(false) }
-            IconButton(
-                modifier = Modifier.size(Dimens.iconSmall),
-                onClick = { moreExpanded.value = true }
+    LocalColors.current.withSurface {
+        VerticalScroll(Modifier.surfaceBackground()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(Dimens.space3),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                CachedIcon(name = "more-vert", contentDescription = "More", size = Dimens.iconSmall)
+                Text(
+                    text = "Library",
+                    style = MaterialTheme.typography.h5,
+                    modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3)
+                )
 
-                DropdownMenu(
-                    expanded = moreExpanded.value,
-                    onDismissRequest = { moreExpanded.value = false }
+                val moreExpanded = remember { mutableStateOf(false) }
+                IconButton(
+                    modifier = Modifier.size(Dimens.iconSmall),
+                    onClick = { moreExpanded.value = true }
                 ) {
-                    DropdownMenuItem(
-                        onClick = {
-                            moreExpanded.value = false
-                            pageStack.mutate { to(LibraryStatePage) }
-                        }
+                    CachedIcon(name = "more-vert", contentDescription = "More", size = Dimens.iconSmall)
+
+                    DropdownMenu(
+                        expanded = moreExpanded.value,
+                        onDismissRequest = { moreExpanded.value = false }
                     ) {
-                        Text("Details")
+                        DropdownMenuItem(
+                            onClick = {
+                                moreExpanded.value = false
+                                pageStack.mutate { to(LibraryStatePage) }
+                            }
+                        ) {
+                            Text("Details")
+                        }
                     }
                 }
             }
+
+            Box(Modifier.height(Dimens.divider).fillMaxWidth().background(LocalColors.current.dividerColor))
+
+            VerticalSpacer(Dimens.space3)
+
+            MaxWidthButton(
+                text = "Artists",
+                selected = pageStack.value.current == ArtistsPage,
+                onClick = { pageStack.mutate { to(ArtistsPage) } }
+            )
+
+            MaxWidthButton(
+                text = "Albums",
+                selected = pageStack.value.current == AlbumsPage,
+                onClick = { pageStack.mutate { to(AlbumsPage) } }
+            )
+
+            MaxWidthButton(
+                text = "Songs",
+                selected = pageStack.value.current == TracksPage,
+                onClick = { pageStack.mutate { to(TracksPage) } }
+            )
+
+            VerticalSpacer(Dimens.space3)
+
+            Text(
+                modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3),
+                style = MaterialTheme.typography.h5,
+                text = "Playlists"
+            )
+
+            val stateOrError = presenter.state()
+            val refreshing = stateOrError.safeState?.refreshing == true
+            InvalidateButton(
+                refreshing = refreshing,
+                updated = stateOrError.safeState?.playlistsUpdated,
+                contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
+                onClick = {
+                    presenter.emitAsync(LibraryPanelPresenter.Event.LoadPlaylists(invalidate = true))
+                }
+            )
+
+            Box(Modifier.height(Dimens.divider).fillMaxWidth().background(LocalColors.current.dividerColor))
+
+            VerticalSpacer(Dimens.space3)
+
+            HandleState(
+                state = { stateOrError },
+                onError = {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally),
+                        tint = LocalColors.current.error
+                    )
+                },
+                onLoading = {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally)
+                    )
+                },
+                onSuccess = { state ->
+                    state.playlists.forEach { playlist -> PlaylistItem(playlist) }
+                }
+            )
         }
-
-        Box(Modifier.height(Dimens.divider).fillMaxWidth().background(LocalColors.current.dividerColor))
-
-        VerticalSpacer(Dimens.space3)
-
-        MaxWidthButton(
-            text = "Artists",
-            selected = pageStack.value.current == ArtistsPage,
-            onClick = { pageStack.mutate { to(ArtistsPage) } }
-        )
-
-        MaxWidthButton(
-            text = "Albums",
-            selected = pageStack.value.current == AlbumsPage,
-            onClick = { pageStack.mutate { to(AlbumsPage) } }
-        )
-
-        MaxWidthButton(
-            text = "Songs",
-            selected = pageStack.value.current == TracksPage,
-            onClick = { pageStack.mutate { to(TracksPage) } }
-        )
-
-        VerticalSpacer(Dimens.space3)
-
-        Text(
-            modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3),
-            style = MaterialTheme.typography.h5,
-            text = "Playlists"
-        )
-
-        val stateOrError = presenter.state()
-        val refreshing = stateOrError.safeState?.refreshing == true
-        InvalidateButton(
-            refreshing = refreshing,
-            updated = stateOrError.safeState?.playlistsUpdated,
-            contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
-            onClick = {
-                presenter.emitAsync(LibraryPanelPresenter.Event.LoadPlaylists(invalidate = true))
-            }
-        )
-
-        Box(Modifier.height(Dimens.divider).fillMaxWidth().background(LocalColors.current.dividerColor))
-
-        VerticalSpacer(Dimens.space3)
-
-        HandleState(
-            state = { stateOrError },
-            onError = {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = null,
-                    modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally),
-                    tint = LocalColors.current.error
-                )
-            },
-            onLoading = {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally)
-                )
-            },
-            onSuccess = { state ->
-                state.playlists.forEach { playlist -> PlaylistItem(playlist) }
-            }
-        )
     }
 }
 

@@ -22,6 +22,7 @@ import com.dzirbel.kotify.ui.panel.debug.DebugPanel
 import com.dzirbel.kotify.ui.panel.library.LibraryPanel
 import com.dzirbel.kotify.ui.panel.navigation.NavigationPanel
 import com.dzirbel.kotify.ui.player.PlayerPanel
+import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.unauthenticated.Unauthenticated
 
 /**
@@ -48,7 +49,7 @@ fun Root() {
                     panelSize = libraryPanelSize,
                     panelContent = { LibraryPanel() },
                     mainContent = {
-                        Column {
+                        Column(Modifier.surfaceBackground()) {
                             val page = pageStack.value.current
                             val headerVisibleState = remember(page) { MutableTransitionState(false) }
 

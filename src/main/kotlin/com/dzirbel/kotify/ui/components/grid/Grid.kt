@@ -8,20 +8,20 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
@@ -35,8 +35,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
+import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.surfaceBackground
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -110,9 +112,11 @@ fun <E> Grid(
     verticalSpacing: Dp = Dimens.space3,
     cellAlignment: Alignment = Alignment.TopCenter,
     columns: Int? = null,
-    detailInsertBackground: Color = LocalColors.current.surface2,
-    detailInsertBorder: Color = LocalColors.current.dividerColor,
-    detailInsertCornerSize: Dp = Dimens.cornerSize * 2,
+    cellParams: GridCellParams = GridCellParams(backgroundSurfaceIncrement = 0),
+    detailInsertCellParams: GridCellParams = GridCellParams(
+        backgroundSurfaceIncrement = Colors.INCREMENT_SMALL,
+        cornerSize = Dimens.cornerSize * 2,
+    ),
     detailInsertAnimationDurationMs: Int = AnimationConstants.DefaultDurationMillis,
     detailInsertContent: @Composable ((elementIndex: Int, element: E) -> Unit)? = null,
     cellContent: @Composable (elementIndex: Int, element: E) -> Unit,
@@ -136,9 +140,23 @@ fun <E> Grid(
 
     Layout(
         content = {
+            val colors = LocalColors.current
             elements.forEachIndexed { index, element ->
-                Box {
-                    cellContent(index, element)
+                val params = if (index == selectedElementIndex) detailInsertCellParams else cellParams
+                colors.withSurface(increment = params.backgroundSurfaceIncrement) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(params.cornerSize))
+                            .let {
+                                if (params.backgroundSurfaceIncrement != 0 && index != selectedElementIndex) {
+                                    it.surfaceBackground()
+                                } else {
+                                    it
+                                }
+                            }
+                    ) {
+                        cellContent(index, element)
+                    }
                 }
             }
 
@@ -153,47 +171,48 @@ fun <E> Grid(
             }
 
             if (detailInsertContent != null && lastSelectedElementIndex != null) {
-                AnimatedVisibility(
-                    visibleState = insertAnimationState,
-                    enter = fadeIn(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
-                    exit = fadeOut(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = detailInsertBackground,
-                                shape = FlaredBottomRoundedRect(cornerSize = detailInsertCornerSize),
-                            )
-                            .border(
-                                width = Dimens.divider,
-                                color = detailInsertBorder,
-                                shape = FlaredBottomRoundedRect(
-                                    cornerSize = detailInsertCornerSize,
-                                    bottomPadding = Dimens.divider,
-                                ),
-                            )
-                            .fillMaxSize()
-                    )
-                }
-
-                AnimatedVisibility(
-                    visibleState = insertAnimationState,
-                    enter = expandVertically(
-                        animationSpec = tween(durationMillis = detailInsertAnimationDurationMs),
-                        expandFrom = Alignment.Top,
-                    ) + fadeIn(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
-                    exit = shrinkVertically(
-                        animationSpec = tween(durationMillis = detailInsertAnimationDurationMs),
-                        shrinkTowards = Alignment.Top,
-                    ) + fadeOut(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .background(detailInsertBackground)
-                            .border(width = Dimens.divider, color = detailInsertBorder)
-                            .fillMaxWidth()
+                colors.withSurface(increment = detailInsertCellParams.backgroundSurfaceIncrement) {
+                    AnimatedVisibility(
+                        visibleState = insertAnimationState,
+                        enter = fadeIn(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
+                        exit = fadeOut(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
                     ) {
-                        detailInsertContent(lastSelectedElementIndex, elements[lastSelectedElementIndex])
+                        Box(
+                            modifier = Modifier
+                                .surfaceBackground(
+                                    FlaredBottomRoundedRect(cornerSize = detailInsertCellParams.cornerSize)
+                                )
+                                .border(
+                                    width = Dimens.divider,
+                                    color = LocalColors.current.dividerColor,
+                                    shape = FlaredBottomRoundedRect(
+                                        cornerSize = detailInsertCellParams.cornerSize,
+                                        bottomPadding = Dimens.divider,
+                                    ),
+                                )
+                                .fillMaxSize()
+                        )
+                    }
+
+                    AnimatedVisibility(
+                        visibleState = insertAnimationState,
+                        enter = expandVertically(
+                            animationSpec = tween(durationMillis = detailInsertAnimationDurationMs),
+                            expandFrom = Alignment.Top,
+                        ) + fadeIn(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
+                        exit = shrinkVertically(
+                            animationSpec = tween(durationMillis = detailInsertAnimationDurationMs),
+                            shrinkTowards = Alignment.Top,
+                        ) + fadeOut(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .surfaceBackground()
+                                .border(width = Dimens.divider, color = LocalColors.current.dividerColor)
+                                .fillMaxWidth()
+                        ) {
+                            detailInsertContent(lastSelectedElementIndex, elements[lastSelectedElementIndex])
+                        }
                     }
                 }
             }
@@ -302,7 +321,7 @@ fun <E> Grid(
                 // - maxHeight increased by divider size to align better with insert top border
                 selectedItemBackgroundPlaceable = insertMeasurables[0].measure(
                     constraints.copy(
-                        maxWidth = maxCellWidth + detailInsertCornerSize.roundToPx() * 2,
+                        maxWidth = maxCellWidth + detailInsertCellParams.cornerSize.roundToPx() * 2,
                         maxHeight = rowHeights[selectedElementDivisionIndex][selectedElementRowIndex] +
                             (verticalSpacingPx + Dimens.divider.toPx()).roundToInt(),
                     )
@@ -355,7 +374,7 @@ fun <E> Grid(
                                 if (insertInRow && colIndex == selectedElementColIndex) {
                                     // adjust x to account for flared base
                                     selectedItemBackgroundPlaceable!!.place(
-                                        x = baseX - detailInsertCornerSize.roundToPx(),
+                                        x = baseX - detailInsertCellParams.cornerSize.roundToPx(),
                                         y = y.roundToInt(),
                                     )
                                 }

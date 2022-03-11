@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui.components.panel
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,7 +12,6 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.components.DraggableSplitter
 import com.dzirbel.kotify.ui.components.SplitterViewParams
-import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.util.coerceAtLeastNullable
 import com.dzirbel.kotify.util.coerceAtMostNullable
 
@@ -28,12 +26,8 @@ fun SidePanel(
     panelSize: PanelSize,
     modifier: Modifier = Modifier.fillMaxSize(),
     panelEnabled: Boolean = true,
-    panelModifier: Modifier = Modifier
-        .fillMaxSize()
-        .background(LocalColors.current.surface2),
-    contentModifier: Modifier = Modifier
-        .fillMaxSize()
-        .background(LocalColors.current.surface3),
+    panelModifier: Modifier = Modifier.fillMaxSize(),
+    contentModifier: Modifier = Modifier.fillMaxSize(),
     splitterViewParams: SplitterViewParams = SplitterViewParams(),
     panelContent: @Composable () -> Unit,
     mainContent: @Composable () -> Unit,

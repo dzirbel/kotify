@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.panel.debug
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,7 +17,6 @@ import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.mutate
 
 private data class NetworkSettings(
@@ -31,7 +29,7 @@ private val networkSettings = mutableStateOf(NetworkSettings())
 
 @Composable
 fun NetworkTab(scrollState: ScrollState) {
-    Column(Modifier.fillMaxWidth().background(LocalColors.current.surface3).padding(Dimens.space3)) {
+    Column(Modifier.fillMaxWidth().padding(Dimens.space3)) {
         val delay = remember { mutableStateOf(DelayInterceptor.delayMs.toString()) }
         val appliedDelay = remember { mutableStateOf(true) }
 

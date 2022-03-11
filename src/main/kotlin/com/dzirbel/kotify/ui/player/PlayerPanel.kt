@@ -61,6 +61,7 @@ import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
 import kotlinx.coroutines.CoroutineScope
@@ -595,104 +596,107 @@ fun PlayerPanel() {
     Column(Modifier.fillMaxWidth().wrapContentHeight()) {
         Box(Modifier.fillMaxWidth().height(Dimens.divider).background(LocalColors.current.dividerColor))
 
-        val layoutDirection = LocalLayoutDirection.current
+        LocalColors.current.withSurface {
+            val layoutDirection = LocalLayoutDirection.current
 
-        Layout(
-            modifier = Modifier.background(LocalColors.current.surface2).padding(Dimens.space3),
-            content = {
-                Column {
-                    CurrentTrack(
-                        track = state.playbackTrack,
-                        trackIsSaved = state.trackSavedState?.value,
-                        trackRating = state.trackRatingState?.value,
-                        artistsAreSaved = state.artistSavedStates?.mapValues { it.value.value },
-                        albumIsSaved = state.albumSavedState?.value,
-                        presenter = presenter,
-                    )
+            Layout(
+                modifier = Modifier.surfaceBackground().padding(Dimens.space3),
+                content = {
+                    Column {
+                        CurrentTrack(
+                            track = state.playbackTrack,
+                            trackIsSaved = state.trackSavedState?.value,
+                            trackRating = state.trackRatingState?.value,
+                            artistsAreSaved = state.artistSavedStates?.mapValues { it.value.value },
+                            albumIsSaved = state.albumSavedState?.value,
+                            presenter = presenter,
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        PlayerControls(state = state, presenter = presenter)
+
+                        TrackProgress(state = state, presenter = presenter)
+                    }
+
+                    Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.End) {
+                        VolumeControls(state = state, presenter = presenter)
+
+                        DeviceControls(state = state, presenter = presenter)
+                    }
+                },
+                measurePolicy = @Suppress("UnnecessaryParentheses") { measurables, constraints ->
+                    @Suppress("MagicNumber")
+                    check(measurables.size == 3)
+
+                    val totalWidth = constraints.maxWidth
+
+                    val left = measurables[0]
+                    val center = measurables[1]
+                    val right = measurables[2]
+
+                    // base widths according to the weights
+                    val sideWidthBase = (totalWidth * SIDE_CONTROLS_WEIGHT).roundToInt()
+                    val centerWidthBase = (totalWidth * CENTER_CONTROLS_WEIGHT).roundToInt()
+
+                    // width constraint constants
+                    val maxCenterWidth = MAX_TRACK_PROGRESS_WIDTH.roundToPx()
+                    val minLeftWidth = MIN_TRACK_PLAYBACK_WIDTH.roundToPx()
+
+                    // allocate any extra space due to the maxCenterWidth to the sides
+                    val sideExtra = ((totalWidth - maxCenterWidth - (sideWidthBase * 2)) / 2)
+                        .coerceAtLeast(0)
+
+                    // left width calculated first with the highest priority
+                    val leftWidth = (sideWidthBase + sideExtra).coerceAtLeast(minLeftWidth)
+
+                    // right width calculated next with the second priority, giving space to left if necessary
+                    val rightWidth = (sideWidthBase + sideExtra).coerceAtMost(totalWidth - leftWidth).coerceAtLeast(0)
+
+                    // center width calculated last, gives any possible space to left/right
+                    val centerWidth = centerWidthBase
+                        .coerceAtMost(maxCenterWidth)
+                        .coerceAtMost(totalWidth - leftWidth - rightWidth)
+                        .coerceAtLeast(0)
+
+                    val leftPlaceable = left.measure(constraints.copy(minWidth = leftWidth, maxWidth = leftWidth))
+                    val centerPlaceable = center
+                        .measure(constraints.copy(minWidth = centerWidth, maxWidth = centerWidth))
+                    val rightPlaceable = right.measure(constraints.copy(maxWidth = rightWidth))
+
+                    val maxHeight = maxOf(leftPlaceable.height, centerPlaceable.height, rightPlaceable.height)
+
+                    layout(width = totalWidth, height = maxHeight) {
+                        leftPlaceable.place(
+                            x = Alignment.Start.align(
+                                size = leftPlaceable.width,
+                                space = leftWidth,
+                                layoutDirection = layoutDirection
+                            ),
+                            y = Alignment.CenterVertically.align(size = leftPlaceable.height, space = maxHeight)
+                        )
+
+                        centerPlaceable.place(
+                            x = leftWidth + Alignment.CenterHorizontally.align(
+                                size = centerPlaceable.width,
+                                space = centerWidth,
+                                layoutDirection = layoutDirection
+                            ),
+                            y = Alignment.CenterVertically.align(size = centerPlaceable.height, space = maxHeight)
+                        )
+
+                        rightPlaceable.place(
+                            x = leftWidth + centerWidth + Alignment.End.align(
+                                size = rightPlaceable.width,
+                                space = rightWidth,
+                                layoutDirection = layoutDirection
+                            ),
+                            y = Alignment.CenterVertically.align(size = rightPlaceable.height, space = maxHeight)
+                        )
+                    }
                 }
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    PlayerControls(state = state, presenter = presenter)
-
-                    TrackProgress(state = state, presenter = presenter)
-                }
-
-                Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.End) {
-                    VolumeControls(state = state, presenter = presenter)
-
-                    DeviceControls(state = state, presenter = presenter)
-                }
-            },
-            measurePolicy = @Suppress("UnnecessaryParentheses") { measurables, constraints ->
-                @Suppress("MagicNumber")
-                check(measurables.size == 3)
-
-                val totalWidth = constraints.maxWidth
-
-                val left = measurables[0]
-                val center = measurables[1]
-                val right = measurables[2]
-
-                // base widths according to the weights
-                val sideWidthBase = (totalWidth * SIDE_CONTROLS_WEIGHT).roundToInt()
-                val centerWidthBase = (totalWidth * CENTER_CONTROLS_WEIGHT).roundToInt()
-
-                // width constraint constants
-                val maxCenterWidth = MAX_TRACK_PROGRESS_WIDTH.roundToPx()
-                val minLeftWidth = MIN_TRACK_PLAYBACK_WIDTH.roundToPx()
-
-                // allocate any extra space due to the maxCenterWidth to the sides
-                val sideExtra = ((totalWidth - maxCenterWidth - (sideWidthBase * 2)) / 2)
-                    .coerceAtLeast(0)
-
-                // left width calculated first with the highest priority
-                val leftWidth = (sideWidthBase + sideExtra).coerceAtLeast(minLeftWidth)
-
-                // right width calculated next with the second priority, giving space to left if necessary
-                val rightWidth = (sideWidthBase + sideExtra).coerceAtMost(totalWidth - leftWidth).coerceAtLeast(0)
-
-                // center width calculated last, gives any possible space to left/right
-                val centerWidth = centerWidthBase
-                    .coerceAtMost(maxCenterWidth)
-                    .coerceAtMost(totalWidth - leftWidth - rightWidth)
-                    .coerceAtLeast(0)
-
-                val leftPlaceable = left.measure(constraints.copy(minWidth = leftWidth, maxWidth = leftWidth))
-                val centerPlaceable = center.measure(constraints.copy(minWidth = centerWidth, maxWidth = centerWidth))
-                val rightPlaceable = right.measure(constraints.copy(maxWidth = rightWidth))
-
-                val maxHeight = maxOf(leftPlaceable.height, centerPlaceable.height, rightPlaceable.height)
-
-                layout(width = totalWidth, height = maxHeight) {
-                    leftPlaceable.place(
-                        x = Alignment.Start.align(
-                            size = leftPlaceable.width,
-                            space = leftWidth,
-                            layoutDirection = layoutDirection
-                        ),
-                        y = Alignment.CenterVertically.align(size = leftPlaceable.height, space = maxHeight)
-                    )
-
-                    centerPlaceable.place(
-                        x = leftWidth + Alignment.CenterHorizontally.align(
-                            size = centerPlaceable.width,
-                            space = centerWidth,
-                            layoutDirection = layoutDirection
-                        ),
-                        y = Alignment.CenterVertically.align(size = centerPlaceable.height, space = maxHeight)
-                    )
-
-                    rightPlaceable.place(
-                        x = leftWidth + centerWidth + Alignment.End.align(
-                            size = rightPlaceable.width,
-                            space = rightWidth,
-                            layoutDirection = layoutDirection
-                        ),
-                        y = Alignment.CenterVertically.align(size = rightPlaceable.height, space = maxHeight)
-                    )
-                }
-            }
-        )
+            )
+        }
     }
 }
 

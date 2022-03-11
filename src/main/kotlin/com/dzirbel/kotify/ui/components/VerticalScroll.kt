@@ -16,8 +16,12 @@ import androidx.compose.ui.Modifier
  * Adds a simple vertical scrollbar to [content], which is placed in a [Box] with a [VerticalScrollbar] to the right.
  */
 @Composable
-fun VerticalScroll(scrollState: ScrollState = rememberScrollState(0), content: @Composable ColumnScope.() -> Unit) {
-    Box {
+fun VerticalScroll(
+    modifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(0),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Box(modifier) {
         Column(Modifier.verticalScroll(scrollState)) {
             content()
         }

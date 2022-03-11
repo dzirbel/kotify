@@ -1,12 +1,12 @@
 package com.dzirbel.kotify.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Theme
+import com.dzirbel.kotify.ui.theme.surfaceBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.swing.Swing
@@ -43,7 +43,7 @@ fun Any.screenshotTest(
             val window = ImageComposeScene(width = windowWidth, height = windowHeight)
             window.setContent {
                 Theme.apply(colors = colors) {
-                    Box(Modifier.background(colors.surface3)) {
+                    Box(Modifier.surfaceBackground()) {
                         content()
                     }
                 }

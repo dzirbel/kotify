@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.panel.debug
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,7 +15,6 @@ import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatByteSize
 
@@ -30,7 +28,7 @@ private val imageCacheSettings = mutableStateOf(ImageCacheSettings())
 
 @Composable
 fun ImageCacheTab(scrollState: ScrollState) {
-    Column(Modifier.fillMaxWidth().background(LocalColors.current.surface3).padding(Dimens.space3)) {
+    Column(Modifier.fillMaxWidth().padding(Dimens.space3)) {
         val inMemoryCount = SpotifyImageCache.state.inMemoryCount
         val diskCount = SpotifyImageCache.state.diskCount
         val totalDiskSize = SpotifyImageCache.state.totalDiskSize

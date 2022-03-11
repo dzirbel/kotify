@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.surfaceBackground
 import kotlin.math.roundToInt
 
 val DEFAULT_SLIDER_HEIGHT = 4.dp
@@ -121,12 +122,9 @@ fun SeekableSlider(
                 }
         ) {
             // the background of the slider bar, representing the maximum progress
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .clip(roundedCornerShape)
-                    .background(LocalColors.current.surface1)
-            )
+            LocalColors.current.withSurface {
+                Box(Modifier.fillMaxSize().surfaceBackground(roundedCornerShape))
+            }
 
             if (progress != null) {
                 Layout(

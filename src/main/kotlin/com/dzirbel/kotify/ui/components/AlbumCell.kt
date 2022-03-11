@@ -63,8 +63,6 @@ fun AlbumCell(
     }
 }
 
-private const val SMALL_ALBUM_BUTTONS_BACKGROUND_ALPHA = 0.6f
-
 @Composable
 fun SmallAlbumCell(
     album: Album,
@@ -89,7 +87,7 @@ fun SmallAlbumCell(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .background(
-                        color = LocalColors.current.surface2.copy(alpha = SMALL_ALBUM_BUTTONS_BACKGROUND_ALPHA),
+                        color = LocalColors.current.overlay,
                         shape = RoundedCornerShape(size = Dimens.cornerSize),
                     )
                     .padding(Dimens.space1),

@@ -7,6 +7,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.screenshotTest
+import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.surfaceBackground
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 
@@ -21,8 +23,10 @@ internal class SidePanelTest {
                 direction = direction,
                 panelSize = PanelSize(initialSize = FixedOrPercent.Fixed(200.dp)),
                 panelContent = {
-                    Box(Modifier.fillMaxSize()) {
-                        Text("Panel", modifier = Modifier.align(Alignment.Center))
+                    LocalColors.current.withSurface {
+                        Box(Modifier.fillMaxSize().surfaceBackground()) {
+                            Text("Panel", modifier = Modifier.align(Alignment.Center))
+                        }
                     }
                 },
                 mainContent = {
@@ -44,8 +48,10 @@ internal class SidePanelTest {
                 direction = direction,
                 panelSize = PanelSize(initialSize = FixedOrPercent.Percent(0.25f)),
                 panelContent = {
-                    Box(Modifier.fillMaxSize()) {
-                        Text("Panel", modifier = Modifier.align(Alignment.Center))
+                    LocalColors.current.withSurface {
+                        Box(Modifier.fillMaxSize().surfaceBackground()) {
+                            Text("Panel", modifier = Modifier.align(Alignment.Center))
+                        }
                     }
                 },
                 mainContent = {
