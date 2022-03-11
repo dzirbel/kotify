@@ -19,6 +19,12 @@ interface Page {
     fun BoxScope.content(toggleHeader: (Boolean) -> Unit)
 
     /**
+     * Whether this [Page] can render any custom [headerContent]. If false, the header will be shown by default since
+     * the user cannot scroll to reveal it.
+     */
+    fun hasHeaderContent(): Boolean = false
+
+    /**
      * Optional content displayed in the top navigation bar, typically when the user scrolls past an inset header in the
      * page content.
      */

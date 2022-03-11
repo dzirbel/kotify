@@ -51,7 +51,7 @@ fun Root() {
                     mainContent = {
                         Column(Modifier.surfaceBackground()) {
                             val page = pageStack.value.current
-                            val headerVisibleState = remember(page) { MutableTransitionState(false) }
+                            val headerVisibleState = remember(page) { MutableTransitionState(!page.hasHeaderContent()) }
 
                             NavigationPanel(
                                 headerVisibleState = headerVisibleState,

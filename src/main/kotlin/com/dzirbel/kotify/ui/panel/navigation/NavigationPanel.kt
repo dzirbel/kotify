@@ -27,9 +27,10 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.components.ProjectGithubIcon
 import com.dzirbel.kotify.ui.components.ThemeSwitcher
 import com.dzirbel.kotify.ui.pageStack
+import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.theme.animatedSurfaceBackground
 import com.dzirbel.kotify.ui.util.mutate
 
 @Composable
@@ -37,9 +38,9 @@ fun NavigationPanel(
     headerVisibleState: MutableTransitionState<Boolean>,
     headerContent: @Composable RowScope.() -> Unit,
 ) {
-    LocalColors.current.withSurface {
+    LocalColors.current.withSurface(increment = if (headerVisibleState.targetState) Colors.INCREMENT_SMALL else 0) {
         Row(
-            modifier = Modifier.fillMaxWidth().surfaceBackground(),
+            modifier = Modifier.fillMaxWidth().animatedSurfaceBackground(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {

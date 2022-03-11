@@ -12,6 +12,8 @@ object ArtistsPage : Page {
     @Composable
     override fun BoxScope.content(toggleHeader: (Boolean) -> Unit) = Artists(toggleHeader)
 
+    override fun hasHeaderContent() = true
+
     @Composable
     override fun RowScope.headerContent() {
         Text("Artists")

@@ -1,5 +1,9 @@
 package com.dzirbel.kotify.ui.theme
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.LocalScrollbarStyle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.defaultScrollbarStyle
@@ -13,6 +17,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -22,10 +27,21 @@ val LocalColors: ProvidableCompositionLocal<Colors> = compositionLocalOf { Setti
 
 private val LocalSurfaceHeight: ProvidableCompositionLocal<Int> = compositionLocalOf { 0 }
 
-val LocalSurfaceBackground: ProvidableCompositionLocal<Color> = compositionLocalOf { error("uninitialized") }
+private val LocalSurfaceBackground: ProvidableCompositionLocal<Color> = compositionLocalOf { error("uninitialized") }
 
 @Composable
 fun Modifier.surfaceBackground(shape: Shape = RectangleShape) = background(LocalSurfaceBackground.current, shape)
+
+@Composable
+fun Modifier.animatedSurfaceBackground(
+    shape: Shape = RectangleShape,
+    animationSpec: AnimationSpec<Color> = spring(stiffness = Spring.StiffnessMediumLow),
+): Modifier {
+    return composed {
+        val state = animateColorAsState(targetValue = LocalSurfaceBackground.current, animationSpec = animationSpec)
+        background(state.value, shape)
+    }
+}
 
 @Suppress("MagicNumber")
 enum class Colors(
@@ -111,18 +127,14 @@ enum class Colors(
 
     @Composable
     fun withSurface(increment: Int = INCREMENT_SMALL, content: @Composable () -> Unit) {
-        if (increment == 0) {
-            content()
-        } else {
-            val height = LocalSurfaceHeight.current + increment
-            val background = surfaces.getOrNull(height)
-                ?: error("no surface background for height $height")
-            CompositionLocalProvider(
-                LocalSurfaceHeight provides height,
-                LocalSurfaceBackground provides background,
-                content = content
-            )
-        }
+        val height = LocalSurfaceHeight.current + increment
+        val background = surfaces.getOrNull(height)
+            ?: error("no surface background for height $height")
+        CompositionLocalProvider(
+            LocalSurfaceHeight provides height,
+            LocalSurfaceBackground provides background,
+            content = content
+        )
     }
 
     companion object {
