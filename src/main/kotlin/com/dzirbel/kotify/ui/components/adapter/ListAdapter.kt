@@ -226,20 +226,11 @@ class ListAdapter<E> private constructor(
         if (sorts == this.sorts) return this
 
         val sortIndexes = sorts?.let {
-            val sortComparator = sorts.asComparator()
-            val mappedComparator = Comparator<IndexedValue<ElementData<E>>> { o1, o2 ->
-                // TODO wasteful creation of IndexedValue objects
-                sortComparator.compare(
-                    IndexedValue(o1.index, o1.value.element),
-                    IndexedValue(o2.index, o2.value.element),
-                )
-            }
-
             // order by existing sortIndexes to preserve existing order under stable sorting
             // TODO avoid creating extra lists in double mapping?
             (sortIndexes ?: elements.indices)
-                .map { IndexedValue(it, elements[it]) }
-                .sortedWith(mappedComparator)
+                .map { IndexedValue(it, elements[it].element) }
+                .sortedWith(sorts.asComparator())
                 .map { it.index }
         }
 
