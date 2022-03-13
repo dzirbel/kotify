@@ -1,10 +1,13 @@
 package com.dzirbel.kotify.ui.components.adapter
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.theme.Dimens
 
 abstract class Divider<E>(
@@ -27,12 +30,15 @@ abstract class Divider<E>(
     @Composable
     fun standardHeaderContent(divisionHeader: String?) {
         divisionHeader?.let {
-            // TODO add underline
-            Text(
-                text = divisionHeader,
-                style = MaterialTheme.typography.h5,
-                modifier = Modifier.padding(horizontal = Dimens.space4, vertical = Dimens.space2),
-            )
+            Box {
+                Text(
+                    text = divisionHeader,
+                    style = MaterialTheme.typography.h5,
+                    modifier = Modifier.padding(horizontal = Dimens.space4, vertical = Dimens.space2),
+                )
+
+                HorizontalDivider(modifier = Modifier.align(Alignment.BottomCenter))
+            }
         }
     }
 
