@@ -54,7 +54,6 @@ internal class SortOrderTest {
     companion object {
         @JvmStatic
         fun testCompareNullable(): List<CompareNullableCase> {
-            // TODO test descending
             return listOf(
                 CompareNullableCase(first = "a", second = "a", nullsFirst = true, sortOrder = SortOrder.ASCENDING),
                 CompareNullableCase(first = "a", second = "a", nullsFirst = false, sortOrder = SortOrder.ASCENDING),
