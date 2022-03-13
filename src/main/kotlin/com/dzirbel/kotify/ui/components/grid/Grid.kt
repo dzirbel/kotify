@@ -297,39 +297,52 @@ fun <E> Grid(
             val detailInsertPlaceable: Placeable?
             val selectedItemBackgroundPlaceable: Placeable?
 
-            // ensure we have exactly 2 insert measurables; in rare cases if the animation is toggled on or off we can
-            // just 1
+            // ensure we have exactly 2 insert measurables; in rare cases while the animation being toggled on or off we
+            // can have just 1
             if (measurables.size - cellMeasurables.size - (dividerPlaceables?.size ?: 0) == 2) {
-                val insertMeasurables = measurables.subList(
-                    fromIndex = measurables.size - 2,
-                    toIndex = measurables.size,
-                )
-
                 requireNotNull(lastSelectedElementIndex)
                 val selectedElementDivision = elements.divisionOf(lastSelectedElementIndex)
-                selectedElementDivisionIndex = divisions.keys.indexOf(selectedElementDivision)
                 val division = requireNotNull(divisions[selectedElementDivision]) { "null selected element division" }
-                val indexInDivision = division.indexOfFirst { it.index == lastSelectedElementIndex }
-                require(indexInDivision >= 0) { "selected element not found in its division" }
+                val indexInDivision = division
+                    .indexOfFirst { it.index == lastSelectedElementIndex }
+                    .takeIf { it >= 0 }
 
-                selectedElementRowIndex = indexInDivision / cols
-                selectedElementColIndex = indexInDivision % cols
+                // if the element could not be found in its division, it must be filtered out and the insert should be
+                // hidden
+                if (indexInDivision == null) {
+                    selectedElementDivisionIndex = null
+                    selectedElementRowIndex = null
+                    selectedElementColIndex = null
+                    detailInsertPlaceable = null
+                    selectedItemBackgroundPlaceable = null
+                } else {
+                    selectedElementDivisionIndex = divisions.keys.indexOf(selectedElementDivision)
+                    require(indexInDivision >= 0) { "selected element not found in its division" }
 
-                // background highlight on the selected item:
-                // - has extra maxWidth since otherwise during the animation the flared base is clipped
-                // - maxHeight increased by verticalSpacingPx to cover space between the row and the insert
-                // - maxHeight increased by divider size to align better with insert top border
-                selectedItemBackgroundPlaceable = insertMeasurables[0].measure(
-                    constraints.copy(
-                        maxWidth = maxCellWidth + detailInsertCellParams.cornerSize.roundToPx() * 2,
-                        maxHeight = rowHeights[selectedElementDivisionIndex][selectedElementRowIndex] +
-                            (verticalSpacingPx + Dimens.divider.toPx()).roundToInt(),
+                    selectedElementRowIndex = indexInDivision / cols
+                    selectedElementColIndex = indexInDivision % cols
+
+                    val insertMeasurables = measurables.subList(
+                        fromIndex = measurables.size - 2,
+                        toIndex = measurables.size,
                     )
-                )
 
-                detailInsertPlaceable = insertMeasurables[1].measure(constraints)
+                    // background highlight on the selected item:
+                    // - has extra maxWidth since otherwise during the animation the flared base is clipped
+                    // - maxHeight increased by verticalSpacingPx to cover space between the row and the insert
+                    // - maxHeight increased by divider size to align better with insert top border
+                    selectedItemBackgroundPlaceable = insertMeasurables[0].measure(
+                        constraints.copy(
+                            maxWidth = maxCellWidth + detailInsertCellParams.cornerSize.roundToPx() * 2,
+                            maxHeight = rowHeights[selectedElementDivisionIndex][selectedElementRowIndex] +
+                                (verticalSpacingPx + Dimens.divider.toPx()).roundToInt(),
+                        )
+                    )
 
-                totalHeight += detailInsertPlaceable.height + verticalSpacingPx.roundToInt()
+                    detailInsertPlaceable = insertMeasurables[1].measure(constraints)
+
+                    totalHeight += detailInsertPlaceable.height + verticalSpacingPx.roundToInt()
+                }
             } else {
                 selectedElementDivisionIndex = null
                 selectedElementRowIndex = null
