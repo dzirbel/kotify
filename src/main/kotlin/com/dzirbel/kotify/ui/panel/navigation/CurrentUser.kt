@@ -32,7 +32,6 @@ import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 private val CURRENT_USER_DROPDOWN_MAX_WIDTH = 500.dp
 
@@ -44,6 +43,7 @@ private class CurrentUserPresenter(scope: CoroutineScope) : Presenter<User?, Cur
 
     sealed class Event {
         object Load : Event()
+        object SignOut : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -55,6 +55,11 @@ private class CurrentUserPresenter(scope: CoroutineScope) : Presenter<User?, Cur
                 }
 
                 mutateState { user }
+            }
+
+            is Event.SignOut -> {
+                KotifyDatabase.clearSaved()
+                AccessToken.Cache.clear()
             }
         }
     }
@@ -100,13 +105,13 @@ fun CurrentUser() {
             expanded = expandedState.value,
             onDismissRequest = { expandedState.value = false }
         ) {
-            CurrentUserDropdownContent(user = currentUser)
+            CurrentUserDropdownContent(presenter = presenter, user = currentUser)
         }
     }
 }
 
 @Composable
-private fun CurrentUserDropdownContent(user: User?) {
+private fun CurrentUserDropdownContent(presenter: CurrentUserPresenter, user: User?) {
     Column(
         modifier = Modifier.padding(Dimens.space3).widthIn(max = CURRENT_USER_DROPDOWN_MAX_WIDTH),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2)
@@ -134,16 +139,9 @@ private fun CurrentUserDropdownContent(user: User?) {
 
         VerticalSpacer(Dimens.space2)
 
-        val scope = rememberCoroutineScope { Dispatchers.IO }
         Button(
             modifier = Modifier.align(Alignment.CenterHorizontally),
-            onClick = {
-                // TODO move to presenter
-                scope.launch {
-                    KotifyDatabase.clearSaved()
-                    AccessToken.Cache.clear()
-                }
-            },
+            onClick = { presenter.emitAsync(CurrentUserPresenter.Event.SignOut) },
         ) {
             Text("Sign out")
         }
