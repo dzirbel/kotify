@@ -85,9 +85,7 @@ interface RatingRepository {
      * The returned [State] must be the same object between calls for as long as it stays in context (i.e. is not
      * garbage-collected).
      */
-    suspend fun ratingState(id: String, userId: String = requireUserId()): State<Rating?> {
-        return ratingStates(listOf(id), userId)[0]
-    }
+    suspend fun ratingState(id: String, userId: String = requireUserId()): State<Rating?>
 
     /**
      * Returns [State]s reflecting the live rating states of the entities with the given [ids] for the user with the

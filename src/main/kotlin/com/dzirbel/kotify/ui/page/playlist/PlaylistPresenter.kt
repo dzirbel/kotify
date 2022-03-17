@@ -17,6 +17,7 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.ReorderCalculator
 import com.dzirbel.kotify.util.compareInOrder
+import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 
 class PlaylistPresenter(
@@ -85,9 +86,9 @@ class PlaylistPresenter(
 
                 val tracks = playlist.getAllTracks()
                 loadTracksToCache(tracks)
-                val trackRatings = tracks
-                    .map { it.track.cached.id.value }
-                    .associateWith { trackId -> TrackRatingRepository.ratingState(trackId) }
+
+                val trackIds = tracks.map { it.track.cached.id.value }
+                val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
 
                 mutateState {
                     it?.copy(

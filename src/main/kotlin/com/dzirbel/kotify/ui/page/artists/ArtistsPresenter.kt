@@ -83,10 +83,8 @@ class ArtistsPresenter(scope: CoroutineScope) :
                 val artistsById = artists.associateBy { it.id.value }
                 val artistsUpdated = SavedArtistRepository.libraryUpdated()
 
-                val artistRatings = KotifyDatabase.transaction {
-                    artists.associate { artist ->
-                        artist.id.value to artist.trackIds.live.let { TrackRatingRepository.ratingStates(ids = it) }
-                    }
+                val artistRatings = artists.associate { artist ->
+                    artist.id.value to TrackRatingRepository.ratingStates(ids = artist.trackIds.cached)
                 }
 
                 initializeLoadedState {
@@ -160,12 +158,16 @@ class ArtistsPresenter(scope: CoroutineScope) :
                     if (missingArtistIds.isNotEmpty()) {
                         val missingArtists: List<Artist> = fetchArtists(artistIds = missingArtistIds)
                         val missingArtistsById = missingArtists.associateBy { it.id.value }
+                        val missingArtistRatings = missingArtists.associate { artist ->
+                            artist.id.value to TrackRatingRepository.ratingStates(ids = artist.trackIds.cached)
+                        }
 
                         mutateLoadedState {
                             it.copy(
                                 artistsById = it.artistsById.plus(missingArtistsById),
                                 artists = it.artists.plusElements(missingArtists),
                                 savedArtistIds = it.savedArtistIds.plus(event.artistIds),
+                                artistRatings = it.artistRatings.plus(missingArtistRatings),
                             )
                         }
                     } else {
@@ -210,6 +212,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
 
         val imageUrls = KotifyDatabase.transaction {
             artists.mapNotNull { artist ->
+                artist.trackIds.loadToCache()
                 artist.largestImage.live?.url
             }
         }

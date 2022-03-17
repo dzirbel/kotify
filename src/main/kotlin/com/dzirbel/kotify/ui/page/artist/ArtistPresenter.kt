@@ -111,7 +111,10 @@ class ArtistPresenter(
 
                 artistAlbums?.let { albums ->
                     val albumUrls = KotifyDatabase.transaction {
-                        albums.mapNotNull { it.largestImage.live?.url }
+                        albums.mapNotNull {
+                            it.trackIds.loadToCache()
+                            it.largestImage.live?.url
+                        }
                     }
                     SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
                 }
@@ -119,10 +122,8 @@ class ArtistPresenter(
                 val savedAlbumsState = SavedAlbumRepository.libraryState()
 
                 val albumRatings = artistAlbums?.let {
-                    KotifyDatabase.transaction {
-                        artistAlbums.associate { album ->
-                            album.id.value to album.trackIds.live.let { TrackRatingRepository.ratingStates(ids = it) }
-                        }
+                    artistAlbums.associate { album ->
+                        album.id.value to album.trackIds.cached.let { TrackRatingRepository.ratingStates(ids = it) }
                     }
                 }
 

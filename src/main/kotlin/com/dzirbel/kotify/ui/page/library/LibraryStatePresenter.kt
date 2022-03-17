@@ -20,6 +20,7 @@ import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.framework.Presenter
+import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
@@ -112,7 +113,8 @@ class LibraryStatePresenter(scope: CoroutineScope) :
 
                 val ratedTrackIds = TrackRatingRepository.ratedEntities().toList()
                 val ratedTracks = TrackRepository.get(ids = ratedTrackIds)
-                val trackRatings = ratedTrackIds.associateWith { TrackRatingRepository.ratingState(it) }
+
+                val trackRatings = ratedTrackIds.zipToMap(TrackRatingRepository.ratingStates(ids = ratedTrackIds))
 
                 val state = ViewModel(
                     artists = savedArtistIds?.zip(savedArtists!!),

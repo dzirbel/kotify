@@ -152,7 +152,9 @@ object TrackRatingRepository : RatingRepository {
             return existingStates as List<State<Rating?>>
         }
 
-        val missingRatings = lastRatingsOf(ids = missingIndices.map { it.value }, userId = userId)
+        val missingRatings = KotifyDatabase.transaction {
+            lastRatingsOf(ids = missingIndices.map { it.value }, userId = userId)
+        }
 
         val userStates = states.getOrPut(userId) { ConcurrentHashMap() }
         missingIndices.zipEach(missingRatings) { indexedValue, rating ->
