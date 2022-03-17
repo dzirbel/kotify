@@ -284,7 +284,7 @@ class LibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.ClearAllRatings -> {
-                TrackRatingRepository.clearAllRatings()
+                TrackRatingRepository.clearAllRatings(userId = null)
                 mutateState { it?.copy(ratedTracks = emptyList()) }
             }
 

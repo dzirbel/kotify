@@ -133,9 +133,7 @@ object SavedPlaylistRepository : SavedDatabaseRepository<SpotifyPlaylist>(
     savedEntityTable = PlaylistTable.SavedPlaylistsTable,
 ) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
-        val userId = requireNotNull(
-            KotifyDatabase.transaction { UserRepository.getCurrentUserIdCached() }
-        ) { "no logged-in user" }
+        val userId = requireNotNull(UserRepository.currentUserId.cached) { "no logged-in user" }
 
         return ids.mapParallel { id ->
             Spotify.Follow.isFollowingPlaylist(playlistId = id, userIds = listOf(userId))

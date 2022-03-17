@@ -62,25 +62,28 @@ class User(id: EntityID<String>) : SpotifyEntity(id = id, table = UserTable) {
 }
 
 object UserRepository : DatabaseRepository<User, SpotifyUser>(User) {
+    val currentUserId: ReadWriteCachedProperty<String?> = ReadWriteCachedProperty(
+        getter = { UserTable.CurrentUserTable.selectAll().firstOrNull()?.get(UserTable.CurrentUserTable.userId) },
+        setter = { id ->
+            UserTable.CurrentUserTable.deleteAll()
+            UserTable.CurrentUserTable.insert {
+                it[userId] = id
+            }
+        }
+    )
+
     override suspend fun fetch(id: String) = Spotify.UsersProfile.getUser(userId = id)
 
-    fun getCurrentUserIdCached(): String? {
-        return UserTable.CurrentUserTable.selectAll().firstOrNull()?.get(UserTable.CurrentUserTable.userId)
-    }
-
     suspend fun getCurrentUserCached(): User? {
-        return KotifyDatabase.transaction { getCurrentUserIdCached() }
-            ?.let { id -> getCached(id = id) }
+        return currentUserId.cached
+            ?.let { getCached(id = it) }
             ?.takeIf { it.fullUpdatedTime != null }
     }
 
     suspend fun getCurrentUserRemote(): User? {
         val user = Spotify.UsersProfile.getCurrentUser()
         return KotifyDatabase.transaction {
-            UserTable.CurrentUserTable.deleteAll()
-            UserTable.CurrentUserTable.insert {
-                it[userId] = user.id
-            }
+            currentUserId.set(user.id)
             User.from(user)
         }
     }

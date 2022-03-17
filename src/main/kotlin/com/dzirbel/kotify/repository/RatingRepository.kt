@@ -1,13 +1,18 @@
 package com.dzirbel.kotify.repository
 
 import androidx.compose.runtime.State
+import com.dzirbel.kotify.db.model.UserRepository
 import java.time.Instant
 
 /**
  * Wrapper around a singe user-provided rating. To allow changing the rating format in the future, both the current
  * [rating] and the [maxRating] are included, as well as the [rateTime] when the rating was given.
  */
-data class Rating(val rating: Int, val maxRating: Int = DEFAULT_MAX_RATING, val rateTime: Instant = Instant.now()) {
+data class Rating(
+    val rating: Int,
+    val maxRating: Int = DEFAULT_MAX_RATING,
+    val rateTime: Instant = Instant.now(),
+) {
     val ratingPercent: Double
         get() = rating.toDouble() / maxRating
 
@@ -40,51 +45,60 @@ data class Rating(val rating: Int, val maxRating: Int = DEFAULT_MAX_RATING, val 
  * This interface specifies a generic repository for locally-stored rated values, with no remote component.
  */
 interface RatingRepository {
-    /**
-     * Retrieves the most recent [Rating] for the entity with the given [id]. This is the canonical current rating for
-     * the entity.
-     */
-    suspend fun lastRatingOf(id: String): Rating?
+    private fun requireUserId(): String = requireNotNull(UserRepository.currentUserId.cached) { "no user logged in" }
 
     /**
-     * Retrieves the most recent [Rating] for each of the entities with the given [ids].
+     * Retrieves the most recent [Rating] for the entity with the given [id] by the user with the given [userId]. This
+     * is the canonical current rating for the entity.
      */
-    suspend fun lastRatingsOf(ids: List<String>): List<Rating?>
+    suspend fun lastRatingOf(id: String, userId: String = requireUserId()): Rating?
 
     /**
-     * Retrieves the rating history of the entity with the given [id], i.e. all the ratings the user has given it,
-     * ordered by [Rating.rateTime], descending.
+     * Retrieves the most recent [Rating] for each of the entities with the given [ids] by the user with the given
+     * [userId].
      */
-    suspend fun allRatingsOf(id: String): List<Rating>
+    suspend fun lastRatingsOf(ids: List<String>, userId: String = requireUserId()): List<Rating?>
 
     /**
-     * Submits a new user [rating] for the entity with the given [id]; if [rating] is null all user ratings for the
-     * entity are removed.
+     * Retrieves the rating history of the entity with the given [id], i.e. all the ratings the user with the given
+     * [userId] has given it, ordered by [Rating.rateTime], descending.
+     */
+    suspend fun allRatingsOf(id: String, userId: String = requireUserId()): List<Rating>
+
+    /**
+     * Submits a new user [rating] for the entity with the given [id] by the user with the given [userId]; if [rating]
+     * is null all user ratings for the entity are removed.
      *
      * TODO probably retain previous ratings, but add a new "null" rating on top instead of clearing all
      */
-    suspend fun rate(id: String, rating: Rating?)
+    suspend fun rate(id: String, rating: Rating?, userId: String = requireUserId())
 
     /**
-     * Returns the set of entity IDs which have a rating.
+     * Returns the set of entity IDs which have a rating by the user with the given [userId].
      */
-    suspend fun ratedEntities(): Set<String>
+    suspend fun ratedEntities(userId: String = requireUserId()): Set<String>
 
     /**
-     * Returns a [State] reflecting the live rating state of the entity with the given [id].
+     * Returns a [State] reflecting the live rating state of the entity with the given [id] for the user with the given
+     * [userId].
      *
      * The returned [State] must be the same object between calls for as long as it stays in context (i.e. is not
      * garbage-collected).
      */
-    suspend fun ratingState(id: String): State<Rating?> = ratingStates(listOf(id))[0]
+    suspend fun ratingState(id: String, userId: String = requireUserId()): State<Rating?> {
+        return ratingStates(listOf(id), userId)[0]
+    }
 
     /**
-     * Returns [State]s reflecting the live rating states of the entities with the given [ids].
+     * Returns [State]s reflecting the live rating states of the entities with the given [ids] for the user with the
+     * given [userId].
      */
-    suspend fun ratingStates(ids: List<String>): List<State<Rating?>>
+    suspend fun ratingStates(ids: List<String>, userId: String = requireUserId()): List<State<Rating?>>
 
     /**
      * Removes all ratings for all entities.
+     *
+     * If a [userId] is provided, only ratings by that user are cleared.
      */
-    suspend fun clearAllRatings()
+    suspend fun clearAllRatings(userId: String?)
 }

@@ -15,6 +15,7 @@ import com.dzirbel.kotify.db.model.SavedPlaylistRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingTable
 import com.dzirbel.kotify.db.model.TrackTable
+import com.dzirbel.kotify.db.model.UserRepository
 import com.dzirbel.kotify.db.model.UserTable
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -78,6 +79,8 @@ object KotifyDatabase {
             transaction(it) {
                 @Suppress("SpreadOperator")
                 SchemaUtils.createMissingTablesAndColumns(*tables)
+
+                UserRepository.currentUserId.loadToCache()
             }
         }
     }

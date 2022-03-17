@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui
 
 import androidx.compose.runtime.MutableState
+import com.dzirbel.kotify.DatabaseExtension
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
@@ -26,10 +27,12 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 // TODO finish testing
+@ExtendWith(DatabaseExtension::class)
 internal class PlayerPanelPresenterTest {
     private val currentDeviceState: MutableState<SpotifyPlaybackDevice?> = mockk {
         every { value = any() } just Runs

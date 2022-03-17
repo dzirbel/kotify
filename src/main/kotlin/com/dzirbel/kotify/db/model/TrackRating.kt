@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.StringIdTable
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.RatingRepository
 import com.dzirbel.kotify.util.zipEach
@@ -13,12 +14,13 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Max
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
 import java.lang.ref.WeakReference
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -28,12 +30,13 @@ object TrackRatingTable : IntIdTable() {
     val rating: Column<Int> = integer("rating")
     val maxRating: Column<Int> = integer("max_rating")
     val rateTime: Column<Instant> = timestamp("rate_time")
+    val userId: Column<String> = varchar("user_id", StringIdTable.STRING_ID_LENGTH)
 }
 
 // TODO extract to abstract class if we ever need to re-use logic
-// TODO make track ratings user-specific (i.e. save user ID alongside rating and only show ratings by logged-in user)
 object TrackRatingRepository : RatingRepository {
-    private val states = ConcurrentHashMap<String, WeakReference<MutableState<Rating?>>>()
+    // userId -> [trackId -> reference to state of the rating]
+    private val states = ConcurrentHashMap<String, ConcurrentHashMap<String, WeakReference<MutableState<Rating?>>>>()
 
     private fun ResultRow.asRating(): Rating {
         return Rating(
@@ -43,19 +46,21 @@ object TrackRatingRepository : RatingRepository {
         )
     }
 
-    override suspend fun lastRatingOf(id: String): Rating? {
+    override suspend fun lastRatingOf(id: String, userId: String): Rating? {
         return TrackRatingTable
             .select { TrackRatingTable.track eq id }
+            .andWhere { TrackRatingTable.userId eq userId }
             .orderBy(TrackRatingTable.rateTime to SortOrder.DESC)
             .limit(1)
             .firstOrNull()
             ?.asRating()
     }
 
-    override suspend fun lastRatingsOf(ids: List<String>): List<Rating?> {
+    override suspend fun lastRatingsOf(ids: List<String>, userId: String): List<Rating?> {
         // map by ID to ensure returned results are in the same order as the inputs
         val mapById: Map<String, ResultRow> = TrackRatingTable
             .select { TrackRatingTable.track inList ids }
+            .andWhere { TrackRatingTable.userId eq userId }
             .groupBy(TrackRatingTable.track)
             .having {
                 TrackRatingTable.rateTime eq Max(TrackRatingTable.rateTime, TrackRatingTable.rateTime.columnType)
@@ -65,25 +70,27 @@ object TrackRatingRepository : RatingRepository {
         return ids.map { id -> mapById[id]?.asRating() }
     }
 
-    override suspend fun allRatingsOf(id: String): List<Rating> {
+    override suspend fun allRatingsOf(id: String, userId: String): List<Rating> {
         return TrackRatingTable
             .select { TrackRatingTable.track eq id }
+            .andWhere { TrackRatingTable.userId eq userId }
             .orderBy(TrackRatingTable.rateTime to SortOrder.DESC)
             .map { it.asRating() }
     }
 
-    override suspend fun rate(id: String, rating: Rating?) {
+    override suspend fun rate(id: String, rating: Rating?, userId: String) {
         if (rating == null) {
             KotifyDatabase.transaction {
-                TrackRatingTable.deleteWhere { TrackRatingTable.track eq id }
+                TrackRatingTable.deleteWhere { TrackRatingTable.track eq id and (TrackRatingTable.userId eq userId) }
             }
 
-            states[id]?.get()?.value = null
+            states[userId]?.get(id)?.get()?.value = null
         } else {
             val lastRateTime = KotifyDatabase.transaction {
                 val lastRateTime = TrackRatingTable
                     .slice(TrackRatingTable.rateTime)
                     .select { TrackRatingTable.track eq id }
+                    .andWhere { TrackRatingTable.userId eq userId }
                     .orderBy(TrackRatingTable.rateTime to SortOrder.DESC)
                     .limit(1)
                     .firstOrNull()
@@ -94,42 +101,46 @@ object TrackRatingRepository : RatingRepository {
                     it[TrackRatingTable.rating] = rating.rating
                     it[maxRating] = rating.maxRating
                     it[rateTime] = rating.rateTime
+                    it[TrackRatingTable.userId] = userId
                 }
 
                 lastRateTime
             }
 
             if (lastRateTime == null || rating.rateTime >= lastRateTime) {
-                states[id]?.get()?.value = rating
+                states[userId]?.get(id)?.get()?.value = rating
             }
         }
     }
 
-    override suspend fun ratedEntities(): Set<String> {
+    override suspend fun ratedEntities(userId: String): Set<String> {
         return KotifyDatabase.transaction {
             TrackRatingTable
                 .slice(TrackRatingTable.track)
-                .selectAll()
+                .select { TrackRatingTable.userId eq userId }
                 .distinct()
                 .mapTo(mutableSetOf()) { it[TrackRatingTable.track].value }
         }
     }
 
-    override suspend fun ratingState(id: String): State<Rating?> {
-        states[id]?.get()?.let { return it }
+    override suspend fun ratingState(id: String, userId: String): State<Rating?> {
+        states[userId]?.get(id)?.get()?.let { return it }
 
-        val rating = lastRatingOf(id = id)
+        val rating = KotifyDatabase.transaction { lastRatingOf(id = id, userId = userId) }
         val state = mutableStateOf(rating)
-        states[id] = WeakReference(state)
+
+        val userStates = states.getOrPut(userId) { ConcurrentHashMap() }
+        userStates[id] = WeakReference(state)
+
         return state
     }
 
     // TODO attempt to share logic from Repository.get()?
-    override suspend fun ratingStates(ids: List<String>): List<State<Rating?>> {
+    override suspend fun ratingStates(ids: List<String>, userId: String): List<State<Rating?>> {
         val missingIndices = ArrayList<IndexedValue<String>>()
 
         val existingStates = ids.mapIndexedTo(ArrayList(ids.size)) { index, id ->
-            val state = states[id]?.get()
+            val state = states[userId]?.get(id)?.get()
             if (state == null) {
                 missingIndices.add(IndexedValue(index = index, value = id))
             }
@@ -142,11 +153,12 @@ object TrackRatingRepository : RatingRepository {
             return existingStates as List<State<Rating?>>
         }
 
-        val missingRatings = lastRatingsOf(ids = missingIndices.map { it.value })
+        val missingRatings = lastRatingsOf(ids = missingIndices.map { it.value }, userId = userId)
 
+        val userStates = states.getOrPut(userId) { ConcurrentHashMap() }
         missingIndices.zipEach(missingRatings) { indexedValue, rating ->
             val state = mutableStateOf(rating)
-            states[indexedValue.value] = WeakReference(state)
+            userStates[indexedValue.value] = WeakReference(state)
             existingStates[indexedValue.index] = state
         }
 
@@ -154,13 +166,25 @@ object TrackRatingRepository : RatingRepository {
         return existingStates as List<State<Rating?>>
     }
 
-    override suspend fun clearAllRatings() {
+    override suspend fun clearAllRatings(userId: String?) {
         KotifyDatabase.transaction {
-            TrackRatingTable.deleteAll()
+            if (userId == null) {
+                TrackRatingTable.deleteAll()
+            } else {
+                TrackRatingTable.deleteWhere { TrackRatingTable.userId eq userId }
+            }
         }
 
-        for (state in states.values) {
-            state.get()?.value = null
+        if (userId == null) {
+            for (userStates in states.values) {
+                for (state in userStates.values) {
+                    state.get()?.value = null
+                }
+            }
+        } else {
+            for (state in states[userId]?.values.orEmpty()) {
+                state.get()?.value = null
+            }
         }
     }
 }
