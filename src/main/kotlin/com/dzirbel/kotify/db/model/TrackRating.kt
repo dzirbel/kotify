@@ -33,7 +33,6 @@ object TrackRatingTable : IntIdTable() {
     val userId: Column<String> = varchar("user_id", StringIdTable.STRING_ID_LENGTH)
 }
 
-// TODO extract to abstract class if we ever need to re-use logic
 object TrackRatingRepository : RatingRepository {
     // userId -> [trackId -> reference to state of the rating]
     private val states = ConcurrentHashMap<String, ConcurrentHashMap<String, WeakReference<MutableState<Rating?>>>>()

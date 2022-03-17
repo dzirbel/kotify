@@ -127,7 +127,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             getLibraryRemote()
         }
 
-        return libraryState // TODO return read-only copy?
+        return libraryState
     }
 
     /**

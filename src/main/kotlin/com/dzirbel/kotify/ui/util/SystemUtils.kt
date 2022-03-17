@@ -44,6 +44,5 @@ fun openInBrowser(url: HttpUrl): Boolean = openInBrowser(url.toUri())
  * Attempts to open the given [uri] in the user's browser, returning true if successful or false otherwise.
  */
 fun openInBrowser(uri: URI): Boolean {
-    // TODO improve error handling, try other ways, etc
     return runCatching { Desktop.getDesktop().browse(uri) }.isSuccess
 }
