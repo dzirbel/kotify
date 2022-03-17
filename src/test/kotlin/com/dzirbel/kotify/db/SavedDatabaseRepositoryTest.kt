@@ -1,8 +1,16 @@
 package com.dzirbel.kotify.db
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isBetween
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
+import com.dzirbel.kotify.containsExactlyElementsOfInAnyOrder
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
-import com.google.common.collect.Range
-import com.google.common.truth.Truth.assertThat
+import com.dzirbel.kotify.isSameInstanceAs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -124,7 +132,7 @@ internal class SavedDatabaseRepositoryTest {
             TestSavedRepository.assertCalls(fetchedIds = listOf(listOf("saved-1"), listOf("unsaved")))
 
             val saved3 = TestSavedRepository.isSavedCached(ids = listOf("saved-1", "saved-2", "unsaved"))
-            assertThat(saved3).containsExactly(true, null, false).inOrder()
+            assertThat(saved3).containsExactly(true, null, false)
 
             TestSavedRepository.assertCalls(fetchedIds = listOf(listOf("saved-1"), listOf("unsaved")))
         }
@@ -156,7 +164,7 @@ internal class SavedDatabaseRepositoryTest {
                     listOf("saved-2") to false,
                 ),
             )
-            assertThat(TestSavedRepository.isSavedCached(id = "saved-2")).isFalse()
+            assertThat(TestSavedRepository.isSavedCached(id = "saved-2")).isNotNull().isFalse()
         }
     }
 
@@ -167,27 +175,27 @@ internal class SavedDatabaseRepositoryTest {
             val library = TestSavedRepository.getLibrary()
             val end = Instant.now().truncatedTo(ChronoUnit.MILLIS)
 
-            assertThat(library).containsExactlyElementsIn(remoteLibrary)
-            assertThat(TestSavedRepository.libraryUpdated()).isIn(Range.closed(start, end))
+            assertThat(library).containsExactlyElementsOfInAnyOrder(remoteLibrary)
+            assertThat(TestSavedRepository.libraryUpdated()).isNotNull().isBetween(start, end)
 
             remoteLibrary.forEach { id ->
-                assertThat(TestSavedRepository.isSavedCached(id = id)).isTrue()
+                assertThat(TestSavedRepository.isSavedCached(id = id)).isNotNull().isTrue()
             }
-            assertThat(TestSavedRepository.isSavedCached(id = "unsaved")).isFalse()
+            assertThat(TestSavedRepository.isSavedCached(id = "unsaved")).isNotNull().isFalse()
 
             TestSavedRepository.assertCalls(libraryFetches = 1, fromIds = remoteLibrary)
 
             val cachedLibrary = TestSavedRepository.getLibraryCached()
 
-            assertThat(cachedLibrary).containsExactlyElementsIn(remoteLibrary)
-            assertThat(TestSavedRepository.libraryUpdated()).isIn(Range.closed(start, end))
+            assertThat(cachedLibrary).isNotNull().containsExactlyElementsOfInAnyOrder(remoteLibrary)
+            assertThat(TestSavedRepository.libraryUpdated()).isNotNull().isBetween(start, end)
 
             TestSavedRepository.assertCalls(libraryFetches = 1, fromIds = remoteLibrary)
 
             val cachedLibrary2 = TestSavedRepository.getLibrary()
 
-            assertThat(cachedLibrary2).containsExactlyElementsIn(remoteLibrary)
-            assertThat(TestSavedRepository.libraryUpdated()).isIn(Range.closed(start, end))
+            assertThat(cachedLibrary2).containsExactlyElementsOfInAnyOrder(remoteLibrary)
+            assertThat(TestSavedRepository.libraryUpdated()).isNotNull().isBetween(start, end)
 
             TestSavedRepository.assertCalls(libraryFetches = 1, fromIds = remoteLibrary)
         }
@@ -197,7 +205,7 @@ internal class SavedDatabaseRepositoryTest {
     fun testInvalidateLibrary() {
         runTest {
             val library = TestSavedRepository.getLibraryRemote()
-            assertThat(library).containsExactlyElementsIn(remoteLibrary)
+            assertThat(library).containsExactlyElementsOfInAnyOrder(remoteLibrary)
 
             TestSavedRepository.invalidateLibrary()
 
@@ -206,7 +214,7 @@ internal class SavedDatabaseRepositoryTest {
             assertThat(TestSavedRepository.libraryUpdated()).isNull()
 
             remoteLibrary.forEach { id ->
-                assertThat(TestSavedRepository.isSavedCached(id = id)).isTrue()
+                assertThat(TestSavedRepository.isSavedCached(id = id)).isNotNull().isTrue()
             }
             assertThat(TestSavedRepository.isSavedCached(id = "unsaved")).isNull()
         }
@@ -216,20 +224,23 @@ internal class SavedDatabaseRepositoryTest {
     fun testLibraryChanged() {
         runTest {
             val library = TestSavedRepository.getLibraryRemote()
-            assertThat(library).containsExactlyElementsIn(remoteLibrary)
+            assertThat(library).containsExactlyElementsOfInAnyOrder(remoteLibrary)
 
             TestSavedRepository.save(id = "saved-x")
             assertThat(TestSavedRepository.getLibraryCached())
-                .containsExactlyElementsIn(remoteLibrary.plus("saved-x"))
+                .isNotNull()
+                .containsExactlyElementsOfInAnyOrder(remoteLibrary.plus("saved-x"))
 
             TestSavedRepository.unsave(id = "saved-1")
             assertThat(TestSavedRepository.getLibraryCached())
-                .containsExactlyElementsIn(remoteLibrary.plus("saved-x").minus("saved-1"))
+                .isNotNull()
+                .containsExactlyElementsOfInAnyOrder(remoteLibrary.plus("saved-x").minus("saved-1"))
 
             TestSavedRepository.savedOverrides["saved-y"] = true
             TestSavedRepository.isSavedRemote(id = "saved-y")
             assertThat(TestSavedRepository.getLibraryCached())
-                .containsExactlyElementsIn(remoteLibrary.plus("saved-x").minus("saved-1").plus("saved-y"))
+                .isNotNull()
+                .containsExactlyElementsOfInAnyOrder(remoteLibrary.plus("saved-x").minus("saved-1").plus("saved-y"))
         }
     }
 
@@ -240,20 +251,20 @@ internal class SavedDatabaseRepositoryTest {
             assertThat(state.value).isNull()
 
             TestSavedRepository.setSaved(id = "saved-1", false)
-            assertThat(state.value).isFalse()
+            assertThat(state.value).isNotNull().isFalse()
 
             TestSavedRepository.savedOverrides["saved-1"] = true
             TestSavedRepository.isSavedRemote(id = "saved-1")
-            assertThat(state.value).isTrue()
+            assertThat(state.value).isNotNull().isTrue()
 
             val state2 = TestSavedRepository.savedStateOf(id = "saved-2", fetchIfUnknown = false)
             assertThat(state2.value).isNull()
 
             TestSavedRepository.getLibrary()
-            assertThat(state2.value).isTrue()
+            assertThat(state2.value).isNotNull().isTrue()
 
             val state3 = TestSavedRepository.savedStateOf(id = "saved-3", fetchIfUnknown = false)
-            assertThat(state3.value).isTrue()
+            assertThat(state3.value).isNotNull().isTrue()
         }
     }
 
@@ -261,11 +272,11 @@ internal class SavedDatabaseRepositoryTest {
     fun testStateFetchIfUnknown() {
         runTest {
             val state1 = TestSavedRepository.savedStateOf(id = "saved-1", fetchIfUnknown = true)
-            assertThat(state1.value).isTrue()
+            assertThat(state1.value).isNotNull().isTrue()
             TestSavedRepository.assertCalls(fetchedIds = listOf(listOf("saved-1")))
 
             val state2 = TestSavedRepository.savedStateOf(id = "unsaved", fetchIfUnknown = true)
-            assertThat(state2.value).isFalse()
+            assertThat(state2.value).isNotNull().isFalse()
             TestSavedRepository.assertCalls(fetchedIds = listOf(listOf("saved-1"), listOf("unsaved")))
 
             val state3 = TestSavedRepository.savedStateOf(id = "saved-1")
@@ -277,8 +288,8 @@ internal class SavedDatabaseRepositoryTest {
             TestSavedRepository.assertCalls(fetchedIds = listOf(listOf("saved-1"), listOf("unsaved")))
 
             val state5 = TestSavedRepository.savedStateOf(id = "saved-2", fetchIfUnknown = true)
-            assertThat(state5.value).isTrue()
-            assertThat(state4.value).isTrue()
+            assertThat(state5.value).isNotNull().isTrue()
+            assertThat(state4.value).isNotNull().isTrue()
             assertThat(state5).isSameInstanceAs(state4)
             TestSavedRepository.assertCalls(
                 fetchedIds = listOf(listOf("saved-1"), listOf("unsaved"), listOf("saved-2"))

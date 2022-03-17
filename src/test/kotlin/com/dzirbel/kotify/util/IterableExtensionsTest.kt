@@ -1,6 +1,9 @@
 package com.dzirbel.kotify.util
 
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
+import com.dzirbel.kotify.containsExactly
 import org.junit.jupiter.api.Test
 
 class IterableExtensionsTest {
@@ -11,22 +14,18 @@ class IterableExtensionsTest {
             result.add(Pair(a, b))
         }
 
-        assertThat(result)
-            .containsExactly(Pair(1, 8), Pair(2, 7), Pair(3, 6))
-            .inOrder()
+        assertThat(result).containsExactly(Pair(1, 8), Pair(2, 7), Pair(3, 6))
     }
 
     @Test
     fun zipToMap() {
         val map = listOf(1, 1, 2, 2, 3, 4, 5).zipToMap(listOf("a", "b", "c", "d", "e", "f"))
 
-        assertThat(map).containsExactlyEntriesIn(
-            mapOf(
-                1 to "b",
-                2 to "d",
-                3 to "e",
-                4 to "f",
-            )
+        assertThat(map).containsExactly(
+            1 to "b",
+            2 to "d",
+            3 to "e",
+            4 to "f",
         )
     }
 

@@ -1,6 +1,10 @@
 package com.dzirbel.kotify.network.oauth
 
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.isBetween
+import assertk.assertions.isEqualTo
+import assertk.assertions.length
+import assertk.assertions.matches
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -13,8 +17,8 @@ internal class CodeChallengeTest {
         val random = SecureRandom(seed.toByteArray())
         val challenge = CodeChallenge.generate(random)
 
-        assertThat(challenge.verifier.length).isIn(VERIFIER_MIN_LENGTH..VERIFIER_MAX_LENGTH)
-        assertThat(challenge.verifier).doesNotContainMatch("""[^\w\d-]""".toRegex().pattern)
+        assertThat(challenge.verifier).length().isBetween(VERIFIER_MIN_LENGTH, VERIFIER_MAX_LENGTH)
+        assertThat(challenge.verifier).matches("""[\w\d-]+""".toRegex())
     }
 
     @RepeatedTest(value = 3)

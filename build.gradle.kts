@@ -49,14 +49,14 @@ dependencies {
     testRuntimeOnly(deps.junit5.vintage.engine)
     testImplementation(deps.compose.test.junit4)
 
-    testImplementation(deps.truth)
+    testImplementation(deps.assertk)
     testImplementation(deps.mockk)
 
+    testFixturesImplementation(deps.assertk)
     testFixturesImplementation(compose.desktop.currentOs)
     testFixturesImplementation(deps.kotlinx.serialization) // TODO necessary for the opt-in
     testFixturesImplementation(deps.okhttp)
     testFixturesImplementation(deps.coroutines.core)
-    testFixturesImplementation(deps.truth)
 
     detektPlugins(deps.detekt.formatting)
 }

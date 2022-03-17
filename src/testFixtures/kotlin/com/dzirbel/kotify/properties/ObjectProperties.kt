@@ -1,8 +1,9 @@
 package com.dzirbel.kotify.properties
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.isNullIf
 import com.dzirbel.kotify.network.model.SpotifyObject
-import com.google.common.truth.Truth.assertThat
 
 abstract class ObjectProperties(
     private val type: String,

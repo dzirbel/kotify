@@ -1,8 +1,12 @@
 package com.dzirbel.kotify.network
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEmpty
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
-import com.google.common.truth.Truth.assertThat
+import com.dzirbel.kotify.containsExactlyElementsOf
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -17,7 +21,7 @@ class SpotifyFollowTest {
             Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.followingArtists.map { it.first })
         }
 
-        assertThat(followedArtists).isEqualTo(Fixtures.followingArtists.map { it.second })
+        assertThat(followedArtists).containsExactlyElementsOf(Fixtures.followingArtists.map { it.second })
     }
 
     @Test
@@ -26,7 +30,7 @@ class SpotifyFollowTest {
             Spotify.Follow.isFollowing(type = "user", ids = Fixtures.followingUsers.map { it.first })
         }
 
-        assertThat(followedUsers).isEqualTo(Fixtures.followingUsers.map { it.second })
+        assertThat(followedUsers).containsExactlyElementsOf(Fixtures.followingUsers.map { it.second })
     }
 
     @ParameterizedTest
@@ -38,7 +42,7 @@ class SpotifyFollowTest {
             Spotify.Follow.isFollowingPlaylist(playlistId = playlistId, userIds = followersList.map { it.first })
         }
 
-        assertThat(followingState).isEqualTo(followersList.map { it.second })
+        assertThat(followingState).containsExactlyElementsOf(followersList.map { it.second })
     }
 
     @Test
@@ -58,20 +62,17 @@ class SpotifyFollowTest {
     @Test
     fun followAndUnfollowArtist() {
         assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
-            .containsExactlyElementsIn(Fixtures.testFollowingArtists.map { false })
-            .inOrder()
+            .containsExactlyElementsOf(Fixtures.testFollowingArtists.map { false })
 
         runBlocking { Spotify.Follow.follow(type = "artist", ids = Fixtures.testFollowingArtists) }
 
         assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
-            .containsExactlyElementsIn(Fixtures.testFollowingArtists.map { true })
-            .inOrder()
+            .containsExactlyElementsOf(Fixtures.testFollowingArtists.map { true })
 
         runBlocking { Spotify.Follow.unfollow(type = "artist", ids = Fixtures.testFollowingArtists) }
 
         assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
-            .containsExactlyElementsIn(Fixtures.testFollowingArtists.map { false })
-            .inOrder()
+            .containsExactlyElementsOf(Fixtures.testFollowingArtists.map { false })
     }
 
     @Test

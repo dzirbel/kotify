@@ -1,9 +1,13 @@
 package com.dzirbel.kotify.db.model
 
+import assertk.assertThat
+import assertk.assertions.isBetween
+import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.dzirbel.kotify.DatabaseExtension
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.google.common.collect.Range
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -33,7 +37,8 @@ internal class GlobalUpdateTimesRepositoryTest {
             val end = Instant.now().truncatedTo(ChronoUnit.MILLIS)
 
             assertThat(KotifyDatabase.transaction { GlobalUpdateTimesRepository.updated(key = key) })
-                .isIn(Range.closed(start, end))
+                .isNotNull()
+                .isBetween(start, end)
             assertThat(KotifyDatabase.transaction { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) })
                 .isTrue()
 
@@ -42,7 +47,8 @@ internal class GlobalUpdateTimesRepositoryTest {
             val end2 = Instant.now().truncatedTo(ChronoUnit.MILLIS)
 
             assertThat(KotifyDatabase.transaction { GlobalUpdateTimesRepository.updated(key = key) })
-                .isIn(Range.closed(start2, end2))
+                .isNotNull()
+                .isBetween(start2, end2)
             assertThat(KotifyDatabase.transaction { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) })
                 .isTrue()
         }
@@ -58,7 +64,8 @@ internal class GlobalUpdateTimesRepositoryTest {
             val end = Instant.now().truncatedTo(ChronoUnit.MILLIS)
 
             assertThat(KotifyDatabase.transaction { GlobalUpdateTimesRepository.updated(key = key) })
-                .isIn(Range.closed(start, end))
+                .isNotNull()
+                .isBetween(start, end)
             assertThat(KotifyDatabase.transaction { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) })
                 .isTrue()
 

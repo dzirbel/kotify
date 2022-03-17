@@ -1,8 +1,10 @@
 package com.dzirbel.kotify.properties
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import com.dzirbel.kotify.network.model.SpotifySavedShow
 import com.dzirbel.kotify.network.model.SpotifyShow
-import com.google.common.truth.Truth.assertThat
 
 data class ShowProperties(
     override val id: String,

@@ -2,8 +2,14 @@ package com.dzirbel.kotify.cache
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asSkiaBitmap
+import assertk.assertThat
+import assertk.assertions.hasSize
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import com.dzirbel.kotify.MockRequestInterceptor
-import com.google.common.truth.Truth.assertThat
+import com.dzirbel.kotify.isNotSameInstanceAs
+import com.dzirbel.kotify.isSameInstanceAs
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -123,7 +129,9 @@ internal class SpotifyImageCacheTest {
 
         assertThat(image2).isNotNull()
         assertThat(image2).isNotSameInstanceAs(image1)
-        assertThat(image2!!.asSkiaBitmap().readPixels()).isEqualTo(image1!!.asSkiaBitmap().readPixels())
+        assertThat(image2!!.asSkiaBitmap().readPixels())
+            .isNotNull()
+            .isEqualTo(image1!!.asSkiaBitmap().readPixels()!!)
         assertThat(interceptor.requests).hasSize(1)
         assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(1)
     }

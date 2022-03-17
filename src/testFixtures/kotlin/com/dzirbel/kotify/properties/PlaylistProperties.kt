@@ -1,10 +1,11 @@
 package com.dzirbel.kotify.properties
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 
 data class PlaylistProperties(

@@ -1,12 +1,14 @@
 package com.dzirbel.kotify.network
 
+import assertk.assertThat
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEmpty
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
 import com.dzirbel.kotify.properties.ArtistProperties
 import com.dzirbel.kotify.zipWithBy
-import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -57,16 +59,12 @@ internal class SpotifyArtistsTest {
             expectedIds
                 .minus(actualIds)
                 .map { id -> Pair(id, idToName[id]) }
-                .let {
-                    assertWithMessage("missing expected albums: $it").that(it).isEmpty()
-                }
+                .let { assertThat(it).isEmpty() }
 
             actualIds
                 .minus(expectedIds)
                 .map { id -> Pair(id, idToName[id]) }
-                .let {
-                    assertWithMessage("received unexpected albums: $it").that(it).isEmpty()
-                }
+                .let { assertThat(it).isEmpty() }
         }
 
         albums.zipWithBy(artistProperties.albums) { album, albumProperties -> album.id == albumProperties.id }

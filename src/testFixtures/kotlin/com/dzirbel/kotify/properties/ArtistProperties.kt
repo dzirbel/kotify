@@ -1,8 +1,12 @@
 package com.dzirbel.kotify.properties
 
+import assertk.assertThat
+import assertk.assertions.isBetween
+import assertk.assertions.isGreaterThanOrEqualTo
+import assertk.assertions.isNotEmpty
+import com.dzirbel.kotify.containsAllElementsOf
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyArtist
-import com.google.common.truth.Truth.assertThat
 
 data class ArtistProperties(
     override val id: String,
@@ -14,10 +18,10 @@ data class ArtistProperties(
         super.check(artist)
 
         if (artist is FullSpotifyArtist) {
-            assertThat(artist.followers.total).isAtLeast(0)
-            assertThat(artist.genres).containsAtLeastElementsIn(genres)
+            assertThat(artist.followers.total).isGreaterThanOrEqualTo(0)
+            assertThat(artist.genres).containsAllElementsOf(genres)
             assertThat(artist.images).isNotEmpty()
-            assertThat(artist.popularity).isIn(0..100)
+            assertThat(artist.popularity).isBetween(0, 100)
         }
     }
 }

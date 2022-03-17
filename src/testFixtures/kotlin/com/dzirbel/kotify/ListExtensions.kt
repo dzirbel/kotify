@@ -1,6 +1,7 @@
 package com.dzirbel.kotify
 
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.hasSize
 
 /**
  * [zip]s this [List] with [other], pairing values one-to-one when [matcher] is true.

@@ -1,10 +1,16 @@
 package com.dzirbel.kotify.network
 
+import assertk.assertThat
+import assertk.assertions.hasSize
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isGreaterThan
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isNotNull
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
 import com.dzirbel.kotify.properties.PlaylistProperties
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -50,7 +56,7 @@ class SpotifyPlaylistsTest {
 
         assertThat(playlist.id).isNotEmpty()
         assertThat(playlist.name).isEqualTo(name)
-        assertThat(playlist.public).isEqualTo(false)
+        assertThat(playlist.public).isNotNull().isFalse()
         assertThat(playlist.owner.id).isEqualTo(Fixtures.userId)
 
         val updatedName = "Test Playlist v2 ${System.currentTimeMillis()}"
@@ -148,8 +154,8 @@ class SpotifyPlaylistsTest {
             assertThat(images).isNotEmpty()
             images.forEach { image ->
                 assertThat(image.url).isNotEmpty()
-                assertThat(image.width).isGreaterThan(0)
-                assertThat(image.height).isGreaterThan(0)
+                assertThat(image.width).isNotNull().isGreaterThan(0)
+                assertThat(image.height).isNotNull().isGreaterThan(0)
             }
         }
     }
@@ -175,7 +181,7 @@ class SpotifyPlaylistsTest {
 
         // note: the downloaded image is not identical to the uploaded one due to resizing
         assertThat(response.headers["Content-Type"]).isEqualTo("image/jpeg")
-        assertThat(response.body?.bytes()).isNotEmpty()
+        assertThat(response.body?.bytes()).isNotNull().isNotEmpty()
     }
 
     @ParameterizedTest

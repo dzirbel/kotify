@@ -1,6 +1,8 @@
 package com.dzirbel.kotify.network.model
 
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
 import org.junit.jupiter.api.Test
 
 internal class PageableTest {

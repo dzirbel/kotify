@@ -1,11 +1,17 @@
 package com.dzirbel.kotify.properties
 
+import assertk.assertThat
+import assertk.assertions.containsAll
+import assertk.assertions.hasSize
+import assertk.assertions.isBetween
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
-import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.runBlocking
 
 data class AlbumProperties(
@@ -19,18 +25,18 @@ data class AlbumProperties(
     fun check(album: SpotifyAlbum) {
         super.check(album)
 
-        albumType?.let { assertWithMessage("incorrect album type for $name").that(album.albumType).isEqualTo(it) }
+        albumType?.let { assertThat(album.albumType).isEqualTo(it) }
         assertThat(album.artists).isNotEmpty()
         assertThat(album.availableMarkets).isNotNull()
         assertThat(album.images).isNotEmpty()
         assertThat(album.releaseDate).isNotNull()
         assertThat(album.releaseDatePrecision).isNotNull()
         assertThat(album.restrictions).isNull()
-        totalTracks?.let { assertWithMessage("incorrect totalTracks for $name").that(album.totalTracks).isEqualTo(it) }
+        totalTracks?.let { assertThat(album.totalTracks).isEqualTo(it) }
 
         if (album is FullSpotifyAlbum) {
-            assertThat(album.genres).containsAtLeastElementsIn(genres)
-            assertThat(album.popularity).isIn(0..100)
+            assertThat(album.genres).containsAll(genres)
+            assertThat(album.popularity).isBetween(0, 100)
             assertThat(album.tracks.items).isNotEmpty()
             totalTracks?.let {
                 assertThat(album.tracks.total).isEqualTo(totalTracks)

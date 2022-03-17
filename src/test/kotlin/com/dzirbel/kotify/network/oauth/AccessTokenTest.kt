@@ -1,11 +1,21 @@
 package com.dzirbel.kotify.network.oauth
 
+import assertk.Assert
+import assertk.assertThat
+import assertk.assertions.hasSize
+import assertk.assertions.isBetween
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isGreaterThan
+import assertk.assertions.isNotEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.dzirbel.kotify.MockRequestInterceptor
+import com.dzirbel.kotify.isNotSameInstanceAs
+import com.dzirbel.kotify.isSameInstanceAs
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.withSpotifyConfiguration
-import com.google.common.io.Files
-import com.google.common.truth.BooleanSubject
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -31,7 +41,7 @@ internal class AccessTokenTest {
 
     @Test
     fun testIsExpired() {
-        fun assertIsExpired(receivedDeltaMs: Long, expiresInS: Long): BooleanSubject {
+        fun assertIsExpired(receivedDeltaMs: Long, expiresInS: Long): Assert<Boolean> {
             return assertThat(
                 AccessToken(
                     accessToken = "",
@@ -130,7 +140,7 @@ internal class AccessTokenTest {
         assertThat(accessToken.accessToken).isEqualTo("abc")
         assertThat(accessToken.tokenType).isEqualTo("def")
         assertThat(accessToken.expiresIn).isEqualTo(30)
-        assertThat(accessToken.received).isIn(before..after)
+        assertThat(accessToken.received).isBetween(before, after)
     }
 
     @Test
@@ -306,7 +316,7 @@ internal class AccessTokenTest {
         fun before() {
             if (AccessToken.Cache.file.exists()) {
                 println("Moving ${AccessToken.Cache.file} to temp file $tempFile")
-                Files.move(AccessToken.Cache.file, tempFile)
+                AccessToken.Cache.file.renameTo(tempFile)
                 AccessToken.Cache.log = false
             } else {
                 println("${AccessToken.Cache.file} does not exist; skipping move to temp file")
@@ -319,7 +329,7 @@ internal class AccessTokenTest {
         fun after() {
             if (tempFile.exists()) {
                 println("Restoring ${AccessToken.Cache.file} from temp file $tempFile")
-                Files.move(tempFile, AccessToken.Cache.file)
+                tempFile.renameTo(AccessToken.Cache.file)
                 AccessToken.Cache.log = true
             } else {
                 println("Temp file $tempFile does not exist; skipping restore to cache file")

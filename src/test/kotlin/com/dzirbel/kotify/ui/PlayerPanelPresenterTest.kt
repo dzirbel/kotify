@@ -1,6 +1,8 @@
 package com.dzirbel.kotify.ui
 
 import androidx.compose.runtime.MutableState
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.DatabaseExtension
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
@@ -12,7 +14,6 @@ import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.player.PlayerPanelPresenter
-import com.google.common.truth.Truth.assertThat
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify

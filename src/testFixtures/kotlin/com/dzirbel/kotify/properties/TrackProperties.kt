@@ -1,9 +1,13 @@
 package com.dzirbel.kotify.properties
 
+import assertk.assertThat
+import assertk.assertions.containsExactlyInAnyOrder
+import assertk.assertions.isEqualTo
+import assertk.assertions.isGreaterThanOrEqualTo
+import assertk.assertions.isNotNull
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.SpotifySavedTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
-import com.google.common.truth.Truth.assertThat
 
 data class TrackProperties(
     override val id: String?,
@@ -19,10 +23,10 @@ data class TrackProperties(
     fun check(track: SpotifyTrack) {
         super.check(track)
 
-        assertThat(track.artists.map { it.name }).containsExactlyElementsIn(artistNames)
+        assertThat(track.artists.map { it.name }).containsExactlyInAnyOrder(artistNames)
         assertThat(track.trackNumber).isEqualTo(trackNumber)
         assertThat(track.discNumber).isEqualTo(discNumber)
-        assertThat(track.durationMs).isAtLeast(0)
+        assertThat(track.durationMs).isGreaterThanOrEqualTo(0)
         assertThat(track.explicit).isEqualTo(explicit)
         assertThat(track.isLocal).isEqualTo(isLocal)
         assertThat(track.externalUrls).isNotNull()

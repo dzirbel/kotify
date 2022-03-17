@@ -1,6 +1,8 @@
 package com.dzirbel.kotify.ui.components.adapter
 
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import com.dzirbel.kotify.containsExactly
 import org.junit.jupiter.api.Test
 
 internal class ListAdapterTest {
@@ -29,8 +31,7 @@ internal class ListAdapterTest {
     fun testPlainList() {
         val elements = ListAdapter.from(list)
 
-        assertThat(elements.divisions)
-            .isEqualTo(mapOf(null to list.withIndex().toList()))
+        assertThat(elements.divisions).isEqualTo(mapOf(null to list.withIndex().toList()))
         assertThat(elements.size).isEqualTo(list.size)
 
         list.forEachIndexed { index, element ->
@@ -97,22 +98,20 @@ internal class ListAdapterTest {
 
         assertThat(elementsDescending.divisions)
             .containsExactly(
-                2, list.filter { it % 3 == 2 }.map { IndexedValue(it, it) },
-                1, list.filter { it % 3 == 1 }.map { IndexedValue(it, it) },
-                0, list.filter { it % 3 == 0 }.map { IndexedValue(it, it) },
+                2 to list.filter { it % 3 == 2 }.map { IndexedValue(it, it) },
+                1 to list.filter { it % 3 == 1 }.map { IndexedValue(it, it) },
+                0 to list.filter { it % 3 == 0 }.map { IndexedValue(it, it) },
             )
-            .inOrder()
 
         val elementsAscending = elementsDescending
             .withDivider(Mod3Divider, SortOrder.ASCENDING)
 
         assertThat(elementsAscending.divisions)
             .containsExactly(
-                0, list.filter { it % 3 == 0 }.map { IndexedValue(it, it) },
-                1, list.filter { it % 3 == 1 }.map { IndexedValue(it, it) },
-                2, list.filter { it % 3 == 2 }.map { IndexedValue(it, it) },
+                0 to list.filter { it % 3 == 0 }.map { IndexedValue(it, it) },
+                1 to list.filter { it % 3 == 1 }.map { IndexedValue(it, it) },
+                2 to list.filter { it % 3 == 2 }.map { IndexedValue(it, it) },
             )
-            .inOrder()
     }
 
     @Test
@@ -126,11 +125,10 @@ internal class ListAdapterTest {
 
         assertThat(elements.divisions)
             .containsExactly(
-                2, listOf(14, 8, 2).map { IndexedValue(it, it) },
-                1, listOf(16, 10, 4).map { IndexedValue(it, it) },
-                0, listOf(18, 12, 6, 0).map { IndexedValue(it, it) },
+                2 to listOf(14, 8, 2).map { IndexedValue(it, it) },
+                1 to listOf(16, 10, 4).map { IndexedValue(it, it) },
+                0 to listOf(18, 12, 6, 0).map { IndexedValue(it, it) },
             )
-            .inOrder()
 
         val elementsPlain = elements
             .withFilter { true }
@@ -153,10 +151,9 @@ internal class ListAdapterTest {
 
         assertThat(elements.divisions)
             .containsExactly(
-                2, listOf(IndexedValue(13, 50), IndexedValue(10, 20), IndexedValue(2, 2)),
-                1, listOf(IndexedValue(6, 16), IndexedValue(4, 4)),
-                0, listOf(IndexedValue(8, 18), IndexedValue(11, 6), IndexedValue(0, 0)),
+                2 to listOf(IndexedValue(13, 50), IndexedValue(10, 20), IndexedValue(2, 2)),
+                1 to listOf(IndexedValue(6, 16), IndexedValue(4, 4)),
+                0 to listOf(IndexedValue(8, 18), IndexedValue(11, 6), IndexedValue(0, 0)),
             )
-            .inOrder()
     }
 }

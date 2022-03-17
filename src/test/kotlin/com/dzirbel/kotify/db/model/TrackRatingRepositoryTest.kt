@@ -1,10 +1,16 @@
 package com.dzirbel.kotify.db.model
 
+import assertk.Assert
+import assertk.assertThat
+import assertk.assertions.hasSameSizeAs
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import com.dzirbel.kotify.DatabaseExtension
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.util.zipEach
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -39,10 +45,10 @@ internal class TrackRatingRepositoryTest {
             assertThat(ratingState.value?.rating).isEqualTo(rating.rating)
 
             KotifyDatabase.transaction { TrackRatingRepository.lastRatingOf(id = trackId) }
-                .assertMatches(rating)
+                .let { assertThat(it).isNotNull().matches(rating) }
 
             KotifyDatabase.transaction { TrackRatingRepository.allRatingsOf(id = trackId) }
-                .assertMatches(listOf(rating))
+                .let { assertThat(it).isNotNull().matches(listOf(rating)) }
         }
     }
 
@@ -57,11 +63,11 @@ internal class TrackRatingRepositoryTest {
             TrackRatingRepository.rate(id = trackId, rating = rating)
         }
 
-        state.value.assertMatches(rating)
+        assertThat(state.value).isNotNull().matches(rating)
         runBlocking {
             KotifyDatabase.transaction { TrackRatingRepository.lastRatingOf(id = trackId) }
         }
-            .assertMatches(rating)
+            .let { assertThat(it).isNotNull().matches(rating) }
 
         runBlocking {
             TrackRatingRepository.rate(id = trackId, rating = null)
@@ -76,17 +82,18 @@ internal class TrackRatingRepositoryTest {
         assertThat(state.value).isNull()
     }
 
-    private fun Rating?.assertMatches(other: Rating?) {
-        requireNotNull(this)
-        requireNotNull(other)
-
-        assertThat(rating).isEqualTo(other.rating)
-        assertThat(maxRating).isEqualTo(other.maxRating)
-        assertThat(rateTime.toEpochMilli() - other.rateTime.toEpochMilli()).isEqualTo(0)
+    private fun Assert<Rating>.matches(other: Rating) {
+        given { actual ->
+            assertThat(actual.rating).isEqualTo(other.rating)
+            assertThat(actual.maxRating).isEqualTo(other.maxRating)
+            assertThat(actual.rateTime.toEpochMilli() - other.rateTime.toEpochMilli()).isEqualTo(0)
+        }
     }
 
-    private fun List<Rating>.assertMatches(others: List<Rating>) {
-        assertThat(size).isEqualTo(others.size)
-        zipEach(others) { e1, e2 -> e1.assertMatches(e2) }
+    private fun Assert<List<Rating>>.matches(others: List<Rating>) {
+        given { actual ->
+            assertThat(actual).hasSameSizeAs(others)
+            actual.zipEach(others) { e1, e2 -> assertk.assertThat(e1).matches(e2) }
+        }
     }
 }

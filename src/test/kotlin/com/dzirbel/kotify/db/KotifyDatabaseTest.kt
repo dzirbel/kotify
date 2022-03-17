@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.db
 
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import com.dzirbel.kotify.containsExactlyElementsOfInAnyOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -58,7 +59,7 @@ internal class KotifyDatabaseTest {
                 .transaction { TestTable.selectAll().toList() }
                 .map { Pair(it[TestTable.name], it[TestTable.count]) }
 
-            assertThat(rows).containsExactlyElementsIn(
+            assertThat(rows).containsExactlyElementsOfInAnyOrder(
                 List(numJobs) { Pair("row $it", it) }
             )
         }

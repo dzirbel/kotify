@@ -10,6 +10,11 @@ pluginManagement {
 dependencyResolutionManagement {
     versionCatalogs {
         create("deps") {
+            // https://github.com/willowtreeapps/assertk
+            version("assertk", "0.25").let { version ->
+                library("assertk", "com.willowtreeapps.assertk", "assertk-jvm").versionRef(version)
+            }
+
             // https://github.com/jetbrains/compose-jb
             version("compose", "1.1.0").let { version ->
                 plugin("compose", "org.jetbrains.compose").versionRef(version)
@@ -90,11 +95,6 @@ dependencyResolutionManagement {
             // https://github.com/xerial/sqlite-jdbc
             version("sqlite-jdbc", "3.36.0.3").let { version ->
                 library("sqlite-jdbc", "org.xerial", "sqlite-jdbc").versionRef(version)
-            }
-
-            // https://github.com/google/truth
-            version("truth", "1.1.3").let { version ->
-                library("truth", "com.google.truth", "truth").versionRef(version)
             }
         }
     }

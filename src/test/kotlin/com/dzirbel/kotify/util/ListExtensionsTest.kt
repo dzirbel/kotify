@@ -1,7 +1,11 @@
 package com.dzirbel.kotify.util
 
-import com.google.common.collect.Range
-import com.google.common.truth.Truth.assertThat
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isBetween
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isTrue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.RepeatedTest
@@ -46,15 +50,12 @@ internal class ListExtensionsTest {
     fun testMinusAt() {
         assertThat(listOf(1, 2, 3, 4).minusAt(0))
             .containsExactly(2, 3, 4)
-            .inOrder()
 
         assertThat(listOf(1, 2, 3, 4).minusAt(3))
             .containsExactly(1, 2, 3)
-            .inOrder()
 
         assertThat(listOf(1, 2, 3, 4).minusAt(2))
             .containsExactly(1, 2, 4)
-            .inOrder()
     }
 
     @RepeatedTest(3)
@@ -76,7 +77,7 @@ internal class ListExtensionsTest {
                 }
 
             val duration = start.elapsedNow()
-            assertThat(duration).isIn(Range.closed(maxDelayMs.milliseconds, (maxDelayMs * 2).milliseconds))
+            assertThat(duration).isBetween(maxDelayMs.milliseconds, (maxDelayMs * 2).milliseconds)
 
             result
         }

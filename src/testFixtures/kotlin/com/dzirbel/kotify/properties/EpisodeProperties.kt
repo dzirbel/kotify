@@ -1,7 +1,10 @@
 package com.dzirbel.kotify.properties
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isGreaterThanOrEqualTo
+import assertk.assertions.isTrue
 import com.dzirbel.kotify.network.model.SpotifyEpisode
-import com.google.common.truth.Truth.assertThat
 
 data class EpisodeProperties(
     override val id: String,
@@ -15,7 +18,7 @@ data class EpisodeProperties(
         super.check(episode)
 
         assertThat(episode.description).isEqualTo(description)
-        assertThat(episode.durationMs).isAtLeast(0)
+        assertThat(episode.durationMs).isGreaterThanOrEqualTo(0)
         assertThat(episode.releaseDate).isEqualTo(releaseDate)
         assertThat(episode.releaseDatePrecision).isEqualTo(releaseDatePrecision)
         assertThat(episode.isPlayable).isTrue()

@@ -1,7 +1,10 @@
 package com.dzirbel.kotify.ui
 
+import assertk.assertThat
+import assertk.assertions.hasSize
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.ui.framework.Presenter
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay

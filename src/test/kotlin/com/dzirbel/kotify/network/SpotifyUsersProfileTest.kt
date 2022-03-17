@@ -1,7 +1,9 @@
 package com.dzirbel.kotify.network
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import com.dzirbel.kotify.TAG_NETWORK
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test

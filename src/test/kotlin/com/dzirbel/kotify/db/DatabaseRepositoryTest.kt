@@ -1,8 +1,14 @@
 package com.dzirbel.kotify.db
 
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.hasSize
+import assertk.assertions.isBetween
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import com.dzirbel.kotify.network.model.SpotifyObject
-import com.google.common.collect.Range
-import com.google.common.truth.Truth.assertThat
 import io.ktor.util.collections.ConcurrentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -253,11 +259,11 @@ internal class DatabaseRepositoryTest {
             assertThat(name).isEqualTo(networkModel.name)
 
             if (createStart != null && createEnd != null) {
-                assertThat(createdTime).isIn(Range.closed(createStart, createEnd))
+                assertThat(createdTime).isBetween(createStart, createEnd)
             }
 
             if (updateStart != null && updateEnd != null) {
-                assertThat(updatedTime).isIn(Range.closed(updateStart, updateEnd))
+                assertThat(updatedTime).isBetween(updateStart, updateEnd)
             }
 
             assertThat(string).isEqualTo(networkModel.stringField)

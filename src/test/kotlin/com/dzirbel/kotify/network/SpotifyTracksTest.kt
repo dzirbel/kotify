@@ -1,9 +1,12 @@
 package com.dzirbel.kotify.network
 
+import assertk.assertThat
+import assertk.assertions.hasSameSizeAs
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
 import com.dzirbel.kotify.properties.TrackProperties
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -25,7 +28,7 @@ internal class SpotifyTracksTest {
     fun getAudioFeatures() {
         val audioFeatures = runBlocking { Spotify.Tracks.getAudioFeatures(Fixtures.tracks.map { it.id!! }) }
 
-        assertThat(audioFeatures.size).isEqualTo(Fixtures.tracks.size) // TODO more assertions
+        assertThat(audioFeatures).hasSameSizeAs(Fixtures.tracks) // TODO more assertions
     }
 
     @ParameterizedTest

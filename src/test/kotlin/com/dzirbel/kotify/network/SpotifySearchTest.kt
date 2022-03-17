@@ -1,7 +1,10 @@
 package com.dzirbel.kotify.network
 
+import assertk.assertThat
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.dzirbel.kotify.TAG_NETWORK
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -25,8 +28,9 @@ class SpotifySearchTest {
         assertThat(results.shows).isNull()
         assertThat(results.episodes).isNull()
 
-        assertThat(results.artists?.items?.any { it.id == "6PXQUX3BYTSVj7LcvviOmI" }).isTrue()
+        assertThat(results.artists?.items?.any { it.id == "6PXQUX3BYTSVj7LcvviOmI" }).isNotNull().isTrue()
         assertThat(results.tracks?.items?.any { track -> track.artists.any { it.id == "6PXQUX3BYTSVj7LcvviOmI" } })
+            .isNotNull()
             .isTrue()
     }
 }

@@ -1,12 +1,18 @@
 package com.dzirbel.kotify.network
 
+import assertk.all
+import assertk.assertThat
+import assertk.assertions.each
+import assertk.assertions.hasSameSizeAs
+import assertk.assertions.isFalse
+import assertk.assertions.isTrue
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
+import com.dzirbel.kotify.containsExactlyElementsOf
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
 import com.dzirbel.kotify.network.model.SpotifySavedShow
 import com.dzirbel.kotify.network.model.SpotifySavedTrack
 import com.dzirbel.kotify.zipWithBy
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -34,23 +40,23 @@ class SpotifyLibraryTest {
 
         val saved = runBlocking { Spotify.Library.checkAlbums(ids.map { it.first }) }
 
-        assertThat(saved).containsExactlyElementsIn(ids.map { it.second }).inOrder()
+        assertThat(saved).containsExactlyElementsOf(ids.map { it.second })
     }
 
     @Test
     fun saveAndRemoveAlbums() {
         assertThat(runBlocking { Spotify.Library.checkAlbums(Fixtures.unsavedAlbums) })
-            .containsExactlyElementsIn(Fixtures.unsavedAlbums.map { false })
+            .containsExactlyElementsOf(Fixtures.unsavedAlbums.map { false })
 
         runBlocking { Spotify.Library.saveAlbums(Fixtures.unsavedAlbums) }
 
         assertThat(runBlocking { Spotify.Library.checkAlbums(Fixtures.unsavedAlbums) })
-            .containsExactlyElementsIn(Fixtures.unsavedAlbums.map { true })
+            .containsExactlyElementsOf(Fixtures.unsavedAlbums.map { true })
 
         runBlocking { Spotify.Library.removeAlbums(Fixtures.unsavedAlbums) }
 
         assertThat(runBlocking { Spotify.Library.checkAlbums(Fixtures.unsavedAlbums) })
-            .containsExactlyElementsIn(Fixtures.unsavedAlbums.map { false })
+            .containsExactlyElementsOf(Fixtures.unsavedAlbums.map { false })
     }
 
     @Test
@@ -75,23 +81,23 @@ class SpotifyLibraryTest {
 
         val saved = runBlocking { Spotify.Library.checkTracks(ids.mapNotNull { it.first }) }
 
-        assertThat(saved).containsExactlyElementsIn(ids.map { it.second }).inOrder()
+        assertThat(saved).containsExactlyElementsOf(ids.map { it.second })
     }
 
     @Test
     fun saveAndRemoveTracks() {
         assertThat(runBlocking { Spotify.Library.checkTracks(Fixtures.unsavedTracks) })
-            .containsExactlyElementsIn(Fixtures.unsavedTracks.map { false })
+            .containsExactlyElementsOf(Fixtures.unsavedTracks.map { false })
 
         runBlocking { Spotify.Library.saveTracks(Fixtures.unsavedTracks) }
 
         assertThat(runBlocking { Spotify.Library.checkTracks(Fixtures.unsavedTracks) })
-            .containsExactlyElementsIn(Fixtures.unsavedTracks.map { true })
+            .containsExactlyElementsOf(Fixtures.unsavedTracks.map { true })
 
         runBlocking { Spotify.Library.removeTracks(Fixtures.unsavedTracks) }
 
         assertThat(runBlocking { Spotify.Library.checkTracks(Fixtures.unsavedTracks) })
-            .containsExactlyElementsIn(Fixtures.unsavedTracks.map { false })
+            .containsExactlyElementsOf(Fixtures.unsavedTracks.map { false })
     }
 
     @Test
@@ -108,24 +114,30 @@ class SpotifyLibraryTest {
     @Test
     fun checkShows() {
         val saved = runBlocking { Spotify.Library.checkShows(Fixtures.shows.map { it.id }) }
-        assertThat(saved).containsExactlyElementsIn(Fixtures.shows.map { it.saved }).inOrder()
+        assertThat(saved).containsExactlyElementsOf(Fixtures.shows.map { it.saved })
     }
 
     @Test
     fun saveAndRemoveShows() {
         val unsaved = listOf(Fixtures.shows.first { !it.saved }).map { it.id }
 
-        assertThat(runBlocking { Spotify.Library.checkShows(unsaved) })
-            .containsExactlyElementsIn(unsaved.map { false })
+        assertThat(runBlocking { Spotify.Library.checkShows(unsaved) }).all {
+            hasSameSizeAs(unsaved)
+            each { it.isFalse() }
+        }
 
         runBlocking { Spotify.Library.saveShows(unsaved) }
 
-        assertThat(runBlocking { Spotify.Library.checkShows(unsaved) })
-            .containsExactlyElementsIn(unsaved.map { true })
+        assertThat(runBlocking { Spotify.Library.checkShows(unsaved) }).all {
+            hasSameSizeAs(unsaved)
+            each { it.isTrue() }
+        }
 
         runBlocking { Spotify.Library.removeShows(unsaved) }
 
-        assertThat(runBlocking { Spotify.Library.checkShows(unsaved) })
-            .containsExactlyElementsIn(unsaved.map { false })
+        assertThat(runBlocking { Spotify.Library.checkShows(unsaved) }).all {
+            hasSameSizeAs(unsaved)
+            each { it.isFalse() }
+        }
     }
 }

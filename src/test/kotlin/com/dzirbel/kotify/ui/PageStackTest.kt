@@ -2,9 +2,15 @@ package com.dzirbel.kotify.ui
 
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
+import assertk.assertThat
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
+import com.dzirbel.kotify.isSameInstanceAs
 import com.dzirbel.kotify.ui.components.Page
 import com.dzirbel.kotify.ui.components.PageStack
-import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.Test
 
 internal class PageStackTest {

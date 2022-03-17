@@ -1,8 +1,12 @@
 package com.dzirbel.kotify.network
 
+import assertk.assertThat
+import assertk.assertions.containsAll
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isNotNull
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
-import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -63,6 +67,6 @@ internal class SpotifyBrowseTest {
         val recommendations = runBlocking { Spotify.Browse.getRecommendationGenres() }
 
         assertThat(recommendations).isNotEmpty()
-        assertThat(recommendations).containsAtLeastElementsIn(Fixtures.recommendationGenres)
+        assertThat(recommendations).containsAll(Fixtures.recommendationGenres)
     }
 }
