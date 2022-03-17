@@ -1,10 +1,10 @@
 package com.dzirbel.kotify.properties
 
 import assertk.assertThat
-import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThanOrEqualTo
 import assertk.assertions.isNotNull
+import com.dzirbel.kotify.containsExactlyElementsOfInAnyOrder
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.SpotifySavedTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
@@ -23,7 +23,7 @@ data class TrackProperties(
     fun check(track: SpotifyTrack) {
         super.check(track)
 
-        assertThat(track.artists.map { it.name }).containsExactlyInAnyOrder(artistNames)
+        assertThat(track.artists.map { it.name }).containsExactlyElementsOfInAnyOrder(artistNames)
         assertThat(track.trackNumber).isEqualTo(trackNumber)
         assertThat(track.discNumber).isEqualTo(discNumber)
         assertThat(track.durationMs).isGreaterThanOrEqualTo(0)

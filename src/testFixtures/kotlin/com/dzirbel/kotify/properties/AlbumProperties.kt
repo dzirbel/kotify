@@ -1,13 +1,13 @@
 package com.dzirbel.kotify.properties
 
 import assertk.assertThat
-import assertk.assertions.containsAll
 import assertk.assertions.hasSize
 import assertk.assertions.isBetween
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import com.dzirbel.kotify.containsAllElementsOf
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
@@ -35,7 +35,7 @@ data class AlbumProperties(
         totalTracks?.let { assertThat(album.totalTracks).isEqualTo(it) }
 
         if (album is FullSpotifyAlbum) {
-            assertThat(album.genres).containsAll(genres)
+            assertThat(album.genres).containsAllElementsOf(genres)
             assertThat(album.popularity).isBetween(0, 100)
             assertThat(album.tracks.items).isNotEmpty()
             totalTracks?.let {

@@ -213,7 +213,7 @@ object Fixtures {
         ArtistProperties(
             id = "4Lm0pUvmisUHMdoky5ch2I",
             name = "Apocalyptica",
-            genres = listOf("symphonic metal", "cello"),
+            genres = listOf("alternative metal", "cello"),
             albums = listOf(
                 AlbumProperties("1H3J2vxFHf0WxYUa9iklzu", "Cell-0"),
                 AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
@@ -328,6 +328,8 @@ object Fixtures {
                 AlbumProperties("0uLrUJVzrbHf6vcg58ooY1", "Angelzoom"),
                 AlbumProperties("19Gkms8Mb4wmoqm1a5VYys", "Metal Rock Cavalcade I"),
                 AlbumProperties("3PH0jVnduEPrwz0OOThXaq", "Die Schlinge"),
+                AlbumProperties("1GmDsPP1uC9vUBC9aQeVzf", "I'll Get Through It"),
+                AlbumProperties("0Vp1T9hEne9rQ71D7Jp72n", "Peltirumpu (Laulu Rakkaudelle kausi 2)"),
             )
                 // ignore albumType since there are so many of these
                 .map { it.copy(albumType = null) }
