@@ -77,17 +77,12 @@ inline fun <reified T> Assert<Iterable<T>>.containsAllElementsOf(elements: Itera
 }
 
 /**
- * Asserts that the [Map] contains exactly the key-value pairs [elements]; in its iteration order if it is a [SortedMap]
- * or in any other otherwise.
+ * Asserts the [SortedMap] contains exactly the expected [elements]. They must be in the same order as the [SortedMap]'s
+ * iteration order and there must not be any extra elements.
  */
 @Suppress("SpreadOperator")
-fun <K, V> Assert<Map<out K, V>>.containsExactly(vararg elements: Pair<K, V>) {
+fun <K, V> Assert<SortedMap<out K, out V>>.containsExactly(vararg elements: Pair<K, V>) {
     given { actual ->
-        // TODO improve error messages
-        if (actual is SortedMap) {
-            assertThat(actual.toList()).containsExactly(*elements)
-        } else {
-            assertThat(actual.toList()).containsExactlyInAnyOrder(*elements)
-        }
+        assertThat(actual.toList()).containsExactly(*elements)
     }
 }

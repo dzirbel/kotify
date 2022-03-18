@@ -2,9 +2,9 @@ package com.dzirbel.kotify.util
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.containsOnly
 import assertk.assertions.isBetween
 import assertk.assertions.isEqualTo
-import com.dzirbel.kotify.containsExactly
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.RepeatedTest
@@ -28,7 +28,7 @@ class IterableExtensionsTest {
     fun zipToMap() {
         val map = listOf(1, 1, 2, 2, 3, 4, 5).zipToMap(listOf("a", "b", "c", "d", "e", "f"))
 
-        assertThat(map).containsExactly(
+        assertThat(map).containsOnly(
             1 to "b",
             2 to "d",
             3 to "e",

@@ -2,6 +2,7 @@ package com.dzirbel.kotify.ui.components.adapter
 
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter.ElementData
 import com.dzirbel.kotify.ui.theme.Dimens.divider
+import java.util.SortedMap
 import java.util.TreeMap
 
 /**
@@ -105,10 +106,11 @@ class ListAdapter<E> private constructor(
      * in cases when either the divider or sort order are changed, but perhaps could be avoided for changes to just the
      * filter, etc.
      */
-    val divisions: Map<out Any?, List<IndexedValue<E>>> by lazy {
+    val divisions: SortedMap<out Any?, out List<IndexedValue<E>>> by lazy {
         val indices = sortIndexes ?: elements.indices
         if (divider == null) {
-            mutableMapOf(
+            sortedMapOf(
+                { _, _ -> 0 }, // no-op comparator since we have a single elements (of type Nothing?)
                 null to indices.mapNotNull { index ->
                     elements[index]
                         .takeIf { it.filtered }
