@@ -1,5 +1,8 @@
 package com.dzirbel.kotify.util
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+
 /**
  * Invokes [onEach] for each pair built from the elements of this [Iterable] and [other] with the same index, up to the
  * minimum index of the two collections.
@@ -50,4 +53,23 @@ fun <T : Any> Iterable<T?>.averageOrNull(toDouble: (T) -> Double?): Double? {
     }
 
     return if (count == 0) null else total / count
+}
+
+/**
+ * Maps values in this [Iterable] via [transform], computing each transformation in parallel.
+ */
+suspend fun <T, R> Iterable<T>.mapParallel(transform: suspend (T) -> R): List<R> {
+    return coroutineScope {
+        map { element ->
+            async { transform(element) }
+        }
+    }
+        .map { it.await() }
+}
+
+/**
+ * Flat maps values in this [Iterable] via [transform], computing each transformation in parallel.
+ */
+suspend fun <T, R> Iterable<T>.flatMapParallel(transform: suspend (T) -> List<R>): List<R> {
+    return mapParallel(transform).flatten()
 }

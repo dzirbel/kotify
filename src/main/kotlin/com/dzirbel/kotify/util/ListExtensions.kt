@@ -1,8 +1,5 @@
 package com.dzirbel.kotify.util
 
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-
 /**
  * Returns a new [List] containing the elements of this [List] and the given [elements], inserted according to the
  * natural order of [selector].
@@ -39,23 +36,4 @@ fun <T> List<T>.minusAt(index: Int): List<T> {
         }
     }
     return result
-}
-
-/**
- * Maps values in this [List] via [transform], computing each transformation in parallel.
- */
-suspend fun <T, R> List<T>.mapParallel(transform: suspend (T) -> R): List<R> {
-    return coroutineScope {
-        map { element ->
-            async { transform(element) }
-        }
-    }
-        .map { it.await() }
-}
-
-/**
- * Flat maps values in this [List] via [transform], computing each transformation in parallel.
- */
-suspend fun <T, R> List<T>.flatMapParallel(transform: suspend (T) -> List<R>): List<R> {
-    return mapParallel(transform).flatten()
 }

@@ -2,19 +2,11 @@ package com.dzirbel.kotify.util
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
-import assertk.assertions.isBetween
-import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import kotlin.math.max
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.TimeSource
 
 internal class ListExtensionsTest {
     data class PlusSortedCase(val list: List<String>, val elements: List<String>)
@@ -56,33 +48,6 @@ internal class ListExtensionsTest {
 
         assertThat(listOf(1, 2, 3, 4).minusAt(2))
             .containsExactly(1, 2, 4)
-    }
-
-    @RepeatedTest(3)
-    fun flatMapParallel() {
-        val baseList = listOf(1, 3, 4, 10)
-        fun transform(n: Int) = List(n) { x -> n * (x + 1) }
-
-        var maxDelayMs = 0
-        val result = runBlocking {
-            val start = TimeSource.Monotonic.markNow()
-            val result = baseList
-                .flatMapParallel { n ->
-                    val delay = 100 - n * 10
-                    maxDelayMs = max(maxDelayMs, delay)
-
-                    delay(delay.toLong())
-
-                    transform(n)
-                }
-
-            val duration = start.elapsedNow()
-            assertThat(duration).isBetween(maxDelayMs.milliseconds, (maxDelayMs * 2).milliseconds)
-
-            result
-        }
-
-        assertThat(result).isEqualTo(baseList.flatMap { transform(it) })
     }
 
     /**
