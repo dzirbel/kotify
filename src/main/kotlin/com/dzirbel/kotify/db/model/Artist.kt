@@ -84,9 +84,9 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
          * Retrieves the [Album]s by the artist with the given [artistId], from the database if the artist and all their
          * albums are cached or from the network if not, also connecting them in the database along the way.
          */
-        suspend fun getAllAlbums(artistId: String): List<Album> {
+        suspend fun getAllAlbums(artistId: String, allowCache: Boolean = true): List<Album> {
             val artist = KotifyDatabase.transaction { findById(id = artistId) }
-            if (artist?.hasAllAlbums == true) {
+            if (allowCache && artist?.hasAllAlbums == true) {
                 return KotifyDatabase.transaction { artist.albums.live }
             }
 

@@ -10,7 +10,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,24 +17,21 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.framework.rememberPresenter
 import com.dzirbel.kotify.ui.theme.Dimens
-import kotlinx.coroutines.Dispatchers
 
 @Composable
 fun TracksLibraryState() {
-    val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember { TracksLibraryStatePresenter(scope) }
+    val presenter = rememberPresenter(::TracksLibraryStatePresenter)
 
     presenter.state().stateOrThrow?.let { state ->
-        val tracks = state.tracks
-
-        if (tracks == null) {
+        if (state.savedTrackIds == null) {
             InvalidateButton(
                 refreshing = state.refreshingSavedTracks,
                 updated = state.tracksUpdated,
                 updatedFallback = "Tracks never synced",
             ) {
-                presenter.emitAsync(TracksLibraryStatePresenter.Event.RefreshSavedTracks)
+                presenter.emitAsync(TracksLibraryStatePresenter.Event.Load(fromCache = false))
             }
 
             return
@@ -43,10 +39,10 @@ fun TracksLibraryState() {
 
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val totalSaved = tracks.size
-                val totalCached = tracks.count { it.second != null }
-                val simplified = tracks.count { it.second != null && it.second?.fullUpdatedTime == null }
-                val full = tracks.count { it.second?.fullUpdatedTime != null }
+                val totalSaved = state.tracks.size
+                val totalCached = state.tracks.count { it != null }
+                val full = state.tracks.count { it?.fullUpdatedTime != null }
+                val simplified = totalCached - full
 
                 Text("$totalSaved Saved Tracks", modifier = Modifier.padding(end = Dimens.space3))
 
@@ -54,7 +50,7 @@ fun TracksLibraryState() {
                     refreshing = state.refreshingSavedTracks,
                     updated = state.tracksUpdated,
                 ) {
-                    presenter.emitAsync(TracksLibraryStatePresenter.Event.RefreshSavedTracks)
+                    presenter.emitAsync(TracksLibraryStatePresenter.Event.Load(fromCache = false))
                 }
 
                 val inCacheExpanded = remember { mutableStateOf(false) }

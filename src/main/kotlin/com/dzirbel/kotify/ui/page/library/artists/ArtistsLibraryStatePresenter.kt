@@ -10,12 +10,9 @@ import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.util.filterNotNullValues
+import com.dzirbel.kotify.util.flatMapParallel
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.flow
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.update
@@ -23,7 +20,7 @@ import org.jetbrains.exposed.sql.update
 class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
     Presenter<ArtistsLibraryStatePresenter.ViewModel?, ArtistsLibraryStatePresenter.Event>(
         scope = scope,
-        startingEvents = listOf(Event.Load),
+        startingEvents = listOf(Event.Load(fromCache = true)),
         initialState = null
     ) {
 
@@ -47,9 +44,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
     )
 
     sealed class Event {
-        object Load : Event()
-
-        object RefreshSavedArtists : Event()
+        class Load(val fromCache: Boolean) : Event()
         class RefreshArtist(val artistId: String) : Event()
         class RefreshArtistAlbums(val artistId: String) : Event()
 
@@ -63,43 +58,23 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
 
     override suspend fun reactTo(event: Event) {
         when (event) {
-            Event.Load -> {
-                val savedArtistIds = SavedArtistRepository.getLibraryCached()?.toList()
-                val artists = savedArtistIds
-                    ?.zipToMap(ArtistRepository.getCached(ids = savedArtistIds))
-                    ?.filterNotNullValues()
-                    .orEmpty()
-                val artistsUpdated = SavedArtistRepository.libraryUpdated()?.toEpochMilli()
+            is Event.Load -> {
+                mutateState { it?.copy(syncingSavedArtists = true) }
 
-                KotifyDatabase.transaction {
-                    artists.values.forEach { it.albums.loadToCache() }
+                val savedArtistIds = if (event.fromCache) {
+                    SavedArtistRepository.getLibraryCached()?.toList()
+                } else {
+                    SavedArtistRepository.getLibraryRemote().toList()
                 }
+
+                val artists = loadArtists(artistIds = savedArtistIds)
+                val artistsUpdated = SavedArtistRepository.libraryUpdated()?.toEpochMilli()
 
                 mutateState {
                     ViewModel(
-                        savedArtistIds = savedArtistIds?.let {
-                            ListAdapter.from(it, defaultSort = listOf(Sort(LibraryArtistIDColumn.sortableProperty)))
+                        savedArtistIds = savedArtistIds?.let { savedArtistIds ->
+                            ListAdapter.from(elements = savedArtistIds, baseAdapter = it?.savedArtistIds)
                         },
-                        artists = artists,
-                        artistsUpdated = artistsUpdated,
-                    )
-                }
-            }
-
-            Event.RefreshSavedArtists -> {
-                mutateState { it?.copy(syncingSavedArtists = true) }
-
-                SavedArtistRepository.invalidateLibrary()
-
-                val savedArtistIds = SavedArtistRepository.getLibrary().toList()
-                val artists = savedArtistIds
-                    .zipToMap(ArtistRepository.getCached(ids = savedArtistIds))
-                    .filterNotNullValues()
-                val artistsUpdated = SavedArtistRepository.libraryUpdated()?.toEpochMilli()
-
-                mutateState {
-                    it?.copy(
-                        savedArtistIds = ListAdapter.from(elements = savedArtistIds, baseAdapter = it.savedArtistIds),
                         artists = artists,
                         artistsUpdated = artistsUpdated,
                         syncingSavedArtists = false,
@@ -111,15 +86,11 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
                 mutateState { it?.copy(syncingArtists = it.syncingArtists.plus(event.artistId)) }
 
                 val artist = ArtistRepository.getRemote(id = event.artistId)
-                KotifyDatabase.transaction { artist?.albums?.loadToCache() }
+                    ?.also { prepArtists(listOf(it)) }
 
                 mutateState {
                     it?.copy(
-                        artists = if (artist == null) {
-                            it.artists.minus(event.artistId)
-                        } else {
-                            it.artists.plus(event.artistId to artist)
-                        },
+                        artists = it.artists.plus(event.artistId to artist).filterNotNullValues(),
                         syncingArtists = it.syncingArtists.minus(event.artistId),
                     )
                 }
@@ -128,64 +99,48 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
             is Event.RefreshArtistAlbums -> {
                 mutateState { it?.copy(syncingArtistsAlbums = it.syncingArtistsAlbums.plus(event.artistId)) }
 
-                ArtistRepository.getCached(id = event.artistId)?.let { artist ->
-                    KotifyDatabase.transaction { artist.albumsFetched = null }
-                }
-                Artist.getAllAlbums(artistId = event.artistId)
+                Artist.getAllAlbums(artistId = event.artistId, allowCache = false)
 
                 val artist = ArtistRepository.getCached(id = event.artistId)
-                KotifyDatabase.transaction { artist?.albums?.loadToCache() }
+                    ?.also { prepArtists(listOf(it)) }
 
                 mutateState {
                     it?.copy(
-                        artists = if (artist == null) {
-                            it.artists.minus(event.artistId)
-                        } else {
-                            it.artists.plus(event.artistId to artist)
-                        },
+                        artists = it.artists.plus(event.artistId to artist).filterNotNullValues(),
                         syncingArtistsAlbums = it.syncingArtistsAlbums.minus(event.artistId),
                     )
                 }
             }
 
             Event.FetchMissingArtists -> {
-                val artistIds = requireNotNull(SavedArtistRepository.getLibraryCached()).toList()
-                val artists = artistIds
-                    .zipToMap(ArtistRepository.getFull(ids = artistIds))
-                    .filterNotNullValues()
+                val artistIds = SavedArtistRepository.getLibraryCached()?.toList()
+                val artists = loadArtists(artistIds = artistIds) { ArtistRepository.getFull(ids = it) }
 
                 mutateState { it?.copy(artists = artists) }
             }
 
             Event.InvalidateArtists -> {
-                val artistIds = requireNotNull(SavedArtistRepository.getLibraryCached()).toList()
-                ArtistRepository.invalidate(ids = artistIds)
+                val artistIds = SavedArtistRepository.getLibraryCached()?.toList()
+                artistIds?.let { ArtistRepository.invalidate(ids = it) }
 
-                val artists = artistIds
-                    .zipToMap(ArtistRepository.getCached(ids = artistIds))
-                    .filterNotNullValues()
+                val artists = loadArtists(artistIds = artistIds)
 
                 mutateState { it?.copy(artists = artists) }
             }
 
             Event.FetchMissingArtistAlbums -> {
-                val artistIds = requireNotNull(SavedArtistRepository.getLibraryCached()).toList()
-                val missingIds = KotifyDatabase.transaction {
-                    Artist.find { ArtistTable.albumsFetched eq null }
-                        .map { it.id.value }
-                }
-                    .filter { artistIds.contains(it) }
+                val artistIds = SavedArtistRepository.getLibraryCached()?.toList()
 
-                missingIds
-                    .asFlow()
-                    .flatMapMerge { id ->
-                        flow<Unit> { Artist.getAllAlbums(artistId = id) }
+                // TODO also fetch albums for artists not in the database at all
+                loadArtists(artistIds)
+                    .filterValues { artist -> !artist.hasAllAlbums }
+                    .values
+                    .flatMapParallel { artist ->
+                        Artist.getAllAlbums(artistId = artist.id.value)
                     }
-                    .collect()
 
-                val artists = artistIds
-                    .zipToMap(ArtistRepository.getCached(ids = artistIds))
-                    .filterNotNullValues()
+                // reload artists from the cache
+                val artists = loadArtists(artistIds = artistIds)
 
                 mutateState { it?.copy(artists = artists) }
             }
@@ -199,10 +154,9 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
                     }
                 }
 
-                val artistIds = requireNotNull(SavedArtistRepository.getLibraryCached()).toList()
-                val artists = artistIds
-                    .zipToMap(ArtistRepository.getCached(ids = artistIds))
-                    .filterNotNullValues()
+                // reload artists form the cache
+                val artistIds = SavedArtistRepository.getLibraryCached()?.toList()
+                val artists = loadArtists(artistIds = artistIds)
 
                 mutateState { it?.copy(artists = artists) }
             }
@@ -210,6 +164,23 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
             is Event.SetSort -> mutateState {
                 it?.copy(savedArtistIds = it.savedArtistIds?.withSort(sorts = event.sorts))
             }
+        }
+    }
+
+    private suspend fun loadArtists(
+        artistIds: List<String>?,
+        fetchArtists: suspend (List<String>) -> List<Artist?> = { ArtistRepository.getCached(ids = it) },
+    ): Map<String, Artist> {
+        return artistIds
+            ?.zipToMap(fetchArtists(artistIds))
+            ?.filterNotNullValues()
+            ?.also { artists -> prepArtists(artists.values) }
+            .orEmpty()
+    }
+
+    private suspend fun prepArtists(artists: Iterable<Artist>) {
+        KotifyDatabase.transaction {
+            artists.forEach { artist -> artist.albums.loadToCache() }
         }
     }
 }

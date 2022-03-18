@@ -20,8 +20,14 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
     ) {
 
     data class ViewModel(
-        val ratedTracks: ListAdapter<String>,
+        // ids of the rated tracks
+        val ratedTracksIds: ListAdapter<String>,
+
+        // map from track id to the track model in the cache; separate from ratedTracks since not all track models might
+        // be present in the cache
         val tracks: Map<String, Track>,
+
+        // map from track id to state of its rating
         val trackRatings: Map<String, State<Rating?>>,
     )
 
@@ -48,7 +54,7 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
 
                 mutateState {
                     ViewModel(
-                        ratedTracks = ListAdapter.from(elements = ratedTrackIds),
+                        ratedTracksIds = ListAdapter.from(elements = ratedTrackIds),
                         tracks = tracks,
                         trackRatings = trackRatings,
                     )
@@ -60,7 +66,7 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
 
                 mutateState {
                     ViewModel(
-                        ratedTracks = ListAdapter.from(elements = emptyList()),
+                        ratedTracksIds = ListAdapter.from(elements = emptyList()),
                         tracks = emptyMap(),
                         trackRatings = emptyMap(),
                     )
@@ -70,7 +76,7 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
             is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
 
             is Event.SetSort -> mutateState {
-                it?.copy(ratedTracks = it.ratedTracks.withSort(sorts = event.sorts))
+                it?.copy(ratedTracksIds = it.ratedTracksIds.withSort(sorts = event.sorts))
             }
         }
     }

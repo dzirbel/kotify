@@ -9,19 +9,16 @@ import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.util.filterNotNullValues
+import com.dzirbel.kotify.util.flatMapParallel
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.flow
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.deleteWhere
 
 class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
     Presenter<PlaylistsLibraryStatePresenter.ViewModel?, PlaylistsLibraryStatePresenter.Event>(
         scope = scope,
-        startingEvents = listOf(Event.Load),
+        startingEvents = listOf(Event.Load(fromCache = true)),
         initialState = null
     ) {
 
@@ -35,7 +32,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
 
         val playlistsUpdated: Long?,
 
-        val refreshingSavedPlaylists: Boolean = false,
+        val syncingSavedPlaylists: Boolean = false,
 
         // ids of playlists currently being synced
         val syncingPlaylists: Set<String> = emptySet(),
@@ -45,9 +42,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
     )
 
     sealed class Event {
-        object Load : Event()
-
-        object RefreshSavedPlaylists : Event()
+        class Load(val fromCache: Boolean) : Event()
         class RefreshPlaylist(val playlistId: String) : Event()
         class RefreshPlaylistTracks(val playlistId: String) : Event()
 
@@ -61,47 +56,26 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
 
     override suspend fun reactTo(event: Event) {
         when (event) {
-            Event.Load -> {
-                val savedPlaylistIds = SavedPlaylistRepository.getLibraryCached()?.toList()
-                val playlists = savedPlaylistIds
-                    ?.zipToMap(PlaylistRepository.getCached(ids = savedPlaylistIds))
-                    ?.filterNotNullValues()
-                    .orEmpty()
-                val playlistsUpdated = SavedPlaylistRepository.libraryUpdated()?.toEpochMilli()
+            is Event.Load -> {
+                mutateState { it?.copy(syncingSavedPlaylists = true) }
 
-                KotifyDatabase.transaction {
-                    playlists.values.forEach { it.tracks.loadToCache() }
+                val savedPlaylistIds = if (event.fromCache) {
+                    SavedPlaylistRepository.getLibraryCached()?.toList()
+                } else {
+                    SavedPlaylistRepository.getLibraryRemote().toList()
                 }
+
+                val playlists = loadPlaylists(playlistIds = savedPlaylistIds)
+                val playlistsUpdated = SavedPlaylistRepository.libraryUpdated()?.toEpochMilli()
 
                 mutateState {
                     ViewModel(
-                        savedPlaylistIds = savedPlaylistIds?.let { ListAdapter.from(it) },
+                        savedPlaylistIds = savedPlaylistIds?.let { savedPlaylistIds ->
+                            ListAdapter.from(elements = savedPlaylistIds, baseAdapter = it?.savedPlaylistIds)
+                        },
                         playlists = playlists,
                         playlistsUpdated = playlistsUpdated,
-                    )
-                }
-            }
-
-            Event.RefreshSavedPlaylists -> {
-                mutateState { it?.copy(refreshingSavedPlaylists = true) }
-
-                SavedPlaylistRepository.invalidateLibrary()
-
-                val savedPlaylistIds = SavedPlaylistRepository.getLibrary().toList()
-                val playlists = savedPlaylistIds
-                    .zipToMap(PlaylistRepository.getCached(ids = savedPlaylistIds))
-                    .filterNotNullValues()
-                val playlistsUpdated = SavedPlaylistRepository.libraryUpdated()?.toEpochMilli()
-
-                mutateState {
-                    it?.copy(
-                        savedPlaylistIds = ListAdapter.from(
-                            elements = savedPlaylistIds,
-                            baseAdapter = it.savedPlaylistIds,
-                        ),
-                        playlists = playlists,
-                        playlistsUpdated = playlistsUpdated,
-                        refreshingSavedPlaylists = false,
+                        syncingSavedPlaylists = false,
                     )
                 }
             }
@@ -110,15 +84,11 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
                 mutateState { it?.copy(syncingPlaylists = it.syncingPlaylists.plus(event.playlistId)) }
 
                 val playlist = PlaylistRepository.getRemote(id = event.playlistId)
-                KotifyDatabase.transaction { playlist?.tracks?.loadToCache() }
+                    ?.also { prepPlaylists(listOf(it)) }
 
                 mutateState {
                     it?.copy(
-                        playlists = if (playlist == null) {
-                            it.playlists.minus(event.playlistId)
-                        } else {
-                            it.playlists.plus(event.playlistId to playlist)
-                        },
+                        playlists = it.playlists.plus(event.playlistId to playlist).filterNotNullValues(),
                         syncingPlaylists = it.syncingPlaylists.minus(event.playlistId),
                     )
                 }
@@ -133,81 +103,81 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
 
                 PlaylistRepository.getCached(id = event.playlistId)?.getAllTracks()
 
+                // reload playlist from the cache
                 val playlist = PlaylistRepository.getCached(id = event.playlistId)
-                KotifyDatabase.transaction { playlist?.tracks?.loadToCache() }
+                    ?.also { prepPlaylists(listOf(it)) }
 
                 mutateState {
                     it?.copy(
-                        playlists = if (playlist == null) {
-                            it.playlists.minus(event.playlistId)
-                        } else {
-                            it.playlists.plus(event.playlistId to playlist)
-                        },
+                        playlists = it.playlists.plus(event.playlistId to playlist).filterNotNullValues(),
                         syncingPlaylistTracks = it.syncingPlaylistTracks.minus(event.playlistId),
                     )
                 }
             }
 
             Event.FetchMissingPlaylists -> {
-                val playlistIds = requireNotNull(SavedPlaylistRepository.getLibraryCached()).toList()
-                val playlists = playlistIds
-                    .zipToMap(PlaylistRepository.getFull(ids = playlistIds))
-                    .filterNotNullValues()
+                val playlistIds = SavedPlaylistRepository.getLibraryCached()?.toList()
+                val playlists = loadPlaylists(playlistIds = playlistIds) { PlaylistRepository.getFull(ids = it) }
 
                 mutateState { it?.copy(playlists = playlists) }
             }
 
             Event.InvalidatePlaylists -> {
-                val playlistIds = requireNotNull(SavedPlaylistRepository.getLibraryCached()).toList()
-                PlaylistRepository.invalidate(ids = playlistIds)
+                val playlistIds = SavedPlaylistRepository.getLibraryCached()?.toList()
+                playlistIds?.let { PlaylistRepository.invalidate(ids = playlistIds) }
 
-                val playlists = playlistIds
-                    .zipToMap(PlaylistRepository.getCached(ids = playlistIds))
-                    .filterNotNullValues()
+                val playlists = loadPlaylists(playlistIds = playlistIds)
 
                 mutateState { it?.copy(playlists = playlists) }
             }
 
             Event.FetchMissingPlaylistTracks -> {
-                val playlistIds = requireNotNull(SavedPlaylistRepository.getLibraryCached()).toList()
-                val playlists = PlaylistRepository.get(ids = playlistIds)
-                KotifyDatabase.transaction {
-                    playlists.onEach { it?.tracks?.loadToCache() }
-                }
+                val playlistIds = SavedPlaylistRepository.getLibraryCached()?.toList()
 
                 // TODO also fetch tracks for playlists not in the database at all
-                val missingTracks = KotifyDatabase.transaction {
-                    playlists.filter { it?.hasAllTracks == false }
-                }
-
-                missingTracks
-                    .asFlow()
-                    .flatMapMerge { playlist ->
-                        flow<Unit> { playlist?.getAllTracks() }
+                loadPlaylists(playlistIds)
+                    .filterValues { playlist -> !playlist.hasAllTracks }
+                    .values
+                    .flatMapParallel { playlist ->
+                        playlist.getAllTracks()
                     }
-                    .collect()
 
-                val playlists2 = playlistIds
-                    .zipToMap(PlaylistRepository.getCached(ids = playlistIds))
-                    .filterNotNullValues()
-                KotifyDatabase.transaction { playlists2.values.forEach { it.tracks.loadToCache() } }
+                // reload playlists from the cache
+                val playlists = loadPlaylists(playlistIds = playlistIds)
 
-                mutateState { it?.copy(playlists = playlists2) }
+                mutateState { it?.copy(playlists = playlists) }
             }
 
             Event.InvalidatePlaylistTracks -> {
                 KotifyDatabase.transaction { PlaylistTrackTable.deleteAll() }
 
-                val playlistIds = requireNotNull(SavedPlaylistRepository.getLibraryCached()).toList()
-                val playlists = playlistIds
-                    .zipToMap(PlaylistRepository.getCached(ids = playlistIds))
-                    .filterNotNullValues()
+                // reload playlists from the cache
+                val playlistIds = SavedPlaylistRepository.getLibraryCached()?.toList()
+                val playlists = loadPlaylists(playlistIds = playlistIds)
+
                 mutateState { it?.copy(playlists = playlists) }
             }
 
             is Event.SetSort -> mutateState {
                 it?.copy(savedPlaylistIds = it.savedPlaylistIds?.withSort(sorts = event.sorts))
             }
+        }
+    }
+
+    private suspend fun loadPlaylists(
+        playlistIds: List<String>?,
+        fetchPlaylists: suspend (List<String>) -> List<Playlist?> = { PlaylistRepository.getCached(ids = it) },
+    ): Map<String, Playlist> {
+        return playlistIds
+            ?.zipToMap(fetchPlaylists(playlistIds))
+            ?.filterNotNullValues()
+            ?.also { playlists -> prepPlaylists(playlists.values) }
+            .orEmpty()
+    }
+
+    private suspend fun prepPlaylists(playlists: Iterable<Playlist>) {
+        KotifyDatabase.transaction {
+            playlists.forEach { playlist -> playlist.tracks.loadToCache() }
         }
     }
 }

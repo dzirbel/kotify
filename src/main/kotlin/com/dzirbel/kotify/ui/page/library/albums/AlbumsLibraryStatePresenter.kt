@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
     Presenter<AlbumsLibraryStatePresenter.ViewModel?, AlbumsLibraryStatePresenter.Event>(
         scope = scope,
-        startingEvents = listOf(Event.Load),
+        startingEvents = listOf(Event.Load(fromCache = true)),
         initialState = null
     ) {
 
@@ -28,14 +28,14 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
 
         val albumsUpdated: Long?,
 
-        val refreshingSavedAlbums: Boolean = false,
+        val syncingSavedAlbums: Boolean = false,
+
+        // ids of albums currently being synced
         val syncingAlbums: Set<String> = emptySet(),
     )
 
     sealed class Event {
-        object Load : Event()
-
-        object RefreshSavedAlbums : Event()
+        class Load(val fromCache: Boolean) : Event()
         class RefreshAlbum(val albumId: String) : Event()
 
         object FetchMissingAlbums : Event()
@@ -46,46 +46,26 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
 
     override suspend fun reactTo(event: Event) {
         when (event) {
-            Event.Load -> {
-                val savedAlbumIds = SavedAlbumRepository.getLibraryCached()?.toList()
-                val albums = savedAlbumIds
-                    ?.zipToMap(AlbumRepository.getCached(ids = savedAlbumIds))
-                    ?.filterNotNullValues()
-                    .orEmpty()
-                val albumsUpdated = SavedAlbumRepository.libraryUpdated()?.toEpochMilli()
+            is Event.Load -> {
+                mutateState { it?.copy(syncingSavedAlbums = true) }
 
-                KotifyDatabase.transaction {
-                    albums.values.forEach { it.artists.loadToCache() }
+                val savedAlbumIds = if (event.fromCache) {
+                    SavedAlbumRepository.getLibraryCached()?.toList()
+                } else {
+                    SavedAlbumRepository.getLibraryRemote().toList()
                 }
+
+                val albums = loadAlbums(albumIds = savedAlbumIds)
+                val albumsUpdated = SavedAlbumRepository.libraryUpdated()?.toEpochMilli()
 
                 mutateState {
                     ViewModel(
-                        savedAlbumIds = savedAlbumIds?.let {
-                            ListAdapter.from(it)
+                        savedAlbumIds = savedAlbumIds?.let { savedAlbumIds ->
+                            ListAdapter.from(elements = savedAlbumIds, baseAdapter = it?.savedAlbumIds)
                         },
                         albums = albums,
                         albumsUpdated = albumsUpdated,
-                    )
-                }
-            }
-
-            Event.RefreshSavedAlbums -> {
-                mutateState { it?.copy(refreshingSavedAlbums = true) }
-
-                SavedAlbumRepository.invalidateLibrary()
-
-                val savedAlbumIds = SavedAlbumRepository.getLibrary().toList()
-                val albums = savedAlbumIds
-                    .zipToMap(AlbumRepository.getCached(ids = savedAlbumIds))
-                    .filterNotNullValues()
-                val albumsUpdated = SavedAlbumRepository.libraryUpdated()?.toEpochMilli()
-
-                mutateState {
-                    it?.copy(
-                        savedAlbumIds = ListAdapter.from(elements = savedAlbumIds, baseAdapter = it.savedAlbumIds),
-                        albums = albums,
-                        albumsUpdated = albumsUpdated,
-                        refreshingSavedAlbums = false,
+                        syncingSavedAlbums = false,
                     )
                 }
             }
@@ -94,15 +74,11 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
                 mutateState { it?.copy(syncingAlbums = it.syncingAlbums.plus(event.albumId)) }
 
                 val album = AlbumRepository.getRemote(id = event.albumId)
-                KotifyDatabase.transaction { album?.artists?.loadToCache() }
+                    ?.also { prepAlbums(listOf(it)) }
 
                 mutateState {
                     it?.copy(
-                        albums = if (album == null) {
-                            it.albums.minus(event.albumId)
-                        } else {
-                            it.albums.plus(event.albumId to album)
-                        },
+                        albums = it.albums.plus(event.albumId to album).filterNotNullValues(),
                         syncingAlbums = it.syncingAlbums.minus(event.albumId),
                     )
                 }
@@ -110,20 +86,16 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
 
             Event.FetchMissingAlbums -> {
                 val albumIds = requireNotNull(SavedAlbumRepository.getLibraryCached()).toList()
-                val albums = albumIds
-                    .zipToMap(AlbumRepository.getFull(ids = albumIds))
-                    .filterNotNullValues()
+                val albums = loadAlbums(albumIds = albumIds) { AlbumRepository.getFull(ids = it) }
 
                 mutateState { it?.copy(albums = albums) }
             }
 
             Event.InvalidateAlbums -> {
-                val albumIds = requireNotNull(SavedAlbumRepository.getLibraryCached()).toList()
-                AlbumRepository.invalidate(ids = albumIds)
+                val albumIds = SavedAlbumRepository.getLibraryCached()?.toList()
+                albumIds?.let { AlbumRepository.invalidate(ids = it) }
 
-                val albums = albumIds
-                    .zipToMap(AlbumRepository.getCached(ids = albumIds))
-                    .filterNotNullValues()
+                val albums = loadAlbums(albumIds = albumIds)
 
                 mutateState { it?.copy(albums = albums) }
             }
@@ -131,6 +103,23 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
             is Event.SetSort -> mutateState {
                 it?.copy(savedAlbumIds = it.savedAlbumIds?.withSort(sorts = event.sorts))
             }
+        }
+    }
+
+    private suspend fun loadAlbums(
+        albumIds: List<String>?,
+        fetchAlbums: suspend (List<String>) -> List<Album?> = { AlbumRepository.getCached(ids = it) },
+    ): Map<String, Album> {
+        return albumIds
+            ?.zipToMap(fetchAlbums(albumIds))
+            ?.filterNotNullValues()
+            ?.also { albums -> prepAlbums(albums.values) }
+            .orEmpty()
+    }
+
+    private suspend fun prepAlbums(albums: Iterable<Album>) {
+        KotifyDatabase.transaction {
+            albums.forEach { artist -> artist.artists.loadToCache() }
         }
     }
 }

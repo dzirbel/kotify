@@ -26,6 +26,7 @@ import com.dzirbel.kotify.ui.components.adapter.compare
 import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.star.StarRating
 import com.dzirbel.kotify.ui.components.table.Column
+import com.dzirbel.kotify.ui.components.table.ColumnByLinkedText
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.ColumnWidth
@@ -140,61 +141,31 @@ object NameColumn : ColumnByString<Track>(name = "Title") {
     override fun toString(item: Track, index: Int) = item.name
 }
 
-object ArtistColumn : Column<Track>(name = "Artist") {
+object ArtistColumn : ColumnByLinkedText<Track>(name = "Artist") {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
-        override fun compare(sortOrder: SortOrder, first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
-            return sortOrder.compare(
-                first = first.value.artists.cached.joinToString { it.name },
-                second = second.value.artists.cached.joinToString { it.name },
-                ignoreCase = true,
-            )
+    override fun links(item: Track, index: Int): List<Link> {
+        return item.artists.cached.map { artist ->
+            Link(text = artist.name, link = artist.id.value)
         }
     }
 
-    @Composable
-    override fun item(item: Track, index: Int) {
-        LinkedText(
-            modifier = Modifier.padding(Dimens.space3),
-            key = item,
-            onClickLink = { artistId ->
-                pageStack.mutate { to(ArtistPage(artistId = artistId)) }
-            }
-        ) {
-            list(item.artists.cached) { artist ->
-                link(text = artist.name, link = artist.id.value)
-            }
-        }
+    override fun onClickLink(link: String) {
+        pageStack.mutate { to(ArtistPage(artistId = link)) }
     }
 }
 
-object AlbumColumn : Column<Track>(name = "Album") {
+object AlbumColumn : ColumnByLinkedText<Track>(name = "Album") {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override val sortableProperty = object : SortableProperty<Track>(sortTitle = name) {
-        override fun compare(sortOrder: SortOrder, first: IndexedValue<Track>, second: IndexedValue<Track>): Int {
-            return sortOrder.compare(
-                first = first.value.album.cached?.name.orEmpty(),
-                second = second.value.album.cached?.name.orEmpty(),
-                ignoreCase = true,
-            )
-        }
+    override fun links(item: Track, index: Int): List<Link> {
+        return listOf(
+            Link(text = item.name, link = item.id.value)
+        )
     }
 
-    @Composable
-    override fun item(item: Track, index: Int) {
-        LinkedText(
-            modifier = Modifier.padding(Dimens.space3),
-            key = item,
-            onClickLink = { albumId ->
-                pageStack.mutate { to(AlbumPage(albumId = albumId)) }
-            }
-        ) {
-            item.album.cached?.let { album ->
-                link(text = album.name, link = album.id.value)
-            }
-        }
+    override fun onClickLink(link: String) {
+        pageStack.mutate { to(AlbumPage(albumId = link)) }
     }
 }
 

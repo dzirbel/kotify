@@ -10,7 +10,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,16 +19,16 @@ import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.table.Column
+import com.dzirbel.kotify.ui.components.table.ColumnByLinkedText
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.Table
+import com.dzirbel.kotify.ui.framework.rememberPresenter
+import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.page.library.InvalidateButtonColumn
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
-import kotlinx.coroutines.Dispatchers
-
-object LibraryArtistIDColumn : ColumnByString<String>(name = "ID") {
-    override fun toString(item: String, index: Int): String = item
-}
+import com.dzirbel.kotify.ui.util.mutate
 
 private fun artistColumns(
     presenter: ArtistsLibraryStatePresenter,
@@ -38,11 +37,21 @@ private fun artistColumns(
     syncingArtistAlbums: Set<String>,
 ): List<Column<String>> {
     return listOf(
-        object : ColumnByString<String>(name = "Name") {
-            override fun toString(item: String, index: Int): String = artists[item]?.name.orEmpty()
+        object : ColumnByLinkedText<String>(name = "Name") {
+            override fun links(item: String, index: Int): List<Link> {
+                return listOfNotNull(
+                    artists[item]?.let { Link(text = it.name, link = it.id.value) }
+                )
+            }
+
+            override fun onClickLink(link: String) {
+                pageStack.mutate { to(ArtistPage(artistId = link)) }
+            }
         },
 
-        LibraryArtistIDColumn,
+        object : ColumnByString<String>(name = "ID") {
+            override fun toString(item: String, index: Int): String = item
+        },
 
         object : InvalidateButtonColumn<String>(name = "Sync artist") {
             override fun timestampFor(item: String, index: Int) = artists[item]?.updatedTime?.toEpochMilli()
@@ -76,8 +85,7 @@ private fun artistColumns(
 
 @Composable
 fun ArtistsLibraryState() {
-    val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember { ArtistsLibraryStatePresenter(scope) }
+    val presenter = rememberPresenter(::ArtistsLibraryStatePresenter)
 
     presenter.state().stateOrThrow?.let { state ->
         val savedArtistIds = state.savedArtistIds
@@ -88,7 +96,7 @@ fun ArtistsLibraryState() {
                 updated = state.artistsUpdated,
                 updatedFallback = "Artists never synced",
             ) {
-                presenter.emitAsync(ArtistsLibraryStatePresenter.Event.RefreshSavedArtists)
+                presenter.emitAsync(ArtistsLibraryStatePresenter.Event.Load(fromCache = false))
             }
 
             return
@@ -110,7 +118,7 @@ fun ArtistsLibraryState() {
                     refreshing = state.syncingSavedArtists,
                     updated = state.artistsUpdated,
                 ) {
-                    presenter.emitAsync(ArtistsLibraryStatePresenter.Event.RefreshSavedArtists)
+                    presenter.emitAsync(ArtistsLibraryStatePresenter.Event.Load(fromCache = false))
                 }
 
                 val inCacheExpanded = remember { mutableStateOf(false) }

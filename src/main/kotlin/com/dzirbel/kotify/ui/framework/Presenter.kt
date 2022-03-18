@@ -3,10 +3,12 @@ package com.dzirbel.kotify.ui.framework
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.ui.framework.Presenter.StateOrError.State
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +30,15 @@ import kotlin.contracts.contract
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.KClass
+
+/**
+ * Convenience function which manages the creation of a [Presenter] tied to the composition.
+ */
+@Composable
+fun <ViewModel, P : Presenter<ViewModel?, *>> rememberPresenter(createPresenter: (CoroutineScope) -> P): P {
+    val scope = rememberCoroutineScope { Dispatchers.IO }
+    return remember { createPresenter(scope) }
+}
 
 /**
  * A presenter abstraction which controls the state of a particular piece of the UI.

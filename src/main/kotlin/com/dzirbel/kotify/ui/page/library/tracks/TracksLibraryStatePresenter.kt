@@ -9,47 +9,45 @@ import kotlinx.coroutines.CoroutineScope
 class TracksLibraryStatePresenter(scope: CoroutineScope) :
     Presenter<TracksLibraryStatePresenter.ViewModel?, TracksLibraryStatePresenter.Event>(
         scope = scope,
-        startingEvents = listOf(Event.Load),
+        startingEvents = listOf(Event.Load(fromCache = true)),
         initialState = null
     ) {
 
     data class ViewModel(
-        val tracks: List<Pair<String, Track?>>?,
+        val savedTrackIds: Set<String>?,
+
+        val tracks: List<Track?>,
+
         val tracksUpdated: Long?,
         val refreshingSavedTracks: Boolean = false,
     )
 
     sealed class Event {
-        object Load : Event()
-        object RefreshSavedTracks : Event()
+        class Load(val fromCache: Boolean) : Event()
         object FetchMissingTracks : Event()
         object InvalidateTracks : Event()
     }
 
     override suspend fun reactTo(event: Event) {
         when (event) {
-            Event.Load -> {
-                val savedTrackIds = SavedTrackRepository.getLibraryCached()?.toList()
-                val tracks = savedTrackIds?.zip(TrackRepository.getCached(ids = savedTrackIds))
-                val tracksUpdated = SavedTrackRepository.libraryUpdated()?.toEpochMilli()
-
-                mutateState { ViewModel(tracks = tracks, tracksUpdated = tracksUpdated) }
-            }
-
-            Event.RefreshSavedTracks -> {
+            is Event.Load -> {
                 mutateState { it?.copy(refreshingSavedTracks = true) }
 
-                SavedTrackRepository.invalidateLibrary()
+                val savedTrackIds = if (event.fromCache) {
+                    SavedTrackRepository.getLibraryCached()
+                } else {
+                    SavedTrackRepository.getLibraryRemote()
+                }
 
-                val savedTrackIds = SavedTrackRepository.getLibrary().toList()
-                val tracks = savedTrackIds.zip(TrackRepository.getCached(ids = savedTrackIds))
+                val tracks = TrackRepository.getCached(ids = savedTrackIds?.toList().orEmpty())
                 val tracksUpdated = SavedTrackRepository.libraryUpdated()?.toEpochMilli()
 
                 mutateState {
-                    it?.copy(
+                    ViewModel(
+                        savedTrackIds = savedTrackIds,
                         tracks = tracks,
                         tracksUpdated = tracksUpdated,
-                        refreshingSavedTracks = false
+                        refreshingSavedTracks = false,
                     )
                 }
             }
@@ -59,16 +57,17 @@ class TracksLibraryStatePresenter(scope: CoroutineScope) :
 
                 val tracks = TrackRepository.getFull(ids = savedTrackIds)
 
-                mutateState { it?.copy(tracks = savedTrackIds.zip(tracks)) }
+                mutateState { it?.copy(tracks = tracks) }
             }
 
             Event.InvalidateTracks -> {
                 val savedTrackIds = requireNotNull(SavedTrackRepository.getLibraryCached()).toList()
 
                 TrackRepository.invalidate(ids = savedTrackIds)
+
                 val tracks = TrackRepository.getCached(ids = savedTrackIds)
 
-                mutateState { it?.copy(tracks = savedTrackIds.zip(tracks)) }
+                mutateState { it?.copy(tracks = tracks) }
             }
         }
     }

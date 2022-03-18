@@ -10,7 +10,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,9 +21,9 @@ import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.Table
+import com.dzirbel.kotify.ui.framework.rememberPresenter
 import com.dzirbel.kotify.ui.page.library.InvalidateButtonColumn
 import com.dzirbel.kotify.ui.theme.Dimens
-import kotlinx.coroutines.Dispatchers
 
 private fun albumColumns(
     presenter: AlbumsLibraryStatePresenter,
@@ -60,19 +59,18 @@ private fun albumColumns(
 
 @Composable
 fun AlbumsLibraryState() {
-    val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember { AlbumsLibraryStatePresenter(scope) }
+    val presenter = rememberPresenter(::AlbumsLibraryStatePresenter)
 
     presenter.state().stateOrThrow?.let { state ->
         val savedAlbumIds = state.savedAlbumIds
 
         if (savedAlbumIds == null) {
             InvalidateButton(
-                refreshing = state.refreshingSavedAlbums,
+                refreshing = state.syncingSavedAlbums,
                 updated = state.albumsUpdated,
                 updatedFallback = "Albums never synced",
             ) {
-                presenter.emitAsync(AlbumsLibraryStatePresenter.Event.RefreshSavedAlbums)
+                presenter.emitAsync(AlbumsLibraryStatePresenter.Event.Load(fromCache = false))
             }
 
             return
@@ -90,10 +88,10 @@ fun AlbumsLibraryState() {
                 Text("$totalSaved Saved Albums", modifier = Modifier.padding(end = Dimens.space3))
 
                 InvalidateButton(
-                    refreshing = state.refreshingSavedAlbums,
+                    refreshing = state.syncingSavedAlbums,
                     updated = state.albumsUpdated,
                 ) {
-                    presenter.emitAsync(AlbumsLibraryStatePresenter.Event.RefreshSavedAlbums)
+                    presenter.emitAsync(AlbumsLibraryStatePresenter.Event.Load(fromCache = false))
                 }
 
                 val inCacheExpanded = remember { mutableStateOf(false) }

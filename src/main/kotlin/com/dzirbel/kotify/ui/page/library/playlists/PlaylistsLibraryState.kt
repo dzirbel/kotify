@@ -10,7 +10,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,9 +22,9 @@ import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.Table
+import com.dzirbel.kotify.ui.framework.rememberPresenter
 import com.dzirbel.kotify.ui.page.library.InvalidateButtonColumn
 import com.dzirbel.kotify.ui.theme.Dimens
-import kotlinx.coroutines.Dispatchers
 
 private fun playlistColumns(
     presenter: PlaylistsLibraryStatePresenter,
@@ -73,19 +72,18 @@ private fun playlistColumns(
 
 @Composable
 fun PlaylistsLibraryState() {
-    val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember { PlaylistsLibraryStatePresenter(scope) }
+    val presenter = rememberPresenter(::PlaylistsLibraryStatePresenter)
 
     presenter.state().stateOrThrow?.let { state ->
         val playlists = state.savedPlaylistIds
 
         if (playlists == null) {
             InvalidateButton(
-                refreshing = state.refreshingSavedPlaylists,
+                refreshing = state.syncingSavedPlaylists,
                 updated = state.playlistsUpdated,
                 updatedFallback = "Playlists never synced",
             ) {
-                presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.RefreshSavedPlaylists)
+                presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.Load(fromCache = false))
             }
 
             return
@@ -104,10 +102,10 @@ fun PlaylistsLibraryState() {
                 Text("$totalSaved Saved Playlists", modifier = Modifier.padding(end = Dimens.space3))
 
                 InvalidateButton(
-                    refreshing = state.refreshingSavedPlaylists,
+                    refreshing = state.syncingSavedPlaylists,
                     updated = state.playlistsUpdated,
                 ) {
-                    presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.RefreshSavedPlaylists)
+                    presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.Load(fromCache = false))
                 }
 
                 val inCacheExpanded = remember { mutableStateOf(false) }
