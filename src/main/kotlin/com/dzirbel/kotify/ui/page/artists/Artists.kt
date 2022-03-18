@@ -30,7 +30,6 @@ import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.DividerSelector
-import com.dzirbel.kotify.ui.components.adapter.FilterTextField
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortSelector
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
@@ -170,13 +169,6 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
                     modifier = Modifier.padding(Dimens.space4),
                 ) {
-                    FilterTextField(
-                        value = state.artists.filterString.orEmpty(),
-                        onValueChange = {
-                            presenter.emitAsync(ArtistsPresenter.Event.SetFilter(it.takeUnless { it.isEmpty() }))
-                        }
-                    )
-
                     DividerSelector(
                         dividers = listOf(ArtistNameDivider(), ArtistRatingDivider(state.artistRatings)),
                         currentDivider = state.artists.divider,

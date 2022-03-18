@@ -54,7 +54,6 @@ class ArtistsPresenter(scope: CoroutineScope) :
         data class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
         data class SetSorts(val sorts: List<Sort<Artist>>) : Event()
         data class SetDivider(val divider: Divider<Artist>?, val dividerSortOrder: SortOrder?) : Event()
-        data class SetFilter(val filter: String?) : Event()
     }
 
     override fun eventFlows(): Iterable<Flow<Event>> {
@@ -195,10 +194,6 @@ class ArtistsPresenter(scope: CoroutineScope) :
                 it.copy(
                     artists = it.artists.withDivider(divider = event.divider, dividerSortOrder = event.dividerSortOrder)
                 )
-            }
-
-            is Event.SetFilter -> mutateLoadedState {
-                it.copy(artists = it.artists.withFilterByString(event.filter) { artist -> artist.name })
             }
         }
     }
