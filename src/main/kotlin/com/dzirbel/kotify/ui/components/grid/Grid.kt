@@ -246,25 +246,26 @@ fun <E> Grid(
             // the total width of a column, including its spacing
             val columnWidthWithSpacing: Float = maxCellWidth + horizontalSpacingPx
 
-            // number of columns is the total column space (total width minus one horizontal spacing for the spacing
-            // after the last column) divided by the column width including its spacing; then taking the floor to
-            // truncate any "fractional column"
+            // the amount of space for the columns: the layout max width minus the start/end spacing
+            val columnSpace = constraints.maxWidth - horizontalSpacingStartPx - horizontalSpacingEndPx
+
+            // number of columns is the total column space (minus one horizontal spacing for the spacing after the last
+            // column) divided by the column width including its spacing; then taking the floor to truncate any
+            // "fractional column"
             val cols: Int = columns
-                ?: ((constraints.maxWidth - horizontalSpacingPx) / columnWidthWithSpacing).toInt().coerceAtLeast(1)
+                ?: ((columnSpace - horizontalSpacingPx) / columnWidthWithSpacing).toInt().coerceAtLeast(1)
 
             // now we need to account for that "fractional column" by adding some "extra" to each column spacing,
-            // distributed among each spacing (note: we cannot add this extra to the columns rather than the spacing
-            // because the placeables have already been measured)
+            // distributed among the space between each column (note: we cannot add this extra to the columns rather
+            // than the spacing because the placeables have already been measured)
             // first: the total width used without the extra is the number of columns times the column width with
-            // spacing, minus an extra horizontal spacing after the final column, plus the start and end spacings
-            // next: extra is the max width minus the used width, divided by the number of columns plus one (to include
-            // the trailing space)
+            // spacing minus an extra horizontal spacing after the final column
+            // next: extra is the max width minus the used width, divided by the number of columns minus one (to exclude
+            // start/end padding)
             // finally: create adjusted width variables including the extra
-            val usedWidth: Float = (cols * columnWidthWithSpacing) - horizontalSpacingPx +
-                horizontalSpacingStartPx + horizontalSpacingEndPx
-            val extra: Float = (constraints.maxWidth - usedWidth) / (cols + 1)
-            val horizontalSpacingPxWithExtra: Float = horizontalSpacingPx + extra
-            val columnWidthWithSpacingAndExtra: Float = maxCellWidth + horizontalSpacingPxWithExtra
+            val usedWidth: Float = (cols * columnWidthWithSpacing) - horizontalSpacingPx
+            val extra: Float = (columnSpace - usedWidth) / (cols - 1)
+            val columnWidthWithSpacingAndExtra: Float = maxCellWidth + horizontalSpacingPx + extra
 
             val divisionElements = divisions.values.toList()
 
