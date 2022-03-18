@@ -52,7 +52,7 @@ fun <T> Table(
                     Box {
                         column.header(
                             sortOrder = items.sorts
-                                ?.firstOrNull { it.sortableProperty == column.sortableProperty }
+                                ?.firstOrNull { it.sortableProperty.sortTitle == column.sortableProperty?.sortTitle }
                                 ?.sortOrder,
                             onSetSort = { sortOrder ->
                                 onSetSort(sortOrder?.let { column.sortableProperty?.let { Sort(it, sortOrder) } })
