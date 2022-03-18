@@ -34,7 +34,7 @@ abstract class Divider<E>(
                 Text(
                     text = divisionHeader,
                     style = MaterialTheme.typography.h5,
-                    modifier = Modifier.padding(horizontal = Dimens.space4, vertical = Dimens.space2),
+                    modifier = Modifier.padding(horizontal = Dimens.space5, vertical = Dimens.space2),
                 )
 
                 HorizontalDivider(modifier = Modifier.align(Alignment.BottomCenter))

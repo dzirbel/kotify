@@ -35,7 +35,7 @@ import kotlin.reflect.KClass
  * Convenience function which manages the creation of a [Presenter] tied to the composition.
  */
 @Composable
-fun <ViewModel, P : Presenter<ViewModel?, *>> rememberPresenter(createPresenter: (CoroutineScope) -> P): P {
+fun <ViewModel, P : Presenter<ViewModel, *>> rememberPresenter(createPresenter: (CoroutineScope) -> P): P {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     return remember { createPresenter(scope) }
 }

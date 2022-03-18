@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
@@ -40,7 +41,7 @@ import com.dzirbel.kotify.ui.theme.LocalColors
 fun <T> BoxScope.StandardPage(
     scrollState: ScrollState,
     presenter: Presenter<RemoteState<T>, *>,
-    header: @Composable (BoxScope.(T) -> Unit)? = null,
+    header: @Composable (BoxScope.(T?) -> Unit)? = null,
     onHeaderVisibilityChanged: (visible: Boolean) -> Unit = {},
     content: @Composable ColumnScope.(T) -> Unit,
 ) {
@@ -54,7 +55,7 @@ fun <T> BoxScope.StandardPage(
                 header = header,
                 onHeaderVisibilityChanged = onHeaderVisibilityChanged,
             )
-            is RemoteState.Loading -> LoadingPage()
+            is RemoteState.Loading -> LoadingPage(header = header)
             is RemoteState.NotFound -> NotFoundPage()
         }
     }
@@ -65,7 +66,7 @@ private fun <T> LoadedPage(
     state: T,
     scrollState: ScrollState,
     content: @Composable ColumnScope.(T) -> Unit,
-    header: @Composable (BoxScope.(T) -> Unit)?,
+    header: @Composable (BoxScope.(T?) -> Unit)?,
     onHeaderVisibilityChanged: (visible: Boolean) -> Unit,
 ) {
     Box {
@@ -126,8 +127,18 @@ private fun <T> BoxScope.ErrorPage(throwable: Throwable, presenter: Presenter<T,
 }
 
 @Composable
-private fun BoxScope.LoadingPage() {
-    CircularProgressIndicator(Modifier.size(Dimens.iconHuge).align(Alignment.Center))
+private fun <T> LoadingPage(header: @Composable (BoxScope.(T?) -> Unit)?) {
+    Column {
+        header?.let {
+            Box {
+                header(null)
+            }
+        }
+
+        Box(Modifier.weight(1f).fillMaxSize()) {
+            CircularProgressIndicator(Modifier.size(Dimens.iconHuge).align(Alignment.Center))
+        }
+    }
 }
 
 @Composable

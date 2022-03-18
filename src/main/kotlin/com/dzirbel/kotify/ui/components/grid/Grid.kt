@@ -109,6 +109,8 @@ fun <E> Grid(
     selectedElementIndex: Int? = null,
     modifier: Modifier = Modifier,
     horizontalSpacing: Dp = Dimens.space2,
+    horizontalSpacingStart: Dp = horizontalSpacing,
+    horizontalSpacingEnd: Dp = horizontalSpacing,
     verticalSpacing: Dp = Dimens.space3,
     cellAlignment: Alignment = Alignment.TopCenter,
     columns: Int? = null,
@@ -222,6 +224,8 @@ fun <E> Grid(
             val cellMeasurables = measurables.subList(fromIndex = 0, toIndex = elements.size)
 
             val horizontalSpacingPx: Float = horizontalSpacing.toPx()
+            val horizontalSpacingStartPx: Float = horizontalSpacingStart.toPx()
+            val horizontalSpacingEndPx: Float = horizontalSpacingEnd.toPx()
             val verticalSpacingPx: Float = verticalSpacing.toPx()
 
             // max width for each column is the total column space (total width minus one horizontal spacing for the
@@ -252,11 +256,12 @@ fun <E> Grid(
             // distributed among each spacing (note: we cannot add this extra to the columns rather than the spacing
             // because the placeables have already been measured)
             // first: the total width used without the extra is the number of columns times the column width with
-            // spacing plus an extra horizontal spacing to account for the trailing space
+            // spacing, minus an extra horizontal spacing after the final column, plus the start and end spacings
             // next: extra is the max width minus the used width, divided by the number of columns plus one (to include
             // the trailing space)
             // finally: create adjusted width variables including the extra
-            val usedWidth: Float = (cols * columnWidthWithSpacing) + horizontalSpacingPx
+            val usedWidth: Float = (cols * columnWidthWithSpacing) - horizontalSpacingPx +
+                horizontalSpacingStartPx + horizontalSpacingEndPx
             val extra: Float = (constraints.maxWidth - usedWidth) / (cols + 1)
             val horizontalSpacingPxWithExtra: Float = horizontalSpacingPx + extra
             val columnWidthWithSpacingAndExtra: Float = maxCellWidth + horizontalSpacingPxWithExtra
@@ -381,7 +386,7 @@ fun <E> Grid(
                             // getOrNull in case the column exceeds the number of elements in the last row
                             division.getOrNull(colIndex + rowIndex * cols)?.index?.let { elementIndex ->
                                 val placeable = cellPlaceables[elementIndex]
-                                val baseX = (horizontalSpacingPxWithExtra + (colIndex * columnWidthWithSpacingAndExtra))
+                                val baseX = (horizontalSpacingStartPx + (colIndex * columnWidthWithSpacingAndExtra))
                                     .roundToInt()
 
                                 if (insertInRow && colIndex == selectedElementColIndex) {

@@ -29,9 +29,9 @@ fun SimpleTextButton(
     enforceMinHeight: Boolean = false,
     backgroundColor: Color = Color.Transparent,
     textColor: Color = if (backgroundColor == Color.Transparent) {
-        LocalColors.current.text
+        LocalColors.current.text.copy(alpha = LocalContentAlpha.current)
     } else {
-        LocalColors.current.textOnSurface
+        LocalColors.current.textOnSurface.copy(alpha = LocalContentAlpha.current)
     },
     onClick: () -> Unit,
     content: @Composable RowScope.() -> Unit,

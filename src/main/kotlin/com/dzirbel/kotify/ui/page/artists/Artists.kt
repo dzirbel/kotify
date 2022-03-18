@@ -8,13 +8,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.Artist
@@ -39,13 +41,13 @@ import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.framework.StandardPage
+import com.dzirbel.kotify.ui.framework.rememberPresenter
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.averageOrNull
-import kotlinx.coroutines.Dispatchers
 import kotlin.math.floor
 
 val SortArtistByName = object : SortableProperty<Artist>(
@@ -134,45 +136,48 @@ class ArtistRatingDivider(
 
 @Composable
 fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
-    val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember { ArtistsPresenter(scope = scope) }
+    val presenter = rememberPresenter(::ArtistsPresenter)
 
     StandardPage(
         scrollState = pageStack.value.currentScrollState,
         presenter = presenter,
         header = { state ->
             Row(
-                modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space5, vertical = Dimens.space4),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column(modifier = Modifier.padding(Dimens.space4)) {
+                Column {
                     Text(
                         text = "Artists",
                         style = MaterialTheme.typography.h4,
                     )
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("${state.artists.size} saved artists", modifier = Modifier.padding(end = Dimens.space2))
+                    if (state != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                                Text(
+                                    text = "${state.artists.size} saved artists",
+                                    modifier = Modifier.padding(end = Dimens.space2),
+                                )
 
-                        Interpunct()
+                                Interpunct()
 
-                        InvalidateButton(
-                            refreshing = state.refreshing,
-                            updated = state.artistsUpdated,
-                            contentPadding = PaddingValues(all = Dimens.space2),
-                            onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) }
-                        )
+                                InvalidateButton(
+                                    refreshing = state.refreshing,
+                                    updated = state.artistsUpdated,
+                                    contentPadding = PaddingValues(all = Dimens.space2),
+                                    onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) }
+                                )
+                            }
+                        }
                     }
                 }
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
-                    modifier = Modifier.padding(Dimens.space4),
-                ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
                     DividerSelector(
-                        dividers = listOf(ArtistNameDivider(), ArtistRatingDivider(state.artistRatings)),
-                        currentDivider = state.artists.divider,
-                        currentDividerSortOrder = state.artists.dividerSortOrder,
+                        dividers = listOf(ArtistNameDivider(), ArtistRatingDivider(state?.artistRatings.orEmpty())),
+                        currentDivider = state?.artists?.divider,
+                        currentDividerSortOrder = state?.artists?.dividerSortOrder,
                         onSelectDivider = { divider, dividerSortOrder ->
                             presenter.emitAsync(
                                 ArtistsPresenter.Event.SetDivider(
@@ -187,9 +192,9 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
                         sortProperties = listOf(
                             SortArtistByName,
                             SortArtistByPopularity,
-                            SortAristByRating(artistRatings = state.artistRatings),
+                            SortAristByRating(artistRatings = state?.artistRatings.orEmpty()),
                         ),
-                        sorts = state.artists.sorts.orEmpty(),
+                        sorts = state?.artists?.sorts.orEmpty(),
                         onSetSort = {
                             presenter.emitAsync(ArtistsPresenter.Event.SetSorts(sorts = it))
                         },
@@ -203,6 +208,8 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
 
         Grid(
             elements = state.artists,
+            horizontalSpacingStart = Dimens.space5,
+            horizontalSpacingEnd = Dimens.space5,
             selectedElementIndex = selectedArtistIndex.value,
             detailInsertContent = { _, artist ->
                 ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
