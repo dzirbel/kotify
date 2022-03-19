@@ -172,7 +172,7 @@ abstract class Presenter<ViewModel, Event : Any>(
      * [eventFlow].
      */
     private fun eventFlow(startingEvents: List<Event>? = this.startingEvents): Flow<Event> {
-        return (eventFlows()?.plus(events)?.merge() ?: events)
+        return (externalEvents()?.let { merge(it, events) } ?: events)
             .onStart { startingEvents?.forEach { emit(it) } }
             .onEach {
                 assertNotOnUIThread()
@@ -205,10 +205,10 @@ abstract class Presenter<ViewModel, Event : Any>(
     override fun close() {}
 
     /**
-     * Optionally returns a set of [Flow]s of [Event]s which are incorporated into the event stream. This allows the
-     * presenter to react to streams of external data in the same way as events from [emit].
+     * Optionally returns a [Flow]s of [Event]s which are incorporated into the event stream. This allows the presenter
+     * to react to streams of external data in the same way as events from [emit].
      */
-    open fun eventFlows(): Iterable<Flow<Event>>? = null
+    open fun externalEvents(): Flow<Event>? = null
 
     /**
      * Listens and handles events for this presenter and returns its current state. This function is appropriate to be

@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 
 class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewModel?, TracksPresenter.Event>(
     scope = scope,
@@ -38,8 +39,8 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
         data class ReactToTracksSaved(val trackIds: List<String>, val saved: Boolean) : Event()
     }
 
-    override fun eventFlows(): Iterable<Flow<Event>> {
-        return listOf(
+    override fun externalEvents(): Flow<Event> {
+        return merge(
             SavedTrackRepository.eventsFlow()
                 .filterIsInstance<SavedRepository.Event.SetSaved>()
                 .map { Event.ReactToTracksSaved(trackIds = it.ids, saved = it.saved) },

@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import java.time.Instant
 
 class ArtistsPresenter(scope: CoroutineScope) :
@@ -56,8 +57,8 @@ class ArtistsPresenter(scope: CoroutineScope) :
         data class SetDivider(val divider: Divider<Artist>?, val dividerSortOrder: SortOrder?) : Event()
     }
 
-    override fun eventFlows(): Iterable<Flow<Event>> {
-        return listOf(
+    override fun externalEvents(): Flow<Event> {
+        return merge(
             SavedArtistRepository.eventsFlow()
                 .filterIsInstance<SavedRepository.Event.SetSaved>()
                 .map { Event.ReactToArtistsSaved(artistIds = it.ids, saved = it.saved) },

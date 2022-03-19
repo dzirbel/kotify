@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 
 class AlbumsPresenter(scope: CoroutineScope) :
     Presenter<AlbumsPresenter.ViewModel?, AlbumsPresenter.Event>(
@@ -34,8 +35,8 @@ class AlbumsPresenter(scope: CoroutineScope) :
         data class ToggleSave(val albumId: String, val save: Boolean) : Event()
     }
 
-    override fun eventFlows(): Iterable<Flow<Event>> {
-        return listOf(
+    override fun externalEvents(): Flow<Event> {
+        return merge(
             SavedAlbumRepository.eventsFlow()
                 .filterIsInstance<SavedRepository.Event.SetSaved>()
                 .map { Event.ReactToAlbumsSaved(albumIds = it.ids, saved = it.saved) },
