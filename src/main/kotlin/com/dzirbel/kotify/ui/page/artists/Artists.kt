@@ -40,6 +40,7 @@ import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
+import com.dzirbel.kotify.ui.framework.StandardLoadingSpinner
 import com.dzirbel.kotify.ui.framework.StandardPage
 import com.dzirbel.kotify.ui.framework.rememberPresenter
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
@@ -141,98 +142,104 @@ fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
     StandardPage(
         scrollState = pageStack.value.currentScrollState,
         presenter = presenter,
-        header = { state ->
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space5, vertical = Dimens.space4),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column {
-                    Text(
-                        text = "Artists",
-                        style = MaterialTheme.typography.h4,
-                    )
+        onHeaderVisibilityChanged = { toggleHeader(!it) },
+        header = { state -> ArtistsHeader(presenter, state) },
+    ) { state ->
+        if (state.artists.hasElements) {
+            ArtistsGrid(presenter, state)
+        } else {
+            StandardLoadingSpinner()
+        }
+    }
+}
 
-                    if (state != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                                Text(
-                                    text = "${state.artists.size} saved artists",
-                                    modifier = Modifier.padding(end = Dimens.space2),
-                                )
+@Composable
+private fun ArtistsHeader(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewModel) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space5, vertical = Dimens.space4),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Column {
+            Text("Artists", style = MaterialTheme.typography.h4)
 
-                                Interpunct()
+            if (state.artists.hasElements) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                        Text(
+                            text = "${state.artists.size} saved artists",
+                            modifier = Modifier.padding(end = Dimens.space2),
+                        )
 
-                                InvalidateButton(
-                                    refreshing = state.refreshing,
-                                    updated = state.artistsUpdated,
-                                    contentPadding = PaddingValues(all = Dimens.space2),
-                                    onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) }
-                                )
-                            }
-                        }
+                        Interpunct()
+
+                        InvalidateButton(
+                            refreshing = state.refreshing,
+                            updated = state.artistsUpdated,
+                            contentPadding = PaddingValues(all = Dimens.space2),
+                            onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) }
+                        )
                     }
                 }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-                    DividerSelector(
-                        dividers = listOf(ArtistNameDivider(), ArtistRatingDivider(state?.artistRatings.orEmpty())),
-                        currentDivider = state?.artists?.divider,
-                        currentDividerSortOrder = state?.artists?.dividerSortOrder,
-                        onSelectDivider = { divider, dividerSortOrder ->
-                            presenter.emitAsync(
-                                ArtistsPresenter.Event.SetDivider(
-                                    divider = divider,
-                                    dividerSortOrder = dividerSortOrder,
-                                )
-                            )
-                        },
-                    )
-
-                    SortSelector(
-                        sortProperties = listOf(
-                            SortArtistByName,
-                            SortArtistByPopularity,
-                            SortAristByRating(artistRatings = state?.artistRatings.orEmpty()),
-                        ),
-                        sorts = state?.artists?.sorts.orEmpty(),
-                        onSetSort = {
-                            presenter.emitAsync(ArtistsPresenter.Event.SetSorts(sorts = it))
-                        },
-                    )
-                }
             }
-        },
-        onHeaderVisibilityChanged = { toggleHeader(!it) },
-    ) { state ->
-        val selectedArtistIndex = remember(state.artists.sorts, state.artists.divider) { mutableStateOf<Int?>(null) }
+        }
 
-        Grid(
-            elements = state.artists,
-            horizontalSpacingStart = Dimens.space5,
-            horizontalSpacingEnd = Dimens.space5,
-            selectedElementIndex = selectedArtistIndex.value,
-            detailInsertContent = { _, artist ->
-                ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
-            },
-        ) { index, artist ->
-            ArtistCell(
-                artist = artist,
-                savedArtists = state.savedArtistIds,
-                artistRatings = state.artistRatings[artist.id.value],
-                presenter = presenter,
-                onRightClick = {
-                    presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
-                    selectedArtistIndex.value = index.takeIf { selectedArtistIndex.value != it }
-                }
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+            DividerSelector(
+                dividers = listOf(ArtistNameDivider(), ArtistRatingDivider(state.artistRatings)),
+                currentDivider = state.artists.divider,
+                currentDividerSortOrder = state.artists.dividerSortOrder,
+                onSelectDivider = { divider, dividerSortOrder ->
+                    presenter.emitAsync(
+                        ArtistsPresenter.Event.SetDivider(divider = divider, dividerSortOrder = dividerSortOrder)
+                    )
+                },
+            )
+
+            SortSelector(
+                sortProperties = listOf(
+                    SortArtistByName,
+                    SortArtistByPopularity,
+                    SortAristByRating(artistRatings = state.artistRatings),
+                ),
+                sorts = state.artists.sorts.orEmpty(),
+                onSetSort = {
+                    presenter.emitAsync(ArtistsPresenter.Event.SetSorts(sorts = it))
+                },
             )
         }
     }
 }
 
 @Composable
+private fun ArtistsGrid(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewModel) {
+    val selectedArtistIndex = remember(state.artists.sorts, state.artists.divider) { mutableStateOf<Int?>(null) }
+
+    Grid(
+        elements = state.artists,
+        horizontalSpacingStart = Dimens.space5 - Dimens.space3,
+        horizontalSpacingEnd = Dimens.space5 - Dimens.space3,
+        selectedElementIndex = selectedArtistIndex.value,
+        detailInsertContent = { _, artist ->
+            ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
+        },
+    ) { index, artist ->
+        ArtistCell(
+            artist = artist,
+            savedArtists = state.savedArtistIds,
+            artistRatings = state.artistRatings[artist.id.value],
+            presenter = presenter,
+            onRightClick = {
+                presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
+                selectedArtistIndex.value = index.takeIf { selectedArtistIndex.value != it }
+            }
+        )
+    }
+}
+
+@Composable
 private fun ArtistCell(
     artist: Artist,
-    savedArtists: Set<String>,
+    savedArtists: Set<String>?,
     artistRatings: List<State<Rating?>>?,
     presenter: ArtistsPresenter,
     onRightClick: () -> Unit,
@@ -260,9 +267,9 @@ private fun ArtistCell(
         ) {
             Text(text = artist.name, modifier = Modifier.weight(1f))
 
-            val isSaved = savedArtists.contains(artist.id.value)
+            val isSaved = savedArtists?.contains(artist.id.value)
             ToggleSaveButton(isSaved = isSaved) {
-                presenter.emitAsync(ArtistsPresenter.Event.ToggleSave(artistId = artist.id.value, save = !isSaved))
+                presenter.emitAsync(ArtistsPresenter.Event.ToggleSave(artistId = artist.id.value, save = it))
             }
 
             PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)

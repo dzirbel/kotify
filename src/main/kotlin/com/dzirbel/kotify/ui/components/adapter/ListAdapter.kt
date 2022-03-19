@@ -19,10 +19,13 @@ class ListAdapter<E> private constructor(
      * Holds the [ElementData] for each element [E] in its canonical order (i.e. the order initially provided in the
      * constructor).
      *
+     * May be null to support cases in which the data has not yet been loaded, but [sorts], etc. can still be
+     * configured.
+     *
      * External usages should access elements only via [divisions], which includes logic for sorting, dividing, and
      * filtering.
      */
-    private val elements: List<ElementData<E>>,
+    private val elements: List<ElementData<E>>?,
 
     /**
      * Maps element indexes from the current applied [sorts], i.e. element i in [sortIndexes] is the index of in
@@ -91,15 +94,22 @@ class ListAdapter<E> private constructor(
         val division: Any?,
     )
 
-    val size = elements.size
+    /**
+     * Whether this adapter has initialized data; if not [divisions] will be empty and a loading state could be
+     * displayed.
+     */
+    val hasElements: Boolean = elements != null
+
+    val size: Int = elements?.size ?: 0
 
     /**
      * Lazily computes the external view of elements in this [ListAdapter], as a map from division key to the sorted,
      * filtered elements in that division.
      *
      * If there are no divisions applied, the returned map will contain a single null key with all the elements.
-     * Otherwise the map will be a [java.util.SortedMap] sorted according to the currently applied [divider]'s ordering
-     * of divisions, so the map's iteration order should be used.
+     * Otherwise the map will be a [SortedMap] sorted according to the currently applied [divider]'s ordering of
+     * divisions, so the map's iteration order should be used. Note that if the adapter has no data (i.e. [hasElements]
+     * is false), a map with no elements will be returned (but it may still have a single, empty division).
      *
      * While sorting is pre-computed every time a new sort order is applied, the division arrangement is recalculated
      * for each new [ListAdapter] on the first call to [divisions]. This is (as far as I can tell) necessary at least
@@ -107,12 +117,12 @@ class ListAdapter<E> private constructor(
      * filter, etc.
      */
     val divisions: SortedMap<out Any?, out List<IndexedValue<E>>> by lazy {
-        val indices = sortIndexes ?: elements.indices
+        val indices = sortIndexes ?: elements?.indices ?: emptyList()
         if (divider == null) {
             sortedMapOf(
                 { _, _ -> 0 }, // no-op comparator since we have a single elements (of type Nothing?)
                 null to indices.mapNotNull { index ->
-                    elements[index]
+                    elements!![index]
                         .takeIf { it.filtered }
                         ?.element
                         ?.let { IndexedValue(index, it) }
@@ -123,7 +133,7 @@ class ListAdapter<E> private constructor(
             val map = TreeMap<Any, MutableList<IndexedValue<E>>>(comparator)
 
             indices.forEach { index ->
-                val elementData = elements[index]
+                val elementData = elements!![index]
                 if (elementData.filtered) {
                     val division = requireNotNull(elementData.division) { "null division with divider" }
                     val indexedValue = IndexedValue(index, elementData.element)
@@ -140,22 +150,22 @@ class ListAdapter<E> private constructor(
     /**
      * Returns the element at the given [index] in the canonical order.
      */
-    operator fun get(index: Int): E = elements[index].element
+    operator fun get(index: Int): E? = elements?.get(index)?.element
 
     /**
      * Returns the division for the element at the given [index] in the canonical order.
      */
-    fun divisionOf(index: Int): Any? = elements[index].division
+    fun divisionOf(index: Int): Any? = elements?.get(index)?.division
 
     override fun iterator(): Iterator<E> {
-        elements.iterator()
         return object : Iterator<E> {
             private var index: Int = 0
 
-            override fun hasNext(): Boolean = index < elements.size
+            @Suppress("UnnecessaryParentheses")
+            override fun hasNext(): Boolean = index < (elements?.size ?: 0)
 
             override fun next(): E {
-                return elements.getOrNull(index++)?.element
+                return elements?.getOrNull(index++)?.element
                     ?: throw NoSuchElementException("")
             }
         }
@@ -167,7 +177,7 @@ class ListAdapter<E> private constructor(
      */
     fun withFilter(filterString: String? = null, filter: ((element: E) -> Boolean)?): ListAdapter<E> {
         return ListAdapter(
-            elements = elements.map {
+            elements = elements?.map {
                 it.copy(filtered = filter?.invoke(it.element) != false)
             },
             sortIndexes = sortIndexes,
@@ -204,7 +214,7 @@ class ListAdapter<E> private constructor(
      */
     fun withDivider(divider: Divider<E>?, dividerSortOrder: SortOrder?): ListAdapter<E> {
         return ListAdapter(
-            elements = elements.map {
+            elements = elements?.map {
                 it.copy(division = divider?.divisionFor(it.element))
             },
             sortIndexes = sortIndexes,
@@ -228,12 +238,14 @@ class ListAdapter<E> private constructor(
         if (sorts == this.sorts) return this
 
         val sortIndexes = sorts?.let {
-            // order by existing sortIndexes to preserve existing order under stable sorting
-            // TODO avoid creating extra lists in double mapping?
-            (sortIndexes ?: elements.indices)
-                .map { IndexedValue(it, elements[it].element) }
-                .sortedWith(sorts.asComparator())
-                .map { it.index }
+            elements?.let {
+                // order by existing sortIndexes to preserve existing order under stable sorting
+                // TODO avoid creating extra lists in double mapping?
+                (sortIndexes ?: elements.indices)
+                    .map { IndexedValue(it, elements[it].element) }
+                    .sortedWith(sorts.asComparator())
+                    .map { it.index }
+            }
         }
 
         return ListAdapter(
@@ -262,7 +274,7 @@ class ListAdapter<E> private constructor(
         }
 
         return ListAdapter(
-            elements = this.elements.plus(newElementData),
+            elements = this.elements?.plus(newElementData),
             sortIndexes = null,
             sorts = null,
             divider = divider,
@@ -281,12 +293,12 @@ class ListAdapter<E> private constructor(
          * [baseAdapter].
          */
         fun <E> from(
-            elements: List<E>,
+            elements: List<E>?,
             baseAdapter: ListAdapter<E>? = null,
             defaultSort: List<Sort<E>>? = null,
         ): ListAdapter<E> {
             return ListAdapter(
-                elements = elements.map { element ->
+                elements = elements?.map { element ->
                     ElementData(
                         element = element,
                         filtered = baseAdapter?.filter?.invoke(element) != false,

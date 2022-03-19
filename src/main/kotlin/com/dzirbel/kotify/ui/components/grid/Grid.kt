@@ -213,7 +213,7 @@ fun <E> Grid(
                                 .border(width = Dimens.divider, color = LocalColors.current.dividerColor)
                                 .fillMaxWidth()
                         ) {
-                            detailInsertContent(lastSelectedElementIndex, elements[lastSelectedElementIndex])
+                            detailInsertContent(lastSelectedElementIndex, elements[lastSelectedElementIndex]!!)
                         }
                     }
                 }
@@ -272,7 +272,7 @@ fun <E> Grid(
             var totalHeight = 0
 
             // division -> [heights of rows in that division]
-            val rowHeights: Array<IntArray> = Array(divisions.size) { divisionIndex ->
+            val rowHeights: Array<IntArray> = Array(divisionElements.size) { divisionIndex ->
                 val division = divisionElements[divisionIndex]
 
                 // number of rows is the number of cells in the division divided by number of columns, rounded up

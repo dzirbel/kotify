@@ -15,7 +15,7 @@ import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
-import com.dzirbel.kotify.ui.framework.RemoteStatePresenter
+import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.page.albums.SortAlbumsByName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -24,11 +24,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import java.time.Instant
 
-class ArtistsPresenter(scope: CoroutineScope) :
-    RemoteStatePresenter<ArtistsPresenter.ViewModel, ArtistsPresenter.Event>(
-        scope = scope,
-        startingEvents = listOf(Event.Load(invalidate = false)),
-    ) {
+class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewModel, ArtistsPresenter.Event>(
+    scope = scope,
+    startingEvents = listOf(Event.Load(invalidate = false)),
+    initialState = ViewModel()
+) {
 
     data class ArtistDetails(
         val savedTime: Instant?,
@@ -37,14 +37,46 @@ class ArtistsPresenter(scope: CoroutineScope) :
     )
 
     data class ViewModel(
-        val refreshing: Boolean,
-        val artists: ListAdapter<Artist>,
-        val artistsById: Map<String, Artist>,
-        val artistRatings: Map<String, List<State<Rating?>>?>,
-        val artistDetails: Map<String, ArtistDetails>,
-        val savedArtistIds: Set<String>,
+        /**
+         * [ListAdapter] wrapping the saved [Artist] models to be displayed.
+         */
+        val artists: ListAdapter<Artist> = ListAdapter.from(
+            elements = null,
+            defaultSort = listOf(Sort(SortArtistByName)),
+        ),
+
+        /**
+         * Whether [artists] is being reloaded.
+         */
+        val refreshing: Boolean = false,
+
+        /**
+         * Map from artist ID to the live [Rating]s for all of their tracks.
+         */
+        val artistRatings: Map<String, List<State<Rating?>>?> = emptyMap(),
+
+        /**
+         * Map from artist ID to [ArtistDetails] which are loaded individually for each artist on demand (i.e. when the
+         * grid insert is displayed).
+         */
+        val artistDetails: Map<String, ArtistDetails> = emptyMap(),
+
+        /**
+         * Set of artist IDs which are currently in the user's library. May not always match [artists] exactly since the
+         * user could remove an artist, but it will still be displayed.
+         */
+        val savedArtistIds: Set<String>? = null,
+
+        /**
+         * Live set of saved album IDs.
+         */
         val savedAlbumsState: State<Set<String>?>? = null,
-        val artistsUpdated: Long?,
+
+        /**
+         * Time when artists were last updated, or null if either this hasn't been loaded yet or the library has never
+         * been fetched.
+         */
+        val artistsUpdated: Long? = null,
     )
 
     sealed class Event {
@@ -72,7 +104,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateLoadedState { it.copy(refreshing = true) }
+                mutateState { it.copy(refreshing = true) }
 
                 if (event.invalidate) {
                     SavedArtistRepository.invalidateLibrary()
@@ -80,24 +112,17 @@ class ArtistsPresenter(scope: CoroutineScope) :
 
                 val savedArtistIds = SavedArtistRepository.getLibrary()
                 val artists = fetchArtists(artistIds = savedArtistIds.toList())
-                val artistsById = artists.associateBy { it.id.value }
                 val artistsUpdated = SavedArtistRepository.libraryUpdated()
 
                 val artistRatings = artists.associate { artist ->
                     artist.id.value to TrackRatingRepository.ratingStates(ids = artist.trackIds.cached)
                 }
 
-                initializeLoadedState {
-                    ViewModel(
+                mutateState {
+                    it.copy(
                         refreshing = false,
-                        artists = ListAdapter.from(
-                            baseAdapter = it?.artists,
-                            elements = artists,
-                            defaultSort = listOf(Sort(SortArtistByName)),
-                        ),
-                        artistsById = artistsById,
+                        artists = ListAdapter.from(elements = artists, baseAdapter = it.artists),
                         artistRatings = artistRatings,
-                        artistDetails = it?.artistDetails.orEmpty(),
                         savedArtistIds = savedArtistIds,
                         artistsUpdated = artistsUpdated?.toEpochMilli(),
                     )
@@ -106,10 +131,9 @@ class ArtistsPresenter(scope: CoroutineScope) :
 
             is Event.LoadArtistDetails -> {
                 // don't load details again if already in the state
-                if (queryState { it.viewModel?.artistDetails }?.containsKey(event.artistId) == true) return
+                if (queryState { it.artistDetails }.containsKey(event.artistId)) return
 
-                val artist = queryState { it.viewModel?.artistsById }?.get(event.artistId)
-                    ?: ArtistRepository.getCached(id = event.artistId)
+                val artist = ArtistRepository.getCached(id = event.artistId)
                 requireNotNull(artist) { "could not resolve artist for ${event.artistId}" }
 
                 val savedTime = SavedArtistRepository.savedTimeCached(id = event.artistId)
@@ -123,7 +147,7 @@ class ArtistsPresenter(scope: CoroutineScope) :
                     albums = null
                 )
 
-                mutateLoadedState {
+                mutateState {
                     it.copy(artistDetails = it.artistDetails.plus(event.artistId to details))
                 }
 
@@ -133,13 +157,13 @@ class ArtistsPresenter(scope: CoroutineScope) :
                     albums.forEach { it.largestImage.loadToCache() }
                 }
 
-                val savedAlbumsState = if (queryState { it.viewModel?.savedAlbumsState } == null) {
+                val savedAlbumsState = if (queryState { it.savedAlbumsState } == null) {
                     SavedAlbumRepository.libraryState()
                 } else {
                     null
                 }
 
-                mutateLoadedState {
+                mutateState {
                     it.copy(
                         artistDetails = it.artistDetails.plus(event.artistId to details.copy(albums = albumsAdapter)),
                         savedAlbumsState = savedAlbumsState ?: it.savedAlbumsState,
@@ -150,35 +174,33 @@ class ArtistsPresenter(scope: CoroutineScope) :
             is Event.ReactToArtistsSaved -> {
                 if (event.saved) {
                     // if an artist has been saved but is now missing from the grid of artists, load and add it
-                    val stateArtists = queryState { it.viewModel?.artistsById }?.keys.orEmpty()
+                    val stateArtists = queryState { it.artists }.mapTo(mutableSetOf()) { it.id.value }
 
                     val missingArtistIds: List<String> = event.artistIds
                         .minus(stateArtists)
 
                     if (missingArtistIds.isNotEmpty()) {
                         val missingArtists: List<Artist> = fetchArtists(artistIds = missingArtistIds)
-                        val missingArtistsById = missingArtists.associateBy { it.id.value }
                         val missingArtistRatings = missingArtists.associate { artist ->
                             artist.id.value to TrackRatingRepository.ratingStates(ids = artist.trackIds.cached)
                         }
 
-                        mutateLoadedState {
+                        mutateState {
                             it.copy(
-                                artistsById = it.artistsById.plus(missingArtistsById),
                                 artists = it.artists.plusElements(missingArtists),
-                                savedArtistIds = it.savedArtistIds.plus(event.artistIds),
+                                savedArtistIds = it.savedArtistIds?.plus(event.artistIds),
                                 artistRatings = it.artistRatings.plus(missingArtistRatings),
                             )
                         }
                     } else {
-                        mutateLoadedState {
-                            it.copy(savedArtistIds = it.savedArtistIds.plus(event.artistIds))
+                        mutateState {
+                            it.copy(savedArtistIds = it.savedArtistIds?.plus(event.artistIds))
                         }
                     }
                 } else {
                     // if an artist has been unsaved, retain the grid of artists but toggle its save state
-                    mutateLoadedState {
-                        it.copy(savedArtistIds = it.savedArtistIds.minus(event.artistIds.toSet()))
+                    mutateState {
+                        it.copy(savedArtistIds = it.savedArtistIds?.minus(event.artistIds.toSet()))
                     }
                 }
             }
@@ -187,11 +209,11 @@ class ArtistsPresenter(scope: CoroutineScope) :
 
             is Event.ToggleAlbumSaved -> SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
 
-            is Event.SetSorts -> mutateLoadedState {
+            is Event.SetSorts -> mutateState {
                 it.copy(artists = it.artists.withSort(event.sorts))
             }
 
-            is Event.SetDivider -> mutateLoadedState {
+            is Event.SetDivider -> mutateState {
                 it.copy(
                     artists = it.artists.withDivider(divider = event.divider, dividerSortOrder = event.dividerSortOrder)
                 )

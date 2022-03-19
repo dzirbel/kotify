@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
@@ -28,72 +28,68 @@ import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 
-/**
- * Standard wrapper around a [presenter] which can display a [RemoteState] with a view model of type [T].
- *
- * Handles the various error, loading, not-found, and success cases of the [presenter]'s current state in standard ways,
- * displaying [content] when a [T] view model is available.
- *
- * May optionally specify a [header] placed at the top of the loaded page which invokes [onHeaderVisibilityChanged] when
- * it is scrolled into or out of the view.
- */
 @Composable
 fun <T> BoxScope.StandardPage(
     scrollState: ScrollState,
-    presenter: Presenter<RemoteState<T>, *>,
-    header: @Composable (BoxScope.(T?) -> Unit)? = null,
+    presenter: Presenter<T, *>,
+    header: @Composable (BoxScope.(T) -> Unit)? = null,
     onHeaderVisibilityChanged: (visible: Boolean) -> Unit = {},
     content: @Composable ColumnScope.(T) -> Unit,
 ) {
     when (val stateOrError = presenter.state()) {
         is Presenter.StateOrError.Error -> ErrorPage(throwable = stateOrError.throwable, presenter = presenter)
-        is Presenter.StateOrError.State -> when (val state = stateOrError.state) {
-            is RemoteState.Loaded -> LoadedPage(
-                state = state.viewModel,
-                scrollState = scrollState,
-                content = content,
-                header = header,
-                onHeaderVisibilityChanged = onHeaderVisibilityChanged,
-            )
-            is RemoteState.Loading -> LoadingPage(header = header)
-            is RemoteState.NotFound -> NotFoundPage()
-        }
+        is Presenter.StateOrError.State -> LoadedPage(
+            state = stateOrError.state,
+            scrollState = scrollState,
+            content = content,
+            header = header,
+            onHeaderVisibilityChanged = onHeaderVisibilityChanged,
+        )
     }
 }
 
 @Composable
-private fun <T> LoadedPage(
+fun ColumnScope.StandardLoadingSpinner() {
+    // TODO center vertically; this is difficult since this is typically placed inside a scrolling column
+    CircularProgressIndicator(
+        Modifier
+            .padding(vertical = Dimens.space5)
+            .size(Dimens.iconHuge)
+            .align(Alignment.CenterHorizontally)
+    )
+}
+
+@Composable
+private fun <T> BoxScope.LoadedPage(
     state: T,
     scrollState: ScrollState,
     content: @Composable ColumnScope.(T) -> Unit,
-    header: @Composable (BoxScope.(T?) -> Unit)?,
+    header: @Composable (BoxScope.(T) -> Unit)?,
     onHeaderVisibilityChanged: (visible: Boolean) -> Unit,
 ) {
-    Box {
-        Column(Modifier.verticalScroll(scrollState)) {
-            if (header != null) {
-                val headerVisible = remember { mutableStateOf<Boolean?>(null) }
-                Box(
-                    modifier = Modifier.onGloballyPositioned {
-                        val visible = it.boundsInParent().bottom - scrollState.value > 0
-                        if (visible != headerVisible.value) {
-                            headerVisible.value = visible
-                            onHeaderVisibilityChanged(visible)
-                        }
+    Column(Modifier.verticalScroll(scrollState)) {
+        if (header != null) {
+            val headerVisible = remember { mutableStateOf<Boolean?>(null) }
+            Box(
+                modifier = Modifier.onGloballyPositioned {
+                    val visible = it.boundsInParent().bottom - scrollState.value > 0
+                    if (visible != headerVisible.value) {
+                        headerVisible.value = visible
+                        onHeaderVisibilityChanged(visible)
                     }
-                ) {
-                    header(state)
                 }
+            ) {
+                header(state)
             }
-
-            content(state)
         }
 
-        VerticalScrollbar(
-            modifier = Modifier.align(Alignment.CenterEnd),
-            adapter = rememberScrollbarAdapter(scrollState),
-        )
+        content(state)
     }
+
+    VerticalScrollbar(
+        modifier = Modifier.align(Alignment.CenterEnd),
+        adapter = rememberScrollbarAdapter(scrollState),
+    )
 }
 
 @Composable
@@ -124,28 +120,4 @@ private fun <T> BoxScope.ErrorPage(throwable: Throwable, presenter: Presenter<T,
             Text("Clear")
         }
     }
-}
-
-@Composable
-private fun <T> LoadingPage(header: @Composable (BoxScope.(T?) -> Unit)?) {
-    Column {
-        header?.let {
-            Box {
-                header(null)
-            }
-        }
-
-        Box(Modifier.weight(1f).fillMaxSize()) {
-            CircularProgressIndicator(Modifier.size(Dimens.iconHuge).align(Alignment.Center))
-        }
-    }
-}
-
-@Composable
-private fun BoxScope.NotFoundPage() {
-    // TODO finish 404 page contents
-    Text(
-        modifier = Modifier.align(Alignment.Center),
-        text = "404 Not found",
-    )
 }
