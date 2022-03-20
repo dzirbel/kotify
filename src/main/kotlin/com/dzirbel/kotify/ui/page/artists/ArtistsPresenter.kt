@@ -62,6 +62,11 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
         val artistDetails: Map<String, ArtistDetails> = emptyMap(),
 
         /**
+         * Index of the selected artist whose details are shown as an insert in the grid.
+         */
+        val selectedArtistIndex: Int? = null,
+
+        /**
          * Set of artist IDs which are currently in the user's library. May not always match [artists] exactly since the
          * user could remove an artist, but it will still be displayed.
          */
@@ -81,7 +86,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
-        data class LoadArtistDetails(val artistId: String) : Event()
+        data class SetSelectedArtistIndex(val index: Int?) : Event()
         data class ReactToArtistsSaved(val artistIds: List<String>, val saved: Boolean) : Event()
         data class ToggleSave(val artistId: String, val save: Boolean) : Event()
         data class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
@@ -119,9 +124,14 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                 }
 
                 mutateState {
+                    val selectedArtistId = it.selectedArtistIndex?.let { index -> it.artists[index]?.id?.value }
+
                     it.copy(
                         refreshing = false,
                         artists = ListAdapter.from(elements = artists, baseAdapter = it.artists),
+                        selectedArtistIndex = selectedArtistId
+                            ?.let { artists.indexOfFirst { artist -> artist.id.value == selectedArtistId } }
+                            ?.takeIf { index -> index >= 0 },
                         artistRatings = artistRatings,
                         savedArtistIds = savedArtistIds,
                         artistsUpdated = artistsUpdated?.toEpochMilli(),
@@ -129,14 +139,18 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                 }
             }
 
-            is Event.LoadArtistDetails -> {
+            is Event.SetSelectedArtistIndex -> {
+                mutateState { it.copy(selectedArtistIndex = event.index) }
+
+                // do not load details the selection has been cleared
+                if (event.index == null) return
+
+                val artist = requireNotNull(queryState { it.artists[event.index] })
+
                 // don't load details again if already in the state
-                if (queryState { it.artistDetails }.containsKey(event.artistId)) return
+                if (queryState { it.artistDetails }.containsKey(artist.id.value)) return
 
-                val artist = ArtistRepository.getCached(id = event.artistId)
-                requireNotNull(artist) { "could not resolve artist for ${event.artistId}" }
-
-                val savedTime = SavedArtistRepository.savedTimeCached(id = event.artistId)
+                val savedTime = SavedArtistRepository.savedTimeCached(id = artist.id.value)
                 val genres = KotifyDatabase.transaction { artist.genres.live }
                     .map { it.name }
                     .sorted()
@@ -148,10 +162,10 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                 )
 
                 mutateState {
-                    it.copy(artistDetails = it.artistDetails.plus(event.artistId to details))
+                    it.copy(artistDetails = it.artistDetails.plus(artist.id.value to details))
                 }
 
-                val albums = Artist.getAllAlbums(artistId = event.artistId)
+                val albums = Artist.getAllAlbums(artistId = artist.id.value)
                 val albumsAdapter = ListAdapter.from(albums, defaultSort = listOf(Sort(SortAlbumsByName)))
                 KotifyDatabase.transaction {
                     albums.forEach { it.largestImage.loadToCache() }
@@ -165,7 +179,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
 
                 mutateState {
                     it.copy(
-                        artistDetails = it.artistDetails.plus(event.artistId to details.copy(albums = albumsAdapter)),
+                        artistDetails = it.artistDetails.plus(artist.id.value to details.copy(albums = albumsAdapter)),
                         savedAlbumsState = savedAlbumsState ?: it.savedAlbumsState,
                     )
                 }

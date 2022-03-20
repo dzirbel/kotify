@@ -14,8 +14,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.Artist
@@ -192,14 +190,11 @@ fun ArtistsPageHeader(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewM
 @Composable
 fun ArtistsPageContent(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewModel) {
     if (state.artists.hasElements) {
-        // TODO move into presenter state so it is preserved
-        val selectedArtistIndex = remember(state.artists.sorts, state.artists.divider) { mutableStateOf<Int?>(null) }
-
         Grid(
             elements = state.artists,
             horizontalSpacingStart = Dimens.space5 - Dimens.space3,
             horizontalSpacingEnd = Dimens.space5 - Dimens.space3,
-            selectedElementIndex = selectedArtistIndex.value,
+            selectedElementIndex = state.selectedArtistIndex,
             detailInsertContent = { _, artist ->
                 ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
             },
@@ -210,8 +205,11 @@ fun ArtistsPageContent(presenter: ArtistsPresenter, state: ArtistsPresenter.View
                 artistRatings = state.artistRatings[artist.id.value],
                 presenter = presenter,
                 onRightClick = {
-                    presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
-                    selectedArtistIndex.value = index.takeIf { selectedArtistIndex.value != it }
+                    presenter.emitAsync(
+                        ArtistsPresenter.Event.SetSelectedArtistIndex(
+                            index = index.takeIf { index != state.selectedArtistIndex },
+                        )
+                    )
                 }
             )
         }
