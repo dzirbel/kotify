@@ -192,8 +192,11 @@ fun ArtistsPageContent(presenter: ArtistsPresenter, state: ArtistsPresenter.View
     if (state.artists.hasElements) {
         Grid(
             elements = state.artists,
-            horizontalSpacingStart = Dimens.space5 - Dimens.space3,
-            horizontalSpacingEnd = Dimens.space5 - Dimens.space3,
+            edgePadding = PaddingValues(
+                start = Dimens.space5 - Dimens.space3,
+                end = Dimens.space5 - Dimens.space3,
+                bottom = Dimens.space3,
+            ),
             selectedElementIndex = state.selectedArtistIndex,
             detailInsertContent = { _, artist ->
                 ArtistDetailInsert(artist = artist, presenter = presenter, state = state)

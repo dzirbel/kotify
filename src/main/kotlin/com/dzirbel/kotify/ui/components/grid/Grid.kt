@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -109,9 +110,8 @@ fun <E> Grid(
     selectedElementIndex: Int? = null,
     modifier: Modifier = Modifier,
     horizontalSpacing: Dp = Dimens.space2,
-    horizontalSpacingStart: Dp = horizontalSpacing,
-    horizontalSpacingEnd: Dp = horizontalSpacing,
-    verticalSpacing: Dp = Dimens.space3,
+    verticalSpacing: Dp = Dimens.space2,
+    edgePadding: PaddingValues = PaddingValues(horizontal = horizontalSpacing, vertical = verticalSpacing),
     cellAlignment: Alignment = Alignment.TopCenter,
     columns: Int? = null,
     cellParams: GridCellParams = GridCellParams(backgroundSurfaceIncrement = 0),
@@ -224,9 +224,12 @@ fun <E> Grid(
             val cellMeasurables = measurables.subList(fromIndex = 0, toIndex = elements.size)
 
             val horizontalSpacingPx: Float = horizontalSpacing.toPx()
-            val horizontalSpacingStartPx: Float = horizontalSpacingStart.toPx()
-            val horizontalSpacingEndPx: Float = horizontalSpacingEnd.toPx()
             val verticalSpacingPx: Float = verticalSpacing.toPx()
+
+            val edgeSpacingLeftPx: Float = edgePadding.calculateLeftPadding(layoutDirection).toPx()
+            val edgeSpacingRightPx: Float = edgePadding.calculateRightPadding(layoutDirection).toPx()
+            val edgeSpacingTopPx: Float = edgePadding.calculateTopPadding().toPx()
+            val edgeSpacingBottomPx: Float = edgePadding.calculateBottomPadding().toPx()
 
             // max width for each column is the total column space (total width minus one horizontal spacing for the
             // spacing after the last column) divided by the minimum number of columns, minus the spacing for the column
@@ -246,8 +249,8 @@ fun <E> Grid(
             // the total width of a column, including its spacing
             val columnWidthWithSpacing: Float = maxCellWidth + horizontalSpacingPx
 
-            // the amount of space for the columns: the layout max width minus the start/end spacing
-            val columnSpace = constraints.maxWidth - horizontalSpacingStartPx - horizontalSpacingEndPx
+            // the amount of space for the columns: the layout max width minus the left/right edge spacing
+            val columnSpace = constraints.maxWidth - edgeSpacingLeftPx - edgeSpacingRightPx
 
             // number of columns is the total column space (minus one horizontal spacing for the spacing after the last
             // column) divided by the column width including its spacing; then taking the floor to truncate any
@@ -269,7 +272,7 @@ fun <E> Grid(
 
             val divisionElements = divisions.values.toList()
 
-            var totalHeight = 0
+            var totalHeight = edgeSpacingBottomPx + edgeSpacingTopPx
 
             // division -> [heights of rows in that division]
             val rowHeights: Array<IntArray> = Array(divisionElements.size) { divisionIndex ->
@@ -277,7 +280,7 @@ fun <E> Grid(
 
                 // number of rows is the number of cells in the division divided by number of columns, rounded up
                 val divisionRows = ceil(division.size.toFloat() / cols).toInt()
-                totalHeight += (verticalSpacingPx * (divisionRows + 1)).roundToInt()
+                totalHeight += (verticalSpacingPx * (divisionRows - 1)).roundToInt()
 
                 // height of each division row is the maximum height of placeables in that row
                 IntArray(divisionRows) { row ->
@@ -357,16 +360,14 @@ fun <E> Grid(
                 selectedItemBackgroundPlaceable = null
             }
 
-            layout(constraints.maxWidth, totalHeight) {
-                var y = 0f
+            layout(constraints.maxWidth, totalHeight.roundToInt()) {
+                var y = edgeSpacingTopPx
 
                 divisionElements.forEachIndexed { divisionIndex, division ->
                     dividerPlaceables?.get(divisionIndex)?.let {
                         it.place(x = 0, y = y.roundToInt())
-                        y += it.height
+                        y += it.height + verticalSpacingPx
                     }
-
-                    y += verticalSpacingPx
 
                     rowHeights[divisionIndex].forEachIndexed { rowIndex, rowHeight ->
                         val roundedY = y.roundToInt()
@@ -387,7 +388,7 @@ fun <E> Grid(
                             // getOrNull in case the column exceeds the number of elements in the last row
                             division.getOrNull(colIndex + rowIndex * cols)?.index?.let { elementIndex ->
                                 val placeable = cellPlaceables[elementIndex]
-                                val baseX = (horizontalSpacingStartPx + (colIndex * columnWidthWithSpacingAndExtra))
+                                val baseX = (edgeSpacingLeftPx + (colIndex * columnWidthWithSpacingAndExtra))
                                     .roundToInt()
 
                                 if (insertInRow && colIndex == selectedElementColIndex) {

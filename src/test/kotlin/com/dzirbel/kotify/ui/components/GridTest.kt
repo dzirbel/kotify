@@ -2,6 +2,7 @@ package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -91,9 +92,8 @@ internal class GridTest {
                 elements = ListAdapter.from(List(50) { it }),
                 columns = case.columns,
                 horizontalSpacing = 10.dp,
-                horizontalSpacingStart = 20.dp,
-                horizontalSpacingEnd = 20.dp,
                 verticalSpacing = 5.dp,
+                edgePadding = PaddingValues(horizontal = 20.dp, vertical = 5.dp),
                 cellAlignment = case.alignment,
             ) { _, index ->
                 Box(
