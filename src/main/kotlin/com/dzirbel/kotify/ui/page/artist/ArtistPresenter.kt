@@ -12,19 +12,17 @@ import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.framework.Presenter
-import com.dzirbel.kotify.ui.pageStack
-import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 class ArtistPresenter(
-    private val page: ArtistPage,
+    private val artistId: String,
     scope: CoroutineScope,
-) : Presenter<ArtistPresenter.ViewModel?, ArtistPresenter.Event>(
+) : Presenter<ArtistPresenter.ViewModel, ArtistPresenter.Event>(
     scope = scope,
-    key = page.artistId,
+    key = artistId,
     startingEvents = listOf(
         Event.Load(
             refreshArtist = true,
@@ -33,16 +31,16 @@ class ArtistPresenter(
             invalidateArtistAlbums = false
         )
     ),
-    initialState = null
+    initialState = ViewModel(),
 ) {
 
     data class ViewModel(
-        val artist: Artist,
-        val refreshingArtist: Boolean,
-        val artistAlbums: ListAdapter<Album>,
-        val albumRatings: Map<String, List<State<Rating?>>?>,
-        val savedAlbumsState: State<Set<String>?>,
-        val refreshingArtistAlbums: Boolean,
+        val artist: Artist? = null,
+        val refreshingArtist: Boolean = false,
+        val artistAlbums: ListAdapter<Album> = ListAdapter.from(null),
+        val albumRatings: Map<String, List<State<Rating?>>?> = emptyMap(),
+        val savedAlbumsState: State<Set<String>?>? = null,
+        val refreshingArtistAlbums: Boolean = false,
     )
 
     sealed class Event {
@@ -60,18 +58,18 @@ class ArtistPresenter(
         when (event) {
             is Event.Load -> {
                 mutateState {
-                    it?.copy(
+                    it.copy(
                         refreshingArtist = event.refreshArtist,
                         refreshingArtistAlbums = event.refreshArtistAlbums
                     )
                 }
 
                 if (event.invalidateArtist) {
-                    AlbumRepository.invalidate(id = page.artistId)
+                    AlbumRepository.invalidate(id = artistId)
                 }
 
                 if (event.invalidateArtistAlbums) {
-                    ArtistRepository.getCached(id = page.artistId)?.let { artist ->
+                    ArtistRepository.getCached(id = artistId)?.let { artist ->
                         KotifyDatabase.transaction { artist.albumsFetched = null }
                     }
                 }
@@ -82,7 +80,7 @@ class ArtistPresenter(
                 coroutineScope {
                     val deferredArtist = if (event.refreshArtist) {
                         async(Dispatchers.IO) {
-                            ArtistRepository.getFull(id = page.artistId)
+                            ArtistRepository.getFull(id = artistId)
                         }
                     } else {
                         null
@@ -90,7 +88,7 @@ class ArtistPresenter(
 
                     val deferredArtistAlbums = if (event.refreshArtistAlbums) {
                         async(Dispatchers.IO) {
-                            Artist.getAllAlbums(artistId = page.artistId)
+                            Artist.getAllAlbums(artistId = artistId)
                         }
                     } else {
                         null
@@ -103,10 +101,6 @@ class ArtistPresenter(
                 KotifyDatabase.transaction {
                     // refresh artist to get updated album fetch time
                     artist?.refresh()
-                }
-
-                artist?.let {
-                    pageStack.mutate { withPageTitle(title = page.titleFor(artist)) }
                 }
 
                 artistAlbums?.let { albums ->
@@ -129,17 +123,17 @@ class ArtistPresenter(
 
                 mutateState {
                     ViewModel(
-                        artist = artist ?: it?.artist ?: error("no artist"),
+                        artist = artist ?: it.artist ?: error("no artist"),
                         refreshingArtist = false,
                         artistAlbums = checkNotNull(
                             // apply new elements if we have them, otherwise keep existing adapter
                             artistAlbums
-                                ?.let { _ -> ListAdapter.from(artistAlbums, baseAdapter = it?.artistAlbums) }
-                                ?: it?.artistAlbums
+                                ?.let { _ -> ListAdapter.from(artistAlbums, baseAdapter = it.artistAlbums) }
+                                ?: it.artistAlbums
                         ),
-                        albumRatings = checkNotNull(albumRatings ?: it?.albumRatings),
+                        albumRatings = checkNotNull(albumRatings ?: it.albumRatings),
                         savedAlbumsState = savedAlbumsState,
-                        refreshingArtistAlbums = false
+                        refreshingArtistAlbums = false,
                     )
                 }
             }

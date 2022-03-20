@@ -13,32 +13,30 @@ import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
-import com.dzirbel.kotify.ui.pageStack
-import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.ReorderCalculator
 import com.dzirbel.kotify.util.compareInOrder
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 
 class PlaylistPresenter(
-    private val page: PlaylistPage,
+    private val playlistId: String,
     scope: CoroutineScope,
-) : Presenter<PlaylistPresenter.ViewModel?, PlaylistPresenter.Event>(
+) : Presenter<PlaylistPresenter.ViewModel, PlaylistPresenter.Event>(
     scope = scope,
-    key = page.playlistId,
+    key = playlistId,
     startingEvents = listOf(Event.Load(invalidate = false)),
-    initialState = null
+    initialState = ViewModel()
 ) {
 
     data class ViewModel(
-        val refreshing: Boolean,
+        val refreshing: Boolean = false,
         val reordering: Boolean = false,
-        val playlist: Playlist,
-        val tracks: ListAdapter<PlaylistTrack>?,
-        val trackRatings: Map<String, State<Rating?>>?,
-        val savedTracksState: State<Set<String>?>,
-        val isSavedState: State<Boolean?>,
-        val playlistUpdated: Long?,
+        val playlist: Playlist? = null,
+        val tracks: ListAdapter<PlaylistTrack> = ListAdapter.from(null),
+        val trackRatings: Map<String, State<Rating?>> = emptyMap(),
+        val savedTracksState: State<Set<String>?>? = null,
+        val isSavedState: State<Boolean?>? = null,
+        val playlistUpdated: Long? = null,
     )
 
     sealed class Event {
@@ -53,16 +51,16 @@ class PlaylistPresenter(
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateState { it?.copy(refreshing = true) }
+                mutateState { it.copy(refreshing = true) }
 
                 if (event.invalidate) {
-                    PlaylistRepository.invalidate(id = page.playlistId)
-                    KotifyDatabase.transaction { PlaylistTrack.invalidate(playlistId = page.playlistId) }
+                    PlaylistRepository.invalidate(id = playlistId)
+                    KotifyDatabase.transaction { PlaylistTrack.invalidate(playlistId = playlistId) }
                 }
 
-                val playlist = PlaylistRepository.getFull(id = page.playlistId)
+                val playlist = PlaylistRepository.getFull(id = playlistId)
                     ?: error("TODO show 404 page") // TODO 404 page
-                pageStack.mutate { withPageTitle(title = page.titleFor(playlist)) }
+
                 val playlistUpdated = playlist.updatedTime.toEpochMilli()
                 KotifyDatabase.transaction {
                     playlist.owner.loadToCache()
@@ -73,13 +71,11 @@ class PlaylistPresenter(
                 val savedTracksState = SavedTrackRepository.libraryState()
 
                 mutateState {
-                    ViewModel(
+                    it.copy(
                         refreshing = false,
                         playlist = playlist,
                         playlistUpdated = playlistUpdated,
                         isSavedState = isSavedState,
-                        tracks = null,
-                        trackRatings = null,
                         savedTracksState = savedTracksState,
                     )
                 }
@@ -91,20 +87,20 @@ class PlaylistPresenter(
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
 
                 mutateState {
-                    it?.copy(
+                    it.copy(
                         tracks = ListAdapter.from(tracks, baseAdapter = it.tracks),
                         trackRatings = trackRatings,
                     )
                 }
             }
 
-            is Event.ToggleSave -> SavedPlaylistRepository.setSaved(id = page.playlistId, saved = event.save)
+            is Event.ToggleSave -> SavedPlaylistRepository.setSaved(id = playlistId, saved = event.save)
 
             is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.saved)
 
             is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
 
-            is Event.SetSorts -> mutateState { it?.copy(tracks = it.tracks?.withSort(event.sorts)) }
+            is Event.SetSorts -> mutateState { it.copy(tracks = it.tracks.withSort(event.sorts)) }
 
             is Event.Order -> {
                 val ops = ReorderCalculator.calculateReorderOperations(
@@ -113,26 +109,26 @@ class PlaylistPresenter(
                 )
 
                 if (ops.isNotEmpty()) {
-                    mutateState { it?.copy(reordering = true) }
+                    mutateState { it.copy(reordering = true) }
 
                     for (op in ops) {
                         Spotify.Playlists.reorderPlaylistItems(
-                            playlistId = page.playlistId,
+                            playlistId = playlistId,
                             rangeStart = op.rangeStart,
                             rangeLength = op.rangeLength,
                             insertBefore = op.insertBefore,
                         )
                     }
 
-                    KotifyDatabase.transaction { PlaylistTrack.invalidate(playlistId = page.playlistId) }
-                    val playlist = PlaylistRepository.getCached(id = page.playlistId)
+                    KotifyDatabase.transaction { PlaylistTrack.invalidate(playlistId = playlistId) }
+                    val playlist = PlaylistRepository.getCached(id = playlistId)
                     val tracks = playlist?.getAllTracks()
                     tracks?.let { loadTracksToCache(it) }
 
                     mutateState {
-                        it?.copy(
+                        it.copy(
                             // resets adapter state (sort, filter, etc); ideally might only reset sort
-                            tracks = tracks?.let { ListAdapter.from(tracks) },
+                            tracks = ListAdapter.from(tracks),
                             reordering = false,
                         )
                     }

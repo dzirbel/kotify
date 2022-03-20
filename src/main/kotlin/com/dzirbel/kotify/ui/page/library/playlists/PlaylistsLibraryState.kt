@@ -72,7 +72,7 @@ private fun playlistColumns(
 
 @Composable
 fun PlaylistsLibraryState() {
-    val presenter = rememberPresenter(::PlaylistsLibraryStatePresenter)
+    val presenter = rememberPresenter { scope -> PlaylistsLibraryStatePresenter(scope) }
 
     presenter.state().stateOrThrow?.let { state ->
         val playlists = state.savedPlaylistIds

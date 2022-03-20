@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -36,18 +35,21 @@ import com.dzirbel.kotify.ui.util.mutate
 @Composable
 fun NavigationPanel(
     headerVisibleState: MutableTransitionState<Boolean>,
-    headerContent: @Composable RowScope.() -> Unit,
+    titles: List<String?>,
 ) {
     LocalColors.current.withSurface(increment = if (headerVisibleState.targetState) Colors.INCREMENT_SMALL else 0) {
+        // TODO avoid animation when returning to a scrolled-down page
         Row(
             modifier = Modifier.fillMaxWidth().animatedSurfaceBackground(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NavigationButtons()
+            NavigationButtons(titles = titles)
 
-            AnimatedVisibility(visibleState = headerVisibleState, enter = fadeIn(), exit = fadeOut()) {
-                headerContent()
+            titles[pageStack.value.currentIndex]?.let { title ->
+                AnimatedVisibility(visibleState = headerVisibleState, enter = fadeIn(), exit = fadeOut()) {
+                    Text(title)
+                }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
@@ -62,7 +64,7 @@ fun NavigationPanel(
 }
 
 @Composable
-private fun NavigationButtons() {
+private fun NavigationButtons(titles: List<String?>) {
     Row(Modifier.padding(Dimens.space2)) {
         IconButton(
             enabled = pageStack.value.hasPrevious,
@@ -98,7 +100,7 @@ private fun NavigationButtons() {
                         },
                         enabled = index != pageStack.value.currentIndex
                     ) {
-                        Text(pageStack.value.pageTitles[index] ?: page.toString())
+                        Text(titles[index] ?: page.toString())
                     }
                 }
             }

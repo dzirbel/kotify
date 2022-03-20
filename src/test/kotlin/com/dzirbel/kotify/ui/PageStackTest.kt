@@ -14,9 +14,11 @@ import com.dzirbel.kotify.ui.components.PageStack
 import org.junit.jupiter.api.Test
 
 internal class PageStackTest {
-    private data class TestPage(val id: Int) : Page {
+    private data class TestPage(val id: Int) : Page<Unit> {
         @Composable
-        override fun BoxScope.content(toggleHeader: (Boolean) -> Unit) {}
+        override fun BoxScope.bind(visible: Boolean, toggleNavigationTitle: (Boolean) -> Unit) {}
+
+        override fun titleFor(data: Unit) = null
     }
 
     @Test

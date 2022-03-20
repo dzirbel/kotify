@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.page.library
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,12 +16,11 @@ import com.dzirbel.kotify.ui.page.library.artists.ArtistsLibraryState
 import com.dzirbel.kotify.ui.page.library.playlists.PlaylistsLibraryState
 import com.dzirbel.kotify.ui.page.library.ratings.RatingsLibraryState
 import com.dzirbel.kotify.ui.page.library.tracks.TracksLibraryState
-import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 
 @Composable
-fun LibraryState() {
-    VerticalScroll(scrollState = pageStack.value.currentScrollState) {
+fun LibraryState(scrollState: ScrollState) {
+    VerticalScroll(scrollState = scrollState) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
             verticalArrangement = Arrangement.spacedBy(Dimens.space3),

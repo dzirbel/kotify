@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.page.album
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,8 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.components.InvalidateButton
@@ -18,64 +15,55 @@ import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
-import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.components.trackColumns
-import com.dzirbel.kotify.ui.framework.ScrollingPage
+import com.dzirbel.kotify.ui.framework.PageLoadingSpinner
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
-import kotlinx.coroutines.Dispatchers
 import java.util.concurrent.TimeUnit
 
 @Composable
-fun BoxScope.Album(page: AlbumPage) {
-    val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember(page) { AlbumPresenter(page = page, scope = scope) }
-
-    ScrollingPage(scrollState = pageStack.value.currentScrollState, presenter = presenter) { state ->
+fun AlbumPageHeader(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                LoadedImage(url = state.album.largestImage.cached?.url)
+            LoadedImage(url = state.album?.largestImage?.cached?.url)
 
+            state.album?.let { album ->
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-                    Text(state.album.name, style = MaterialTheme.typography.h5)
+                    Text(album.name, style = MaterialTheme.typography.h5)
 
-                    LinkedText(
-                        onClickLink = { artistId ->
-                            pageStack.mutate { to(ArtistPage(artistId = artistId)) }
-                        }
-                    ) {
-                        text("By ")
-                        list(state.album.artists.cached) { artist ->
-                            link(text = artist.name, link = artist.id.value)
+                    album.artists.cachedOrNull?.let { artists ->
+                        LinkedText(
+                            onClickLink = { artistId -> pageStack.mutate { to(ArtistPage(artistId = artistId)) } }
+                        ) {
+                            text("By ")
+                            list(artists) { artist -> link(text = artist.name, link = artist.id.value) }
                         }
                     }
 
-                    state.album.releaseDate?.let {
-                        Text(it)
-                    }
+                    album.releaseDate?.let { Text(it) }
 
-                    val totalDurationMins = remember(state.tracks) {
-                        TimeUnit.MILLISECONDS.toMinutes(state.tracks.sumOf { it.durationMs.toInt() }.toLong())
-                    }
+                    val totalDurationMins = state.totalDurationMs
+                        ?.let { TimeUnit.MILLISECONDS.toMinutes(it.toLong()) }
+                        ?.let { ", $it mins" }
 
-                    Text("${state.album.totalTracks} songs, $totalDurationMins min")
+                    Text("${state.album.totalTracks} songs" + totalDurationMins)
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ToggleSaveButton(isSaved = state.isSavedState.value, size = Dimens.iconMedium) {
+                        ToggleSaveButton(isSaved = state.isSavedState?.value, size = Dimens.iconMedium) {
                             presenter.emitAsync(AlbumPresenter.Event.ToggleSave(save = it))
                         }
 
@@ -85,21 +73,26 @@ fun BoxScope.Album(page: AlbumPage) {
                     AverageStarRating(ratings = state.trackRatings.values.map { it.value })
                 }
             }
+        }
 
+        if (state.album != null) {
             InvalidateButton(
                 refreshing = state.refreshing,
-                updated = state.albumUpdated.toEpochMilli(),
+                updated = state.albumUpdated?.toEpochMilli(),
                 updatedFormat = { "Album synced $it" },
                 updatedFallback = "Album never synced",
                 onClick = { presenter.emitAsync(AlbumPresenter.Event.Load(invalidate = true)) }
             )
         }
+    }
+}
 
-        VerticalSpacer(Dimens.space3)
-
+@Composable
+fun AlbumPageContent(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) {
+    if (state.tracks.hasElements) {
         Table(
             columns = trackColumns(
-                savedTracks = state.savedTracksState.value,
+                savedTracks = state.savedTracksState?.value,
                 onSetTrackSaved = { trackId, saved ->
                     presenter.emitAsync(AlbumPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))
                 },
@@ -109,7 +102,7 @@ fun BoxScope.Album(page: AlbumPage) {
                 },
                 includeAlbum = false,
                 playContextFromIndex = { index ->
-                    Player.PlayContext.albumTrack(album = state.album, index = index)
+                    Player.PlayContext.albumTrack(album = state.album!!, index = index)
                 }
             ),
             items = state.tracks,
@@ -117,5 +110,7 @@ fun BoxScope.Album(page: AlbumPage) {
                 presenter.emitAsync(AlbumPresenter.Event.SetSort(listOfNotNull(it)))
             },
         )
+    } else {
+        PageLoadingSpinner()
     }
 }

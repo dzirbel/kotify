@@ -85,7 +85,7 @@ private fun artistColumns(
 
 @Composable
 fun ArtistsLibraryState() {
-    val presenter = rememberPresenter(::ArtistsLibraryStatePresenter)
+    val presenter = rememberPresenter { scope -> ArtistsLibraryStatePresenter(scope) }
 
     presenter.state().stateOrThrow?.let { state ->
         val savedArtistIds = state.savedArtistIds

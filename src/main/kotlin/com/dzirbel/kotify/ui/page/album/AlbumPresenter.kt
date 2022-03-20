@@ -13,30 +13,29 @@ import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
-import com.dzirbel.kotify.ui.pageStack
-import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
 class AlbumPresenter(
-    private val page: AlbumPage,
+    private val albumId: String,
     scope: CoroutineScope,
-) : Presenter<AlbumPresenter.ViewModel?, AlbumPresenter.Event>(
+) : Presenter<AlbumPresenter.ViewModel, AlbumPresenter.Event>(
     scope = scope,
-    key = page.albumId,
+    key = albumId,
     startingEvents = listOf(Event.Load(invalidate = false)),
-    initialState = null,
+    initialState = ViewModel(),
 ) {
 
     data class ViewModel(
-        val refreshing: Boolean,
-        val album: Album,
-        val tracks: ListAdapter<Track>,
-        val savedTracksState: State<Set<String>?>,
-        val trackRatings: Map<String, State<Rating?>>,
-        val isSavedState: State<Boolean?>,
-        val albumUpdated: Instant,
+        val refreshing: Boolean = false,
+        val album: Album? = null,
+        val tracks: ListAdapter<Track> = ListAdapter.from(null),
+        val totalDurationMs: ULong? = null,
+        val savedTracksState: State<Set<String>?>? = null,
+        val trackRatings: Map<String, State<Rating?>> = emptyMap(),
+        val isSavedState: State<Boolean?>? = null,
+        val albumUpdated: Instant? = null,
     )
 
     sealed class Event {
@@ -50,26 +49,25 @@ class AlbumPresenter(
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateState { it?.copy(refreshing = true) }
+                mutateState { it.copy(refreshing = true) }
 
                 if (event.invalidate) {
-                    AlbumRepository.invalidate(id = page.albumId)
+                    AlbumRepository.invalidate(id = albumId)
                 }
 
-                val album = AlbumRepository.get(id = page.albumId) ?: error("TODO show 404 page") // TODO 404 page
+                val album = AlbumRepository.get(id = albumId) ?: error("TODO show 404 page") // TODO 404 page
                 KotifyDatabase.transaction {
                     album.largestImage.loadToCache()
                     album.artists.loadToCache()
                 }
 
-                pageStack.mutate { withPageTitle(title = page.titleFor(album)) }
-
+                // TODO replace with ListAdapter sorting
                 val tracks = album.getAllTracks().sortedBy { it.trackNumber }
                 KotifyDatabase.transaction {
                     tracks.onEach { it.artists.loadToCache() }
                 }
 
-                val isSavedState = SavedAlbumRepository.savedStateOf(id = page.albumId, fetchIfUnknown = true)
+                val isSavedState = SavedAlbumRepository.savedStateOf(id = albumId, fetchIfUnknown = true)
                 val savedTracksState = SavedTrackRepository.libraryState()
 
                 val trackIds = tracks.map { it.id.value }
@@ -79,7 +77,8 @@ class AlbumPresenter(
                     ViewModel(
                         refreshing = false,
                         album = album,
-                        tracks = ListAdapter.from(tracks, baseAdapter = it?.tracks),
+                        tracks = ListAdapter.from(tracks, baseAdapter = it.tracks),
+                        totalDurationMs = tracks.sumOf { track -> track.durationMs },
                         savedTracksState = savedTracksState,
                         trackRatings = trackRatings,
                         isSavedState = isSavedState,
@@ -93,14 +92,19 @@ class AlbumPresenter(
                     fullTracks.forEach { it.artists.loadToCache() }
                 }
 
-                mutateState { it?.copy(tracks = ListAdapter.from(fullTracks, baseAdapter = it.tracks)) }
+                mutateState {
+                    it.copy(
+                        tracks = ListAdapter.from(fullTracks, baseAdapter = it.tracks),
+                        totalDurationMs = fullTracks.sumOf { track -> track.durationMs },
+                    )
+                }
             }
 
             is Event.SetSort -> mutateState {
-                it?.copy(tracks = it.tracks.withSort(event.sorts))
+                it.copy(tracks = it.tracks.withSort(event.sorts))
             }
 
-            is Event.ToggleSave -> SavedAlbumRepository.setSaved(id = page.albumId, saved = event.save)
+            is Event.ToggleSave -> SavedAlbumRepository.setSaved(id = albumId, saved = event.save)
 
             is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.saved)
 

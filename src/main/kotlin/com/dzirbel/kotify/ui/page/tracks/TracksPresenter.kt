@@ -17,19 +17,19 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 
-class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewModel?, TracksPresenter.Event>(
+class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewModel, TracksPresenter.Event>(
     scope = scope,
     startingEvents = listOf(Event.Load(invalidate = false)),
-    initialState = null
+    initialState = ViewModel(),
 ) {
 
     data class ViewModel(
-        val refreshing: Boolean,
-        val tracks: ListAdapter<Track>,
-        val tracksById: Map<String, Track>,
-        val savedTrackIds: Set<String>,
-        val trackRatings: Map<String, State<Rating?>>?,
-        val tracksUpdated: Long?,
+        val refreshing: Boolean = false,
+        val tracks: ListAdapter<Track> = ListAdapter.from(null),
+        val tracksById: Map<String, Track> = emptyMap(),
+        val savedTrackIds: Set<String> = emptySet(),
+        val trackRatings: Map<String, State<Rating?>> = emptyMap(),
+        val tracksUpdated: Long? = null,
     )
 
     sealed class Event {
@@ -54,7 +54,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateState { it?.copy(refreshing = true) }
+                mutateState { it.copy(refreshing = true) }
 
                 if (event.invalidate) {
                     SavedTrackRepository.invalidateLibrary()
@@ -71,7 +71,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                 mutateState {
                     ViewModel(
                         refreshing = false,
-                        tracks = ListAdapter.from(tracks, baseAdapter = it?.tracks),
+                        tracks = ListAdapter.from(tracks, baseAdapter = it.tracks),
                         tracksById = tracksById,
                         savedTrackIds = trackIds.toSet(),
                         trackRatings = trackRatings,
@@ -83,7 +83,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
             is Event.ReactToTracksSaved -> {
                 if (event.saved) {
                     // if an track has been saved but is now missing from the table of tracks, load and add it
-                    val stateTracks = queryState { it?.tracksById }?.keys.orEmpty()
+                    val stateTracks = queryState { it.tracksById }.keys
 
                     val missingTrackIds: List<String> = event.trackIds
                         .minus(stateTracks)
@@ -93,7 +93,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                         val missingTracksById = missingTracks.associateBy { it.id.value }
 
                         mutateState {
-                            it?.copy(
+                            it.copy(
                                 tracksById = it.tracksById.plus(missingTracksById),
                                 tracks = it.tracks.plusElements(missingTracks),
                                 savedTrackIds = it.savedTrackIds.plus(event.trackIds),
@@ -101,13 +101,13 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                         }
                     } else {
                         mutateState {
-                            it?.copy(savedTrackIds = it.savedTrackIds.plus(event.trackIds))
+                            it.copy(savedTrackIds = it.savedTrackIds.plus(event.trackIds))
                         }
                     }
                 } else {
                     // if an track has been unsaved, retain the table of tracks but toggle its save state
                     mutateState {
-                        it?.copy(savedTrackIds = it.savedTrackIds.minus(event.trackIds.toSet()))
+                        it.copy(savedTrackIds = it.savedTrackIds.minus(event.trackIds.toSet()))
                     }
                 }
             }

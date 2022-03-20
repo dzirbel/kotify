@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.page.artists
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -40,9 +39,7 @@ import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
-import com.dzirbel.kotify.ui.framework.StandardLoadingSpinner
-import com.dzirbel.kotify.ui.framework.StandardPage
-import com.dzirbel.kotify.ui.framework.rememberPresenter
+import com.dzirbel.kotify.ui.framework.PageLoadingSpinner
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
@@ -136,25 +133,7 @@ class ArtistRatingDivider(
 }
 
 @Composable
-fun BoxScope.Artists(toggleHeader: (Boolean) -> Unit) {
-    val presenter = rememberPresenter(::ArtistsPresenter)
-
-    StandardPage(
-        scrollState = pageStack.value.currentScrollState,
-        presenter = presenter,
-        onHeaderVisibilityChanged = { toggleHeader(!it) },
-        header = { state -> ArtistsHeader(presenter, state) },
-    ) { state ->
-        if (state.artists.hasElements) {
-            ArtistsGrid(presenter, state)
-        } else {
-            StandardLoadingSpinner()
-        }
-    }
-}
-
-@Composable
-private fun ArtistsHeader(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewModel) {
+fun ArtistsPageHeader(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewModel) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space5, vertical = Dimens.space4),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -211,28 +190,33 @@ private fun ArtistsHeader(presenter: ArtistsPresenter, state: ArtistsPresenter.V
 }
 
 @Composable
-private fun ArtistsGrid(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewModel) {
-    val selectedArtistIndex = remember(state.artists.sorts, state.artists.divider) { mutableStateOf<Int?>(null) }
+fun ArtistsPageContent(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewModel) {
+    if (state.artists.hasElements) {
+        // TODO move into presenter state so it is preserved
+        val selectedArtistIndex = remember(state.artists.sorts, state.artists.divider) { mutableStateOf<Int?>(null) }
 
-    Grid(
-        elements = state.artists,
-        horizontalSpacingStart = Dimens.space5 - Dimens.space3,
-        horizontalSpacingEnd = Dimens.space5 - Dimens.space3,
-        selectedElementIndex = selectedArtistIndex.value,
-        detailInsertContent = { _, artist ->
-            ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
-        },
-    ) { index, artist ->
-        ArtistCell(
-            artist = artist,
-            savedArtists = state.savedArtistIds,
-            artistRatings = state.artistRatings[artist.id.value],
-            presenter = presenter,
-            onRightClick = {
-                presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
-                selectedArtistIndex.value = index.takeIf { selectedArtistIndex.value != it }
-            }
-        )
+        Grid(
+            elements = state.artists,
+            horizontalSpacingStart = Dimens.space5 - Dimens.space3,
+            horizontalSpacingEnd = Dimens.space5 - Dimens.space3,
+            selectedElementIndex = selectedArtistIndex.value,
+            detailInsertContent = { _, artist ->
+                ArtistDetailInsert(artist = artist, presenter = presenter, state = state)
+            },
+        ) { index, artist ->
+            ArtistCell(
+                artist = artist,
+                savedArtists = state.savedArtistIds,
+                artistRatings = state.artistRatings[artist.id.value],
+                presenter = presenter,
+                onRightClick = {
+                    presenter.emitAsync(ArtistsPresenter.Event.LoadArtistDetails(artistId = artist.id.value))
+                    selectedArtistIndex.value = index.takeIf { selectedArtistIndex.value != it }
+                }
+            )
+        }
+    } else {
+        PageLoadingSpinner()
     }
 }
 

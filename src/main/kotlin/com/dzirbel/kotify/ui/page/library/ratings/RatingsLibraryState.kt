@@ -23,7 +23,7 @@ private val RATINGS_TABLE_WIDTH = 750.dp
 
 @Composable
 fun RatingsLibraryState() {
-    val presenter = rememberPresenter(::RatingsLibraryStatePresenter)
+    val presenter = rememberPresenter { scope -> RatingsLibraryStatePresenter(scope) }
 
     presenter.state().stateOrThrow?.let { state ->
         val ratedTracks = state.ratedTracksIds

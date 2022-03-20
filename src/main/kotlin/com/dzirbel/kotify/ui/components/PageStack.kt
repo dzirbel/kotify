@@ -1,35 +1,34 @@
 package com.dzirbel.kotify.ui.components
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 
 /**
- * Represents a page in a [PageStack] and how they are rendered.
+ * Represents a page in a [PageStack] and how it is rendered.
  */
-interface Page {
+interface Page<T> {
     /**
-     * The main content for this [Page].
+     * Binds this page to the composition, optionally rendering its content if [visible] is true; returning some
+     * stateful data [T] which can be used to derive the [titleFor] the page.
      *
-     * May call [toggleHeader] to toggle the visibility of [headerContent] in the top navigation bar, typically when the
-     * user scrolls past an inset header in the page.
+     * This function is called by the [PageStack] container for all pages on the stack, and serves two purposes. For
+     * pages which are not currently [visible], bind allows the page to persist data which is attached to the
+     * composition, but should not use it to render visible elements. For the page which is [visible], the page can
+     * both attach data to the composition and render its contents in this call. Ideally these functions might be
+     * separated, but given that the data bound to the composition is used to drive the rendered content it is
+     * convenient to keep them together and allow the page to determine how they interact.
      */
     @Composable
-    fun BoxScope.content(toggleHeader: (Boolean) -> Unit)
+    fun BoxScope.bind(visible: Boolean, toggleNavigationTitle: (Boolean) -> Unit): T
 
     /**
-     * Whether this [Page] can render any custom [headerContent]. If false, the header will be shown by default since
-     * the user cannot scroll to reveal it.
+     * Determines the user-visible title for this page, which may optionally use [data] of type [T] returned by the most
+     * recent call to [bind] for the page.
+     *
+     * Use of [data] allows pages to construct a title based on data they load, e.g. the page displaying an artist would
+     * need to load the artist's name.
      */
-    fun hasHeaderContent(): Boolean = false
-
-    /**
-     * Optional content displayed in the top navigation bar, typically when the user scrolls past an inset header in the
-     * page content.
-     */
-    @Composable
-    fun RowScope.headerContent() {}
+    fun titleFor(data: T): String?
 }
 
 /**
@@ -39,40 +38,27 @@ interface Page {
  * before the [currentIndex] are on the "back-stack" and pages after the [currentIndex] are on the "forward-stack". This
  * allows the user to navigate up the stack to a previous page, then forward again.
  *
- * A [PageStack] also contains the [scrollStates] of each page, so that they are maintained when navigating between
- * pages.
- *
  * A [PageStack] may be not be empty.
  */
 class PageStack private constructor(
-    val pages: List<Page>,
-    val pageTitles: List<String?>,
-    private val scrollStates: List<ScrollState>,
+    val pages: List<Page<*>>,
     val currentIndex: Int,
 ) {
     init {
         require(currentIndex in pages.indices) { "index out of bounds: $currentIndex not in ${pages.indices}" }
-        require(pages.size == scrollStates.size) { "pages array does not match scroll states array" }
-        require(pages.size == pageTitles.size) { "pages array does not match titles array" }
     }
 
     /**
      * The currently visible [Page] on the stack.
      */
-    val current: Page
+    val current: Page<*>
         get() = pages[currentIndex]
-
-    /**
-     * The [ScrollState] for the currently [Page] on the stack.
-     */
-    val currentScrollState: ScrollState
-        get() = scrollStates[currentIndex]
 
     /**
      * The [Page] immediately before the [current] page on the stack, or null if there is no such page (the back-stack
      * is empty).
      */
-    val previous: Page?
+    val previous: Page<*>?
         get() = pages.getOrNull(currentIndex - 1)
 
     /**
@@ -85,7 +71,7 @@ class PageStack private constructor(
      * The [Page] immediately after the [current] page on the stack, or null if there is no such page (the forward-stack
      * is empty).
      */
-    val next: Page?
+    val next: Page<*>?
         get() = pages.getOrNull(currentIndex + 1)
 
     /**
@@ -94,12 +80,7 @@ class PageStack private constructor(
     val hasNext: Boolean
         get() = currentIndex < pages.lastIndex
 
-    constructor(page: Page) : this(
-        pages = listOf(page),
-        pageTitles = listOf(null),
-        scrollStates = listOf(ScrollState(0)),
-        currentIndex = 0
-    )
+    constructor(page: Page<*>) : this(pages = listOf(page), currentIndex = 0)
 
     /**
      * Returns a copy of this [PageStack] which represents the stack navigated to the [previous] page.
@@ -126,21 +107,7 @@ class PageStack private constructor(
      */
     fun toIndex(index: Int): PageStack {
         check(index in pages.indices)
-        return PageStack(pages = pages, pageTitles = pageTitles, scrollStates = scrollStates, currentIndex = index)
-    }
-
-    /**
-     * Returns a copy of this [PageStack] with the given [title] for the page at the given [index].
-     */
-    fun withPageTitle(title: String, index: Int = currentIndex): PageStack {
-        return PageStack(
-            pages = pages,
-            pageTitles = pageTitles.mapIndexed { currentIndex, currentTitle ->
-                if (currentIndex == index) title else currentTitle
-            },
-            scrollStates = scrollStates,
-            currentIndex = currentIndex
-        )
+        return PageStack(pages = pages, currentIndex = index)
     }
 
     /**
@@ -150,14 +117,12 @@ class PageStack private constructor(
      *
      * If [allowDuplicate] is false (the default), [page] will only be added if it is different than the [current] page.
      */
-    fun to(page: Page, allowDuplicate: Boolean = false): PageStack {
+    fun to(page: Page<*>, allowDuplicate: Boolean = false): PageStack {
         if (!allowDuplicate && current == page) return this
 
         return PageStack(
             pages = pages.minusForwardStack().plus(page),
-            pageTitles = pageTitles.minusForwardStack().plus(null),
-            scrollStates = scrollStates.minusForwardStack().plus(ScrollState(0)),
-            currentIndex = currentIndex + 1
+            currentIndex = currentIndex + 1,
         )
     }
 

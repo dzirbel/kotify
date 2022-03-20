@@ -59,7 +59,7 @@ private fun albumColumns(
 
 @Composable
 fun AlbumsLibraryState() {
-    val presenter = rememberPresenter(::AlbumsLibraryStatePresenter)
+    val presenter = rememberPresenter { scope -> AlbumsLibraryStatePresenter(scope) }
 
     presenter.state().stateOrThrow?.let { state ->
         val savedAlbumIds = state.savedAlbumIds

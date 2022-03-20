@@ -22,7 +22,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 
 @Composable
 fun TracksLibraryState() {
-    val presenter = rememberPresenter(::TracksLibraryStatePresenter)
+    val presenter = rememberPresenter { scope -> TracksLibraryStatePresenter(scope) }
 
     presenter.state().stateOrThrow?.let { state ->
         if (state.savedTrackIds == null) {

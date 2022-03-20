@@ -15,18 +15,17 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 
-class AlbumsPresenter(scope: CoroutineScope) :
-    Presenter<AlbumsPresenter.ViewModel?, AlbumsPresenter.Event>(
-        scope = scope,
-        startingEvents = listOf(Event.Load(invalidate = false)),
-        initialState = null
-    ) {
+class AlbumsPresenter(scope: CoroutineScope) : Presenter<AlbumsPresenter.ViewModel, AlbumsPresenter.Event>(
+    scope = scope,
+    startingEvents = listOf(Event.Load(invalidate = false)),
+    initialState = ViewModel(),
+) {
 
     data class ViewModel(
-        val refreshing: Boolean,
-        val albums: ListAdapter<Album>,
-        val savedAlbumIds: Set<String>,
-        val albumsUpdated: Long?,
+        val refreshing: Boolean = false,
+        val albums: ListAdapter<Album> = ListAdapter.from(null, defaultSort = listOf(Sort(SortAlbumsByName))),
+        val savedAlbumIds: Set<String>? = null,
+        val albumsUpdated: Long? = null,
     )
 
     sealed class Event {
@@ -50,7 +49,7 @@ class AlbumsPresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateState { it?.copy(refreshing = true) }
+                mutateState { it.copy(refreshing = true) }
 
                 if (event.invalidate) {
                     SavedAlbumRepository.invalidateLibrary()
@@ -63,11 +62,7 @@ class AlbumsPresenter(scope: CoroutineScope) :
                 mutateState {
                     ViewModel(
                         refreshing = false,
-                        albums = ListAdapter.from(
-                            elements = albums,
-                            baseAdapter = it?.albums,
-                            defaultSort = listOf(Sort(SortAlbumsByName)),
-                        ),
+                        albums = ListAdapter.from(elements = albums, baseAdapter = it.albums),
                         savedAlbumIds = savedAlbumIds,
                         albumsUpdated = albumsUpdated?.toEpochMilli(),
                     )
@@ -77,7 +72,7 @@ class AlbumsPresenter(scope: CoroutineScope) :
             is Event.ReactToAlbumsSaved -> {
                 if (event.saved) {
                     // if an album has been saved but is now missing from the grid of albums, load and add it
-                    val stateAlbums = queryState { it?.albums } ?: return
+                    val stateAlbums = queryState { it.albums }
 
                     val missingAlbumIds: List<String> = event.albumIds
                         .minus(stateAlbums.mapTo(mutableSetOf()) { it.id.value })
@@ -87,17 +82,17 @@ class AlbumsPresenter(scope: CoroutineScope) :
                         val allAlbums = stateAlbums.plusElements(missingAlbums)
 
                         mutateState {
-                            it?.copy(albums = allAlbums, savedAlbumIds = it.savedAlbumIds.plus(event.albumIds))
+                            it.copy(albums = allAlbums, savedAlbumIds = it.savedAlbumIds?.plus(event.albumIds))
                         }
                     } else {
                         mutateState {
-                            it?.copy(savedAlbumIds = it.savedAlbumIds.plus(event.albumIds))
+                            it.copy(savedAlbumIds = it.savedAlbumIds?.plus(event.albumIds))
                         }
                     }
                 } else {
                     // if an album has been unsaved, retain the grid of albums but toggle its save state
                     mutateState {
-                        it?.copy(savedAlbumIds = it.savedAlbumIds.minus(event.albumIds.toSet()))
+                        it.copy(savedAlbumIds = it.savedAlbumIds?.minus(event.albumIds.toSet()))
                     }
                 }
             }

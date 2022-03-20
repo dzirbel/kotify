@@ -106,6 +106,8 @@ fun <T> iterativeState(key: Any? = null, generate: () -> Pair<T, Long>): T {
  * Handles the three possible states of [state]: an exception is thrown, in which case [onError] is invoked with the
  * exception; null is returned, in which case [onLoading] is invoked; or a non-null [T] is returned in which case
  * [onSuccess] with the value.
+ *
+ * TODO: remove (only used by LibraryPanel)
  */
 @Composable
 fun <T> HandleState(

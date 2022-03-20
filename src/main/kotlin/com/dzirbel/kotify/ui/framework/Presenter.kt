@@ -1,12 +1,12 @@
 package com.dzirbel.kotify.ui.framework
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.ui.framework.Presenter.StateOrError.State
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
+import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -35,9 +35,13 @@ import kotlin.reflect.KClass
  * Convenience function which manages the creation of a [Presenter] tied to the composition.
  */
 @Composable
-fun <ViewModel, P : Presenter<ViewModel, *>> rememberPresenter(createPresenter: (CoroutineScope) -> P): P {
+fun <ViewModel, P : Presenter<ViewModel, *>> rememberPresenter(
+    key: Any? = Unit,
+    createPresenter: (CoroutineScope) -> P,
+): P {
+    // TODO remember with key?
     val scope = rememberCoroutineScope { Dispatchers.IO }
-    return remember { createPresenter(scope) }
+    return remember(key) { createPresenter(scope) }
 }
 
 /**
@@ -56,7 +60,7 @@ abstract class Presenter<ViewModel, Event : Any>(
     /**
      * The initial [ViewModel] of the content.
      */
-    initialState: ViewModel,
+    private val initialState: ViewModel,
 
     /**
      * An optional key by which the event flow collection is remembered; the same event flow will be used as long as
@@ -222,7 +226,11 @@ abstract class Presenter<ViewModel, Event : Any>(
             }
         }
 
-        return stateFlow.collectAsState(context = context).value
+        return stateFlow.collectAsStateSwitchable(
+            initial = { State(initialState) },
+            key = key,
+            context = context,
+        ).value
     }
 
     /**

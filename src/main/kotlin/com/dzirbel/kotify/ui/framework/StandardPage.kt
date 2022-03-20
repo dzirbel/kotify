@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
@@ -27,16 +29,47 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import kotlinx.coroutines.CoroutineScope
 
+// TODO document
+@Composable
+fun <ViewModel, P : Presenter<ViewModel, *>> BoxScope.BindPresenterPage(
+    visible: Boolean,
+    key: Any? = null,
+    createPresenter: (scope: CoroutineScope) -> P,
+    toggleNavigationTitle: (Boolean) -> Unit,
+    header: @Composable (P, ViewModel) -> Unit,
+    content: @Composable (P, ViewModel) -> Unit,
+): ViewModel {
+    val presenter = rememberPresenter(key = key, createPresenter = createPresenter)
+    val scrollState = rememberScrollState()
+    val stateOrError = presenter.state()
+
+    if (visible) {
+        StandardPage(
+            presenter = presenter,
+            stateOrError = stateOrError,
+            scrollState = scrollState,
+            onHeaderVisibilityChanged = { toggleNavigationTitle(!it) },
+            header = { state -> header(presenter, state) },
+            content = { state -> content(presenter, state) },
+        )
+    }
+
+    return stateOrError.safeState
+}
+
+// TODO document
 @Composable
 fun <T> BoxScope.StandardPage(
-    scrollState: ScrollState,
     presenter: Presenter<T, *>,
+    stateOrError: Presenter.StateOrError<T>,
+    scrollState: ScrollState,
     header: @Composable (BoxScope.(T) -> Unit)? = null,
     onHeaderVisibilityChanged: (visible: Boolean) -> Unit = {},
     content: @Composable ColumnScope.(T) -> Unit,
 ) {
-    when (val stateOrError = presenter.state()) {
+    when (stateOrError) {
         is Presenter.StateOrError.Error -> ErrorPage(throwable = stateOrError.throwable, presenter = presenter)
         is Presenter.StateOrError.State -> LoadedPage(
             state = stateOrError.state,
@@ -48,15 +81,21 @@ fun <T> BoxScope.StandardPage(
     }
 }
 
+/**
+ * Standard spinner element which occupies the maximum width, typically shown when the main content of a page is being
+ * loaded.
+ */
 @Composable
-fun ColumnScope.StandardLoadingSpinner() {
+fun PageLoadingSpinner() {
     // TODO center vertically; this is difficult since this is typically placed inside a scrolling column
-    CircularProgressIndicator(
-        Modifier
-            .padding(vertical = Dimens.space5)
-            .size(Dimens.iconHuge)
-            .align(Alignment.CenterHorizontally)
-    )
+    Box(Modifier.fillMaxWidth()) {
+        CircularProgressIndicator(
+            Modifier
+                .padding(vertical = Dimens.space5)
+                .size(Dimens.iconHuge)
+                .align(Alignment.Center)
+        )
+    }
 }
 
 @Composable
