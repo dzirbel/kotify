@@ -50,7 +50,6 @@ internal class PlayerPanelPresenterTest {
 
     @BeforeEach
     fun setup() {
-        unmockkAll()
         mockkObject(Spotify.Player, Player)
 
         every { Player.currentDevice } returns currentDeviceState
@@ -67,6 +66,7 @@ internal class PlayerPanelPresenterTest {
     fun finish() {
         confirmVerified(Spotify.Player, Player)
         confirmVerified(currentDeviceState, currentTrackState, isPlayingState, playbackContextState)
+        unmockkAll()
     }
 
     @Test
