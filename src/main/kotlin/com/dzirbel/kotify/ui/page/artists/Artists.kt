@@ -35,6 +35,7 @@ import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.adapter.compare
 import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.grid.Grid
+import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.framework.PageLoadingSpinner
@@ -286,7 +287,7 @@ private fun ArtistDetailInsert(
 
             artistDetails?.let {
                 artistDetails.savedTime?.let { savedTime ->
-                    Text("Saved $savedTime") // TODO improve datetime formatting
+                    Text(liveRelativeDateText(timestamp = savedTime.toEpochMilli()) { "Saved $it" })
                 }
 
                 Flow {
