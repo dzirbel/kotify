@@ -75,7 +75,10 @@ object IconCache {
         val key = IconHash(name = name, density = density, size = size)
 
         // happy path: icon is already loaded
-        jobs[key]?.getCompleted()?.let { return it }
+        jobs[key]
+            ?.takeIf { it.isCompleted }
+            ?.getCompleted()
+            ?.let { return it }
 
         return callbackAsState(context = Dispatchers.IO, key = name) {
             jobs.computeIfAbsent(key) {
