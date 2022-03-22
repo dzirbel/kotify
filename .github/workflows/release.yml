@@ -19,7 +19,7 @@ jobs:
       - run: ./gradlew --no-daemon --stacktrace --console=plain package
 
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: release ${{ matrix.os }}
           path: build/compose/binaries/main/*/*

@@ -19,6 +19,15 @@ jobs:
 
       - run: ./gradlew --stacktrace checkLocal jacocoTestReportLocal
 
+      - name: Upload mismatching screenshots
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: mismatching-screenshots
+          path: src/test/resources/screenshots/**/*-MISMATCH.png
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Upload test results to codecov
         run: |
           Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
