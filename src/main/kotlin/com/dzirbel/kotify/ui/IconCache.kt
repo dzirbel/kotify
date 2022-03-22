@@ -20,6 +20,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -92,5 +93,12 @@ object IconCache {
             }
                 .await()
         }.value ?: EmptyPainter
+    }
+
+    /**
+     * Awaits until all in-progress icons being loaded from disk are ready; intended for use in screenshot tests.
+     */
+    suspend fun awaitAll() {
+        jobs.values.filter { !it.isCompleted }.awaitAll()
     }
 }

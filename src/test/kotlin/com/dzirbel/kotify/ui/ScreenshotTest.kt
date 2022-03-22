@@ -49,6 +49,9 @@ fun Any.screenshotTest(
                 }
             }
 
+            // ensure that all icons are loaded before rendering the content
+            IconCache.awaitAll()
+
             window.render().encodeToData()
         }
 
