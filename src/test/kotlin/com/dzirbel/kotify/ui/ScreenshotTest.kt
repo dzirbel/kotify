@@ -35,6 +35,8 @@ fun Any.screenshotTest(
     colorsSet: Set<Colors> = Colors.values().toSet(),
     content: @Composable () -> Unit,
 ) {
+    IconCache.loadBlocking = true
+
     val multipleColorSets = colorsSet.size > 1
     var recordedScreenshots = false
     for (colors in colorsSet) {
@@ -48,9 +50,6 @@ fun Any.screenshotTest(
                     }
                 }
             }
-
-            // ensure that all icons are loaded before rendering the content
-            IconCache.awaitAll()
 
             window.render().encodeToData()
         }

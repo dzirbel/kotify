@@ -16,11 +16,11 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.callbackAsState
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -63,6 +63,12 @@ object IconCache {
     private val jobs: ConcurrentMap<IconHash, Deferred<Painter>> = ConcurrentHashMap()
 
     /**
+     * Toggles the [IconCache]'s blocking mode, in which calls to [load] are always done synchronously. This is used in
+     * screenshot tests to ensure icons are available for the test image.
+     */
+    var loadBlocking = false
+
+    /**
      * Loads the icon with the given [name] from the application resources, using an in-memory cache to avoid reloading
      * the same icon multiple times.
      *
@@ -81,24 +87,24 @@ object IconCache {
             ?.getCompleted()
             ?.let { return it }
 
-        return callbackAsState(context = Dispatchers.IO, key = name) {
-            jobs.computeIfAbsent(key) {
-                // cannot use scope local to the composition in case it is removed from the composition before
-                // finishing, but then the same icon is requested again
-                GlobalScope.async {
-                    val iconPath = "$name.svg"
-                    requireNotNull(classLoader.getResourceAsStream(iconPath)) { "Icon $iconPath not found" }
-                        .use { loadSvgPainter(it, density) }
+        return if (loadBlocking) {
+            readIcon(name, density)
+                .also { jobs[key] = CompletableDeferred(it) }
+        } else {
+            callbackAsState(context = Dispatchers.IO, key = name) {
+                jobs.computeIfAbsent(key) {
+                    // cannot use scope local to the composition in case it is removed from the composition before
+                    // finishing, but then the same icon is requested again
+                    GlobalScope.async { readIcon(name, density) }
                 }
-            }
-                .await()
-        }.value ?: EmptyPainter
+                    .await()
+            }.value ?: EmptyPainter
+        }
     }
 
-    /**
-     * Awaits until all in-progress icons being loaded from disk are ready; intended for use in screenshot tests.
-     */
-    suspend fun awaitAll() {
-        jobs.values.filter { !it.isCompleted }.awaitAll()
+    private fun readIcon(name: String, density: Density): Painter {
+        val iconPath = "$name.svg"
+        return requireNotNull(classLoader.getResourceAsStream(iconPath)) { "Icon $iconPath not found" }
+            .use { loadSvgPainter(it, density) }
     }
 }
