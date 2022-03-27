@@ -162,4 +162,22 @@ internal class ListAdapterTest {
                 0 to listOf(IndexedValue(8, 18), IndexedValue(11, 6), IndexedValue(0, 0)),
             )
     }
+
+    @Test
+    fun testWithElements() {
+        val predicate: (Int) -> Boolean = { it % 2 == 0 }
+
+        val elements = ListAdapter.of(List(10) { it })
+            .withFilter(filter = predicate)
+            .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
+            .withDivider(Divider(Mod3DividableProperty, SortOrder.DESCENDING))
+            .withElements(List(10) { it + 10 })
+
+        assertThat(elements.divisions)
+            .containsExactly(
+                2 to listOf(IndexedValue(4, 14)),
+                1 to listOf(IndexedValue(6, 16), IndexedValue(0, 10)),
+                0 to listOf(IndexedValue(8, 18), IndexedValue(2, 12)),
+            )
+    }
 }
