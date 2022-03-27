@@ -17,10 +17,10 @@ interface ColumnByString<T> : Column<T> {
     /**
      * Renders the content of the given [item] as the returned string.
      */
-    fun toString(item: T): String
+    fun toString(item: T): String?
 
     @Composable
     override fun item(item: T) {
-        Text(text = toString(item), modifier = Modifier.padding(cellPadding))
+        Text(text = toString(item).orEmpty(), modifier = Modifier.padding(cellPadding))
     }
 }

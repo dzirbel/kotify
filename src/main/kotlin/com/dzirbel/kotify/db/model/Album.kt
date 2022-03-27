@@ -13,6 +13,7 @@ import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
+import com.dzirbel.kotify.network.model.ReleaseDate
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
@@ -70,6 +71,10 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
     val images: ReadWriteCachedProperty<List<Image>> by (Image via AlbumTable.AlbumImageTable).cachedAsList()
     val genres: ReadWriteCachedProperty<List<Genre>> by (Genre via AlbumTable.AlbumGenreTable).cachedAsList()
     val tracks: ReadWriteCachedProperty<List<Track>> by (Track via AlbumTable.AlbumTrackTable).cachedAsList()
+
+    val parsedReleaseDate: ReleaseDate? by lazy {
+        releaseDate?.let { ReleaseDate.parse(it) }
+    }
 
     /**
      * IDs of the tracks on this album; not guaranteed to contain all the tracks, just the ones in

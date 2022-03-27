@@ -3,7 +3,7 @@ package com.dzirbel.kotify.ui.properties
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
-import com.dzirbel.kotify.ui.components.adapter.compare
+import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 
 abstract class PropertyByString<E>(override val title: String) :
@@ -12,15 +12,16 @@ abstract class PropertyByString<E>(override val title: String) :
     override val terminalSort = true
 
     override fun compare(sortOrder: SortOrder, first: E, second: E): Int {
-        return sortOrder.compare(toString(first), toString(second))
+        return sortOrder.compareNullable(toString(first), toString(second))
     }
 
-    override fun divisionFor(element: E): Char {
-        val firstChar = toString(element)[0] // TODO allow empty strings?
-        return if (firstChar.isLetter()) firstChar.uppercaseChar() else '#'
+    override fun divisionFor(element: E): Char? {
+        return toString(element)?.firstOrNull()?.let { firstChar ->
+            if (firstChar.isLetter()) firstChar.uppercaseChar() else '#'
+        }
     }
 
     override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
-        return sortOrder.compare(first as Char, second as Char)
+        return sortOrder.compareNullable(first as? Char, second as? Char)
     }
 }

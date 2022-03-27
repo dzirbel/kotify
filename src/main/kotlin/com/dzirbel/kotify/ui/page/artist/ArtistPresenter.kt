@@ -17,6 +17,7 @@ import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.properties.AlbumRatingProperty
+import com.dzirbel.kotify.ui.properties.AlbumReleaseDateProperty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -49,6 +50,7 @@ class ArtistPresenter(
     ) {
         val artistAlbumProperties: List<AdapterProperty<Album>> = listOf(
             AlbumNameProperty,
+            AlbumReleaseDateProperty,
             AlbumRatingProperty(ratings = albumRatings),
         )
     }
