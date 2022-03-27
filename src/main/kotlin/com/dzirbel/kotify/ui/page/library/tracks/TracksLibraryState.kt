@@ -17,12 +17,10 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
-import com.dzirbel.kotify.ui.framework.rememberPresenter
 import com.dzirbel.kotify.ui.theme.Dimens
 
 @Composable
-fun TracksLibraryState() {
-    val presenter = rememberPresenter { scope -> TracksLibraryStatePresenter(scope) }
+fun TracksLibraryState(presenter: TracksLibraryStatePresenter) {
     val state = presenter.state().stateOrThrow
 
     if (state.savedTrackIds == null) {

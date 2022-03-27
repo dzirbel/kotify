@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.table.Table
-import com.dzirbel.kotify.ui.framework.rememberPresenter
 import com.dzirbel.kotify.ui.properties.TrackNameProperty
 import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -22,8 +21,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 private val RATINGS_TABLE_WIDTH = 750.dp
 
 @Composable
-fun RatingsLibraryState() {
-    val presenter = rememberPresenter { scope -> RatingsLibraryStatePresenter(scope) }
+fun RatingsLibraryState(presenter: RatingsLibraryStatePresenter) {
     val state = presenter.state().stateOrThrow
 
     val ratingsExpanded = remember { mutableStateOf(false) }

@@ -21,7 +21,6 @@ import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.Table
-import com.dzirbel.kotify.ui.framework.rememberPresenter
 import com.dzirbel.kotify.ui.page.library.InvalidateButtonColumn
 import com.dzirbel.kotify.ui.theme.Dimens
 
@@ -66,8 +65,7 @@ private fun albumColumns(
 }
 
 @Composable
-fun AlbumsLibraryState() {
-    val presenter = rememberPresenter { scope -> AlbumsLibraryStatePresenter(scope) }
+fun AlbumsLibraryState(presenter: AlbumsLibraryStatePresenter) {
     val state = presenter.state().stateOrThrow
 
     if (!state.savedAlbumIds.hasElements) {

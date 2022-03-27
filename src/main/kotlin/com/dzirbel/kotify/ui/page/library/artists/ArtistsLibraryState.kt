@@ -23,7 +23,6 @@ import com.dzirbel.kotify.ui.components.table.ColumnByLinkedText
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
 import com.dzirbel.kotify.ui.components.table.ColumnByString
 import com.dzirbel.kotify.ui.components.table.Table
-import com.dzirbel.kotify.ui.framework.rememberPresenter
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.page.library.InvalidateButtonColumn
 import com.dzirbel.kotify.ui.pageStack
@@ -94,8 +93,7 @@ private fun artistColumns(
 }
 
 @Composable
-fun ArtistsLibraryState() {
-    val presenter = rememberPresenter { scope -> ArtistsLibraryStatePresenter(scope) }
+fun ArtistsLibraryState(presenter: ArtistsLibraryStatePresenter) {
     val state = presenter.state().stateOrThrow
 
     if (!state.savedArtistIds.hasElements) {
