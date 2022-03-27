@@ -43,7 +43,7 @@ internal class KotifyDatabaseTest {
         runBlocking(context = Dispatchers.IO) {
             val jobs = Array(numJobs) { i ->
                 async {
-                    KotifyDatabase.transaction {
+                    KotifyDatabase.transaction(name = null) {
                         TestTable.insert {
                             it[name] = "row $i"
                             it[count] = i
@@ -56,7 +56,7 @@ internal class KotifyDatabaseTest {
             awaitAll(*jobs)
 
             val rows: List<Pair<String, Int>> = KotifyDatabase
-                .transaction { TestTable.selectAll().toList() }
+                .transaction(name = null) { TestTable.selectAll().toList() }
                 .map { Pair(it[TestTable.name], it[TestTable.count]) }
 
             assertThat(rows).containsExactlyElementsOfInAnyOrder(

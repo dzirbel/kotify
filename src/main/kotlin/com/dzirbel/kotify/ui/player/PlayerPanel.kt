@@ -295,7 +295,9 @@ internal class PlayerPanelPresenter(scope: CoroutineScope) :
 
                     // cache track in database or update stored data
                     // TODO runBlocking hack for tests
-                    runBlocking { KotifyDatabase.transaction { Track.from(track) } }
+                    runBlocking {
+                        KotifyDatabase.transaction(name = "save track ${track.name}") { Track.from(track) }
+                    }
                 }
 
                 when {
@@ -359,7 +361,9 @@ internal class PlayerPanelPresenter(scope: CoroutineScope) :
 
                     // cache track in database or update stored data
                     // TODO runBlocking hack for tests
-                    runBlocking { KotifyDatabase.transaction { Track.from(track) } }
+                    runBlocking {
+                        KotifyDatabase.transaction(name = "save track ${track.name}") { Track.from(track) }
+                    }
                 }
 
                 when {

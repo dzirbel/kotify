@@ -157,7 +157,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                 if (queryState { it.artistDetails }.containsKey(artist.id.value)) return
 
                 val savedTime = SavedArtistRepository.savedTimeCached(id = artist.id.value)
-                val genres = KotifyDatabase.transaction { artist.genres.live }
+                val genres = KotifyDatabase.transaction("load artist ${artist.name} genres") { artist.genres.live }
                     .map { it.name }
                     .sorted()
 
@@ -173,7 +173,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
 
                 val albums = Artist.getAllAlbums(artistId = artist.id.value)
                 val albumsAdapter = ListAdapter.empty(AlbumNameProperty).withElements(albums)
-                KotifyDatabase.transaction {
+                KotifyDatabase.transaction("load artist ${artist.name} albums images") {
                     albums.forEach { it.largestImage.loadToCache() }
                 }
 
@@ -247,7 +247,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
     private suspend fun fetchArtists(artistIds: List<String>): List<Artist> {
         val artists = ArtistRepository.getFull(ids = artistIds).filterNotNull()
 
-        val imageUrls = KotifyDatabase.transaction {
+        val imageUrls = KotifyDatabase.transaction("load artists tracks and image") {
             artists.mapNotNull { artist ->
                 artist.trackIds.loadToCache()
                 artist.largestImage.live?.url

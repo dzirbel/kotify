@@ -51,7 +51,7 @@ private class CurrentUserPresenter(scope: CoroutineScope) : Presenter<User?, Cur
             is Event.Load -> {
                 val user = UserRepository.getCurrentUser()
                 user?.let {
-                    KotifyDatabase.transaction { user.thumbnailImage.loadToCache() }
+                    KotifyDatabase.transaction("load user image") { user.thumbnailImage.loadToCache() }
                 }
 
                 mutateState { user }

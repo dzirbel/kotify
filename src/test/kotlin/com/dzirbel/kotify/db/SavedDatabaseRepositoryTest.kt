@@ -30,7 +30,10 @@ data class TestSavedNetworkModel(val id: String)
 
 object TestSavedEntityTable : SavedEntityTable()
 
-object TestSavedRepository : SavedDatabaseRepository<TestSavedNetworkModel>(savedEntityTable = TestSavedEntityTable) {
+object TestSavedRepository : SavedDatabaseRepository<TestSavedNetworkModel>(
+    entityName = "test",
+    savedEntityTable = TestSavedEntityTable,
+) {
     private val fetchedIds: MutableList<List<String>> = mutableListOf()
     private val pushedIds: MutableList<Pair<List<String>, Boolean>> = mutableListOf()
     private var libraryFetches = 0

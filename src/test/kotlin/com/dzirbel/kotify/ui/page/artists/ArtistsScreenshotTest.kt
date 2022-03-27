@@ -31,7 +31,7 @@ internal class ArtistsScreenshotTest {
     @Test
     fun headerFull() {
         val artist = runBlocking {
-            KotifyDatabase.transaction { requireNotNull(Artist.from(Fixtures.artist)) }
+            KotifyDatabase.transaction(name = null) { requireNotNull(Artist.from(Fixtures.artist)) }
         }
 
         screenshotTest(filename = "header-full") {
@@ -61,7 +61,7 @@ internal class ArtistsScreenshotTest {
     @Test
     fun contentFull() {
         val artist = runBlocking {
-            KotifyDatabase.transaction {
+            KotifyDatabase.transaction(name = null) {
                 requireNotNull(Artist.from(Fixtures.artist))
                     .also { it.largestImage.loadToCache() }
             }

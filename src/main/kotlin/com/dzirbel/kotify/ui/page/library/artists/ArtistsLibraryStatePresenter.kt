@@ -144,7 +144,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.InvalidateArtistAlbums -> {
-                KotifyDatabase.transaction {
+                KotifyDatabase.transaction("invalidate artists albums") {
                     AlbumTable.AlbumArtistTable.deleteAll()
 
                     ArtistTable.update(where = { Op.TRUE }) {
@@ -177,7 +177,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
     }
 
     private suspend fun prepArtists(artists: Iterable<Artist>) {
-        KotifyDatabase.transaction {
+        KotifyDatabase.transaction("load artists albums") {
             artists.forEach { artist -> artist.albums.loadToCache() }
         }
     }

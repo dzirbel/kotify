@@ -97,7 +97,7 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
         get() = totalTracks?.let { tracks.live.size.toUInt() == it } == true
 
     suspend fun getAllTracks(): List<Track> {
-        val cachedTracks = KotifyDatabase.transaction {
+        val cachedTracks = KotifyDatabase.transaction("load album $name tracks") {
             totalTracks?.let { totalTracks ->
                 tracks.live.takeIf { it.size.toUInt() == totalTracks }
             }
@@ -107,7 +107,7 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
         val networkTracks = Spotify.Albums.getAlbumTracks(id = id.value)
             .fetchAll<SimplifiedSpotifyTrack>()
 
-        return KotifyDatabase.transaction {
+        return KotifyDatabase.transaction("set album $name tracks") {
             networkTracks.mapNotNull { Track.from(it) }
                 .also { tracks.set(it) }
         }
@@ -151,6 +151,7 @@ object AlbumRepository : DatabaseRepository<Album, SpotifyAlbum>(Album) {
 }
 
 object SavedAlbumRepository : SavedDatabaseRepository<SpotifySavedAlbum>(
+    entityName = "album",
     savedEntityTable = AlbumTable.SavedAlbumsTable,
 ) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {

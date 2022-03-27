@@ -86,7 +86,9 @@ class ArtistPresenter(
 
                 if (event.invalidateArtistAlbums) {
                     ArtistRepository.getCached(id = artistId)?.let { artist ->
-                        KotifyDatabase.transaction { artist.albumsFetched = null }
+                        KotifyDatabase.transaction("invalidate artist ${artist.name} albums") {
+                            artist.albumsFetched = null
+                        }
                     }
                 }
 
@@ -114,13 +116,13 @@ class ArtistPresenter(
                     artistAlbums = deferredArtistAlbums?.await()
                 }
 
-                KotifyDatabase.transaction {
+                artist?.let {
                     // refresh artist to get updated album fetch time
-                    artist?.refresh()
+                    KotifyDatabase.transaction("refresh artist ${artist.name}") { artist.refresh() }
                 }
 
                 artistAlbums?.let { albums ->
-                    val albumUrls = KotifyDatabase.transaction {
+                    val albumUrls = KotifyDatabase.transaction("load artist ${artist?.name} albums tracks and image") {
                         albums.mapNotNull {
                             it.trackIds.loadToCache()
                             it.largestImage.live?.url

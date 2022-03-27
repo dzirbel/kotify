@@ -11,6 +11,11 @@ import com.dzirbel.kotify.repository.Repository
  */
 abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : SpotifyObject>(
     private val entityClass: SpotifyEntityClass<EntityType, NetworkType>,
+
+    /**
+     * The singular name of an entity, used in transaction names; e.g. "artist".
+     */
+    private val entityName: String = entityClass.table.tableName.removeSuffix("s"),
 ) : Repository<EntityType> {
     /**
      * Fetches a single network model of [NetworkType] via a remote call to the network.
@@ -28,18 +33,18 @@ abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : Spot
     protected open suspend fun fetch(ids: List<String>): List<NetworkType?> = ids.map { fetch(it) }
 
     final override suspend fun getCached(id: String): EntityType? {
-        return KotifyDatabase.transaction { entityClass.findById(id) }
+        return KotifyDatabase.transaction("load cached $entityName $id") { entityClass.findById(id) }
     }
 
     final override suspend fun getCached(ids: Iterable<String>): List<EntityType?> {
-        return KotifyDatabase.transaction {
+        return KotifyDatabase.transaction("load ${ids.count()} cached ${entityName}s") {
             ids.map { id -> entityClass.findById(id) }
         }
     }
 
     final override suspend fun getRemote(id: String): EntityType? {
         return fetch(id)?.let { networkModel ->
-            KotifyDatabase.transaction { entityClass.from(networkModel) }
+            KotifyDatabase.transaction("save $entityName $id") { entityClass.from(networkModel) }
         }
     }
 
@@ -49,7 +54,7 @@ abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : Spot
             1 -> listOf(getRemote(id = ids[0]))
             else -> {
                 val networkModels = fetch(ids = ids)
-                KotifyDatabase.transaction { entityClass.from(networkModels) }
+                KotifyDatabase.transaction("save ${ids.size} ${entityName}s") { entityClass.from(networkModels) }
             }
         }
     }
@@ -71,11 +76,11 @@ abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : Spot
     }
 
     final override suspend fun invalidate(id: String): Boolean {
-        return KotifyDatabase.transaction { entityClass.findById(id)?.delete() } != null
+        return KotifyDatabase.transaction("invalidate $entityName $id") { entityClass.findById(id)?.delete() } != null
     }
 
     final override suspend fun invalidate(ids: Iterable<String>): List<Boolean> {
-        return KotifyDatabase.transaction {
+        return KotifyDatabase.transaction("invalidate ${ids.count()} ${entityName}s") {
             ids.map { id -> entityClass.findById(id)?.delete() != null }
         }
     }

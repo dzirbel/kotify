@@ -108,7 +108,7 @@ class AlbumsPresenter(scope: CoroutineScope) : Presenter<AlbumsPresenter.ViewMod
     private suspend fun fetchAlbums(albumIds: List<String>): List<Album> {
         val albums = AlbumRepository.getFull(ids = albumIds).filterNotNull()
 
-        val imageUrls = KotifyDatabase.transaction {
+        val imageUrls = KotifyDatabase.transaction("load albums images") {
             albums.mapNotNull { it.largestImage.live?.url }
         }
         SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)

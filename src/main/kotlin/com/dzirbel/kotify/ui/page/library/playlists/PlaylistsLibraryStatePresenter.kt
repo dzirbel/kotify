@@ -95,7 +95,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
             is Event.RefreshPlaylistTracks -> {
                 mutateState { it.copy(syncingPlaylistTracks = it.syncingPlaylistTracks.plus(event.playlistId)) }
 
-                KotifyDatabase.transaction {
+                KotifyDatabase.transaction("invalidate playlist id ${event.playlistId} tracks") {
                     PlaylistTrackTable.deleteWhere { PlaylistTrackTable.playlist eq event.playlistId }
                 }
 
@@ -147,7 +147,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.InvalidatePlaylistTracks -> {
-                KotifyDatabase.transaction { PlaylistTrackTable.deleteAll() }
+                KotifyDatabase.transaction("invalidate playlists tracks") { PlaylistTrackTable.deleteAll() }
 
                 // reload playlists from the cache
                 val playlistIds = SavedPlaylistRepository.getLibraryCached()?.toList()
@@ -174,7 +174,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
     }
 
     private suspend fun prepPlaylists(playlists: Iterable<Playlist>) {
-        KotifyDatabase.transaction {
+        KotifyDatabase.transaction("load playlists tracks") {
             playlists.forEach { playlist -> playlist.tracks.loadToCache() }
         }
     }

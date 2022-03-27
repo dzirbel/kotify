@@ -85,14 +85,16 @@ class PlaylistPresenter(
 
                 if (event.invalidate) {
                     PlaylistRepository.invalidate(id = playlistId)
-                    KotifyDatabase.transaction { PlaylistTrack.invalidate(playlistId = playlistId) }
+                    KotifyDatabase.transaction("invalid playlist id $playlistId") {
+                        PlaylistTrack.invalidate(playlistId = playlistId)
+                    }
                 }
 
                 val playlist = PlaylistRepository.getFull(id = playlistId)
                     ?: error("TODO show 404 page") // TODO 404 page
 
                 val playlistUpdated = playlist.updatedTime.toEpochMilli()
-                KotifyDatabase.transaction {
+                KotifyDatabase.transaction("load playlist ${playlist.name} owner and image") {
                     playlist.owner.loadToCache()
                     playlist.largestImage.loadToCache()
                 }
@@ -111,7 +113,7 @@ class PlaylistPresenter(
                 }
 
                 val tracks = playlist.getAllTracks()
-                loadTracksToCache(tracks)
+                loadTracksToCache(playlist, tracks)
 
                 val trackIds = tracks.map { it.track.cached.id.value }
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
@@ -146,10 +148,13 @@ class PlaylistPresenter(
                         )
                     }
 
-                    KotifyDatabase.transaction { PlaylistTrack.invalidate(playlistId = playlistId) }
+                    KotifyDatabase.transaction("invalidate playlist id $playlistId tracks") {
+                        PlaylistTrack.invalidate(playlistId = playlistId)
+                    }
+
                     val playlist = PlaylistRepository.getCached(id = playlistId)
                     val tracks = playlist?.getAllTracks()
-                    tracks?.let { loadTracksToCache(it) }
+                    tracks?.let { loadTracksToCache(playlist, it) }
 
                     mutateState {
                         it.copy(
@@ -162,8 +167,8 @@ class PlaylistPresenter(
         }
     }
 
-    private suspend fun loadTracksToCache(tracks: List<PlaylistTrack>) {
-        KotifyDatabase.transaction {
+    private suspend fun loadTracksToCache(playlist: Playlist, tracks: List<PlaylistTrack>) {
+        KotifyDatabase.transaction("load tracks, tracks artists, and tracks album for playlist ${playlist.name}") {
             tracks.forEach {
                 it.track.loadToCache()
                 it.track.cached.artists.loadToCache()

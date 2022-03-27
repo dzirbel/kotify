@@ -82,7 +82,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                 val tracks = fetchTracks(trackIds = trackIds)
                 val tracksById = tracks.associateBy { it.id.value }
                 val tracksUpdated = SavedTrackRepository.libraryUpdated()
-                val trackRatings = KotifyDatabase.transaction {
+                val trackRatings = KotifyDatabase.transaction("load rating states for ${trackIds.size} tracks") {
                     trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
                 }
 
@@ -134,7 +134,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
 
     private suspend fun fetchTracks(trackIds: List<String>): List<Track> {
         val tracks = TrackRepository.get(ids = trackIds).filterNotNull()
-        KotifyDatabase.transaction {
+        KotifyDatabase.transaction("load tracks album and artists") {
             tracks.forEach { track ->
                 track.album.loadToCache()
                 track.artists.loadToCache()

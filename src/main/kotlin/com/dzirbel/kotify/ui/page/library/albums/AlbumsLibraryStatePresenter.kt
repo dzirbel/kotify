@@ -116,8 +116,8 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
     }
 
     private suspend fun prepAlbums(albums: Iterable<Album>) {
-        KotifyDatabase.transaction {
-            albums.forEach { artist -> artist.artists.loadToCache() }
+        KotifyDatabase.transaction("load albums artists") {
+            albums.forEach { album -> album.artists.loadToCache() }
         }
     }
 }

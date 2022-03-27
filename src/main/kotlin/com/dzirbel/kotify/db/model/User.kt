@@ -82,7 +82,7 @@ object UserRepository : DatabaseRepository<User, SpotifyUser>(User) {
 
     suspend fun getCurrentUserRemote(): User? {
         val user = Spotify.UsersProfile.getCurrentUser()
-        return KotifyDatabase.transaction {
+        return KotifyDatabase.transaction("set current user") {
             currentUserId.set(user.id)
             User.from(user)
         }

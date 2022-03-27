@@ -85,15 +85,15 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
          * albums are cached or from the network if not, also connecting them in the database along the way.
          */
         suspend fun getAllAlbums(artistId: String, allowCache: Boolean = true): List<Album> {
-            val artist = KotifyDatabase.transaction { findById(id = artistId) }
+            val artist = KotifyDatabase.transaction("load artist for id $artistId") { findById(id = artistId) }
             if (allowCache && artist?.hasAllAlbums == true) {
-                return KotifyDatabase.transaction { artist.albums.live }
+                return KotifyDatabase.transaction("load artist ${artist.name} albums") { artist.albums.live }
             }
 
             val networkAlbums = Spotify.Artists.getArtistAlbums(id = artistId)
                 .fetchAll<SimplifiedSpotifyAlbum>()
 
-            return KotifyDatabase.transaction {
+            return KotifyDatabase.transaction("save artist ${artist?.name} albums") {
                 // TODO create artist entity if it does not exist in order to save the albums? unlikely to ever happen
                 //  in practice
                 networkAlbums
@@ -116,6 +116,7 @@ object ArtistRepository : DatabaseRepository<Artist, SpotifyArtist>(Artist) {
 }
 
 object SavedArtistRepository : SavedDatabaseRepository<FullSpotifyArtist>(
+    entityName = "artist",
     savedEntityTable = ArtistTable.SavedArtistsTable,
 ) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {

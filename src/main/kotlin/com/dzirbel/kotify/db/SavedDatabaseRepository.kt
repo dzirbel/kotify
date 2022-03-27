@@ -19,6 +19,10 @@ import java.util.concurrent.ConcurrentHashMap
  * the [GlobalUpdateTimesRepository] via [libraryUpdateKey] for the library update time.
  */
 abstract class SavedDatabaseRepository<SavedNetworkType>(
+    /**
+     * The singular name of an entity, used in transaction names; e.g. "artist".
+     */
+    private val entityName: String,
     private val savedEntityTable: SavedEntityTable,
     private val libraryUpdateKey: String = savedEntityTable.tableName,
 ) : SavedRepository {
@@ -60,13 +64,13 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     override fun eventsFlow(): SharedFlow<SavedRepository.Event> = events.asSharedFlow()
 
     override suspend fun savedTimeCached(id: String): Instant? {
-        return KotifyDatabase.transaction {
+        return KotifyDatabase.transaction("check saved time for $entityName $id") {
             savedEntityTable.savedTime(entityId = id)
         }
     }
 
     final override suspend fun isSavedCached(ids: List<String>): List<Boolean?> {
-        return KotifyDatabase.transaction {
+        return KotifyDatabase.transaction("check saved state for ${ids.size} ${entityName}s") {
             val hasFetchedLibrary = GlobalUpdateTimesRepository.hasBeenUpdated(libraryUpdateKey)
             // if we've fetched the entire library, then any saved entity not present in the table is unsaved (or was
             // when the library was fetched)
@@ -84,7 +88,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     final override suspend fun isSavedRemote(id: String): Boolean {
         val saved = fetchIsSaved(ids = listOf(id)).first()
 
-        KotifyDatabase.transaction {
+        KotifyDatabase.transaction("set saved state for $entityName $id") {
             savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = null)
         }
 
@@ -140,7 +144,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     final override suspend fun setSaved(ids: List<String>, saved: Boolean) {
         pushSaved(ids = ids, saved = saved)
 
-        KotifyDatabase.transaction {
+        KotifyDatabase.transaction("set saved state for ${ids.size} ${entityName}s") {
             ids.forEach { id -> savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = Instant.now()) }
         }
 
@@ -154,17 +158,21 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     }
 
     final override suspend fun libraryUpdated(): Instant? {
-        return KotifyDatabase.transaction { GlobalUpdateTimesRepository.updated(libraryUpdateKey) }
+        return KotifyDatabase.transaction("check $entityName saved library updated time") {
+            GlobalUpdateTimesRepository.updated(libraryUpdateKey)
+        }
     }
 
     final override suspend fun invalidateLibrary() {
-        KotifyDatabase.transaction { GlobalUpdateTimesRepository.invalidate(libraryUpdateKey) }
+        KotifyDatabase.transaction("invalidate $entityName saved library") {
+            GlobalUpdateTimesRepository.invalidate(libraryUpdateKey)
+        }
 
         events.emit(SavedRepository.Event.InvalidateLibrary)
     }
 
     final override suspend fun getLibraryCached(): Set<String>? {
-        return KotifyDatabase.transaction {
+        return KotifyDatabase.transaction("load $entityName saved library") {
             if (GlobalUpdateTimesRepository.hasBeenUpdated(libraryUpdateKey)) {
                 savedEntityTable.savedEntityIds()
             } else {
@@ -181,7 +189,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
     final override suspend fun getLibraryRemote(): Set<String> {
         val savedNetworkModels = fetchLibrary()
-        return KotifyDatabase.transaction {
+        return KotifyDatabase.transaction("save $entityName saved library") {
             GlobalUpdateTimesRepository.setUpdated(libraryUpdateKey)
             savedNetworkModels.mapNotNullTo(mutableSetOf()) { from(it) }
                 .onEach { id ->
@@ -201,7 +209,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     }
 
     final override suspend fun invalidateAll() {
-        KotifyDatabase.transaction {
+        KotifyDatabase.transaction("invalidate $entityName saved library and entities") {
             GlobalUpdateTimesRepository.invalidate(libraryUpdateKey)
             savedEntityTable.deleteAll()
         }

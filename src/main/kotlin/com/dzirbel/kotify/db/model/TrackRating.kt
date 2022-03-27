@@ -79,13 +79,13 @@ object TrackRatingRepository : RatingRepository {
 
     override suspend fun rate(id: String, rating: Rating?, userId: String) {
         if (rating == null) {
-            KotifyDatabase.transaction {
+            KotifyDatabase.transaction("clear rating for track id $id") {
                 TrackRatingTable.deleteWhere { TrackRatingTable.track eq id and (TrackRatingTable.userId eq userId) }
             }
 
             states[userId]?.get(id)?.get()?.value = null
         } else {
-            val lastRateTime = KotifyDatabase.transaction {
+            val lastRateTime = KotifyDatabase.transaction("add rating for track id $id") {
                 val lastRateTime = TrackRatingTable
                     .slice(TrackRatingTable.rateTime)
                     .select { TrackRatingTable.track eq id }
@@ -113,7 +113,7 @@ object TrackRatingRepository : RatingRepository {
     }
 
     override suspend fun ratedEntities(userId: String): Set<String> {
-        return KotifyDatabase.transaction {
+        return KotifyDatabase.transaction("load rated track ids for user $userId") {
             TrackRatingTable
                 .slice(TrackRatingTable.track)
                 .select { TrackRatingTable.userId eq userId }
@@ -125,7 +125,9 @@ object TrackRatingRepository : RatingRepository {
     override suspend fun ratingState(id: String, userId: String): State<Rating?> {
         states[userId]?.get(id)?.get()?.let { return it }
 
-        val rating = KotifyDatabase.transaction { lastRatingOf(id = id, userId = userId) }
+        val rating = KotifyDatabase.transaction("load last rating of track id $id for state") {
+            lastRatingOf(id = id, userId = userId)
+        }
         val state = mutableStateOf(rating)
 
         val userStates = states.getOrPut(userId) { ConcurrentHashMap() }
@@ -152,7 +154,7 @@ object TrackRatingRepository : RatingRepository {
             return existingStates as List<State<Rating?>>
         }
 
-        val missingRatings = KotifyDatabase.transaction {
+        val missingRatings = KotifyDatabase.transaction("load last ratings of ${ids.size} tracks for states") {
             lastRatingsOf(ids = missingIndices.map { it.value }, userId = userId)
         }
 
@@ -168,7 +170,7 @@ object TrackRatingRepository : RatingRepository {
     }
 
     override suspend fun clearAllRatings(userId: String?) {
-        KotifyDatabase.transaction {
+        KotifyDatabase.transaction("clear ratings for user $userId") {
             if (userId == null) {
                 TrackRatingTable.deleteAll()
             } else {

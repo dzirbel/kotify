@@ -90,6 +90,7 @@ object TrackRepository : DatabaseRepository<Track, SpotifyTrack>(Track) {
 }
 
 object SavedTrackRepository : SavedDatabaseRepository<SpotifySavedTrack>(
+    entityName = "track",
     savedEntityTable = TrackTable.SavedTracksTable,
 ) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {

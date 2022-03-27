@@ -31,10 +31,10 @@ internal class TrackRatingRepositoryTest {
         val rating = Rating(rating = 2)
 
         runBlocking {
-            val rating1 = KotifyDatabase.transaction { TrackRatingRepository.lastRatingOf(id = trackId) }
+            val rating1 = KotifyDatabase.transaction(name = null) { TrackRatingRepository.lastRatingOf(id = trackId) }
             assertThat(rating1).isNull()
 
-            val ratings1 = KotifyDatabase.transaction { TrackRatingRepository.allRatingsOf(id = trackId) }
+            val ratings1 = KotifyDatabase.transaction(name = null) { TrackRatingRepository.allRatingsOf(id = trackId) }
             assertThat(ratings1).isEmpty()
 
             val ratingState = TrackRatingRepository.ratingState(id = trackId)
@@ -44,10 +44,10 @@ internal class TrackRatingRepositoryTest {
 
             assertThat(ratingState.value?.rating).isEqualTo(rating.rating)
 
-            KotifyDatabase.transaction { TrackRatingRepository.lastRatingOf(id = trackId) }
+            KotifyDatabase.transaction(name = null) { TrackRatingRepository.lastRatingOf(id = trackId) }
                 .let { assertThat(it).isNotNull().matches(rating) }
 
-            KotifyDatabase.transaction { TrackRatingRepository.allRatingsOf(id = trackId) }
+            KotifyDatabase.transaction(name = null) { TrackRatingRepository.allRatingsOf(id = trackId) }
                 .let { assertThat(it).isNotNull().matches(listOf(rating)) }
         }
     }
@@ -65,7 +65,7 @@ internal class TrackRatingRepositoryTest {
 
         assertThat(state.value).isNotNull().matches(rating)
         runBlocking {
-            KotifyDatabase.transaction { TrackRatingRepository.lastRatingOf(id = trackId) }
+            KotifyDatabase.transaction(name = null) { TrackRatingRepository.lastRatingOf(id = trackId) }
         }
             .let { assertThat(it).isNotNull().matches(rating) }
 
@@ -75,7 +75,7 @@ internal class TrackRatingRepositoryTest {
 
         assertThat(
             runBlocking {
-                KotifyDatabase.transaction { TrackRatingRepository.lastRatingOf(id = trackId) }
+                KotifyDatabase.transaction(name = null) { TrackRatingRepository.lastRatingOf(id = trackId) }
             }
         )
             .isNull()

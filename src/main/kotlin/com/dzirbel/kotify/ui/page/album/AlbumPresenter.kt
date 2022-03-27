@@ -79,14 +79,14 @@ class AlbumPresenter(
                 }
 
                 val album = AlbumRepository.get(id = albumId) ?: error("TODO show 404 page") // TODO 404 page
-                KotifyDatabase.transaction {
+                KotifyDatabase.transaction("load album ${album.name} image and artists") {
                     album.largestImage.loadToCache()
                     album.artists.loadToCache()
                 }
 
                 // TODO replace with ListAdapter sorting
                 val tracks = album.getAllTracks().sortedBy { it.trackNumber }
-                KotifyDatabase.transaction {
+                KotifyDatabase.transaction("load album ${album.name} tracks artists") {
                     tracks.onEach { it.artists.loadToCache() }
                 }
 
@@ -111,7 +111,7 @@ class AlbumPresenter(
 
                 val fullTracks = TrackRepository.getFull(ids = tracks.map { it.id.value })
                     .zip(tracks) { fullTrack, existingTrack -> fullTrack ?: existingTrack }
-                KotifyDatabase.transaction {
+                KotifyDatabase.transaction("load album ${album.name} full-tracks artists") {
                     fullTracks.forEach { it.artists.loadToCache() }
                 }
 
