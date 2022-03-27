@@ -12,9 +12,20 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
+import com.dzirbel.kotify.ui.components.adapter.asComparator
 import com.dzirbel.kotify.ui.framework.Presenter
+import com.dzirbel.kotify.ui.player.Player
+import com.dzirbel.kotify.ui.properties.PlaylistTrackAddedAtProperty
+import com.dzirbel.kotify.ui.properties.PlaylistTrackIndexProperty
+import com.dzirbel.kotify.ui.properties.TrackAlbumProperty
+import com.dzirbel.kotify.ui.properties.TrackArtistsProperty
+import com.dzirbel.kotify.ui.properties.TrackDurationProperty
+import com.dzirbel.kotify.ui.properties.TrackNameProperty
+import com.dzirbel.kotify.ui.properties.TrackPlayingColumn
+import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
+import com.dzirbel.kotify.ui.properties.TrackRatingProperty
+import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.util.ReorderCalculator
-import com.dzirbel.kotify.util.compareInOrder
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 
@@ -32,18 +43,37 @@ class PlaylistPresenter(
         val refreshing: Boolean = false,
         val reordering: Boolean = false,
         val playlist: Playlist? = null,
-        val tracks: ListAdapter<PlaylistTrack> = ListAdapter.from(null),
+        val tracks: ListAdapter<PlaylistTrack> = ListAdapter.empty(defaultSort = PlaylistTrackIndexProperty),
         val trackRatings: Map<String, State<Rating?>> = emptyMap(),
         val savedTracksState: State<Set<String>?>? = null,
         val isSavedState: State<Boolean?>? = null,
         val playlistUpdated: Long? = null,
-    )
+    ) {
+        val playlistTrackColumns = listOf(
+            TrackPlayingColumn(
+                trackIdOf = { it.track.cached.id.value },
+                playContextFromTrack = { track ->
+                    Player.PlayContext.playlistTrack(
+                        playlist = requireNotNull(playlist),
+                        index = track.indexOnPlaylist.toInt(),
+                    )
+                },
+            ),
+            PlaylistTrackIndexProperty,
+            TrackSavedProperty(trackIdOf = { it.track.cached.id.value }, savedTrackIds = savedTracksState?.value),
+            TrackNameProperty.ForPlaylistTrack,
+            TrackArtistsProperty.ForPlaylistTrack,
+            TrackAlbumProperty.ForPlaylistTrack,
+            TrackRatingProperty(trackIdOf = { it.track.cached.id.value }, trackRatings = trackRatings),
+            PlaylistTrackAddedAtProperty,
+            TrackDurationProperty.ForPlaylistTrack,
+            TrackPopularityProperty.ForPlaylistTrack,
+        )
+    }
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
         data class ToggleSave(val save: Boolean) : Event()
-        data class ToggleTrackSaved(val trackId: String, val saved: Boolean) : Event()
-        data class RateTrack(val trackId: String, val rating: Rating?) : Event()
         data class SetSorts(val sorts: List<Sort<PlaylistTrack>>) : Event()
         data class Order(val tracks: ListAdapter<PlaylistTrack>) : Event()
     }
@@ -88,7 +118,7 @@ class PlaylistPresenter(
 
                 mutateState {
                     it.copy(
-                        tracks = ListAdapter.from(tracks, baseAdapter = it.tracks),
+                        tracks = it.tracks.withElements(tracks),
                         trackRatings = trackRatings,
                     )
                 }
@@ -96,16 +126,12 @@ class PlaylistPresenter(
 
             is Event.ToggleSave -> SavedPlaylistRepository.setSaved(id = playlistId, saved = event.save)
 
-            is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.saved)
-
-            is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
-
             is Event.SetSorts -> mutateState { it.copy(tracks = it.tracks.withSort(event.sorts)) }
 
             is Event.Order -> {
                 val ops = ReorderCalculator.calculateReorderOperations(
-                    list = event.tracks.withIndex().toList(),
-                    comparator = event.tracks.sorts.orEmpty().map { it.comparator }.compareInOrder(),
+                    list = event.tracks.toList(),
+                    comparator = event.tracks.sorts.orEmpty().asComparator(),
                 )
 
                 if (ops.isNotEmpty()) {

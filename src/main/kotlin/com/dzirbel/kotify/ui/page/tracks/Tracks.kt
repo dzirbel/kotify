@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.table.Table
-import com.dzirbel.kotify.ui.components.trackColumns
 import com.dzirbel.kotify.ui.framework.PageLoadingSpinner
 import com.dzirbel.kotify.ui.theme.Dimens
 
@@ -34,21 +33,11 @@ fun TracksPageHeader(presenter: TracksPresenter, state: TracksPresenter.ViewMode
 }
 
 @Composable
-fun TracksPageContent(presenter: TracksPresenter, state: TracksPresenter.ViewModel) {
+fun TracksPageContent(state: TracksPresenter.ViewModel) {
     if (state.tracks.hasElements) {
         // TODO find the context to play tracks from the list of all saved tracks
         Table(
-            columns = trackColumns(
-                savedTracks = state.savedTrackIds,
-                onSetTrackSaved = { trackId, saved ->
-                    presenter.emitAsync(TracksPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))
-                },
-                trackRatings = state.trackRatings,
-                onRateTrack = { trackId, rating ->
-                    presenter.emitAsync(TracksPresenter.Event.RateTrack(trackId = trackId, rating = rating))
-                },
-                playContextFromIndex = null,
-            ),
+            columns = state.trackProperties,
             items = state.tracks,
             onSetSort = {
                 // TODO allow sorting saved tracks list

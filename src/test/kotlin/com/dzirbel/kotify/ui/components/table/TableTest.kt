@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
+import com.dzirbel.kotify.ui.properties.PropertyByNumber
+import com.dzirbel.kotify.ui.properties.PropertyByString
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.theme.Dimens
 import org.junit.jupiter.params.ParameterizedTest
@@ -49,8 +51,8 @@ internal class TableTest {
                 ScreenshotTestCase(
                     filename = "simple",
                     columns = listOf(
-                        object : ColumnByString<String>(name = "Col 1") {
-                            override fun toString(item: String, index: Int) = item
+                        object : PropertyByString<String>(title = "Col 1") {
+                            override fun toString(item: String) = item
                         }
                     ),
                     items = listOf("First", "Second", "Third")
@@ -59,41 +61,51 @@ internal class TableTest {
                 ScreenshotTestCase(
                     filename = "medium",
                     columns = listOf(
-                        IndexColumn(),
+                        object : ColumnByNumber<IndexedValue<String>> {
+                            override val title = "#"
 
-                        object : ColumnByString<String>(name = "Col 1") {
-                            override fun toString(item: String, index: Int) = item
+                            override fun toNumber(item: IndexedValue<String>) = item.index + 1
                         },
 
-                        object : Column<String>(name = "Col 2") {
+                        object : PropertyByString<IndexedValue<String>>(title = "Col 1") {
+                            override fun toString(item: IndexedValue<String>) = item.value
+                        },
+
+                        object : Column<IndexedValue<String>> {
+                            override val title = "Col 2"
                             override val width = ColumnWidth.Weighted(weight = 1f)
                             override val cellAlignment = Alignment.BottomEnd
 
                             @Composable
-                            override fun item(item: String, index: Int) {
+                            override fun item(item: IndexedValue<String>) {
                                 val color = when {
-                                    index % 3 == 0 -> Color.Red
-                                    index % 3 == 1 -> Color.Green
-                                    index % 3 == 2 -> Color.Blue
+                                    item.index % 3 == 0 -> Color.Red
+                                    item.index % 3 == 1 -> Color.Green
+                                    item.index % 3 == 2 -> Color.Blue
                                     else -> error("impossible")
                                 }
 
                                 Box(Modifier.background(color)) {
-                                    Text("$item - ${20 - index} from the end")
+                                    Text("${item.value} - ${20 - item.index} from the end")
                                 }
                             }
                         }
                     ),
-                    items = List(20) { "${it}th item" }
+                    items = List(20) { IndexedValue(index = it, value = "${it}th item") },
                 ),
 
                 ScreenshotTestCase(
                     filename = "complex",
                     windowHeight = 7_000,
                     columns = listOf(
-                        IndexColumn(),
+                        object : ColumnByNumber<Int> {
+                            override val title = "#"
 
-                        object : Column<Int>(name = "Unused") {
+                            override fun toNumber(item: Int) = item + 1
+                        },
+
+                        object : Column<Int> {
+                            override val title = "Unused"
                             override val width = ColumnWidth.Fixed(50.dp)
                             override val cellAlignment = Alignment.Center
                             override val headerAlignment = Alignment.Center
@@ -104,7 +116,7 @@ internal class TableTest {
                             }
 
                             @Composable
-                            override fun item(item: Int, index: Int) {
+                            override fun item(item: Int) {
                                 Icon(
                                     imageVector = Icons.Default.Star,
                                     contentDescription = null,
@@ -113,7 +125,8 @@ internal class TableTest {
                             }
                         },
 
-                        object : Column<Int>(name = "Unused") {
+                        object : Column<Int> {
+                            override val title = "Unused"
                             override val width = ColumnWidth.MatchHeader
                             override val cellAlignment = Alignment.Center
                             override val headerAlignment = Alignment.Center
@@ -124,28 +137,28 @@ internal class TableTest {
                             }
 
                             @Composable
-                            override fun item(item: Int, index: Int) {
+                            override fun item(item: Int) {
                                 Box(Modifier.fillMaxWidth().height(20.dp).background(Color.Gray))
                             }
                         },
 
-                        object : ColumnByString<Int>(name = "Even or odd?") {
+                        object : PropertyByString<Int>(title = "Even or odd?") {
                             override val width = ColumnWidth.Weighted(weight = 1.5f)
 
-                            override fun toString(item: Int, index: Int): String {
+                            override fun toString(item: Int): String {
                                 return if (item % 2 == 0) "Even" else "Odd"
                             }
                         },
 
-                        object : ColumnByNumber<Int>(name = "Collatz") {
+                        object : PropertyByNumber<Int>(title = "Collatz") {
                             override val width = ColumnWidth.Weighted(weight = 1.5f)
 
-                            override fun toNumber(item: Int, index: Int): Number {
+                            override fun toNumber(item: Int): Number {
                                 return if (item % 2 == 0) item / 2 else 3 * item + 1
                             }
                         },
                     ),
-                    items = List(200) { it }
+                    items = List(200) { it },
                 )
             )
         }

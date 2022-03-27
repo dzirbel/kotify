@@ -9,7 +9,16 @@ import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
+import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.framework.Presenter
+import com.dzirbel.kotify.ui.properties.TrackAlbumIndexProperty
+import com.dzirbel.kotify.ui.properties.TrackAlbumProperty
+import com.dzirbel.kotify.ui.properties.TrackArtistsProperty
+import com.dzirbel.kotify.ui.properties.TrackDurationProperty
+import com.dzirbel.kotify.ui.properties.TrackNameProperty
+import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
+import com.dzirbel.kotify.ui.properties.TrackRatingProperty
+import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -25,17 +34,26 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
 
     data class ViewModel(
         val refreshing: Boolean = false,
-        val tracks: ListAdapter<Track> = ListAdapter.from(null),
+        val tracks: ListAdapter<Track> = ListAdapter.empty(),
         val tracksById: Map<String, Track> = emptyMap(),
         val savedTrackIds: Set<String> = emptySet(),
         val trackRatings: Map<String, State<Rating?>> = emptyMap(),
         val tracksUpdated: Long? = null,
-    )
+    ) {
+        val trackProperties: List<Column<Track>> = listOf(
+            TrackAlbumIndexProperty,
+            TrackSavedProperty(trackIdOf = { it.id.value }, savedTrackIds = savedTrackIds),
+            TrackNameProperty,
+            TrackArtistsProperty,
+            TrackAlbumProperty,
+            TrackRatingProperty(trackIdOf = { it.id.value }, trackRatings = trackRatings),
+            TrackDurationProperty,
+            TrackPopularityProperty,
+        )
+    }
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
-        data class ToggleTrackSaved(val trackId: String, val saved: Boolean) : Event()
-        data class RateTrack(val trackId: String, val rating: Rating?) : Event()
         data class ReactToTracksSaved(val trackIds: List<String>, val saved: Boolean) : Event()
     }
 
@@ -71,7 +89,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                 mutateState {
                     ViewModel(
                         refreshing = false,
-                        tracks = ListAdapter.from(tracks, baseAdapter = it.tracks),
+                        tracks = it.tracks.withElements(tracks),
                         tracksById = tracksById,
                         savedTrackIds = trackIds.toSet(),
                         trackRatings = trackRatings,
@@ -111,10 +129,6 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                     }
                 }
             }
-
-            is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.saved)
-
-            is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
         }
     }
 

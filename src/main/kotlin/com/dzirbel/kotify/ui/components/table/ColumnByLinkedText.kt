@@ -5,35 +5,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.components.LinkedText
-import com.dzirbel.kotify.ui.components.adapter.SortOrder
-import com.dzirbel.kotify.ui.components.adapter.SortableProperty
-import com.dzirbel.kotify.ui.components.adapter.compare
 import com.dzirbel.kotify.ui.theme.Dimens
 
-abstract class ColumnByLinkedText<T>(name: String, private val padding: Dp = Dimens.space3) : Column<T>(name = name) {
+interface ColumnByLinkedText<T> : Column<T> {
+    val cellPadding: Dp
+        get() = Dimens.space3
+
     data class Link(val text: String, val link: String)
 
-    override val sortableProperty = object : SortableProperty<T>(sortTitle = name) {
-        override fun compare(sortOrder: SortOrder, first: IndexedValue<T>, second: IndexedValue<T>): Int {
-            return sortOrder.compare(
-                first = links(first.value, first.index).joinToString { it.text },
-                second = links(second.value, second.index).joinToString { it.text },
-                ignoreCase = true,
-            )
-        }
-    }
-
     @Composable
-    override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
-        standardHeader(sortOrder = sortOrder, onSetSort = onSetSort, padding = padding)
-    }
-
-    @Composable
-    final override fun item(item: T, index: Int) {
-        val links = links(item, index)
+    override fun item(item: T) {
+        val links = links(item)
         if (links.isNotEmpty()) {
             LinkedText(
-                modifier = Modifier.padding(padding),
+                modifier = Modifier.padding(cellPadding),
                 key = item,
                 onClickLink = ::onClickLink,
             ) {
@@ -47,10 +32,10 @@ abstract class ColumnByLinkedText<T>(name: String, private val padding: Dp = Dim
     /**
      * Renders the contents for [item] as a list of [Link]s.
      */
-    abstract fun links(item: T, index: Int): List<Link>
+    fun links(item: T): List<Link>
 
     /**
      * Invoked when the user clicks one of the rendered links.
      */
-    abstract fun onClickLink(link: String)
+    fun onClickLink(link: String)
 }

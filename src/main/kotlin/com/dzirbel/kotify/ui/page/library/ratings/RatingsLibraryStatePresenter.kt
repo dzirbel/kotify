@@ -35,7 +35,6 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
         object Load : Event()
 
         object ClearAllRatings : Event()
-        data class RateTrack(val trackId: String, val rating: Rating?) : Event()
 
         class SetSort(val sorts: List<Sort<String>>) : Event()
     }
@@ -72,8 +71,6 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
                     )
                 }
             }
-
-            is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
 
             is Event.SetSort -> mutateState {
                 it?.copy(ratedTracksIds = it.ratedTracksIds.withSort(sorts = event.sorts))

@@ -26,11 +26,15 @@ import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.util.minusAt
 
+/**
+ * Renders a standard selector among the given [sortableProperties], displaying [sorts] as the currently selected
+ * ordered list of sorting criteria and invoking [onSetSort] when the user chooses a new list of [Sort]s.
+ */
 @Composable
 fun <T> SortSelector(
-    allowEmpty: Boolean = false,
-    sortProperties: List<SortableProperty<T>>,
+    sortableProperties: List<SortableProperty<T>>,
     sorts: List<Sort<T>>,
+    allowEmpty: Boolean = false,
     onSetSort: (List<Sort<T>>) -> Unit,
 ) {
     LocalColors.current.withSurface {
@@ -65,10 +69,12 @@ fun <T> SortSelector(
 
                         SortPickerDropdown(
                             expanded = changeDropdownExpanded.value,
-                            sortProperties = { sortProperties.minus(sort.sortableProperty) },
+                            sortProperties = {
+                                sortableProperties.filterNot { it.sortTitle == sort.sortableProperty.sortTitle }
+                            },
                             onDismissRequest = { changeDropdownExpanded.value = false },
                             onPickSort = { property ->
-                                val newSort = Sort(sortableProperty = property, sortOrder = property.defaultOrder)
+                                val newSort = Sort(sortableProperty = property, sortOrder = property.defaultSortOrder)
                                 onSetSort(
                                     sorts
                                         .toMutableList()
@@ -116,7 +122,7 @@ fun <T> SortSelector(
                 }
             }
 
-            if (sortProperties.size > sorts.size && sorts.lastOrNull()?.sortableProperty?.terminal != true) {
+            if (sortableProperties.size > sorts.size && sorts.lastOrNull()?.sortableProperty?.terminalSort != true) {
                 val addDropdownExpanded = remember { mutableStateOf(false) }
                 SortSelectorButton(onClick = { addDropdownExpanded.value = true }) {
                     Icon(
@@ -128,12 +134,12 @@ fun <T> SortSelector(
                     SortPickerDropdown(
                         expanded = addDropdownExpanded.value,
                         sortProperties = {
-                            val selectedSortProperties = sorts.mapTo(mutableSetOf()) { it.sortableProperty }
-                            sortProperties.minus(selectedSortProperties)
+                            val selectedSortProperties = sorts.mapTo(mutableSetOf()) { it.sortableProperty.title }
+                            sortableProperties.filterNot { it.sortTitle in selectedSortProperties }
                         },
                         onDismissRequest = { addDropdownExpanded.value = false },
                         onPickSort = { property ->
-                            val newSort = Sort(sortableProperty = property, sortOrder = property.defaultOrder)
+                            val newSort = Sort(sortableProperty = property, sortOrder = property.defaultSortOrder)
                             onSetSort(sorts.plus(newSort))
                         },
                     )

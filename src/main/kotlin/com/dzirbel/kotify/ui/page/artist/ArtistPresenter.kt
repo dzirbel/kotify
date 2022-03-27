@@ -10,11 +10,13 @@ import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
 import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
-import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.framework.Presenter
+import com.dzirbel.kotify.ui.properties.AlbumNameProperty
+import com.dzirbel.kotify.ui.properties.AlbumRatingProperty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -40,11 +42,16 @@ class ArtistPresenter(
     data class ViewModel(
         val artist: Artist? = null,
         val refreshingArtist: Boolean = false,
-        val artistAlbums: ListAdapter<Album> = ListAdapter.from(null, defaultSort = listOf(Sort(SortAlbumsByName))),
+        val artistAlbums: ListAdapter<Album> = ListAdapter.empty(defaultSort = AlbumNameProperty),
         val albumRatings: Map<String, List<State<Rating?>>?> = emptyMap(),
         val savedAlbumsState: State<Set<String>?>? = null,
         val refreshingArtistAlbums: Boolean = false,
-    )
+    ) {
+        val artistAlbumProperties: List<AdapterProperty<Album>> = listOf(
+            AlbumNameProperty,
+            AlbumRatingProperty(ratings = albumRatings),
+        )
+    }
 
     sealed class Event {
         data class Load(
@@ -56,7 +63,7 @@ class ArtistPresenter(
 
         class ToggleSave(val albumId: String, val save: Boolean) : Event()
         class SetSorts(val sorts: List<Sort<Album>>) : Event()
-        class SetDivider(val divider: Divider<Album>?, val dividerSortOrder: SortOrder?) : Event()
+        class SetDivider(val divider: Divider<Album>?) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -133,7 +140,7 @@ class ArtistPresenter(
                         artistAlbums = checkNotNull(
                             // apply new elements if we have them, otherwise keep existing adapter
                             artistAlbums
-                                ?.let { _ -> ListAdapter.from(artistAlbums, baseAdapter = it.artistAlbums) }
+                                ?.let { _ -> it.artistAlbums.withElements(artistAlbums) }
                                 ?: it.artistAlbums
                         ),
                         albumRatings = checkNotNull(albumRatings ?: it.albumRatings),
@@ -150,12 +157,7 @@ class ArtistPresenter(
             }
 
             is Event.SetDivider -> mutateState {
-                it.copy(
-                    artistAlbums = it.artistAlbums.withDivider(
-                        divider = event.divider,
-                        dividerSortOrder = event.dividerSortOrder,
-                    )
-                )
+                it.copy(artistAlbums = it.artistAlbums.withDivider(divider = event.divider))
             }
         }
     }

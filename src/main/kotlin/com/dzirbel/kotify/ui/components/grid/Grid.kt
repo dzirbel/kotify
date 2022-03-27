@@ -102,6 +102,8 @@ private class FlaredBottomRoundedRect(val cornerSize: Dp, val bottomPadding: Dp 
  * A [selectedElementIndex] may be provided along with [detailInsertContent] to display an insert below the row of the
  * [selectedElementIndex] with some extra content for it. This corresponds to the index of the selected element in the
  * canonical order of [elements].
+ *
+ * TODO miscalculates total height with dividers
  */
 @Composable
 @Suppress("UnnecessaryParentheses")
@@ -165,9 +167,7 @@ fun <E> Grid(
             elements.divider?.let { divider ->
                 divisions.forEach { division ->
                     Box {
-                        divider.headerContent(
-                            division = requireNotNull(division.key) { "null division with a divider" }
-                        )
+                        divider.dividableProperty.divisionHeader(division = division.key)
                     }
                 }
             }
@@ -293,7 +293,7 @@ fun <E> Grid(
                 }
             }
 
-            val dividerPlaceables = elements.divider
+            val dividerPlaceables = elements.divider?.dividableProperty
                 ?.let { measurables.subList(fromIndex = elements.size, toIndex = elements.size + divisions.size) }
                 ?.map { measurable ->
                     measurable.measure(constraints)

@@ -7,8 +7,8 @@ import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
-import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
+import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -23,7 +23,7 @@ class AlbumsPresenter(scope: CoroutineScope) : Presenter<AlbumsPresenter.ViewMod
 
     data class ViewModel(
         val refreshing: Boolean = false,
-        val albums: ListAdapter<Album> = ListAdapter.from(null, defaultSort = listOf(Sort(SortAlbumsByName))),
+        val albums: ListAdapter<Album> = ListAdapter.empty(defaultSort = AlbumNameProperty),
         val savedAlbumIds: Set<String>? = null,
         val albumsUpdated: Long? = null,
     )
@@ -62,7 +62,7 @@ class AlbumsPresenter(scope: CoroutineScope) : Presenter<AlbumsPresenter.ViewMod
                 mutateState {
                     ViewModel(
                         refreshing = false,
-                        albums = ListAdapter.from(elements = albums, baseAdapter = it.albums),
+                        albums = it.albums.withElements(albums),
                         savedAlbumIds = savedAlbumIds,
                         albumsUpdated = albumsUpdated?.toEpochMilli(),
                     )

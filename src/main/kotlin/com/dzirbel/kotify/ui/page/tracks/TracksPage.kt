@@ -13,7 +13,7 @@ object TracksPage : Page<Unit> {
             createPresenter = { scope -> TracksPresenter(scope) },
             toggleNavigationTitle = toggleNavigationTitle,
             header = { presenter, state -> TracksPageHeader(presenter, state) },
-            content = { presenter, state -> TracksPageContent(presenter, state) },
+            content = { _, state -> TracksPageContent(state) },
         )
     }
 

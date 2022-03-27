@@ -26,12 +26,15 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 
+/**
+ * Renders a standard selector among the given [dividableProperties], displaying [currentDivider] as the currently
+ * selected one and invoking [onSelectDivider] when the user chooses a new [Divider] (or null to remove divisions).
+ */
 @Composable
 fun <E> DividerSelector(
-    dividers: List<Divider<E>>,
+    dividableProperties: List<DividableProperty<E>>,
     currentDivider: Divider<E>?,
-    currentDividerSortOrder: SortOrder?,
-    onSelectDivider: (Divider<E>?, SortOrder?) -> Unit,
+    onSelectDivider: (Divider<E>?) -> Unit,
 ) {
     LocalColors.current.withSurface {
         Row(
@@ -61,20 +64,20 @@ fun <E> DividerSelector(
                         )
                     }
                 } else {
-                    Text(currentDivider.dividerTitle)
+                    Text(currentDivider.dividableProperty.dividerTitle)
                 }
 
                 DropdownMenu(expanded = dropdownExpanded.value, onDismissRequest = { dropdownExpanded.value = false }) {
-                    dividers.forEach { divider ->
-                        if (divider.dividerTitle != currentDivider?.dividerTitle) {
+                    dividableProperties.forEach { dividableProperty ->
+                        if (dividableProperty.dividerTitle != currentDivider?.dividableProperty?.dividerTitle) {
                             DropdownMenuItem(
                                 onClick = {
                                     dropdownExpanded.value = false
 
-                                    onSelectDivider(divider, divider.defaultDivisionSortOrder)
+                                    onSelectDivider(Divider(dividableProperty))
                                 }
                             ) {
-                                Text(divider.dividerTitle)
+                                Text(dividableProperty.dividerTitle)
                             }
                         }
                     }
@@ -84,14 +87,16 @@ fun <E> DividerSelector(
             if (currentDivider != null) {
                 SimpleTextButton(
                     onClick = {
-                        onSelectDivider(currentDivider, currentDividerSortOrder?.flipped)
+                        onSelectDivider(
+                            currentDivider.copy(divisionSortOrder = currentDivider.divisionSortOrder.flipped),
+                        )
                     },
                     contentPadding = PaddingValues(all = Dimens.space2),
                     enforceMinWidth = false,
                     enforceMinHeight = true,
                 ) {
                     Icon(
-                        imageVector = currentDividerSortOrder.icon,
+                        imageVector = currentDivider.divisionSortOrder.icon,
                         contentDescription = null,
                         modifier = Modifier.size(Dimens.iconSmall),
                         tint = LocalColors.current.primary,
@@ -99,7 +104,7 @@ fun <E> DividerSelector(
                 }
 
                 SimpleTextButton(
-                    onClick = { onSelectDivider(null, null) },
+                    onClick = { onSelectDivider(null) },
                     contentPadding = PaddingValues(all = Dimens.space2),
                     enforceMinWidth = false,
                     enforceMinHeight = true,

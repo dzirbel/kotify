@@ -14,40 +14,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.ui.components.AlbumCell
 import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.InvalidateButton
-import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.DividerSelector
-import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortSelector
-import com.dzirbel.kotify.ui.components.adapter.SortableProperty
-import com.dzirbel.kotify.ui.components.adapter.compare
+import com.dzirbel.kotify.ui.components.adapter.dividableProperties
+import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.framework.PageLoadingSpinner
 import com.dzirbel.kotify.ui.theme.Dimens
-
-val SortAlbumsByName = object : SortableProperty<Album>(
-    sortTitle = "Album Name",
-    defaultOrder = SortOrder.ASCENDING,
-    terminal = true,
-) {
-    override fun compare(sortOrder: SortOrder, first: IndexedValue<Album>, second: IndexedValue<Album>): Int {
-        return sortOrder.compare(first.value.name, second.value.name)
-    }
-}
-
-object AlbumNameDivider : Divider<Album>(dividerTitle = "Name") {
-    override fun compareDivisions(sortOrder: SortOrder, first: Any, second: Any): Int {
-        return sortOrder.compare(first as String, second as String)
-    }
-
-    override fun divisionFor(element: Album): String {
-        val firstChar = element.name[0]
-        return if (firstChar.isLetter()) firstChar.uppercaseChar().toString() else "#"
-    }
-}
 
 @Composable
 fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewModel) {
@@ -115,18 +91,13 @@ fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewMode
 
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
             DividerSelector(
-                dividers = listOf(AlbumNameDivider),
+                dividableProperties = state.artistAlbumProperties.dividableProperties(),
                 currentDivider = state.artistAlbums.divider,
-                currentDividerSortOrder = state.artistAlbums.dividerSortOrder,
-                onSelectDivider = { divider, dividerSortOrder ->
-                    presenter.emitAsync(
-                        ArtistPresenter.Event.SetDivider(divider = divider, dividerSortOrder = dividerSortOrder)
-                    )
-                },
+                onSelectDivider = { presenter.emitAsync(ArtistPresenter.Event.SetDivider(divider = it)) },
             )
 
             SortSelector(
-                sortProperties = listOf(SortAlbumsByName),
+                sortableProperties = state.artistAlbumProperties.sortableProperties(),
                 sorts = state.artistAlbums.sorts.orEmpty(),
                 onSetSort = { presenter.emitAsync(ArtistPresenter.Event.SetSorts(sorts = it)) },
             )

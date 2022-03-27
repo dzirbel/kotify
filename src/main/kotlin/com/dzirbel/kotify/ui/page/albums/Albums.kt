@@ -9,25 +9,11 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.ui.components.AlbumCell
 import com.dzirbel.kotify.ui.components.InvalidateButton
-import com.dzirbel.kotify.ui.components.adapter.SortOrder
-import com.dzirbel.kotify.ui.components.adapter.SortableProperty
-import com.dzirbel.kotify.ui.components.adapter.compare
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.framework.PageLoadingSpinner
 import com.dzirbel.kotify.ui.theme.Dimens
-
-val SortAlbumsByName = object : SortableProperty<Album>(
-    sortTitle = "Album Name",
-    defaultOrder = SortOrder.ASCENDING,
-    terminal = true,
-) {
-    override fun compare(sortOrder: SortOrder, first: IndexedValue<Album>, second: IndexedValue<Album>): Int {
-        return sortOrder.compare(first.value.name, second.value.name)
-    }
-}
 
 @Composable
 fun AlbumsPageHeader(presenter: AlbumsPresenter, state: AlbumsPresenter.ViewModel) {

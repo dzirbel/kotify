@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.adapter.icon
@@ -21,54 +22,46 @@ import com.dzirbel.kotify.ui.theme.LocalColors
 /**
  * Represents a single column in a [Table].
  */
-abstract class Column<T>(val name: String) {
+interface Column<E> : AdapterProperty<E> {
+    val columnTitle: String
+        get() = title
+
+    val headerPadding: Dp
+        get() = Dimens.space3
+
     /**
      * The policy by which the width of the column is measured.
      */
-    open val width: ColumnWidth = ColumnWidth.Fill()
+    val width: ColumnWidth
+        get() = ColumnWidth.Fill()
 
     /**
      * The way that items in this [Column] are aligned within their cell.
      */
-    open val cellAlignment: Alignment = Alignment.TopStart
+    val cellAlignment: Alignment
+        get() = Alignment.TopStart
 
     /**
      * The way that the header of this [Column] is aligned with its cell.
      */
-    open val headerAlignment: Alignment = Alignment.BottomStart
+    val headerAlignment: Alignment
+        get() = Alignment.BottomStart
 
     /**
      * Determines how elements should be sorted by this column, or null if the data cannot be sorted by this column.
      */
-    open val sortableProperty: SortableProperty<T>? = null
+    @Suppress("UNCHECKED_CAST")
+    val sortableProperty: SortableProperty<E>?
+        get() = this as? SortableProperty<E>
 
     /**
      * The content for the header of this column.
      */
     @Composable
-    open fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
-        standardHeader(sortOrder = sortOrder, onSetSort = onSetSort)
-    }
-
-    /**
-     * The content for the given [item] at the given [index].
-     */
-    @Composable
-    abstract fun item(item: T, index: Int)
-
-    /**
-     * The standard table header with a text [header] and which may be sorted if [sortableProperty] is non-null.
-     */
-    @Composable
-    fun standardHeader(
-        sortOrder: SortOrder?,
-        onSetSort: (SortOrder?) -> Unit,
-        header: String = name,
-        padding: Dp = Dimens.space3,
-    ) {
+    fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
         if (sortableProperty != null) {
             SimpleTextButton(
-                contentPadding = PaddingValues(end = padding),
+                contentPadding = PaddingValues(end = headerPadding),
                 onClick = {
                     onSetSort(
                         when (sortOrder) {
@@ -80,9 +73,14 @@ abstract class Column<T>(val name: String) {
                 }
             ) {
                 Text(
-                    text = header,
+                    text = columnTitle,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = padding, top = padding, bottom = padding, end = padding / 2)
+                    modifier = Modifier.padding(
+                        start = headerPadding,
+                        top = headerPadding,
+                        bottom = headerPadding,
+                        end = headerPadding / 2,
+                    )
                 )
 
                 Icon(
@@ -93,42 +91,13 @@ abstract class Column<T>(val name: String) {
                 )
             }
         } else {
-            Text(text = header, fontWeight = FontWeight.Bold, modifier = Modifier.padding(padding))
+            Text(text = columnTitle, fontWeight = FontWeight.Bold, modifier = Modifier.padding(headerPadding))
         }
     }
 
     /**
-     * Creates a new [Column] from this [Column] with the same values, but mapped with [mapper]. This is convenient for
-     * reusing a [Column] with a different type of item but the same content.
+     * The cell content for the given [item].
      */
-    fun <R> mapped(name: String = this.name, mapper: (R) -> T): Column<R> {
-        val base = this
-        return object : Column<R>(name = name) {
-            override val width = base.width
-            override val cellAlignment = base.cellAlignment
-            override val headerAlignment = base.headerAlignment
-
-            override val sortableProperty: SortableProperty<R>? = base.sortableProperty?.let { baseSortProperty ->
-                object : SortableProperty<R>(sortTitle = name) {
-                    override fun compare(sortOrder: SortOrder, first: IndexedValue<R>, second: IndexedValue<R>): Int {
-                        return baseSortProperty.compare(
-                            sortOrder = sortOrder,
-                            first = IndexedValue(index = first.index, value = mapper(first.value)),
-                            second = IndexedValue(index = second.index, value = mapper(second.value)),
-                        )
-                    }
-                }
-            }
-
-            @Composable
-            override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
-                base.header(sortOrder, onSetSort)
-            }
-
-            @Composable
-            override fun item(item: R, index: Int) {
-                base.item(mapper(item), index)
-            }
-        }
-    }
+    @Composable
+    fun item(item: E)
 }

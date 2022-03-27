@@ -5,37 +5,22 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import com.dzirbel.kotify.ui.components.adapter.SortOrder
-import com.dzirbel.kotify.ui.components.adapter.SortableProperty
-import com.dzirbel.kotify.ui.components.adapter.compare
 import com.dzirbel.kotify.ui.theme.Dimens
 
 /**
  * A simple [Column] where the header and content are rendered as [Text] via [toString].
  */
-abstract class ColumnByString<T>(name: String, private val padding: Dp = Dimens.space3) : Column<T>(name = name) {
-    override val sortableProperty = object : SortableProperty<T>(sortTitle = name) {
-        override fun compare(sortOrder: SortOrder, first: IndexedValue<T>, second: IndexedValue<T>): Int {
-            return sortOrder.compare(
-                first = toString(first.value, first.index),
-                second = toString(second.value, second.index),
-                ignoreCase = true,
-            )
-        }
-    }
+interface ColumnByString<T> : Column<T> {
+    val cellPadding: Dp
+        get() = Dimens.space3
 
     /**
      * Renders the content of the given [item] as the returned string.
      */
-    abstract fun toString(item: T, index: Int): String
+    fun toString(item: T): String
 
     @Composable
-    override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
-        standardHeader(sortOrder = sortOrder, onSetSort = onSetSort, padding = padding)
-    }
-
-    @Composable
-    override fun item(item: T, index: Int) {
-        Text(text = toString(item, index), modifier = Modifier.padding(padding))
+    override fun item(item: T) {
+        Text(text = toString(item), modifier = Modifier.padding(cellPadding))
     }
 }

@@ -37,10 +37,12 @@ private fun artistColumns(
     syncingArtistAlbums: Set<String>,
 ): List<Column<String>> {
     return listOf(
-        object : ColumnByLinkedText<String>(name = "Name") {
-            override fun links(item: String, index: Int): List<Link> {
+        object : ColumnByLinkedText<String> {
+            override val title = "Name"
+
+            override fun links(item: String): List<ColumnByLinkedText.Link> {
                 return listOfNotNull(
-                    artists[item]?.let { Link(text = it.name, link = it.id.value) }
+                    artists[item]?.let { ColumnByLinkedText.Link(text = it.name, link = it.id.value) }
                 )
             }
 
@@ -49,34 +51,42 @@ private fun artistColumns(
             }
         },
 
-        object : ColumnByString<String>(name = "ID") {
-            override fun toString(item: String, index: Int): String = item
+        object : ColumnByString<String> {
+            override val title = "ID"
+
+            override fun toString(item: String): String = item
         },
 
-        object : InvalidateButtonColumn<String>(name = "Sync artist") {
-            override fun timestampFor(item: String, index: Int) = artists[item]?.updatedTime?.toEpochMilli()
+        object : InvalidateButtonColumn<String> {
+            override val title = "Sync artist"
 
-            override fun isRefreshing(item: String, index: Int) = syncingArtists.contains(item)
+            override fun timestampFor(item: String) = artists[item]?.updatedTime?.toEpochMilli()
 
-            override fun onInvalidate(item: String, index: Int) {
+            override fun isRefreshing(item: String) = syncingArtists.contains(item)
+
+            override fun onInvalidate(item: String) {
                 presenter.emitAsync(ArtistsLibraryStatePresenter.Event.RefreshArtist(artistId = item))
             }
         },
 
-        object : ColumnByNumber<String>(name = "Albums") {
-            override fun toNumber(item: String, index: Int): Int? {
+        object : ColumnByNumber<String> {
+            override val title = "Albums"
+
+            override fun toNumber(item: String): Int? {
                 return artists[item]?.let { artist ->
                     if (artist.hasAllAlbums) artist.albums.cached.size else null
                 }
             }
         },
 
-        object : InvalidateButtonColumn<String>(name = "Sync albums") {
-            override fun timestampFor(item: String, index: Int) = artists[item]?.albumsFetched?.toEpochMilli()
+        object : InvalidateButtonColumn<String> {
+            override val title = "Sync albums"
 
-            override fun isRefreshing(item: String, index: Int) = syncingArtistAlbums.contains(item)
+            override fun timestampFor(item: String) = artists[item]?.albumsFetched?.toEpochMilli()
 
-            override fun onInvalidate(item: String, index: Int) {
+            override fun isRefreshing(item: String) = syncingArtistAlbums.contains(item)
+
+            override fun onInvalidate(item: String) {
                 presenter.emitAsync(ArtistsLibraryStatePresenter.Event.RefreshArtistAlbums(artistId = item))
             }
         },

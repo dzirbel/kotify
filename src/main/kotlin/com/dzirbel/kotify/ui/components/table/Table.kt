@@ -29,12 +29,12 @@ import kotlin.math.roundToInt
  */
 @Composable
 @Suppress("UnnecessaryParentheses")
-fun <T> Table(
-    columns: List<Column<T>>,
-    items: ListAdapter<T>,
+fun <E> Table(
+    columns: List<Column<E>>,
+    items: ListAdapter<E>,
     includeHeader: Boolean = true,
     modifier: Modifier = Modifier,
-    onSetSort: (Sort<T>?) -> Unit,
+    onSetSort: (Sort<E>?) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
 
@@ -48,12 +48,10 @@ fun <T> Table(
         modifier = modifier,
         content = {
             if (includeHeader) {
-                columns.forEach { column ->
+                columns.forEach { column: Column<E> ->
                     Box {
                         column.header(
-                            sortOrder = items.sorts
-                                ?.firstOrNull { it.sortableProperty.sortTitle == column.sortableProperty?.sortTitle }
-                                ?.sortOrder,
+                            sortOrder = items.sortOrderFor(column.sortableProperty),
                             onSetSort = { sortOrder ->
                                 onSetSort(sortOrder?.let { column.sortableProperty?.let { Sort(it, sortOrder) } })
                             },
@@ -62,10 +60,10 @@ fun <T> Table(
                 }
             }
 
-            items.forEachIndexed { index, item ->
+            items.forEach { item ->
                 columns.forEach { column ->
                     Box {
-                        column.item(item, index)
+                        column.item(item)
                     }
                 }
             }

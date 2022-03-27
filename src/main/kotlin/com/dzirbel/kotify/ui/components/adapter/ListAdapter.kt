@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.components.adapter
 
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter.ElementData
-import com.dzirbel.kotify.ui.theme.Dimens.divider
 import java.util.SortedMap
 import java.util.TreeMap
 
@@ -40,27 +39,18 @@ class ListAdapter<E> private constructor(
      *
      * Null when the elements should retain their canonical order.
      *
-     * This is retained as a field for convenience to encapsulate the state of the elements for external users and in
-     * order to properly sort newly added elements (e.g. [plusElements]).
+     * This is retained as a field to properly sort newly added elements (e.g. [plusElements]).
      */
     val sorts: List<Sort<E>>?,
 
     /**
-     * The currently applied [Divider] determining how elements are grouped into [divisions].
+     * The currently applied [Divider] determining how elements are split into groupings.
      *
-     * Null when the elements should not have any divisions, i.e. a single null key in [divisions].
+     * Null when no divisions should be applied.
      *
-     * This is retained as a field for convenience to encapsulate the state of the elements for external users and in
-     * order to properly group newly added elements (e.g. [plusElements]).
+     * This is retained as a field to properly retain divisions for newly added elements (e.g. [plusElements]).
      */
     val divider: Divider<E>?,
-
-    /**
-     * The [SortOrder] by which divisions provided by [divider] should be ordered.
-     *
-     * Null when [divider] is null or when the [Divider.defaultDivisionSortOrder] should be used.
-     */
-    val dividerSortOrder: SortOrder?,
 
     /**
      * The currently applied filtering predicate determining which elements should be displayed.
@@ -100,6 +90,10 @@ class ListAdapter<E> private constructor(
      */
     val hasElements: Boolean = elements != null
 
+    /**
+     * The number of elements (including filtered elements) in the adapter, or zero if the adapter has not yet been
+     * initialized with elements.
+     */
     val size: Int = elements?.size ?: 0
 
     /**
@@ -116,7 +110,7 @@ class ListAdapter<E> private constructor(
      * in cases when either the divider or sort order are changed, but perhaps could be avoided for changes to just the
      * filter, etc.
      */
-    val divisions: SortedMap<out Any?, out List<IndexedValue<E>>> by lazy {
+    val divisions: SortedMap<Any?, out List<IndexedValue<E>>> by lazy {
         val indices = sortIndexes ?: elements?.indices ?: emptyList()
         if (divider == null) {
             sortedMapOf(
@@ -129,15 +123,13 @@ class ListAdapter<E> private constructor(
                 }
             )
         } else {
-            val comparator = divider.divisionComparator(dividerSortOrder ?: divider.defaultDivisionSortOrder)
-            val map = TreeMap<Any, MutableList<IndexedValue<E>>>(comparator)
+            val map = TreeMap<Any?, MutableList<IndexedValue<E>>>(divider.divisionComparator)
 
             indices.forEach { index ->
                 val elementData = elements!![index]
                 if (elementData.filtered) {
-                    val division = requireNotNull(elementData.division) { "null division with divider" }
                     val indexedValue = IndexedValue(index, elementData.element)
-                    map.compute(division) { _, list ->
+                    map.compute(elementData.division) { _, list ->
                         list?.apply { add(indexedValue) } ?: mutableListOf(indexedValue)
                     }
                 }
@@ -156,6 +148,19 @@ class ListAdapter<E> private constructor(
      * Returns the division for the element at the given [index] in the canonical order.
      */
     fun divisionOf(index: Int): Any? = elements?.get(index)?.division
+
+    /**
+     * Retrieves the currently applied [SortOrder] associated with the given [sortableProperty] in this adapter's
+     * [sorts].
+     *
+     * Note that [SortableProperty.sortTitle] is used to determine equality of [SortableProperty]s, so the same
+     * [SortableProperty] object as is present in [sorts] does not need to be used.
+     */
+    fun sortOrderFor(sortableProperty: SortableProperty<E>?): SortOrder? {
+        return sortableProperty?.let {
+            sorts?.find { it.sortableProperty.sortTitle == sortableProperty.sortTitle }?.sortOrder
+        }
+    }
 
     override fun iterator(): Iterator<E> {
         return object : Iterator<E> {
@@ -183,7 +188,6 @@ class ListAdapter<E> private constructor(
             sortIndexes = sortIndexes,
             sorts = sorts,
             divider = divider,
-            dividerSortOrder = dividerSortOrder,
             filter = filter,
             filterString = filterString,
         )
@@ -209,18 +213,17 @@ class ListAdapter<E> private constructor(
     }
 
     /**
-     * Returns a copy of this [ListAdapter] with the given [divider] applied, i.e. elements will be grouped according
-     * to [Divider.divisionFor] in its [divisions], or undivided if [divider] is null.
+     * Returns a copy of this [ListAdapter] with the given [divider] applied, i.e. elements will be grouped according to
+     * [DividableProperty.divisionFor] in its [divisions], or undivided if [divider] is null.
      */
-    fun withDivider(divider: Divider<E>?, dividerSortOrder: SortOrder?): ListAdapter<E> {
+    fun withDivider(divider: Divider<E>?): ListAdapter<E> {
         return ListAdapter(
             elements = elements?.map {
-                it.copy(division = divider?.divisionFor(it.element))
+                it.copy(division = divider?.dividableProperty?.divisionFor(it.element))
             },
             sortIndexes = sortIndexes,
             sorts = sorts,
             divider = divider,
-            dividerSortOrder = dividerSortOrder,
             filter = filter,
             filterString = filterString,
         )
@@ -239,11 +242,16 @@ class ListAdapter<E> private constructor(
 
         val sortIndexes = sorts?.let {
             elements?.let {
+                val sortComparator = sorts.asComparator()
+                val indexedComparator = Comparator<IndexedValue<E>> { o1, o2 ->
+                    sortComparator.compare(o1.value, o2.value)
+                }
+
                 // order by existing sortIndexes to preserve existing order under stable sorting
                 // TODO avoid creating extra lists in double mapping?
                 (sortIndexes ?: elements.indices)
                     .map { IndexedValue(it, elements[it].element) }
-                    .sortedWith(sorts.asComparator())
+                    .sortedWith(indexedComparator)
                     .map { it.index }
             }
         }
@@ -253,7 +261,6 @@ class ListAdapter<E> private constructor(
             sortIndexes = sortIndexes,
             sorts = sorts,
             divider = divider,
-            dividerSortOrder = dividerSortOrder,
             filter = filter,
             filterString = filterString,
         )
@@ -269,7 +276,7 @@ class ListAdapter<E> private constructor(
             ElementData(
                 element = element,
                 filtered = filter?.invoke(element) != false,
-                division = divider?.divisionFor(element),
+                division = divider?.dividableProperty?.divisionFor(element),
             )
         }
 
@@ -278,19 +285,56 @@ class ListAdapter<E> private constructor(
             sortIndexes = null,
             sorts = null,
             divider = divider,
-            dividerSortOrder = dividerSortOrder,
             filter = filter,
             filterString = filterString,
         )
-            .withSort(sorts)
+            .withSort(sorts) // TODO integrate new elements without a new ListAdapter copy
+    }
+
+    // TODO document
+    fun withElements(elements: List<E>): ListAdapter<E> {
+        return ListAdapter(
+            elements = elements.map { element ->
+                ElementData(
+                    element = element,
+                    filtered = this.filter?.invoke(element) != false,
+                    division = this.divider?.dividableProperty?.divisionFor(element),
+                )
+            },
+            sortIndexes = null,
+            sorts = null,
+            divider = divider,
+            filter = filter,
+            filterString = filterString,
+        )
+            .withSort(sorts) // TODO integrate elements without a new ListAdapter copy
     }
 
     companion object {
+        /**
+         * Creates a new [ListAdapter] with uninitialized elements, optionally applying the given [defaultSort].
+         *
+         * This is useful to create a [ListAdapter] without any data, but which can be used to store sorts, dividers,
+         * etc. before elements are loaded.
+         */
+        fun <E> empty(defaultSort: SortableProperty<E>? = null): ListAdapter<E> {
+            return ListAdapter(
+                elements = null,
+                sortIndexes = null,
+                sorts = defaultSort?.let { listOf(Sort(it)) },
+                divider = null,
+                filter = null,
+                filterString = null,
+            )
+        }
+
         /**
          * Creates a new [ListAdapter] from the given [elements].
          *
          * Optionally applies properties (sort, divider, filter) from [baseAdapter] or [defaultSort] if there is no
          * [baseAdapter].
+         *
+         * TODO replace with empty() or withElements()
          */
         fun <E> from(
             elements: List<E>?,
@@ -302,13 +346,12 @@ class ListAdapter<E> private constructor(
                     ElementData(
                         element = element,
                         filtered = baseAdapter?.filter?.invoke(element) != false,
-                        division = baseAdapter?.divider?.divisionFor(element),
+                        division = baseAdapter?.divider?.dividableProperty?.divisionFor(element),
                     )
                 },
                 sortIndexes = null,
                 sorts = null,
                 divider = baseAdapter?.divider,
-                dividerSortOrder = baseAdapter?.dividerSortOrder,
                 filter = baseAdapter?.filter,
                 filterString = baseAdapter?.filterString,
             )

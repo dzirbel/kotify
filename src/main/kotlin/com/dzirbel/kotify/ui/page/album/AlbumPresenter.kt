@@ -13,6 +13,15 @@ import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
+import com.dzirbel.kotify.ui.player.Player
+import com.dzirbel.kotify.ui.properties.TrackAlbumIndexProperty
+import com.dzirbel.kotify.ui.properties.TrackArtistsProperty
+import com.dzirbel.kotify.ui.properties.TrackDurationProperty
+import com.dzirbel.kotify.ui.properties.TrackNameProperty
+import com.dzirbel.kotify.ui.properties.TrackPlayingColumn
+import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
+import com.dzirbel.kotify.ui.properties.TrackRatingProperty
+import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
@@ -30,20 +39,34 @@ class AlbumPresenter(
     data class ViewModel(
         val refreshing: Boolean = false,
         val album: Album? = null,
-        val tracks: ListAdapter<Track> = ListAdapter.from(null),
+        val tracks: ListAdapter<Track> = ListAdapter.empty(),
         val totalDurationMs: ULong? = null,
         val savedTracksState: State<Set<String>?>? = null,
         val trackRatings: Map<String, State<Rating?>> = emptyMap(),
         val isSavedState: State<Boolean?>? = null,
         val albumUpdated: Instant? = null,
-    )
+    ) {
+        val trackProperties = listOf(
+            TrackPlayingColumn(
+                trackIdOf = { it.id.value },
+                playContextFromTrack = { track ->
+                    Player.PlayContext.albumTrack(album = album!!, index = track.trackNumber.toInt())
+                }
+            ),
+            TrackAlbumIndexProperty,
+            TrackSavedProperty(trackIdOf = { it.id.value }, savedTrackIds = savedTracksState?.value),
+            TrackNameProperty,
+            TrackArtistsProperty,
+            TrackRatingProperty(trackIdOf = { it.id.value }, trackRatings = trackRatings),
+            TrackDurationProperty,
+            TrackPopularityProperty,
+        )
+    }
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
         data class SetSort(val sorts: List<Sort<Track>>) : Event()
         data class ToggleSave(val save: Boolean) : Event()
-        data class ToggleTrackSaved(val trackId: String, val saved: Boolean) : Event()
-        data class RateTrack(val trackId: String, val rating: Rating?) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -77,7 +100,7 @@ class AlbumPresenter(
                     ViewModel(
                         refreshing = false,
                         album = album,
-                        tracks = ListAdapter.from(tracks, baseAdapter = it.tracks),
+                        tracks = it.tracks.withElements(tracks),
                         totalDurationMs = tracks.sumOf { track -> track.durationMs },
                         savedTracksState = savedTracksState,
                         trackRatings = trackRatings,
@@ -94,7 +117,7 @@ class AlbumPresenter(
 
                 mutateState {
                     it.copy(
-                        tracks = ListAdapter.from(fullTracks, baseAdapter = it.tracks),
+                        tracks = it.tracks.withElements(fullTracks),
                         totalDurationMs = fullTracks.sumOf { track -> track.durationMs },
                     )
                 }
@@ -105,10 +128,6 @@ class AlbumPresenter(
             }
 
             is Event.ToggleSave -> SavedAlbumRepository.setSaved(id = albumId, saved = event.save)
-
-            is Event.ToggleTrackSaved -> SavedTrackRepository.setSaved(id = event.trackId, saved = event.saved)
-
-            is Event.RateTrack -> TrackRatingRepository.rate(id = event.trackId, rating = event.rating)
         }
     }
 }

@@ -11,12 +11,15 @@ import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
 import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
-import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.framework.Presenter
-import com.dzirbel.kotify.ui.page.albums.SortAlbumsByName
+import com.dzirbel.kotify.ui.properties.AlbumNameProperty
+import com.dzirbel.kotify.ui.properties.ArtistNameProperty
+import com.dzirbel.kotify.ui.properties.ArtistPopularityProperty
+import com.dzirbel.kotify.ui.properties.ArtistRatingProperty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -40,10 +43,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
         /**
          * [ListAdapter] wrapping the saved [Artist] models to be displayed.
          */
-        val artists: ListAdapter<Artist> = ListAdapter.from(
-            elements = null,
-            defaultSort = listOf(Sort(SortArtistByName)),
-        ),
+        val artists: ListAdapter<Artist> = ListAdapter.empty(defaultSort = ArtistNameProperty),
 
         /**
          * Whether [artists] is being reloaded.
@@ -82,7 +82,13 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
          * been fetched.
          */
         val artistsUpdated: Long? = null,
-    )
+    ) {
+        val artistProperties: List<AdapterProperty<Artist>> = listOf(
+            ArtistNameProperty,
+            ArtistPopularityProperty,
+            ArtistRatingProperty(ratings = artistRatings),
+        )
+    }
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
@@ -91,7 +97,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
         data class ToggleSave(val artistId: String, val save: Boolean) : Event()
         data class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
         data class SetSorts(val sorts: List<Sort<Artist>>) : Event()
-        data class SetDivider(val divider: Divider<Artist>?, val dividerSortOrder: SortOrder?) : Event()
+        data class SetDivider(val divider: Divider<Artist>?) : Event()
     }
 
     override fun externalEvents(): Flow<Event> {
@@ -128,7 +134,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
 
                     it.copy(
                         refreshing = false,
-                        artists = ListAdapter.from(elements = artists, baseAdapter = it.artists),
+                        artists = it.artists.withElements(artists),
                         selectedArtistIndex = selectedArtistId
                             ?.let { artists.indexOfFirst { artist -> artist.id.value == selectedArtistId } }
                             ?.takeIf { index -> index >= 0 },
@@ -166,7 +172,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                 }
 
                 val albums = Artist.getAllAlbums(artistId = artist.id.value)
-                val albumsAdapter = ListAdapter.from(albums, defaultSort = listOf(Sort(SortAlbumsByName)))
+                val albumsAdapter = ListAdapter.empty(AlbumNameProperty).withElements(albums)
                 KotifyDatabase.transaction {
                     albums.forEach { it.largestImage.loadToCache() }
                 }
@@ -200,10 +206,11 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                         }
 
                         mutateState {
+                            val artistRatings = it.artistRatings.plus(missingArtistRatings)
                             it.copy(
                                 artists = it.artists.plusElements(missingArtists),
                                 savedArtistIds = it.savedArtistIds?.plus(event.artistIds),
-                                artistRatings = it.artistRatings.plus(missingArtistRatings),
+                                artistRatings = artistRatings,
                             )
                         }
                     } else {
@@ -228,9 +235,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
             }
 
             is Event.SetDivider -> mutateState {
-                it.copy(
-                    artists = it.artists.withDivider(divider = event.divider, dividerSortOrder = event.dividerSortOrder)
-                )
+                it.copy(artists = it.artists.withDivider(divider = event.divider))
             }
         }
     }

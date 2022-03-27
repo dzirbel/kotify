@@ -17,7 +17,6 @@ import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.components.table.Table
-import com.dzirbel.kotify.ui.components.trackColumns
 import com.dzirbel.kotify.ui.framework.PageLoadingSpinner
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
@@ -91,20 +90,7 @@ fun AlbumPageHeader(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) 
 fun AlbumPageContent(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) {
     if (state.tracks.hasElements) {
         Table(
-            columns = trackColumns(
-                savedTracks = state.savedTracksState?.value,
-                onSetTrackSaved = { trackId, saved ->
-                    presenter.emitAsync(AlbumPresenter.Event.ToggleTrackSaved(trackId = trackId, saved = saved))
-                },
-                trackRatings = state.trackRatings,
-                onRateTrack = { trackId, rating ->
-                    presenter.emitAsync(AlbumPresenter.Event.RateTrack(trackId = trackId, rating = rating))
-                },
-                includeAlbum = false,
-                playContextFromIndex = { index ->
-                    Player.PlayContext.albumTrack(album = state.album!!, index = index)
-                }
-            ),
+            columns = state.trackProperties,
             items = state.tracks,
             onSetSort = {
                 presenter.emitAsync(AlbumPresenter.Event.SetSort(listOfNotNull(it)))

@@ -12,11 +12,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.dzirbel.kotify.ui.components.NameColumn
-import com.dzirbel.kotify.ui.components.RatingColumn
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.framework.rememberPresenter
+import com.dzirbel.kotify.ui.properties.TrackNameProperty
+import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.theme.Dimens
 
 private val RATINGS_TABLE_WIDTH = 750.dp
@@ -47,21 +47,10 @@ fun RatingsLibraryState() {
         }
 
         if (ratingsExpanded.value) {
-            val ratingColumn = remember {
-                RatingColumn(
-                    trackRatings = state.trackRatings,
-                    onRateTrack = { trackId, rating ->
-                        presenter.emitAsync(
-                            RatingsLibraryStatePresenter.Event.RateTrack(trackId = trackId, rating = rating)
-                        )
-                    },
-                )
-            }
-
             Table(
                 columns = listOf(
-                    NameColumn.mapped { trackId -> requireNotNull(state.tracks[trackId]) },
-                    ratingColumn.mapped { trackId -> requireNotNull(state.tracks[trackId]) },
+                    TrackNameProperty(toTrack = { requireNotNull(state.tracks[it]) }),
+                    TrackRatingProperty(trackIdOf = { it }, trackRatings = state.trackRatings),
                 ),
                 items = state.ratedTracksIds,
                 modifier = Modifier.widthIn(max = RATINGS_TABLE_WIDTH),

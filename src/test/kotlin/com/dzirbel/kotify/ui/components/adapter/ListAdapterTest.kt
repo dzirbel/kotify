@@ -8,21 +8,27 @@ import org.junit.jupiter.api.Test
 internal class ListAdapterTest {
     private val list = List(20) { it }
 
-    private val naturalOrder = object : SortableProperty<Int>(sortTitle = "natural order") {
-        override fun compare(sortOrder: SortOrder, first: IndexedValue<Int>, second: IndexedValue<Int>): Int {
-            return sortOrder.compare(first.value, second.value)
+    private val naturalOrder = object : SortableProperty<Int> {
+        override val title = "natural order"
+
+        override fun compare(sortOrder: SortOrder, first: Int, second: Int): Int {
+            return sortOrder.compare(first, second)
         }
     }
 
-    private val orderByMod2 = object : SortableProperty<Int>(sortTitle = "mod 2 order") {
-        override fun compare(sortOrder: SortOrder, first: IndexedValue<Int>, second: IndexedValue<Int>): Int {
-            return sortOrder.compare(first.value % 2, second.value % 2)
+    private val orderByMod2 = object : SortableProperty<Int> {
+        override val title = "mod 2 order"
+
+        override fun compare(sortOrder: SortOrder, first: Int, second: Int): Int {
+            return sortOrder.compare(first % 2, second % 2)
         }
     }
 
-    private object Mod3Divider : Divider<Int>("mod 3") {
+    private object Mod3DividableProperty : DividableProperty<Int> {
+        override val title = "mod 3"
+
         override fun divisionFor(element: Int): Int = element % 3
-        override fun compareDivisions(sortOrder: SortOrder, first: Any, second: Any): Int {
+        override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
             return sortOrder.compare(first as Int, second as Int)
         }
     }
@@ -94,7 +100,7 @@ internal class ListAdapterTest {
     @Test
     fun testDivided() {
         val elementsDescending = ListAdapter.from(list)
-            .withDivider(Mod3Divider, SortOrder.DESCENDING)
+            .withDivider(Divider(Mod3DividableProperty, SortOrder.DESCENDING))
 
         assertThat(elementsDescending.divisions)
             .containsExactly(
@@ -104,7 +110,7 @@ internal class ListAdapterTest {
             )
 
         val elementsAscending = elementsDescending
-            .withDivider(Mod3Divider, SortOrder.ASCENDING)
+            .withDivider(Divider(Mod3DividableProperty, SortOrder.ASCENDING))
 
         assertThat(elementsAscending.divisions)
             .containsExactly(
@@ -121,7 +127,7 @@ internal class ListAdapterTest {
         val elements = ListAdapter.from(list)
             .withFilter(filter = predicate)
             .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
-            .withDivider(Mod3Divider, SortOrder.DESCENDING)
+            .withDivider(Divider(Mod3DividableProperty, SortOrder.DESCENDING))
 
         assertThat(elements.divisions)
             .containsExactly(
@@ -133,7 +139,7 @@ internal class ListAdapterTest {
         val elementsPlain = elements
             .withFilter { true }
             .withSort(null)
-            .withDivider(null, null)
+            .withDivider(null)
 
         assertThat(elementsPlain.divisions)
             .isEqualTo(mapOf(null to list.withIndex().toList()))
@@ -146,7 +152,7 @@ internal class ListAdapterTest {
         val elements = ListAdapter.from(listOf(0, 1, 2, 3, 4, 5, 16, 17, 18, 19, 20))
             .withFilter(filter = predicate)
             .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
-            .withDivider(Mod3Divider, SortOrder.DESCENDING)
+            .withDivider(Divider(Mod3DividableProperty, SortOrder.DESCENDING))
             .plusElements(listOf(6, 7, 50))
 
         assertThat(elements.divisions)

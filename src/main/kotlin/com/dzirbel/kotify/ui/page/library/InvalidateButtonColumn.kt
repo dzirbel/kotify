@@ -10,37 +10,37 @@ import com.dzirbel.kotify.ui.components.table.Column
 /**
  * A [Column] which renders an [InvalidateButton] based on [timestampFor].
  */
-abstract class InvalidateButtonColumn<T>(name: String) : Column<T>(name = name) {
-    final override val sortableProperty = object : SortableProperty<T>(sortTitle = name) {
-        override fun compare(sortOrder: SortOrder, first: IndexedValue<T>, second: IndexedValue<T>): Int {
-            return sortOrder.compareNullable(
-                timestampFor(first.value, first.index),
-                timestampFor(second.value, second.index),
-            )
+interface InvalidateButtonColumn<T> : Column<T> {
+    override val sortableProperty
+        get() = object : SortableProperty<T> {
+            override val title = this@InvalidateButtonColumn.title
+
+            override fun compare(sortOrder: SortOrder, first: T, second: T): Int {
+                return sortOrder.compareNullable(timestampFor(first), timestampFor(second))
+            }
         }
-    }
 
     @Composable
-    final override fun item(item: T, index: Int) {
+    override fun item(item: T) {
         InvalidateButton(
-            refreshing = isRefreshing(item, index),
-            updated = timestampFor(item, index),
-            onClick = { onInvalidate(item, index) },
+            refreshing = isRefreshing(item),
+            updated = timestampFor(item),
+            onClick = { onInvalidate(item) },
         )
     }
 
     /**
      * The timestamp at which the resource was last updated, for the given [item].
      */
-    abstract fun timestampFor(item: T, index: Int): Long?
+    fun timestampFor(item: T): Long?
 
     /**
      * Whether the given [item] is actively being refreshed.
      */
-    abstract fun isRefreshing(item: T, index: Int): Boolean
+    fun isRefreshing(item: T): Boolean
 
     /**
      * Invoked when the [InvalidateButton] is clicked for the given [item].
      */
-    abstract fun onInvalidate(item: T, index: Int)
+    fun onInvalidate(item: T)
 }

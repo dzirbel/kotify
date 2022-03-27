@@ -1,52 +1,16 @@
 package com.dzirbel.kotify.ui.components.adapter
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.ui.components.HorizontalDivider
-import com.dzirbel.kotify.ui.theme.Dimens
-
-abstract class Divider<E>(
-    val dividerTitle: String,
-    val defaultDivisionSortOrder: SortOrder = SortOrder.ASCENDING,
+/**
+ * Encapsulates a [dividableProperty] and a particular [divisionSortOrder], which together provide a means to divide
+ * elements of type [E] and impose an ordering on the resulting divisions; namely [divisionComparator].
+ */
+data class Divider<E>(
+    val dividableProperty: DividableProperty<E>,
+    val divisionSortOrder: SortOrder = dividableProperty.defaultDivisionSortOrder,
 ) {
-    fun divisionComparator(sortOrder: SortOrder): Comparator<Any> {
-        return Comparator { o1, o2 -> compareDivisions(sortOrder, o1, o2) }
-    }
-
-    abstract fun compareDivisions(sortOrder: SortOrder, first: Any, second: Any): Int
-
-    abstract fun divisionFor(element: E): Any
-
-    @Composable
-    open fun headerContent(division: Any) {
-        standardHeaderContent(divisionHeader = division.toString())
-    }
-
-    @Composable
-    fun standardHeaderContent(divisionHeader: String?) {
-        divisionHeader?.let {
-            Box {
-                Text(
-                    text = divisionHeader,
-                    style = MaterialTheme.typography.h5,
-                    modifier = Modifier.padding(horizontal = Dimens.space5, vertical = Dimens.space2),
-                )
-
-                HorizontalDivider(modifier = Modifier.align(Alignment.BottomCenter))
-            }
-        }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return (other as? Divider<*>)?.dividerTitle?.equals(dividerTitle) == true
-    }
-
-    override fun hashCode(): Int {
-        return dividerTitle.hashCode()
-    }
+    /**
+     * A [Comparator] which compares divisions according to [dividableProperty] and [divisionSortOrder].
+     */
+    val divisionComparator: Comparator<Any?>
+        get() = Comparator { o1, o2 -> dividableProperty.compareDivisions(divisionSortOrder, o1, o2) }
 }

@@ -27,13 +27,10 @@ import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.SmallAlbumCell
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
-import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.DividerSelector
-import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortSelector
-import com.dzirbel.kotify.ui.components.adapter.SortableProperty
-import com.dzirbel.kotify.ui.components.adapter.compare
-import com.dzirbel.kotify.ui.components.adapter.compareNullable
+import com.dzirbel.kotify.ui.components.adapter.dividableProperties
+import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.components.rightLeftClickable
@@ -44,92 +41,6 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.averageOrNull
-import kotlin.math.floor
-
-val SortArtistByName = object : SortableProperty<Artist>(
-    sortTitle = "Artist Name",
-    defaultOrder = SortOrder.ASCENDING,
-    terminal = true,
-) {
-    override fun compare(sortOrder: SortOrder, first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
-        return sortOrder.compare(first.value.name, second.value.name)
-    }
-}
-
-val SortArtistByPopularity = object : SortableProperty<Artist>(
-    sortTitle = "Artist Popularity",
-    defaultOrder = SortOrder.DESCENDING,
-) {
-    override fun compare(sortOrder: SortOrder, first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
-        return sortOrder.compareNullable(first.value.popularity, second.value.popularity)
-    }
-}
-
-class SortAristByRating(private val artistRatings: Map<String, List<State<Rating?>>?>) : SortableProperty<Artist>(
-    sortTitle = "Artist Rating",
-    defaultOrder = SortOrder.DESCENDING,
-) {
-    override fun compare(sortOrder: SortOrder, first: IndexedValue<Artist>, second: IndexedValue<Artist>): Int {
-        val firstRating = artistRatings[first.value.id.value]?.averageOrNull { it.value?.ratingPercent }
-        val secondRating = artistRatings[second.value.id.value]?.averageOrNull { it.value?.ratingPercent }
-
-        return sortOrder.compareNullable(firstRating, secondRating)
-    }
-}
-
-class ArtistNameDivider : Divider<Artist>(dividerTitle = "Name") {
-    override fun compareDivisions(sortOrder: SortOrder, first: Any, second: Any): Int {
-        return sortOrder.compare(first as String, second as String)
-    }
-
-    override fun divisionFor(element: Artist): String {
-        val firstChar = element.name[0]
-        return if (firstChar.isLetter()) firstChar.uppercaseChar().toString() else "#"
-    }
-}
-
-class ArtistRatingDivider(
-    private val artistRatings: Map<String, List<State<Rating?>>?>,
-) : Divider<Artist>(dividerTitle = "Rating", defaultDivisionSortOrder = SortOrder.DESCENDING) {
-    override fun compareDivisions(sortOrder: SortOrder, first: Any, second: Any): Int {
-        return when {
-            first is String && second is String -> 0
-            first is String -> 1
-            second is String -> -1
-            else -> sortOrder.compare(first as Double, second as Double)
-        }
-    }
-
-    override fun divisionFor(element: Artist): Any {
-        return artistRatings[element.id.value]
-            ?.averageOrNull { it.value?.ratingPercent }
-            ?.let { average ->
-                floor(average * Rating.DEFAULT_MAX_AVERAGE_RATING * DIVIDING_FRACTION) / DIVIDING_FRACTION
-            }
-            ?: "Unrated"
-    }
-
-    @Composable
-    override fun headerContent(division: Any) {
-        val title = when (division) {
-            is String -> division
-            is Double -> "%.1f - %.1f".format(division, division + 1.0 / DIVIDING_FRACTION)
-            else -> error("")
-        }
-
-        standardHeaderContent(divisionHeader = title)
-    }
-
-    companion object {
-        /**
-         * Determines what ranges ratings are grouped into, inverted. E.g. with a fraction of 4 ranges will be
-         * 0.0 - 0.25, 0.25 - 0.5, 0.5 - 0.75, 0.75 - 1.0, etc. Note that the rounding of the header strings may make
-         * some groupings unclear.
-         */
-        private const val DIVIDING_FRACTION = 2
-    }
-}
 
 @Composable
 fun ArtistsPageHeader(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewModel) {
@@ -163,26 +74,15 @@ fun ArtistsPageHeader(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewM
 
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
             DividerSelector(
-                dividers = listOf(ArtistNameDivider(), ArtistRatingDivider(state.artistRatings)),
+                dividableProperties = state.artistProperties.dividableProperties(),
                 currentDivider = state.artists.divider,
-                currentDividerSortOrder = state.artists.dividerSortOrder,
-                onSelectDivider = { divider, dividerSortOrder ->
-                    presenter.emitAsync(
-                        ArtistsPresenter.Event.SetDivider(divider = divider, dividerSortOrder = dividerSortOrder)
-                    )
-                },
+                onSelectDivider = { presenter.emitAsync(ArtistsPresenter.Event.SetDivider(divider = it)) },
             )
 
             SortSelector(
-                sortProperties = listOf(
-                    SortArtistByName,
-                    SortArtistByPopularity,
-                    SortAristByRating(artistRatings = state.artistRatings),
-                ),
+                sortableProperties = state.artistProperties.sortableProperties(),
                 sorts = state.artists.sorts.orEmpty(),
-                onSetSort = {
-                    presenter.emitAsync(ArtistsPresenter.Event.SetSorts(sorts = it))
-                },
+                onSetSort = { presenter.emitAsync(ArtistsPresenter.Event.SetSorts(sorts = it)) },
             )
         }
     }

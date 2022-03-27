@@ -31,26 +31,34 @@ private fun albumColumns(
     syncingAlbums: Set<String>,
 ): List<Column<String>> {
     return listOf(
-        object : ColumnByString<String>(name = "Name") {
-            override fun toString(item: String, index: Int): String = albums[item]?.name.orEmpty()
+        object : ColumnByString<String> {
+            override val title = "Name"
+
+            override fun toString(item: String): String = albums[item]?.name.orEmpty()
         },
 
-        object : ColumnByString<String>(name = "Artists") {
-            override fun toString(item: String, index: Int): String {
+        object : ColumnByString<String> {
+            override val title = "Artists"
+
+            override fun toString(item: String): String {
                 return albums[item]?.artists?.cached?.joinToString { it.name }.orEmpty()
             }
         },
 
-        object : ColumnByString<String>(name = "ID") {
-            override fun toString(item: String, index: Int): String = item
+        object : ColumnByString<String> {
+            override val title = "ID"
+
+            override fun toString(item: String): String = item
         },
 
-        object : InvalidateButtonColumn<String>(name = "Sync album") {
-            override fun timestampFor(item: String, index: Int) = albums[item]?.updatedTime?.toEpochMilli()
+        object : InvalidateButtonColumn<String> {
+            override val title = "Sync album"
 
-            override fun isRefreshing(item: String, index: Int) = syncingAlbums.contains(item)
+            override fun timestampFor(item: String) = albums[item]?.updatedTime?.toEpochMilli()
 
-            override fun onInvalidate(item: String, index: Int) {
+            override fun isRefreshing(item: String) = syncingAlbums.contains(item)
+
+            override fun onInvalidate(item: String) {
                 presenter.emitAsync(AlbumsLibraryStatePresenter.Event.RefreshAlbum(albumId = item))
             }
         },

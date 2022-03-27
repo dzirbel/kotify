@@ -33,37 +33,47 @@ private fun playlistColumns(
     syncingPlaylistTracks: Set<String>,
 ): List<Column<String>> {
     return listOf(
-        object : ColumnByString<String>(name = "Name") {
-            override fun toString(item: String, index: Int): String = playlists[item]?.name.orEmpty()
+        object : ColumnByString<String> {
+            override val title = "Name"
+
+            override fun toString(item: String): String = playlists[item]?.name.orEmpty()
         },
 
-        object : ColumnByString<String>(name = "ID") {
-            override fun toString(item: String, index: Int): String = item
+        object : ColumnByString<String> {
+            override val title = "ID"
+
+            override fun toString(item: String): String = item
         },
 
-        object : InvalidateButtonColumn<String>(name = "Sync playlist") {
-            override fun timestampFor(item: String, index: Int) = playlists[item]?.updatedTime?.toEpochMilli()
+        object : InvalidateButtonColumn<String> {
+            override val title = "Sync playlist"
 
-            override fun isRefreshing(item: String, index: Int) = syncingPlaylists.contains(item)
+            override fun timestampFor(item: String) = playlists[item]?.updatedTime?.toEpochMilli()
 
-            override fun onInvalidate(item: String, index: Int) {
+            override fun isRefreshing(item: String) = syncingPlaylists.contains(item)
+
+            override fun onInvalidate(item: String) {
                 presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.RefreshPlaylist(playlistId = item))
             }
         },
 
-        object : ColumnByNumber<String>(name = "Tracks") {
-            override fun toNumber(item: String, index: Int) = playlists[item]?.totalTracks?.toInt()
+        object : ColumnByNumber<String> {
+            override val title = "Tracks"
+
+            override fun toNumber(item: String) = playlists[item]?.totalTracks?.toInt()
         },
 
-        object : InvalidateButtonColumn<String>(name = "Sync tracks") {
-            override fun timestampFor(item: String, index: Int): Long? {
+        object : InvalidateButtonColumn<String> {
+            override val title = "Sync tracks"
+
+            override fun timestampFor(item: String): Long? {
                 // TODO store time playlist tracks were synced instead of using 0
                 return 0L.takeIf { playlists[item]?.hasAllTracksCached == true }
             }
 
-            override fun isRefreshing(item: String, index: Int) = syncingPlaylistTracks.contains(item)
+            override fun isRefreshing(item: String) = syncingPlaylistTracks.contains(item)
 
-            override fun onInvalidate(item: String, index: Int) {
+            override fun onInvalidate(item: String) {
                 presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.RefreshPlaylistTracks(playlistId = item))
             }
         },
