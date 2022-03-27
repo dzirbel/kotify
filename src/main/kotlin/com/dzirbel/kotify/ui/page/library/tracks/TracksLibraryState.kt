@@ -23,74 +23,73 @@ import com.dzirbel.kotify.ui.theme.Dimens
 @Composable
 fun TracksLibraryState() {
     val presenter = rememberPresenter { scope -> TracksLibraryStatePresenter(scope) }
+    val state = presenter.state().stateOrThrow
 
-    presenter.state().stateOrThrow?.let { state ->
-        if (state.savedTrackIds == null) {
+    if (state.savedTrackIds == null) {
+        InvalidateButton(
+            refreshing = state.refreshingSavedTracks,
+            updated = state.tracksUpdated,
+            updatedFallback = "Tracks never synced",
+        ) {
+            presenter.emitAsync(TracksLibraryStatePresenter.Event.Load(fromCache = false))
+        }
+
+        return
+    }
+
+    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            val totalSaved = state.tracks.size
+            val totalCached = state.tracks.count { it != null }
+            val full = state.tracks.count { it?.fullUpdatedTime != null }
+            val simplified = totalCached - full
+
+            Text("$totalSaved Saved Tracks", modifier = Modifier.padding(end = Dimens.space3))
+
             InvalidateButton(
                 refreshing = state.refreshingSavedTracks,
                 updated = state.tracksUpdated,
-                updatedFallback = "Tracks never synced",
             ) {
                 presenter.emitAsync(TracksLibraryStatePresenter.Event.Load(fromCache = false))
             }
 
-            return
-        }
+            val inCacheExpanded = remember { mutableStateOf(false) }
+            SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
+                val allInCache = full == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
 
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val totalSaved = state.tracks.size
-                val totalCached = state.tracks.count { it != null }
-                val full = state.tracks.count { it?.fullUpdatedTime != null }
-                val simplified = totalCached - full
+                HorizontalSpacer(Dimens.space1)
 
-                Text("$totalSaved Saved Tracks", modifier = Modifier.padding(end = Dimens.space3))
+                Text(
+                    "$totalCached/$totalSaved in cache" +
+                        simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
+                )
 
-                InvalidateButton(
-                    refreshing = state.refreshingSavedTracks,
-                    updated = state.tracksUpdated,
+                DropdownMenu(
+                    expanded = inCacheExpanded.value,
+                    onDismissRequest = { inCacheExpanded.value = false }
                 ) {
-                    presenter.emitAsync(TracksLibraryStatePresenter.Event.Load(fromCache = false))
-                }
-
-                val inCacheExpanded = remember { mutableStateOf(false) }
-                SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
-                    val allInCache = full == totalSaved
-                    CachedIcon(
-                        name = if (allInCache) "check-circle" else "cancel",
-                        size = Dimens.iconSmall,
-                        tint = if (allInCache) Color.Green else Color.Red
-                    )
-
-                    HorizontalSpacer(Dimens.space1)
-
-                    Text(
-                        "$totalCached/$totalSaved in cache" +
-                            simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
-                    )
-
-                    DropdownMenu(
-                        expanded = inCacheExpanded.value,
-                        onDismissRequest = { inCacheExpanded.value = false }
+                    DropdownMenuItem(
+                        enabled = full < totalSaved,
+                        onClick = {
+                            presenter.emitAsync(TracksLibraryStatePresenter.Event.FetchMissingTracks)
+                            inCacheExpanded.value = false
+                        }
                     ) {
-                        DropdownMenuItem(
-                            enabled = full < totalSaved,
-                            onClick = {
-                                presenter.emitAsync(TracksLibraryStatePresenter.Event.FetchMissingTracks)
-                                inCacheExpanded.value = false
-                            }
-                        ) {
-                            Text("Fetch missing")
-                        }
+                        Text("Fetch missing")
+                    }
 
-                        DropdownMenuItem(
-                            onClick = {
-                                presenter.emitAsync(TracksLibraryStatePresenter.Event.InvalidateTracks)
-                                inCacheExpanded.value = false
-                            }
-                        ) {
-                            Text("Invalidate all")
+                    DropdownMenuItem(
+                        onClick = {
+                            presenter.emitAsync(TracksLibraryStatePresenter.Event.InvalidateTracks)
+                            inCacheExpanded.value = false
                         }
+                    ) {
+                        Text("Invalidate all")
                     }
                 }
             }

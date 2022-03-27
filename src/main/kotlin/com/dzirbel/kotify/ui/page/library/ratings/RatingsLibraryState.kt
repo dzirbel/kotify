@@ -24,40 +24,37 @@ private val RATINGS_TABLE_WIDTH = 750.dp
 @Composable
 fun RatingsLibraryState() {
     val presenter = rememberPresenter { scope -> RatingsLibraryStatePresenter(scope) }
+    val state = presenter.state().stateOrThrow
 
-    presenter.state().stateOrThrow?.let { state ->
-        val ratedTracks = state.ratedTracksIds
+    val ratingsExpanded = remember { mutableStateOf(false) }
 
-        val ratingsExpanded = remember { mutableStateOf(false) }
+    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("${state.ratedTracksIds.size} Rated Tracks", modifier = Modifier.padding(end = Dimens.space3))
 
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("${ratedTracks.size} Rated Tracks", modifier = Modifier.padding(end = Dimens.space3))
-
-                SimpleTextButton(
-                    onClick = { presenter.emitAsync(RatingsLibraryStatePresenter.Event.ClearAllRatings) }
-                ) {
-                    Text("Clear all ratings")
-                }
-            }
-
-            SimpleTextButton(onClick = { ratingsExpanded.value = !ratingsExpanded.value }) {
-                Text(if (ratingsExpanded.value) "Collapse" else "Expand")
+            SimpleTextButton(
+                onClick = { presenter.emitAsync(RatingsLibraryStatePresenter.Event.ClearAllRatings) }
+            ) {
+                Text("Clear all ratings")
             }
         }
 
-        if (ratingsExpanded.value) {
-            Table(
-                columns = listOf(
-                    TrackNameProperty(toTrack = { requireNotNull(state.tracks[it]) }),
-                    TrackRatingProperty(trackIdOf = { it }, trackRatings = state.trackRatings),
-                ),
-                items = state.ratedTracksIds,
-                modifier = Modifier.widthIn(max = RATINGS_TABLE_WIDTH),
-                onSetSort = {
-                    presenter.emitAsync(RatingsLibraryStatePresenter.Event.SetSort(sorts = listOfNotNull(it)))
-                },
-            )
+        SimpleTextButton(onClick = { ratingsExpanded.value = !ratingsExpanded.value }) {
+            Text(if (ratingsExpanded.value) "Collapse" else "Expand")
         }
+    }
+
+    if (ratingsExpanded.value) {
+        Table(
+            columns = listOf(
+                TrackNameProperty(toTrack = { requireNotNull(state.tracks[it]) }),
+                TrackRatingProperty(trackIdOf = { it }, trackRatings = state.trackRatings),
+            ),
+            items = state.ratedTracksIds,
+            modifier = Modifier.widthIn(max = RATINGS_TABLE_WIDTH),
+            onSetSort = {
+                presenter.emitAsync(RatingsLibraryStatePresenter.Event.SetSort(sorts = listOfNotNull(it)))
+            },
+        )
     }
 }

@@ -153,8 +153,7 @@ class PlaylistPresenter(
 
                     mutateState {
                         it.copy(
-                            // resets adapter state (sort, filter, etc); ideally might only reset sort
-                            tracks = ListAdapter.from(tracks),
+                            tracks = it.tracks.withElements(tracks).withSort(null),
                             reordering = false,
                         )
                     }

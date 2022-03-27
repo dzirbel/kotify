@@ -291,10 +291,12 @@ class ListAdapter<E> private constructor(
             .withSort(sorts) // TODO integrate new elements without a new ListAdapter copy
     }
 
-    // TODO document
-    fun withElements(elements: List<E>): ListAdapter<E> {
+    /**
+     * Returns a copy of this [ListAdapter] with the given [elements] as its data, retaining sorts, filters, etc.
+     */
+    fun withElements(elements: List<E>?): ListAdapter<E> {
         return ListAdapter(
-            elements = elements.map { element ->
+            elements = elements?.map { element ->
                 ElementData(
                     element = element,
                     filtered = this.filter?.invoke(element) != false,
@@ -330,32 +332,18 @@ class ListAdapter<E> private constructor(
 
         /**
          * Creates a new [ListAdapter] from the given [elements].
-         *
-         * Optionally applies properties (sort, divider, filter) from [baseAdapter] or [defaultSort] if there is no
-         * [baseAdapter].
-         *
-         * TODO replace with empty() or withElements()
          */
-        fun <E> from(
-            elements: List<E>?,
-            baseAdapter: ListAdapter<E>? = null,
-            defaultSort: List<Sort<E>>? = null,
-        ): ListAdapter<E> {
+        fun <E> of(elements: List<E>?): ListAdapter<E> {
             return ListAdapter(
                 elements = elements?.map { element ->
-                    ElementData(
-                        element = element,
-                        filtered = baseAdapter?.filter?.invoke(element) != false,
-                        division = baseAdapter?.divider?.dividableProperty?.divisionFor(element),
-                    )
+                    ElementData(element = element, filtered = true, division = null)
                 },
                 sortIndexes = null,
                 sorts = null,
-                divider = baseAdapter?.divider,
-                filter = baseAdapter?.filter,
-                filterString = baseAdapter?.filterString,
+                divider = null,
+                filter = null,
+                filterString = null,
             )
-                .withSort(baseAdapter?.sorts ?: defaultSort)
         }
     }
 }

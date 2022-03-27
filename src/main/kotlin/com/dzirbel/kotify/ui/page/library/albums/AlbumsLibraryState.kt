@@ -68,99 +68,96 @@ private fun albumColumns(
 @Composable
 fun AlbumsLibraryState() {
     val presenter = rememberPresenter { scope -> AlbumsLibraryStatePresenter(scope) }
+    val state = presenter.state().stateOrThrow
 
-    presenter.state().stateOrThrow?.let { state ->
-        val savedAlbumIds = state.savedAlbumIds
+    if (!state.savedAlbumIds.hasElements) {
+        InvalidateButton(
+            refreshing = state.syncingSavedAlbums,
+            updated = state.albumsUpdated,
+            updatedFallback = "Albums never synced",
+        ) {
+            presenter.emitAsync(AlbumsLibraryStatePresenter.Event.Load(fromCache = false))
+        }
 
-        if (savedAlbumIds == null) {
+        return
+    }
+
+    val albumsExpanded = remember { mutableStateOf(false) }
+
+    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            val totalSaved = state.savedAlbumIds.size
+            val totalCached = state.savedAlbumIds.count { state.albums[it] != null }
+            val full = state.savedAlbumIds.count { state.albums[it]?.fullUpdatedTime != null }
+            val simplified = totalCached - full
+
+            Text("$totalSaved Saved Albums", modifier = Modifier.padding(end = Dimens.space3))
+
             InvalidateButton(
                 refreshing = state.syncingSavedAlbums,
                 updated = state.albumsUpdated,
-                updatedFallback = "Albums never synced",
             ) {
                 presenter.emitAsync(AlbumsLibraryStatePresenter.Event.Load(fromCache = false))
             }
 
-            return
-        }
+            val inCacheExpanded = remember { mutableStateOf(false) }
+            SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
+                val allInCache = full == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
 
-        val albumsExpanded = remember { mutableStateOf(false) }
+                HorizontalSpacer(Dimens.space1)
 
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val totalSaved = savedAlbumIds.size
-                val totalCached = savedAlbumIds.count { state.albums[it] != null }
-                val full = savedAlbumIds.count { state.albums[it]?.fullUpdatedTime != null }
-                val simplified = totalCached - full
+                Text(
+                    "$totalCached/$totalSaved in cache" +
+                        simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
+                )
 
-                Text("$totalSaved Saved Albums", modifier = Modifier.padding(end = Dimens.space3))
-
-                InvalidateButton(
-                    refreshing = state.syncingSavedAlbums,
-                    updated = state.albumsUpdated,
+                DropdownMenu(
+                    expanded = inCacheExpanded.value,
+                    onDismissRequest = { inCacheExpanded.value = false }
                 ) {
-                    presenter.emitAsync(AlbumsLibraryStatePresenter.Event.Load(fromCache = false))
-                }
-
-                val inCacheExpanded = remember { mutableStateOf(false) }
-                SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
-                    val allInCache = full == totalSaved
-                    CachedIcon(
-                        name = if (allInCache) "check-circle" else "cancel",
-                        size = Dimens.iconSmall,
-                        tint = if (allInCache) Color.Green else Color.Red
-                    )
-
-                    HorizontalSpacer(Dimens.space1)
-
-                    Text(
-                        "$totalCached/$totalSaved in cache" +
-                            simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
-                    )
-
-                    DropdownMenu(
-                        expanded = inCacheExpanded.value,
-                        onDismissRequest = { inCacheExpanded.value = false }
+                    DropdownMenuItem(
+                        enabled = full < totalSaved,
+                        onClick = {
+                            presenter.emitAsync(AlbumsLibraryStatePresenter.Event.FetchMissingAlbums)
+                            inCacheExpanded.value = false
+                        }
                     ) {
-                        DropdownMenuItem(
-                            enabled = full < totalSaved,
-                            onClick = {
-                                presenter.emitAsync(AlbumsLibraryStatePresenter.Event.FetchMissingAlbums)
-                                inCacheExpanded.value = false
-                            }
-                        ) {
-                            Text("Fetch missing")
-                        }
+                        Text("Fetch missing")
+                    }
 
-                        DropdownMenuItem(
-                            onClick = {
-                                presenter.emitAsync(AlbumsLibraryStatePresenter.Event.InvalidateAlbums)
-                                inCacheExpanded.value = false
-                            }
-                        ) {
-                            Text("Invalidate all")
+                    DropdownMenuItem(
+                        onClick = {
+                            presenter.emitAsync(AlbumsLibraryStatePresenter.Event.InvalidateAlbums)
+                            inCacheExpanded.value = false
                         }
+                    ) {
+                        Text("Invalidate all")
                     }
                 }
             }
+        }
 
-            SimpleTextButton(onClick = { albumsExpanded.value = !albumsExpanded.value }) {
-                Text(if (albumsExpanded.value) "Collapse" else "Expand")
+        SimpleTextButton(onClick = { albumsExpanded.value = !albumsExpanded.value }) {
+            Text(if (albumsExpanded.value) "Collapse" else "Expand")
+        }
+    }
+
+    if (albumsExpanded.value) {
+        Table(
+            columns = albumColumns(
+                presenter = presenter,
+                albums = state.albums,
+                syncingAlbums = state.syncingAlbums,
+            ),
+            items = state.savedAlbumIds,
+            onSetSort = {
+                presenter.emitAsync(AlbumsLibraryStatePresenter.Event.SetSort(sorts = listOfNotNull(it)))
             }
-        }
-
-        if (albumsExpanded.value) {
-            Table(
-                columns = albumColumns(
-                    presenter = presenter,
-                    albums = state.albums,
-                    syncingAlbums = state.syncingAlbums,
-                ),
-                items = state.savedAlbumIds,
-                onSetSort = {
-                    presenter.emitAsync(AlbumsLibraryStatePresenter.Event.SetSort(sorts = listOfNotNull(it)))
-                }
-            )
-        }
+        )
     }
 }

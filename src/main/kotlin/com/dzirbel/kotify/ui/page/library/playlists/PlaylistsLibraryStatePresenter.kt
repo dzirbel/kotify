@@ -16,21 +16,21 @@ import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.deleteWhere
 
 class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
-    Presenter<PlaylistsLibraryStatePresenter.ViewModel?, PlaylistsLibraryStatePresenter.Event>(
+    Presenter<PlaylistsLibraryStatePresenter.ViewModel, PlaylistsLibraryStatePresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.Load(fromCache = true)),
-        initialState = null
+        initialState = ViewModel()
     ) {
 
     data class ViewModel(
         // ids of the saved playlists
-        val savedPlaylistIds: ListAdapter<String>?,
+        val savedPlaylistIds: ListAdapter<String> = ListAdapter.empty(),
 
         // map from playlist id to the playlist model in the cache; separate from savedPlaylistIds since not all
         // playlist models might be present in the cache
-        val playlists: Map<String, Playlist>,
+        val playlists: Map<String, Playlist> = emptyMap(),
 
-        val playlistsUpdated: Long?,
+        val playlistsUpdated: Long? = null,
 
         val syncingSavedPlaylists: Boolean = false,
 
@@ -57,7 +57,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateState { it?.copy(syncingSavedPlaylists = true) }
+                mutateState { it.copy(syncingSavedPlaylists = true) }
 
                 val savedPlaylistIds = if (event.fromCache) {
                     SavedPlaylistRepository.getLibraryCached()?.toList()
@@ -70,9 +70,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
 
                 mutateState {
                     ViewModel(
-                        savedPlaylistIds = savedPlaylistIds?.let { savedPlaylistIds ->
-                            ListAdapter.from(elements = savedPlaylistIds, baseAdapter = it?.savedPlaylistIds)
-                        },
+                        savedPlaylistIds = it.savedPlaylistIds.withElements(savedPlaylistIds),
                         playlists = playlists,
                         playlistsUpdated = playlistsUpdated,
                         syncingSavedPlaylists = false,
@@ -81,13 +79,13 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             is Event.RefreshPlaylist -> {
-                mutateState { it?.copy(syncingPlaylists = it.syncingPlaylists.plus(event.playlistId)) }
+                mutateState { it.copy(syncingPlaylists = it.syncingPlaylists.plus(event.playlistId)) }
 
                 val playlist = PlaylistRepository.getRemote(id = event.playlistId)
                     ?.also { prepPlaylists(listOf(it)) }
 
                 mutateState {
-                    it?.copy(
+                    it.copy(
                         playlists = it.playlists.plus(event.playlistId to playlist).filterNotNullValues(),
                         syncingPlaylists = it.syncingPlaylists.minus(event.playlistId),
                     )
@@ -95,7 +93,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             is Event.RefreshPlaylistTracks -> {
-                mutateState { it?.copy(syncingPlaylistTracks = it.syncingPlaylistTracks.plus(event.playlistId)) }
+                mutateState { it.copy(syncingPlaylistTracks = it.syncingPlaylistTracks.plus(event.playlistId)) }
 
                 KotifyDatabase.transaction {
                     PlaylistTrackTable.deleteWhere { PlaylistTrackTable.playlist eq event.playlistId }
@@ -108,7 +106,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
                     ?.also { prepPlaylists(listOf(it)) }
 
                 mutateState {
-                    it?.copy(
+                    it.copy(
                         playlists = it.playlists.plus(event.playlistId to playlist).filterNotNullValues(),
                         syncingPlaylistTracks = it.syncingPlaylistTracks.minus(event.playlistId),
                     )
@@ -119,7 +117,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
                 val playlistIds = SavedPlaylistRepository.getLibraryCached()?.toList()
                 val playlists = loadPlaylists(playlistIds = playlistIds) { PlaylistRepository.getFull(ids = it) }
 
-                mutateState { it?.copy(playlists = playlists) }
+                mutateState { it.copy(playlists = playlists) }
             }
 
             Event.InvalidatePlaylists -> {
@@ -128,7 +126,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
 
                 val playlists = loadPlaylists(playlistIds = playlistIds)
 
-                mutateState { it?.copy(playlists = playlists) }
+                mutateState { it.copy(playlists = playlists) }
             }
 
             Event.FetchMissingPlaylistTracks -> {
@@ -145,7 +143,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
                 // reload playlists from the cache
                 val playlists = loadPlaylists(playlistIds = playlistIds)
 
-                mutateState { it?.copy(playlists = playlists) }
+                mutateState { it.copy(playlists = playlists) }
             }
 
             Event.InvalidatePlaylistTracks -> {
@@ -155,11 +153,11 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
                 val playlistIds = SavedPlaylistRepository.getLibraryCached()?.toList()
                 val playlists = loadPlaylists(playlistIds = playlistIds)
 
-                mutateState { it?.copy(playlists = playlists) }
+                mutateState { it.copy(playlists = playlists) }
             }
 
             is Event.SetSort -> mutateState {
-                it?.copy(savedPlaylistIds = it.savedPlaylistIds?.withSort(sorts = event.sorts))
+                it.copy(savedPlaylistIds = it.savedPlaylistIds.withSort(sorts = event.sorts))
             }
         }
     }

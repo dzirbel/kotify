@@ -12,21 +12,21 @@ import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 
 class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
-    Presenter<AlbumsLibraryStatePresenter.ViewModel?, AlbumsLibraryStatePresenter.Event>(
+    Presenter<AlbumsLibraryStatePresenter.ViewModel, AlbumsLibraryStatePresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.Load(fromCache = true)),
-        initialState = null
+        initialState = ViewModel()
     ) {
 
     data class ViewModel(
         // ids of the saved albums
-        val savedAlbumIds: ListAdapter<String>?,
+        val savedAlbumIds: ListAdapter<String> = ListAdapter.empty(),
 
         // map from album id to the album model in the cache; separate from savedAlbumsIds since not all album models
         // might be present in the cache
-        val albums: Map<String, Album>,
+        val albums: Map<String, Album> = emptyMap(),
 
-        val albumsUpdated: Long?,
+        val albumsUpdated: Long? = null,
 
         val syncingSavedAlbums: Boolean = false,
 
@@ -47,7 +47,7 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateState { it?.copy(syncingSavedAlbums = true) }
+                mutateState { it.copy(syncingSavedAlbums = true) }
 
                 val savedAlbumIds = if (event.fromCache) {
                     SavedAlbumRepository.getLibraryCached()?.toList()
@@ -60,9 +60,7 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
 
                 mutateState {
                     ViewModel(
-                        savedAlbumIds = savedAlbumIds?.let { savedAlbumIds ->
-                            ListAdapter.from(elements = savedAlbumIds, baseAdapter = it?.savedAlbumIds)
-                        },
+                        savedAlbumIds = it.savedAlbumIds.withElements(savedAlbumIds),
                         albums = albums,
                         albumsUpdated = albumsUpdated,
                         syncingSavedAlbums = false,
@@ -71,13 +69,13 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             is Event.RefreshAlbum -> {
-                mutateState { it?.copy(syncingAlbums = it.syncingAlbums.plus(event.albumId)) }
+                mutateState { it.copy(syncingAlbums = it.syncingAlbums.plus(event.albumId)) }
 
                 val album = AlbumRepository.getRemote(id = event.albumId)
                     ?.also { prepAlbums(listOf(it)) }
 
                 mutateState {
-                    it?.copy(
+                    it.copy(
                         albums = it.albums.plus(event.albumId to album).filterNotNullValues(),
                         syncingAlbums = it.syncingAlbums.minus(event.albumId),
                     )
@@ -88,7 +86,7 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
                 val albumIds = requireNotNull(SavedAlbumRepository.getLibraryCached()).toList()
                 val albums = loadAlbums(albumIds = albumIds) { AlbumRepository.getFull(ids = it) }
 
-                mutateState { it?.copy(albums = albums) }
+                mutateState { it.copy(albums = albums) }
             }
 
             Event.InvalidateAlbums -> {
@@ -97,11 +95,11 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
 
                 val albums = loadAlbums(albumIds = albumIds)
 
-                mutateState { it?.copy(albums = albums) }
+                mutateState { it.copy(albums = albums) }
             }
 
             is Event.SetSort -> mutateState {
-                it?.copy(savedAlbumIds = it.savedAlbumIds?.withSort(sorts = event.sorts))
+                it.copy(savedAlbumIds = it.savedAlbumIds.withSort(sorts = event.sorts))
             }
         }
     }

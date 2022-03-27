@@ -96,138 +96,135 @@ private fun artistColumns(
 @Composable
 fun ArtistsLibraryState() {
     val presenter = rememberPresenter { scope -> ArtistsLibraryStatePresenter(scope) }
+    val state = presenter.state().stateOrThrow
 
-    presenter.state().stateOrThrow?.let { state ->
-        val savedArtistIds = state.savedArtistIds
+    if (!state.savedArtistIds.hasElements) {
+        InvalidateButton(
+            refreshing = state.syncingSavedArtists,
+            updated = state.artistsUpdated,
+            updatedFallback = "Artists never synced",
+        ) {
+            presenter.emitAsync(ArtistsLibraryStatePresenter.Event.Load(fromCache = false))
+        }
 
-        if (savedArtistIds == null) {
+        return
+    }
+
+    val artistsExpanded = remember { mutableStateOf(false) }
+
+    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            val totalSaved = state.savedArtistIds.size
+            val totalCached = state.savedArtistIds.count { state.artists[it] != null }
+            val full = state.savedArtistIds.count { state.artists[it]?.fullUpdatedTime != null }
+            val simplified = totalCached - full
+            val albums = state.savedArtistIds.count { state.artists[it]?.albumsFetched != null }
+
+            Text("$totalSaved Saved Artists", modifier = Modifier.padding(end = Dimens.space3))
+
             InvalidateButton(
                 refreshing = state.syncingSavedArtists,
                 updated = state.artistsUpdated,
-                updatedFallback = "Artists never synced",
             ) {
                 presenter.emitAsync(ArtistsLibraryStatePresenter.Event.Load(fromCache = false))
             }
 
-            return
-        }
+            val inCacheExpanded = remember { mutableStateOf(false) }
+            SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
+                val allInCache = full == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
 
-        val artistsExpanded = remember { mutableStateOf(false) }
+                HorizontalSpacer(Dimens.space1)
 
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val totalSaved = savedArtistIds.size
-                val totalCached = savedArtistIds.count { state.artists[it] != null }
-                val full = savedArtistIds.count { state.artists[it]?.fullUpdatedTime != null }
-                val simplified = totalCached - full
-                val albums = savedArtistIds.count { state.artists[it]?.albumsFetched != null }
+                Text(
+                    "$totalCached/$totalSaved in cache" +
+                        simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
+                )
 
-                Text("$totalSaved Saved Artists", modifier = Modifier.padding(end = Dimens.space3))
-
-                InvalidateButton(
-                    refreshing = state.syncingSavedArtists,
-                    updated = state.artistsUpdated,
+                DropdownMenu(
+                    expanded = inCacheExpanded.value,
+                    onDismissRequest = { inCacheExpanded.value = false }
                 ) {
-                    presenter.emitAsync(ArtistsLibraryStatePresenter.Event.Load(fromCache = false))
-                }
-
-                val inCacheExpanded = remember { mutableStateOf(false) }
-                SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
-                    val allInCache = full == totalSaved
-                    CachedIcon(
-                        name = if (allInCache) "check-circle" else "cancel",
-                        size = Dimens.iconSmall,
-                        tint = if (allInCache) Color.Green else Color.Red
-                    )
-
-                    HorizontalSpacer(Dimens.space1)
-
-                    Text(
-                        "$totalCached/$totalSaved in cache" +
-                            simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
-                    )
-
-                    DropdownMenu(
-                        expanded = inCacheExpanded.value,
-                        onDismissRequest = { inCacheExpanded.value = false }
+                    DropdownMenuItem(
+                        enabled = full < totalSaved,
+                        onClick = {
+                            presenter.emitAsync(ArtistsLibraryStatePresenter.Event.FetchMissingArtists)
+                            inCacheExpanded.value = false
+                        }
                     ) {
-                        DropdownMenuItem(
-                            enabled = full < totalSaved,
-                            onClick = {
-                                presenter.emitAsync(ArtistsLibraryStatePresenter.Event.FetchMissingArtists)
-                                inCacheExpanded.value = false
-                            }
-                        ) {
-                            Text("Fetch missing")
-                        }
-
-                        DropdownMenuItem(
-                            onClick = {
-                                presenter.emitAsync(ArtistsLibraryStatePresenter.Event.InvalidateArtists)
-                                inCacheExpanded.value = false
-                            }
-                        ) {
-                            Text("Invalidate all")
-                        }
+                        Text("Fetch missing")
                     }
-                }
 
-                val albumMappingsExpanded = remember { mutableStateOf(false) }
-                SimpleTextButton(onClick = { albumMappingsExpanded.value = true }) {
-                    val allInCache = albums == totalSaved
-                    CachedIcon(
-                        name = if (allInCache) "check-circle" else "cancel",
-                        size = Dimens.iconSmall,
-                        tint = if (allInCache) Color.Green else Color.Red
-                    )
-
-                    HorizontalSpacer(Dimens.space1)
-
-                    Text("$albums/$totalSaved album mappings")
-
-                    DropdownMenu(
-                        expanded = albumMappingsExpanded.value,
-                        onDismissRequest = { albumMappingsExpanded.value = false }
+                    DropdownMenuItem(
+                        onClick = {
+                            presenter.emitAsync(ArtistsLibraryStatePresenter.Event.InvalidateArtists)
+                            inCacheExpanded.value = false
+                        }
                     ) {
-                        DropdownMenuItem(
-                            onClick = {
-                                presenter.emitAsync(ArtistsLibraryStatePresenter.Event.FetchMissingArtistAlbums)
-                                albumMappingsExpanded.value = false
-                            }
-                        ) {
-                            Text("Fetch missing")
-                        }
-
-                        DropdownMenuItem(
-                            onClick = {
-                                presenter.emitAsync(ArtistsLibraryStatePresenter.Event.InvalidateArtistAlbums)
-                                albumMappingsExpanded.value = false
-                            }
-                        ) {
-                            Text("Invalidate all")
-                        }
+                        Text("Invalidate all")
                     }
                 }
             }
 
-            SimpleTextButton(onClick = { artistsExpanded.value = !artistsExpanded.value }) {
-                Text(if (artistsExpanded.value) "Collapse" else "Expand")
+            val albumMappingsExpanded = remember { mutableStateOf(false) }
+            SimpleTextButton(onClick = { albumMappingsExpanded.value = true }) {
+                val allInCache = albums == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
+
+                HorizontalSpacer(Dimens.space1)
+
+                Text("$albums/$totalSaved album mappings")
+
+                DropdownMenu(
+                    expanded = albumMappingsExpanded.value,
+                    onDismissRequest = { albumMappingsExpanded.value = false }
+                ) {
+                    DropdownMenuItem(
+                        onClick = {
+                            presenter.emitAsync(ArtistsLibraryStatePresenter.Event.FetchMissingArtistAlbums)
+                            albumMappingsExpanded.value = false
+                        }
+                    ) {
+                        Text("Fetch missing")
+                    }
+
+                    DropdownMenuItem(
+                        onClick = {
+                            presenter.emitAsync(ArtistsLibraryStatePresenter.Event.InvalidateArtistAlbums)
+                            albumMappingsExpanded.value = false
+                        }
+                    ) {
+                        Text("Invalidate all")
+                    }
+                }
             }
         }
 
-        if (artistsExpanded.value) {
-            Table(
-                columns = artistColumns(
-                    presenter = presenter,
-                    artists = state.artists,
-                    syncingArtists = state.syncingArtists,
-                    syncingArtistAlbums = state.syncingArtistsAlbums,
-                ),
-                items = state.savedArtistIds,
-                onSetSort = {
-                    presenter.emitAsync(ArtistsLibraryStatePresenter.Event.SetSort(sorts = listOfNotNull(it)))
-                },
-            )
+        SimpleTextButton(onClick = { artistsExpanded.value = !artistsExpanded.value }) {
+            Text(if (artistsExpanded.value) "Collapse" else "Expand")
         }
+    }
+
+    if (artistsExpanded.value) {
+        Table(
+            columns = artistColumns(
+                presenter = presenter,
+                artists = state.artists,
+                syncingArtists = state.syncingArtists,
+                syncingArtistAlbums = state.syncingArtistsAlbums,
+            ),
+            items = state.savedArtistIds,
+            onSetSort = {
+                presenter.emitAsync(ArtistsLibraryStatePresenter.Event.SetSort(sorts = listOfNotNull(it)))
+            },
+        )
     }
 }

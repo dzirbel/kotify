@@ -18,21 +18,21 @@ import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.update
 
 class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
-    Presenter<ArtistsLibraryStatePresenter.ViewModel?, ArtistsLibraryStatePresenter.Event>(
+    Presenter<ArtistsLibraryStatePresenter.ViewModel, ArtistsLibraryStatePresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.Load(fromCache = true)),
-        initialState = null
+        initialState = ViewModel()
     ) {
 
     data class ViewModel(
         // ids of the saved artists
-        val savedArtistIds: ListAdapter<String>?,
+        val savedArtistIds: ListAdapter<String> = ListAdapter.empty(),
 
         // map from artist id to the artist model in the cache; separate from savedArtistIds since not all artist models
         // might be present in the cache
-        val artists: Map<String, Artist>,
+        val artists: Map<String, Artist> = emptyMap(),
 
-        val artistsUpdated: Long?,
+        val artistsUpdated: Long? = null,
 
         val syncingSavedArtists: Boolean = false,
 
@@ -59,7 +59,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateState { it?.copy(syncingSavedArtists = true) }
+                mutateState { it.copy(syncingSavedArtists = true) }
 
                 val savedArtistIds = if (event.fromCache) {
                     SavedArtistRepository.getLibraryCached()?.toList()
@@ -72,9 +72,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
 
                 mutateState {
                     ViewModel(
-                        savedArtistIds = savedArtistIds?.let { savedArtistIds ->
-                            ListAdapter.from(elements = savedArtistIds, baseAdapter = it?.savedArtistIds)
-                        },
+                        savedArtistIds = it.savedArtistIds.withElements(savedArtistIds),
                         artists = artists,
                         artistsUpdated = artistsUpdated,
                         syncingSavedArtists = false,
@@ -83,13 +81,13 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             is Event.RefreshArtist -> {
-                mutateState { it?.copy(syncingArtists = it.syncingArtists.plus(event.artistId)) }
+                mutateState { it.copy(syncingArtists = it.syncingArtists.plus(event.artistId)) }
 
                 val artist = ArtistRepository.getRemote(id = event.artistId)
                     ?.also { prepArtists(listOf(it)) }
 
                 mutateState {
-                    it?.copy(
+                    it.copy(
                         artists = it.artists.plus(event.artistId to artist).filterNotNullValues(),
                         syncingArtists = it.syncingArtists.minus(event.artistId),
                     )
@@ -97,7 +95,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             is Event.RefreshArtistAlbums -> {
-                mutateState { it?.copy(syncingArtistsAlbums = it.syncingArtistsAlbums.plus(event.artistId)) }
+                mutateState { it.copy(syncingArtistsAlbums = it.syncingArtistsAlbums.plus(event.artistId)) }
 
                 Artist.getAllAlbums(artistId = event.artistId, allowCache = false)
 
@@ -105,7 +103,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
                     ?.also { prepArtists(listOf(it)) }
 
                 mutateState {
-                    it?.copy(
+                    it.copy(
                         artists = it.artists.plus(event.artistId to artist).filterNotNullValues(),
                         syncingArtistsAlbums = it.syncingArtistsAlbums.minus(event.artistId),
                     )
@@ -116,7 +114,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
                 val artistIds = SavedArtistRepository.getLibraryCached()?.toList()
                 val artists = loadArtists(artistIds = artistIds) { ArtistRepository.getFull(ids = it) }
 
-                mutateState { it?.copy(artists = artists) }
+                mutateState { it.copy(artists = artists) }
             }
 
             Event.InvalidateArtists -> {
@@ -125,7 +123,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
 
                 val artists = loadArtists(artistIds = artistIds)
 
-                mutateState { it?.copy(artists = artists) }
+                mutateState { it.copy(artists = artists) }
             }
 
             Event.FetchMissingArtistAlbums -> {
@@ -142,7 +140,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
                 // reload artists from the cache
                 val artists = loadArtists(artistIds = artistIds)
 
-                mutateState { it?.copy(artists = artists) }
+                mutateState { it.copy(artists = artists) }
             }
 
             Event.InvalidateArtistAlbums -> {
@@ -158,11 +156,11 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
                 val artistIds = SavedArtistRepository.getLibraryCached()?.toList()
                 val artists = loadArtists(artistIds = artistIds)
 
-                mutateState { it?.copy(artists = artists) }
+                mutateState { it.copy(artists = artists) }
             }
 
             is Event.SetSort -> mutateState {
-                it?.copy(savedArtistIds = it.savedArtistIds?.withSort(sorts = event.sorts))
+                it.copy(savedArtistIds = it.savedArtistIds.withSort(sorts = event.sorts))
             }
         }
     }

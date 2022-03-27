@@ -35,7 +35,7 @@ internal class ListAdapterTest {
 
     @Test
     fun testPlainList() {
-        val elements = ListAdapter.from(list)
+        val elements = ListAdapter.of(list)
 
         assertThat(elements.divisions).isEqualTo(mapOf(null to list.withIndex().toList()))
         assertThat(elements.size).isEqualTo(list.size)
@@ -47,7 +47,7 @@ internal class ListAdapterTest {
 
     @Test
     fun testIterator() {
-        val elements = ListAdapter.from(list)
+        val elements = ListAdapter.of(list)
 
         var element = 0
         elements.iterator().forEach {
@@ -60,7 +60,7 @@ internal class ListAdapterTest {
     fun testFilter() {
         val predicate: (Int) -> Boolean = { it % 2 == 0 }
 
-        val elements = ListAdapter.from(list)
+        val elements = ListAdapter.of(list)
             .withFilter(filter = predicate)
 
         assertThat(elements.divisions)
@@ -69,7 +69,7 @@ internal class ListAdapterTest {
 
     @Test
     fun testFilterByString() {
-        val elements = ListAdapter.from(list)
+        val elements = ListAdapter.of(list)
             .withFilterByString(filterString = "0", elementProperty = { it.toString() })
 
         assertThat(elements.divisions)
@@ -78,7 +78,7 @@ internal class ListAdapterTest {
 
     @Test
     fun testSort() {
-        val elementsDescending = ListAdapter.from(list)
+        val elementsDescending = ListAdapter.of(list)
             .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
 
         assertThat(elementsDescending.divisions)
@@ -99,7 +99,7 @@ internal class ListAdapterTest {
 
     @Test
     fun testDivided() {
-        val elementsDescending = ListAdapter.from(list)
+        val elementsDescending = ListAdapter.of(list)
             .withDivider(Divider(Mod3DividableProperty, SortOrder.DESCENDING))
 
         assertThat(elementsDescending.divisions)
@@ -124,7 +124,7 @@ internal class ListAdapterTest {
     fun testCombined() {
         val predicate: (Int) -> Boolean = { it % 2 == 0 }
 
-        val elements = ListAdapter.from(list)
+        val elements = ListAdapter.of(list)
             .withFilter(filter = predicate)
             .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
             .withDivider(Divider(Mod3DividableProperty, SortOrder.DESCENDING))
@@ -149,7 +149,7 @@ internal class ListAdapterTest {
     fun testPlusElements() {
         val predicate: (Int) -> Boolean = { it % 2 == 0 }
 
-        val elements = ListAdapter.from(listOf(0, 1, 2, 3, 4, 5, 16, 17, 18, 19, 20))
+        val elements = ListAdapter.of(listOf(0, 1, 2, 3, 4, 5, 16, 17, 18, 19, 20))
             .withFilter(filter = predicate)
             .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
             .withDivider(Divider(Mod3DividableProperty, SortOrder.DESCENDING))

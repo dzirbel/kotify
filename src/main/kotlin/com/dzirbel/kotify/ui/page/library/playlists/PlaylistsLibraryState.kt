@@ -83,138 +83,135 @@ private fun playlistColumns(
 @Composable
 fun PlaylistsLibraryState() {
     val presenter = rememberPresenter { scope -> PlaylistsLibraryStatePresenter(scope) }
+    val state = presenter.state().stateOrThrow
 
-    presenter.state().stateOrThrow?.let { state ->
-        val playlists = state.savedPlaylistIds
+    if (!state.savedPlaylistIds.hasElements) {
+        InvalidateButton(
+            refreshing = state.syncingSavedPlaylists,
+            updated = state.playlistsUpdated,
+            updatedFallback = "Playlists never synced",
+        ) {
+            presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.Load(fromCache = false))
+        }
 
-        if (playlists == null) {
+        return
+    }
+
+    val playlistsExpanded = remember { mutableStateOf(false) }
+
+    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            val totalSaved = state.savedPlaylistIds.size
+            val totalCached = state.savedPlaylistIds.count { state.playlists[it] != null }
+            val full = state.savedPlaylistIds.count { state.playlists[it]?.fullUpdatedTime != null }
+            val simplified = totalCached - full
+            val tracks = state.savedPlaylistIds.count { state.playlists[it]?.hasAllTracksCached == true }
+
+            Text("$totalSaved Saved Playlists", modifier = Modifier.padding(end = Dimens.space3))
+
             InvalidateButton(
                 refreshing = state.syncingSavedPlaylists,
                 updated = state.playlistsUpdated,
-                updatedFallback = "Playlists never synced",
             ) {
                 presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.Load(fromCache = false))
             }
 
-            return
-        }
+            val inCacheExpanded = remember { mutableStateOf(false) }
+            SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
+                val allInCache = full == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
 
-        val playlistsExpanded = remember { mutableStateOf(false) }
+                HorizontalSpacer(Dimens.space1)
 
-        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val totalSaved = playlists.size
-                val totalCached = playlists.count { state.playlists[it] != null }
-                val full = playlists.count { state.playlists[it]?.fullUpdatedTime != null }
-                val simplified = totalCached - full
-                val tracks = playlists.count { state.playlists[it]?.hasAllTracksCached == true }
+                Text(
+                    "$totalCached/$totalSaved in cache" +
+                        simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
+                )
 
-                Text("$totalSaved Saved Playlists", modifier = Modifier.padding(end = Dimens.space3))
-
-                InvalidateButton(
-                    refreshing = state.syncingSavedPlaylists,
-                    updated = state.playlistsUpdated,
+                DropdownMenu(
+                    expanded = inCacheExpanded.value,
+                    onDismissRequest = { inCacheExpanded.value = false }
                 ) {
-                    presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.Load(fromCache = false))
-                }
-
-                val inCacheExpanded = remember { mutableStateOf(false) }
-                SimpleTextButton(onClick = { inCacheExpanded.value = true }) {
-                    val allInCache = full == totalSaved
-                    CachedIcon(
-                        name = if (allInCache) "check-circle" else "cancel",
-                        size = Dimens.iconSmall,
-                        tint = if (allInCache) Color.Green else Color.Red
-                    )
-
-                    HorizontalSpacer(Dimens.space1)
-
-                    Text(
-                        "$totalCached/$totalSaved in cache" +
-                            simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
-                    )
-
-                    DropdownMenu(
-                        expanded = inCacheExpanded.value,
-                        onDismissRequest = { inCacheExpanded.value = false }
+                    DropdownMenuItem(
+                        enabled = full < totalSaved,
+                        onClick = {
+                            presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.FetchMissingPlaylists)
+                            inCacheExpanded.value = false
+                        }
                     ) {
-                        DropdownMenuItem(
-                            enabled = full < totalSaved,
-                            onClick = {
-                                presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.FetchMissingPlaylists)
-                                inCacheExpanded.value = false
-                            }
-                        ) {
-                            Text("Fetch missing")
-                        }
-
-                        DropdownMenuItem(
-                            onClick = {
-                                presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.InvalidatePlaylists)
-                                inCacheExpanded.value = false
-                            }
-                        ) {
-                            Text("Invalidate all")
-                        }
+                        Text("Fetch missing")
                     }
-                }
 
-                val trackMappingsExpanded = remember { mutableStateOf(false) }
-                SimpleTextButton(onClick = { trackMappingsExpanded.value = true }) {
-                    val allInCache = tracks == totalSaved
-                    CachedIcon(
-                        name = if (allInCache) "check-circle" else "cancel",
-                        size = Dimens.iconSmall,
-                        tint = if (allInCache) Color.Green else Color.Red
-                    )
-
-                    HorizontalSpacer(Dimens.space1)
-
-                    Text("$tracks/$totalSaved track mappings")
-
-                    DropdownMenu(
-                        expanded = trackMappingsExpanded.value,
-                        onDismissRequest = { trackMappingsExpanded.value = false }
+                    DropdownMenuItem(
+                        onClick = {
+                            presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.InvalidatePlaylists)
+                            inCacheExpanded.value = false
+                        }
                     ) {
-                        DropdownMenuItem(
-                            onClick = {
-                                presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.FetchMissingPlaylistTracks)
-                                trackMappingsExpanded.value = false
-                            }
-                        ) {
-                            Text("Fetch missing")
-                        }
-
-                        DropdownMenuItem(
-                            onClick = {
-                                presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.InvalidatePlaylistTracks)
-                                trackMappingsExpanded.value = false
-                            }
-                        ) {
-                            Text("Invalidate all")
-                        }
+                        Text("Invalidate all")
                     }
                 }
             }
 
-            SimpleTextButton(onClick = { playlistsExpanded.value = !playlistsExpanded.value }) {
-                Text(if (playlistsExpanded.value) "Collapse" else "Expand")
+            val trackMappingsExpanded = remember { mutableStateOf(false) }
+            SimpleTextButton(onClick = { trackMappingsExpanded.value = true }) {
+                val allInCache = tracks == totalSaved
+                CachedIcon(
+                    name = if (allInCache) "check-circle" else "cancel",
+                    size = Dimens.iconSmall,
+                    tint = if (allInCache) Color.Green else Color.Red
+                )
+
+                HorizontalSpacer(Dimens.space1)
+
+                Text("$tracks/$totalSaved track mappings")
+
+                DropdownMenu(
+                    expanded = trackMappingsExpanded.value,
+                    onDismissRequest = { trackMappingsExpanded.value = false }
+                ) {
+                    DropdownMenuItem(
+                        onClick = {
+                            presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.FetchMissingPlaylistTracks)
+                            trackMappingsExpanded.value = false
+                        }
+                    ) {
+                        Text("Fetch missing")
+                    }
+
+                    DropdownMenuItem(
+                        onClick = {
+                            presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.InvalidatePlaylistTracks)
+                            trackMappingsExpanded.value = false
+                        }
+                    ) {
+                        Text("Invalidate all")
+                    }
+                }
             }
         }
 
-        if (playlistsExpanded.value) {
-            Table(
-                columns = playlistColumns(
-                    presenter = presenter,
-                    playlists = state.playlists,
-                    syncingPlaylists = state.syncingPlaylists,
-                    syncingPlaylistTracks = state.syncingPlaylistTracks,
-                ),
-                items = state.savedPlaylistIds,
-                onSetSort = {
-                    presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.SetSort(sorts = listOfNotNull(it)))
-                },
-            )
+        SimpleTextButton(onClick = { playlistsExpanded.value = !playlistsExpanded.value }) {
+            Text(if (playlistsExpanded.value) "Collapse" else "Expand")
         }
+    }
+
+    if (playlistsExpanded.value) {
+        Table(
+            columns = playlistColumns(
+                presenter = presenter,
+                playlists = state.playlists,
+                syncingPlaylists = state.syncingPlaylists,
+                syncingPlaylistTracks = state.syncingPlaylistTracks,
+            ),
+            items = state.savedPlaylistIds,
+            onSetSort = {
+                presenter.emitAsync(PlaylistsLibraryStatePresenter.Event.SetSort(sorts = listOfNotNull(it)))
+            },
+        )
     }
 }

@@ -40,7 +40,7 @@ internal class ArtistsScreenshotTest {
             ArtistsPageHeader(
                 presenter = presenter,
                 state = ArtistsPresenter.ViewModel(
-                    artists = ListAdapter.from(listOf(artist)),
+                    artists = ListAdapter.of(listOf(artist)),
                 ),
             )
         }
@@ -73,7 +73,7 @@ internal class ArtistsScreenshotTest {
             ArtistsPageContent(
                 presenter = presenter,
                 state = ArtistsPresenter.ViewModel(
-                    artists = ListAdapter.from(listOf(artist)),
+                    artists = ListAdapter.of(listOf(artist)),
                 ),
             )
         }

@@ -40,7 +40,7 @@ internal class GridTest {
         val horizontalSpacing = 10.dp
         val verticalSpacing = 5.dp
         val elementHeight = 20.dp
-        val elements = ListAdapter.from(listOf(1, 2, 3))
+        val elements = ListAdapter.of(listOf(1, 2, 3))
 
         rule.setContent {
             Theme.apply(colors = Colors.DARK) {
@@ -89,7 +89,7 @@ internal class GridTest {
         screenshotTest(filename = case.filename, colorsSet = setOf(Colors.LIGHT)) {
             Grid(
                 modifier = Modifier.background(Color.Green),
-                elements = ListAdapter.from(List(50) { it }),
+                elements = ListAdapter.of(List(50) { it }),
                 columns = case.columns,
                 horizontalSpacing = 10.dp,
                 verticalSpacing = 5.dp,

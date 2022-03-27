@@ -7,18 +7,18 @@ import com.dzirbel.kotify.ui.framework.Presenter
 import kotlinx.coroutines.CoroutineScope
 
 class TracksLibraryStatePresenter(scope: CoroutineScope) :
-    Presenter<TracksLibraryStatePresenter.ViewModel?, TracksLibraryStatePresenter.Event>(
+    Presenter<TracksLibraryStatePresenter.ViewModel, TracksLibraryStatePresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.Load(fromCache = true)),
-        initialState = null
+        initialState = ViewModel()
     ) {
 
     data class ViewModel(
-        val savedTrackIds: Set<String>?,
+        val savedTrackIds: Set<String>? = null,
 
-        val tracks: List<Track?>,
+        val tracks: List<Track?> = emptyList(),
 
-        val tracksUpdated: Long?,
+        val tracksUpdated: Long? = null,
         val refreshingSavedTracks: Boolean = false,
     )
 
@@ -31,7 +31,7 @@ class TracksLibraryStatePresenter(scope: CoroutineScope) :
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateState { it?.copy(refreshingSavedTracks = true) }
+                mutateState { it.copy(refreshingSavedTracks = true) }
 
                 val savedTrackIds = if (event.fromCache) {
                     SavedTrackRepository.getLibraryCached()
@@ -57,7 +57,7 @@ class TracksLibraryStatePresenter(scope: CoroutineScope) :
 
                 val tracks = TrackRepository.getFull(ids = savedTrackIds)
 
-                mutateState { it?.copy(tracks = tracks) }
+                mutateState { it.copy(tracks = tracks) }
             }
 
             Event.InvalidateTracks -> {
@@ -67,7 +67,7 @@ class TracksLibraryStatePresenter(scope: CoroutineScope) :
 
                 val tracks = TrackRepository.getCached(ids = savedTrackIds)
 
-                mutateState { it?.copy(tracks = tracks) }
+                mutateState { it.copy(tracks = tracks) }
             }
         }
     }

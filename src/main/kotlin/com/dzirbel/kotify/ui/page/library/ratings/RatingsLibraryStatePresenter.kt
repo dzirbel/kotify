@@ -13,22 +13,22 @@ import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 
 class RatingsLibraryStatePresenter(scope: CoroutineScope) :
-    Presenter<RatingsLibraryStatePresenter.ViewModel?, RatingsLibraryStatePresenter.Event>(
+    Presenter<RatingsLibraryStatePresenter.ViewModel, RatingsLibraryStatePresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.Load),
-        initialState = null
+        initialState = ViewModel()
     ) {
 
     data class ViewModel(
         // ids of the rated tracks
-        val ratedTracksIds: ListAdapter<String>,
+        val ratedTracksIds: ListAdapter<String> = ListAdapter.empty(),
 
         // map from track id to the track model in the cache; separate from ratedTracks since not all track models might
         // be present in the cache
-        val tracks: Map<String, Track>,
+        val tracks: Map<String, Track> = emptyMap(),
 
         // map from track id to state of its rating
-        val trackRatings: Map<String, State<Rating?>>,
+        val trackRatings: Map<String, State<Rating?>> = emptyMap(),
     )
 
     sealed class Event {
@@ -53,7 +53,7 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
 
                 mutateState {
                     ViewModel(
-                        ratedTracksIds = ListAdapter.from(elements = ratedTrackIds),
+                        ratedTracksIds = it.ratedTracksIds.withElements(ratedTrackIds),
                         tracks = tracks,
                         trackRatings = trackRatings,
                     )
@@ -65,7 +65,7 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
 
                 mutateState {
                     ViewModel(
-                        ratedTracksIds = ListAdapter.from(elements = emptyList()),
+                        ratedTracksIds = it.ratedTracksIds.withElements(emptyList()),
                         tracks = emptyMap(),
                         trackRatings = emptyMap(),
                     )
@@ -73,7 +73,7 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             is Event.SetSort -> mutateState {
-                it?.copy(ratedTracksIds = it.ratedTracksIds.withSort(sorts = event.sorts))
+                it.copy(ratedTracksIds = it.ratedTracksIds.withSort(sorts = event.sorts))
             }
         }
     }
