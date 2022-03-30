@@ -3,6 +3,7 @@ package com.dzirbel.kotify.db
 import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.db.model.AlbumTable
+import com.dzirbel.kotify.db.model.ArtistAlbumTable
 import com.dzirbel.kotify.db.model.ArtistTable
 import com.dzirbel.kotify.db.model.GenreTable
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
@@ -33,7 +34,6 @@ import java.sql.Connection
 
 private val tables = arrayOf(
     AlbumTable,
-    AlbumTable.AlbumArtistTable,
     AlbumTable.AlbumGenreTable,
     AlbumTable.AlbumImageTable,
     AlbumTable.AlbumTrackTable,
@@ -42,6 +42,7 @@ private val tables = arrayOf(
     ArtistTable.ArtistGenreTable,
     ArtistTable.ArtistImageTable,
     ArtistTable.SavedArtistsTable,
+    ArtistAlbumTable,
     GenreTable,
     GlobalUpdateTimesTable,
     ImageTable,

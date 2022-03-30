@@ -3,8 +3,8 @@ package com.dzirbel.kotify.ui.page.artists
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
@@ -36,7 +36,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
     data class ArtistDetails(
         val savedTime: Instant?,
         val genres: List<String>,
-        val albums: ListAdapter<Album>?,
+        val albums: ListAdapter<ArtistAlbum>?,
     )
 
     data class ViewModel(
@@ -172,9 +172,9 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                 }
 
                 val albums = Artist.getAllAlbums(artistId = artist.id.value)
-                val albumsAdapter = ListAdapter.empty(AlbumNameProperty).withElements(albums)
+                val albumsAdapter = ListAdapter.empty(AlbumNameProperty.ForArtistAlbum).withElements(albums)
                 KotifyDatabase.transaction("load artist ${artist.name} albums images") {
-                    albums.forEach { it.largestImage.loadToCache() }
+                    albums.forEach { it.album.cached.largestImage.loadToCache() }
                 }
 
                 val savedAlbumsState = if (queryState { it.savedAlbumsState } == null) {

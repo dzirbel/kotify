@@ -202,13 +202,13 @@ private fun ArtistDetailInsert(
             Grid(
                 modifier = Modifier.weight(DETAILS_ALBUMS_WEIGHT),
                 elements = albums,
-            ) { _, album ->
+            ) { _, artistAlbum ->
                 SmallAlbumCell(
-                    album = album,
-                    isSaved = state.savedAlbumsState?.value?.contains(album.id.value),
+                    album = artistAlbum.album.cached,
+                    isSaved = state.savedAlbumsState?.value?.contains(artistAlbum.albumId.value),
                     onToggleSave = { save ->
                         presenter.emitAsync(
-                            ArtistsPresenter.Event.ToggleAlbumSaved(albumId = album.id.value, save = save)
+                            ArtistsPresenter.Event.ToggleAlbumSaved(albumId = artistAlbum.albumId.value, save = save)
                         )
                     }
                 )

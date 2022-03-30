@@ -32,12 +32,6 @@ object AlbumTable : SpotifyEntityTable(name = "albums") {
     val label: Column<String?> = text("label").nullable()
     val popularity: Column<Int?> = integer("popularity").nullable()
 
-    object AlbumArtistTable : Table() {
-        val album = reference("album", AlbumTable)
-        val artist = reference("artist", ArtistTable)
-        override val primaryKey = PrimaryKey(album, artist)
-    }
-
     object AlbumImageTable : Table() {
         val album = reference("album", AlbumTable)
         val image = reference("image", ImageTable)
@@ -67,10 +61,13 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
     var label: String? by AlbumTable.label
     var popularity: Int? by AlbumTable.popularity
 
-    val artists: ReadWriteCachedProperty<List<Artist>> by (Artist via AlbumTable.AlbumArtistTable).cachedAsList()
     val images: ReadWriteCachedProperty<List<Image>> by (Image via AlbumTable.AlbumImageTable).cachedAsList()
     val genres: ReadWriteCachedProperty<List<Genre>> by (Genre via AlbumTable.AlbumGenreTable).cachedAsList()
     val tracks: ReadWriteCachedProperty<List<Track>> by (Track via AlbumTable.AlbumTrackTable).cachedAsList()
+
+    val artists: ReadOnlyCachedProperty<List<Artist>> = ReadOnlyCachedProperty {
+        ArtistAlbum.find { ArtistAlbumTable.album eq id }.map { it.artist.live }
+    }
 
     val parsedReleaseDate: ReleaseDate? by lazy {
         releaseDate?.let { ReleaseDate.parse(it) }
@@ -122,7 +119,14 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
                 totalTracks = it
             }
 
-            artists.set(networkModel.artists.mapNotNull { Artist.from(it) })
+            // attempt to link artists from network model; do not set albumGroup since it is unavailable from an album
+            // context
+            networkModel.artists.forEach {
+                Artist.from(it)?.let { artist ->
+                    ArtistAlbum.from(artistId = artist.id.value, albumId = id.value, albumGroup = null)
+                }
+            }
+
             images.set(networkModel.images.map { Image.from(it) })
 
             if (networkModel is FullSpotifyAlbum) {

@@ -50,7 +50,9 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
 
     val images: ReadWriteCachedProperty<List<Image>> by (Image via ArtistTable.ArtistImageTable).cachedAsList()
     val genres: ReadWriteCachedProperty<List<Genre>> by (Genre via ArtistTable.ArtistGenreTable).cachedAsList()
-    val albums: ReadWriteCachedProperty<List<Album>> by (Album via AlbumTable.AlbumArtistTable).cachedAsList()
+
+    val artistAlbums: ReadOnlyCachedProperty<List<ArtistAlbum>> by (ArtistAlbum referrersOn ArtistAlbumTable.artist)
+        .cachedReadOnly(baseToDerived = { it.toList() })
 
     val largestImage: ReadOnlyCachedProperty<Image?> by (Image via ArtistTable.ArtistImageTable)
         .cachedReadOnly { it.largest() }
@@ -84,24 +86,31 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
          * Retrieves the [Album]s by the artist with the given [artistId], from the database if the artist and all their
          * albums are cached or from the network if not, also connecting them in the database along the way.
          */
-        suspend fun getAllAlbums(artistId: String, allowCache: Boolean = true): List<Album> {
+        suspend fun getAllAlbums(artistId: String, allowCache: Boolean = true): List<ArtistAlbum> {
             val artist = KotifyDatabase.transaction("load artist for id $artistId") { findById(id = artistId) }
             if (allowCache && artist?.hasAllAlbums == true) {
-                return KotifyDatabase.transaction("load artist ${artist.name} albums") { artist.albums.live }
+                return KotifyDatabase.transaction("load artist ${artist.name} albums") {
+                    artist.artistAlbums.live
+                        .onEach { it.album.loadToCache() }
+                }
             }
 
             val networkAlbums = Spotify.Artists.getArtistAlbums(id = artistId)
                 .fetchAll<SimplifiedSpotifyAlbum>()
 
             return KotifyDatabase.transaction("save artist ${artist?.name} albums") {
-                // TODO create artist entity if it does not exist in order to save the albums? unlikely to ever happen
-                //  in practice
-                networkAlbums
-                    .mapNotNull { Album.from(it) }
-                    .also {
-                        artist?.albums?.set(it)
-                        artist?.albumsFetched = Instant.now()
+                artist?.albumsFetched = Instant.now()
+
+                networkAlbums.mapNotNull { spotifyAlbum ->
+                    Album.from(spotifyAlbum)?.let { album ->
+                        // TODO what happens if artist entity doesn't exist in DB?
+                        ArtistAlbum.from(
+                            artistId = artistId,
+                            albumId = album.id.value,
+                            albumGroup = spotifyAlbum.albumGroup,
+                        )
                     }
+                }
             }
         }
     }

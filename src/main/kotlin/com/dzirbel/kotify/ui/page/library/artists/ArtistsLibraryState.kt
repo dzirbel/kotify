@@ -73,7 +73,7 @@ private fun artistColumns(
 
             override fun toNumber(item: String): Int? {
                 return artists[item]?.let { artist ->
-                    if (artist.hasAllAlbums) artist.albums.cached.size else null
+                    if (artist.hasAllAlbums) artist.artistAlbums.cached.size else null
                 }
             }
         },

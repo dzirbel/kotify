@@ -115,14 +115,16 @@ fun ArtistPageContent(presenter: ArtistPresenter, state: ArtistPresenter.ViewMod
                 end = Dimens.space5 - Dimens.space3,
                 bottom = Dimens.space3,
             ),
-        ) { _, album ->
+        ) { _, artistAlbum ->
             AlbumCell(
-                album = album,
-                isSaved = state.savedAlbumsState?.value?.contains(album.id.value),
+                album = artistAlbum.album.cached,
+                isSaved = state.savedAlbumsState?.value?.contains(artistAlbum.albumId.value),
                 showRating = true,
-                ratings = state.albumRatings[album.id.value]?.map { it.value },
+                ratings = state.albumRatings[artistAlbum.albumId.value]?.map { it.value },
                 onToggleSave = { save ->
-                    presenter.emitAsync(ArtistPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
+                    presenter.emitAsync(
+                        ArtistPresenter.Event.ToggleSave(albumId = artistAlbum.albumId.value, save = save)
+                    )
                 }
             )
         }

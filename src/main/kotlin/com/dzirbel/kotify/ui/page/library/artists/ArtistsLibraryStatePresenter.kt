@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.ui.page.library.artists
 
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.db.model.AlbumTable
 import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.db.model.ArtistAlbumTable
 import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.ArtistTable
 import com.dzirbel.kotify.db.model.SavedArtistRepository
@@ -145,7 +145,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
 
             Event.InvalidateArtistAlbums -> {
                 KotifyDatabase.transaction("invalidate artists albums") {
-                    AlbumTable.AlbumArtistTable.deleteAll()
+                    ArtistAlbumTable.deleteAll()
 
                     ArtistTable.update(where = { Op.TRUE }) {
                         it[albumsFetched] = null
@@ -178,7 +178,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
 
     private suspend fun prepArtists(artists: Iterable<Artist>) {
         KotifyDatabase.transaction("load artists albums") {
-            artists.forEach { artist -> artist.albums.loadToCache() }
+            artists.forEach { artist -> artist.artistAlbums.loadToCache() }
         }
     }
 }

@@ -3,9 +3,9 @@ package com.dzirbel.kotify.ui.page.artist
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
@@ -44,16 +44,16 @@ class ArtistPresenter(
     data class ViewModel(
         val artist: Artist? = null,
         val refreshingArtist: Boolean = false,
-        val artistAlbums: ListAdapter<Album> = ListAdapter.empty(defaultSort = AlbumNameProperty),
+        val artistAlbums: ListAdapter<ArtistAlbum> = ListAdapter.empty(defaultSort = AlbumNameProperty.ForArtistAlbum),
         val albumRatings: Map<String, List<State<Rating?>>?> = emptyMap(),
         val savedAlbumsState: State<Set<String>?>? = null,
         val refreshingArtistAlbums: Boolean = false,
     ) {
-        val artistAlbumProperties: List<AdapterProperty<Album>> = listOf(
-            AlbumNameProperty,
-            AlbumReleaseDateProperty,
-            AlbumTypeDividableProperty,
-            AlbumRatingProperty(ratings = albumRatings),
+        val artistAlbumProperties: List<AdapterProperty<ArtistAlbum>> = listOf(
+            AlbumNameProperty.ForArtistAlbum,
+            AlbumReleaseDateProperty.ForArtistAlbum,
+            AlbumTypeDividableProperty.ForArtistAlbum,
+            AlbumRatingProperty.ForArtistAlbum(ratings = albumRatings),
         )
     }
 
@@ -66,8 +66,8 @@ class ArtistPresenter(
         ) : Event()
 
         class ToggleSave(val albumId: String, val save: Boolean) : Event()
-        class SetSorts(val sorts: List<Sort<Album>>) : Event()
-        class SetDivider(val divider: Divider<Album>?) : Event()
+        class SetSorts(val sorts: List<Sort<ArtistAlbum>>) : Event()
+        class SetDivider(val divider: Divider<ArtistAlbum>?) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -93,7 +93,7 @@ class ArtistPresenter(
                 }
 
                 val artist: Artist?
-                val artistAlbums: List<Album>?
+                val artistAlbums: List<ArtistAlbum>?
 
                 coroutineScope {
                     val deferredArtist = if (event.refreshArtist) {
@@ -123,9 +123,9 @@ class ArtistPresenter(
 
                 artistAlbums?.let { albums ->
                     val albumUrls = KotifyDatabase.transaction("load artist ${artist?.name} albums tracks and image") {
-                        albums.mapNotNull {
-                            it.trackIds.loadToCache()
-                            it.largestImage.live?.url
+                        albums.mapNotNull { artistAlbum ->
+                            artistAlbum.album.cached.trackIds.loadToCache()
+                            artistAlbum.album.cached.largestImage.live?.url
                         }
                     }
                     SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
@@ -134,14 +134,15 @@ class ArtistPresenter(
                 val savedAlbumsState = SavedAlbumRepository.libraryState()
 
                 val albumRatings = artistAlbums?.let {
-                    artistAlbums.associate { album ->
+                    artistAlbums.associate { artistAlbum ->
+                        val album = artistAlbum.album.cached
                         album.id.value to album.trackIds.cached.let { TrackRatingRepository.ratingStates(ids = it) }
                     }
                 }
 
                 mutateState {
                     ViewModel(
-                        artist = artist ?: it.artist ?: error("no artist"),
+                        artist = checkNotNull(artist ?: it.artist),
                         refreshingArtist = false,
                         artistAlbums = checkNotNull(
                             // apply new elements if we have them, otherwise keep existing adapter
