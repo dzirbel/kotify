@@ -577,9 +577,8 @@ style:
       - 'TODO:'
     allowedPatterns: ''
   ForbiddenImport:
-    active: true
+    active: false
     imports:
-      - 'com.google.common.truth.Truth' # import assertThat() directly
     forbiddenPatterns: ''
   ForbiddenMethodCall:
     active: true # TODO does not appear to work at all
