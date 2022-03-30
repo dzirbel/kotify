@@ -28,9 +28,9 @@ object AlbumTable : SpotifyEntityTable(name = "albums") {
     val albumType: Column<SpotifyAlbum.Type?> = enumeration("album_type", SpotifyAlbum.Type::class).nullable()
     val releaseDate: Column<String?> = text("release_date").nullable()
     val releaseDatePrecision: Column<String?> = text("release_date_precision").nullable()
-    val totalTracks: Column<UInt?> = uinteger("total_tracks").nullable()
+    val totalTracks: Column<Int?> = integer("total_tracks").nullable()
     val label: Column<String?> = text("label").nullable()
-    val popularity: Column<UInt?> = uinteger("popularity").nullable()
+    val popularity: Column<Int?> = integer("popularity").nullable()
 
     object AlbumArtistTable : Table() {
         val album = reference("album", AlbumTable)
@@ -63,9 +63,9 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
     var albumType: SpotifyAlbum.Type? by AlbumTable.albumType
     var releaseDate: String? by AlbumTable.releaseDate
     var releaseDatePrecision: String? by AlbumTable.releaseDatePrecision
-    var totalTracks: UInt? by AlbumTable.totalTracks
+    var totalTracks: Int? by AlbumTable.totalTracks
     var label: String? by AlbumTable.label
-    var popularity: UInt? by AlbumTable.popularity
+    var popularity: Int? by AlbumTable.popularity
 
     val artists: ReadWriteCachedProperty<List<Artist>> by (Artist via AlbumTable.AlbumArtistTable).cachedAsList()
     val images: ReadWriteCachedProperty<List<Image>> by (Image via AlbumTable.AlbumImageTable).cachedAsList()
@@ -94,12 +94,12 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
      * within a transaction.
      */
     val hasAllTracks: Boolean
-        get() = totalTracks?.let { tracks.live.size.toUInt() == it } == true
+        get() = totalTracks?.let { tracks.live.size == it } == true
 
     suspend fun getAllTracks(): List<Track> {
         val cachedTracks = KotifyDatabase.transaction("load album $name tracks") {
             totalTracks?.let { totalTracks ->
-                tracks.live.takeIf { it.size.toUInt() == totalTracks }
+                tracks.live.takeIf { it.size == totalTracks }
             }
         }
         cachedTracks?.let { return it }
@@ -118,7 +118,7 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
             albumType = networkModel.albumType
             releaseDate = networkModel.releaseDate
             releaseDatePrecision = networkModel.releaseDatePrecision
-            networkModel.totalTracks?.toUInt()?.let {
+            networkModel.totalTracks?.let {
                 totalTracks = it
             }
 
@@ -129,8 +129,8 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
                 fullUpdatedTime = Instant.now()
 
                 label = networkModel.label
-                popularity = networkModel.popularity.toUInt()
-                totalTracks = networkModel.tracks.total.toUInt()
+                popularity = networkModel.popularity
+                totalTracks = networkModel.tracks.total
 
                 genres.set(networkModel.genres.map { Genre.from(it) })
                 tracks.set(networkModel.tracks.items.mapNotNull { Track.from(it) })

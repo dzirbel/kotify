@@ -24,8 +24,8 @@ import org.jetbrains.exposed.sql.select
 import java.time.Instant
 
 object ArtistTable : SpotifyEntityTable(name = "artists") {
-    val popularity: Column<UInt?> = uinteger("popularity").nullable()
-    val followersTotal: Column<UInt?> = uinteger("followers_total").nullable()
+    val popularity: Column<Int?> = integer("popularity").nullable()
+    val followersTotal: Column<Int?> = integer("followers_total").nullable()
     val albumsFetched: Column<Instant?> = timestamp("albums_fetched_time").nullable()
 
     object ArtistImageTable : Table() {
@@ -44,8 +44,8 @@ object ArtistTable : SpotifyEntityTable(name = "artists") {
 }
 
 class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable) {
-    var popularity: UInt? by ArtistTable.popularity
-    var followersTotal: UInt? by ArtistTable.followersTotal
+    var popularity: Int? by ArtistTable.popularity
+    var followersTotal: Int? by ArtistTable.followersTotal
     var albumsFetched: Instant? by ArtistTable.albumsFetched
 
     val images: ReadWriteCachedProperty<List<Image>> by (Image via ArtistTable.ArtistImageTable).cachedAsList()
@@ -73,8 +73,8 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
             if (networkModel is FullSpotifyArtist) {
                 fullUpdatedTime = Instant.now()
 
-                popularity = networkModel.popularity.toUInt()
-                followersTotal = networkModel.followers.total.toUInt()
+                popularity = networkModel.popularity
+                followersTotal = networkModel.followers.total
                 images.set(networkModel.images.map { Image.from(it) })
                 genres.set(networkModel.genres.map { Genre.from(it) })
             }

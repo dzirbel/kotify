@@ -21,13 +21,13 @@ import org.jetbrains.exposed.sql.Table
 import java.time.Instant
 
 object TrackTable : SpotifyEntityTable(name = "tracks") {
-    val discNumber: Column<UInt> = uinteger("disc_number")
-    val durationMs: Column<ULong> = ulong("duration_ms")
+    val discNumber: Column<Int> = integer("disc_number")
+    val durationMs: Column<Long> = long("duration_ms")
     val explicit: Column<Boolean> = bool("explicit")
     val local: Column<Boolean> = bool("local")
     val playable: Column<Boolean?> = bool("playable").nullable()
-    val trackNumber: Column<UInt> = uinteger("track_number")
-    val popularity: Column<UInt?> = uinteger("popularity").nullable()
+    val trackNumber: Column<Int> = integer("track_number")
+    val popularity: Column<Int?> = integer("popularity").nullable()
 
     val album: Column<EntityID<String>?> = reference("album", AlbumTable).nullable()
 
@@ -41,13 +41,13 @@ object TrackTable : SpotifyEntityTable(name = "tracks") {
 }
 
 class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
-    var discNumber: UInt by TrackTable.discNumber
-    var durationMs: ULong by TrackTable.durationMs
+    var discNumber: Int by TrackTable.discNumber
+    var durationMs: Long by TrackTable.durationMs
     var explicit: Boolean by TrackTable.explicit
     var local: Boolean by TrackTable.local
     var playable: Boolean? by TrackTable.playable
-    var trackNumber: UInt by TrackTable.trackNumber
-    var popularity: UInt? by TrackTable.popularity
+    var trackNumber: Int by TrackTable.trackNumber
+    var popularity: Int? by TrackTable.popularity
 
     val album: ReadWriteCachedProperty<Album?> by (Album optionalReferencedOn TrackTable.album).cached()
 
@@ -55,12 +55,12 @@ class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
 
     companion object : SpotifyEntityClass<Track, SpotifyTrack>(TrackTable) {
         override fun Track.update(networkModel: SpotifyTrack) {
-            discNumber = networkModel.discNumber.toUInt()
-            durationMs = networkModel.durationMs.toULong() // TODO use ULong in network model?
+            discNumber = networkModel.discNumber
+            durationMs = networkModel.durationMs
             explicit = networkModel.explicit
             local = networkModel.isLocal
             playable = networkModel.isPlayable
-            trackNumber = networkModel.trackNumber.toUInt()
+            trackNumber = networkModel.trackNumber
             networkModel.album
                 ?.let { Album.from(it) }
                 ?.let { album.set(it) }
@@ -69,13 +69,13 @@ class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
 
             if (networkModel is SimplifiedSpotifyTrack) {
                 networkModel.popularity?.let {
-                    popularity = it.toUInt()
+                    popularity = it
                 }
             }
 
             if (networkModel is FullSpotifyTrack) {
                 fullUpdatedTime = Instant.now()
-                popularity = networkModel.popularity.toUInt()
+                popularity = networkModel.popularity
             }
         }
     }

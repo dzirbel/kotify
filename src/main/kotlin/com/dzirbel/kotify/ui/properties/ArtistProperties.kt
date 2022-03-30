@@ -13,8 +13,7 @@ object ArtistPopularityProperty : PropertyByNumber<Artist>(title = "Popularity")
     override val defaultSortOrder = SortOrder.DESCENDING
     override val defaultDivisionSortOrder = SortOrder.DESCENDING
 
-    // TODO allow UInt?
-    override fun toNumber(item: Artist): Int? = item.popularity?.toInt()
+    override fun toNumber(item: Artist): Int? = item.popularity
 }
 
 class ArtistRatingProperty(ratings: Map<String, List<State<Rating?>>?>) : PropertyByAverageRating<Artist>(ratings) {

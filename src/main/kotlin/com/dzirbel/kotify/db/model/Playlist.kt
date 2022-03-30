@@ -32,8 +32,8 @@ object PlaylistTable : SpotifyEntityTable(name = "playlists") {
     val owner: Column<EntityID<String>> = reference("owner", UserTable)
     val public: Column<Boolean?> = bool("public").nullable()
     val snapshotId: Column<String> = varchar("snapshotId", length = SNAPSHOT_ID_LENGTH)
-    val followersTotal: Column<UInt?> = uinteger("followers_total").nullable()
-    val totalTracks: Column<UInt?> = uinteger("total_tracks").nullable()
+    val followersTotal: Column<Int?> = integer("followers_total").nullable()
+    val totalTracks: Column<Int?> = integer("total_tracks").nullable()
 
     object PlaylistImageTable : Table() {
         val playlist = reference("playlist", PlaylistTable)
@@ -49,8 +49,8 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
     var description: String? by PlaylistTable.description
     var public: Boolean? by PlaylistTable.public
     var snapshotId: String by PlaylistTable.snapshotId
-    var followersTotal: UInt? by PlaylistTable.followersTotal
-    var totalTracks: UInt? by PlaylistTable.totalTracks
+    var followersTotal: Int? by PlaylistTable.followersTotal
+    var totalTracks: Int? by PlaylistTable.totalTracks
 
     val owner: ReadWriteCachedProperty<User> by (User referencedOn PlaylistTable.owner).cached()
 
@@ -72,15 +72,15 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
         .cachedReadOnly(baseToDerived = { playlistTracks -> playlistTracks.map { it.track.live } })
 
     val hasAllTracks: Boolean
-        get() = totalTracks?.let { playlistTracks.live.size.toUInt() == it } == true
+        get() = totalTracks?.let { playlistTracks.live.size == it } == true
 
     val hasAllTracksCached: Boolean
-        get() = totalTracks?.let { (playlistTracks.cachedOrNull ?: tracks.cached).size.toUInt() == it } == true
+        get() = totalTracks?.let { (playlistTracks.cachedOrNull ?: tracks.cached).size == it } == true
 
     suspend fun getAllTracks(): List<PlaylistTrack> {
         val cachedTracks = KotifyDatabase.transaction("load tracks for playlist $name") {
             totalTracks?.let { totalTracks ->
-                playlistTracksInOrder.live.takeIf { it.size.toUInt() == totalTracks }
+                playlistTracksInOrder.live.takeIf { it.size == totalTracks }
             }
         }
         cachedTracks?.let { return it }
@@ -108,15 +108,15 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
 
             if (networkModel is SimplifiedSpotifyPlaylist) {
                 networkModel.tracks?.let {
-                    totalTracks = it.total.toUInt()
+                    totalTracks = it.total
                 }
             }
 
             if (networkModel is FullSpotifyPlaylist) {
                 fullUpdatedTime = Instant.now()
-                followersTotal = networkModel.followers.total.toUInt()
+                followersTotal = networkModel.followers.total
 
-                totalTracks = networkModel.tracks.total.toUInt()
+                totalTracks = networkModel.tracks.total
                 networkModel.tracks.items.mapIndexedNotNull { index, track ->
                     PlaylistTrack.from(spotifyPlaylistTrack = track, playlist = this, index = index)
                 }

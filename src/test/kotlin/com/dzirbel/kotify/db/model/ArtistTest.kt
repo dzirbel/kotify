@@ -70,8 +70,8 @@ internal class ArtistTest {
         assertThat(artist.id.value).isEqualTo(fullSpotifyArtist.id)
         assertThat(artist.name).isEqualTo(fullSpotifyArtist.name)
 
-        assertThat(artist.popularity).isEqualTo(fullSpotifyArtist.popularity.toUInt())
-        assertThat(artist.followersTotal).isEqualTo(fullSpotifyArtist.followers.total.toUInt())
+        assertThat(artist.popularity).isEqualTo(fullSpotifyArtist.popularity)
+        assertThat(artist.followersTotal).isEqualTo(fullSpotifyArtist.followers.total)
 
         assertThat(transaction { artist.images.live.map { it.url } }).containsExactlyInAnyOrder("url 1", "url 2")
         assertThat(transaction { artist.genres.live.map { it.name } }).containsExactlyInAnyOrder("genre 1", "genre 2")

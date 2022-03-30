@@ -40,7 +40,7 @@ class AlbumPresenter(
         val refreshing: Boolean = false,
         val album: Album? = null,
         val tracks: ListAdapter<Track> = ListAdapter.empty(),
-        val totalDurationMs: ULong? = null,
+        val totalDurationMs: Long? = null,
         val savedTracksState: State<Set<String>?>? = null,
         val trackRatings: Map<String, State<Rating?>> = emptyMap(),
         val isSavedState: State<Boolean?>? = null,

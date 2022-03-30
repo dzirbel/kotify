@@ -21,7 +21,7 @@ import org.jetbrains.exposed.sql.selectAll
 import java.time.Instant
 
 object UserTable : SpotifyEntityTable(name = "users") {
-    val followersTotal: Column<UInt?> = uinteger("followers_total").nullable()
+    val followersTotal: Column<Int?> = integer("followers_total").nullable()
     val email: Column<String?> = text("email").nullable()
 
     object CurrentUserTable : Table(name = "current_user") {
@@ -36,7 +36,7 @@ object UserTable : SpotifyEntityTable(name = "users") {
 }
 
 class User(id: EntityID<String>) : SpotifyEntity(id = id, table = UserTable) {
-    var followersTotal: UInt? by UserTable.followersTotal
+    var followersTotal: Int? by UserTable.followersTotal
     var email: String? by UserTable.email
 
     val images: ReadWriteCachedProperty<List<Image>> by (Image via UserTable.UserImageTable).cachedAsList()
@@ -50,7 +50,7 @@ class User(id: EntityID<String>) : SpotifyEntity(id = id, table = UserTable) {
             }
 
             networkModel.followers?.let {
-                followersTotal = it.total.toUInt()
+                followersTotal = it.total
             }
 
             if (networkModel is PrivateSpotifyUser) {

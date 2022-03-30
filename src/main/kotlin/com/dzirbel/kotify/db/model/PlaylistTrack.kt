@@ -14,7 +14,7 @@ import org.jetbrains.exposed.sql.deleteWhere
 object PlaylistTrackTable : IntIdTable() {
     val addedAd: Column<String?> = varchar("added_at", 20).nullable()
     val isLocal: Column<Boolean> = bool("is_local")
-    val indexOnPlaylist: Column<UInt> = uinteger("index_on_playlist").default(0.toUInt())
+    val indexOnPlaylist: Column<Int> = integer("index_on_playlist")
 
     val addedBy: Column<EntityID<String>> = reference("user", UserTable)
     val playlist: Column<EntityID<String>> = reference("playlist", PlaylistTable)
@@ -28,7 +28,7 @@ object PlaylistTrackTable : IntIdTable() {
 class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
     var addedAt: String? by PlaylistTrackTable.addedAd
     var isLocal: Boolean by PlaylistTrackTable.isLocal
-    var indexOnPlaylist: UInt by PlaylistTrackTable.indexOnPlaylist
+    var indexOnPlaylist: Int by PlaylistTrackTable.indexOnPlaylist
 
     val addedBy: ReadWriteCachedProperty<User> by (User referencedOn PlaylistTrackTable.addedBy).cached()
     val playlist: ReadWriteCachedProperty<Playlist> by (Playlist referencedOn PlaylistTrackTable.playlist).cached()
@@ -64,7 +64,7 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
                     User.from(spotifyPlaylistTrack.addedBy)?.let { addedBy.set(it) }
                     spotifyPlaylistTrack.addedAt?.let { addedAt = it }
                     isLocal = spotifyPlaylistTrack.isLocal
-                    indexOnPlaylist = index.toUInt()
+                    indexOnPlaylist = index
                 }
             }
         }
