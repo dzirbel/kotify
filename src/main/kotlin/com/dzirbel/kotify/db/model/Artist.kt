@@ -93,18 +93,23 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
                 Spotify.Artists.getArtistAlbums(id = artistId).fetchAll<SimplifiedSpotifyAlbum>()
             },
         ): List<ArtistAlbum> {
-            val artist = KotifyDatabase.transaction("load artist for id $artistId") { findById(id = artistId) }
-            if (allowCache && artist?.hasAllAlbums == true) {
-                return KotifyDatabase.transaction("load artist ${artist.name} albums") {
-                    artist.artistAlbums.live
-                        .onEach { it.album.loadToCache() }
+            var artist: Artist? = null
+            if (allowCache) {
+                KotifyDatabase.transaction("load artist albums for id $artistId") {
+                    findById(id = artistId)
+                        ?.also { artist = it }
+                        ?.takeIf { it.hasAllAlbums }
+                        ?.artistAlbums
+                        ?.live
+                        ?.onEach { it.album.loadToCache() }
                 }
+                    ?.let { return it }
             }
 
             val networkAlbums = fetchAlbums()
 
-            return KotifyDatabase.transaction("save artist ${artist?.name} albums") {
-                artist?.albumsFetched = Instant.now()
+            return KotifyDatabase.transaction("save artist ${artist?.name ?: "id $artistId"} albums") {
+                (artist ?: findById(id = artistId))?.albumsFetched = Instant.now()
 
                 networkAlbums
                     .mapNotNull { spotifyAlbum ->

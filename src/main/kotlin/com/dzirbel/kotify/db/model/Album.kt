@@ -94,12 +94,13 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
         get() = totalTracks?.let { tracks.live.size == it } == true
 
     suspend fun getAllTracks(): List<Track> {
-        val cachedTracks = KotifyDatabase.transaction("load album $name tracks") {
-            totalTracks?.let { totalTracks ->
-                tracks.live.takeIf { it.size == totalTracks }
+        totalTracks
+            ?.let { totalTracks ->
+                KotifyDatabase.transaction("load album $name tracks") {
+                    tracks.live.takeIf { it.size == totalTracks }
+                }
             }
-        }
-        cachedTracks?.let { return it }
+            ?.let { return it }
 
         val networkTracks = Spotify.Albums.getAlbumTracks(id = id.value)
             .fetchAll<SimplifiedSpotifyTrack>()
