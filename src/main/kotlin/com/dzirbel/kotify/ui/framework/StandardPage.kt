@@ -31,7 +31,20 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import kotlinx.coroutines.CoroutineScope
 
-// TODO document
+/**
+ * Binds the main content of a standard [com.dzirbel.kotify.ui.components.Page] via the state provided by a presenter
+ * [P].
+ *
+ * This allows the presenter created by [createPresenter], its state, and a [ScrollState] to be remembered in the scope
+ * of the composition while only rendering page content (consisting of [content] and an optional [header]) when
+ * [visible] is true.
+ *
+ * An optional [key] may be provided which differentiates presenters of the same type in the composition. For example,
+ * in order to maintain distinct presenters when pages for two different artists are present on the page stack, the
+ * [key] could be the artist ID.
+ *
+ * The current (safe) state of the presenter is returned.
+ */
 @Composable
 fun <ViewModel, P : Presenter<ViewModel, *>> BoxScope.BindPresenterPage(
     visible: Boolean,
@@ -46,44 +59,24 @@ fun <ViewModel, P : Presenter<ViewModel, *>> BoxScope.BindPresenterPage(
     val stateOrError = presenter.state()
 
     if (visible) {
-        StandardPage(
-            presenter = presenter,
-            stateOrError = stateOrError,
-            scrollState = scrollState,
-            onHeaderVisibilityChanged = { toggleNavigationTitle(!it) },
-            header = { state -> header(presenter, state) },
-            content = { state -> content(presenter, state) },
-        )
+        when (stateOrError) {
+            is Presenter.StateOrError.Error -> ErrorPage(throwable = stateOrError.throwable, presenter = presenter)
+            is Presenter.StateOrError.State -> StandardPage(
+                state = stateOrError.state,
+                scrollState = scrollState,
+                onHeaderVisibilityChanged = { headerVisible -> toggleNavigationTitle(!headerVisible) },
+                header = { state -> header(presenter, state) },
+                content = { state -> content(presenter, state) },
+            )
+        }
     }
 
     return stateOrError.safeState
 }
 
-// TODO document
-@Composable
-fun <T> BoxScope.StandardPage(
-    presenter: Presenter<T, *>,
-    stateOrError: Presenter.StateOrError<T>,
-    scrollState: ScrollState,
-    header: @Composable (BoxScope.(T) -> Unit)? = null,
-    onHeaderVisibilityChanged: (visible: Boolean) -> Unit = {},
-    content: @Composable ColumnScope.(T) -> Unit,
-) {
-    when (stateOrError) {
-        is Presenter.StateOrError.Error -> ErrorPage(throwable = stateOrError.throwable, presenter = presenter)
-        is Presenter.StateOrError.State -> LoadedPage(
-            state = stateOrError.state,
-            scrollState = scrollState,
-            content = content,
-            header = header,
-            onHeaderVisibilityChanged = onHeaderVisibilityChanged,
-        )
-    }
-}
-
 /**
- * Standard spinner element which occupies the maximum width, typically shown when the main content of a page is being
- * loaded.
+ * Standard indeterminate loading element which occupies the maximum width, typically shown when the main content of a
+ * page is being loaded.
  */
 @Composable
 fun PageLoadingSpinner() {
@@ -98,15 +91,22 @@ fun PageLoadingSpinner() {
     }
 }
 
+/**
+ * The standard page content which renders [content] and an optional [header] inside a vertical scrolling column.
+ *
+ * If [header] is non-null it is rendered above the content and will trigger [onHeaderVisibilityChanged] when its
+ * visibility on the screen changes; if it becomes visible the input will be true or if it becomes hidden the input will
+ * be false.
+ */
 @Composable
-private fun <T> BoxScope.LoadedPage(
+private fun <T> BoxScope.StandardPage(
     state: T,
     scrollState: ScrollState,
     content: @Composable ColumnScope.(T) -> Unit,
     header: @Composable (BoxScope.(T) -> Unit)?,
     onHeaderVisibilityChanged: (visible: Boolean) -> Unit,
 ) {
-    Column(Modifier.verticalScroll(scrollState)) {
+    Column(modifier = Modifier.verticalScroll(scrollState)) {
         if (header != null) {
             val headerVisible = remember { mutableStateOf<Boolean?>(null) }
             Box(
@@ -116,7 +116,7 @@ private fun <T> BoxScope.LoadedPage(
                         headerVisible.value = visible
                         onHeaderVisibilityChanged(visible)
                     }
-                }
+                },
             ) {
                 header(state)
             }
@@ -131,9 +131,13 @@ private fun <T> BoxScope.LoadedPage(
     )
 }
 
+/**
+ * The standard error page displayed when a [Presenter] state is a [Presenter.StateOrError.Error] with the given
+ * [throwable] cause.
+ */
 @Composable
-private fun <T> BoxScope.ErrorPage(throwable: Throwable, presenter: Presenter<T, *>) {
-    Column(Modifier.align(Alignment.Center)) {
+private fun <T> ErrorPage(throwable: Throwable, presenter: Presenter<T, *>) {
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(
             imageVector = Icons.Default.Warning,
             contentDescription = "Error",
@@ -153,9 +157,7 @@ private fun <T> BoxScope.ErrorPage(throwable: Throwable, presenter: Presenter<T,
             fontFamily = FontFamily.Monospace,
         )
 
-        Button(
-            onClick = { presenter.clearError() }
-        ) {
+        Button(onClick = { presenter.clearError() }) {
             Text("Clear")
         }
     }
