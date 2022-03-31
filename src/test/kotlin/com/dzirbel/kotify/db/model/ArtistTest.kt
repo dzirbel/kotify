@@ -73,7 +73,7 @@ internal class ArtistTest {
         val artist = transaction { Artist.from(Fixtures.simplifiedArtist) }
         requireNotNull(artist)
 
-        val albums = runBlocking {
+        val (_, albums) = runBlocking {
             Artist.getAllAlbums(
                 artistId = artist.id.value,
                 allowCache = true,
@@ -86,7 +86,7 @@ internal class ArtistTest {
         assertThat(albums.map { it.album.cached.name }).containsExactlyElementsOf(Fixtures.albums.map { it.name })
         assertThat(albums.map { it.albumGroup }).containsExactlyElementsOf(Fixtures.albums.map { it.albumGroup })
 
-        val cachedAlbums = runBlocking {
+        val (_, cachedAlbums) = runBlocking {
             Artist.getAllAlbums(artistId = "id1", allowCache = true, fetchAlbums = { emptyList() })
         }
 
@@ -99,7 +99,7 @@ internal class ArtistTest {
 
     @Test
     fun testGetAllAlbumsNoArtistEntity() {
-        val albums = runBlocking {
+        val (artist, albums) = runBlocking {
             Artist.getAllAlbums(
                 artistId = "id1",
                 allowCache = true,
@@ -107,15 +107,17 @@ internal class ArtistTest {
             )
         }
 
+        assertThat(artist).isNull()
         assertThat(albums).hasSameSizeAs(Fixtures.albums)
         assertThat(albums.map { it.albumId.value }).containsExactlyElementsOf(Fixtures.albums.map { it.id })
         assertThat(albums.map { it.album.cached.name }).containsExactlyElementsOf(Fixtures.albums.map { it.name })
         assertThat(albums.map { it.albumGroup }).containsExactlyElementsOf(Fixtures.albums.map { it.albumGroup })
 
-        val cachedAlbums = runBlocking {
+        val (artist2, cachedAlbums) = runBlocking {
             Artist.getAllAlbums(artistId = "id1", allowCache = true, fetchAlbums = { emptyList() })
         }
 
+        assertThat(artist2).isNull()
         // cached albums use new fetched values (empty) because artist entity does not exist
         assertThat(cachedAlbums).isEmpty()
     }

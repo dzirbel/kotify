@@ -3,7 +3,6 @@ package com.dzirbel.kotify.ui.page.artist
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.db.model.AlbumRepository
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.db.model.ArtistRepository
@@ -20,9 +19,6 @@ import com.dzirbel.kotify.ui.properties.AlbumRatingProperty
 import com.dzirbel.kotify.ui.properties.AlbumReleaseDateProperty
 import com.dzirbel.kotify.ui.properties.AlbumTypeDividableProperty
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 
 class ArtistPresenter(
     private val artistId: String,
@@ -31,12 +27,8 @@ class ArtistPresenter(
     scope = scope,
     key = artistId,
     startingEvents = listOf(
-        Event.Load(
-            refreshArtist = true,
-            refreshArtistAlbums = true,
-            invalidateArtist = false,
-            invalidateArtistAlbums = false
-        )
+        Event.LoadArtist(invalidate = false),
+        Event.LoadArtistAlbums(invalidate = false),
     ),
     initialState = ViewModel(),
 ) {
@@ -58,12 +50,8 @@ class ArtistPresenter(
     }
 
     sealed class Event {
-        data class Load(
-            val refreshArtist: Boolean,
-            val refreshArtistAlbums: Boolean,
-            val invalidateArtist: Boolean,
-            val invalidateArtistAlbums: Boolean,
-        ) : Event()
+        data class LoadArtist(val invalidate: Boolean) : Event()
+        data class LoadArtistAlbums(val invalidate: Boolean) : Event()
 
         class ToggleSave(val albumId: String, val save: Boolean) : Event()
         class SetSorts(val sorts: List<Sort<ArtistAlbum>>) : Event()
@@ -72,85 +60,47 @@ class ArtistPresenter(
 
     override suspend fun reactTo(event: Event) {
         when (event) {
-            is Event.Load -> {
+            is Event.LoadArtist -> {
+                mutateState { it.copy(refreshingArtist = true) }
+
+                val artist = if (event.invalidate) {
+                    ArtistRepository.getRemote(id = artistId)
+                } else {
+                    ArtistRepository.get(id = artistId)
+                }
+
                 mutateState {
-                    it.copy(
-                        refreshingArtist = event.refreshArtist,
-                        refreshingArtistAlbums = event.refreshArtistAlbums
-                    )
+                    it.copy(artist = artist, refreshingArtist = false)
                 }
+            }
 
-                if (event.invalidateArtist) {
-                    AlbumRepository.invalidate(id = artistId)
-                }
+            is Event.LoadArtistAlbums -> {
+                mutateState { it.copy(refreshingArtistAlbums = true) }
 
-                if (event.invalidateArtistAlbums) {
-                    ArtistRepository.getCached(id = artistId)?.let { artist ->
-                        KotifyDatabase.transaction("invalidate artist ${artist.name} albums") {
-                            artist.albumsFetched = null
-                        }
+                val (artist, artistAlbums) = Artist.getAllAlbums(artistId = artistId, allowCache = !event.invalidate)
+
+                val albumUrls = KotifyDatabase.transaction("load artist ${artist?.name} albums tracks and image") {
+                    artistAlbums.mapNotNull { artistAlbum ->
+                        artistAlbum.album.cached.trackIds.loadToCache()
+                        artistAlbum.album.cached.largestImage.live?.url
                     }
                 }
-
-                val artist: Artist?
-                val artistAlbums: List<ArtistAlbum>?
-
-                coroutineScope {
-                    val deferredArtist = if (event.refreshArtist) {
-                        async(Dispatchers.IO) {
-                            ArtistRepository.getFull(id = artistId)
-                        }
-                    } else {
-                        null
-                    }
-
-                    val deferredArtistAlbums = if (event.refreshArtistAlbums) {
-                        async(Dispatchers.IO) {
-                            Artist.getAllAlbums(artistId = artistId)
-                        }
-                    } else {
-                        null
-                    }
-
-                    artist = deferredArtist?.await()
-                    artistAlbums = deferredArtistAlbums?.await()
-                }
-
-                artist?.let {
-                    // refresh artist to get updated album fetch time
-                    KotifyDatabase.transaction("refresh artist ${artist.name}") { artist.refresh() }
-                }
-
-                artistAlbums?.let { albums ->
-                    val albumUrls = KotifyDatabase.transaction("load artist ${artist?.name} albums tracks and image") {
-                        albums.mapNotNull { artistAlbum ->
-                            artistAlbum.album.cached.trackIds.loadToCache()
-                            artistAlbum.album.cached.largestImage.live?.url
-                        }
-                    }
-                    SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
-                }
+                SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
 
                 val savedAlbumsState = SavedAlbumRepository.libraryState()
 
-                val albumRatings = artistAlbums?.let {
-                    artistAlbums.associate { artistAlbum ->
-                        val album = artistAlbum.album.cached
-                        album.id.value to album.trackIds.cached.let { TrackRatingRepository.ratingStates(ids = it) }
-                    }
+                val albumRatings = artistAlbums.associate { artistAlbum ->
+                    val album = artistAlbum.album.cached
+                    album.id.value to album.trackIds.cached.let { TrackRatingRepository.ratingStates(ids = it) }
                 }
 
                 mutateState {
-                    ViewModel(
-                        artist = checkNotNull(artist ?: it.artist),
-                        refreshingArtist = false,
-                        artistAlbums = checkNotNull(
-                            // apply new elements if we have them, otherwise keep existing adapter
-                            artistAlbums
-                                ?.let { _ -> it.artistAlbums.withElements(artistAlbums) }
-                                ?: it.artistAlbums
-                        ),
-                        albumRatings = checkNotNull(albumRatings ?: it.albumRatings),
+                    it.copy(
+                        // apply new artist model in order to update album refresh time
+                        // TODO race condition with loading artist
+                        artist = artist ?: it.artist,
+                        artistAlbums = it.artistAlbums.withElements(artistAlbums),
+                        albumRatings = albumRatings,
                         savedAlbumsState = savedAlbumsState,
                         refreshingArtistAlbums = false,
                     )

@@ -49,18 +49,11 @@ fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewMode
                         InvalidateButton(
                             contentPadding = PaddingValues(all = Dimens.space2),
                             refreshing = state.refreshingArtist,
-                            updated = state.artist.updatedTime.toEpochMilli(),
+                            updated = state.artist.fullUpdatedTime?.toEpochMilli(),
                             updatedFormat = { "Artist synced $it" },
                             updatedFallback = "Artist never synced",
                             onClick = {
-                                presenter.emitAsync(
-                                    ArtistPresenter.Event.Load(
-                                        refreshArtist = true,
-                                        invalidateArtist = true,
-                                        refreshArtistAlbums = false,
-                                        invalidateArtistAlbums = false
-                                    )
-                                )
+                                presenter.emitAsync(ArtistPresenter.Event.LoadArtist(invalidate = true))
                             }
                         )
 
@@ -69,19 +62,11 @@ fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewMode
                         InvalidateButton(
                             contentPadding = PaddingValues(all = Dimens.space2),
                             refreshing = state.refreshingArtistAlbums,
-                            // TODO doesn't update when only the albums are synced (but artist model is not)
                             updated = state.artist.albumsFetched?.toEpochMilli(),
                             updatedFormat = { "Albums synced $it" },
                             updatedFallback = "Albums never synced",
                             onClick = {
-                                presenter.emitAsync(
-                                    ArtistPresenter.Event.Load(
-                                        refreshArtist = false,
-                                        invalidateArtist = false,
-                                        refreshArtistAlbums = true,
-                                        invalidateArtistAlbums = true
-                                    )
-                                )
+                                presenter.emitAsync(ArtistPresenter.Event.LoadArtistAlbums(invalidate = true))
                             }
                         )
                     }

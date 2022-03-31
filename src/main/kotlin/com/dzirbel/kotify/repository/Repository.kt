@@ -76,12 +76,18 @@ interface Repository<E> {
 
     /**
      * Invalidates the entity with the given [id], returning true if it existed and was invalidated or false otherwise.
+     *
+     * TODO invalidating may clear local state (e.g. time artist albums were fetched) - maybe remove this entirely and
+     *  just load from remote in cases where we want fresh data
      */
     suspend fun invalidate(id: String): Boolean = invalidate(ids = listOf(id))[0]
 
     /**
      * Invalidates the entities with the given [ids], returning true for each if it existed and was invalidates or false
      * otherwise.
+     *
+     * TODO invalidating may clear local state (e.g. time artist albums were fetched) - maybe remove this entirely and
+     *  just load from remote in cases where we want fresh data
      */
     suspend fun invalidate(ids: Iterable<String>): List<Boolean>
 }

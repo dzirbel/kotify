@@ -134,7 +134,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
                     .filterValues { artist -> !artist.hasAllAlbums }
                     .values
                     .flatMapParallel { artist ->
-                        Artist.getAllAlbums(artistId = artist.id.value)
+                        Artist.getAllAlbums(artistId = artist.id.value).second
                     }
 
                 // reload artists from the cache

@@ -171,7 +171,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                     it.copy(artistDetails = it.artistDetails.plus(artist.id.value to details))
                 }
 
-                val albums = Artist.getAllAlbums(artistId = artist.id.value)
+                val (_, albums) = Artist.getAllAlbums(artistId = artist.id.value)
                 val albumsAdapter = ListAdapter.empty(AlbumNameProperty.ForArtistAlbum).withElements(albums)
                 KotifyDatabase.transaction("load artist ${artist.name} albums images") {
                     albums.forEach { it.album.cached.largestImage.loadToCache() }
