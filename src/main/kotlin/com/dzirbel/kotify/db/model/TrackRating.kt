@@ -136,7 +136,6 @@ object TrackRatingRepository : RatingRepository {
         return state
     }
 
-    // TODO attempt to share logic from Repository.get()?
     override suspend fun ratingStates(ids: List<String>, userId: String): List<State<Rating?>> {
         val missingIndices = ArrayList<IndexedValue<String>>()
 
