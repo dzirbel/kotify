@@ -39,7 +39,7 @@ class AlbumPresenter(
     data class ViewModel(
         val refreshing: Boolean = false,
         val album: Album? = null,
-        val tracks: ListAdapter<Track> = ListAdapter.empty(),
+        val tracks: ListAdapter<Track> = ListAdapter.empty(defaultSort = TrackAlbumIndexProperty),
         val totalDurationMs: Long? = null,
         val savedTracksState: State<Set<String>?>? = null,
         val trackRatings: Map<String, State<Rating?>> = emptyMap(),
@@ -50,7 +50,7 @@ class AlbumPresenter(
             TrackPlayingColumn(
                 trackIdOf = { it.id.value },
                 playContextFromTrack = { track ->
-                    Player.PlayContext.albumTrack(album = album!!, index = track.trackNumber.toInt())
+                    Player.PlayContext.albumTrack(album = album!!, index = track.trackNumber)
                 }
             ),
             TrackAlbumIndexProperty,
@@ -84,8 +84,7 @@ class AlbumPresenter(
                     album.artists.loadToCache()
                 }
 
-                // TODO replace with ListAdapter sorting
-                val tracks = album.getAllTracks().sortedBy { it.trackNumber }
+                val tracks = album.getAllTracks()
                 KotifyDatabase.transaction("load album ${album.name} tracks artists") {
                     tracks.onEach { it.artists.loadToCache() }
                 }
