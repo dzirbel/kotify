@@ -10,6 +10,7 @@ import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
+import java.time.Instant
 
 object PlaylistTrackTable : IntIdTable() {
     val addedAd: Column<String?> = varchar("added_at", 20).nullable()
@@ -33,6 +34,10 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
     val addedBy: ReadWriteCachedProperty<User> by (User referencedOn PlaylistTrackTable.addedBy).cached()
     val playlist: ReadWriteCachedProperty<Playlist> by (Playlist referencedOn PlaylistTrackTable.playlist).cached()
     val track: ReadWriteCachedProperty<Track> by (Track referencedOn PlaylistTrackTable.track).cached()
+
+    val addedAtInstant: Instant? by lazy {
+        addedAt?.let { Instant.parse(it) }
+    }
 
     companion object : IntEntityClass<PlaylistTrack>(PlaylistTrackTable) {
         /**
