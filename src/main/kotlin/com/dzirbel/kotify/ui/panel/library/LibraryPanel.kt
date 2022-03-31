@@ -31,6 +31,7 @@ import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.page.albums.AlbumsPage
 import com.dzirbel.kotify.ui.page.artists.ArtistsPage
 import com.dzirbel.kotify.ui.page.library.LibraryStatePage
@@ -41,7 +42,6 @@ import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
-import com.dzirbel.kotify.ui.util.HandleState
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.Dispatchers
 
@@ -131,25 +131,26 @@ fun LibraryPanel() {
 
             VerticalSpacer(Dimens.space3)
 
-            HandleState(
-                state = { stateOrError },
-                onError = {
+            when (stateOrError) {
+                is Presenter.StateOrError.Error ->
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = null,
                         modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally),
                         tint = LocalColors.current.error
                     )
-                },
-                onLoading = {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally)
-                    )
-                },
-                onSuccess = { state ->
-                    state.playlists.forEach { playlist -> PlaylistItem(playlist) }
+
+                is Presenter.StateOrError.State -> {
+                    val state = stateOrError.state
+                    if (state != null) {
+                        state.playlists.forEach { playlist -> PlaylistItem(playlist) }
+                    } else {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally)
+                        )
+                    }
                 }
-            )
+            }
         }
     }
 }

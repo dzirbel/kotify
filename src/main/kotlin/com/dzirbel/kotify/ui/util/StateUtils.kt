@@ -9,7 +9,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import com.dzirbel.kotify.ui.framework.Presenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -100,24 +99,4 @@ fun <T> iterativeState(key: Any? = null, generate: () -> Pair<T, Long>): T {
             delay(delay)
         }
     }.value
-}
-
-/**
- * Handles the three possible states of [state]: an exception is thrown, in which case [onError] is invoked with the
- * exception; null is returned, in which case [onLoading] is invoked; or a non-null [T] is returned in which case
- * [onSuccess] with the value.
- *
- * TODO: remove (only used by LibraryPanel)
- */
-@Composable
-fun <T> HandleState(
-    state: @Composable () -> Presenter.StateOrError<T?>,
-    onError: @Composable (Throwable) -> Unit,
-    onLoading: @Composable () -> Unit,
-    onSuccess: @Composable (T) -> Unit,
-) {
-    when (val stateOrError = state()) {
-        is Presenter.StateOrError.Error -> onError(stateOrError.throwable)
-        is Presenter.StateOrError.State -> stateOrError.state?.also { onSuccess(it) } ?: onLoading()
-    }
 }
