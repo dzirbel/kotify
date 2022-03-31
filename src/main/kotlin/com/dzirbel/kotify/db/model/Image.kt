@@ -16,6 +16,7 @@ import java.util.UUID
  */
 fun SizedIterable<Image>.largest(): Image? {
     return this
+        .copy() // copy to ensure SizedIterable has not already been loaded
         .orderBy(ImageTable.width.times(ImageTable.height) to SortOrder.DESC)
         .limit(1)
         .firstOrNull()
@@ -26,6 +27,7 @@ fun SizedIterable<Image>.largest(): Image? {
  */
 fun SizedIterable<Image>.smallest(): Image? {
     return this
+        .copy() // copy to ensure SizedIterable has not already been loaded
         .orderBy(ImageTable.width.times(ImageTable.height) to SortOrder.ASC)
         .limit(1)
         .firstOrNull()

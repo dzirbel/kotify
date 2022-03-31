@@ -86,7 +86,13 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
          * Retrieves the [Album]s by the artist with the given [artistId], from the database if the artist and all their
          * albums are cached or from the network if not, also connecting them in the database along the way.
          */
-        suspend fun getAllAlbums(artistId: String, allowCache: Boolean = true): List<ArtistAlbum> {
+        suspend fun getAllAlbums(
+            artistId: String,
+            allowCache: Boolean = true,
+            fetchAlbums: suspend () -> List<SimplifiedSpotifyAlbum> = {
+                Spotify.Artists.getArtistAlbums(id = artistId).fetchAll<SimplifiedSpotifyAlbum>()
+            },
+        ): List<ArtistAlbum> {
             val artist = KotifyDatabase.transaction("load artist for id $artistId") { findById(id = artistId) }
             if (allowCache && artist?.hasAllAlbums == true) {
                 return KotifyDatabase.transaction("load artist ${artist.name} albums") {
@@ -95,22 +101,22 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
                 }
             }
 
-            val networkAlbums = Spotify.Artists.getArtistAlbums(id = artistId)
-                .fetchAll<SimplifiedSpotifyAlbum>()
+            val networkAlbums = fetchAlbums()
 
             return KotifyDatabase.transaction("save artist ${artist?.name} albums") {
                 artist?.albumsFetched = Instant.now()
 
-                networkAlbums.mapNotNull { spotifyAlbum ->
-                    Album.from(spotifyAlbum)?.let { album ->
-                        // TODO what happens if artist entity doesn't exist in DB?
-                        ArtistAlbum.from(
-                            artistId = artistId,
-                            albumId = album.id.value,
-                            albumGroup = spotifyAlbum.albumGroup,
-                        )
+                networkAlbums
+                    .mapNotNull { spotifyAlbum ->
+                        Album.from(spotifyAlbum)?.let { album ->
+                            ArtistAlbum.from(
+                                artistId = artistId,
+                                albumId = album.id.value,
+                                albumGroup = spotifyAlbum.albumGroup,
+                            )
+                        }
                     }
-                }
+                    .onEach { it.album.loadToCache() }
             }
         }
     }
