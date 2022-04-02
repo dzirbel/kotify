@@ -21,14 +21,14 @@ internal class SpotifyTracksTest {
     fun getAudioFeatures(trackProperties: TrackProperties) {
         val audioFeatures = runBlocking { Spotify.Tracks.getAudioFeatures(trackProperties.id!!) }
 
-        assertThat(audioFeatures).isNotNull() // TODO more assertions
+        assertThat(audioFeatures).isNotNull()
     }
 
     @Test
     fun getAudioFeatures() {
         val audioFeatures = runBlocking { Spotify.Tracks.getAudioFeatures(Fixtures.tracks.map { it.id!! }) }
 
-        assertThat(audioFeatures).hasSameSizeAs(Fixtures.tracks) // TODO more assertions
+        assertThat(audioFeatures).hasSameSizeAs(Fixtures.tracks)
     }
 
     @ParameterizedTest
@@ -36,7 +36,7 @@ internal class SpotifyTracksTest {
     fun getAudioAnalysis(trackProperties: TrackProperties) {
         val audioAnalysis = runBlocking { Spotify.Tracks.getAudioAnalysis(trackProperties.id!!) }
 
-        assertThat(audioAnalysis).isNotNull() // TODO more assertions
+        assertThat(audioAnalysis).isNotNull()
     }
 
     @ParameterizedTest
