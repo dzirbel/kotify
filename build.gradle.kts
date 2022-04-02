@@ -51,6 +51,7 @@ dependencies {
 
     testImplementation(deps.assertk)
     testImplementation(deps.mockk)
+    testImplementation(deps.compose.swing) // Swing dispatcher for screenshot tests
 
     testFixturesImplementation(deps.assertk)
     testFixturesImplementation(compose.desktop.currentOs)

@@ -16,9 +16,10 @@ dependencyResolutionManagement {
             }
 
             // https://github.com/jetbrains/compose-jb
-            version("compose", "1.1.0").let { version ->
+            version("compose", "1.1.1").let { version ->
                 plugin("compose", "org.jetbrains.compose").versionRef(version)
 
+                library("compose-swing", "org.jetbrains.kotlinx", "kotlinx-coroutines-swing").versionRef(version)
                 library("compose-test-junit4", "org.jetbrains.compose.ui", "ui-test-junit4").versionRef(version)
             }
 
