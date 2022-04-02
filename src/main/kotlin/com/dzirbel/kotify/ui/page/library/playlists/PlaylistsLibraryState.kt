@@ -59,15 +59,14 @@ private fun playlistColumns(
         object : ColumnByNumber<String> {
             override val title = "Tracks"
 
-            override fun toNumber(item: String) = playlists[item]?.totalTracks?.toInt()
+            override fun toNumber(item: String) = playlists[item]?.totalTracks
         },
 
         object : InvalidateButtonColumn<String> {
             override val title = "Sync tracks"
 
             override fun timestampFor(item: String): Long? {
-                // TODO store time playlist tracks were synced instead of using 0
-                return 0L.takeIf { playlists[item]?.hasAllTracksCached == true }
+                return playlists[item]?.tracksFetched?.toEpochMilli()
             }
 
             override fun isRefreshing(item: String) = syncingPlaylistTracks.contains(item)
@@ -103,7 +102,7 @@ fun PlaylistsLibraryState(presenter: PlaylistsLibraryStatePresenter) {
             val totalCached = state.savedPlaylistIds.count { state.playlists[it] != null }
             val full = state.savedPlaylistIds.count { state.playlists[it]?.fullUpdatedTime != null }
             val simplified = totalCached - full
-            val tracks = state.savedPlaylistIds.count { state.playlists[it]?.hasAllTracksCached == true }
+            val tracks = state.savedPlaylistIds.count { state.playlists[it]?.hasAllTracks == true }
 
             Text("$totalSaved Saved Playlists", modifier = Modifier.padding(end = Dimens.space3))
 

@@ -94,13 +94,23 @@ fun PlaylistPageHeader(presenter: PlaylistPresenter, state: PlaylistPresenter.Vi
             }
         }
 
-        InvalidateButton(
-            refreshing = state.refreshing,
-            updated = state.playlistUpdated,
-            updatedFormat = { "Playlist synced $it" },
-            updatedFallback = "Playlist never synced",
-            onClick = { presenter.emitAsync(PlaylistPresenter.Event.Load(invalidate = true)) }
-        )
+        Row {
+            InvalidateButton(
+                refreshing = state.refreshing,
+                updated = state.playlist?.updatedTime?.toEpochMilli(),
+                updatedFormat = { "Playlist synced $it" },
+                updatedFallback = "Playlist never synced",
+                onClick = { presenter.emitAsync(PlaylistPresenter.Event.Load(invalidate = true)) }
+            )
+
+            InvalidateButton(
+                refreshing = state.refreshingTracks,
+                updated = state.playlist?.tracksFetched?.toEpochMilli(),
+                updatedFormat = { "Tracks synced $it" },
+                updatedFallback = "Tracks never synced",
+                onClick = { presenter.emitAsync(PlaylistPresenter.Event.LoadTracks(invalidate = true)) }
+            )
+        }
     }
 }
 

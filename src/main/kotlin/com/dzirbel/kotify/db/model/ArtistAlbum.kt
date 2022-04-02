@@ -30,10 +30,6 @@ class ArtistAlbum(id: EntityID<Int>) : IntEntity(id) {
                 (ArtistAlbumTable.album eq albumId) and (ArtistAlbumTable.artist eq artistId)
             }
                 .firstOrNull()
-                ?.also {
-                    it.albumId = EntityID(id = albumId, table = AlbumTable)
-                    it.artistId = EntityID(id = artistId, table = ArtistTable)
-                }
                 ?: ArtistAlbum.new {
                     this.albumId = EntityID(id = albumId, table = AlbumTable)
                     this.artistId = EntityID(id = artistId, table = ArtistTable)

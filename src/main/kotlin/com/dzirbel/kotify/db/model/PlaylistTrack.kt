@@ -27,6 +27,9 @@ object PlaylistTrackTable : IntIdTable() {
 }
 
 class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
+    var playlistId: EntityID<String> by PlaylistTrackTable.playlist
+    var trackId: EntityID<String> by PlaylistTrackTable.track
+
     var addedAt: String? by PlaylistTrackTable.addedAd
     var isLocal: Boolean by PlaylistTrackTable.isLocal
     var indexOnPlaylist: Int by PlaylistTrackTable.indexOnPlaylist
@@ -40,18 +43,15 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
     }
 
     companion object : IntEntityClass<PlaylistTrack>(PlaylistTrackTable) {
-        /**
-         * Returns the [PlaylistTrack] for the given [track] and [playlist], creating one if it does not exist.
-         */
-        private fun recordFor(track: Track, playlist: Playlist): PlaylistTrack {
+        private fun recordFor(trackId: String, playlistId: String): PlaylistTrack {
             return find {
                 @Suppress("UnnecessaryParentheses")
-                (PlaylistTrackTable.track eq track.id) and (PlaylistTrackTable.playlist eq playlist.id)
+                (PlaylistTrackTable.track eq trackId) and (PlaylistTrackTable.playlist eq playlistId)
             }
                 .firstOrNull()
                 ?: new {
-                    this.track.set(track)
-                    this.playlist.set(playlist)
+                    this.trackId = EntityID(id = trackId, table = TrackTable)
+                    this.playlistId = EntityID(id = playlistId, table = PlaylistTable)
                 }
         }
 
@@ -63,9 +63,9 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
          *
          * Must be called from within a transaction.
          */
-        fun from(spotifyPlaylistTrack: SpotifyPlaylistTrack, playlist: Playlist, index: Int): PlaylistTrack? {
+        fun from(spotifyPlaylistTrack: SpotifyPlaylistTrack, playlistId: String, index: Int): PlaylistTrack? {
             return Track.from(spotifyPlaylistTrack.track)?.let { track ->
-                recordFor(track = track, playlist = playlist).apply {
+                recordFor(trackId = track.id.value, playlistId = playlistId).apply {
                     User.from(spotifyPlaylistTrack.addedBy)?.let { addedBy.set(it) }
                     spotifyPlaylistTrack.addedAt?.let { addedAt = it }
                     isLocal = spotifyPlaylistTrack.isLocal

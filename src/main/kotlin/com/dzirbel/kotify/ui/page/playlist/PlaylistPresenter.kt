@@ -35,19 +35,19 @@ class PlaylistPresenter(
 ) : Presenter<PlaylistPresenter.ViewModel, PlaylistPresenter.Event>(
     scope = scope,
     key = playlistId,
-    startingEvents = listOf(Event.Load(invalidate = false)),
+    startingEvents = listOf(Event.Load(invalidate = false), Event.LoadTracks(invalidate = false)),
     initialState = ViewModel()
 ) {
 
     data class ViewModel(
         val refreshing: Boolean = false,
+        val refreshingTracks: Boolean = false,
         val reordering: Boolean = false,
         val playlist: Playlist? = null,
         val tracks: ListAdapter<PlaylistTrack> = ListAdapter.empty(defaultSort = PlaylistTrackIndexProperty),
         val trackRatings: Map<String, State<Rating?>> = emptyMap(),
         val savedTracksState: State<Set<String>?>? = null,
         val isSavedState: State<Boolean?>? = null,
-        val playlistUpdated: Long? = null,
     ) {
         val playlistTrackColumns = listOf(
             TrackPlayingColumn(
@@ -55,7 +55,7 @@ class PlaylistPresenter(
                 playContextFromTrack = { track ->
                     Player.PlayContext.playlistTrack(
                         playlist = requireNotNull(playlist),
-                        index = track.indexOnPlaylist.toInt(),
+                        index = track.indexOnPlaylist,
                     )
                 },
             ),
@@ -73,6 +73,7 @@ class PlaylistPresenter(
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
+        data class LoadTracks(val invalidate: Boolean) : Event()
         data class ToggleSave(val save: Boolean) : Event()
         data class SetSorts(val sorts: List<Sort<PlaylistTrack>>) : Event()
         data class Order(val tracks: ListAdapter<PlaylistTrack>) : Event()
@@ -81,19 +82,17 @@ class PlaylistPresenter(
     override suspend fun reactTo(event: Event) {
         when (event) {
             is Event.Load -> {
-                mutateState { it.copy(refreshing = true) }
-
                 if (event.invalidate) {
-                    PlaylistRepository.invalidate(id = playlistId)
-                    KotifyDatabase.transaction("invalid playlist id $playlistId") {
-                        PlaylistTrack.invalidate(playlistId = playlistId)
-                    }
+                    mutateState { it.copy(refreshing = true) }
                 }
 
-                val playlist = PlaylistRepository.getFull(id = playlistId)
+                val playlist = if (event.invalidate) {
+                    PlaylistRepository.getRemote(id = playlistId)
+                } else {
+                    PlaylistRepository.getFull(id = playlistId)
+                }
                     ?: error("TODO show 404 page") // TODO 404 page
 
-                val playlistUpdated = playlist.updatedTime.toEpochMilli()
                 KotifyDatabase.transaction("load playlist ${playlist.name} owner and image") {
                     playlist.owner.loadToCache()
                     playlist.largestImage.loadToCache()
@@ -106,20 +105,27 @@ class PlaylistPresenter(
                     it.copy(
                         refreshing = false,
                         playlist = playlist,
-                        playlistUpdated = playlistUpdated,
                         isSavedState = isSavedState,
                         savedTracksState = savedTracksState,
                     )
                 }
+            }
 
-                val tracks = playlist.getAllTracks()
+            is Event.LoadTracks -> {
+                if (event.invalidate) {
+                    mutateState { it.copy(refreshingTracks = true) }
+                }
+
+                val (playlist, tracks) = Playlist.getAllTracks(playlistId = playlistId, allowCache = !event.invalidate)
                 loadTracksToCache(playlist, tracks)
 
                 val trackIds = tracks.map { it.track.cached.id.value }
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
 
                 mutateState {
+                    // TODO doesn't apply new track loaded time to playlist model in the ViewModel
                     it.copy(
+                        refreshingTracks = false,
                         tracks = it.tracks.withElements(tracks),
                         trackRatings = trackRatings,
                     )
@@ -148,13 +154,8 @@ class PlaylistPresenter(
                         )
                     }
 
-                    KotifyDatabase.transaction("invalidate playlist id $playlistId tracks") {
-                        PlaylistTrack.invalidate(playlistId = playlistId)
-                    }
-
-                    val playlist = PlaylistRepository.getCached(id = playlistId)
-                    val tracks = playlist?.getAllTracks()
-                    tracks?.let { loadTracksToCache(playlist, it) }
+                    val (playlist, tracks) = Playlist.getAllTracks(playlistId = playlistId, allowCache = false)
+                    loadTracksToCache(playlist, tracks)
 
                     mutateState {
                         it.copy(
@@ -167,8 +168,8 @@ class PlaylistPresenter(
         }
     }
 
-    private suspend fun loadTracksToCache(playlist: Playlist, tracks: List<PlaylistTrack>) {
-        KotifyDatabase.transaction("load tracks, tracks artists, and tracks album for playlist ${playlist.name}") {
+    private suspend fun loadTracksToCache(playlist: Playlist?, tracks: List<PlaylistTrack>) {
+        KotifyDatabase.transaction("load tracks, tracks artists, and tracks album for playlist ${playlist?.name}") {
             tracks.forEach {
                 it.track.loadToCache()
                 it.track.cached.artists.loadToCache()

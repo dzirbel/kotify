@@ -22,6 +22,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant
 
 object PlaylistTable : SpotifyEntityTable(name = "playlists") {
@@ -34,6 +35,7 @@ object PlaylistTable : SpotifyEntityTable(name = "playlists") {
     val snapshotId: Column<String> = varchar("snapshotId", length = SNAPSHOT_ID_LENGTH)
     val followersTotal: Column<Int?> = integer("followers_total").nullable()
     val totalTracks: Column<Int?> = integer("total_tracks").nullable()
+    val tracksFetched: Column<Instant?> = timestamp("tracks_fetched_time").nullable()
 
     object PlaylistImageTable : Table() {
         val playlist = reference("playlist", PlaylistTable)
@@ -51,16 +53,13 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
     var snapshotId: String by PlaylistTable.snapshotId
     var followersTotal: Int? by PlaylistTable.followersTotal
     var totalTracks: Int? by PlaylistTable.totalTracks
+    var tracksFetched: Instant? by PlaylistTable.tracksFetched
 
     val owner: ReadWriteCachedProperty<User> by (User referencedOn PlaylistTable.owner).cached()
 
     val images: ReadWriteCachedProperty<List<Image>> by (Image via PlaylistTable.PlaylistImageTable).cachedAsList()
     val largestImage: ReadOnlyCachedProperty<Image?> by (Image via PlaylistTable.PlaylistImageTable)
         .cachedReadOnly { it.largest() }
-
-    val playlistTracks: ReadOnlyCachedProperty<List<PlaylistTrack>> by
-    (PlaylistTrack referrersOn PlaylistTrackTable.playlist)
-        .cachedReadOnly(baseToDerived = { it.toList() })
 
     val playlistTracksInOrder: ReadOnlyCachedProperty<List<PlaylistTrack>> = ReadOnlyCachedProperty {
         PlaylistTrack.find { PlaylistTrackTable.playlist eq this@Playlist.id }
@@ -72,28 +71,7 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
         .cachedReadOnly(baseToDerived = { playlistTracks -> playlistTracks.map { it.track.live } })
 
     val hasAllTracks: Boolean
-        get() = totalTracks?.let { playlistTracks.live.size == it } == true
-
-    val hasAllTracksCached: Boolean
-        get() = totalTracks?.let { (playlistTracks.cachedOrNull ?: tracks.cached).size == it } == true
-
-    suspend fun getAllTracks(): List<PlaylistTrack> {
-        val cachedTracks = KotifyDatabase.transaction("load tracks for playlist $name") {
-            totalTracks?.let { totalTracks ->
-                playlistTracksInOrder.live.takeIf { it.size == totalTracks }
-            }
-        }
-        cachedTracks?.let { return it }
-
-        val networkTracks = Spotify.Playlists.getPlaylistTracks(playlistId = id.value)
-            .fetchAll<SpotifyPlaylistTrack>()
-
-        return KotifyDatabase.transaction("save tracks for playlist $name") {
-            networkTracks.mapIndexedNotNull { index, track ->
-                PlaylistTrack.from(spotifyPlaylistTrack = track, playlist = this@Playlist, index = index)
-            }
-        }
-    }
+        get() = tracksFetched != null
 
     companion object : SpotifyEntityClass<Playlist, SpotifyPlaylist>(PlaylistTable) {
         override fun Playlist.update(networkModel: SpotifyPlaylist) {
@@ -118,9 +96,36 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
 
                 totalTracks = networkModel.tracks.total
                 networkModel.tracks.items.mapIndexedNotNull { index, track ->
-                    PlaylistTrack.from(spotifyPlaylistTrack = track, playlist = this, index = index)
+                    PlaylistTrack.from(spotifyPlaylistTrack = track, playlistId = id.value, index = index)
                 }
             }
+        }
+
+        suspend fun getAllTracks(playlistId: String, allowCache: Boolean = true): Pair<Playlist?, List<PlaylistTrack>> {
+            var playlist: Playlist? = null
+            if (allowCache) {
+                KotifyDatabase.transaction("load playlist tracks for id $playlistId") {
+                    findById(id = playlistId)
+                        ?.also { playlist = it }
+                        ?.takeIf { it.hasAllTracks }
+                        ?.playlistTracksInOrder
+                        ?.live
+                }
+                    ?.let { return Pair(playlist, it) }
+            }
+
+            val networkTracks = Spotify.Playlists.getPlaylistTracks(playlistId = playlistId)
+                .fetchAll<SpotifyPlaylistTrack>()
+
+            return KotifyDatabase.transaction("save playlist ${playlist?.name ?: "id $playlistId"} tracks") {
+                playlist = playlist ?: findById(id = playlistId)
+                playlist?.tracksFetched = Instant.now()
+
+                networkTracks.mapIndexedNotNull { index, track ->
+                    PlaylistTrack.from(spotifyPlaylistTrack = track, playlistId = playlistId, index = index)
+                }
+            }
+                .let { Pair(playlist, it) }
         }
     }
 }

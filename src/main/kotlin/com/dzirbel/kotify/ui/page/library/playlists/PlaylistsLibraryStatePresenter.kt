@@ -13,7 +13,6 @@ import com.dzirbel.kotify.util.flatMapParallel
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.deleteWhere
 
 class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
     Presenter<PlaylistsLibraryStatePresenter.ViewModel, PlaylistsLibraryStatePresenter.Event>(
@@ -95,15 +94,8 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
             is Event.RefreshPlaylistTracks -> {
                 mutateState { it.copy(syncingPlaylistTracks = it.syncingPlaylistTracks.plus(event.playlistId)) }
 
-                KotifyDatabase.transaction("invalidate playlist id ${event.playlistId} tracks") {
-                    PlaylistTrackTable.deleteWhere { PlaylistTrackTable.playlist eq event.playlistId }
-                }
-
-                PlaylistRepository.getCached(id = event.playlistId)?.getAllTracks()
-
-                // reload playlist from the cache
-                val playlist = PlaylistRepository.getCached(id = event.playlistId)
-                    ?.also { prepPlaylists(listOf(it)) }
+                val (playlist, _) = Playlist.getAllTracks(playlistId = event.playlistId, allowCache = false)
+                playlist?.let { prepPlaylists(listOf(it)) } // reload playlist from the cache
 
                 mutateState {
                     it.copy(
@@ -132,13 +124,9 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
             Event.FetchMissingPlaylistTracks -> {
                 val playlistIds = SavedPlaylistRepository.getLibraryCached()?.toList()
 
-                // TODO also fetch tracks for playlists not in the database at all
-                loadPlaylists(playlistIds)
-                    .filterValues { playlist -> !playlist.hasAllTracks }
-                    .values
-                    .flatMapParallel { playlist ->
-                        playlist.getAllTracks()
-                    }
+                playlistIds?.flatMapParallel { playlistId ->
+                    Playlist.getAllTracks(playlistId = playlistId, allowCache = true).second
+                }
 
                 // reload playlists from the cache
                 val playlists = loadPlaylists(playlistIds = playlistIds)
