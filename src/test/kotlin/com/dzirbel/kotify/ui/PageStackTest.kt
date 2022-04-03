@@ -9,8 +9,8 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.dzirbel.kotify.isSameInstanceAs
-import com.dzirbel.kotify.ui.components.Page
-import com.dzirbel.kotify.ui.components.PageStack
+import com.dzirbel.kotify.ui.framework.Page
+import com.dzirbel.kotify.ui.framework.PageStack
 import org.junit.jupiter.api.Test
 
 internal class PageStackTest {

@@ -1,24 +1,22 @@
 package com.dzirbel.kotify.ui.page.playlist
 
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
-import com.dzirbel.kotify.db.model.Playlist
-import com.dzirbel.kotify.ui.components.Page
-import com.dzirbel.kotify.ui.framework.BindPresenterPage
+import com.dzirbel.kotify.ui.framework.PresenterPage
+import kotlinx.coroutines.CoroutineScope
 
-data class PlaylistPage(val playlistId: String) : Page<Playlist?> {
+data class PlaylistPage(val playlistId: String) :
+    PresenterPage<PlaylistPresenter.ViewModel, PlaylistPresenter>(key = playlistId) {
+    override fun createPresenter(scope: CoroutineScope) = PlaylistPresenter(playlistId, scope)
+
     @Composable
-    override fun BoxScope.bind(visible: Boolean, toggleNavigationTitle: (Boolean) -> Unit): Playlist? {
-        return BindPresenterPage(
-            visible = visible,
-            key = playlistId,
-            createPresenter = { scope -> PlaylistPresenter(playlistId, scope) },
-            toggleNavigationTitle = toggleNavigationTitle,
-            header = { presenter, state -> PlaylistPageHeader(presenter, state) },
-            content = { presenter, state -> PlaylistPageContent(presenter, state) },
-        )
-            .playlist
+    override fun header(presenter: PlaylistPresenter, state: PlaylistPresenter.ViewModel) {
+        PlaylistPageHeader(presenter, state)
     }
 
-    override fun titleFor(data: Playlist?) = data?.name
+    @Composable
+    override fun content(presenter: PlaylistPresenter, state: PlaylistPresenter.ViewModel) {
+        PlaylistPageContent(presenter, state)
+    }
+
+    override fun titleFor(data: PlaylistPresenter.ViewModel) = data.playlist?.name
 }

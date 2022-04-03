@@ -1,24 +1,22 @@
 package com.dzirbel.kotify.ui.page.artist
 
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
-import com.dzirbel.kotify.db.model.Artist
-import com.dzirbel.kotify.ui.components.Page
-import com.dzirbel.kotify.ui.framework.BindPresenterPage
+import com.dzirbel.kotify.ui.framework.PresenterPage
+import kotlinx.coroutines.CoroutineScope
 
-data class ArtistPage(val artistId: String) : Page<Artist?> {
+data class ArtistPage(val artistId: String) :
+    PresenterPage<ArtistPresenter.ViewModel, ArtistPresenter>(key = artistId) {
+    override fun createPresenter(scope: CoroutineScope) = ArtistPresenter(artistId, scope)
+
     @Composable
-    override fun BoxScope.bind(visible: Boolean, toggleNavigationTitle: (Boolean) -> Unit): Artist? {
-        return BindPresenterPage(
-            visible = visible,
-            key = artistId,
-            createPresenter = { scope -> ArtistPresenter(artistId, scope) },
-            toggleNavigationTitle = toggleNavigationTitle,
-            header = { presenter, state -> ArtistPageHeader(presenter, state) },
-            content = { presenter, state -> ArtistPageContent(presenter, state) },
-        )
-            .artist
+    override fun header(presenter: ArtistPresenter, state: ArtistPresenter.ViewModel) {
+        ArtistPageHeader(presenter, state)
     }
 
-    override fun titleFor(data: Artist?) = data?.name
+    @Composable
+    override fun content(presenter: ArtistPresenter, state: ArtistPresenter.ViewModel) {
+        ArtistPageContent(presenter, state)
+    }
+
+    override fun titleFor(data: ArtistPresenter.ViewModel) = data.artist?.name
 }

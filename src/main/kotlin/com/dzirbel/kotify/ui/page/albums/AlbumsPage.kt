@@ -1,21 +1,21 @@
 package com.dzirbel.kotify.ui.page.albums
 
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
-import com.dzirbel.kotify.ui.components.Page
-import com.dzirbel.kotify.ui.framework.BindPresenterPage
+import com.dzirbel.kotify.ui.framework.PresenterPage
+import kotlinx.coroutines.CoroutineScope
 
-object AlbumsPage : Page<Unit> {
+object AlbumsPage : PresenterPage<AlbumsPresenter.ViewModel, AlbumsPresenter>() {
+    override fun createPresenter(scope: CoroutineScope) = AlbumsPresenter(scope)
+
     @Composable
-    override fun BoxScope.bind(visible: Boolean, toggleNavigationTitle: (Boolean) -> Unit) {
-        BindPresenterPage(
-            visible = visible,
-            createPresenter = { scope -> AlbumsPresenter(scope) },
-            toggleNavigationTitle = toggleNavigationTitle,
-            header = { presenter, state -> AlbumsPageHeader(presenter, state) },
-            content = { presenter, state -> AlbumsPageContent(presenter, state) },
-        )
+    override fun header(presenter: AlbumsPresenter, state: AlbumsPresenter.ViewModel) {
+        AlbumsPageHeader(presenter, state)
     }
 
-    override fun titleFor(data: Unit) = "Saved Albums"
+    @Composable
+    override fun content(presenter: AlbumsPresenter, state: AlbumsPresenter.ViewModel) {
+        AlbumsPageContent(presenter, state)
+    }
+
+    override fun titleFor(data: AlbumsPresenter.ViewModel) = "Saved Albums"
 }

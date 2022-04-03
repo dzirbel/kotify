@@ -13,12 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.ui.components.Page
-import com.dzirbel.kotify.ui.components.PageStack
 import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
 import com.dzirbel.kotify.ui.components.panel.PanelSize
 import com.dzirbel.kotify.ui.components.panel.SidePanel
+import com.dzirbel.kotify.ui.framework.Page
+import com.dzirbel.kotify.ui.framework.PageStack
 import com.dzirbel.kotify.ui.page.artists.ArtistsPage
 import com.dzirbel.kotify.ui.panel.debug.DebugPanel
 import com.dzirbel.kotify.ui.panel.library.LibraryPanel

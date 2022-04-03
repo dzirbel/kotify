@@ -3,7 +3,7 @@ package com.dzirbel.kotify.ui.page.library
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
-import com.dzirbel.kotify.ui.components.Page
+import com.dzirbel.kotify.ui.framework.Page
 import com.dzirbel.kotify.ui.framework.rememberPresenter
 import com.dzirbel.kotify.ui.page.library.albums.AlbumsLibraryStatePresenter
 import com.dzirbel.kotify.ui.page.library.artists.ArtistsLibraryStatePresenter
