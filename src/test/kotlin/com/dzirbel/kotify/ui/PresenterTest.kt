@@ -36,8 +36,6 @@ fun <S, E, P : Presenter<S, E>> testPresenter(
 
         block(presenter)
 
-        presenter.close()
-
         job.cancel()
     }
 }

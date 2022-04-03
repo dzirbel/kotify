@@ -66,11 +66,10 @@ import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
@@ -93,23 +92,6 @@ internal class PlayerPanelPresenter(scope: CoroutineScope) :
         startingEvents = listOf(Event.LoadDevices(), Event.LoadPlayback(), Event.LoadTrackPlayback()),
         initialState = ViewModel()
     ) {
-
-    private val job: Job
-
-    init {
-        job = scope.launch {
-            Player.playEvents.collect { playEvent ->
-                emit(Event.LoadPlayback(untilIsPlayingChange = true))
-                if (playEvent.contextChanged) {
-                    emit(Event.LoadTrackPlayback(untilTrackChange = true))
-                }
-            }
-        }
-    }
-
-    override fun close() {
-        job.cancel()
-    }
 
     data class ViewModel(
         val playbackTrack: SpotifyTrack? = null,
@@ -220,6 +202,17 @@ internal class PlayerPanelPresenter(scope: CoroutineScope) :
         class ToggleArtistSaved(val artistId: String, val save: Boolean) : Event()
 
         class RateTrack(val trackId: String, val rating: Rating?) : Event()
+    }
+
+    override fun externalEvents(): Flow<Event> {
+        return flow {
+            Player.playEvents.collect { playEvent ->
+                emit(Event.LoadPlayback(untilIsPlayingChange = true))
+                if (playEvent.contextChanged) {
+                    emit(Event.LoadTrackPlayback(untilTrackChange = true))
+                }
+            }
+        }
     }
 
     override suspend fun reactTo(event: Event) {
