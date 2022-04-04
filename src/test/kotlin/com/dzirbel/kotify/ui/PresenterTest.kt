@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.hasSize
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.ui.framework.Presenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -26,17 +27,19 @@ fun <S, E, P : Presenter<S, E>> testPresenter(
     beforeOpen: (suspend (P) -> Unit)? = null,
     block: suspend TestScope.(P) -> Unit,
 ) {
-    runTest {
-        val presenter = createPresenter()
+    KotifyDatabase.withSynchronousTransactions {
+        runTest {
+            val presenter = createPresenter()
 
-        beforeOpen?.invoke(presenter)
+            beforeOpen?.invoke(presenter)
 
-        val job = launch { presenter.open() }
-        advanceUntilIdle()
+            val job = launch { presenter.open() }
+            advanceUntilIdle()
 
-        block(presenter)
+            block(presenter)
 
-        job.cancel()
+            job.cancel()
+        }
     }
 }
 

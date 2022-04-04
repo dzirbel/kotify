@@ -20,6 +20,7 @@ import com.dzirbel.kotify.db.model.UserRepository
 import com.dzirbel.kotify.db.model.UserTable
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -92,6 +93,21 @@ object KotifyDatabase {
      */
     private val dbDispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1)
 
+    private var synchronousTransactions = false
+
+    /**
+     * Toggles running [transaction] synchronously (rather than via [newSuspendedTransaction]) inside [block].
+     *
+     * This is intended for use in tests where a test scheduler is used to advance time; this will cause the test
+     * scheduler to proceed as soon as a suspended transaction is begun. Running synchronously avoids the test scheduler
+     * advancing until the transaction is complete.
+     */
+    fun withSynchronousTransactions(block: () -> Unit) {
+        synchronousTransactions = true
+        block()
+        synchronousTransactions = false
+    }
+
     /**
      * Creates a transaction on this [db] with appropriate logic; in particular, using the [dbDispatcher] which operates
      * on a single thread to avoid database locking.
@@ -99,14 +115,17 @@ object KotifyDatabase {
     suspend fun <T> transaction(name: String?, statement: suspend Transaction.() -> T): T {
         check(db.transactionManager.currentOrNull() == null) { "transaction already in progress" }
 
-        return newSuspendedTransaction(
-            context = dbDispatcher,
-            db = db,
-            statement = {
+        return if (synchronousTransactions) {
+            transaction(db = db) {
+                Logger.Database.registerTransaction(transaction = this, name = name)
+                runBlocking { statement() }
+            }
+        } else {
+            newSuspendedTransaction(context = dbDispatcher, db = db) {
                 Logger.Database.registerTransaction(transaction = this, name = name)
                 statement()
-            },
-        )
+            }
+        }
     }
 
     /**

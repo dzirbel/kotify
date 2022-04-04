@@ -8,7 +8,6 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
-import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -71,10 +70,10 @@ object Player {
     private val _playEvents = MutableSharedFlow<PlayEvent>()
 
     /**
-     * A [androidx.compose.runtime.MutableState] of the currently active [SpotifyPlaybackDevice]. [play] requests will
+     * A [androidx.compose.runtime.MutableState] of the ID of the currently active playback device. [play] requests will
      * be sent to this device, and [playable] is true when it is non-null.
      */
-    val currentDevice = mutableStateOf<SpotifyPlaybackDevice?>(null)
+    val currentPlaybackDeviceId = mutableStateOf<String?>(null)
 
     /**
      * A [androidx.compose.runtime.MutableState] of the current [SpotifyPlaybackContext].
@@ -87,15 +86,15 @@ object Player {
     val isPlaying = mutableStateOf(false)
 
     /**
-     * A [androidx.compose.runtime.MutableState] of the currently playing [FullSpotifyTrack].
+     * A [androidx.compose.runtime.MutableState] of the ID of the currently playing [FullSpotifyTrack].
      */
-    val currentTrack = mutableStateOf<FullSpotifyTrack?>(null)
+    val currentTrackId = mutableStateOf<String?>(null)
 
     /**
      * Whether it is currently possible to play music in the player.
      */
     val playable: Boolean
-        get() = currentDevice.value != null
+        get() = currentPlaybackDeviceId.value != null
 
     /**
      * A [SharedFlow] which emits [Unit] each time [play] changes the playback.
@@ -110,7 +109,7 @@ object Player {
         resumeIfSameContext: Boolean = true,
         scope: CoroutineScope = GlobalScope,
     ): Boolean {
-        currentDevice.value?.let { device ->
+        currentPlaybackDeviceId.value?.let { deviceId ->
             scope.launch {
                 val contextChanged = context?.contextUri != playbackContext.value?.uri
                 Spotify.Player.startPlayback(
@@ -119,7 +118,7 @@ object Player {
                     },
                     offset = context?.offset,
                     positionMs = context?.positionMs,
-                    deviceId = device.id
+                    deviceId = deviceId,
                 )
 
                 _playEvents.emit(PlayEvent(contextChanged = contextChanged))
@@ -134,9 +133,9 @@ object Player {
      * Pauses the current playback, returning true if this is possible (i.e. [playable] is true) or false if not.
      */
     fun pause(scope: CoroutineScope = GlobalScope): Boolean {
-        currentDevice.value?.let { device ->
+        currentPlaybackDeviceId.value?.let { deviceId ->
             scope.launch {
-                Spotify.Player.pausePlayback(deviceId = device.id)
+                Spotify.Player.pausePlayback(deviceId = deviceId)
 
                 _playEvents.emit(PlayEvent(contextChanged = false))
             }

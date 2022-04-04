@@ -8,7 +8,6 @@ import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
@@ -35,10 +34,10 @@ import org.junit.jupiter.params.provider.MethodSource
 // TODO finish testing
 @ExtendWith(DatabaseExtension::class)
 internal class PlayerPanelPresenterTest {
-    private val currentDeviceState: MutableState<SpotifyPlaybackDevice?> = mockk {
+    private val currentPlaybackDeviceIdState: MutableState<String?> = mockk {
         every { value = any() } just Runs
     }
-    private val currentTrackState: MutableState<FullSpotifyTrack?> = mockk {
+    private val currentTrackIdState: MutableState<String?> = mockk {
         every { value = any() } just Runs
     }
     private val isPlayingState: MutableState<Boolean> = mockk {
@@ -52,8 +51,8 @@ internal class PlayerPanelPresenterTest {
     fun setup() {
         mockkObject(Spotify.Player, Player)
 
-        every { Player.currentDevice } returns currentDeviceState
-        every { Player.currentTrack } returns currentTrackState
+        every { Player.currentPlaybackDeviceId } returns currentPlaybackDeviceIdState
+        every { Player.currentTrackId } returns currentTrackIdState
         every { Player.isPlaying } returns isPlayingState
         every { Player.playbackContext } returns playbackContextState
 
@@ -65,7 +64,7 @@ internal class PlayerPanelPresenterTest {
     @AfterEach
     fun finish() {
         confirmVerified(Spotify.Player, Player)
-        confirmVerified(currentDeviceState, currentTrackState, isPlayingState, playbackContextState)
+        confirmVerified(currentPlaybackDeviceIdState, currentTrackIdState, isPlayingState, playbackContextState)
         unmockkAll()
     }
 
@@ -86,8 +85,12 @@ internal class PlayerPanelPresenterTest {
         testPresenter(::PlayerPanelPresenter) { presenter ->
             verifyOpenCalls()
 
-            val device1: SpotifyPlaybackDevice = mockk()
-            val device2: SpotifyPlaybackDevice = mockk()
+            val device1: SpotifyPlaybackDevice = mockk {
+                every { id } returns "device 1"
+            }
+            val device2: SpotifyPlaybackDevice = mockk {
+                every { id } returns "device 2"
+            }
             coEvery { Spotify.Player.getAvailableDevices() } returns listOf(device1, device2)
 
             presenter.emit(PlayerPanelPresenter.Event.LoadDevices())
@@ -97,8 +100,8 @@ internal class PlayerPanelPresenterTest {
 
             coVerify {
                 Spotify.Player.getAvailableDevices()
-                Player.currentDevice
-                currentDeviceState.value = device1
+                Player.currentPlaybackDeviceId
+                currentPlaybackDeviceIdState.value = "device 1"
             }
         }
     }
@@ -111,7 +114,7 @@ internal class PlayerPanelPresenterTest {
         }
         coEvery { Spotify.Player.getAvailableDevices() } returns listOf(device)
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls(device = device)
+            verifyOpenCalls(deviceId = "device_id")
 
             presenter.emit(
                 PlayerPanelPresenter.Event.LoadDevices(
@@ -128,8 +131,8 @@ internal class PlayerPanelPresenterTest {
             }
 
             coVerify {
-                Player.currentDevice
-                currentDeviceState.value = device
+                Player.currentPlaybackDeviceId
+                currentPlaybackDeviceIdState.value = "device_id"
             }
         }
     }
@@ -156,7 +159,7 @@ internal class PlayerPanelPresenterTest {
                     playbackTrack = playback?.item,
                     trackSavedState = playback?.item?.let { SavedTrackRepository.savedStateOf(id = it.id) },
                     trackRatingState = playback?.item?.let { TrackRatingRepository.ratingState(id = it.id) },
-                    albumSavedState = playback?.item?.let { SavedAlbumRepository.savedStateOf(id = it.id) },
+                    albumSavedState = playback?.item?.album?.id?.let { SavedAlbumRepository.savedStateOf(id = it) },
                     artistSavedStates = playback?.item?.let { emptyMap() },
                 )
             )
@@ -171,23 +174,23 @@ internal class PlayerPanelPresenterTest {
                     playbackContextState.value = playback.context
 
                     playback.item?.let { track ->
-                        Player.currentTrack
-                        currentTrackState.value = track
+                        Player.currentTrackId
+                        currentTrackIdState.value = track.id
                     }
                 }
             }
         }
     }
 
-    private fun verifyOpenCalls(device: SpotifyPlaybackDevice? = null) {
+    private fun verifyOpenCalls(deviceId: String? = null) {
         coVerifyAll {
             Spotify.Player.getAvailableDevices()
             Spotify.Player.getCurrentPlayback()
             Spotify.Player.getCurrentlyPlayingTrack()
 
             Player.playEvents
-            Player.currentDevice
-            currentDeviceState.value = device
+            Player.currentPlaybackDeviceId
+            currentPlaybackDeviceIdState.value = deviceId
         }
     }
 

@@ -13,7 +13,7 @@ import com.dzirbel.kotify.ui.theme.LocalColors
 @Composable
 fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
     val matchesContext = Player.playbackContext.value?.uri == context?.contextUri
-    val playing = Player.isPlaying.value && matchesContext
+    val playing = matchesContext && Player.isPlaying.value
     IconButton(
         enabled = Player.playable && context != null,
         modifier = Modifier.size(size),

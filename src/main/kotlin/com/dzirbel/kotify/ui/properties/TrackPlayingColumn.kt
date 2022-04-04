@@ -44,7 +44,7 @@ class TrackPlayingColumn<T>(
     override fun item(item: T) {
         val hoverState = remember { mutableStateOf(false) }
         Box(Modifier.hoverState(hoverState).padding(Dimens.space2).size(Dimens.fontBodyDp)) {
-            if (Player.currentTrack.value?.id == trackIdOf(item)) {
+            if (Player.currentTrackId.value == trackIdOf(item)) {
                 CachedIcon(
                     name = "volume-up",
                     size = Dimens.fontBodyDp,
