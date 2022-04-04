@@ -6,8 +6,9 @@ import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.adapter.compare
 import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.table.ColumnByNumber
+import java.util.concurrent.TimeUnit
 
-abstract class PropertyByNumber<E>(override val title: String) :
+abstract class PropertyByNumber<E>(override val title: String, private val divisionRange: Int) :
     SortableProperty<E>, DividableProperty<E>, ColumnByNumber<E> {
     open val nullsFirst: Boolean = false
 
@@ -18,13 +19,22 @@ abstract class PropertyByNumber<E>(override val title: String) :
         return sortOrder.compareNullable(firstNumber, secondNumber, nullsFirst = nullsFirst)
     }
 
-    @Suppress("UnnecessaryParentheses", "MagicNumber")
     override fun divisionFor(element: E): Int {
-        // TODO allow more advanced numeric division
-        return toNumber(element)?.toInt()?.let { (it / 10) * 10 } ?: 0
+        return toNumber(element)?.toInt()?.let { divisionRange * (it / divisionRange) } ?: 0
+    }
+
+    override fun divisionTitle(division: Any?): String? {
+        val number = division as Int
+        return "$number - ${number + divisionRange}"
     }
 
     override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
         return sortOrder.compare(first as Int, second as Int)
+    }
+
+    companion object {
+        const val POPULARITY_DIVISION_RANGE = 10
+        const val TRACK_INDEX_DIVISION_RANGE = 10
+        val DURATION_DIVISION_RANGE_MS = TimeUnit.SECONDS.toMillis(10).toInt()
     }
 }

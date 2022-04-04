@@ -9,7 +9,10 @@ object ArtistNameProperty : PropertyByString<Artist>(title = "Name") {
     override fun toString(item: Artist) = item.name
 }
 
-object ArtistPopularityProperty : PropertyByNumber<Artist>(title = "Popularity") {
+object ArtistPopularityProperty : PropertyByNumber<Artist>(
+    title = "Popularity",
+    divisionRange = POPULARITY_DIVISION_RANGE,
+) {
     override val defaultSortOrder = SortOrder.DESCENDING
     override val defaultDivisionSortOrder = SortOrder.DESCENDING
 

@@ -47,17 +47,19 @@ open class TrackNameProperty<T>(private val toTrack: (T) -> Track) : PropertyByS
     object ForPlaylistTrack : TrackNameProperty<PlaylistTrack>(toTrack = { it.track.cached })
 }
 
-open class TrackAlbumIndexProperty<T>(private val toTrack: (T) -> Track) : PropertyByNumber<T>(title = "#") {
-    override fun toNumber(item: T) = toTrack(item).trackNumber.toInt()
+open class TrackAlbumIndexProperty<T>(private val toTrack: (T) -> Track) :
+    PropertyByNumber<T>(title = "#", divisionRange = TRACK_INDEX_DIVISION_RANGE) {
+    override fun toNumber(item: T) = toTrack(item).trackNumber
 
     companion object : TrackAlbumIndexProperty<Track>(toTrack = { it })
     object ForPlaylistTrack : TrackAlbumIndexProperty<PlaylistTrack>(toTrack = { it.track.cached })
 }
 
-open class TrackDurationProperty<T>(private val toTrack: (T) -> Track) : PropertyByNumber<T>(title = "Duration") {
+open class TrackDurationProperty<T>(private val toTrack: (T) -> Track) :
+    PropertyByNumber<T>(title = "Duration", divisionRange = DURATION_DIVISION_RANGE_MS) {
     override val cellAlignment = Alignment.TopEnd
 
-    override fun toNumber(item: T) = toTrack(item).durationMs.toLong()
+    override fun toNumber(item: T) = toTrack(item).durationMs
 
     override fun toString(item: T): String = formatDuration(toNumber(item))
 
@@ -98,14 +100,15 @@ open class TrackAlbumProperty<T>(private val toTrack: (T) -> Track) : PropertyBy
     object ForPlaylistTrack : TrackAlbumProperty<PlaylistTrack>(toTrack = { it.track.cached })
 }
 
-open class TrackPopularityProperty<T>(private val toTrack: (T) -> Track) : PropertyByNumber<T>(title = "Popularity") {
+open class TrackPopularityProperty<T>(private val toTrack: (T) -> Track) :
+    PropertyByNumber<T>(title = "Popularity", divisionRange = POPULARITY_DIVISION_RANGE) {
     override val defaultSortOrder = SortOrder.DESCENDING
     override val defaultDivisionSortOrder = SortOrder.DESCENDING
 
     override val width: ColumnWidth = ColumnWidth.MatchHeader
     override val cellAlignment = Alignment.TopEnd
 
-    override fun toNumber(item: T) = toTrack(item).popularity?.toInt()
+    override fun toNumber(item: T) = toTrack(item).popularity
 
     @Composable
     override fun item(item: T) {
@@ -183,15 +186,21 @@ open class TrackSavedProperty<T>(
 class TrackRatingProperty<T>(
     private val trackIdOf: (T) -> String,
     private val trackRatings: Map<String, State<Rating?>>?,
-) : PropertyByNumber<T>(title = "Rating") {
+) : SortableProperty<T>, RatingDividableProperty<T>, Column<T> {
+    override val title = "Rating"
+
     override val defaultSortOrder = SortOrder.DESCENDING
     override val defaultDivisionSortOrder = SortOrder.DESCENDING
 
     override val width: ColumnWidth = ColumnWidth.Fill()
     override val cellAlignment = Alignment.Center
 
-    override fun toNumber(item: T): Number? {
-        return trackRatings?.get(trackIdOf(item))?.value?.ratingPercent
+    override fun compare(sortOrder: SortOrder, first: T, second: T): Int {
+        return sortOrder.compareNullable(ratingOf(first), ratingOf(second))
+    }
+
+    override fun ratingOf(element: T): Double? {
+        return trackRatings?.get(trackIdOf(element))?.value?.ratingPercent
     }
 
     @Composable

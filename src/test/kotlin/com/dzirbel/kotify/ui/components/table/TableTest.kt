@@ -150,7 +150,7 @@ internal class TableTest {
                             }
                         },
 
-                        object : PropertyByNumber<Int>(title = "Collatz") {
+                        object : PropertyByNumber<Int>(title = "Collatz", divisionRange = 10) {
                             override val width = ColumnWidth.Weighted(weight = 1.5f)
 
                             override fun toNumber(item: Int): Number {
