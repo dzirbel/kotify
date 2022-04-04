@@ -74,14 +74,4 @@ abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : Spot
     suspend fun getFull(ids: List<String>): List<EntityType?> {
         return get(ids = ids, cachePredicate = { _, value -> value.fullUpdatedTime != null })
     }
-
-    final override suspend fun invalidate(id: String): Boolean {
-        return KotifyDatabase.transaction("invalidate $entityName $id") { entityClass.findById(id)?.delete() } != null
-    }
-
-    final override suspend fun invalidate(ids: Iterable<String>): List<Boolean> {
-        return KotifyDatabase.transaction("invalidate ${ids.count()} ${entityName}s") {
-            ids.map { id -> entityClass.findById(id)?.delete() != null }
-        }
-    }
 }

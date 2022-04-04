@@ -118,10 +118,9 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.InvalidateArtists -> {
-                val artistIds = SavedArtistRepository.getLibraryCached()?.toList()
-                artistIds?.let { ArtistRepository.invalidate(ids = it) }
-
-                val artists = loadArtists(artistIds = artistIds)
+                val artists = loadArtists(artistIds = SavedArtistRepository.getLibraryCached()?.toList()) {
+                    ArtistRepository.getRemote(ids = it)
+                }
 
                 mutateState { it.copy(artists = artists) }
             }

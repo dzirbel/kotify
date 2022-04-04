@@ -33,21 +33,36 @@ interface Repository<E> {
     suspend fun getRemote(ids: List<String>): List<E?>
 
     /**
-     * Retrieves the entity for the given [id], from the local cache if present and it satisfies [cachePredicate],
-     * otherwise fetches it from the remote source, caches, and returns it.
+     * Retrieves the entity for the given [id], from the local cache if [allowCache] is true and the cached value
+     * satisfies [cachePredicate], otherwise fetches it from the remote source, caches, and returns it.
      */
-    suspend fun get(id: String, cachePredicate: (id: String, cached: E) -> Boolean = { _, _ -> true }): E? {
-        return getCached(id = id)?.takeIf { cachePredicate(id, it) } ?: getRemote(id = id)
+    suspend fun get(
+        id: String,
+        allowCache: Boolean = true,
+        cachePredicate: (id: String, cached: E) -> Boolean = { _, _ -> true },
+    ): E? {
+        if (allowCache) {
+            getCached(id = id)
+                ?.takeIf { cachePredicate(id, it) }
+                ?.let { return it }
+        }
+
+        return getRemote(id = id)
     }
 
     /**
-     * Retrieves the entities for the given [ids], from the local cache if present and each satisfies
+     * Retrieves the entities for the given [ids], from the local cache if [allowCache] is true and each satisfies
      * [cachePredicate], otherwise fetches the IDs not locally cached from the remote source, caches, and returns them.
      */
     suspend fun get(
         ids: List<String>,
+        allowCache: Boolean = true,
         cachePredicate: (id: String, cached: E) -> Boolean = { _, _ -> true },
     ): List<E?> {
+        if (!allowCache) {
+            return getRemote(ids = ids)
+        }
+
         val missingIndices = ArrayList<IndexedValue<String>>()
 
         val cachedValues = getCached(ids = ids)
@@ -73,21 +88,4 @@ interface Repository<E> {
 
         return cachedValues
     }
-
-    /**
-     * Invalidates the entity with the given [id], returning true if it existed and was invalidated or false otherwise.
-     *
-     * TODO invalidating may clear local state (e.g. time artist albums were fetched) - maybe remove this entirely and
-     *  just load from remote in cases where we want fresh data
-     */
-    suspend fun invalidate(id: String): Boolean = invalidate(ids = listOf(id))[0]
-
-    /**
-     * Invalidates the entities with the given [ids], returning true for each if it existed and was invalidates or false
-     * otherwise.
-     *
-     * TODO invalidating may clear local state (e.g. time artist albums were fetched) - maybe remove this entirely and
-     *  just load from remote in cases where we want fresh data
-     */
-    suspend fun invalidate(ids: Iterable<String>): List<Boolean>
 }

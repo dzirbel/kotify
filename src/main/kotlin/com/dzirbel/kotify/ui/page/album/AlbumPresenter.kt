@@ -74,11 +74,9 @@ class AlbumPresenter(
             is Event.Load -> {
                 mutateState { it.copy(refreshing = true) }
 
-                if (event.invalidate) {
-                    AlbumRepository.invalidate(id = albumId)
-                }
+                val album = AlbumRepository.get(id = albumId, allowCache = !event.invalidate)
+                    ?: error("TODO show 404 page") // TODO 404 page
 
-                val album = AlbumRepository.get(id = albumId) ?: error("TODO show 404 page") // TODO 404 page
                 KotifyDatabase.transaction("load album ${album.name} image and artists") {
                     album.largestImage.loadToCache()
                     album.artists.loadToCache()

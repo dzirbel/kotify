@@ -113,10 +113,9 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.InvalidatePlaylists -> {
-                val playlistIds = SavedPlaylistRepository.getLibraryCached()?.toList()
-                playlistIds?.let { PlaylistRepository.invalidate(ids = playlistIds) }
-
-                val playlists = loadPlaylists(playlistIds = playlistIds)
+                val playlists = loadPlaylists(playlistIds = SavedPlaylistRepository.getLibraryCached()?.toList()) {
+                    PlaylistRepository.getRemote(ids = it)
+                }
 
                 mutateState { it.copy(playlists = playlists) }
             }

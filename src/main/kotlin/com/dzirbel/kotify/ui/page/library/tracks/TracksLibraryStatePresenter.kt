@@ -63,9 +63,7 @@ class TracksLibraryStatePresenter(scope: CoroutineScope) :
             Event.InvalidateTracks -> {
                 val savedTrackIds = requireNotNull(SavedTrackRepository.getLibraryCached()).toList()
 
-                TrackRepository.invalidate(ids = savedTrackIds)
-
-                val tracks = TrackRepository.getCached(ids = savedTrackIds)
+                val tracks = TrackRepository.getRemote(ids = savedTrackIds)
 
                 mutateState { it.copy(tracks = tracks) }
             }

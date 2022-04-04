@@ -63,11 +63,7 @@ class ArtistPresenter(
             is Event.LoadArtist -> {
                 mutateState { it.copy(refreshingArtist = true) }
 
-                val artist = if (event.invalidate) {
-                    ArtistRepository.getRemote(id = artistId)
-                } else {
-                    ArtistRepository.get(id = artistId)
-                }
+                val artist = ArtistRepository.get(id = artistId, allowCache = !event.invalidate)
 
                 mutateState {
                     it.copy(artist = artist, refreshingArtist = false)

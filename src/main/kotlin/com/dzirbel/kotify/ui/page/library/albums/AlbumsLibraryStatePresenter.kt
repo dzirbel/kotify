@@ -90,10 +90,9 @@ class AlbumsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.InvalidateAlbums -> {
-                val albumIds = SavedAlbumRepository.getLibraryCached()?.toList()
-                albumIds?.let { AlbumRepository.invalidate(ids = it) }
-
-                val albums = loadAlbums(albumIds = albumIds)
+                val albums = loadAlbums(albumIds = SavedAlbumRepository.getLibraryCached()?.toList()) {
+                    AlbumRepository.getRemote(ids = it)
+                }
 
                 mutateState { it.copy(albums = albums) }
             }

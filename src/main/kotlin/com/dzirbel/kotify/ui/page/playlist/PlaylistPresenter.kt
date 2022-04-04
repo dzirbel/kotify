@@ -86,11 +86,7 @@ class PlaylistPresenter(
                     mutateState { it.copy(refreshing = true) }
                 }
 
-                val playlist = if (event.invalidate) {
-                    PlaylistRepository.getRemote(id = playlistId)
-                } else {
-                    PlaylistRepository.getFull(id = playlistId)
-                }
+                val playlist = PlaylistRepository.get(id = playlistId, allowCache = !event.invalidate)
                     ?: error("TODO show 404 page") // TODO 404 page
 
                 KotifyDatabase.transaction("load playlist ${playlist.name} owner and image") {

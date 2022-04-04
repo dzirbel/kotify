@@ -6,7 +6,6 @@ import assertk.assertions.hasSize
 import assertk.assertions.isBetween
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
-import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import com.dzirbel.kotify.network.model.SpotifyObject
 import io.ktor.util.collections.ConcurrentList
@@ -210,22 +209,6 @@ internal class DatabaseRepositoryTest {
             assertThat(TestRepository.fetchedIds).isEmpty()
             assertThat(TestRepository.batchFetchedIds)
                 .containsExactly(remoteModels.keys.minus(cachedValue.key).toList())
-        }
-    }
-
-    @Test
-    fun testInvalidate() {
-        val id = "id1"
-        runBlocking {
-            assertThat(TestRepository.getCached(id = id)).isNull()
-
-            transaction(KotifyDatabase.db) { TestEntity.from(requireNotNull(remoteModels[id])) }
-
-            assertThat(TestRepository.getCached(id = id)).isNotNull()
-
-            TestRepository.invalidate(id = id)
-
-            assertThat(TestRepository.getCached(id = id)).isNull()
         }
     }
 
