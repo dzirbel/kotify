@@ -137,6 +137,14 @@ abstract class Presenter<ViewModel, Event : Any>(
     }
 
     /**
+     * A [Throwable] representing an error indicating a resource was not found.
+     *
+     * If used as the [StateOrError.Error.throwable] (i.e. thrown during presenter processing) it should be displayed in
+     * a user-friendly way that a particular page could not be found.
+     */
+    class NotFound(message: String = "Not found") : Throwable(message)
+
+    /**
      * Exposes the current state for tests, where the composable [state] cannot be called.
      */
     internal val testState: StateOrError<ViewModel>

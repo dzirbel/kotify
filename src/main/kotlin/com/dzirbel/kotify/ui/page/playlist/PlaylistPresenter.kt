@@ -87,7 +87,7 @@ class PlaylistPresenter(
                 }
 
                 val playlist = PlaylistRepository.get(id = playlistId, allowCache = !event.invalidate)
-                    ?: error("TODO show 404 page") // TODO 404 page
+                    ?: throw NotFound("Playlist $playlistId not found")
 
                 KotifyDatabase.transaction("load playlist ${playlist.name} owner and image") {
                     playlist.owner.loadToCache()

@@ -5,7 +5,9 @@ import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
@@ -122,28 +124,38 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
 
     @Composable
     private fun <T> errorState(throwable: Throwable, presenter: Presenter<T, *>) {
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "Error",
-                modifier = Modifier.size(Dimens.iconHuge).align(Alignment.CenterHorizontally),
-                tint = LocalColors.current.error,
-            )
+        if (throwable is Presenter.NotFound) {
+            Box(Modifier.fillMaxSize().padding(Dimens.space5)) {
+                Text(
+                    modifier = Modifier.align(Alignment.Center),
+                    style = MaterialTheme.typography.h6,
+                    text = throwable.message.orEmpty(),
+                )
+            }
+        } else {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "Error",
+                    modifier = Modifier.size(Dimens.iconHuge).align(Alignment.CenterHorizontally),
+                    tint = LocalColors.current.error,
+                )
 
-            Text(
-                text = "Encountered an error: ${throwable.message}",
-                color = LocalColors.current.error,
-                style = MaterialTheme.typography.h5,
-            )
+                Text(
+                    text = "Encountered an error: ${throwable.message}",
+                    color = LocalColors.current.error,
+                    style = MaterialTheme.typography.h5,
+                )
 
-            Text(
-                text = throwable.stackTraceToString(),
-                color = LocalColors.current.error,
-                fontFamily = FontFamily.Monospace,
-            )
+                Text(
+                    text = throwable.stackTraceToString(),
+                    color = LocalColors.current.error,
+                    fontFamily = FontFamily.Monospace,
+                )
 
-            Button(onClick = { presenter.clearError() }) {
-                Text("Clear")
+                Button(onClick = { presenter.clearError() }) {
+                    Text("Clear")
+                }
             }
         }
     }

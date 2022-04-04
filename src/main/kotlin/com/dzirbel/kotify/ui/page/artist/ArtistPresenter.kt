@@ -64,6 +64,7 @@ class ArtistPresenter(
                 mutateState { it.copy(refreshingArtist = true) }
 
                 val artist = ArtistRepository.get(id = artistId, allowCache = !event.invalidate)
+                    ?: throw NotFound("Artist $artistId not found")
 
                 mutateState {
                     it.copy(artist = artist, refreshingArtist = false)
