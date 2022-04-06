@@ -50,6 +50,7 @@ dependencies {
     testImplementation(deps.compose.test.junit4)
 
     testImplementation(deps.assertk)
+    testImplementation(deps.ktor.client)
     testImplementation(deps.mockk)
     testImplementation(deps.compose.swing) // Swing dispatcher for screenshot tests
 

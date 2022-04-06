@@ -76,6 +76,8 @@ dependencyResolutionManagement {
             // https://ktor.io/changelog/
             version("ktor", "1.6.7").let { version ->
                 library("ktor-netty", "io.ktor", "ktor-server-netty").versionRef(version)
+
+                library("ktor-client", "io.ktor", "ktor-client-java").versionRef(version)
             }
 
             // https://github.com/mockk/mockk

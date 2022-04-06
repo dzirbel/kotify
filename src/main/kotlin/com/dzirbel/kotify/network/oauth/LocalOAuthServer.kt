@@ -12,8 +12,6 @@ import okhttp3.HttpUrl
 /**
  * Wraps a simple [ApplicationEngine] ktor server which responds to GET requests on the given [port] to capture
  * redirects from Spotify's OAuth request.
- *
- * TODO try again to test (couldn't get the test environment to use the right port)
  */
 class LocalOAuthServer(
     port: Int = DEFAULT_PORT,
@@ -51,8 +49,8 @@ class LocalOAuthServer(
     /**
      * Stops this [LocalOAuthServer] and returns it.
      */
-    fun stop(): LocalOAuthServer {
-        server.stop(gracePeriodMillis = STOP_GRACE_PERIOD_MS, timeoutMillis = STOP_TIMEOUT_MS)
+    fun stop(gracePeriodMillis: Long = STOP_GRACE_PERIOD_MS, timeoutMillis: Long = STOP_TIMEOUT_MS): LocalOAuthServer {
+        server.stop(gracePeriodMillis = gracePeriodMillis, timeoutMillis = timeoutMillis)
         return this
     }
 
