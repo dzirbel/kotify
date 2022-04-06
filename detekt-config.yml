@@ -248,7 +248,7 @@ formatting:
     active: true
     autoCorrect: true
   ArgumentListWrapping:
-    active: false
+    active: true
     autoCorrect: true
     indentSize: 4
     maxLineLength: 120
