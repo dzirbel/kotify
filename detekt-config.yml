@@ -136,6 +136,8 @@ coroutines:
     active: true
   SleepInsteadOfDelay:
     active: true
+  SuspendFunWithCoroutineScopeReceiver:
+    active: true
   SuspendFunWithFlowReturnType:
     active: true
 
@@ -250,10 +252,19 @@ formatting:
     autoCorrect: true
     indentSize: 4
     maxLineLength: 120
+  BlockCommentInitialStarAlignment:
+    active: true
   ChainWrapping:
     active: true
     autoCorrect: true
   CommentSpacing:
+    active: true
+    autoCorrect: true
+  CommentWrapping:
+    active: true
+    indentSize: 4
+    autoCorrect: true
+  DiscouragedCommentLocation:
     active: true
     autoCorrect: true
   EnumEntryNameCase:
@@ -265,6 +276,10 @@ formatting:
     active: true
     autoCorrect: true
     insertFinalNewLine: true
+  FunKeywordSpacing:
+    active: true
+  FunctionTypeReferenceSpacing:
+    active: true
   ImportOrdering:
     active: true
     autoCorrect: true
@@ -273,11 +288,15 @@ formatting:
     active: true
     autoCorrect: true
     indentSize: 4
-    continuationIndentSize: 4
+  KdocWrapping:
+    active: true
   MaximumLineLength:
     active: true
     maxLineLength: 120
     ignoreBackTickedIdentifier: false
+  ModifierListSpacing:
+    active: true
+    autoCorrect: true
   ModifierOrdering:
     active: true
     autoCorrect: true
@@ -368,6 +387,20 @@ formatting:
     active: true
     autoCorrect: true
   StringTemplate:
+    active: true
+    autoCorrect: true
+  TrailingComma:
+    active: false
+    allowTrailingComma: true
+    allowTrailingCommaOnCallSite: true
+    autoCorrect: true
+  TypeArgumentListSpacing:
+    active: true
+    autoCorrect: true
+  UnnecessaryParenthesesBeforeTrailingLambda:
+    active: true
+    autoCorrect: true
+  Wrapping:
     active: true
     autoCorrect: true
 
@@ -478,6 +511,8 @@ potential-bugs:
     active: true
   DuplicateCaseInWhenExpression:
     active: true
+  ElseCaseInsteadOfExhaustiveWhen:
+    active: true
   EqualsAlwaysReturnsTrueOrFalse:
     active: true
   EqualsWithHashCodeExist:
@@ -519,6 +554,8 @@ potential-bugs:
   MissingWhenCase:
     active: true
     allowElseExpression: true
+  NullCheckOnMutableProperty:
+    active: true
   NullableToStringCall:
     active: true
   RedundantElseInWhen:
@@ -546,6 +583,8 @@ potential-bugs:
 
 style:
   active: true
+  CanBeNonNullable:
+    active: true
   ClassOrdering:
     active: true
   CollapsibleIfStatements:
@@ -700,6 +739,8 @@ style:
   UnnecessaryFilter:
     active: true
   UnnecessaryInheritance:
+    active: true
+  UnnecessaryInnerClass:
     active: true
   UnnecessaryLet:
     active: true
