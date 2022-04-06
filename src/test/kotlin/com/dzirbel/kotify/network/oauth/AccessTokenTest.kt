@@ -47,8 +47,8 @@ internal class AccessTokenTest {
                     accessToken = "",
                     tokenType = "",
                     received = System.currentTimeMillis() + receivedDeltaMs,
-                    expiresIn = expiresInS
-                ).isExpired
+                    expiresIn = expiresInS,
+                ).isExpired,
             )
         }
 
@@ -74,7 +74,7 @@ internal class AccessTokenTest {
             accessToken = "",
             tokenType = "",
             expiresIn = 0,
-            scope = "scope1 SCOPE2"
+            scope = "scope1 SCOPE2",
         )
 
         assertThat(token.hasScope("scope1")).isTrue()
@@ -132,7 +132,7 @@ internal class AccessTokenTest {
                 "token_type": "def",
                 "expires_in": 30
             }
-            """
+            """,
         )
 
         val after = System.currentTimeMillis()
@@ -153,7 +153,7 @@ internal class AccessTokenTest {
                 "expires_in": 30,
                 "received": 123
             }
-            """
+            """,
         )
 
         assertThat(accessToken.accessToken).isEqualTo("abc")
@@ -176,16 +176,16 @@ internal class AccessTokenTest {
         withSpotifyConfiguration(
             Spotify.configuration.copy(
                 oauthOkHttpClient = MockRequestInterceptor(
-                    responseBody = tokenBody.toResponseBody("text/plain".toMediaType())
+                    responseBody = tokenBody.toResponseBody("text/plain".toMediaType()),
                 ).client,
-            )
+            ),
         ) {
             val expiredToken = AccessToken(
                 accessToken = "",
                 tokenType = "",
                 expiresIn = 10,
                 received = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(15),
-                refreshToken = "refresh"
+                refreshToken = "refresh",
             )
             assertThat(expiredToken.isExpired).isTrue()
             AccessToken.Cache.put(expiredToken)
@@ -209,16 +209,16 @@ internal class AccessTokenTest {
             Spotify.configuration.copy(
                 oauthOkHttpClient = MockRequestInterceptor(
                     responseCode = 500,
-                    responseMessage = "Internal server error"
+                    responseMessage = "Internal server error",
                 ).client,
-            )
+            ),
         ) {
             val expiredToken = AccessToken(
                 accessToken = "",
                 tokenType = "",
                 expiresIn = 10,
                 received = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(15),
-                refreshToken = "refresh"
+                refreshToken = "refresh",
             )
             assertThat(expiredToken.isExpired).isTrue()
             AccessToken.Cache.put(expiredToken)
@@ -243,7 +243,7 @@ internal class AccessTokenTest {
 
         val interceptor = MockRequestInterceptor(
             responseBody = tokenBody.toResponseBody("text/plain".toMediaType()),
-            delayMs = 100
+            delayMs = 100,
         )
 
         withSpotifyConfiguration(Spotify.configuration.copy(oauthOkHttpClient = interceptor.client)) {
@@ -252,7 +252,7 @@ internal class AccessTokenTest {
                 tokenType = "",
                 expiresIn = 10,
                 received = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(15),
-                refreshToken = "refresh"
+                refreshToken = "refresh",
             )
             assertThat(expiredToken.isExpired).isTrue()
             AccessToken.Cache.put(expiredToken)
@@ -289,7 +289,7 @@ internal class AccessTokenTest {
             accessToken = "token2",
             tokenType = "type",
             expiresIn = 10,
-            refreshToken = "refresh"
+            refreshToken = "refresh",
         )
         assertThat(refreshable.refreshToken).isNotNull()
 

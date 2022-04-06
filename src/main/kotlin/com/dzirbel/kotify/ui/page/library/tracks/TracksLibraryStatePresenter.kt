@@ -10,7 +10,7 @@ class TracksLibraryStatePresenter(scope: CoroutineScope) :
     Presenter<TracksLibraryStatePresenter.ViewModel, TracksLibraryStatePresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.Load(fromCache = true)),
-        initialState = ViewModel()
+        initialState = ViewModel(),
     ) {
 
     data class ViewModel(

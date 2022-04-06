@@ -28,7 +28,7 @@ fun VerticalScroll(
 
         VerticalScrollbar(
             modifier = Modifier.align(Alignment.CenterEnd),
-            adapter = rememberScrollbarAdapter(scrollState)
+            adapter = rememberScrollbarAdapter(scrollState),
         )
     }
 }

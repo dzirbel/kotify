@@ -67,20 +67,20 @@ fun DraggableSplitter(
                                 },
                                 startDragImmediately = true,
                                 onDragStarted = { resizing.value = true },
-                                onDragStopped = { resizing.value = false }
+                                onDragStopped = { resizing.value = false },
                             )
                             .pointerHoverIcon(
                                 PointerIcon(
                                     when (orientation) {
                                         Orientation.Horizontal -> Cursor(Cursor.N_RESIZE_CURSOR)
                                         Orientation.Vertical -> Cursor(Cursor.E_RESIZE_CURSOR)
-                                    }
-                                )
+                                    },
+                                ),
                             )
                     } else {
                         this
                     }
-                }
+                },
         )
 
         Box(
@@ -91,7 +91,7 @@ fun DraggableSplitter(
                         Orientation.Horizontal -> height(params.lineWidth).fillMaxWidth()
                     }
                 }
-                .background(params.lineColor.takeIf { it.isSpecified } ?: LocalColors.current.dividerColor)
+                .background(params.lineColor.takeIf { it.isSpecified } ?: LocalColors.current.dividerColor),
         )
     }
 }

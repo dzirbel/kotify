@@ -60,25 +60,25 @@ fun LibraryPanel() {
                 Text(
                     text = "Library",
                     style = MaterialTheme.typography.h5,
-                    modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3)
+                    modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3),
                 )
 
                 val moreExpanded = remember { mutableStateOf(false) }
                 IconButton(
                     modifier = Modifier.size(Dimens.iconSmall),
-                    onClick = { moreExpanded.value = true }
+                    onClick = { moreExpanded.value = true },
                 ) {
                     CachedIcon(name = "more-vert", contentDescription = "More", size = Dimens.iconSmall)
 
                     DropdownMenu(
                         expanded = moreExpanded.value,
-                        onDismissRequest = { moreExpanded.value = false }
+                        onDismissRequest = { moreExpanded.value = false },
                     ) {
                         DropdownMenuItem(
                             onClick = {
                                 moreExpanded.value = false
                                 pageStack.mutate { to(LibraryStatePage) }
-                            }
+                            },
                         ) {
                             Text("Details")
                         }
@@ -93,19 +93,19 @@ fun LibraryPanel() {
             MaxWidthButton(
                 text = "Artists",
                 selected = pageStack.value.current == ArtistsPage,
-                onClick = { pageStack.mutate { to(ArtistsPage) } }
+                onClick = { pageStack.mutate { to(ArtistsPage) } },
             )
 
             MaxWidthButton(
                 text = "Albums",
                 selected = pageStack.value.current == AlbumsPage,
-                onClick = { pageStack.mutate { to(AlbumsPage) } }
+                onClick = { pageStack.mutate { to(AlbumsPage) } },
             )
 
             MaxWidthButton(
                 text = "Songs",
                 selected = pageStack.value.current == TracksPage,
-                onClick = { pageStack.mutate { to(TracksPage) } }
+                onClick = { pageStack.mutate { to(TracksPage) } },
             )
 
             VerticalSpacer(Dimens.space3)
@@ -113,7 +113,7 @@ fun LibraryPanel() {
             Text(
                 modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3),
                 style = MaterialTheme.typography.h5,
-                text = "Playlists"
+                text = "Playlists",
             )
 
             val stateOrError = presenter.state()
@@ -124,7 +124,7 @@ fun LibraryPanel() {
                 contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
                 onClick = {
                     presenter.emitAsync(LibraryPanelPresenter.Event.LoadPlaylists(invalidate = true))
-                }
+                },
             )
 
             Box(Modifier.height(Dimens.divider).fillMaxWidth().background(LocalColors.current.dividerColor))
@@ -137,7 +137,7 @@ fun LibraryPanel() {
                         imageVector = Icons.Default.Warning,
                         contentDescription = null,
                         modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally),
-                        tint = LocalColors.current.error
+                        tint = LocalColors.current.error,
                     )
 
                 is Presenter.StateOrError.State -> {
@@ -146,7 +146,7 @@ fun LibraryPanel() {
                         state.playlists.forEach { playlist -> PlaylistItem(playlist) }
                     } else {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally)
+                            modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally),
                         )
                     }
                 }
@@ -162,12 +162,12 @@ private fun PlaylistItem(playlist: Playlist) {
     SimpleTextButton(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
-        onClick = { pageStack.mutate { to(PlaylistPage(playlistId = playlist.id.value)) } }
+        onClick = { pageStack.mutate { to(PlaylistPage(playlistId = playlist.id.value)) } },
     ) {
         Text(
             text = playlist.name,
             modifier = Modifier.weight(1f),
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
         )
 
         if (Player.playbackContext.value?.uri == playlist.uri) {
@@ -191,12 +191,12 @@ private fun MaxWidthButton(
     SimpleTextButton(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = contentPadding,
-        onClick = onClick
+        onClick = onClick,
     ) {
         Text(
             text = text,
             modifier = Modifier.fillMaxWidth(),
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
         )
     }
 }

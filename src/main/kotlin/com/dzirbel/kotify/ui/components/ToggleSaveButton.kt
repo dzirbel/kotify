@@ -29,12 +29,12 @@ fun ToggleSaveButton(
                 expectedState.value = !isSaved
                 onSave(!isSaved)
             }
-        }
+        },
     ) {
         CachedIcon(
             name = if (isSaved == true) "favorite" else "favorite-border",
             size = size,
-            contentDescription = "Save"
+            contentDescription = "Save",
         )
     }
 }

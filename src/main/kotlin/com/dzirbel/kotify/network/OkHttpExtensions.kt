@@ -29,7 +29,7 @@ suspend fun Call.await(): Response {
                         continuation.resumeWithException(e)
                     }
                 }
-            }
+            },
         )
 
         continuation.invokeOnCancellation {

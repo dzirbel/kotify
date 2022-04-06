@@ -53,9 +53,9 @@ internal class TableTest {
                     columns = listOf(
                         object : PropertyByString<String>(title = "Col 1") {
                             override fun toString(item: String) = item
-                        }
+                        },
                     ),
-                    items = listOf("First", "Second", "Third")
+                    items = listOf("First", "Second", "Third"),
                 ),
 
                 ScreenshotTestCase(
@@ -89,7 +89,7 @@ internal class TableTest {
                                     Text("${item.value} - ${20 - item.index} from the end")
                                 }
                             }
-                        }
+                        },
                     ),
                     items = List(20) { IndexedValue(index = it, value = "${it}th item") },
                 ),
@@ -159,7 +159,7 @@ internal class TableTest {
                         },
                     ),
                     items = List(200) { it },
-                )
+                ),
             )
         }
     }

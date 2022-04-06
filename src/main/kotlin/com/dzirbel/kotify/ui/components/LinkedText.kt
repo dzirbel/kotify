@@ -93,7 +93,7 @@ fun LinkedText(
         LinkElementBuilder(
             hoveredOffset = hoverState.value.first,
             unhoveredSpanStyle = unhoveredSpanStyle,
-            hoveredSpanStyle = hoveredSpanStyle
+            hoveredSpanStyle = hoveredSpanStyle,
         )
             .apply(elements)
             .build()
@@ -118,10 +118,10 @@ fun LinkedText(
             onExit = {
                 hoverState.value = Pair(null, null)
                 true
-            }
+            },
         )
             .pointerHoverIcon(
-                if (hoverState.value.second != null) PointerIconDefaults.Hand else PointerIconDefaults.Default
+                if (hoverState.value.second != null) PointerIconDefaults.Hand else PointerIconDefaults.Default,
             )
     }
 
@@ -133,7 +133,7 @@ fun LinkedText(
         text = text,
         modifier = modifier.then(clickModifier).then(hoverModifier),
         style = style.copy(color = textColor),
-        onTextLayout = { layoutResult.value = it }
+        onTextLayout = { layoutResult.value = it },
     )
 }
 
@@ -167,15 +167,15 @@ private class LinkElementBuilder(
         builder.append(
             AnnotatedString(
                 text = text,
-                spanStyles = listOf(AnnotatedString.Range(item = spanStyle, start = 0, end = text.length))
-            )
+                spanStyles = listOf(AnnotatedString.Range(item = spanStyle, start = 0, end = text.length)),
+            ),
         )
 
         builder.addStringAnnotation(
             tag = ANNOTATION_TAG_LINK,
             annotation = link,
             start = currentOffset,
-            end = endOffset
+            end = endOffset,
         )
 
         currentOffset = endOffset

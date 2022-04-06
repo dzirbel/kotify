@@ -32,7 +32,7 @@ fun PlaylistPageHeader(presenter: PlaylistPresenter, state: PlaylistPresenter.Vi
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             LoadedImage(url = state.playlist?.largestImage?.cached?.url)
 
@@ -46,12 +46,12 @@ fun PlaylistPageHeader(presenter: PlaylistPresenter, state: PlaylistPresenter.Vi
 
                     Text(
                         "Created by ${state.playlist.owner.cached.name}; " +
-                            "${state.playlist.followersTotal} followers"
+                            "${state.playlist.followersTotal} followers",
                     )
 
                     val totalDurationMins = remember(state.tracks) {
                         TimeUnit.MILLISECONDS.toMinutes(
-                            state.tracks.sumOf { it.track.cached.durationMs.toInt() }.toLong()
+                            state.tracks.sumOf { it.track.cached.durationMs.toInt() }.toLong(),
                         )
                     }
 
@@ -59,7 +59,7 @@ fun PlaylistPageHeader(presenter: PlaylistPresenter, state: PlaylistPresenter.Vi
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         ToggleSaveButton(isSaved = state.isSavedState?.value, size = Dimens.iconMedium) {
                             presenter.emitAsync(PlaylistPresenter.Event.ToggleSave(save = it))
@@ -100,7 +100,7 @@ fun PlaylistPageHeader(presenter: PlaylistPresenter, state: PlaylistPresenter.Vi
                 updated = state.playlist?.updatedTime?.toEpochMilli(),
                 updatedFormat = { "Playlist synced $it" },
                 updatedFallback = "Playlist never synced",
-                onClick = { presenter.emitAsync(PlaylistPresenter.Event.Load(invalidate = true)) }
+                onClick = { presenter.emitAsync(PlaylistPresenter.Event.Load(invalidate = true)) },
             )
 
             InvalidateButton(
@@ -108,7 +108,7 @@ fun PlaylistPageHeader(presenter: PlaylistPresenter, state: PlaylistPresenter.Vi
                 updated = state.playlist?.tracksFetched?.toEpochMilli(),
                 updatedFormat = { "Tracks synced $it" },
                 updatedFallback = "Tracks never synced",
-                onClick = { presenter.emitAsync(PlaylistPresenter.Event.LoadTracks(invalidate = true)) }
+                onClick = { presenter.emitAsync(PlaylistPresenter.Event.LoadTracks(invalidate = true)) },
             )
         }
     }

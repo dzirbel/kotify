@@ -43,7 +43,7 @@ class OAuth private constructor(
                     error.value = ex
                 }
             }
-        }
+        },
     ).start()
 
     /**
@@ -166,7 +166,7 @@ class OAuth private constructor(
                 scopes = scopes,
                 redirectUri = redirectUri,
                 codeChallenge = codeChallenge,
-                state = state
+                state = state,
             )
 
             openInBrowser(authorizationUrl)
@@ -176,7 +176,7 @@ class OAuth private constructor(
                 codeVerifier = codeChallenge.verifier,
                 clientId = clientId,
                 redirectUri = redirectUri,
-                authorizationUrl = authorizationUrl
+                authorizationUrl = authorizationUrl,
             )
         }
 

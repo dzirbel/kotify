@@ -43,12 +43,12 @@ fun AlbumCell(
     ) {
         LoadedImage(
             url = album.largestImage.cached?.url,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            modifier = Modifier.align(Alignment.CenterHorizontally),
         )
 
         Row(
             modifier = Modifier.widthIn(max = Dimens.contentImage),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.space2)
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
         ) {
             Text(text = album.name, modifier = Modifier.weight(1f))
 
@@ -80,7 +80,7 @@ fun SmallAlbumCell(
             LoadedImage(
                 url = album.largestImage.cached?.url,
                 size = Dimens.contentImageSmall,
-                modifier = Modifier.align(Alignment.Center)
+                modifier = Modifier.align(Alignment.Center),
             )
 
             Row(

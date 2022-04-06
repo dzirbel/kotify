@@ -69,7 +69,7 @@ object UserRepository : DatabaseRepository<User, SpotifyUser>(User) {
             UserTable.CurrentUserTable.insert {
                 it[userId] = id
             }
-        }
+        },
     )
 
     override suspend fun fetch(id: String) = Spotify.UsersProfile.getUser(userId = id)

@@ -39,14 +39,14 @@ fun ColumnScope.LandingPage(state: MutableState<AuthenticationState>) {
 
     Text(
         "To get started, you'll need to authenticate with Spotify. This will open a web browser to request the " +
-            "permissions ${Application.name} needs to function."
+            "permissions ${Application.name} needs to function.",
     )
 
     Button(
         modifier = Modifier.align(Alignment.CenterHorizontally).padding(Dimens.space3),
         onClick = {
             state.mutate { copy(oauth = OAuth.start(clientId = clientId, port = port, scopes = scopes)) }
-        }
+        },
     ) {
         Text("Authenticate")
     }
@@ -57,11 +57,11 @@ fun ColumnScope.LandingPage(state: MutableState<AuthenticationState>) {
     SimpleTextButton(
         onClick = {
             detailsExpanded.mutate { !this }
-        }
+        },
     ) {
         Icon(
             imageVector = if (detailsExpanded.value) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-            contentDescription = null
+            contentDescription = null,
         )
 
         HorizontalSpacer(Dimens.space2)
@@ -82,16 +82,16 @@ fun ColumnScope.LandingPage(state: MutableState<AuthenticationState>) {
                     enabled = state.value.clientId != OAuth.DEFAULT_CLIENT_ID,
                     onClick = {
                         state.mutate { copy(clientId = OAuth.DEFAULT_CLIENT_ID) }
-                    }
+                    },
                 ) {
                     Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
                 }
-            }
+            },
         )
 
         LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle(), hoveredSpanStyle = HyperlinkSpanStyle()) {
             text(
-                "The Spotify application client ID to authenticate with, through which API requests are made. See the "
+                "The Spotify application client ID to authenticate with, through which API requests are made. See the ",
             )
             link(text = "docs", link = "https://developer.spotify.com/documentation/general/guides/app-settings/")
             text(" for details.")
@@ -115,17 +115,17 @@ fun ColumnScope.LandingPage(state: MutableState<AuthenticationState>) {
                     enabled = state.value.port != LocalOAuthServer.DEFAULT_PORT,
                     onClick = {
                         state.mutate { copy(port = LocalOAuthServer.DEFAULT_PORT) }
-                    }
+                    },
                 ) {
                     Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
                 }
-            }
+            },
         )
 
         Text(
             "The port on which a local server is run to capture the OAuth redirect URL. Note that " +
                 "`http://localhost:<PORT>/` MUST be whitelisted as a redirect URI for the Spotify client above, " +
-                "otherwise the authentication request will be rejected."
+                "otherwise the authentication request will be rejected.",
         )
 
         VerticalSpacer(Dimens.space3)
@@ -137,7 +137,7 @@ fun ColumnScope.LandingPage(state: MutableState<AuthenticationState>) {
                 enabled = state.value.scopes != OAuth.DEFAULT_SCOPES,
                 onClick = {
                     state.mutate { copy(scopes = OAuth.DEFAULT_SCOPES) }
-                }
+                },
             ) {
                 Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
             }
@@ -146,7 +146,7 @@ fun ColumnScope.LandingPage(state: MutableState<AuthenticationState>) {
         LinkedText(unhoveredSpanStyle = HyperlinkSpanStyle(), hoveredSpanStyle = HyperlinkSpanStyle()) {
             text(
                 "The authentication scopes that this application requests; if some are not granted parts of the " +
-                    "application may not work. See the "
+                    "application may not work. See the ",
             )
             link(text = "docs", link = "https://developer.spotify.com/documentation/general/guides/scopes/")
             text(" for details.")
@@ -163,7 +163,7 @@ fun ColumnScope.LandingPage(state: MutableState<AuthenticationState>) {
                 },
                 label = {
                     Text(scope)
-                }
+                },
             )
         }
     }

@@ -118,7 +118,7 @@ sealed class Logger<T> {
                     isSpotifyApi = request.url.host == "api.spotify.com",
                     isRequest = true,
                     isResponse = false,
-                )
+                ),
             )
         }
 
@@ -138,7 +138,7 @@ sealed class Logger<T> {
                     isSpotifyApi = response.request.url.host == "api.spotify.com",
                     isRequest = false,
                     isResponse = true,
-                )
+                ),
             )
         }
     }

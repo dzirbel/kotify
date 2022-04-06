@@ -85,7 +85,7 @@ object Application {
         val os = currentOs
         Logger.Events.info(
             "Detected operating system: ${os?.name?.lowercase(Locale.getDefault())?.capitalize()} " +
-                "(os.name: ${System.getProperty("os.name")})"
+                "(os.name: ${System.getProperty("os.name")})",
         )
 
         _cacheDir = cacheDirFor(os = os, override = cachePath)

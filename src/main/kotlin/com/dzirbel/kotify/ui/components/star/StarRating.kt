@@ -44,7 +44,7 @@ fun StarRating(
             }
         } else {
             modifier
-        }
+        },
     ) {
         if (rating != null) {
             DropdownMenu(
@@ -59,7 +59,7 @@ fun StarRating(
                     onClick = {
                         onRate(null)
                         dropdownVisible.value = false
-                    }
+                    },
                 ) {
                     Text("Clear rating")
                 }

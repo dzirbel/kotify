@@ -65,7 +65,7 @@ fun ArtistsPageHeader(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewM
                             refreshing = state.refreshing,
                             updated = state.artistsUpdated,
                             contentPadding = PaddingValues(all = Dimens.space2),
-                            onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) }
+                            onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) },
                         )
                     }
                 }
@@ -112,9 +112,9 @@ fun ArtistsPageContent(presenter: ArtistsPresenter, state: ArtistsPresenter.View
                     presenter.emitAsync(
                         ArtistsPresenter.Event.SetSelectedArtistIndex(
                             index = index.takeIf { index != state.selectedArtistIndex },
-                        )
+                        ),
                     )
-                }
+                },
             )
         }
     } else {
@@ -138,11 +138,11 @@ private fun ArtistCell(
                 },
                 onRightClick = onRightClick,
             )
-            .padding(Dimens.space3)
+            .padding(Dimens.space3),
     ) {
         LoadedImage(
             url = artist.largestImage.cached?.url,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            modifier = Modifier.align(Alignment.CenterHorizontally),
         )
 
         VerticalSpacer(Dimens.space3)
@@ -208,9 +208,9 @@ private fun ArtistDetailInsert(
                     isSaved = state.savedAlbumsState?.value?.contains(artistAlbum.albumId.value),
                     onToggleSave = { save ->
                         presenter.emitAsync(
-                            ArtistsPresenter.Event.ToggleAlbumSaved(albumId = artistAlbum.albumId.value, save = save)
+                            ArtistsPresenter.Event.ToggleAlbumSaved(albumId = artistAlbum.albumId.value, save = save),
                         )
-                    }
+                    },
                 )
             }
         }

@@ -11,6 +11,6 @@ import androidx.compose.ui.input.pointer.pointerMoveFilter
 fun Modifier.hoverState(state: MutableState<Boolean>): Modifier {
     return pointerMoveFilter(
         onEnter = { true.also { state.value = true } },
-        onExit = { true.also { state.value = false } }
+        onExit = { true.also { state.value = false } },
     )
 }

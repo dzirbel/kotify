@@ -98,7 +98,7 @@ fun SeekableSlider(
                         // manually adjust for padding
                         hoverLocation.value = it.x - paddingPx
                         true
-                    }
+                    },
                 )
                 // hack: pointerMoveFilter is not called on drag events (pointer move with mouse down), so we listen for
                 // those manually with draggable(). We also don't need clickable() since regular clicks are captured by
@@ -113,13 +113,13 @@ fun SeekableSlider(
                         val seekPercent = adjustedX / maxWidth
                         drag.value = adjustedX - (progressOverride.value!! * maxWidth)
                         onSeek(seekPercent)
-                    }
+                    },
                 )
                 .padding(padding)
                 .size(width = sliderWidth ?: Dp.Unspecified, height = sliderHeight)
                 .let {
                     if (sliderWidth == null) it.weight(1f) else it
-                }
+                },
         ) {
             // the background of the slider bar, representing the maximum progress
             LocalColors.current.withSurface {
@@ -134,7 +134,7 @@ fun SeekableSlider(
                             Modifier
                                 .fillMaxWidth(fraction = progress)
                                 .clip(roundedCornerShape)
-                                .background(LocalColors.current.highlighted(highlight = hoverState.value))
+                                .background(LocalColors.current.highlighted(highlight = hoverState.value)),
                         )
 
                         if (hoverState.value) {
@@ -150,8 +150,8 @@ fun SeekableSlider(
                                         },
                                         orientation = Orientation.Horizontal,
                                         startDragImmediately = true,
-                                        onDragStopped = { progressOverride.value?.let(onSeek) }
-                                    )
+                                        onDragStopped = { progressOverride.value?.let(onSeek) },
+                                    ),
                             )
                         }
                     },
@@ -173,7 +173,7 @@ fun SeekableSlider(
                         progressOverride.value = finalProgress
 
                         val progressBar = measurables[0].measure(
-                            Constraints.fixed(width = progressWidth, height = height)
+                            Constraints.fixed(width = progressWidth, height = height),
                         )
                         val seekTarget = measurables.getOrNull(1)?.measure(Constraints())
 
@@ -186,11 +186,11 @@ fun SeekableSlider(
 
                                 it.place(
                                     x = progressBar.width - (size / 2),
-                                    y = (height / 2) - (size / 2)
+                                    y = (height / 2) - (size / 2),
                                 )
                             }
                         }
-                    }
+                    },
                 )
             }
         }

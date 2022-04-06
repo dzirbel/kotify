@@ -76,7 +76,7 @@ fun Any.screenshotTest(
                 mismatchFile.writeBytes(screenshotBytes)
                 throw AssertionError(
                     "Screenshot mismatch for $screenshotFile. The image generated in the test has been written to " +
-                        "$mismatchFile for comparison (but then should be deleted)."
+                        "$mismatchFile for comparison (but then should be deleted).",
                 )
             } else {
                 mismatchFile.delete()
@@ -87,7 +87,7 @@ fun Any.screenshotTest(
     if (recordedScreenshots) {
         throw AssertionError(
             "Failing test because screenshots were recorded. Screenshots were successfully saved; this assertion " +
-                "ensures that all live tests are not in record mode and all screenshots exist."
+                "ensures that all live tests are not in record mode and all screenshots exist.",
         )
     }
 }

@@ -27,7 +27,7 @@ fun AlbumsPageHeader(presenter: AlbumsPresenter, state: AlbumsPresenter.ViewMode
             InvalidateButton(
                 refreshing = state.refreshing,
                 updated = state.albumsUpdated,
-                onClick = { presenter.emitAsync(AlbumsPresenter.Event.Load(invalidate = true)) }
+                onClick = { presenter.emitAsync(AlbumsPresenter.Event.Load(invalidate = true)) },
             )
         }
     }
@@ -42,7 +42,7 @@ fun AlbumsPageContent(presenter: AlbumsPresenter, state: AlbumsPresenter.ViewMod
                 isSaved = state.savedAlbumIds?.contains(album.id.value),
                 onToggleSave = { save ->
                     presenter.emitAsync(AlbumsPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
-                }
+                },
             )
         }
     } else {

@@ -54,7 +54,7 @@ fun NetworkTab(scrollState: ScrollState) {
             },
             label = {
                 Text("Network delay (ms)", style = MaterialTheme.typography.overline)
-            }
+            },
         )
 
         VerticalSpacer(Dimens.space2)
@@ -63,7 +63,7 @@ fun NetworkTab(scrollState: ScrollState) {
             modifier = Modifier.fillMaxWidth(),
             checked = networkSettings.value.filterApi,
             onCheckedChange = { networkSettings.mutate { copy(filterApi = it) } },
-            label = { Text("Spotify API calls only") }
+            label = { Text("Spotify API calls only") },
         )
 
         VerticalSpacer(Dimens.space2)
@@ -72,7 +72,7 @@ fun NetworkTab(scrollState: ScrollState) {
             modifier = Modifier.fillMaxWidth(),
             checked = networkSettings.value.filterIncoming,
             onCheckedChange = { networkSettings.mutate { copy(filterIncoming = it) } },
-            label = { Text("Incoming responses only") }
+            label = { Text("Incoming responses only") },
         )
 
         VerticalSpacer(Dimens.space2)
@@ -81,7 +81,7 @@ fun NetworkTab(scrollState: ScrollState) {
             modifier = Modifier.fillMaxWidth(),
             checked = networkSettings.value.filterOutgoing,
             onCheckedChange = { networkSettings.mutate { copy(filterOutgoing = it) } },
-            label = { Text("Outgoing requests only") }
+            label = { Text("Outgoing requests only") },
         )
     }
 

@@ -52,7 +52,7 @@ object Dimens {
         CompositionLocalProvider(
             LocalTextStyle provides MaterialTheme.typography.body2,
             LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(thickness = scrollbarWidth),
-            content = content
+            content = content,
         )
     }
 

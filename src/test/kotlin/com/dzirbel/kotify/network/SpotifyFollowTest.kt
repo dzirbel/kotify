@@ -92,7 +92,7 @@ class SpotifyFollowTest {
         assertThat(
             runBlocking {
                 Spotify.Follow.isFollowingPlaylist(playlistId = playlistId, userIds = listOf(Fixtures.userId))
-            }
+            },
         ).containsExactly(following)
     }
 

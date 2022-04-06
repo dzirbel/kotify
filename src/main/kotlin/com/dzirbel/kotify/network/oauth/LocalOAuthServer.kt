@@ -30,10 +30,10 @@ class LocalOAuthServer(
                 when (val result = handle(state = state, error = error, code = code)) {
                     is Result.Error -> call.respondText("Error: ${result.error}")
                     is Result.MismatchedState -> call.respondText(
-                        "Mismatched state! Expected ${result.expectedState}; got ${result.actualState}"
+                        "Mismatched state! Expected ${result.expectedState}; got ${result.actualState}",
                     )
                     is Result.Success -> call.respondText(
-                        "Success! You can now close this tab.\n\nCode: ${result.code}"
+                        "Success! You can now close this tab.\n\nCode: ${result.code}",
                     )
                 }
             }

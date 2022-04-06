@@ -104,26 +104,26 @@ fun AlbumsLibraryState(presenter: AlbumsLibraryStatePresenter) {
                 CachedIcon(
                     name = if (allInCache) "check-circle" else "cancel",
                     size = Dimens.iconSmall,
-                    tint = if (allInCache) Color.Green else Color.Red
+                    tint = if (allInCache) Color.Green else Color.Red,
                 )
 
                 HorizontalSpacer(Dimens.space1)
 
                 Text(
                     "$totalCached/$totalSaved in cache" +
-                        simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
+                        simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty(),
                 )
 
                 DropdownMenu(
                     expanded = inCacheExpanded.value,
-                    onDismissRequest = { inCacheExpanded.value = false }
+                    onDismissRequest = { inCacheExpanded.value = false },
                 ) {
                     DropdownMenuItem(
                         enabled = full < totalSaved,
                         onClick = {
                             presenter.emitAsync(AlbumsLibraryStatePresenter.Event.FetchMissingAlbums)
                             inCacheExpanded.value = false
-                        }
+                        },
                     ) {
                         Text("Fetch missing")
                     }
@@ -132,7 +132,7 @@ fun AlbumsLibraryState(presenter: AlbumsLibraryStatePresenter) {
                         onClick = {
                             presenter.emitAsync(AlbumsLibraryStatePresenter.Event.InvalidateAlbums)
                             inCacheExpanded.value = false
-                        }
+                        },
                     ) {
                         Text("Invalidate all")
                     }
@@ -155,7 +155,7 @@ fun AlbumsLibraryState(presenter: AlbumsLibraryStatePresenter) {
             items = state.savedAlbumIds,
             onSetSort = {
                 presenter.emitAsync(AlbumsLibraryStatePresenter.Event.SetSort(sorts = listOfNotNull(it)))
-            }
+            },
         )
     }
 }

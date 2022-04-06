@@ -54,7 +54,7 @@ internal class SpotifyBrowseTest {
             Spotify.Browse.getRecommendations(
                 seedArtists = Fixtures.artists.map { it.id }.take(5),
                 seedGenres = emptyList(),
-                seedTracks = emptyList()
+                seedTracks = emptyList(),
             )
         }
 

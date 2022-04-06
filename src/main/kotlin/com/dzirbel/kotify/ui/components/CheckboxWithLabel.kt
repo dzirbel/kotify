@@ -24,7 +24,7 @@ fun CheckboxWithLabel(
         modifier = modifier
             .clickable { onCheckedChange(!checked) }
             .padding(top = Dimens.space1, bottom = Dimens.space1, end = Dimens.space1),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(checked = checked, onCheckedChange = null)
 

@@ -41,7 +41,7 @@ private fun artistColumns(
 
             override fun links(item: String): List<ColumnByLinkedText.Link> {
                 return listOfNotNull(
-                    artists[item]?.let { ColumnByLinkedText.Link(text = it.name, link = it.id.value) }
+                    artists[item]?.let { ColumnByLinkedText.Link(text = it.name, link = it.id.value) },
                 )
             }
 
@@ -133,26 +133,26 @@ fun ArtistsLibraryState(presenter: ArtistsLibraryStatePresenter) {
                 CachedIcon(
                     name = if (allInCache) "check-circle" else "cancel",
                     size = Dimens.iconSmall,
-                    tint = if (allInCache) Color.Green else Color.Red
+                    tint = if (allInCache) Color.Green else Color.Red,
                 )
 
                 HorizontalSpacer(Dimens.space1)
 
                 Text(
                     "$totalCached/$totalSaved in cache" +
-                        simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
+                        simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty(),
                 )
 
                 DropdownMenu(
                     expanded = inCacheExpanded.value,
-                    onDismissRequest = { inCacheExpanded.value = false }
+                    onDismissRequest = { inCacheExpanded.value = false },
                 ) {
                     DropdownMenuItem(
                         enabled = full < totalSaved,
                         onClick = {
                             presenter.emitAsync(ArtistsLibraryStatePresenter.Event.FetchMissingArtists)
                             inCacheExpanded.value = false
-                        }
+                        },
                     ) {
                         Text("Fetch missing")
                     }
@@ -161,7 +161,7 @@ fun ArtistsLibraryState(presenter: ArtistsLibraryStatePresenter) {
                         onClick = {
                             presenter.emitAsync(ArtistsLibraryStatePresenter.Event.InvalidateArtists)
                             inCacheExpanded.value = false
-                        }
+                        },
                     ) {
                         Text("Invalidate all")
                     }
@@ -174,7 +174,7 @@ fun ArtistsLibraryState(presenter: ArtistsLibraryStatePresenter) {
                 CachedIcon(
                     name = if (allInCache) "check-circle" else "cancel",
                     size = Dimens.iconSmall,
-                    tint = if (allInCache) Color.Green else Color.Red
+                    tint = if (allInCache) Color.Green else Color.Red,
                 )
 
                 HorizontalSpacer(Dimens.space1)
@@ -183,13 +183,13 @@ fun ArtistsLibraryState(presenter: ArtistsLibraryStatePresenter) {
 
                 DropdownMenu(
                     expanded = albumMappingsExpanded.value,
-                    onDismissRequest = { albumMappingsExpanded.value = false }
+                    onDismissRequest = { albumMappingsExpanded.value = false },
                 ) {
                     DropdownMenuItem(
                         onClick = {
                             presenter.emitAsync(ArtistsLibraryStatePresenter.Event.FetchMissingArtistAlbums)
                             albumMappingsExpanded.value = false
-                        }
+                        },
                     ) {
                         Text("Fetch missing")
                     }
@@ -198,7 +198,7 @@ fun ArtistsLibraryState(presenter: ArtistsLibraryStatePresenter) {
                         onClick = {
                             presenter.emitAsync(ArtistsLibraryStatePresenter.Event.InvalidateArtistAlbums)
                             albumMappingsExpanded.value = false
-                        }
+                        },
                     ) {
                         Text("Invalidate all")
                     }

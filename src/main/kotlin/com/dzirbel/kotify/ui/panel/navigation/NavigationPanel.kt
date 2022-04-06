@@ -68,29 +68,29 @@ private fun NavigationButtons(titles: List<String?>) {
     Row(Modifier.padding(Dimens.space2)) {
         IconButton(
             enabled = pageStack.value.hasPrevious,
-            onClick = { pageStack.mutate { toPrevious() } }
+            onClick = { pageStack.mutate { toPrevious() } },
         ) {
             Icon(
                 imageVector = Icons.Filled.KeyboardArrowLeft,
                 contentDescription = "Back",
-                modifier = Modifier.size(Dimens.iconMedium)
+                modifier = Modifier.size(Dimens.iconMedium),
             )
         }
 
         val historyExpanded = remember { mutableStateOf(false) }
         IconButton(
             enabled = pageStack.value.pages.size > 1,
-            onClick = { historyExpanded.value = true }
+            onClick = { historyExpanded.value = true },
         ) {
             Icon(
                 imageVector = Icons.Filled.List,
                 contentDescription = "History",
-                modifier = Modifier.size(Dimens.iconMedium)
+                modifier = Modifier.size(Dimens.iconMedium),
             )
 
             DropdownMenu(
                 expanded = historyExpanded.value,
-                onDismissRequest = { historyExpanded.value = false }
+                onDismissRequest = { historyExpanded.value = false },
             ) {
                 pageStack.value.pages.forEachIndexed { index, page ->
                     DropdownMenuItem(
@@ -98,7 +98,7 @@ private fun NavigationButtons(titles: List<String?>) {
                             historyExpanded.value = false
                             pageStack.mutate { toIndex(index) }
                         },
-                        enabled = index != pageStack.value.currentIndex
+                        enabled = index != pageStack.value.currentIndex,
                     ) {
                         Text(titles[index] ?: page.toString())
                     }
@@ -108,12 +108,12 @@ private fun NavigationButtons(titles: List<String?>) {
 
         IconButton(
             enabled = pageStack.value.hasNext,
-            onClick = { pageStack.mutate { toNext() } }
+            onClick = { pageStack.mutate { toNext() } },
         ) {
             Icon(
                 imageVector = Icons.Filled.KeyboardArrowRight,
                 contentDescription = "Next",
-                modifier = Modifier.size(Dimens.iconMedium)
+                modifier = Modifier.size(Dimens.iconMedium),
             )
         }
     }

@@ -120,7 +120,7 @@ class ListAdapter<E> private constructor(
                         .takeIf { it.filtered }
                         ?.element
                         ?.let { IndexedValue(index, it) }
-                }
+                },
             )
         } else {
             val map = TreeMap<Any?, MutableList<IndexedValue<E>>>(divider.divisionComparator)
@@ -208,7 +208,7 @@ class ListAdapter<E> private constructor(
                 { element ->
                     elementProperty(element).contains(filterString, ignoreCase = ignoreCase)
                 }
-            }
+            },
         )
     }
 

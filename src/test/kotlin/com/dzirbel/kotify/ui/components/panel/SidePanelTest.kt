@@ -17,7 +17,7 @@ internal class SidePanelTest {
     @EnumSource(PanelDirection::class)
     fun testFixed(direction: PanelDirection) {
         screenshotTest(
-            filename = "fixed-${direction.name.lowercase()}"
+            filename = "fixed-${direction.name.lowercase()}",
         ) {
             SidePanel(
                 direction = direction,
@@ -33,7 +33,7 @@ internal class SidePanelTest {
                     Box(Modifier.fillMaxSize()) {
                         Text("Main content", modifier = Modifier.align(Alignment.Center))
                     }
-                }
+                },
             )
         }
     }
@@ -42,7 +42,7 @@ internal class SidePanelTest {
     @EnumSource(PanelDirection::class)
     fun testPercent(direction: PanelDirection) {
         screenshotTest(
-            filename = "percent-${direction.name.lowercase()}"
+            filename = "percent-${direction.name.lowercase()}",
         ) {
             SidePanel(
                 direction = direction,
@@ -58,7 +58,7 @@ internal class SidePanelTest {
                     Box(Modifier.fillMaxSize()) {
                         Text("Main content", modifier = Modifier.align(Alignment.Center))
                     }
-                }
+                },
             )
         }
     }

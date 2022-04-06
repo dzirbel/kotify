@@ -31,7 +31,7 @@ fun RatingsLibraryState(presenter: RatingsLibraryStatePresenter) {
             Text("${state.ratedTracksIds.size} Rated Tracks", modifier = Modifier.padding(end = Dimens.space3))
 
             SimpleTextButton(
-                onClick = { presenter.emitAsync(RatingsLibraryStatePresenter.Event.ClearAllRatings) }
+                onClick = { presenter.emitAsync(RatingsLibraryStatePresenter.Event.ClearAllRatings) },
             ) {
                 Text("Clear all ratings")
             }

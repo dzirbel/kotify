@@ -68,9 +68,9 @@ interface Column<E> : AdapterProperty<E> {
                             SortOrder.ASCENDING -> SortOrder.DESCENDING
                             SortOrder.DESCENDING -> null
                             null -> SortOrder.ASCENDING
-                        }
+                        },
                     )
-                }
+                },
             ) {
                 Text(
                     text = columnTitle,
@@ -80,14 +80,14 @@ interface Column<E> : AdapterProperty<E> {
                         top = headerPadding,
                         bottom = headerPadding,
                         end = headerPadding / 2,
-                    )
+                    ),
                 )
 
                 Icon(
                     imageVector = sortOrder.icon,
                     contentDescription = null,
                     modifier = Modifier.size(Dimens.iconSmall),
-                    tint = LocalColors.current.highlighted(sortOrder != null, otherwise = Color.Transparent)
+                    tint = LocalColors.current.highlighted(sortOrder != null, otherwise = Color.Transparent),
                 )
             }
         } else {

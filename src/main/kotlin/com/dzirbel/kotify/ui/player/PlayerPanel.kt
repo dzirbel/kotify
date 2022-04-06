@@ -159,30 +159,30 @@ fun PlayerPanel() {
                             x = Alignment.Start.align(
                                 size = leftPlaceable.width,
                                 space = leftWidth,
-                                layoutDirection = layoutDirection
+                                layoutDirection = layoutDirection,
                             ),
-                            y = Alignment.CenterVertically.align(size = leftPlaceable.height, space = maxHeight)
+                            y = Alignment.CenterVertically.align(size = leftPlaceable.height, space = maxHeight),
                         )
 
                         centerPlaceable.place(
                             x = leftWidth + Alignment.CenterHorizontally.align(
                                 size = centerPlaceable.width,
                                 space = centerWidth,
-                                layoutDirection = layoutDirection
+                                layoutDirection = layoutDirection,
                             ),
-                            y = Alignment.CenterVertically.align(size = centerPlaceable.height, space = maxHeight)
+                            y = Alignment.CenterVertically.align(size = centerPlaceable.height, space = maxHeight),
                         )
 
                         rightPlaceable.place(
                             x = leftWidth + centerWidth + Alignment.End.align(
                                 size = rightPlaceable.width,
                                 space = rightWidth,
-                                layoutDirection = layoutDirection
+                                layoutDirection = layoutDirection,
                             ),
-                            y = Alignment.CenterVertically.align(size = rightPlaceable.height, space = maxHeight)
+                            y = Alignment.CenterVertically.align(size = rightPlaceable.height, space = maxHeight),
                         )
                     }
-                }
+                },
             )
         }
     }
@@ -202,24 +202,24 @@ private fun CurrentTrack(
 
         LoadedImage(
             url = album?.images?.firstOrNull()?.url,
-            size = ALBUM_ART_SIZE
+            size = ALBUM_ART_SIZE,
         )
 
         track?.let {
             Column(
                 modifier = Modifier.sizeIn(minHeight = ALBUM_ART_SIZE),
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.space3)
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
                 ) {
                     Text(track.name)
 
                     track.id?.let { trackId ->
                         ToggleSaveButton(isSaved = trackIsSaved) {
                             presenter.emitAsync(
-                                PlayerPanelPresenter.Event.ToggleTrackSaved(trackId = trackId, save = it)
+                                PlayerPanelPresenter.Event.ToggleTrackSaved(trackId = trackId, save = it),
                             )
                         }
                     }
@@ -230,7 +230,7 @@ private fun CurrentTrack(
                         onRate = { rating ->
                             track.id?.let { trackId ->
                                 presenter.emitAsync(
-                                    PlayerPanelPresenter.Event.RateTrack(trackId = trackId, rating = rating)
+                                    PlayerPanelPresenter.Event.RateTrack(trackId = trackId, rating = rating),
                                 )
                             }
                         },
@@ -246,14 +246,14 @@ private fun CurrentTrack(
                         track.artists.forEach { artist ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(Dimens.space2)
+                                horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
                             ) {
                                 LinkedText(
                                     key = artist.id,
                                     style = MaterialTheme.typography.caption,
                                     onClickLink = { artistId ->
                                         pageStack.mutate { to(ArtistPage(artistId = artistId)) }
-                                    }
+                                    },
                                 ) {
                                     link(text = artist.name, link = artist.id)
                                 }
@@ -261,10 +261,13 @@ private fun CurrentTrack(
                                 artist.id?.let { artistId ->
                                     ToggleSaveButton(
                                         isSaved = artistsAreSaved?.get(artist.id),
-                                        size = Dimens.iconTiny
+                                        size = Dimens.iconTiny,
                                     ) {
                                         presenter.emitAsync(
-                                            PlayerPanelPresenter.Event.ToggleArtistSaved(artistId = artistId, save = it)
+                                            PlayerPanelPresenter.Event.ToggleArtistSaved(
+                                                artistId = artistId,
+                                                save = it,
+                                            ),
                                         )
                                     }
                                 }
@@ -278,14 +281,14 @@ private fun CurrentTrack(
                 if (album != null) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.space2)
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
                     ) {
                         LinkedText(
                             key = album.id,
                             style = MaterialTheme.typography.caption,
                             onClickLink = { albumId ->
                                 pageStack.mutate { to(AlbumPage(albumId = albumId)) }
-                            }
+                            },
                         ) {
                             text("on ")
                             link(text = album.name, link = album.id)
@@ -294,7 +297,7 @@ private fun CurrentTrack(
                         album.id?.let { albumId ->
                             ToggleSaveButton(isSaved = albumIsSaved, size = Dimens.iconTiny) {
                                 presenter.emitAsync(
-                                    PlayerPanelPresenter.Event.ToggleAlbumSaved(albumId = albumId, save = it)
+                                    PlayerPanelPresenter.Event.ToggleAlbumSaved(albumId = albumId, save = it),
                                 )
                             }
                         }
@@ -318,13 +321,13 @@ private fun PlayerControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
             enabled = controlsEnabled && !state.togglingShuffle,
             onClick = {
                 presenter.emitAsync(PlayerPanelPresenter.Event.ToggleShuffle(shuffle = !shuffling))
-            }
+            },
         ) {
             CachedIcon(
                 name = "shuffle",
                 size = Dimens.iconSmall,
                 contentDescription = "Shuffle",
-                tint = LocalColors.current.highlighted(highlight = shuffling)
+                tint = LocalColors.current.highlighted(highlight = shuffling),
             )
         }
 
@@ -332,7 +335,7 @@ private fun PlayerControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
             enabled = controlsEnabled && !state.skippingPrevious,
             onClick = {
                 presenter.emitAsync(PlayerPanelPresenter.Event.SkipPrevious)
-            }
+            },
         ) {
             CachedIcon(name = "skip-previous", size = Dimens.iconSmall, contentDescription = "Previous")
         }
@@ -345,13 +348,13 @@ private fun PlayerControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
                         PlayerPanelPresenter.Event.Pause
                     } else {
                         PlayerPanelPresenter.Event.Play
-                    }
+                    },
                 )
-            }
+            },
         ) {
             CachedIcon(
                 name = if (playing) "pause-circle-outline" else "play-circle-outline",
-                contentDescription = if (playing) "Pause" else "Play"
+                contentDescription = if (playing) "Pause" else "Play",
             )
         }
 
@@ -359,7 +362,7 @@ private fun PlayerControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
             enabled = controlsEnabled && !state.skippingNext,
             onClick = {
                 presenter.emitAsync(PlayerPanelPresenter.Event.SkipNext)
-            }
+            },
         ) {
             CachedIcon(name = "skip-next", size = Dimens.iconSmall, contentDescription = "Next")
         }
@@ -374,7 +377,7 @@ private fun PlayerControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
                 }
 
                 presenter.emitAsync(PlayerPanelPresenter.Event.SetRepeat(repeatState = newRepeatState))
-            }
+            },
         ) {
             CachedIcon(
                 name = if (repeatState == "track") "repeat-one" else "repeat",
@@ -435,7 +438,7 @@ private fun TrackProgress(state: PlayerPanelPresenter.ViewModel, presenter: Play
                 val positionMs = (seekPercent * track.durationMs).roundToInt()
                 seekProgress.value = positionMs
                 presenter.emitAsync(PlayerPanelPresenter.Event.SeekTo(positionMs = positionMs))
-            }
+            },
         )
     }
 }
@@ -467,15 +470,15 @@ private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
                     onClick = {
                         if (volume != null) {
                             presenter.emitAsync(
-                                PlayerPanelPresenter.Event.ToggleMuteVolume(mute = !muted, previousVolume = volume)
+                                PlayerPanelPresenter.Event.ToggleMuteVolume(mute = !muted, previousVolume = volume),
                             )
                         }
-                    }
+                    },
                 ) {
                     CachedIcon(
                         name = if (muted) "volume-off" else "volume-up",
                         contentDescription = "Volume",
-                        size = Dimens.iconSmall
+                        size = Dimens.iconSmall,
                     )
                 }
             },
@@ -483,7 +486,7 @@ private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
                 val volumeInt = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
                 seekVolume.value = volumeInt
                 presenter.emitAsync(PlayerPanelPresenter.Event.SetVolume(volumeInt))
-            }
+            },
         )
 
         val refreshing = state.loadingDevices || state.loadingPlayback || state.loadingTrackPlayback
@@ -493,9 +496,9 @@ private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
                 presenter.emitAsync(
                     PlayerPanelPresenter.Event.LoadDevices(),
                     PlayerPanelPresenter.Event.LoadPlayback(),
-                    PlayerPanelPresenter.Event.LoadTrackPlayback()
+                    PlayerPanelPresenter.Event.LoadTrackPlayback(),
                 )
-            }
+            },
         ) {
             RefreshIcon(refreshing = refreshing)
         }
@@ -504,36 +507,36 @@ private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
         if (errors.isNotEmpty()) {
             val errorsExpanded = remember { mutableStateOf(false) }
             IconButton(
-                onClick = { errorsExpanded.value = !errorsExpanded.value }
+                onClick = { errorsExpanded.value = !errorsExpanded.value },
             ) {
                 Icon(
                     imageVector = Icons.Filled.Warning,
                     contentDescription = "Refresh",
                     modifier = Modifier.size(Dimens.iconMedium),
-                    tint = LocalColors.current.error
+                    tint = LocalColors.current.error,
                 )
 
                 DropdownMenu(
                     expanded = errorsExpanded.value,
-                    onDismissRequest = { errorsExpanded.value = false }
+                    onDismissRequest = { errorsExpanded.value = false },
                 ) {
                     errors.forEach { throwable ->
                         Text(
                             modifier = Modifier.padding(Dimens.space3),
-                            text = "${throwable::class.simpleName} | ${throwable.message}"
+                            text = "${throwable::class.simpleName} | ${throwable.message}",
                         )
 
                         Box(
                             Modifier
                                 .fillMaxWidth()
                                 .height(Dimens.divider)
-                                .background(LocalColors.current.dividerColor)
+                                .background(LocalColors.current.dividerColor),
                         )
                     }
 
                     SimpleTextButton(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { presenter.errors = emptyList() }
+                        onClick = { presenter.errors = emptyList() },
                     ) {
                         Text("Clear")
                     }
@@ -552,7 +555,7 @@ private fun DeviceControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
 
     SimpleTextButton(
         enabled = dropdownEnabled,
-        onClick = { dropdownExpanded.value = !dropdownExpanded.value }
+        onClick = { dropdownExpanded.value = !dropdownExpanded.value },
     ) {
         CachedIcon(name = state.currentDevice.iconName, size = Dimens.iconSmall)
 
@@ -582,7 +585,7 @@ private fun DeviceControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
                         text = devices.size.toString(),
                         color = LocalColors.current.textOnSurface,
                         textAlign = TextAlign.Center,
-                        letterSpacing = 0.sp // hack - ideally wouldn't be necessary
+                        letterSpacing = 0.sp, // hack - ideally wouldn't be necessary
                     )
                 },
                 measurePolicy = { measurables, constraints ->
@@ -595,22 +598,22 @@ private fun DeviceControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
                         // center vertically and horizontally
                         placeable.place(
                             x = (size - placeable.width) / 2,
-                            y = (size - placeable.height) / 2
+                            y = (size - placeable.height) / 2,
                         )
                     }
-                }
+                },
             )
 
             DropdownMenu(
                 expanded = dropdownExpanded.value,
-                onDismissRequest = { dropdownExpanded.value = false }
+                onDismissRequest = { dropdownExpanded.value = false },
             ) {
                 devices.forEach { device ->
                     DropdownMenuItem(
                         onClick = {
                             presenter.emitAsync(PlayerPanelPresenter.Event.SelectDevice(device = device))
                             dropdownExpanded.value = false
-                        }
+                        },
                     ) {
                         CachedIcon(name = device.iconName, size = Dimens.iconSmall)
 

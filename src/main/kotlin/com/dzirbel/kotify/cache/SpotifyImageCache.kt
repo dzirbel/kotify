@@ -113,7 +113,7 @@ object SpotifyImageCache {
                         if (image != null && !imageJobs.containsKey(url)) {
                             imageJobs[url] = CompletableDeferred(image)
                         }
-                    }
+                    },
                 )
             }
         }
@@ -165,7 +165,7 @@ object SpotifyImageCache {
 
                 totalCompleted.incrementAndGet()
                 Logger.ImageCache.handleImageCacheEvent(
-                    ImageCacheEvent.OnDisk(url = url, duration = start.elapsedNow(), cacheFile = cacheFile)
+                    ImageCacheEvent.OnDisk(url = url, duration = start.elapsedNow(), cacheFile = cacheFile),
                 )
 
                 return Pair(cacheFile, image)
@@ -194,7 +194,7 @@ object SpotifyImageCache {
 
                 totalCompleted.incrementAndGet()
                 Logger.ImageCache.handleImageCacheEvent(
-                    ImageCacheEvent.Fetch(url = url, duration = start.elapsedNow(), cacheFile = cacheFile)
+                    ImageCacheEvent.Fetch(url = url, duration = start.elapsedNow(), cacheFile = cacheFile),
                 )
 
                 image

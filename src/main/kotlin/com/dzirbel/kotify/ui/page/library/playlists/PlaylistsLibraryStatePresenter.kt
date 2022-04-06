@@ -18,7 +18,7 @@ class PlaylistsLibraryStatePresenter(scope: CoroutineScope) :
     Presenter<PlaylistsLibraryStatePresenter.ViewModel, PlaylistsLibraryStatePresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.Load(fromCache = true)),
-        initialState = ViewModel()
+        initialState = ViewModel(),
     ) {
 
     data class ViewModel(

@@ -36,7 +36,7 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
         Text(
             text = oauth.error.value!!.stackTraceToString(),
             color = LocalColors.current.error,
-            fontFamily = FontFamily.Monospace
+            fontFamily = FontFamily.Monospace,
         )
     }
 
@@ -46,7 +46,7 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
         onClick = {
             runCatching { oauth.cancel() }
             state.mutate { copy(oauth = null) }
-        }
+        },
     ) {
         Text("Cancel flow")
     }
@@ -64,12 +64,12 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
             onValueChange = { },
             label = {
                 Text("Authorization URL")
-            }
+            },
         )
 
         // TODO toast/tooltip/etc when copied
         Button(
-            onClick = { setClipboard(oauth.authorizationUrl.toString()) }
+            onClick = { setClipboard(oauth.authorizationUrl.toString()) },
         ) {
             Text("Copy to clipboard")
         }
@@ -80,7 +80,7 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
     Text(
         "If you've accepted the authorization request in Spotify but it wasn't automatically captured (the browser " +
             "may be showing a \"site can't be reached\" error), copy the entire URL here (should start with " +
-            "\"localhost\"):"
+            "\"localhost\"):",
     )
 
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
@@ -91,13 +91,13 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
             onValueChange = { state.mutate { copy(manualRedirectUrl = it) } },
             label = {
                 Text("Redirect URL")
-            }
+            },
         )
 
         Button(
             onClick = {
                 state.mutate { copy(manualRedirectUrl = getClipboard()) }
-            }
+            },
         ) {
             Text("Paste")
         }
@@ -114,7 +114,7 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
                 oauth.onManualRedirect(url = url)
                 submitting.value = false
             }
-        }
+        },
     ) {
         if (submitting.value) {
             CircularProgressIndicator()

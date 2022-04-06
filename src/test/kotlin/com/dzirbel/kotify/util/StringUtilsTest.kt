@@ -40,8 +40,8 @@ internal class StringUtilsTest {
                 includeTime = case.includeTime,
                 includeMillis = case.includeMillis,
                 locale = Locale.US,
-                zone = ZoneId.of("America/Los_Angeles")
-            )
+                zone = ZoneId.of("America/Los_Angeles"),
+            ),
         ).isEqualTo(case.formatted)
     }
 
@@ -95,36 +95,36 @@ internal class StringUtilsTest {
                     formatted = "2021-03-14 18:49:04.610",
                     includeDate = true,
                     includeTime = true,
-                    includeMillis = true
+                    includeMillis = true,
                 ),
                 FormatDateTimeCase(
                     timestamp = 1_615_772_944_610,
                     formatted = "18:49:04.610",
                     includeDate = false,
                     includeTime = true,
-                    includeMillis = true
+                    includeMillis = true,
                 ),
                 FormatDateTimeCase(
                     timestamp = 1_615_772_944_610,
                     formatted = "2021-03-14 18:49:04",
                     includeDate = true,
                     includeTime = true,
-                    includeMillis = false
+                    includeMillis = false,
                 ),
                 FormatDateTimeCase(
                     timestamp = 1_615_772_944_610,
                     formatted = "18:49:04",
                     includeDate = false,
                     includeTime = true,
-                    includeMillis = false
+                    includeMillis = false,
                 ),
                 FormatDateTimeCase(
                     timestamp = 1_615_772_944_610,
                     formatted = "2021-03-14",
                     includeDate = true,
                     includeTime = false,
-                    includeMillis = false
-                )
+                    includeMillis = false,
+                ),
             )
         }
 
@@ -138,11 +138,11 @@ internal class StringUtilsTest {
                 FormatDurationCase(duration = 2.toDuration(DurationUnit.MINUTES), formatted = "2:00"),
                 FormatDurationCase(
                     duration = 2.toDuration(DurationUnit.MINUTES).plus(30.toDuration(DurationUnit.SECONDS)),
-                    formatted = "2:30"
+                    formatted = "2:30",
                 ),
                 FormatDurationCase(
                     duration = 2.toDuration(DurationUnit.HOURS),
-                    formatted = "2:00:00"
+                    formatted = "2:00:00",
                 ),
             )
         }

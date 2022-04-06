@@ -51,7 +51,7 @@ class AlbumPresenter(
                 trackIdOf = { it.id.value },
                 playContextFromTrack = { track ->
                     Player.PlayContext.albumTrack(album = album!!, index = track.trackNumber)
-                }
+                },
             ),
             TrackAlbumIndexProperty,
             TrackSavedProperty(trackIdOf = { it.id.value }, savedTrackIds = savedTracksState?.value),

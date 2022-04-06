@@ -19,13 +19,13 @@ fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
         modifier = Modifier.size(size),
         onClick = {
             if (playing) Player.pause() else Player.play(context = context)
-        }
+        },
     ) {
         CachedIcon(
             name = if (playing) "pause-circle-outline" else "play-circle-outline",
             size = size,
             contentDescription = "Play",
-            tint = LocalColors.current.highlighted(highlight = matchesContext)
+            tint = LocalColors.current.highlighted(highlight = matchesContext),
         )
     }
 }

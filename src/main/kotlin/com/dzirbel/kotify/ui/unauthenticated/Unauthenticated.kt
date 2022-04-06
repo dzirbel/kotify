@@ -47,7 +47,7 @@ fun Unauthenticated() {
                         .fillMaxWidth(fraction = WIDTH_FRACTION)
                         .fillMaxHeight()
                         .align(Alignment.TopCenter),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.space3, Alignment.Top)
+                    verticalArrangement = Arrangement.spacedBy(Dimens.space3, Alignment.Top),
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         ThemeSwitcher()
@@ -65,7 +65,7 @@ fun Unauthenticated() {
 
             VerticalScrollbar(
                 modifier = Modifier.align(Alignment.CenterEnd),
-                adapter = rememberScrollbarAdapter(scrollState)
+                adapter = rememberScrollbarAdapter(scrollState),
             )
         }
     }

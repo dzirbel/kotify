@@ -103,7 +103,7 @@ private fun <T> EventItem(event: Logger.Event<T>) {
                     onClick = {
                         setClipboard(contents = event.content.orEmpty())
                         rightClickMenuExpanded.value = false
-                    }
+                    },
                 ) {
                     Text("Copy contents to clipboard")
                 }

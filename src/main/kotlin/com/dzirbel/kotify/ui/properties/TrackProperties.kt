@@ -122,14 +122,14 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> Track) :
                     .surfaceBackground()
                     .height(Dimens.fontBodyDp)
                     .fillMaxWidth()
-                    .border(width = Dimens.divider, color = color)
+                    .border(width = Dimens.divider, color = color),
             ) {
                 Box(
                     @Suppress("MagicNumber")
                     Modifier
                         .background(color)
                         .fillMaxHeight()
-                        .fillMaxWidth(fraction = popularity / 100f)
+                        .fillMaxWidth(fraction = popularity / 100f),
                 )
             }
         }

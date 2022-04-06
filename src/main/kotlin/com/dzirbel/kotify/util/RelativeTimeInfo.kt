@@ -54,7 +54,7 @@ data class RelativeTimeInfo(
                             unitMillis - differenceMs % unitMillis
                         } else {
                             (absDifferenceMs % unitMillis).takeIf { it != 0L } ?: unitMillis
-                        }
+                        },
                     )
                 }
             }
@@ -62,7 +62,7 @@ data class RelativeTimeInfo(
             return RelativeTimeInfo(
                 unit = TimeUnit.SECONDS,
                 amount = 0,
-                msUntilNextIncrement = TimeUnit.SECONDS.toMillis(1) - differenceMs
+                msUntilNextIncrement = TimeUnit.SECONDS.toMillis(1) - differenceMs,
             )
         }
     }

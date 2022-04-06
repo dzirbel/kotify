@@ -13,7 +13,7 @@ fun HorizontalSpacer(width: Dp) {
         content = {},
         measurePolicy = { _, _ ->
             layout(width = width.roundToPx(), height = 0) {}
-        }
+        },
     )
 }
 
@@ -26,6 +26,6 @@ fun VerticalSpacer(height: Dp) {
         content = {},
         measurePolicy = { _, _ ->
             layout(width = 0, height = height.roundToPx()) {}
-        }
+        },
     )
 }

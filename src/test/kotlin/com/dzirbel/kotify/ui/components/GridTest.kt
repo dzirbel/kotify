@@ -63,7 +63,7 @@ internal class GridTest {
                 ) { _, element ->
                     Text(
                         text = element.toString(),
-                        modifier = Modifier.fillMaxWidth().height(elementHeight)
+                        modifier = Modifier.fillMaxWidth().height(elementHeight),
                     )
                 }
             }
@@ -110,7 +110,7 @@ internal class GridTest {
                 Box(
                     modifier = Modifier
                         .background(Color.Black)
-                        .size((20 + index * 2).dp)
+                        .size((20 + index * 2).dp),
                 ) {
                     Text(
                         text = (index + 1).toString(),
@@ -153,7 +153,7 @@ internal class GridTest {
                     alignment = Alignment.Center,
                     columns = null,
                     adapter = ListAdapter.of(List(50) { it })
-                        .withDivider(Divider(dividableProperty = ModDividableProperty(mod = 5)))
+                        .withDivider(Divider(dividableProperty = ModDividableProperty(mod = 5))),
                 ),
             )
         }

@@ -33,7 +33,7 @@ fun AlbumPageHeader(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) 
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             LoadedImage(url = state.album?.largestImage?.cached?.url)
 
@@ -43,7 +43,7 @@ fun AlbumPageHeader(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) 
 
                     album.artists.cachedOrNull?.let { artists ->
                         LinkedText(
-                            onClickLink = { artistId -> pageStack.mutate { to(ArtistPage(artistId = artistId)) } }
+                            onClickLink = { artistId -> pageStack.mutate { to(ArtistPage(artistId = artistId)) } },
                         ) {
                             text("By ")
                             list(artists) { artist -> link(text = artist.name, link = artist.id.value) }
@@ -60,7 +60,7 @@ fun AlbumPageHeader(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) 
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         ToggleSaveButton(isSaved = state.isSavedState?.value, size = Dimens.iconMedium) {
                             presenter.emitAsync(AlbumPresenter.Event.ToggleSave(save = it))
@@ -80,7 +80,7 @@ fun AlbumPageHeader(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) 
                 updated = state.albumUpdated?.toEpochMilli(),
                 updatedFormat = { "Album synced $it" },
                 updatedFallback = "Album never synced",
-                onClick = { presenter.emitAsync(AlbumPresenter.Event.Load(invalidate = true)) }
+                onClick = { presenter.emitAsync(AlbumPresenter.Event.Load(invalidate = true)) },
             )
         }
     }

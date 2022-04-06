@@ -62,7 +62,7 @@ fun SidePanel(
                                 .coerceAtLeastNullable(min)
                                 .coerceAtMostNullable(max)
                         }
-                    }
+                    },
                 )
             }
 
@@ -91,7 +91,7 @@ fun SidePanel(
                     when (splitterOrientation) {
                         Orientation.Horizontal -> constraints.copy(minHeight = panelSizePx, maxHeight = panelSizePx)
                         Orientation.Vertical -> constraints.copy(minWidth = panelSizePx, maxWidth = panelSizePx)
-                    }
+                    },
                 )
 
                 val contentSize = when (splitterOrientation) {
@@ -105,16 +105,16 @@ fun SidePanel(
                                 minWidth = constraints.maxWidth,
                                 maxWidth = constraints.maxWidth,
                                 minHeight = contentSize,
-                                maxHeight = contentSize
+                                maxHeight = contentSize,
                             )
                         Orientation.Vertical ->
                             Constraints(
                                 minWidth = contentSize,
                                 maxWidth = contentSize,
                                 minHeight = constraints.maxHeight,
-                                maxHeight = constraints.maxHeight
+                                maxHeight = constraints.maxHeight,
                             )
-                    }
+                    },
                 )
 
                 val splitterPlaceable = measurables[1].measure(constraints)
@@ -145,6 +145,6 @@ fun SidePanel(
                     placeable.place(0, 0)
                 }
             }
-        }
+        },
     )
 }

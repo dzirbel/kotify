@@ -81,9 +81,9 @@ fun <T> SortSelector(
                                         // replace the sort at this index with the new property
                                         .apply { set(index, newSort) }
                                         // remove any other (i.e. not at this index) sorts which also use this property
-                                        .filterIndexed { i, s -> i == index || s.sortableProperty != property }
+                                        .filterIndexed { i, s -> i == index || s.sortableProperty != property },
                                 )
-                            }
+                            },
                         )
                     }
 
@@ -177,7 +177,7 @@ private fun <T> SortPickerDropdown(
                 onClick = {
                     onDismissRequest()
                     onPickSort(property)
-                }
+                },
             ) {
                 Text(property.sortTitle)
             }

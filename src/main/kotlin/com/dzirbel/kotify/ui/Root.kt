@@ -37,7 +37,7 @@ val pageStack: MutableState<PageStack> = mutableStateOf(PageStack(ArtistsPage))
 private val libraryPanelSize = PanelSize(
     initialSize = FixedOrPercent.Fixed(300.dp),
     minPanelSizeDp = 150.dp,
-    minContentSizePercent = 0.7f
+    minContentSizePercent = 0.7f,
 )
 
 @Composable
@@ -102,13 +102,13 @@ private fun PageStackContent() {
             }
 
             NavigationPanel(headerVisibleState = navigationTitleVisibleState, titles = titles)
-        }
+        },
     ) { measurables, constraints ->
         assert(measurables.size == 2)
 
         val headerPlaceable = measurables[1].measure(constraints)
         val contentPlaceable = measurables[0].measure(
-            constraints.copy(maxHeight = constraints.maxHeight - headerPlaceable.height)
+            constraints.copy(maxHeight = constraints.maxHeight - headerPlaceable.height),
         )
 
         layout(width = constraints.maxWidth, height = constraints.maxHeight) {

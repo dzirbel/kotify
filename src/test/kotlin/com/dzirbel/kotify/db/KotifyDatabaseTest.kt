@@ -60,7 +60,7 @@ internal class KotifyDatabaseTest {
                 .map { Pair(it[TestTable.name], it[TestTable.count]) }
 
             assertThat(rows).containsExactlyElementsOfInAnyOrder(
-                List(numJobs) { Pair("row $it", it) }
+                List(numJobs) { Pair("row $it", it) },
             )
         }
     }

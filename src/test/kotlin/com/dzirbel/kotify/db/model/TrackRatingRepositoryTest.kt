@@ -76,7 +76,7 @@ internal class TrackRatingRepositoryTest {
         assertThat(
             runBlocking {
                 KotifyDatabase.transaction(name = null) { TrackRatingRepository.lastRatingOf(id = trackId) }
-            }
+            },
         )
             .isNull()
         assertThat(state.value).isNull()

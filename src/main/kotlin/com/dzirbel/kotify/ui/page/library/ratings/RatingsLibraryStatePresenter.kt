@@ -16,7 +16,7 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
     Presenter<RatingsLibraryStatePresenter.ViewModel, RatingsLibraryStatePresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.Load),
-        initialState = ViewModel()
+        initialState = ViewModel(),
     ) {
 
     data class ViewModel(

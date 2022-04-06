@@ -295,7 +295,7 @@ internal class SavedDatabaseRepositoryTest {
             assertThat(state4.value).isNotNull().isTrue()
             assertThat(state5).isSameInstanceAs(state4)
             TestSavedRepository.assertCalls(
-                fetchedIds = listOf(listOf("saved-1"), listOf("unsaved"), listOf("saved-2"))
+                fetchedIds = listOf(listOf("saved-1"), listOf("unsaved"), listOf("saved-2")),
             )
         }
     }

@@ -30,7 +30,7 @@ import java.time.Instant
 class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewModel, ArtistsPresenter.Event>(
     scope = scope,
     startingEvents = listOf(Event.Load(invalidate = false)),
-    initialState = ViewModel()
+    initialState = ViewModel(),
 ) {
 
     data class ArtistDetails(
@@ -164,7 +164,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                 val details = ArtistDetails(
                     savedTime = savedTime,
                     genres = genres,
-                    albums = null
+                    albums = null,
                 )
 
                 mutateState {

@@ -126,7 +126,7 @@ object Spotify {
             method = "POST",
             path = path,
             queryParams = queryParams,
-            body = Json.encodeToString(jsonBody).toRequestBody()
+            body = Json.encodeToString(jsonBody).toRequestBody(),
         )
     }
 
@@ -139,7 +139,7 @@ object Spotify {
             method = "PUT",
             path = path,
             queryParams = queryParams,
-            body = Json.encodeToString(jsonBody).toRequestBody()
+            body = Json.encodeToString(jsonBody).toRequestBody(),
         )
     }
 
@@ -152,7 +152,7 @@ object Spotify {
             method = "DELETE",
             path = path,
             queryParams = queryParams,
-            body = Json.encodeToString(jsonBody).toRequestBody()
+            body = Json.encodeToString(jsonBody).toRequestBody(),
         )
     }
 
@@ -235,7 +235,7 @@ object Spotify {
         ): Paging<SimplifiedSpotifyTrack> {
             return get(
                 "albums/$id/tracks",
-                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market),
             )
         }
 
@@ -251,7 +251,7 @@ object Spotify {
         suspend fun getAlbums(ids: List<String>, market: String? = null): List<FullSpotifyAlbum> {
             return get<AlbumsModel>(
                 "albums",
-                mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
+                mapOf("ids" to ids.joinToString(separator = ","), "market" to market),
             ).albums
         }
     }
@@ -317,8 +317,8 @@ object Spotify {
                     "include_groups" to includeGroups?.joinToString(separator = ",") { it.name.lowercase(Locale.US) },
                     "country" to country,
                     "limit" to limit?.toString(),
-                    "offset" to offset?.toString()
-                )
+                    "offset" to offset?.toString(),
+                ),
             )
         }
 
@@ -390,7 +390,7 @@ object Spotify {
         ): Paging<SimplifiedSpotifyPlaylist> {
             return get<PlaylistPagingModel>(
                 "browse/categories/$categoryId/playlists",
-                mapOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString())
+                mapOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString()),
             ).playlists
         }
 
@@ -425,8 +425,8 @@ object Spotify {
                     "country" to country,
                     "locale" to locale,
                     "limit" to limit?.toString(),
-                    "offset" to offset?.toString()
-                )
+                    "offset" to offset?.toString(),
+                ),
             ).categories
         }
 
@@ -468,8 +468,8 @@ object Spotify {
                     "country" to country,
                     "timestamp" to timestamp,
                     "limit" to limit?.toString(),
-                    "offset" to offset?.toString()
-                )
+                    "offset" to offset?.toString(),
+                ),
             ).playlists
         }
 
@@ -493,7 +493,7 @@ object Spotify {
         ): Paging<SimplifiedSpotifyAlbum> {
             return get<AlbumsPagingModel>(
                 "browse/new-releases",
-                mapOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString())
+                mapOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString()),
             ).albums
         }
 
@@ -541,8 +541,8 @@ object Spotify {
                     "market" to market,
                     "seed_artists" to seedArtists.joinToString(separator = ","),
                     "seed_genres" to seedGenres.joinToString(separator = ","),
-                    "seed_tracks" to seedTracks.joinToString(separator = ",")
-                ).plus(tunableTrackAttributes)
+                    "seed_tracks" to seedTracks.joinToString(separator = ","),
+                ).plus(tunableTrackAttributes),
             )
         }
 
@@ -593,7 +593,7 @@ object Spotify {
         suspend fun getEpisodes(ids: List<String>, market: String? = null): List<FullSpotifyEpisode> {
             return get<EpisodesModel>(
                 "episodes",
-                mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
+                mapOf("ids" to ids.joinToString(separator = ","), "market" to market),
             ).episodes
         }
     }
@@ -629,7 +629,7 @@ object Spotify {
         suspend fun isFollowingPlaylist(playlistId: String, userIds: List<String>): List<Boolean> {
             return get(
                 "playlists/$playlistId/followers/contains",
-                mapOf("ids" to userIds.joinToString(separator = ","))
+                mapOf("ids" to userIds.joinToString(separator = ",")),
             )
         }
 
@@ -644,7 +644,7 @@ object Spotify {
         suspend fun getFollowedArtists(limit: Int? = null, after: String? = null): CursorPaging<FullSpotifyArtist> {
             return get<ArtistsCursorPagingModel>(
                 "me/following",
-                mapOf("type" to "artist", "limit" to limit?.toString(), "after" to after)
+                mapOf("type" to "artist", "limit" to limit?.toString(), "after" to after),
             ).artists
         }
 
@@ -693,7 +693,7 @@ object Spotify {
             return delete(
                 "me/following",
                 jsonBody = mapOf<String, String>(),
-                queryParams = mapOf("type" to type, "ids" to ids.joinToString(separator = ","))
+                queryParams = mapOf("type" to type, "ids" to ids.joinToString(separator = ",")),
             )
         }
 
@@ -709,7 +709,7 @@ object Spotify {
             return delete(
                 "playlists/$playlistId/followers",
                 jsonBody = null as Map<String, String>?,
-                queryParams = null
+                queryParams = null,
             )
         }
     }
@@ -739,7 +739,7 @@ object Spotify {
         ): Paging<SpotifySavedAlbum> {
             return get(
                 "me/albums",
-                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market),
             )
         }
 
@@ -755,7 +755,7 @@ object Spotify {
             return put(
                 "me/albums",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?
+                jsonBody = null as Unit?,
             )
         }
 
@@ -771,7 +771,7 @@ object Spotify {
             return delete(
                 "me/albums",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?
+                jsonBody = null as Unit?,
             )
         }
 
@@ -804,7 +804,7 @@ object Spotify {
         ): Paging<SpotifySavedTrack> {
             return get(
                 "me/tracks",
-                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market),
             )
         }
 
@@ -820,7 +820,7 @@ object Spotify {
             return put(
                 "me/tracks",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?
+                jsonBody = null as Unit?,
             )
         }
 
@@ -836,7 +836,7 @@ object Spotify {
             return delete(
                 "me/tracks",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?
+                jsonBody = null as Unit?,
             )
         }
 
@@ -877,7 +877,7 @@ object Spotify {
             return put(
                 "me/shows",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?
+                jsonBody = null as Unit?,
             )
         }
 
@@ -893,7 +893,7 @@ object Spotify {
             return delete(
                 "me/shows",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?
+                jsonBody = null as Unit?,
             )
         }
 
@@ -949,7 +949,7 @@ object Spotify {
         ): Paging<FullSpotifyArtist> {
             return get(
                 "me/top/artists",
-                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value)
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value),
             )
         }
 
@@ -981,7 +981,7 @@ object Spotify {
         ): Paging<FullSpotifyTrack> {
             return get(
                 "me/top/tracks",
-                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value)
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value),
             )
         }
     }
@@ -1015,7 +1015,7 @@ object Spotify {
         ): SpotifyPlayback? {
             return get(
                 "me/player",
-                mapOf("market" to market, "additional_types" to additionalTypes?.joinToString(separator = ","))
+                mapOf("market" to market, "additional_types" to additionalTypes?.joinToString(separator = ",")),
             )
         }
 
@@ -1073,7 +1073,7 @@ object Spotify {
         ): SpotifyTrackPlayback? {
             return get(
                 "me/player/currently-playing",
-                mapOf("market" to market, "additional_types" to additionalTypes?.joinToString(separator = ","))
+                mapOf("market" to market, "additional_types" to additionalTypes?.joinToString(separator = ",")),
             )
         }
 
@@ -1107,7 +1107,7 @@ object Spotify {
             return put(
                 "me/player/play",
                 jsonBody = Body(contextUri = contextUri, uris = uris, offset = offset, positionMs = positionMs),
-                queryParams = mapOf("device_id" to deviceId)
+                queryParams = mapOf("device_id" to deviceId),
             )
         }
 
@@ -1124,7 +1124,7 @@ object Spotify {
             return put(
                 "me/player/pause",
                 jsonBody = null as Unit?,
-                queryParams = mapOf("device_id" to deviceId)
+                queryParams = mapOf("device_id" to deviceId),
             )
         }
 
@@ -1141,7 +1141,7 @@ object Spotify {
             return post(
                 "me/player/next",
                 jsonBody = null as Unit?,
-                queryParams = mapOf("device_id" to deviceId)
+                queryParams = mapOf("device_id" to deviceId),
             )
         }
 
@@ -1158,7 +1158,7 @@ object Spotify {
             return post(
                 "me/player/previous",
                 jsonBody = null as Unit?,
-                queryParams = mapOf("device_id" to deviceId)
+                queryParams = mapOf("device_id" to deviceId),
             )
         }
 
@@ -1178,7 +1178,7 @@ object Spotify {
             return put(
                 "me/player/seek",
                 jsonBody = null as Unit?,
-                queryParams = mapOf("position_ms" to positionMs.toString(), "device_id" to deviceId)
+                queryParams = mapOf("position_ms" to positionMs.toString(), "device_id" to deviceId),
             )
         }
 
@@ -1199,7 +1199,7 @@ object Spotify {
             return put(
                 "me/player/repeat",
                 jsonBody = null as Unit?,
-                queryParams = mapOf("state" to state, "device_id" to deviceId)
+                queryParams = mapOf("state" to state, "device_id" to deviceId),
             )
         }
 
@@ -1217,7 +1217,7 @@ object Spotify {
             return put(
                 "me/player/volume",
                 jsonBody = null as Unit?,
-                queryParams = mapOf("volume_percent" to volumePercent.toString(), "device_id" to deviceId)
+                queryParams = mapOf("volume_percent" to volumePercent.toString(), "device_id" to deviceId),
             )
         }
 
@@ -1235,7 +1235,7 @@ object Spotify {
             return put(
                 "me/player/shuffle",
                 jsonBody = null as Unit?,
-                queryParams = mapOf("state" to state.toString(), "device_id" to deviceId)
+                queryParams = mapOf("state" to state.toString(), "device_id" to deviceId),
             )
         }
 
@@ -1260,8 +1260,8 @@ object Spotify {
                 queryParams = mapOf(
                     "limit" to limit?.toString(),
                     "after" to after?.toString(),
-                    "before" to before?.toString()
-                )
+                    "before" to before?.toString(),
+                ),
             )
         }
 
@@ -1279,7 +1279,7 @@ object Spotify {
             return post(
                 "me/player/queue",
                 jsonBody = null as Unit?,
-                queryParams = mapOf("uri" to uri, "device_id" to deviceId)
+                queryParams = mapOf("uri" to uri, "device_id" to deviceId),
             )
         }
     }
@@ -1349,8 +1349,8 @@ object Spotify {
                     "name" to name,
                     "public" to public?.toString(),
                     "collaborative" to collaborative?.toString(),
-                    "description" to description
-                )
+                    "description" to description,
+                ),
             )
         }
 
@@ -1387,8 +1387,8 @@ object Spotify {
                     name = name,
                     public = public,
                     collaborative = collaborative,
-                    description = description
-                )
+                    description = description,
+                ),
             )
         }
 
@@ -1414,7 +1414,7 @@ object Spotify {
 
             return post<Body, SnaphshotId>(
                 "playlists/$playlistId/tracks",
-                jsonBody = Body(position = position, uris = uris)
+                jsonBody = Body(position = position, uris = uris),
             ).snapshotId
         }
 
@@ -1455,8 +1455,8 @@ object Spotify {
                     rangeStart = rangeStart,
                     insertBefore = insertBefore,
                     rangeLength = rangeLength,
-                    snapshotId = snapshotId
-                )
+                    snapshotId = snapshotId,
+                ),
             ).snapshotId
         }
 
@@ -1473,7 +1473,7 @@ object Spotify {
 
             return put<Body, SnaphshotId>(
                 "playlists/$playlistId/tracks",
-                jsonBody = Body(uris = uris)
+                jsonBody = Body(uris = uris),
             ).snapshotId
         }
 
@@ -1493,7 +1493,7 @@ object Spotify {
 
             return delete<Body, SnaphshotId>(
                 "playlists/$playlistId/tracks",
-                jsonBody = Body(uris = tracks, snapshotId = snapshotId)
+                jsonBody = Body(uris = tracks, snapshotId = snapshotId),
             ).snapshotId
         }
 
@@ -1521,7 +1521,7 @@ object Spotify {
                 method = "PUT",
                 path = "playlists/$playlistId/images",
                 body = Base64.getEncoder().encodeToString(jpegImage)
-                    .toRequestBody(contentType = "image/jpeg".toMediaType())
+                    .toRequestBody(contentType = "image/jpeg".toMediaType()),
             )
         }
 
@@ -1560,8 +1560,8 @@ object Spotify {
                 mapOf(
                     "fields" to fields?.joinToString(separator = ","),
                     "market" to market,
-                    "additional_types" to additionalTypes?.joinToString(separator = ",")
-                )
+                    "additional_types" to additionalTypes?.joinToString(separator = ","),
+                ),
             )
         }
 
@@ -1608,8 +1608,8 @@ object Spotify {
                     "limit" to limit?.toString(),
                     "offset" to offset?.toString(),
                     "market" to market,
-                    "additional_types" to additionalTypes?.joinToString(separator = ",")
-                )
+                    "additional_types" to additionalTypes?.joinToString(separator = ","),
+                ),
             )
         }
     }
@@ -1674,8 +1674,8 @@ object Spotify {
                     "market" to market,
                     "limit" to limit?.toString(),
                     "offset" to offset?.toString(),
-                    "include_external" to includeExternal
-                )
+                    "include_external" to includeExternal,
+                ),
             )
         }
     }
@@ -1717,7 +1717,7 @@ object Spotify {
         suspend fun getShows(ids: List<String>, market: String? = null): List<SimplifiedSpotifyShow> {
             return get<ShowsModel>(
                 "shows",
-                mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
+                mapOf("ids" to ids.joinToString(separator = ","), "market" to market),
             ).shows
         }
 
@@ -1745,7 +1745,7 @@ object Spotify {
         ): Paging<SimplifiedSpotifyEpisode> {
             return get(
                 "shows/$id/episodes",
-                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market)
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market),
             )
         }
     }
@@ -1793,7 +1793,7 @@ object Spotify {
         suspend fun getAudioFeatures(ids: List<String>): List<SpotifyAudioFeatures> {
             return get<AudioFeaturesModel>(
                 "audio-features",
-                mapOf("ids" to ids.joinToString(separator = ","))
+                mapOf("ids" to ids.joinToString(separator = ",")),
             ).audioFeatures
         }
 
@@ -1822,7 +1822,7 @@ object Spotify {
         suspend fun getTracks(ids: List<String>, market: String? = null): List<FullSpotifyTrack> {
             return get<TracksModel>(
                 "tracks",
-                mapOf("ids" to ids.joinToString(separator = ","), "market" to market)
+                mapOf("ids" to ids.joinToString(separator = ","), "market" to market),
             ).tracks
         }
     }

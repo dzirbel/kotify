@@ -92,8 +92,8 @@ internal class ListAdapterTest {
             .isEqualTo(
                 mapOf(
                     null to listOf(18, 16, 14, 12, 10, 8, 6, 4, 2, 0, 19, 17, 15, 13, 11, 9, 7, 5, 3, 1)
-                        .map { IndexedValue(it, it) }
-                )
+                        .map { IndexedValue(it, it) },
+                ),
             )
     }
 

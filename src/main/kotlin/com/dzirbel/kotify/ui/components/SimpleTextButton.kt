@@ -58,7 +58,7 @@ fun SimpleTextButton(
         colors = ButtonDefaults.textButtonColors(
             backgroundColor = backgroundColor,
             contentColor = textColor,
-            disabledContentColor = textColor.copy(alpha = LocalContentAlpha.current)
+            disabledContentColor = textColor.copy(alpha = LocalContentAlpha.current),
         ),
         onClick = onClick,
         content = {

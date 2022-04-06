@@ -42,7 +42,7 @@ internal class GlobalUpdateTimesRepositoryTest {
                 .isNotNull()
                 .isBetween(start, end)
             assertThat(
-                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) }
+                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) },
             ).isTrue()
 
             val start2 = Instant.now().truncatedTo(ChronoUnit.MILLIS)
@@ -53,7 +53,7 @@ internal class GlobalUpdateTimesRepositoryTest {
                 .isNotNull()
                 .isBetween(start2, end2)
             assertThat(
-                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) }
+                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) },
             ).isTrue()
         }
     }
@@ -71,7 +71,7 @@ internal class GlobalUpdateTimesRepositoryTest {
                 .isNotNull()
                 .isBetween(start, end)
             assertThat(
-                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) }
+                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) },
             ).isTrue()
 
             KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.invalidate(key = key) }
@@ -79,7 +79,7 @@ internal class GlobalUpdateTimesRepositoryTest {
             assertThat(KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.updated(key = key) })
                 .isNull()
             assertThat(
-                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) }
+                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) },
             ).isFalse()
         }
     }

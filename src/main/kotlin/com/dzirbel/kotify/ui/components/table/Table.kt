@@ -158,7 +158,7 @@ fun <E> Table(
                         .coerceAtLeastNullable(
                             headerMeasurables?.get(colIndex)?.measure(colConstraints)
                                 ?.also { headerPlaceables!![colIndex] = it }
-                                ?.width
+                                ?.width,
                         )
 
                     colWidths[colIndex] = colWidth.toFloat()
@@ -285,6 +285,6 @@ fun <E> Table(
                     }
                 }
             }
-        }
+        },
     )
 }

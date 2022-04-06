@@ -390,7 +390,7 @@ formatting:
     active: true
     autoCorrect: true
   TrailingComma:
-    active: false
+    active: true
     allowTrailingComma: true
     allowTrailingCommaOnCallSite: true
     autoCorrect: true

@@ -35,7 +35,7 @@ class SpotifyLibraryTest {
             .plus(
                 Fixtures.albums.keys.map {
                     it.id to Fixtures.savedAlbums.any { savedAlbum -> it.id == savedAlbum.id }
-                }
+                },
             )
 
         val saved = runBlocking { Spotify.Library.checkAlbums(ids.map { it.first }) }
@@ -76,7 +76,7 @@ class SpotifyLibraryTest {
             .plus(
                 Fixtures.tracks.map {
                     it.id to Fixtures.savedTracks.any { savedTrack -> it.id == savedTrack.id }
-                }
+                },
             )
 
         val saved = runBlocking { Spotify.Library.checkTracks(ids.mapNotNull { it.first }) }

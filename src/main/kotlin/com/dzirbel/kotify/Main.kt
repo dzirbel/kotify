@@ -17,7 +17,7 @@ import okhttp3.OkHttpClient
 fun main(args: Array<String>) {
     Application.setup(
         cachePath = args.getOrNull(0),
-        settingsPath = args.getOrNull(1)
+        settingsPath = args.getOrNull(1),
     )
 
     Settings.ensureLoaded()
@@ -31,7 +31,7 @@ fun main(args: Array<String>) {
 
     Spotify.configuration = Spotify.Configuration(
         okHttpClient = okHttpClient,
-        oauthOkHttpClient = okHttpClient
+        oauthOkHttpClient = okHttpClient,
     )
 
     // clear non-refreshable tokens from tests
@@ -42,7 +42,7 @@ fun main(args: Array<String>) {
             onCloseRequest = ::exitApplication,
             title = "${Application.name} ${Application.version}",
             state = rememberWindowState(placement = WindowPlacement.Maximized, size = DpSize.Unspecified),
-            onKeyEvent = KeyboardShortcuts::handle
+            onKeyEvent = KeyboardShortcuts::handle,
         ) {
             Theme.apply { Root() }
         }

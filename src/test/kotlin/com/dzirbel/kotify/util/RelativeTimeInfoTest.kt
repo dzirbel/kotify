@@ -32,32 +32,32 @@ internal class RelativeTimeInfoTest {
                 RelativeTestCase(
                     timestamp = base,
                     now = base,
-                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 0, msUntilNextIncrement = 1_000)
+                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 0, msUntilNextIncrement = 1_000),
                 ),
                 RelativeTestCase(
                     timestamp = base + 1,
                     now = base,
-                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 0, msUntilNextIncrement = 999)
+                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 0, msUntilNextIncrement = 999),
                 ),
                 RelativeTestCase(
                     timestamp = base - 1,
                     now = base,
-                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 0, msUntilNextIncrement = 1001)
+                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 0, msUntilNextIncrement = 1001),
                 ),
                 RelativeTestCase(
                     timestamp = base + 1001,
                     now = base,
-                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 1, msUntilNextIncrement = 999)
+                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 1, msUntilNextIncrement = 999),
                 ),
                 RelativeTestCase(
                     timestamp = base - 1001,
                     now = base,
-                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = -1, msUntilNextIncrement = 1)
+                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = -1, msUntilNextIncrement = 1),
                 ),
                 RelativeTestCase(
                     timestamp = base + 3_600,
                     now = base + 2_000,
-                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 1, msUntilNextIncrement = 400)
+                    expected = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 1, msUntilNextIncrement = 400),
                 ),
                 RelativeTestCase(
                     timestamp = base + TimeUnit.MINUTES.toMillis(3) + TimeUnit.SECONDS.toMillis(20),
@@ -65,8 +65,8 @@ internal class RelativeTimeInfoTest {
                     expected = RelativeTimeInfo(
                         unit = TimeUnit.MINUTES,
                         amount = 3,
-                        msUntilNextIncrement = TimeUnit.SECONDS.toMillis(40)
-                    )
+                        msUntilNextIncrement = TimeUnit.SECONDS.toMillis(40),
+                    ),
                 ),
                 RelativeTestCase(
                     timestamp = base,
@@ -74,8 +74,8 @@ internal class RelativeTimeInfoTest {
                     expected = RelativeTimeInfo(
                         unit = TimeUnit.MINUTES,
                         amount = -3,
-                        msUntilNextIncrement = TimeUnit.SECONDS.toMillis(20)
-                    )
+                        msUntilNextIncrement = TimeUnit.SECONDS.toMillis(20),
+                    ),
                 ),
                 RelativeTestCase(
                     timestamp = base + TimeUnit.DAYS.toMillis(100),
@@ -83,8 +83,8 @@ internal class RelativeTimeInfoTest {
                     expected = RelativeTimeInfo(
                         unit = TimeUnit.DAYS,
                         amount = 100,
-                        msUntilNextIncrement = TimeUnit.DAYS.toMillis(1)
-                    )
+                        msUntilNextIncrement = TimeUnit.DAYS.toMillis(1),
+                    ),
                 ),
                 RelativeTestCase(
                     timestamp = base - TimeUnit.DAYS.toMillis(100),
@@ -92,8 +92,8 @@ internal class RelativeTimeInfoTest {
                     expected = RelativeTimeInfo(
                         unit = TimeUnit.DAYS,
                         amount = -100,
-                        msUntilNextIncrement = TimeUnit.DAYS.toMillis(1)
-                    )
+                        msUntilNextIncrement = TimeUnit.DAYS.toMillis(1),
+                    ),
                 ),
             )
         }
@@ -104,47 +104,47 @@ internal class RelativeTimeInfoTest {
             return listOf(
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 0, msUntilNextIncrement = 0),
-                    format = "now"
+                    format = "now",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 1, msUntilNextIncrement = 0),
-                    format = "in 1 second"
+                    format = "in 1 second",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = -1, msUntilNextIncrement = 0),
-                    format = "1 second ago"
+                    format = "1 second ago",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 2, msUntilNextIncrement = 0),
-                    format = "in 2 seconds"
+                    format = "in 2 seconds",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = -2, msUntilNextIncrement = 0),
-                    format = "2 seconds ago"
+                    format = "2 seconds ago",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.MINUTES, amount = 3, msUntilNextIncrement = 0),
-                    format = "in 3 minutes"
+                    format = "in 3 minutes",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.MINUTES, amount = -3, msUntilNextIncrement = 0),
-                    format = "3 minutes ago"
+                    format = "3 minutes ago",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.HOURS, amount = 4, msUntilNextIncrement = 0),
-                    format = "in 4 hours"
+                    format = "in 4 hours",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.HOURS, amount = -4, msUntilNextIncrement = 0),
-                    format = "4 hours ago"
+                    format = "4 hours ago",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.DAYS, amount = 5, msUntilNextIncrement = 0),
-                    format = "in 5 days"
+                    format = "in 5 days",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.DAYS, amount = -5, msUntilNextIncrement = 0),
-                    format = "5 days ago"
+                    format = "5 days ago",
                 ),
             )
         }

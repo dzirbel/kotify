@@ -21,7 +21,7 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
     Presenter<PlayerPanelPresenter.ViewModel, PlayerPanelPresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.LoadDevices(), Event.LoadPlayback(), Event.LoadTrackPlayback()),
-        initialState = ViewModel()
+        initialState = ViewModel(),
     ) {
 
     data class ViewModel(
@@ -232,7 +232,7 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                                 playbackShuffleState = playback.shuffleState,
                                 playbackRepeatState = playback.repeatState,
                                 playbackCurrentDevice = playback.device,
-                                loadingPlayback = false
+                                loadingPlayback = false,
                             )
                         }
                     }
@@ -284,8 +284,8 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                             emit(
                                 Event.LoadTrackPlayback(
                                     untilTrackChange = event.untilTrackChange,
-                                    retries = event.retries - 1
-                                )
+                                    retries = event.retries - 1,
+                                ),
                             )
                         } else {
                             mutateState { it.copy(loadingTrackPlayback = false) }

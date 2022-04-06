@@ -25,7 +25,7 @@ fun RefreshIcon(refreshing: Boolean, size: Dp = Dimens.iconMedium) {
         Icon(
             imageVector = Icons.Filled.Refresh,
             contentDescription = "Refresh",
-            modifier = Modifier.size(size)
+            modifier = Modifier.size(size),
         )
     }
 }
@@ -54,7 +54,7 @@ fun InvalidateButton(
             fontSize = fontSize,
             text = updated?.let {
                 liveRelativeDateText(timestamp = updated, format = updatedFormat)
-            } ?: updatedFallback
+            } ?: updatedFallback,
         )
 
         HorizontalSpacer(Dimens.space2)

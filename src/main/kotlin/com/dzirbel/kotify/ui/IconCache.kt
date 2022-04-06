@@ -41,7 +41,7 @@ fun CachedIcon(
         painter = IconCache.load(name, size = size),
         modifier = modifier.size(size),
         contentDescription = contentDescription,
-        tint = tint
+        tint = tint,
     )
 }
 

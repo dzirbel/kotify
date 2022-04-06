@@ -18,7 +18,7 @@ fun HorizontalDivider(color: Color = LocalColors.current.dividerColor, modifier:
         content = {},
         measurePolicy = { _, constraints ->
             layout(width = constraints.maxWidth, height = Dimens.divider.roundToPx()) {}
-        }
+        },
     )
 }
 
@@ -32,6 +32,6 @@ fun VerticalDivider(color: Color = LocalColors.current.dividerColor, modifier: M
         content = {},
         measurePolicy = { _, constraints ->
             layout(width = Dimens.divider.roundToPx(), height = constraints.maxHeight) {}
-        }
+        },
     )
 }

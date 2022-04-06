@@ -24,7 +24,7 @@ internal class OAuthTest {
             scopes = setOf("scope1", "another_scope"),
             redirectUri = "http://example.com/my/redirect",
             codeChallenge = CodeChallenge.generate(random),
-            state = "my_state"
+            state = "my_state",
         )
 
         assertThat(url.toString()).isEqualTo(
@@ -35,7 +35,7 @@ internal class OAuthTest {
                 "code_challenge_method=S256&" +
                 "code_challenge=sH2tESA7aIPu7pcXufG4P7jp_HWjstu3EFeYDU6yUPA&" +
                 "state=my_state&" +
-                "scope=scope1%20another_scope"
+                "scope=scope1%20another_scope",
         )
 
         assertThat(url.toUri()).isNotNull()

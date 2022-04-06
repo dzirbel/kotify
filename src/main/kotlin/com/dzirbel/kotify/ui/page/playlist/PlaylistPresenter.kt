@@ -36,7 +36,7 @@ class PlaylistPresenter(
     scope = scope,
     key = playlistId,
     startingEvents = listOf(Event.Load(invalidate = false), Event.LoadTracks(invalidate = false)),
-    initialState = ViewModel()
+    initialState = ViewModel(),
 ) {
 
     data class ViewModel(

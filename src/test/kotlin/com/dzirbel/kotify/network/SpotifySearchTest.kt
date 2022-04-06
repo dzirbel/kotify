@@ -16,7 +16,7 @@ class SpotifySearchTest {
         val results = runBlocking {
             Spotify.Search.search(
                 q = "blackbriar",
-                type = listOf("artist,track")
+                type = listOf("artist,track"),
             )
         }
 

@@ -36,14 +36,14 @@ fun ImageCacheTab(scrollState: ScrollState) {
 
         Text(
             "$inMemoryCount images cached in memory; " +
-                "$diskCount cached on disk for a total of $totalSizeFormatted on disk"
+                "$diskCount cached on disk for a total of $totalSizeFormatted on disk",
         )
 
         VerticalSpacer(Dimens.space2)
 
         Button(
             modifier = Modifier.fillMaxWidth(),
-            onClick = { SpotifyImageCache.clear() }
+            onClick = { SpotifyImageCache.clear() },
         ) {
             Text("Clear image cache")
         }
@@ -54,7 +54,7 @@ fun ImageCacheTab(scrollState: ScrollState) {
             modifier = Modifier.fillMaxWidth(),
             checked = imageCacheSettings.value.includeInMemory,
             onCheckedChange = { imageCacheSettings.mutate { copy(includeInMemory = it) } },
-            label = { Text("Include IN-MEMORY events") }
+            label = { Text("Include IN-MEMORY events") },
         )
 
         VerticalSpacer(Dimens.space2)
@@ -63,7 +63,7 @@ fun ImageCacheTab(scrollState: ScrollState) {
             modifier = Modifier.fillMaxWidth(),
             checked = imageCacheSettings.value.includeOnDisk,
             onCheckedChange = { imageCacheSettings.mutate { copy(includeOnDisk = it) } },
-            label = { Text("Include ON-DISK events") }
+            label = { Text("Include ON-DISK events") },
         )
 
         VerticalSpacer(Dimens.space2)
@@ -72,7 +72,7 @@ fun ImageCacheTab(scrollState: ScrollState) {
             modifier = Modifier.fillMaxWidth(),
             checked = imageCacheSettings.value.includeMiss,
             onCheckedChange = { imageCacheSettings.mutate { copy(includeMiss = it) } },
-            label = { Text("Include MISS events") }
+            label = { Text("Include MISS events") },
         )
     }
 

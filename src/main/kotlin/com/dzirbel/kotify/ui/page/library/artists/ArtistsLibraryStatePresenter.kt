@@ -21,7 +21,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
     Presenter<ArtistsLibraryStatePresenter.ViewModel, ArtistsLibraryStatePresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.Load(fromCache = true)),
-        initialState = ViewModel()
+        initialState = ViewModel(),
     ) {
 
     data class ViewModel(

@@ -155,7 +155,7 @@ fun <E> Grid(
                                 } else {
                                     it
                                 }
-                            }
+                            },
                     ) {
                         cellContent(index, element)
                     }
@@ -180,7 +180,7 @@ fun <E> Grid(
                         Box(
                             modifier = Modifier
                                 .surfaceBackground(
-                                    FlaredBottomRoundedRect(cornerSize = detailInsertCellParams.cornerSize)
+                                    FlaredBottomRoundedRect(cornerSize = detailInsertCellParams.cornerSize),
                                 )
                                 .border(
                                     width = Dimens.divider,
@@ -190,7 +190,7 @@ fun <E> Grid(
                                         bottomPadding = Dimens.divider,
                                     ),
                                 )
-                                .fillMaxSize()
+                                .fillMaxSize(),
                         )
                     }
 
@@ -209,7 +209,7 @@ fun <E> Grid(
                             modifier = Modifier
                                 .surfaceBackground()
                                 .border(width = Dimens.divider, color = LocalColors.current.dividerColor)
-                                .fillMaxWidth()
+                                .fillMaxWidth(),
                         ) {
                             detailInsertContent(lastSelectedElementIndex, elements[lastSelectedElementIndex]!!)
                         }
@@ -234,7 +234,7 @@ fun <E> Grid(
             val minColumns = columns ?: 1
             val cellConstraints = Constraints(
                 maxWidth = (((constraints.maxWidth - horizontalSpacingPx) / minColumns) - horizontalSpacingPx).toInt()
-                    .coerceAtLeast(0)
+                    .coerceAtLeast(0),
             )
 
             var maxCellWidth = 0 // find max cell width while measuring to avoid an extra loop
@@ -347,7 +347,7 @@ fun <E> Grid(
                             maxWidth = maxCellWidth + detailInsertCellParams.cornerSize.roundToPx() * 2,
                             maxHeight = rowHeights[selectedElementDivisionIndex][selectedElementRowIndex] +
                                 (verticalSpacingPx + Dimens.divider.toPx()).roundToInt(),
-                        )
+                        ),
                     )
 
                     detailInsertPlaceable = insertMeasurables[1].measure(constraints)
@@ -420,6 +420,6 @@ fun <E> Grid(
                     }
                 }
             }
-        }
+        },
     )
 }

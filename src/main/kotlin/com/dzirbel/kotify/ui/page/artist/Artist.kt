@@ -54,7 +54,7 @@ fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewMode
                             updatedFallback = "Artist never synced",
                             onClick = {
                                 presenter.emitAsync(ArtistPresenter.Event.LoadArtist(invalidate = true))
-                            }
+                            },
                         )
 
                         Interpunct()
@@ -67,7 +67,7 @@ fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewMode
                             updatedFallback = "Albums never synced",
                             onClick = {
                                 presenter.emitAsync(ArtistPresenter.Event.LoadArtistAlbums(invalidate = true))
-                            }
+                            },
                         )
                     }
                 }
@@ -108,9 +108,9 @@ fun ArtistPageContent(presenter: ArtistPresenter, state: ArtistPresenter.ViewMod
                 ratings = state.albumRatings[artistAlbum.albumId.value]?.map { it.value },
                 onToggleSave = { save ->
                     presenter.emitAsync(
-                        ArtistPresenter.Event.ToggleSave(albumId = artistAlbum.albumId.value, save = save)
+                        ArtistPresenter.Event.ToggleSave(albumId = artistAlbum.albumId.value, save = save),
                     )
-                }
+                },
             )
         }
     } else {

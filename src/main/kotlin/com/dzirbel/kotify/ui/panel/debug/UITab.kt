@@ -37,7 +37,7 @@ fun UITab(scrollState: ScrollState) {
             },
             label = {
                 Text("Presenter class regex (case insensitive)", style = MaterialTheme.typography.overline)
-            }
+            },
         )
 
         VerticalSpacer(Dimens.space2)
@@ -46,7 +46,7 @@ fun UITab(scrollState: ScrollState) {
             modifier = Modifier.fillMaxWidth(),
             checked = uiSettings.value.includeStates,
             onCheckedChange = { uiSettings.mutate { copy(includeStates = it) } },
-            label = { Text("Include state changes") }
+            label = { Text("Include state changes") },
         )
 
         VerticalSpacer(Dimens.space2)
@@ -55,7 +55,7 @@ fun UITab(scrollState: ScrollState) {
             modifier = Modifier.fillMaxWidth(),
             checked = uiSettings.value.includeEvents,
             onCheckedChange = { uiSettings.mutate { copy(includeEvents = it) } },
-            label = { Text("Include events") }
+            label = { Text("Include events") },
         )
 
         VerticalSpacer(Dimens.space2)
@@ -64,7 +64,7 @@ fun UITab(scrollState: ScrollState) {
             modifier = Modifier.fillMaxWidth(),
             checked = uiSettings.value.includeErrors,
             onCheckedChange = { uiSettings.mutate { copy(includeErrors = it) } },
-            label = { Text("Include errors") }
+            label = { Text("Include errors") },
         )
     }
 

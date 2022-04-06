@@ -65,7 +65,7 @@ class SpotifyPlaylistsTest {
             Spotify.Playlists.changePlaylistDetails(
                 playlistId = playlist.id,
                 name = updatedName,
-                description = updatedDescription
+                description = updatedDescription,
             )
         }
 
@@ -77,7 +77,7 @@ class SpotifyPlaylistsTest {
         runBlocking {
             Spotify.Playlists.addItemsToPlaylist(
                 playlistId = playlist.id,
-                uris = Fixtures.tracks.map { "spotify:track:${it.id}" }
+                uris = Fixtures.tracks.map { "spotify:track:${it.id}" },
             )
         }
 
@@ -95,7 +95,7 @@ class SpotifyPlaylistsTest {
                 playlistId = playlist.id,
                 rangeStart = 1,
                 rangeLength = 2,
-                insertBefore = 4
+                insertBefore = 4,
             )
         }
 
@@ -118,7 +118,7 @@ class SpotifyPlaylistsTest {
         runBlocking {
             Spotify.Playlists.replacePlaylistItems(
                 playlistId = playlist.id,
-                uris = replaceTracks.map { "spotify:track:${it.id}" }
+                uris = replaceTracks.map { "spotify:track:${it.id}" },
             )
         }
 
@@ -133,7 +133,7 @@ class SpotifyPlaylistsTest {
         runBlocking {
             Spotify.Playlists.removePlaylistTracks(
                 playlistId = playlist.id,
-                tracks = replaceTracks.take(2).map { "spotify:track:${it.id}" }
+                tracks = replaceTracks.take(2).map { "spotify:track:${it.id}" },
             )
         }
 

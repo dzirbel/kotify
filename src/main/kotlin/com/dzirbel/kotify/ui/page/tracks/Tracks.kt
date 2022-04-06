@@ -26,7 +26,7 @@ fun TracksPageHeader(presenter: TracksPresenter, state: TracksPresenter.ViewMode
             InvalidateButton(
                 refreshing = state.refreshing,
                 updated = state.tracksUpdated,
-                onClick = { presenter.emitAsync(TracksPresenter.Event.Load(invalidate = true)) }
+                onClick = { presenter.emitAsync(TracksPresenter.Event.Load(invalidate = true)) },
             )
         }
     }
@@ -41,7 +41,7 @@ fun TracksPageContent(state: TracksPresenter.ViewModel) {
             items = state.tracks,
             onSetSort = {
                 // TODO allow sorting saved tracks list
-            }
+            },
         )
     } else {
         PageLoadingSpinner()

@@ -15,11 +15,11 @@ fun ThemeSwitcher(modifier: Modifier = Modifier) {
         modifier = modifier,
         onClick = {
             Settings.colors = if (isLight) Colors.DARK else Colors.LIGHT
-        }
+        },
     ) {
         CachedIcon(
             name = if (isLight) "wb-sunny" else "nightlight-round",
-            contentDescription = "Theme"
+            contentDescription = "Theme",
         )
     }
 }

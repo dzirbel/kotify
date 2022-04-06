@@ -90,7 +90,7 @@ private fun DebugPanelContent(tab: MutableState<DebugTab>, scrollState: ScrollSt
                     modifier = Modifier.align(Alignment.CenterVertically),
                     onClick = {
                         Settings.debugPanelDetached = !Settings.debugPanelDetached
-                    }
+                    },
                 ) {
                     val detached = Settings.debugPanelDetached
                     CachedIcon(
@@ -105,7 +105,11 @@ private fun DebugPanelContent(tab: MutableState<DebugTab>, scrollState: ScrollSt
                     SimpleTextButton(
                         onClick = { tab.value = buttonTab },
                         modifier = Modifier.fillMaxWidth().weight(1f),
-                        backgroundColor = if (tab.value == buttonTab) LocalColors.current.primary else Color.Transparent
+                        backgroundColor = if (tab.value == buttonTab) {
+                            LocalColors.current.primary
+                        } else {
+                            Color.Transparent
+                        },
                     ) {
                         Text(buttonTab.tabName)
                     }
@@ -127,7 +131,7 @@ private fun DebugPanelContent(tab: MutableState<DebugTab>, scrollState: ScrollSt
 
         SimpleTextButton(
             onClick = { tab.value.log.clear() },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Clear log")
         }

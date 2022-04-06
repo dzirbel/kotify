@@ -74,7 +74,7 @@ internal class PlayerPanelPresenterTest {
             createPresenter = ::PlayerPanelPresenter,
             beforeOpen = { presenter ->
                 assertThat(presenter.testState.stateOrThrow).isEqualTo(loadingState)
-            }
+            },
         ) {
             verifyOpenCalls()
         }
@@ -119,8 +119,8 @@ internal class PlayerPanelPresenterTest {
             presenter.emit(
                 PlayerPanelPresenter.Event.LoadDevices(
                     untilVolumeChange = true,
-                    untilVolumeChangeDeviceId = "device_id"
-                )
+                    untilVolumeChangeDeviceId = "device_id",
+                ),
             )
             advanceUntilIdle()
 
@@ -161,7 +161,7 @@ internal class PlayerPanelPresenterTest {
                     trackRatingState = playback?.item?.let { TrackRatingRepository.ratingState(id = it.id) },
                     albumSavedState = playback?.item?.album?.id?.let { SavedAlbumRepository.savedStateOf(id = it) },
                     artistSavedStates = playback?.item?.let { emptyMap() },
-                )
+                ),
             )
 
             coVerify {
@@ -200,7 +200,7 @@ internal class PlayerPanelPresenterTest {
             loadingPlayback = false,
             loadingTrackPlayback = false,
             loadingDevices = false,
-            devices = emptyList()
+            devices = emptyList(),
         )
 
         @JvmStatic
@@ -217,7 +217,7 @@ internal class PlayerPanelPresenterTest {
                     item = null,
                     shuffleState = true,
                     repeatState = "repeat",
-                    context = null
+                    context = null,
                 ),
                 SpotifyPlayback(
                     timestamp = 0,
@@ -228,7 +228,7 @@ internal class PlayerPanelPresenterTest {
                     item = mockk(relaxed = true),
                     shuffleState = false,
                     repeatState = "repeat",
-                    context = mockk()
+                    context = mockk(),
                 ),
             )
         }

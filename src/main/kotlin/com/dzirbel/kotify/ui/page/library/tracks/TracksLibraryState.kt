@@ -57,26 +57,26 @@ fun TracksLibraryState(presenter: TracksLibraryStatePresenter) {
                 CachedIcon(
                     name = if (allInCache) "check-circle" else "cancel",
                     size = Dimens.iconSmall,
-                    tint = if (allInCache) Color.Green else Color.Red
+                    tint = if (allInCache) Color.Green else Color.Red,
                 )
 
                 HorizontalSpacer(Dimens.space1)
 
                 Text(
                     "$totalCached/$totalSaved in cache" +
-                        simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty()
+                        simplified.takeIf { it > 0 }?.let { " ($it simplified)" }.orEmpty(),
                 )
 
                 DropdownMenu(
                     expanded = inCacheExpanded.value,
-                    onDismissRequest = { inCacheExpanded.value = false }
+                    onDismissRequest = { inCacheExpanded.value = false },
                 ) {
                     DropdownMenuItem(
                         enabled = full < totalSaved,
                         onClick = {
                             presenter.emitAsync(TracksLibraryStatePresenter.Event.FetchMissingTracks)
                             inCacheExpanded.value = false
-                        }
+                        },
                     ) {
                         Text("Fetch missing")
                     }
@@ -85,7 +85,7 @@ fun TracksLibraryState(presenter: TracksLibraryStatePresenter) {
                         onClick = {
                             presenter.emitAsync(TracksLibraryStatePresenter.Event.InvalidateTracks)
                             inCacheExpanded.value = false
-                        }
+                        },
                     ) {
                         Text("Invalidate all")
                     }

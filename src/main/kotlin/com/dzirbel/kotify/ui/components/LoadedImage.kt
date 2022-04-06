@@ -48,7 +48,7 @@ fun LoadedImage(
         Image(
             bitmap = imageBitmap,
             contentDescription = contentDescription,
-            modifier = imageModifier
+            modifier = imageModifier,
         )
     }
 }

@@ -72,7 +72,7 @@ enum class Colors(
         star = Color.Yellow,
         scrollBarHover = Color(0x60, 0x60, 0x60),
         scrollBarUnhover = Color(0x50, 0x50, 0x50),
-        materialColors = darkColors()
+        materialColors = darkColors(),
     ),
 
     LIGHT(
@@ -91,7 +91,7 @@ enum class Colors(
         star = Color.Yellow,
         scrollBarHover = Color(0x90, 0x90, 0x90),
         scrollBarUnhover = Color(0x78, 0x78, 0x78),
-        materialColors = lightColors()
+        materialColors = lightColors(),
     );
 
     val primary: Color
@@ -116,7 +116,7 @@ enum class Colors(
             LocalContentColor provides text,
             LocalScrollbarStyle provides defaultScrollbarStyle().copy(
                 hoverColor = scrollBarHover,
-                unhoverColor = scrollBarUnhover
+                unhoverColor = scrollBarUnhover,
             ),
             LocalSurfaceBackground provides surfaces.first(),
             LocalColors provides this,
@@ -133,7 +133,7 @@ enum class Colors(
         CompositionLocalProvider(
             LocalSurfaceHeight provides height,
             LocalSurfaceBackground provides background,
-            content = content
+            content = content,
         )
     }
 

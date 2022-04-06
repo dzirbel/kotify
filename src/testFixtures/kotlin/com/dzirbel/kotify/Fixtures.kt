@@ -39,7 +39,7 @@ object Fixtures {
     // map from playlist ID to a map from user ID to whether the user is following that playlist
     val followingPlaylists = listOf(
         "5apAth0JL9APnjo62F93RN" to mapOf("djynth" to true, "luckyeights" to false),
-        "6urDFlFQIDXPwXbfpdGUc0" to mapOf("djynth" to true, "1267916582" to true)
+        "6urDFlFQIDXPwXbfpdGUc0" to mapOf("djynth" to true, "1267916582" to true),
     )
 
     // a playlist not being followed, but will be followed-and-unfollowed in tests
@@ -54,56 +54,56 @@ object Fixtures {
                 id = "5p4S4vvrJO1wB5yxdOKcMl",
                 name = "Búcsúzó",
                 artistNames = setOf("Dalriada"),
-                trackNumber = 1
+                trackNumber = 1,
             ),
             TrackProperties(
                 id = "49JyVkrdxsciZiFQ1amvUl",
                 name = "Kikelet",
                 artistNames = setOf("Dalriada"),
-                trackNumber = 2
+                trackNumber = 2,
             ),
             TrackProperties(
                 id = "5bLICs3ZgqEe3MYFLCstdP",
                 name = "Vándor-Fohász",
                 artistNames = setOf("Dalriada"),
-                trackNumber = 3
+                trackNumber = 3,
             ),
             TrackProperties(
                 id = "5ghCuL8wPjC0yESL7e4xQ5",
                 name = "Táltosének",
                 artistNames = setOf("Dalriada"),
-                trackNumber = 4
+                trackNumber = 4,
             ),
             TrackProperties(
                 id = "4Aovdxm75RG9bM1daoGojO",
                 name = "Néma Harangok",
                 artistNames = setOf("Dalriada"),
-                trackNumber = 5
+                trackNumber = 5,
             ),
             TrackProperties(
                 id = "40y0VEUdIvVXKsNOOnd1To",
                 name = "Szentföld",
                 artistNames = setOf("Dalriada"),
-                trackNumber = 6
+                trackNumber = 6,
             ),
             TrackProperties(
                 id = "1ZowHVI8WFNjtfz7fqh7Rr",
                 name = "Tűzhozó",
                 artistNames = setOf("Dalriada"),
-                trackNumber = 7
+                trackNumber = 7,
             ),
             TrackProperties(
                 id = "2FDPS2gYmtXmrIUNsR9qkc",
                 name = "Tavasz Dala",
                 artistNames = setOf("Dalriada"),
-                trackNumber = 8
+                trackNumber = 8,
             ),
             TrackProperties(
                 id = "7gZJBbzUNQk36dYz7wrOqX",
                 name = "Szondi Két Apródja II.rész",
                 artistNames = setOf("Dalriada"),
-                trackNumber = 9
-            )
+                trackNumber = 9,
+            ),
         ),
 
         AlbumProperties("7sDOBekGFHH2KfwW0vn6Me", "Arcane Astral Aeons") to listOf(
@@ -111,75 +111,75 @@ object Fixtures {
                 id = "3fsWHLlp3D9CzZv6YUo3pv",
                 name = "In Styx Embrace",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 1
+                trackNumber = 1,
             ),
             TrackProperties(
                 id = "6mHngSw9ywDzghL8YvsDnW",
                 name = "Into the Night",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 2
+                trackNumber = 2,
             ),
             TrackProperties(
                 id = "52UrdP9ByyzpzdxrKOkQhm",
                 name = "Love Like Cyanide",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 3
+                trackNumber = 3,
             ),
             TrackProperties(
                 id = "6ety9hMPEGoOso9jm01ogh",
                 name = "Desire",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 4
+                trackNumber = 4,
             ),
             TrackProperties(
                 id = "1Q5zahML4WCp6I2cOHoL4E",
                 name = "Asphyxia",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 5
+                trackNumber = 5,
             ),
             TrackProperties(
                 id = "037N6MX5jyhu5YXpyi7id2",
                 name = "Queen of Lies",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 6
+                trackNumber = 6,
             ),
             TrackProperties(
                 id = "4of1AAmOGeHQ91pV8hug5S",
                 name = "Nos Heures Sombres",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 7
+                trackNumber = 7,
             ),
             TrackProperties(
                 id = "0lzlpdsGRbHqfyMBcGNqSy",
                 name = "The Voyage",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 8
+                trackNumber = 8,
             ),
             TrackProperties(
                 id = "1w4ibHOzLSQNl7bYdB5GnF",
                 name = "Aerodyne",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 9
+                trackNumber = 9,
             ),
             TrackProperties(
                 id = "1BLrZ3IpeiKsPUjQDWyTsB",
                 name = "The Twilight Hour",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 10
+                trackNumber = 10,
             ),
             TrackProperties(
                 id = "1dQTItrEzPEoWj5k3s2Bsy",
                 name = "Glowing Embers",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 11
+                trackNumber = 11,
             ),
             TrackProperties(
                 id = "16JomutDWxRTgzeeFTYUdW",
                 name = "Love Like Cyanide - Edit",
                 artistNames = setOf("Sirenia"),
-                trackNumber = 12
+                trackNumber = 12,
             ),
-        )
+        ),
     )
 
     val savedAlbums = listOf(
@@ -187,19 +187,19 @@ object Fixtures {
             id = "7sDOBekGFHH2KfwW0vn6Me",
             name = "Arcane Astral Aeons",
             totalTracks = 12,
-            addedAt = "2021-02-21T05:15:47Z"
+            addedAt = "2021-02-21T05:15:47Z",
         ),
         AlbumProperties(
             id = "6N2Dn0OZ8KUDLsRqdToPcc",
             name = "The Unforgiving",
             totalTracks = 12,
-            addedAt = "2021-02-21T05:16:10Z"
+            addedAt = "2021-02-21T05:16:10Z",
         ),
         AlbumProperties(
             id = "0KQNT6LnM05dUTr3slwnNJ",
             name = "Ephemeral",
             totalTracks = 12,
-            addedAt = "2021-02-21T05:16:38Z"
+            addedAt = "2021-02-21T05:16:38Z",
         ),
     )
 
@@ -313,7 +313,7 @@ object Fixtures {
                 AlbumProperties("5P54iC1TsPsEUtsRj7AqeB", "Albüm"),
                 AlbumProperties(
                     "7jWLdyYqBTqXH1PAFVL7vN",
-                    "The Midnight Meat Train (Original Motion Picture Soundtrack)"
+                    "The Midnight Meat Train (Original Motion Picture Soundtrack)",
                 ),
                 AlbumProperties("4uNzDULQ9RAy0nxGaPbCDn", "The Poison (Deluxe Version)"),
                 AlbumProperties("4gHIcZWRHEWY0TyPrS8r01", "Delikatessen"),
@@ -332,7 +332,7 @@ object Fixtures {
                 AlbumProperties("0Vp1T9hEne9rQ71D7Jp72n", "Peltirumpu (Laulu Rakkaudelle kausi 2)"),
             )
                 // ignore albumType since there are so many of these
-                .map { it.copy(albumType = null) }
+                .map { it.copy(albumType = null) },
         ),
 
         ArtistProperties(
@@ -340,8 +340,8 @@ object Fixtures {
             name = "Trees of Eternity",
             genres = listOf("atmospheric doom", "doom metal", "gaian doom", "gothic metal", "swedish doom metal"),
             albums = listOf(
-                AlbumProperties("6sFhi9TivgwN6XzcEYcfAy", "Hour of the Nightingale", totalTracks = 10)
-            )
+                AlbumProperties("6sFhi9TivgwN6XzcEYcfAy", "Hour of the Nightingale", totalTracks = 10),
+            ),
         ),
 
         ArtistProperties(
@@ -353,13 +353,13 @@ object Fixtures {
                     "5P7GIlX83brISe8k0XQQL1",
                     "A Strange Encounter",
                     totalTracks = 10,
-                    albumType = SpotifyAlbum.Type.ALBUM
+                    albumType = SpotifyAlbum.Type.ALBUM,
                 ),
                 AlbumProperties(
                     "148kHVSDW2cwyAnmOUnSsm",
                     "Crystal Sounds",
                     totalTracks = 10,
-                    albumType = SpotifyAlbum.Type.ALBUM
+                    albumType = SpotifyAlbum.Type.ALBUM,
                 ),
                 AlbumProperties(
                     "1v0kIX9QOYJhmbixRoWpeY",
@@ -377,31 +377,31 @@ object Fixtures {
                     "53d6xPe9mO7wVUCCPqlUqb",
                     "The Invitation",
                     totalTracks = 12,
-                    albumType = SpotifyAlbum.Type.ALBUM
+                    albumType = SpotifyAlbum.Type.ALBUM,
                 ),
                 AlbumProperties(
                     "7JSZOMOVibNSpGWSfcgqcN",
                     "The Invitation",
                     totalTracks = 12,
-                    albumType = SpotifyAlbum.Type.ALBUM
+                    albumType = SpotifyAlbum.Type.ALBUM,
                 ),
                 AlbumProperties(
                     "2taMI79KWzXO0cOV4RJx4i",
                     "The Invitation",
                     totalTracks = 11,
-                    albumType = SpotifyAlbum.Type.ALBUM
+                    albumType = SpotifyAlbum.Type.ALBUM,
                 ),
                 AlbumProperties(
                     "2Ea6nI5gRsy7QXCYFihMEk",
                     "Into The Fire (Acoustic)",
                     totalTracks = 1,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "5nU3OZkQWBJnz1SijLLepR",
                     "Into the Fire (Acoustic)",
                     totalTracks = 1,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "3dXyenZqQJOktXiLRBXU55",
@@ -413,31 +413,31 @@ object Fixtures {
                     "3CcltJjnlBarLBrnbU7Dgg",
                     "The Loneliest Star",
                     totalTracks = 2,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "4gUjTWrUEcc3Dc2M1k9Jj4",
                     "All The Love In Your Hands",
                     totalTracks = 3,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "5bb11iSUgn7dYtodcW5fhW",
                     "All The Love In Your Hands (Acoustic Version)",
                     totalTracks = 1,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "7i6IV55nXu52k7dqckivO7",
                     "All The Love In Your Hands (Cicada Remix Esingle)",
                     totalTracks = 1,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "1UYhCN5SOV713pJcCBQ7Cf",
                     "All The Love In Your Hands (Qattara Remix Esingle)",
                     totalTracks = 1,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "7ETiCkWai8cmWbVfnKCLJ6",
@@ -449,73 +449,73 @@ object Fixtures {
                     "75Rh0bIPEP7IJMUzpGo4os",
                     "Into The Fire (Cicada Remix)",
                     totalTracks = 1,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "14pHgW7BaEclVGKiw4xhAN",
                     "Thru The Glass",
                     totalTracks = 2,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "5Y1ybrFh0aScu26vW7HNwf",
                     "Thru The Glass (On-Line Exclusive)",
                     totalTracks = 1,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "6Qh7aqH8eZq6ttLEaLeaOK",
                     "Do No Wrong",
                     totalTracks = 2,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "2MniZtyXdn2pr4mKzDealC",
                     "Into The Fire",
                     totalTracks = 3,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "5OLMgzmbLgt7xLS2mBaxoo",
                     "Into The Fire",
                     totalTracks = 1,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "2zi2pN4YdijE2OWEFZmkPH",
                     "Thru The Glass",
                     totalTracks = 3,
-                    albumType = SpotifyAlbum.Type.SINGLE
+                    albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
                     "5XLcGXPZdjtz3UkZMdJgvE",
                     "All My Love",
                     totalTracks = 36,
-                    albumType = SpotifyAlbum.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
                 AlbumProperties(
                     "0NHF6ViRN7Bv55QVwZmfGR",
                     "Rock Chillout",
                     totalTracks = 31,
-                    albumType = SpotifyAlbum.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
                 AlbumProperties(
                     "1TGoeK3BIRKHSOatnlHp6e",
                     "Pure Rock Ballads",
                     totalTracks = 18,
-                    albumType = SpotifyAlbum.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
                 AlbumProperties(
                     "0fvoWtxY2mO6zgzCm9cqrj",
                     "Bones (Original Television Soundtrack)",
                     totalTracks = 13,
-                    albumType = SpotifyAlbum.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
                 AlbumProperties(
                     "1uyjx3SQ0LOIiLsH45lq8s",
                     "Bones - Original Television Soundtrack",
                     totalTracks = 13,
-                    albumType = SpotifyAlbum.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
                 AlbumProperties(
                     "5QkqgBLXsymXJKWaagawSY",
@@ -533,22 +533,22 @@ object Fixtures {
                     "0HojjwZyJFH4nywrYGfwMJ",
                     "¡Calor En La Ciudad!",
                     totalTracks = 39,
-                    albumType = SpotifyAlbum.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
                 AlbumProperties(
                     "3r77ZQgndz6sw6emGvr7tR",
                     "Alternative Rock: The Best Of The Rest",
                     totalTracks = 30,
-                    albumType = SpotifyAlbum.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
                 AlbumProperties(
                     "3ZCqORuVBN89Do4oYVDVnt",
                     "Chill Rock",
                     totalTracks = 30,
-                    albumType = SpotifyAlbum.Type.COMPILATION
+                    albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
-            )
-        )
+            ),
+        ),
     )
 
     val episodes = listOf(
@@ -574,7 +574,7 @@ object Fixtures {
                 .toSingleLine(),
             releaseDate = "2020-12-18",
             releaseDatePrecision = "day",
-        )
+        ),
     )
 
     val playlists = listOf(
@@ -582,7 +582,7 @@ object Fixtures {
             id = "7aTpaSVlycAJyeU2SocEfA",
             name = "Favorites",
             description = "",
-            public = true
+            public = true,
         ),
         PlaylistProperties(
             id = "5ajl0Scpq3FuNe2dgu2bMM",
@@ -596,7 +596,7 @@ object Fixtures {
                     artistNames = setOf("Apocalyptica", "HOTEI"),
                     trackNumber = 2,
                     addedBy = userId,
-                    addedAt = "2021-02-11T06:20:38Z"
+                    addedAt = "2021-02-11T06:20:38Z",
                 ),
                 TrackProperties(
                     id = "0hrNeGXIsFXCzGv27hDYlz",
@@ -604,10 +604,10 @@ object Fixtures {
                     artistNames = setOf("Jeff Loomis"),
                     trackNumber = 8,
                     addedBy = userId,
-                    addedAt = "2021-02-11T06:21:41Z"
-                )
-            )
-        )
+                    addedAt = "2021-02-11T06:21:41Z",
+                ),
+            ),
+        ),
     )
 
     val shows = listOf(
@@ -621,7 +621,7 @@ object Fixtures {
                 physics, and everything else about life in the universe. Keep Looking Up! New episodes premiere Monday
                 nights at 7pm ET.
                 """
-                .toSingleLine()
+                .toSingleLine(),
         ),
         ShowProperties(
             id = "2mTUnDkuKUkhiueKcVWoP0",
@@ -635,8 +635,8 @@ object Fixtures {
                 Simon. On Sundays, hear a longer exploration behind the headlines with Rachel Martin, available by
                 8 a.m. ET. Subscribe and listen, then support your local NPR station at donate.npr.org.
                 """
-                .toSingleLine()
-        )
+                .toSingleLine(),
+        ),
     )
 
     val tracks = listOf(
@@ -644,21 +644,21 @@ object Fixtures {
             id = "1rBhSseb3q55BJdTdxuSf4",
             name = "Walk Unafraid",
             artistNames = setOf("R.E.M."),
-            trackNumber = 9
+            trackNumber = 9,
         ),
 
         TrackProperties(
             id = "4d5ft4QeC3GuHBwPGLnLc8",
             name = "Help",
             artistNames = setOf("Thaehan"),
-            trackNumber = 13
+            trackNumber = 13,
         ),
 
         TrackProperties(
             id = "7JyeTAshXQRlFSLJmgr9E6",
             name = "Nausicaa Requiem (Nausicaa Of The Valley Of The Wind)",
             artistNames = setOf("Imaginary Flying Machines", "Neroargento", "Yoko Hallelujah"),
-            trackNumber = 12
+            trackNumber = 12,
         ),
 
         TrackProperties(
@@ -666,7 +666,7 @@ object Fixtures {
             name = "We Believe",
             artistNames = setOf("Red Hot Chili Peppers"),
             trackNumber = 12,
-            discNumber = 2
+            discNumber = 2,
         ),
 
         TrackProperties(
@@ -674,8 +674,8 @@ object Fixtures {
             name = "Delusion",
             artistNames = setOf("We Are the Catalyst"),
             trackNumber = 1,
-            explicit = true
-        )
+            explicit = true,
+        ),
     )
 
     val savedTracks = listOf(
@@ -684,21 +684,21 @@ object Fixtures {
             name = "That's What The Wise Lady Said",
             artistNames = setOf("Angtoria"),
             trackNumber = 12,
-            addedAt = "2021-02-21T05:52:14Z"
+            addedAt = "2021-02-21T05:52:14Z",
         ),
         TrackProperties(
             id = "16Z7RW76CpuaewB1U8H4cn",
             name = "Wheel of Time",
             artistNames = setOf("Blind Guardian"),
             trackNumber = 10,
-            addedAt = "2021-02-21T05:52:57Z"
+            addedAt = "2021-02-21T05:52:57Z",
         ),
         TrackProperties(
             id = "0zvWXDMgXSBoOkZ3XKPGC6",
             name = "Greensleeves",
             artistNames = setOf("Blackmore's Night"),
             trackNumber = 14,
-            addedAt = "2021-02-21T05:52:35Z"
+            addedAt = "2021-02-21T05:52:35Z",
         ),
     )
 

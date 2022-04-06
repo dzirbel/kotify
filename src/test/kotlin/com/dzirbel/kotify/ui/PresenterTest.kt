@@ -75,7 +75,7 @@ internal class PresenterTest {
         eventMergeStrategy = eventMergeStrategy,
         startingEvents = startingEvents,
         scope = scope,
-        initialState = ViewModel("initial")
+        initialState = ViewModel("initial"),
     ) {
         override suspend fun reactTo(event: Event) {
             event.delay?.let { delay(it) }
@@ -96,7 +96,7 @@ internal class PresenterTest {
             createPresenter = { TestPresenter(this) },
             beforeOpen = { presenter ->
                 presenter.emit(Event.A("e1"))
-            }
+            },
         ) { presenter ->
             assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial"))
         }
@@ -105,7 +105,7 @@ internal class PresenterTest {
     @Test
     fun testStartingEvents() {
         testPresenter(
-            { TestPresenter(scope = this, startingEvents = listOf(Event.A("e1"), Event.A("e2"))) }
+            { TestPresenter(scope = this, startingEvents = listOf(Event.A("e1"), Event.A("e2"))) },
         ) { presenter ->
             assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial | e1 | e2"))
         }
@@ -154,8 +154,8 @@ internal class PresenterTest {
             presenter.emit(
                 Event.A(
                     param = "1",
-                    block = { throw Throwable() }
-                )
+                    block = { throw Throwable() },
+                ),
             )
             advanceUntilIdle()
             assertThrows<Throwable> { presenter.testState.stateOrThrow }
@@ -171,8 +171,8 @@ internal class PresenterTest {
                         coroutineScope {
                             launch { throw Throwable() }
                         }
-                    }
-                )
+                    },
+                ),
             )
             advanceUntilIdle()
             assertThrows<Throwable> { presenter.testState.stateOrThrow }
@@ -182,7 +182,7 @@ internal class PresenterTest {
     @RepeatedTest(10)
     fun testMerge() {
         testPresenter(
-            { TestPresenter(scope = this, eventMergeStrategy = Presenter.EventMergeStrategy.MERGE) }
+            { TestPresenter(scope = this, eventMergeStrategy = Presenter.EventMergeStrategy.MERGE) },
         ) { presenter ->
             assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial"))
 
@@ -212,7 +212,7 @@ internal class PresenterTest {
     @RepeatedTest(10)
     fun testLatest() {
         testPresenter(
-            { TestPresenter(scope = this, eventMergeStrategy = Presenter.EventMergeStrategy.LATEST) }
+            { TestPresenter(scope = this, eventMergeStrategy = Presenter.EventMergeStrategy.LATEST) },
         ) { presenter ->
             assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial"))
 
@@ -242,7 +242,7 @@ internal class PresenterTest {
     @RepeatedTest(10)
     fun testLatestByClass() {
         testPresenter(
-            { TestPresenter(scope = this, eventMergeStrategy = Presenter.EventMergeStrategy.LATEST_BY_CLASS) }
+            { TestPresenter(scope = this, eventMergeStrategy = Presenter.EventMergeStrategy.LATEST_BY_CLASS) },
         ) { presenter ->
             assertThat(presenter.testState.stateOrThrow).isEqualTo(ViewModel("initial"))
 

@@ -22,7 +22,7 @@ fun PageLoadingSpinner() {
             Modifier
                 .padding(vertical = Dimens.space5)
                 .size(Dimens.iconHuge)
-                .align(Alignment.Center)
+                .align(Alignment.Center),
         )
     }
 }

@@ -75,7 +75,7 @@ fun <E> DividerSelector(
                                     dropdownExpanded.value = false
 
                                     onSelectDivider(Divider(dividableProperty))
-                                }
+                                },
                             ) {
                                 Text(dividableProperty.dividerTitle)
                             }

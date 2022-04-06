@@ -78,11 +78,11 @@ fun CurrentUser() {
 
     SimpleTextButton(
         enabled = currentUser != null || userError,
-        onClick = { expandedState.value = !expandedState.value }
+        onClick = { expandedState.value = !expandedState.value },
     ) {
         LoadedImage(
             url = currentUser?.thumbnailImage?.cached?.url,
-            modifier = Modifier.size(Dimens.iconMedium)
+            modifier = Modifier.size(Dimens.iconMedium),
         )
 
         HorizontalSpacer(Dimens.space2)
@@ -90,7 +90,7 @@ fun CurrentUser() {
         Text(
             text = username,
             maxLines = 1,
-            modifier = Modifier.align(Alignment.CenterVertically)
+            modifier = Modifier.align(Alignment.CenterVertically),
         )
 
         HorizontalSpacer(Dimens.space2)
@@ -98,12 +98,12 @@ fun CurrentUser() {
         Icon(
             imageVector = Icons.Filled.KeyboardArrowDown,
             contentDescription = "Expand",
-            modifier = Modifier.requiredSize(Dimens.iconMedium).align(Alignment.CenterVertically)
+            modifier = Modifier.requiredSize(Dimens.iconMedium).align(Alignment.CenterVertically),
         )
 
         DropdownMenu(
             expanded = expandedState.value,
-            onDismissRequest = { expandedState.value = false }
+            onDismissRequest = { expandedState.value = false },
         ) {
             CurrentUserDropdownContent(presenter = presenter, user = currentUser)
         }
@@ -114,7 +114,7 @@ fun CurrentUser() {
 private fun CurrentUserDropdownContent(presenter: CurrentUserPresenter, user: User?) {
     Column(
         modifier = Modifier.padding(Dimens.space3).widthIn(max = CURRENT_USER_DROPDOWN_MAX_WIDTH),
-        verticalArrangement = Arrangement.spacedBy(Dimens.space2)
+        verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {
         if (user == null) {
             Text("Not authenticated")
@@ -133,7 +133,7 @@ private fun CurrentUserDropdownContent(presenter: CurrentUserPresenter, user: Us
             val expiresRelative = liveRelativeDateText(timestamp = token.expiresInstant.toEpochMilli())
             Text(
                 "Received at ${token.receivedInstant} ($receivedRelative); " +
-                    "expires at ${token.expiresInstant} ($expiresRelative)"
+                    "expires at ${token.expiresInstant} ($expiresRelative)",
             )
         }
 

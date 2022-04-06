@@ -10,7 +10,7 @@ class LibraryPanelPresenter(scope: CoroutineScope) :
     Presenter<LibraryPanelPresenter.ViewModel?, LibraryPanelPresenter.Event>(
         scope = scope,
         startingEvents = listOf(Event.LoadPlaylists()),
-        initialState = null
+        initialState = null,
     ) {
 
     data class ViewModel(val refreshing: Boolean, val playlists: List<Playlist>, val playlistsUpdated: Long?)
@@ -38,7 +38,7 @@ class LibraryPanelPresenter(scope: CoroutineScope) :
                     ViewModel(
                         refreshing = false,
                         playlists = playlists,
-                        playlistsUpdated = playlistsUpdated
+                        playlistsUpdated = playlistsUpdated,
                     )
                 }
             }
