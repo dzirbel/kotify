@@ -36,6 +36,7 @@ import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
+import com.dzirbel.kotify.ui.components.star.RatingHistogram
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
@@ -195,6 +196,10 @@ private fun ArtistDetailInsert(
                         Pill(text = genre)
                     }
                 }
+            }
+
+            state.artistRatings[artist.id.value]?.let { ratings ->
+                RatingHistogram(ratings = ratings)
             }
         }
 
