@@ -319,13 +319,16 @@ class ListAdapter<E> private constructor(
          * This is useful to create a [ListAdapter] without any data, but which can be used to store sorts, dividers,
          * etc. before elements are loaded.
          */
-        fun <E> empty(defaultSort: SortableProperty<E>? = null): ListAdapter<E> {
+        fun <E> empty(
+            defaultSort: SortableProperty<E>? = null,
+            defaultFilter: ((E) -> Boolean)? = null,
+        ): ListAdapter<E> {
             return ListAdapter(
                 elements = null,
                 sortIndexes = null,
                 sorts = defaultSort?.let { listOf(Sort(it)) },
                 divider = null,
-                filter = null,
+                filter = defaultFilter,
                 filterString = null,
             )
         }

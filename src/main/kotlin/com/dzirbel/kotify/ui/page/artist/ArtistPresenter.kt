@@ -8,6 +8,7 @@ import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
+import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
 import com.dzirbel.kotify.ui.components.adapter.Divider
@@ -36,7 +37,11 @@ class ArtistPresenter(
     data class ViewModel(
         val artist: Artist? = null,
         val refreshingArtist: Boolean = false,
-        val artistAlbums: ListAdapter<ArtistAlbum> = ListAdapter.empty(defaultSort = AlbumNameProperty.ForArtistAlbum),
+        val displayedAlbumTypes: Set<SpotifyAlbum.Type> = setOf(SpotifyAlbum.Type.ALBUM),
+        val artistAlbums: ListAdapter<ArtistAlbum> = ListAdapter.empty(
+            defaultSort = AlbumNameProperty.ForArtistAlbum,
+            defaultFilter = filterFor(displayedAlbumTypes),
+        ),
         val albumRatings: Map<String, List<State<Rating?>>?> = emptyMap(),
         val savedAlbumsState: State<Set<String>?>? = null,
         val refreshingArtistAlbums: Boolean = false,
@@ -56,6 +61,7 @@ class ArtistPresenter(
         class ToggleSave(val albumId: String, val save: Boolean) : Event()
         class SetSorts(val sorts: List<Sort<ArtistAlbum>>) : Event()
         class SetDivider(val divider: Divider<ArtistAlbum>?) : Event()
+        class SetDisplayedAlbumTypes(val albumTypes: Set<SpotifyAlbum.Type>) : Event()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -112,6 +118,23 @@ class ArtistPresenter(
 
             is Event.SetDivider -> mutateState {
                 it.copy(artistAlbums = it.artistAlbums.withDivider(divider = event.divider))
+            }
+
+            is Event.SetDisplayedAlbumTypes -> mutateState {
+                it.copy(
+                    displayedAlbumTypes = event.albumTypes,
+                    artistAlbums = it.artistAlbums.withFilter(filter = filterFor(event.albumTypes)),
+                )
+            }
+        }
+    }
+
+    companion object {
+        private fun filterFor(albumTypes: Set<SpotifyAlbum.Type>): ((ArtistAlbum) -> Boolean)? {
+            return if (albumTypes.isNotEmpty()) {
+                { album -> albumTypes.contains(album.albumGroup) }
+            } else {
+                null
             }
         }
     }

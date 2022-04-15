@@ -37,3 +37,14 @@ fun <T> List<T>.minusAt(index: Int): List<T> {
     }
     return result
 }
+
+/**
+ * Returns a map from the results of [map] to the number of times they occur.
+ */
+fun <T, K> Iterable<T>.countsBy(map: (T) -> K): Map<K, Int> {
+    val counts = mutableMapOf<K, Int>()
+    for (element in this) {
+        counts.compute(map(element)) { _, count -> if (count == null) 1 else count + 1 }
+    }
+    return counts
+}

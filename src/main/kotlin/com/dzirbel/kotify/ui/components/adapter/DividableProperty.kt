@@ -1,12 +1,15 @@
 package com.dzirbel.kotify.ui.components.adapter
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.theme.Dimens
 
@@ -50,6 +53,8 @@ interface DividableProperty<E> : AdapterProperty<E> {
      */
     fun divisionTitle(division: Any?): String? = division?.toString().orEmpty()
 
+    fun divisionIconName(division: Any?): String? = null
+
     /**
      * Renders a display of the header of the given [division], using its [divisionTitle].
      */
@@ -57,11 +62,19 @@ interface DividableProperty<E> : AdapterProperty<E> {
     fun divisionHeader(division: Any?) {
         divisionTitle(division)?.let { divisionTitle ->
             Box {
-                Text(
-                    text = divisionTitle,
-                    style = MaterialTheme.typography.h5,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
                     modifier = Modifier.padding(horizontal = Dimens.space5, vertical = Dimens.space2),
-                )
+                ) {
+                    val textStyle = MaterialTheme.typography.h5
+
+                    divisionIconName(division)?.let { iconName ->
+                        CachedIcon(name = iconName, size = Dimens.iconSizeFor(fontSize = textStyle.fontSize))
+                    }
+
+                    Text(text = divisionTitle, style = textStyle)
+                }
 
                 HorizontalDivider(modifier = Modifier.align(Alignment.BottomCenter))
             }

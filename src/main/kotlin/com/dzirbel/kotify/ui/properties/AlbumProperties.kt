@@ -8,7 +8,6 @@ import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.compareNullable
-import com.dzirbel.kotify.util.capitalize
 
 open class AlbumNameProperty<A>(private val toAlbum: (A) -> Album) : PropertyByString<A>(title = "Name") {
     override fun toString(item: A) = toAlbum(item).name
@@ -26,21 +25,23 @@ open class AlbumReleaseDateProperty<A>(
     object ForArtistAlbum : AlbumReleaseDateProperty<ArtistAlbum>(toAlbum = { it.album.cached })
 }
 
-open class AlbumTypeDividableProperty<A>(private val toAlbum: (A) -> Album) : DividableProperty<A> {
+open class AlbumTypeDividableProperty<A>(private val toAlbumType: (A) -> SpotifyAlbum.Type?) : DividableProperty<A> {
     override val title = "Album type"
 
-    override fun divisionFor(element: A): SpotifyAlbum.Type? = toAlbum(element).albumType
+    override fun divisionFor(element: A): SpotifyAlbum.Type? = toAlbumType(element)
+
+    override fun divisionIconName(division: Any?) = (division as? SpotifyAlbum.Type)?.iconName
 
     override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
         return sortOrder.compareNullable(first as? SpotifyAlbum.Type, second as? SpotifyAlbum.Type)
     }
 
     override fun divisionTitle(division: Any?): String? {
-        return (division as? SpotifyAlbum.Type)?.name?.lowercase()?.capitalize()
+        return (division as? SpotifyAlbum.Type)?.displayName ?: "Unknown"
     }
 
-    companion object : AlbumTypeDividableProperty<Album>(toAlbum = { it })
-    object ForArtistAlbum : AlbumTypeDividableProperty<ArtistAlbum>(toAlbum = { it.album.cached })
+    companion object : AlbumTypeDividableProperty<Album>(toAlbumType = { it.albumType })
+    object ForArtistAlbum : AlbumTypeDividableProperty<ArtistAlbum>(toAlbumType = { it.albumGroup })
 }
 
 class AlbumRatingProperty(ratings: Map<String, List<State<Rating?>>?>) : PropertyByAverageRating<Album>(ratings) {

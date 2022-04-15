@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
@@ -27,6 +28,7 @@ fun SimpleTextButton(
     contentPadding: PaddingValues = PaddingValues(Dimens.space3),
     enforceMinWidth: Boolean = true,
     enforceMinHeight: Boolean = false,
+    shape: Shape = RectangleShape,
     backgroundColor: Color = Color.Transparent,
     textColor: Color = if (backgroundColor == Color.Transparent) {
         LocalColors.current.text.copy(alpha = LocalContentAlpha.current)
@@ -54,7 +56,7 @@ fun SimpleTextButton(
             },
         enabled = enabled,
         contentPadding = contentPadding,
-        shape = RectangleShape,
+        shape = shape,
         colors = ButtonDefaults.textButtonColors(
             backgroundColor = backgroundColor,
             contentColor = textColor,

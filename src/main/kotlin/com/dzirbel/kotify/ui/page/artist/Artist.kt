@@ -15,6 +15,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.components.AlbumCell
+import com.dzirbel.kotify.ui.components.AlbumTypePicker
 import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner
@@ -24,6 +25,7 @@ import com.dzirbel.kotify.ui.components.adapter.dividableProperties
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.util.countsBy
 
 @Composable
 fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewModel) {
@@ -75,6 +77,14 @@ fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewMode
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+            AlbumTypePicker(
+                albumTypeCounts = state.artistAlbums.countsBy { it.albumGroup },
+                albumTypes = state.displayedAlbumTypes,
+                onSelectAlbumTypes = { albumTypes ->
+                    presenter.emitAsync(ArtistPresenter.Event.SetDisplayedAlbumTypes(albumTypes))
+                },
+            )
+
             DividerSelector(
                 dividableProperties = state.artistAlbumProperties.dividableProperties(),
                 currentDivider = state.artistAlbums.divider,

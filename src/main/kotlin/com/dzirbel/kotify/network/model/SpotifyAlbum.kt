@@ -62,11 +62,11 @@ interface SpotifyAlbum : SpotifyObject {
     val totalTracks: Int?
 
     @Serializable(with = Type.Serializer::class)
-    enum class Type {
-        ALBUM,
-        SINGLE,
-        APPEARS_ON,
-        COMPILATION;
+    enum class Type(val displayName: String, val iconName: String) {
+        ALBUM(displayName = "Album", iconName = "album"),
+        SINGLE(displayName = "Single", iconName = "audiotrack"),
+        COMPILATION(displayName = "Compilation", iconName = "library-music"),
+        APPEARS_ON(displayName = "Appears On", iconName = "audio-file");
 
         object Serializer : CaseInsensitiveEnumSerializer<Type>(Type::class)
     }
