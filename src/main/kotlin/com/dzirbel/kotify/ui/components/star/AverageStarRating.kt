@@ -11,7 +11,7 @@ import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.util.averageOrNull
+import com.dzirbel.kotify.util.averageAndCountOrNull
 import kotlin.math.floor
 
 @Composable
@@ -20,8 +20,9 @@ fun AverageStarRating(
     maxRating: Int = Rating.DEFAULT_MAX_AVERAGE_RATING,
     starSize: Dp = Dimens.iconSmall,
 ) {
-    val averageRating = remember(ratings) {
-        ratings?.averageOrNull { it.ratingRelativeToMax(maxRating = maxRating) }
+    val (averageRating, totalRatings) = remember(ratings) {
+        ratings?.averageAndCountOrNull { it.ratingRelativeToMax(maxRating = maxRating) }
+            ?: Pair(null, 0)
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -47,7 +48,7 @@ fun AverageStarRating(
             HorizontalSpacer(width = Dimens.space1)
 
             Text(
-                text = "%.1f".format(averageRating),
+                text = "%.1f (%d)".format(averageRating, totalRatings),
                 color = LocalColors.current.text.copy(alpha = ContentAlpha.medium),
             )
         }

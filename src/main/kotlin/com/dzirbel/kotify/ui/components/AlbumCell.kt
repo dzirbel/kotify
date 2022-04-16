@@ -9,15 +9,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.pageStack
@@ -55,6 +59,34 @@ fun AlbumCell(
             ToggleSaveButton(isSaved = isSaved) { onToggleSave(it) }
 
             PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)
+        }
+
+        Row(
+            modifier = Modifier.widthIn(max = Dimens.contentImage),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                album.albumType?.let { albumType ->
+                    CachedIcon(
+                        name = albumType.iconName,
+                        size = Dimens.iconSmall,
+                        contentDescription = albumType.displayName,
+                    )
+                }
+
+                album.parsedReleaseDate?.let { releaseDate ->
+                    Text(text = releaseDate.year.toString())
+                }
+
+                if (album.parsedReleaseDate != null && album.totalTracks != null) {
+                    Interpunct()
+                }
+
+                album.totalTracks?.let { totalTracks ->
+                    Text("$totalTracks tracks")
+                }
+            }
         }
 
         if (showRating) {
