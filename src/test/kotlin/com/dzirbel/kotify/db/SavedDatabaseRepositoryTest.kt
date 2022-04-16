@@ -10,7 +10,6 @@ import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.dzirbel.kotify.containsExactlyElementsOfInAnyOrder
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
-import com.dzirbel.kotify.isSameInstanceAs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -250,7 +249,7 @@ internal class SavedDatabaseRepositoryTest {
     @Test
     fun testState() {
         runTest {
-            val state = TestSavedRepository.savedStateOf(id = "saved-1", fetchIfUnknown = false)
+            val state = TestSavedRepository.savedStateOf(id = "saved-1")
             assertThat(state.value).isNull()
 
             TestSavedRepository.setSaved(id = "saved-1", false)
@@ -260,43 +259,14 @@ internal class SavedDatabaseRepositoryTest {
             TestSavedRepository.isSavedRemote(id = "saved-1")
             assertThat(state.value).isNotNull().isTrue()
 
-            val state2 = TestSavedRepository.savedStateOf(id = "saved-2", fetchIfUnknown = false)
+            val state2 = TestSavedRepository.savedStateOf(id = "saved-2")
             assertThat(state2.value).isNull()
 
             TestSavedRepository.getLibrary()
             assertThat(state2.value).isNotNull().isTrue()
 
-            val state3 = TestSavedRepository.savedStateOf(id = "saved-3", fetchIfUnknown = false)
+            val state3 = TestSavedRepository.savedStateOf(id = "saved-3")
             assertThat(state3.value).isNotNull().isTrue()
-        }
-    }
-
-    @Test
-    fun testStateFetchIfUnknown() {
-        runTest {
-            val state1 = TestSavedRepository.savedStateOf(id = "saved-1", fetchIfUnknown = true)
-            assertThat(state1.value).isNotNull().isTrue()
-            TestSavedRepository.assertCalls(fetchedIds = listOf(listOf("saved-1")))
-
-            val state2 = TestSavedRepository.savedStateOf(id = "unsaved", fetchIfUnknown = true)
-            assertThat(state2.value).isNotNull().isFalse()
-            TestSavedRepository.assertCalls(fetchedIds = listOf(listOf("saved-1"), listOf("unsaved")))
-
-            val state3 = TestSavedRepository.savedStateOf(id = "saved-1")
-            assertThat(state3).isSameInstanceAs(state1)
-            TestSavedRepository.assertCalls(fetchedIds = listOf(listOf("saved-1"), listOf("unsaved")))
-
-            val state4 = TestSavedRepository.savedStateOf(id = "saved-2", fetchIfUnknown = false)
-            assertThat(state4.value).isNull()
-            TestSavedRepository.assertCalls(fetchedIds = listOf(listOf("saved-1"), listOf("unsaved")))
-
-            val state5 = TestSavedRepository.savedStateOf(id = "saved-2", fetchIfUnknown = true)
-            assertThat(state5.value).isNotNull().isTrue()
-            assertThat(state4.value).isNotNull().isTrue()
-            assertThat(state5).isSameInstanceAs(state4)
-            TestSavedRepository.assertCalls(
-                fetchedIds = listOf(listOf("saved-1"), listOf("unsaved"), listOf("saved-2")),
-            )
         }
     }
 

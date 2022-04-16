@@ -19,6 +19,7 @@ import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.properties.AlbumRatingProperty
 import com.dzirbel.kotify.ui.properties.AlbumReleaseDateProperty
 import com.dzirbel.kotify.ui.properties.AlbumTypeDividableProperty
+import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -91,19 +92,14 @@ class ArtistPresenter(
                 }
                 SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
 
-                // TODO batch
-                val savedAlbumsStates = artistAlbums.associate {
-                    it.albumId.value to SavedAlbumRepository.savedStateOf(id = it.albumId.value)
-                }
+                val albumIds = artistAlbums.map { it.albumId.value }
+                val savedAlbumsStates = albumIds.zipToMap(SavedAlbumRepository.savedStatesOf(ids = albumIds))
 
                 // if any album saved states are unknown, fetch them asynchronously
                 val missingSavedStates = savedAlbumsStates.filterValues { it.value == null }.keys
                 if (missingSavedStates.isNotEmpty()) {
                     scope.launch {
-                        // TODO batch
-                        missingSavedStates.forEach { albumId ->
-                            SavedAlbumRepository.isSavedRemote(id = albumId)
-                        }
+                        SavedAlbumRepository.isSavedRemote(ids = missingSavedStates.toList())
                     }
                 }
 

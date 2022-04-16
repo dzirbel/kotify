@@ -28,6 +28,7 @@ import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.util.ReorderCalculator
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 class PlaylistPresenter(
     private val playlistId: String,
@@ -94,7 +95,13 @@ class PlaylistPresenter(
                     playlist.largestImage.loadToCache()
                 }
 
-                val isSavedState = SavedPlaylistRepository.savedStateOf(id = playlist.id.value, fetchIfUnknown = true)
+                val isSavedState = SavedPlaylistRepository.savedStateOf(id = playlistId)
+
+                // if the saved state is unknown, fetch asynchronously
+                if (isSavedState.value == null) {
+                    scope.launch { SavedPlaylistRepository.isSaved(id = playlistId) }
+                }
+
                 val savedTracksState = SavedTrackRepository.libraryState()
 
                 mutateState {

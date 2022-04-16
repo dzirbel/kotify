@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesRepository
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.util.plusOrMinus
+import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -102,7 +103,58 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         return saved
     }
 
-    final override suspend fun savedStateOf(id: String, fetchIfUnknown: Boolean): State<Boolean?> {
+    final override suspend fun isSavedRemote(ids: List<String>): List<Boolean> {
+        val saveds = fetchIsSaved(ids = ids)
+
+        KotifyDatabase.transaction("set saved state for ${ids.size} ${entityName}s") {
+            ids.zipEach(saveds) { id, saved ->
+                savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = null)
+            }
+        }
+
+        ids.zipEach(saveds) { id, saved ->
+            states[id]?.get()?.value = saved
+            libraryState.value?.let { library ->
+                libraryState.value = library.plusOrMinus(value = id, condition = saved)
+            }
+        }
+
+        val queryEvents = ids.zip(saveds).map { (id, saved) -> SavedRepository.QueryEvent(id = id, result = saved) }
+        events.emit(SavedRepository.Event.QueryRemote(queryEvents))
+
+        return saveds
+    }
+
+    override suspend fun isSaved(ids: List<String>): List<Boolean> {
+        val missingIndices = ArrayList<IndexedValue<String>>()
+
+        val cachedValues = isSavedCached(ids = ids)
+            .mapIndexedTo(ArrayList(ids.size)) { index, cached ->
+                val id = ids[index]
+
+                if (cached == null) {
+                    missingIndices.add(IndexedValue(index = index, value = id))
+                }
+
+                cached
+            }
+
+        if (missingIndices.isEmpty()) {
+            @Suppress("UNCHECKED_CAST")
+            return cachedValues as List<Boolean>
+        }
+
+        val remote = isSavedRemote(ids = missingIndices.map { it.value })
+        missingIndices.zipEach(remote) { indexedValue, value ->
+            cachedValues[indexedValue.index] = value
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        return cachedValues as List<Boolean>
+    }
+
+    final override suspend fun savedStateOf(id: String): State<Boolean?> {
+        val fetchIfUnknown = false // TODO clean up
         states[id]?.get()?.let { cached ->
             // if the cached value is unknown, refresh directly from the remote (assuming that the cached value is
             // up-to-date with the cache already, so it can be skipped)
@@ -117,6 +169,35 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         val state = mutableStateOf(saved)
         states[id] = WeakReference(state)
         return state
+    }
+
+    override suspend fun savedStatesOf(ids: List<String>): List<State<Boolean?>> {
+        val missingIndices = ArrayList<IndexedValue<String>>()
+
+        val existingStates = ids.mapIndexedTo(ArrayList(ids.size)) { index, id ->
+            val state = states[id]?.get()
+            if (state == null) {
+                missingIndices.add(IndexedValue(index = index, value = id))
+            }
+
+            state
+        }
+
+        if (missingIndices.isEmpty()) {
+            @Suppress("UNCHECKED_CAST")
+            return existingStates as List<State<Boolean?>>
+        }
+
+        val missingSaved = isSavedCached(ids = missingIndices.map { it.value })
+
+        missingIndices.zipEach(missingSaved) { indexedValue, saved ->
+            val state = mutableStateOf(saved)
+            states[indexedValue.value] = WeakReference(state)
+            existingStates[indexedValue.index] = state
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        return existingStates as List<State<Boolean?>>
     }
 
     final override suspend fun libraryState(fetchIfUnknown: Boolean): State<Set<String>?> {

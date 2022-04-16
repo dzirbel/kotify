@@ -78,21 +78,38 @@ interface SavedRepository {
     suspend fun isSavedRemote(id: String): Boolean
 
     /**
+     * Retrieves the saved state from the remote source for the given [ids] without checking for a locally cached state,
+     * saves them to the cache, and returns them.
+     */
+    suspend fun isSavedRemote(ids: List<String>): List<Boolean>
+
+    /**
      * Retrieves the saved state for the given [id], from the local cache if present, otherwise fetches it from the
      * remote source, caches, and returns it.
      */
     suspend fun isSaved(id: String): Boolean = isSavedCached(id) ?: isSavedRemote(id)
 
     /**
+     * Retrieves the saved state for the given [ids], from the local cache if present, otherwise fetches them from the
+     * remote source, caches, and returns them.
+     */
+    suspend fun isSaved(ids: List<String>): List<Boolean>
+
+    /**
      * Returns a [State] reflecting the live saved state of the entity with the given [id].
      *
      * The returned [State] must be the same object between calls for as long as it stays in context (i.e. is not
      * garbage-collected).
-     *
-     * If [fetchIfUnknown] is true, the saved state will be fetched from the remote state if it is not cached (i.e.
-     * null). Otherwise, the returned state may have a null value.
      */
-    suspend fun savedStateOf(id: String, fetchIfUnknown: Boolean = false): State<Boolean?>
+    suspend fun savedStateOf(id: String): State<Boolean?>
+
+    /**
+     * Returns [State]s reflecting the live saved state of the entity with the given [ids].
+     *
+     * The returned [State]s must be the same objects between calls for as long as it stays in context (i.e. is not
+     * garbage-collected).
+     */
+    suspend fun savedStatesOf(ids: List<String>): List<State<Boolean?>>
 
     /**
      * Returns a [State] reflecting the live state of the user's library as entity IDs.

@@ -12,6 +12,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.framework.Presenter
+import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -212,12 +213,12 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                             TrackRatingRepository.ratingState(id = trackId)
                         }
 
-                        val artistSavedStates = track?.artists?.mapNotNull { it.id }?.associateWith { artistId ->
-                            SavedArtistRepository.savedStateOf(artistId, fetchIfUnknown = false)
+                        val artistSavedStates = track?.artists?.mapNotNull { it.id }?.let { trackArtistIds ->
+                            trackArtistIds.zipToMap(SavedArtistRepository.savedStatesOf(ids = trackArtistIds))
                         }
 
                         val albumSavedState = track?.album?.id?.let {
-                            SavedAlbumRepository.savedStateOf(id = it, fetchIfUnknown = false)
+                            SavedAlbumRepository.savedStateOf(id = it)
                         }
 
                         mutateState {
@@ -309,12 +310,12 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                         val trackSavedState = SavedTrackRepository.savedStateOf(id = track.id)
                         val trackRatingState = TrackRatingRepository.ratingState(id = track.id)
 
-                        val artistSavedStates = track.artists.mapNotNull { it.id }.associateWith { artistId ->
-                            SavedArtistRepository.savedStateOf(artistId, fetchIfUnknown = false)
-                        }
+                        val trackArtistIds = track.artists.mapNotNull { it.id }
+                        val artistSavedStates = trackArtistIds
+                            .zipToMap(SavedArtistRepository.savedStatesOf(ids = trackArtistIds))
 
                         val albumSavedState = track.album.id?.let {
-                            SavedAlbumRepository.savedStateOf(id = it, fetchIfUnknown = false)
+                            SavedAlbumRepository.savedStateOf(id = it)
                         }
 
                         mutateState {
