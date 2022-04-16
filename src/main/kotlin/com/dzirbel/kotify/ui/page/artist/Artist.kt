@@ -113,7 +113,7 @@ fun ArtistPageContent(presenter: ArtistPresenter, state: ArtistPresenter.ViewMod
         ) { _, artistAlbum ->
             AlbumCell(
                 album = artistAlbum.album.cached,
-                isSaved = state.savedAlbumsState?.value?.contains(artistAlbum.albumId.value),
+                isSaved = state.savedAlbumsStates?.get(artistAlbum.albumId.value)?.value,
                 showRating = true,
                 ratings = state.albumRatings[artistAlbum.albumId.value]?.map { it.value },
                 onToggleSave = { save ->

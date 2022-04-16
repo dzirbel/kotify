@@ -20,6 +20,7 @@ import com.dzirbel.kotify.ui.properties.AlbumRatingProperty
 import com.dzirbel.kotify.ui.properties.AlbumReleaseDateProperty
 import com.dzirbel.kotify.ui.properties.AlbumTypeDividableProperty
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 class ArtistPresenter(
     private val artistId: String,
@@ -43,7 +44,7 @@ class ArtistPresenter(
             defaultFilter = filterFor(displayedAlbumTypes),
         ),
         val albumRatings: Map<String, List<State<Rating?>>?> = emptyMap(),
-        val savedAlbumsState: State<Set<String>?>? = null,
+        val savedAlbumsStates: Map<String, State<Boolean?>>? = null,
         val refreshingArtistAlbums: Boolean = false,
     ) {
         val artistAlbumProperties: List<AdapterProperty<ArtistAlbum>> = listOf(
@@ -90,7 +91,21 @@ class ArtistPresenter(
                 }
                 SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
 
-                val savedAlbumsState = SavedAlbumRepository.libraryState()
+                // TODO batch
+                val savedAlbumsStates = artistAlbums.associate {
+                    it.albumId.value to SavedAlbumRepository.savedStateOf(id = it.albumId.value)
+                }
+
+                // if any album saved states are unknown, fetch them asynchronously
+                val missingSavedStates = savedAlbumsStates.filterValues { it.value == null }.keys
+                if (missingSavedStates.isNotEmpty()) {
+                    scope.launch {
+                        // TODO batch
+                        missingSavedStates.forEach { albumId ->
+                            SavedAlbumRepository.isSavedRemote(id = albumId)
+                        }
+                    }
+                }
 
                 val albumRatings = artistAlbums.associate { artistAlbum ->
                     val album = artistAlbum.album.cached
@@ -104,7 +119,7 @@ class ArtistPresenter(
                         artist = artist ?: it.artist,
                         artistAlbums = it.artistAlbums.withElements(artistAlbums),
                         albumRatings = albumRatings,
-                        savedAlbumsState = savedAlbumsState,
+                        savedAlbumsStates = savedAlbumsStates,
                         refreshingArtistAlbums = false,
                     )
                 }
