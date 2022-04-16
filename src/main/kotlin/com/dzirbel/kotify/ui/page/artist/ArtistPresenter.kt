@@ -39,7 +39,7 @@ class ArtistPresenter(
         val refreshingArtist: Boolean = false,
         val displayedAlbumTypes: Set<SpotifyAlbum.Type> = setOf(SpotifyAlbum.Type.ALBUM),
         val artistAlbums: ListAdapter<ArtistAlbum> = ListAdapter.empty(
-            defaultSort = AlbumNameProperty.ForArtistAlbum,
+            defaultSort = AlbumReleaseDateProperty.ForArtistAlbum,
             defaultFilter = filterFor(displayedAlbumTypes),
         ),
         val albumRatings: Map<String, List<State<Rating?>>?> = emptyMap(),
