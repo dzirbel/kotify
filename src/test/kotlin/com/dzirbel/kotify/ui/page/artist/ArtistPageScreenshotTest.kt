@@ -4,8 +4,11 @@ import com.dzirbel.kotify.DatabaseExtension
 import com.dzirbel.kotify.FixtureModels
 import com.dzirbel.kotify.testTransaction
 import com.dzirbel.kotify.ui.screenshotTest
+import io.mockk.every
+import io.mockk.spyk
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import java.time.Instant
 
 @ExtendWith(DatabaseExtension::class)
 internal class ArtistPageScreenshotTest {
@@ -20,8 +23,12 @@ internal class ArtistPageScreenshotTest {
 
     @Test
     fun full() {
-        val artist = FixtureModels.artist()
+        val artist = spyk(FixtureModels.artist())
         val artistAlbums = FixtureModels.artistAlbums(artistId = artist.id.value, count = 20)
+
+        // hack: ensure updated time is rendered consistently as now
+        every { artist.fullUpdatedTime } answers { Instant.now() }
+        every { artist.albumsFetched } answers { Instant.now() }
 
         testTransaction {
             artistAlbums.forEach {
