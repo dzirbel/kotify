@@ -55,6 +55,7 @@ dependencies {
     testImplementation(deps.compose.swing) // Swing dispatcher for screenshot tests
 
     testFixturesImplementation(deps.assertk)
+    testFixturesImplementation(deps.bundles.exposed)
     testFixturesImplementation(compose.desktop.currentOs)
     testFixturesImplementation(deps.kotlinx.serialization) // TODO necessary for the opt-in
     testFixturesImplementation(deps.okhttp)
