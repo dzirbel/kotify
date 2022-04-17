@@ -21,7 +21,7 @@ internal class ArtistsPageScreenshotTest {
 
     @Test
     fun full() {
-        val artists = FixtureModels.databaseArtists(count = 10)
+        val artists = FixtureModels.artists(count = 10)
 
         testTransaction {
             artists.forEach { it.largestImage.loadToCache() }
