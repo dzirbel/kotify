@@ -101,6 +101,7 @@ tasks.test {
 }
 
 tasks.withType<Test>().configureEach {
+    systemProperty("junit.jupiter.extensions.autodetection.enabled", true)
     testLogging {
         events = setOf(TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR, TestLogEvent.STANDARD_OUT)
         showStackTraces = true

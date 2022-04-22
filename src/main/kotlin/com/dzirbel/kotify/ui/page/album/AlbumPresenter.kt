@@ -24,7 +24,6 @@ import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import java.time.Instant
 
 class AlbumPresenter(
@@ -89,11 +88,6 @@ class AlbumPresenter(
                 }
 
                 val isSavedState = SavedAlbumRepository.savedStateOf(id = albumId)
-
-                // if the saved state is unknown, fetch asynchronously
-                if (isSavedState.value == null) {
-                    scope.launch { SavedAlbumRepository.isSaved(id = albumId) }
-                }
 
                 val savedTracksState = SavedTrackRepository.libraryState()
 

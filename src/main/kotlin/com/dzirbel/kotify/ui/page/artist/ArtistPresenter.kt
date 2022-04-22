@@ -21,7 +21,6 @@ import com.dzirbel.kotify.ui.properties.AlbumReleaseDateProperty
 import com.dzirbel.kotify.ui.properties.AlbumTypeDividableProperty
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 class ArtistPresenter(
     private val artistId: String,
@@ -94,14 +93,6 @@ class ArtistPresenter(
 
                 val albumIds = artistAlbums.map { it.albumId.value }
                 val savedAlbumsStates = albumIds.zipToMap(SavedAlbumRepository.savedStatesOf(ids = albumIds))
-
-                // if any album saved states are unknown, fetch them asynchronously
-                val missingSavedStates = savedAlbumsStates.filterValues { it.value == null }.keys
-                if (missingSavedStates.isNotEmpty()) {
-                    scope.launch {
-                        SavedAlbumRepository.isSavedRemote(ids = missingSavedStates.toList())
-                    }
-                }
 
                 val albumRatings = artistAlbums.associate { artistAlbum ->
                     val album = artistAlbum.album.cached

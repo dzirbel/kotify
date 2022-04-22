@@ -9,9 +9,11 @@ import org.junit.jupiter.api.extension.ExtensionContext
 
 /**
  * A JUnit test extension which setups up the database connection and clears database contents after each test.
+ *
+ * This extension is applied automatically to all tests via a service loader.
  */
 class DatabaseExtension : BeforeAllCallback, AfterEachCallback {
-    override fun beforeAll(context: ExtensionContext?) {
+    override fun beforeAll(context: ExtensionContext) {
         KotifyDatabase.db
         transaction(KotifyDatabase.db) {
             UserRepository.currentUserId.set("abc") // use mock user ID for tests
@@ -19,7 +21,7 @@ class DatabaseExtension : BeforeAllCallback, AfterEachCallback {
         KotifyDatabase.dbFile.deleteOnExit()
     }
 
-    override fun afterEach(context: ExtensionContext?) {
+    override fun afterEach(context: ExtensionContext) {
         KotifyDatabase.clear()
     }
 }

@@ -3,15 +3,12 @@ package com.dzirbel.kotify.db.model
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
-import com.dzirbel.kotify.DatabaseExtension
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyArtist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyExternalUrl
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(DatabaseExtension::class)
 internal class TrackTest {
     @Test
     fun testFromSimplified() {

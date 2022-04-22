@@ -7,9 +7,11 @@ import com.dzirbel.kotify.db.model.GlobalUpdateTimesRepository
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.util.plusOrMinus
 import com.dzirbel.kotify.util.zipEach
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.deleteAll
 import java.lang.ref.WeakReference
 import java.time.Instant
@@ -153,25 +155,24 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         return cachedValues as List<Boolean>
     }
 
-    final override suspend fun savedStateOf(id: String): State<Boolean?> {
-        val fetchIfUnknown = false // TODO clean up
-        states[id]?.get()?.let { cached ->
-            // if the cached value is unknown, refresh directly from the remote (assuming that the cached value is
-            // up-to-date with the cache already, so it can be skipped)
-            if (fetchIfUnknown && cached.value == null) {
-                isSavedRemote(id = id)
-            }
+    final override suspend fun savedStateOf(id: String, fetchMissing: Boolean): State<Boolean?> {
+        states[id]?.get()?.let { return it }
 
-            return cached
-        }
+        val saved = isSavedCached(id)
 
-        val saved = if (fetchIfUnknown) isSaved(id) else isSavedCached(id)
         val state = mutableStateOf(saved)
         states[id] = WeakReference(state)
+
+        if (saved == null && fetchMissing) {
+            coroutineScope {
+                launch { isSavedRemote(id) }
+            }
+        }
+
         return state
     }
 
-    override suspend fun savedStatesOf(ids: List<String>): List<State<Boolean?>> {
+    override suspend fun savedStatesOf(ids: List<String>, fetchMissing: Boolean): List<State<Boolean?>> {
         val missingIndices = ArrayList<IndexedValue<String>>()
 
         val existingStates = ids.mapIndexedTo(ArrayList(ids.size)) { index, id ->
@@ -189,11 +190,22 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         }
 
         val missingSaved = isSavedCached(ids = missingIndices.map { it.value })
+        val idsToFetch = if (fetchMissing) mutableListOf<String>() else null
 
         missingIndices.zipEach(missingSaved) { indexedValue, saved ->
             val state = mutableStateOf(saved)
             states[indexedValue.value] = WeakReference(state)
             existingStates[indexedValue.index] = state
+
+            if (saved == null) {
+                idsToFetch?.add(indexedValue.value)
+            }
+        }
+
+        idsToFetch?.takeIf { it.isNotEmpty() }?.let {
+            coroutineScope {
+                launch { isSavedRemote(ids = it) }
+            }
         }
 
         @Suppress("UNCHECKED_CAST")

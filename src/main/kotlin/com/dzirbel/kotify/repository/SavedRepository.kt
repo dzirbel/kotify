@@ -100,16 +100,20 @@ interface SavedRepository {
      *
      * The returned [State] must be the same object between calls for as long as it stays in context (i.e. is not
      * garbage-collected).
+     *
+     * If [fetchMissing] is true (the default), then the state will be fetched asynchronously if it is unknown.
      */
-    suspend fun savedStateOf(id: String): State<Boolean?>
+    suspend fun savedStateOf(id: String, fetchMissing: Boolean = true): State<Boolean?>
 
     /**
      * Returns [State]s reflecting the live saved state of the entity with the given [ids].
      *
      * The returned [State]s must be the same objects between calls for as long as it stays in context (i.e. is not
      * garbage-collected).
+     *
+     * If [fetchMissing] is true (the default), then any unknown states will be fetched asynchronously.
      */
-    suspend fun savedStatesOf(ids: List<String>): List<State<Boolean?>>
+    suspend fun savedStatesOf(ids: List<String>, fetchMissing: Boolean = true): List<State<Boolean?>>
 
     /**
      * Returns a [State] reflecting the live state of the user's library as entity IDs.

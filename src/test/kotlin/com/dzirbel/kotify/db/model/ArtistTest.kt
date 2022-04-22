@@ -7,7 +7,6 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
-import com.dzirbel.kotify.DatabaseExtension
 import com.dzirbel.kotify.containsExactlyElementsOf
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
@@ -19,9 +18,7 @@ import com.dzirbel.kotify.network.model.SpotifyImage
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(DatabaseExtension::class)
 internal class ArtistTest {
     @Test
     fun testFromSimplified() {

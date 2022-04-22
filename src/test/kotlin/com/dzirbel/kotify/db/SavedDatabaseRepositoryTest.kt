@@ -249,7 +249,7 @@ internal class SavedDatabaseRepositoryTest {
     @Test
     fun testState() {
         runTest {
-            val state = TestSavedRepository.savedStateOf(id = "saved-1")
+            val state = TestSavedRepository.savedStateOf(id = "saved-1", fetchMissing = false)
             assertThat(state.value).isNull()
 
             TestSavedRepository.setSaved(id = "saved-1", false)
@@ -259,13 +259,13 @@ internal class SavedDatabaseRepositoryTest {
             TestSavedRepository.isSavedRemote(id = "saved-1")
             assertThat(state.value).isNotNull().isTrue()
 
-            val state2 = TestSavedRepository.savedStateOf(id = "saved-2")
+            val state2 = TestSavedRepository.savedStateOf(id = "saved-2", fetchMissing = false)
             assertThat(state2.value).isNull()
 
             TestSavedRepository.getLibrary()
             assertThat(state2.value).isNotNull().isTrue()
 
-            val state3 = TestSavedRepository.savedStateOf(id = "saved-3")
+            val state3 = TestSavedRepository.savedStateOf(id = "saved-3", fetchMissing = false)
             assertThat(state3.value).isNotNull().isTrue()
         }
     }

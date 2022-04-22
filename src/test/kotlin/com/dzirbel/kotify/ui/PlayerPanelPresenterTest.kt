@@ -3,7 +3,6 @@ package com.dzirbel.kotify.ui
 import androidx.compose.runtime.MutableState
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import com.dzirbel.kotify.DatabaseExtension
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
@@ -27,12 +26,10 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 // TODO finish testing
-@ExtendWith(DatabaseExtension::class)
 internal class PlayerPanelPresenterTest {
     private val currentPlaybackDeviceIdState: MutableState<String?> = mockk {
         every { value = any() } just Runs
@@ -49,7 +46,7 @@ internal class PlayerPanelPresenterTest {
 
     @BeforeEach
     fun setup() {
-        mockkObject(Spotify.Player, Player)
+        mockkObject(Spotify.Player, Spotify.Library, Player)
 
         every { Player.currentPlaybackDeviceId } returns currentPlaybackDeviceIdState
         every { Player.currentTrackId } returns currentTrackIdState
@@ -59,6 +56,9 @@ internal class PlayerPanelPresenterTest {
         coEvery { Spotify.Player.getAvailableDevices() } returns emptyList()
         coEvery { Spotify.Player.getCurrentPlayback() } returns null
         coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returns null
+
+        coEvery { Spotify.Library.checkTracks(any()) } answers { firstArg<List<String>>().map { false } }
+        coEvery { Spotify.Library.checkAlbums(any()) } answers { firstArg<List<String>>().map { false } }
     }
 
     @AfterEach

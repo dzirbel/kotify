@@ -1,16 +1,13 @@
 package com.dzirbel.kotify.ui.page.playlist
 
-import com.dzirbel.kotify.DatabaseExtension
 import com.dzirbel.kotify.FixtureModels
 import com.dzirbel.kotify.testTransaction
 import com.dzirbel.kotify.ui.screenshotTest
 import io.mockk.every
 import io.mockk.spyk
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Instant
 
-@ExtendWith(DatabaseExtension::class)
 internal class PlaylistPageScreenshotTest {
     @Test
     fun empty() {

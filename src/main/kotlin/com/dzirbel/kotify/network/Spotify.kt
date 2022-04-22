@@ -55,6 +55,12 @@ object Spotify {
 
     var configuration: Configuration = Configuration()
 
+    /**
+     * A global flag which throws an [IllegalStateException] when making any network call when it is enabled, for use in
+     * tests to prohibit any dependency on the network.
+     */
+    var allowNetworkCalls = true
+
     const val FROM_TOKEN = "from_token"
     const val API_URL = "https://api.spotify.com/v1/"
 
@@ -163,6 +169,7 @@ object Spotify {
         body: RequestBody? = null,
     ): T {
         assertNotOnUIThread()
+        check(allowNetworkCalls)
 
         val token = AccessToken.Cache.getOrThrow()
 

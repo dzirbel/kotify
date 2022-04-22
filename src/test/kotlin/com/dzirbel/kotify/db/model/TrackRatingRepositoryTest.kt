@@ -7,16 +7,13 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import com.dzirbel.kotify.DatabaseExtension
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(DatabaseExtension::class)
 internal class TrackRatingRepositoryTest {
     @AfterEach
     fun cleanup() {
