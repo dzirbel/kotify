@@ -94,7 +94,9 @@ object SavedTrackRepository : SavedDatabaseRepository<SpotifySavedTrack>(
     savedEntityTable = TrackTable.SavedTracksTable,
 ) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
-        return Spotify.Library.checkTracks(ids = ids)
+        return ids.chunked(size = Spotify.MAX_LIMIT).flatMapParallel { chunk ->
+            Spotify.Library.checkTracks(ids = chunk)
+        }
     }
 
     override suspend fun pushSaved(ids: List<String>, saved: Boolean) {

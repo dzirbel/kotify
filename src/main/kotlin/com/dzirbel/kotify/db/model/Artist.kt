@@ -142,7 +142,9 @@ object SavedArtistRepository : SavedDatabaseRepository<FullSpotifyArtist>(
     savedEntityTable = ArtistTable.SavedArtistsTable,
 ) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
-        return Spotify.Follow.isFollowing(type = "artist", ids = ids)
+        return ids.chunked(size = Spotify.MAX_LIMIT).flatMapParallel { chunk ->
+            Spotify.Follow.isFollowing(type = "artist", ids = chunk)
+        }
     }
 
     override suspend fun pushSaved(ids: List<String>, saved: Boolean) {
