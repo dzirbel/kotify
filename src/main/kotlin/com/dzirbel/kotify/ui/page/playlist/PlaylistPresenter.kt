@@ -46,7 +46,7 @@ class PlaylistPresenter(
         val playlist: Playlist? = null,
         val tracks: ListAdapter<PlaylistTrack> = ListAdapter.empty(defaultSort = PlaylistTrackIndexProperty),
         val trackRatings: Map<String, State<Rating?>> = emptyMap(),
-        val savedTracksState: State<Set<String>?>? = null,
+        val savedTracksStates: Map<String, State<Boolean?>>? = null,
         val isSavedState: State<Boolean?>? = null,
     ) {
         val playlistTrackColumns = listOf(
@@ -60,7 +60,10 @@ class PlaylistPresenter(
                 },
             ),
             PlaylistTrackIndexProperty,
-            TrackSavedProperty(trackIdOf = { it.track.cached.id.value }, savedTrackIds = savedTracksState?.value),
+            TrackSavedProperty(
+                trackIdOf = { playlistTrack -> playlistTrack.trackId.value },
+                isSaved = { playlistTrack -> savedTracksStates?.get(playlistTrack.trackId.value)?.value },
+            ),
             TrackNameProperty.ForPlaylistTrack,
             TrackArtistsProperty.ForPlaylistTrack,
             TrackAlbumProperty.ForPlaylistTrack,
@@ -96,14 +99,11 @@ class PlaylistPresenter(
 
                 val isSavedState = SavedPlaylistRepository.savedStateOf(id = playlistId)
 
-                val savedTracksState = SavedTrackRepository.libraryState()
-
                 mutateState {
                     it.copy(
                         refreshing = false,
                         playlist = playlist,
                         isSavedState = isSavedState,
-                        savedTracksState = savedTracksState,
                     )
                 }
             }
@@ -118,6 +118,7 @@ class PlaylistPresenter(
 
                 val trackIds = tracks.map { it.track.cached.id.value }
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
+                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.savedStatesOf(ids = trackIds))
 
                 mutateState {
                     // TODO doesn't apply new track loaded time to playlist model in the ViewModel
@@ -125,6 +126,7 @@ class PlaylistPresenter(
                         refreshingTracks = false,
                         tracks = it.tracks.withElements(tracks),
                         trackRatings = trackRatings,
+                        savedTracksStates = savedTracksState,
                     )
                 }
             }

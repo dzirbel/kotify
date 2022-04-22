@@ -41,7 +41,7 @@ class AlbumPresenter(
         val album: Album? = null,
         val tracks: ListAdapter<Track> = ListAdapter.empty(defaultSort = TrackAlbumIndexProperty),
         val totalDurationMs: Long? = null,
-        val savedTracksState: State<Set<String>?>? = null,
+        val savedTracksStates: Map<String, State<Boolean?>>? = null,
         val trackRatings: Map<String, State<Rating?>> = emptyMap(),
         val isSavedState: State<Boolean?>? = null,
         val albumUpdated: Instant? = null,
@@ -54,7 +54,10 @@ class AlbumPresenter(
                 },
             ),
             TrackAlbumIndexProperty,
-            TrackSavedProperty(trackIdOf = { it.id.value }, savedTrackIds = savedTracksState?.value),
+            TrackSavedProperty(
+                trackIdOf = { track -> track.id.value },
+                isSaved = { track -> savedTracksStates?.get(track.id.value)?.value },
+            ),
             TrackNameProperty,
             TrackArtistsProperty,
             TrackRatingProperty(trackIdOf = { it.id.value }, trackRatings = trackRatings),
@@ -89,9 +92,10 @@ class AlbumPresenter(
 
                 val isSavedState = SavedAlbumRepository.savedStateOf(id = albumId)
 
-                val savedTracksState = SavedTrackRepository.libraryState()
-
                 val trackIds = tracks.map { it.id.value }
+
+                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.savedStatesOf(ids = trackIds))
+
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
 
                 mutateState {
@@ -100,7 +104,7 @@ class AlbumPresenter(
                         album = album,
                         tracks = it.tracks.withElements(tracks),
                         totalDurationMs = tracks.sumOf { track -> track.durationMs },
-                        savedTracksState = savedTracksState,
+                        savedTracksStates = savedTracksState,
                         trackRatings = trackRatings,
                         isSavedState = isSavedState,
                         albumUpdated = album.updatedTime,

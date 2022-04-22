@@ -139,23 +139,18 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> Track) :
     object ForPlaylistTrack : TrackPopularityProperty<PlaylistTrack>(toTrack = { it.track.cached })
 }
 
-open class TrackSavedProperty<T>(
+class TrackSavedProperty<T>(
     private val trackIdOf: (T) -> String,
-    private val savedTrackIds: Set<String>?,
+    private val isSaved: (T) -> Boolean?,
 ) : SortableProperty<T>, DividableProperty<T>, Column<T> {
     override val title = "Saved"
     override val width = ColumnWidth.Fill()
 
     override fun compare(sortOrder: SortOrder, first: T, second: T): Int {
-        val firstSaved = savedTrackIds?.contains(trackIdOf(first))
-        val secondSaved = savedTrackIds?.contains(trackIdOf(second))
-
-        return sortOrder.compareNullable(firstSaved, secondSaved)
+        return sortOrder.compareNullable(isSaved(first), isSaved(second))
     }
 
-    override fun divisionFor(element: T): Boolean? {
-        return savedTrackIds?.contains(trackIdOf(element))
-    }
+    override fun divisionFor(element: T): Boolean? = isSaved(element)
 
     override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
         return sortOrder.compareNullable(first as? Boolean, second as? Boolean)
@@ -171,14 +166,12 @@ open class TrackSavedProperty<T>(
 
     @Composable
     override fun item(item: T) {
-        val trackId = trackIdOf(item)
-
         val scope = rememberCoroutineScope { Dispatchers.IO }
         ToggleSaveButton(
             modifier = Modifier.padding(Dimens.space2),
-            isSaved = savedTrackIds?.contains(trackId),
+            isSaved = isSaved(item),
         ) { saved ->
-            scope.launch { SavedTrackRepository.setSaved(id = trackId, saved = saved) }
+            scope.launch { SavedTrackRepository.setSaved(id = trackIdOf(item), saved = saved) }
         }
     }
 }

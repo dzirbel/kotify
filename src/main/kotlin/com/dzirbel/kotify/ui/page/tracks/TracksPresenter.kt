@@ -42,7 +42,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
     ) {
         val trackProperties: List<Column<Track>> = listOf(
             TrackAlbumIndexProperty,
-            TrackSavedProperty(trackIdOf = { it.id.value }, savedTrackIds = savedTrackIds),
+            TrackSavedProperty(trackIdOf = { it.id.value }, isSaved = { savedTrackIds.contains(it.id.value) }),
             TrackNameProperty,
             TrackArtistsProperty,
             TrackAlbumProperty,
