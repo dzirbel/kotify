@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerIconDefaults
@@ -84,14 +83,13 @@ fun LinkedText(
 ) {
     val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
 
-    // first: hovered character offset
-    // second: hovered link
-    val hoverState = remember { mutableStateOf(Pair<Int?, String?>(null, null)) }
+    val hoveredOffset = remember { mutableStateOf<Int?>(null) }
+    val hoveringLink = remember { mutableStateOf(false) }
 
     // TODO maybe optimize if unhoveredSpanStyle and hoveredSpanStyle are the same
-    val text = remember(hoverState.value, key) {
+    val text = remember(hoveredOffset.value, key) {
         LinkElementBuilder(
-            hoveredOffset = hoverState.value.first,
+            hoveredOffset = hoveredOffset.value,
             unhoveredSpanStyle = unhoveredSpanStyle,
             hoveredSpanStyle = hoveredSpanStyle,
         )
@@ -107,23 +105,22 @@ fun LinkedText(
         }
     }
 
-    val hoverModifier = Modifier.composed {
-        pointerMoveFilter(
+    val hoverModifier = Modifier
+        .pointerMoveFilter(
             onMove = { offset ->
                 val characterOffset = text.characterOffset(offset, layoutResult.value)
                 val link = characterOffset?.let { text.linkAnnotationAtOffset(it) }
-                hoverState.value = Pair(characterOffset, link)
+                hoveredOffset.value = characterOffset
+                hoveringLink.value = link != null
                 true
             },
             onExit = {
-                hoverState.value = Pair(null, null)
+                hoveredOffset.value = null
+                hoveringLink.value = false
                 true
             },
         )
-            .pointerHoverIcon(
-                if (hoverState.value.second != null) PointerIconDefaults.Hand else PointerIconDefaults.Default,
-            )
-    }
+        .pointerHoverIcon(if (hoveringLink.value) PointerIconDefaults.Hand else PointerIconDefaults.Default)
 
     val textColor = style.color.takeOrElse {
         LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
