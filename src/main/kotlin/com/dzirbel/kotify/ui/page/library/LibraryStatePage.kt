@@ -11,9 +11,9 @@ import com.dzirbel.kotify.ui.page.library.playlists.PlaylistsLibraryStatePresent
 import com.dzirbel.kotify.ui.page.library.ratings.RatingsLibraryStatePresenter
 import com.dzirbel.kotify.ui.page.library.tracks.TracksLibraryStatePresenter
 
-object LibraryStatePage : Page<Unit> {
+object LibraryStatePage : Page<Unit>() {
     @Composable
-    override fun BoxScope.bind(visible: Boolean, toggleNavigationTitle: (Boolean) -> Unit) {
+    override fun BoxScope.bind(visible: Boolean) {
         val scrollState = rememberScrollState()
 
         // bind child presenters to attach them to the composition

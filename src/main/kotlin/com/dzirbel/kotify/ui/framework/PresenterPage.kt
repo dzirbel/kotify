@@ -41,7 +41,7 @@ import kotlinx.coroutines.CoroutineScope
  * in order to maintain distinct presenters when pages for two different artists are present on the page stack, the
  * [key] could be the artist ID.
  */
-abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = null) : Page<VM> {
+abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = null) : Page<VM>() {
     /**
      * Creates an instance of the presenter [P] under the given scope, typically by simply calling its constructor.
      */
@@ -63,7 +63,7 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
     abstract fun content(presenter: P, state: VM)
 
     @Composable
-    final override fun BoxScope.bind(visible: Boolean, toggleNavigationTitle: (Boolean) -> Unit): VM {
+    final override fun BoxScope.bind(visible: Boolean): VM {
         val presenter = rememberPresenter(key = key, createPresenter = ::createPresenter)
         val scrollState = rememberScrollState()
         val stateOrError = presenter.state()
@@ -75,7 +75,7 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
                     presenter = presenter,
                     state = stateOrError.state,
                     scrollState = scrollState,
-                    onHeaderVisibilityChanged = { headerVisible -> toggleNavigationTitle(!headerVisible) },
+                    onHeaderVisibilityChanged = { headerVisible -> navigationTitleState.targetState = !headerVisible },
                 )
             }
         }

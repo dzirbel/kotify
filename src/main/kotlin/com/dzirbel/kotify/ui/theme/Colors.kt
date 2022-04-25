@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.ui.theme
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -14,8 +14,10 @@ import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
@@ -29,17 +31,34 @@ private val LocalSurfaceHeight: ProvidableCompositionLocal<Int> = compositionLoc
 
 private val LocalSurfaceBackground: ProvidableCompositionLocal<Color> = compositionLocalOf { error("uninitialized") }
 
+/**
+ * Applies a background for the local surface as determined by calls to [Colors.withSurface] higher in the composition.
+ */
 @Composable
 fun Modifier.surfaceBackground(shape: Shape = RectangleShape) = background(LocalSurfaceBackground.current, shape)
 
+/**
+ * Applies an animated background for the local surface as determined by calls to [Colors.withSurface] higher in the
+ * composition, fading between the surface background color via [animationSpec].
+ *
+ * An optional [key] may be provided in order to recreate (jump) the animation when the value of [key] changes.
+ */
 @Composable
 fun Modifier.animatedSurfaceBackground(
     shape: Shape = RectangleShape,
     animationSpec: AnimationSpec<Color> = spring(stiffness = Spring.StiffnessMediumLow),
+    key: Any? = null,
 ): Modifier {
     return composed {
-        val state = animateColorAsState(targetValue = LocalSurfaceBackground.current, animationSpec = animationSpec)
-        background(state.value, shape)
+        // using lower-level Animatable directly rather than animateColorAsState since animate*AsState does not include
+        // a key parameter to recreate the Animatable in a different context
+        val background = LocalSurfaceBackground.current
+        val animatable = remember(key) { Animatable(initialValue = background) }
+        LaunchedEffect(key, background) {
+            animatable.animateTo(targetValue = background, animationSpec = animationSpec)
+        }
+
+        background(animatable.value, shape)
     }
 }
 

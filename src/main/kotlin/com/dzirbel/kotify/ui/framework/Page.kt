@@ -1,12 +1,24 @@
 package com.dzirbel.kotify.ui.framework
 
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 
 /**
  * Represents a page in a [PageStack] and how it is rendered.
  */
-interface Page<T> {
+abstract class Page<T> {
+    /**
+     * The [MutableTransitionState] which contains the animation state of the page name and highlighted background for
+     * the navigation title.
+     *
+     * This can be toggled by pages e.g. when the user scrolls past a header section, to retain the page title on the
+     * screen. When true the title will be shown in the navigation header, when false it will not be. Each [Page]
+     * retains its own state so that navigating in the page stack does not start a new animation for each new page -
+     * transitions between pages should be instant.
+     */
+    val navigationTitleState = MutableTransitionState(false)
+
     /**
      * Binds this page to the composition, optionally rendering its content if [visible] is true; returning some
      * stateful data [T] which can be used to derive the [titleFor] the page.
@@ -19,7 +31,7 @@ interface Page<T> {
      * convenient to keep them together and allow the page to determine how they interact.
      */
     @Composable
-    fun BoxScope.bind(visible: Boolean, toggleNavigationTitle: (Boolean) -> Unit): T
+    abstract fun BoxScope.bind(visible: Boolean): T
 
     /**
      * Determines the user-visible title for this page, which may optionally use [data] of type [T] returned by the most
@@ -28,5 +40,5 @@ interface Page<T> {
      * Use of [data] allows pages to construct a title based on data they load, e.g. the page displaying an artist would
      * need to load the artist's name.
      */
-    fun titleFor(data: T): String?
+    abstract fun titleFor(data: T): String?
 }

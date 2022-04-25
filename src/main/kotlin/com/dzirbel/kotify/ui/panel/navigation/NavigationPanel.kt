@@ -38,9 +38,8 @@ fun NavigationPanel(
     titles: List<String?>,
 ) {
     LocalColors.current.withSurface(increment = if (headerVisibleState.targetState) Colors.INCREMENT_SMALL else 0) {
-        // TODO avoid animation when returning to a scrolled-down page
         Row(
-            modifier = Modifier.fillMaxWidth().animatedSurfaceBackground(),
+            modifier = Modifier.fillMaxWidth().animatedSurfaceBackground(key = headerVisibleState),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {

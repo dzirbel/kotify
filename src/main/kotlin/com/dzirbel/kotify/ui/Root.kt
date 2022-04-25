@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui
 
-import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -8,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
@@ -72,12 +70,6 @@ private fun PageStackContent() {
     Layout(
         modifier = Modifier.surfaceBackground(),
         content = {
-            val pageStack = pageStack.value
-
-            // whether the header text in the navigation panel is visible; toggled on by the page when the user scrolls
-            // beyond the page's header
-            val navigationTitleVisibleState = remember(pageStack.current) { MutableTransitionState(false) }
-
             /**
              * Extension function to allow proper parameterization of [Page] on [T]; retrieves the page state from
              * [Page.bind] and passes it into [Page.titleFor], returning the resulting value.
@@ -85,15 +77,13 @@ private fun PageStackContent() {
             @Composable
             fun <T> Page<T>.bindAndGetTitle(scope: BoxScope, visible: Boolean): String? {
                 val data: T = with(scope) {
-                    bind(
-                        visible = visible,
-                        toggleNavigationTitle = { navigationTitleVisibleState.targetState = it },
-                    )
+                    bind(visible = visible)
                 }
 
                 return titleFor(data)
             }
 
+            val pageStack = pageStack.value
             lateinit var titles: List<String?>
             Box {
                 titles = pageStack.pages.mapIndexed { index, page ->
@@ -101,7 +91,7 @@ private fun PageStackContent() {
                 }
             }
 
-            NavigationPanel(headerVisibleState = navigationTitleVisibleState, titles = titles)
+            NavigationPanel(headerVisibleState = pageStack.current.navigationTitleState, titles = titles)
         },
     ) { measurables, constraints ->
         assert(measurables.size == 2)
