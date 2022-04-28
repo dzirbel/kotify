@@ -24,7 +24,7 @@ dependencyResolutionManagement {
             }
 
             // https://github.com/Kotlin/kotlinx.coroutines
-            version("coroutines", "1.6.0").let { version ->
+            version("coroutines", "1.6.1").let { version ->
                 library("coroutines-core", "org.jetbrains.kotlinx", "kotlinx-coroutines-core").versionRef(version)
                 library("coroutines-test", "org.jetbrains.kotlinx", "kotlinx-coroutines-test").versionRef(version)
             }
