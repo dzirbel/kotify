@@ -126,13 +126,11 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.FetchMissingArtistAlbums -> {
-                val artistIds = SavedArtistRepository.getLibraryCached()?.toList()
+                val artistIds = SavedArtistRepository.getLibraryCached()?.toList().orEmpty()
 
-                // TODO also fetch albums for artists not in the database at all
-                loadArtists(artistIds)
-                    .filterValues { artist -> !artist.hasAllAlbums }
-                    .values
-                    .flatMapParallel { artist -> ArtistRepository.getAllAlbums(artistId = artist.id.value) }
+                artistIds.zip(ArtistRepository.getCached(ids = artistIds))
+                    .filter { (_, artist) -> artist?.hasAllAlbums != true }
+                    .flatMapParallel { (artistId, _) -> ArtistRepository.getAllAlbums(artistId = artistId) }
 
                 // reload artists from the cache
                 val artists = loadArtists(artistIds = artistIds)
