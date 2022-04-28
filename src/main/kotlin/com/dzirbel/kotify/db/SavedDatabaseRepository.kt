@@ -39,7 +39,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     /**
      * Fetches the saved state of each of the given [ids] via a remote call to the network.
      *
-     * This is the remote primitive and simply fetches the network state but does not cache it, unlike [isSavedRemote].
+     * This is the remote primitive and simply fetches the network state but does not cache it, unlike [getRemote].
      */
     protected abstract suspend fun fetchIsSaved(ids: List<String>): List<Boolean>
 
@@ -72,8 +72,8 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         }
     }
 
-    final override suspend fun isSavedCached(ids: List<String>): List<Boolean?> {
-        return KotifyDatabase.transaction("check saved state for ${ids.size} ${entityName}s") {
+    final override suspend fun getCached(ids: Iterable<String>): List<Boolean?> {
+        return KotifyDatabase.transaction("check saved state for ${ids.count()} ${entityName}s") {
             val hasFetchedLibrary = GlobalUpdateTimesRepository.hasBeenUpdated(libraryUpdateKey)
             // if we've fetched the entire library, then any saved entity not present in the table is unsaved (or was
             // when the library was fetched)
@@ -88,7 +88,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             }
     }
 
-    final override suspend fun isSavedRemote(id: String): Boolean {
+    final override suspend fun getRemote(id: String): Boolean {
         val saved = fetchIsSaved(ids = listOf(id)).first()
 
         KotifyDatabase.transaction("set saved state for $entityName $id") {
@@ -105,7 +105,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         return saved
     }
 
-    final override suspend fun isSavedRemote(ids: List<String>): List<Boolean> {
+    final override suspend fun getRemote(ids: List<String>): List<Boolean> {
         val saveds = fetchIsSaved(ids = ids)
 
         KotifyDatabase.transaction("set saved state for ${ids.size} ${entityName}s") {
@@ -127,45 +127,17 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         return saveds
     }
 
-    override suspend fun isSaved(ids: List<String>): List<Boolean> {
-        val missingIndices = ArrayList<IndexedValue<String>>()
-
-        val cachedValues = isSavedCached(ids = ids)
-            .mapIndexedTo(ArrayList(ids.size)) { index, cached ->
-                val id = ids[index]
-
-                if (cached == null) {
-                    missingIndices.add(IndexedValue(index = index, value = id))
-                }
-
-                cached
-            }
-
-        if (missingIndices.isEmpty()) {
-            @Suppress("UNCHECKED_CAST")
-            return cachedValues as List<Boolean>
-        }
-
-        val remote = isSavedRemote(ids = missingIndices.map { it.value })
-        missingIndices.zipEach(remote) { indexedValue, value ->
-            cachedValues[indexedValue.index] = value
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        return cachedValues as List<Boolean>
-    }
-
     final override suspend fun savedStateOf(id: String, fetchMissing: Boolean): State<Boolean?> {
         states[id]?.get()?.let { return it }
 
-        val saved = isSavedCached(id)
+        val saved = getCached(id)
 
         val state = mutableStateOf(saved)
         states[id] = WeakReference(state)
 
         if (saved == null && fetchMissing) {
             coroutineScope {
-                launch { isSavedRemote(id) }
+                launch { getRemote(id) }
             }
         }
 
@@ -189,7 +161,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             return existingStates as List<State<Boolean?>>
         }
 
-        val missingSaved = isSavedCached(ids = missingIndices.map { it.value })
+        val missingSaved = getCached(ids = missingIndices.map { it.value })
         val idsToFetch = if (fetchMissing) mutableListOf<String>() else null
 
         missingIndices.zipEach(missingSaved) { indexedValue, saved ->
@@ -204,7 +176,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
         idsToFetch?.takeIf { it.isNotEmpty() }?.let {
             coroutineScope {
-                launch { isSavedRemote(ids = it) }
+                launch { getRemote(ids = it) }
             }
         }
 

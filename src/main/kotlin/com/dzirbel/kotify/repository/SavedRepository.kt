@@ -8,9 +8,10 @@ import java.time.Instant
  * Manages the state of entities which can be saved/unsaved from a user's library.
  *
  * This interface specifies a generic repository which interfaces between a remote data source and a local cache, but is
- * itself implementation agnostic.
+ * itself implementation agnostic. It is itself a [Repository] for values of type [Boolean], i.e. whether or not an item
+ * is saved.
  */
-interface SavedRepository {
+interface SavedRepository : Repository<Boolean> {
     /**
      * Wraps the [result] of querying the saved state of [id].
      */
@@ -58,42 +59,6 @@ interface SavedRepository {
      * is unsaved or its status is unknown.
      */
     suspend fun savedTimeCached(id: String): Instant?
-
-    /**
-     * Determines whether [id] has been saved to the user's library, from the local cache. Returns null if its status is
-     * not cached.
-     */
-    suspend fun isSavedCached(id: String): Boolean? = isSavedCached(ids = listOf(id))[0]
-
-    /**
-     * Determines whether each of [ids] has been saved to the user's library, from the local cache. Returns null for
-     * each if its status is not cached.
-     */
-    suspend fun isSavedCached(ids: List<String>): List<Boolean?>
-
-    /**
-     * Retrieves the saved state from the remote source for the given [id] without checking for a locally cached state,
-     * saves it to the cache, and returns it.
-     */
-    suspend fun isSavedRemote(id: String): Boolean
-
-    /**
-     * Retrieves the saved state from the remote source for the given [ids] without checking for a locally cached state,
-     * saves them to the cache, and returns them.
-     */
-    suspend fun isSavedRemote(ids: List<String>): List<Boolean>
-
-    /**
-     * Retrieves the saved state for the given [id], from the local cache if present, otherwise fetches it from the
-     * remote source, caches, and returns it.
-     */
-    suspend fun isSaved(id: String): Boolean = isSavedCached(id) ?: isSavedRemote(id)
-
-    /**
-     * Retrieves the saved state for the given [ids], from the local cache if present, otherwise fetches them from the
-     * remote source, caches, and returns them.
-     */
-    suspend fun isSaved(ids: List<String>): List<Boolean>
 
     /**
      * Returns a [State] reflecting the live saved state of the entity with the given [id].
