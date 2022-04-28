@@ -30,7 +30,7 @@ dependencyResolutionManagement {
             }
 
             // https://github.com/detekt/detekt
-            version("detekt", "1.20.0-RC2").let { version ->
+            version("detekt", "1.20.0").let { version ->
                 plugin("detekt", "io.gitlab.arturbosch.detekt").versionRef(version)
 
                 library("detekt-formatting", "io.gitlab.arturbosch.detekt", "detekt-formatting").versionRef(version)
