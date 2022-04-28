@@ -17,10 +17,8 @@ abstract class Pageable<T> {
      * Generally, [Paging.fetchAll] or [CursorPaging.fetchAll] should be used instead for convenience.
      *
      * This fetches all values immediately, rather than on-demand, and so may not be appropriate for all use cases.
-     *
-     * TODO implement a lazy fetch (likely via an iterator())
      */
-    inline fun <reified S : Pageable<out T>> fetchAll(fetchNext: (S) -> S?): List<T> {
+    protected inline fun <reified S : Pageable<out T>> fetchAll(fetchNext: (S) -> S?): List<T> {
         val all = mutableListOf<T>()
 
         var current: S? = this as S
@@ -65,15 +63,8 @@ data class Paging<T>(
     /**
      * Fetches all the items in this [Paging], i.e. its [items] and the [items] in all the [next] [Paging] objects.
      */
-    suspend inline fun <reified S : T> fetchAll(): List<T> {
-        return fetchAllCustom<S> { Spotify.get(it) }
-    }
-
-    // TODO document/clean up
-    inline fun <reified S : T> fetchAllCustom(
-        fetchNext: (String) -> Paging<S>,
-    ): List<T> {
-        return fetchAll<Paging<S>> { paging -> paging.next?.let { fetchNext(it) } }
+    suspend fun <S : T> fetchAll(): List<T> {
+        return fetchAll<Paging<S>> { paging -> paging.next?.let { Spotify.get(it) } }
     }
 }
 
@@ -105,16 +96,9 @@ data class CursorPaging<T>(
 
     /**
      * Fetches all the items in this [CursorPaging], i.e. its [items] and the [items] in all the [next] [CursorPaging]
-     * objects.
+     * objects, using [fetchNext] to provide each successive [CursorPaging].
      */
-    suspend inline fun <reified S : T> fetchAll(): List<T> {
-        return fetchAllCustom<S> { Spotify.get(it) }
-    }
-
-    // TODO document/clean up
-    inline fun <reified S : T> fetchAllCustom(
-        fetchNext: (String) -> CursorPaging<S>,
-    ): List<T> {
+    suspend fun <S : T> fetchAll(fetchNext: suspend (String) -> CursorPaging<S>): List<T> {
         return fetchAll<CursorPaging<S>> { paging -> paging.next?.let { fetchNext(it) } }
     }
 }

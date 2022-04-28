@@ -158,7 +158,7 @@ object SavedArtistRepository : SavedDatabaseRepository<FullSpotifyArtist>(
 
     override suspend fun fetchLibrary(): Iterable<FullSpotifyArtist> {
         return Spotify.Follow.getFollowedArtists(limit = Spotify.MAX_LIMIT)
-            .fetchAllCustom { Spotify.get<Spotify.ArtistsCursorPagingModel>(it).artists }
+            .fetchAll { url -> Spotify.get<Spotify.ArtistsCursorPagingModel>(url).artists }
     }
 
     override fun from(savedNetworkType: FullSpotifyArtist): String? {

@@ -49,7 +49,7 @@ class SpotifyFollowTest {
     fun getFollowedArtists() {
         val artists = runBlocking {
             Spotify.Follow.getFollowedArtists(limit = 50)
-                .fetchAllCustom { Spotify.get<Spotify.ArtistsCursorPagingModel>(it).artists }
+                .fetchAll { url -> Spotify.get<Spotify.ArtistsCursorPagingModel>(url).artists }
         }
 
         assertThat(artists).isNotEmpty()
