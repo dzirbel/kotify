@@ -82,9 +82,9 @@ class ArtistPresenter(
             is Event.LoadArtistAlbums -> {
                 mutateState { it.copy(refreshingArtistAlbums = true) }
 
-                val (artist, artistAlbums) = Artist.getAllAlbums(artistId = artistId, allowCache = !event.invalidate)
+                val artistAlbums = ArtistRepository.getAllAlbums(artistId = artistId, allowCache = !event.invalidate)
 
-                val albumUrls = KotifyDatabase.transaction("load artist ${artist?.name} albums tracks and image") {
+                val albumUrls = KotifyDatabase.transaction("load artist id $artistId albums tracks and image") {
                     artistAlbums.mapNotNull { artistAlbum ->
                         artistAlbum.album.cached.trackIds.loadToCache()
                         artistAlbum.album.cached.largestImage.live?.url
@@ -101,7 +101,6 @@ class ArtistPresenter(
                 }
 
                 mutateState {
-                    // TODO refresh artist album updated time in state
                     it.copy(
                         artistAlbums = it.artistAlbums.withElements(artistAlbums),
                         albumRatings = albumRatings,

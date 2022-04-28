@@ -81,51 +81,6 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
                 genres.set(networkModel.genres.map { Genre.from(it) })
             }
         }
-
-        /**
-         * Retrieves the [Album]s by the artist with the given [artistId], from the database if the artist and all their
-         * albums are cached or from the network if not, also connecting them in the database along the way.
-         */
-        suspend fun getAllAlbums(
-            artistId: String,
-            allowCache: Boolean = true,
-            fetchAlbums: suspend () -> List<SimplifiedSpotifyAlbum> = {
-                Spotify.Artists.getArtistAlbums(id = artistId).fetchAll<SimplifiedSpotifyAlbum>()
-            },
-        ): Pair<Artist?, List<ArtistAlbum>> {
-            var artist: Artist? = null
-            if (allowCache) {
-                KotifyDatabase.transaction("load artist albums for id $artistId") {
-                    findById(id = artistId)
-                        ?.also { artist = it }
-                        ?.takeIf { it.hasAllAlbums }
-                        ?.artistAlbums
-                        ?.live
-                        ?.onEach { it.album.loadToCache() }
-                }
-                    ?.let { return Pair(artist, it) }
-            }
-
-            val networkAlbums = fetchAlbums()
-
-            return KotifyDatabase.transaction("save artist ${artist?.name ?: "id $artistId"} albums") {
-                artist = artist ?: findById(id = artistId)
-                artist?.albumsFetched = Instant.now()
-
-                networkAlbums
-                    .mapNotNull { spotifyAlbum ->
-                        Album.from(spotifyAlbum)?.let { album ->
-                            ArtistAlbum.from(
-                                artistId = artistId,
-                                albumId = album.id.value,
-                                albumGroup = spotifyAlbum.albumGroup,
-                            )
-                        }
-                    }
-                    .onEach { it.album.loadToCache() }
-            }
-                .let { Pair(artist, it) }
-        }
     }
 }
 
@@ -134,6 +89,52 @@ object ArtistRepository : DatabaseRepository<Artist, SpotifyArtist>(Artist) {
     override suspend fun fetch(ids: List<String>): List<SpotifyArtist?> {
         return ids.chunked(size = Spotify.MAX_LIMIT)
             .flatMapParallel { idsChunk -> Spotify.Artists.getArtists(ids = idsChunk) }
+    }
+
+    /**
+     * Retrieves the [Album]s by the artist with the given [artistId], from the database if the artist and all their
+     * albums are cached or from the network if not, also connecting them in the database along the way.
+     */
+    suspend fun getAllAlbums(
+        artistId: String,
+        allowCache: Boolean = true,
+        fetchAlbums: suspend () -> List<SimplifiedSpotifyAlbum> = {
+            Spotify.Artists.getArtistAlbums(id = artistId).fetchAll<SimplifiedSpotifyAlbum>()
+        },
+    ): List<ArtistAlbum> {
+        var artist: Artist? = null
+        if (allowCache) {
+            KotifyDatabase.transaction("load artist albums for id $artistId") {
+                Artist.findById(id = artistId)
+                    ?.also { artist = it }
+                    ?.takeIf { it.hasAllAlbums }
+                    ?.artistAlbums
+                    ?.live
+                    ?.onEach { it.album.loadToCache() }
+            }
+                ?.let { return it }
+        }
+
+        val networkAlbums = fetchAlbums()
+
+        return KotifyDatabase.transaction("save artist ${artist?.name ?: "id $artistId"} albums") {
+            (artist ?: Artist.findById(id = artistId))?.let { artist ->
+                artist.albumsFetched = Instant.now()
+                states[artistId]?.get()?.value = artist
+            }
+
+            networkAlbums
+                .mapNotNull { spotifyAlbum ->
+                    Album.from(spotifyAlbum)?.let { album ->
+                        ArtistAlbum.from(
+                            artistId = artistId,
+                            albumId = album.id.value,
+                            albumGroup = spotifyAlbum.albumGroup,
+                        )
+                    }
+                }
+                .onEach { it.album.loadToCache() }
+        }
     }
 }
 

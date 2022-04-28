@@ -97,7 +97,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
             is Event.RefreshArtistAlbums -> {
                 mutateState { it.copy(syncingArtistsAlbums = it.syncingArtistsAlbums.plus(event.artistId)) }
 
-                Artist.getAllAlbums(artistId = event.artistId, allowCache = false)
+                ArtistRepository.getAllAlbums(artistId = event.artistId, allowCache = false)
 
                 val artist = ArtistRepository.getCached(id = event.artistId)
                     ?.also { prepArtists(listOf(it)) }
@@ -132,9 +132,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
                 loadArtists(artistIds)
                     .filterValues { artist -> !artist.hasAllAlbums }
                     .values
-                    .flatMapParallel { artist ->
-                        Artist.getAllAlbums(artistId = artist.id.value).second
-                    }
+                    .flatMapParallel { artist -> ArtistRepository.getAllAlbums(artistId = artist.id.value) }
 
                 // reload artists from the cache
                 val artists = loadArtists(artistIds = artistIds)
