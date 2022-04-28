@@ -97,7 +97,7 @@ class PlaylistPresenter(
                     playlist.largestImage.loadToCache()
                 }
 
-                val isSavedState = SavedPlaylistRepository.savedStateOf(id = playlistId)
+                val isSavedState = SavedPlaylistRepository.stateOf(id = playlistId)
 
                 mutateState {
                     it.copy(
@@ -118,7 +118,7 @@ class PlaylistPresenter(
 
                 val trackIds = tracks.map { it.track.cached.id.value }
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
-                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.savedStatesOf(ids = trackIds))
+                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.stateOf(ids = trackIds))
 
                 mutateState {
                     // TODO doesn't apply new track loaded time to playlist model in the ViewModel

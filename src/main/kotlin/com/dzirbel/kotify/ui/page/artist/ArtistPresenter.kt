@@ -19,6 +19,7 @@ import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.properties.AlbumRatingProperty
 import com.dzirbel.kotify.ui.properties.AlbumReleaseDateProperty
 import com.dzirbel.kotify.ui.properties.AlbumTypeDividableProperty
+import com.dzirbel.kotify.ui.util.requireValue
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 
@@ -36,7 +37,7 @@ class ArtistPresenter(
 ) {
 
     data class ViewModel(
-        val artist: Artist? = null,
+        val artist: State<Artist>? = null,
         val refreshingArtist: Boolean = false,
         val displayedAlbumTypes: Set<SpotifyAlbum.Type> = setOf(SpotifyAlbum.Type.ALBUM),
         val artistAlbums: ListAdapter<ArtistAlbum> = ListAdapter.empty(
@@ -70,11 +71,11 @@ class ArtistPresenter(
             is Event.LoadArtist -> {
                 mutateState { it.copy(refreshingArtist = true) }
 
-                val artist = ArtistRepository.get(id = artistId, allowCache = !event.invalidate)
-                    ?: throw NotFound("Artist $artistId not found")
+                val artistState = ArtistRepository.stateOf(id = artistId)
+                    .requireValue { throw NotFound("Artist $artistId not found") }
 
                 mutateState {
-                    it.copy(artist = artist, refreshingArtist = false)
+                    it.copy(artist = artistState, refreshingArtist = false)
                 }
             }
 
@@ -92,7 +93,7 @@ class ArtistPresenter(
                 SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
 
                 val albumIds = artistAlbums.map { it.albumId.value }
-                val savedAlbumsStates = albumIds.zipToMap(SavedAlbumRepository.savedStatesOf(ids = albumIds))
+                val savedAlbumsStates = albumIds.zipToMap(SavedAlbumRepository.stateOf(ids = albumIds))
 
                 val albumRatings = artistAlbums.associate { artistAlbum ->
                     val album = artistAlbum.album.cached
@@ -100,10 +101,8 @@ class ArtistPresenter(
                 }
 
                 mutateState {
+                    // TODO refresh artist album updated time in state
                     it.copy(
-                        // apply new artist model in order to update album refresh time
-                        // TODO race condition with loading artist
-                        artist = artist ?: it.artist,
                         artistAlbums = it.artistAlbums.withElements(artistAlbums),
                         albumRatings = albumRatings,
                         savedAlbumsStates = savedAlbumsStates,

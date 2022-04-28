@@ -34,7 +34,7 @@ fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewMode
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column {
-            Text(state.artist?.name.orEmpty(), style = MaterialTheme.typography.h4)
+            Text(state.artist?.value?.name.orEmpty(), style = MaterialTheme.typography.h4)
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
@@ -51,7 +51,7 @@ fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewMode
                         InvalidateButton(
                             contentPadding = PaddingValues(all = Dimens.space2),
                             refreshing = state.refreshingArtist,
-                            updated = state.artist.fullUpdatedTime?.toEpochMilli(),
+                            updated = state.artist.value.fullUpdatedTime?.toEpochMilli(),
                             updatedFormat = { "Artist synced $it" },
                             updatedFallback = "Artist never synced",
                             onClick = {
@@ -64,7 +64,7 @@ fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewMode
                         InvalidateButton(
                             contentPadding = PaddingValues(all = Dimens.space2),
                             refreshing = state.refreshingArtistAlbums,
-                            updated = state.artist.albumsFetched?.toEpochMilli(),
+                            updated = state.artist.value.albumsFetched?.toEpochMilli(),
                             updatedFormat = { "Albums synced $it" },
                             updatedFallback = "Albums never synced",
                             onClick = {

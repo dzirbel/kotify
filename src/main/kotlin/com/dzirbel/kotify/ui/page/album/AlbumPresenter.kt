@@ -90,11 +90,11 @@ class AlbumPresenter(
                     tracks.onEach { it.artists.loadToCache() }
                 }
 
-                val isSavedState = SavedAlbumRepository.savedStateOf(id = albumId)
+                val isSavedState = SavedAlbumRepository.stateOf(id = albumId)
 
                 val trackIds = tracks.map { it.id.value }
 
-                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.savedStatesOf(ids = trackIds))
+                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.stateOf(ids = trackIds))
 
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
 

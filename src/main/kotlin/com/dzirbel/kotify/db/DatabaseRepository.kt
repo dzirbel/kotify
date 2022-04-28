@@ -16,7 +16,7 @@ abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : Spot
      * The singular name of an entity, used in transaction names; e.g. "artist".
      */
     private val entityName: String = entityClass.table.tableName.removeSuffix("s"),
-) : Repository<EntityType> {
+) : Repository<EntityType>() {
     /**
      * Fetches a single network model of [NetworkType] via a remote call to the network.
      *
@@ -45,6 +45,7 @@ abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : Spot
     final override suspend fun getRemote(id: String): EntityType? {
         return fetch(id)?.let { networkModel ->
             KotifyDatabase.transaction("save $entityName $id") { entityClass.from(networkModel) }
+                ?.also { states[id]?.get()?.value = it }
         }
     }
 
@@ -55,6 +56,11 @@ abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : Spot
             else -> {
                 val networkModels = fetch(ids = ids)
                 KotifyDatabase.transaction("save ${ids.size} ${entityName}s") { entityClass.from(networkModels) }
+                    .onEach { model ->
+                        if (model != null) {
+                            states[model.id.value]?.get()?.value = model
+                        }
+                    }
             }
         }
     }

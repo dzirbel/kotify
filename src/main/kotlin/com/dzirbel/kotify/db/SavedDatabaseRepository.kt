@@ -7,15 +7,11 @@ import com.dzirbel.kotify.db.model.GlobalUpdateTimesRepository
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.util.plusOrMinus
 import com.dzirbel.kotify.util.zipEach
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.deleteAll
-import java.lang.ref.WeakReference
 import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A [SavedRepository] which uses a database table [savedEntityTable] as its local cache for individual saved states an
@@ -28,13 +24,12 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     private val entityName: String,
     private val savedEntityTable: SavedEntityTable,
     private val libraryUpdateKey: String = savedEntityTable.tableName,
-) : SavedRepository {
-    private val states = ConcurrentHashMap<String, WeakReference<MutableState<Boolean?>>>()
-
+) : SavedRepository() {
     private var libraryStateInitialized = false
+
     private val libraryState: MutableState<Set<String>?> = mutableStateOf(null)
 
-    private val events = MutableSharedFlow<SavedRepository.Event>()
+    private val events = MutableSharedFlow<Event>()
 
     /**
      * Fetches the saved state of each of the given [ids] via a remote call to the network.
@@ -64,7 +59,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
      */
     protected abstract fun from(savedNetworkType: SavedNetworkType): String?
 
-    override fun eventsFlow(): SharedFlow<SavedRepository.Event> = events.asSharedFlow()
+    override fun eventsFlow(): SharedFlow<Event> = events.asSharedFlow()
 
     override suspend fun savedTimeCached(id: String): Instant? {
         return KotifyDatabase.transaction("check saved time for $entityName $id") {
@@ -82,9 +77,9 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         }
             .also { results ->
                 val queryEvents = ids.zip(results) { id, result ->
-                    SavedRepository.QueryEvent(id = id, result = result)
+                    QueryEvent(id = id, result = result)
                 }
-                events.emit(SavedRepository.Event.QueryCached(queryEvents))
+                events.emit(Event.QueryCached(queryEvents))
             }
     }
 
@@ -99,8 +94,8 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         libraryState.value?.let { library ->
             libraryState.value = library.plusOrMinus(value = id, condition = saved)
         }
-        val queryEvents = listOf(SavedRepository.QueryEvent(id = id, result = saved))
-        events.emit(SavedRepository.Event.QueryRemote(queryEvents))
+        val queryEvents = listOf(QueryEvent(id = id, result = saved))
+        events.emit(Event.QueryRemote(queryEvents))
 
         return saved
     }
@@ -121,67 +116,10 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             }
         }
 
-        val queryEvents = ids.zip(saveds).map { (id, saved) -> SavedRepository.QueryEvent(id = id, result = saved) }
-        events.emit(SavedRepository.Event.QueryRemote(queryEvents))
+        val queryEvents = ids.zip(saveds).map { (id, saved) -> QueryEvent(id = id, result = saved) }
+        events.emit(Event.QueryRemote(queryEvents))
 
         return saveds
-    }
-
-    final override suspend fun savedStateOf(id: String, fetchMissing: Boolean): State<Boolean?> {
-        states[id]?.get()?.let { return it }
-
-        val saved = getCached(id)
-
-        val state = mutableStateOf(saved)
-        states[id] = WeakReference(state)
-
-        if (saved == null && fetchMissing) {
-            coroutineScope {
-                launch { getRemote(id) }
-            }
-        }
-
-        return state
-    }
-
-    override suspend fun savedStatesOf(ids: List<String>, fetchMissing: Boolean): List<State<Boolean?>> {
-        val missingIndices = ArrayList<IndexedValue<String>>()
-
-        val existingStates = ids.mapIndexedTo(ArrayList(ids.size)) { index, id ->
-            val state = states[id]?.get()
-            if (state == null) {
-                missingIndices.add(IndexedValue(index = index, value = id))
-            }
-
-            state
-        }
-
-        if (missingIndices.isEmpty()) {
-            @Suppress("UNCHECKED_CAST")
-            return existingStates as List<State<Boolean?>>
-        }
-
-        val missingSaved = getCached(ids = missingIndices.map { it.value })
-        val idsToFetch = if (fetchMissing) mutableListOf<String>() else null
-
-        missingIndices.zipEach(missingSaved) { indexedValue, saved ->
-            val state = mutableStateOf(saved)
-            states[indexedValue.value] = WeakReference(state)
-            existingStates[indexedValue.index] = state
-
-            if (saved == null) {
-                idsToFetch?.add(indexedValue.value)
-            }
-        }
-
-        idsToFetch?.takeIf { it.isNotEmpty() }?.let {
-            coroutineScope {
-                launch { getRemote(ids = it) }
-            }
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        return existingStates as List<State<Boolean?>>
     }
 
     final override suspend fun libraryState(fetchIfUnknown: Boolean): State<Set<String>?> {
@@ -200,7 +138,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     }
 
     /**
-     * Clears the cache of states used by [savedStateOf], for use in tests.
+     * Clears the cache of states used by [stateOf], for use in tests.
      */
     fun clearStates() {
         states.clear()
@@ -219,7 +157,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         libraryState.value?.let { library ->
             libraryState.value = library.plusOrMinus(elements = ids, condition = saved)
         }
-        events.emit(SavedRepository.Event.SetSaved(ids = ids, saved = saved))
+        events.emit(Event.SetSaved(ids = ids, saved = saved))
     }
 
     final override suspend fun libraryUpdated(): Instant? {
@@ -233,7 +171,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             GlobalUpdateTimesRepository.invalidate(libraryUpdateKey)
         }
 
-        events.emit(SavedRepository.Event.InvalidateLibrary)
+        events.emit(Event.InvalidateLibrary)
     }
 
     final override suspend fun getLibraryCached(): Set<String>? {
@@ -248,7 +186,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
                 libraryStateInitialized = true
                 libraryState.value = library
 
-                events.emit(SavedRepository.Event.QueryLibraryCached(library = library))
+                events.emit(Event.QueryLibraryCached(library = library))
             }
     }
 
@@ -269,7 +207,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
                 libraryStateInitialized = true
                 libraryState.value = library
 
-                events.emit(SavedRepository.Event.QueryLibraryRemote(library = library))
+                events.emit(Event.QueryLibraryRemote(library = library))
             }
     }
 

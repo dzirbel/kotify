@@ -249,7 +249,7 @@ internal class SavedDatabaseRepositoryTest {
     @Test
     fun testState() {
         runTest {
-            val state = TestSavedRepository.savedStateOf(id = "saved-1", fetchMissing = false)
+            val state = TestSavedRepository.stateOf(id = "saved-1", fetchMissing = false)
             assertThat(state.value).isNull()
 
             TestSavedRepository.setSaved(id = "saved-1", false)
@@ -259,13 +259,13 @@ internal class SavedDatabaseRepositoryTest {
             TestSavedRepository.getRemote(id = "saved-1")
             assertThat(state.value).isNotNull().isTrue()
 
-            val state2 = TestSavedRepository.savedStateOf(id = "saved-2", fetchMissing = false)
+            val state2 = TestSavedRepository.stateOf(id = "saved-2", fetchMissing = false)
             assertThat(state2.value).isNull()
 
             TestSavedRepository.getLibrary()
             assertThat(state2.value).isNotNull().isTrue()
 
-            val state3 = TestSavedRepository.savedStateOf(id = "saved-3", fetchMissing = false)
+            val state3 = TestSavedRepository.stateOf(id = "saved-3", fetchMissing = false)
             assertThat(state3.value).isNotNull().isTrue()
         }
     }
@@ -281,7 +281,7 @@ internal class SavedDatabaseRepositoryTest {
     @Timeout(value = 5, unit = TimeUnit.SECONDS)
     fun testStateGC() {
         runBlocking {
-            val state1 = WeakReference(TestSavedRepository.savedStateOf(id = "saved-1"))
+            val state1 = WeakReference(TestSavedRepository.stateOf(id = "saved-1"))
 
             var attempt = 1
             while (!state1.refersTo(null)) {

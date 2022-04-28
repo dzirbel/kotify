@@ -206,7 +206,7 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                         val track = playback.item
 
                         val trackSavedState = track?.id?.let { trackId ->
-                            SavedTrackRepository.savedStateOf(id = trackId)
+                            SavedTrackRepository.stateOf(id = trackId)
                         }
 
                         val trackRatingState = track?.id?.let { trackId ->
@@ -214,11 +214,11 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                         }
 
                         val artistSavedStates = track?.artists?.mapNotNull { it.id }?.let { trackArtistIds ->
-                            trackArtistIds.zipToMap(SavedArtistRepository.savedStatesOf(ids = trackArtistIds))
+                            trackArtistIds.zipToMap(SavedArtistRepository.stateOf(ids = trackArtistIds))
                         }
 
                         val albumSavedState = track?.album?.id?.let {
-                            SavedAlbumRepository.savedStateOf(id = it)
+                            SavedAlbumRepository.stateOf(id = it)
                         }
 
                         mutateState {
@@ -307,15 +307,15 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                     else -> {
                         val track = trackPlayback.item
 
-                        val trackSavedState = SavedTrackRepository.savedStateOf(id = track.id)
+                        val trackSavedState = SavedTrackRepository.stateOf(id = track.id)
                         val trackRatingState = TrackRatingRepository.ratingState(id = track.id)
 
                         val trackArtistIds = track.artists.mapNotNull { it.id }
                         val artistSavedStates = trackArtistIds
-                            .zipToMap(SavedArtistRepository.savedStatesOf(ids = trackArtistIds))
+                            .zipToMap(SavedArtistRepository.stateOf(ids = trackArtistIds))
 
                         val albumSavedState = track.album.id?.let {
-                            SavedAlbumRepository.savedStateOf(id = it)
+                            SavedAlbumRepository.stateOf(id = it)
                         }
 
                         mutateState {

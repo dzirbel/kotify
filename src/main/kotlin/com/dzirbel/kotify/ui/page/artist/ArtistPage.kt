@@ -18,5 +18,5 @@ data class ArtistPage(val artistId: String) :
         ArtistPageContent(presenter, state)
     }
 
-    override fun titleFor(data: ArtistPresenter.ViewModel) = data.artist?.name
+    override fun titleFor(data: ArtistPresenter.ViewModel) = data.artist?.value?.name
 }
