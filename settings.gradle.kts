@@ -86,7 +86,7 @@ dependencyResolutionManagement {
             }
 
             // https://square.github.io/okhttp
-            version("okhttp", "4.9.2").let { version ->
+            version("okhttp", "4.9.3").let { version ->
                 library("okhttp", "com.squareup.okhttp3", "okhttp").versionRef(version)
             }
 
