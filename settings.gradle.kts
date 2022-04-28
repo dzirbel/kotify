@@ -37,7 +37,7 @@ dependencyResolutionManagement {
             }
 
             // https://github.com/JetBrains/Exposed
-            version("exposed", "0.37.3").let { version ->
+            version("exposed", "0.38.2").let { version ->
                 library("exposed-core", "org.jetbrains.exposed", "exposed-core").versionRef(version)
                 library("exposed-dao", "org.jetbrains.exposed", "exposed-dao").versionRef(version)
                 library("exposed-jdbc", "org.jetbrains.exposed", "exposed-jdbc").versionRef(version)
