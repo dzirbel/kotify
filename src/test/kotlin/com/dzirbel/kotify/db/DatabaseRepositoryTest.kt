@@ -7,8 +7,8 @@ import assertk.assertions.isBetween
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
+import com.dzirbel.kotify.containsExactlyElementsOf
 import com.dzirbel.kotify.network.model.SpotifyObject
-import io.ktor.util.collections.ConcurrentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -57,16 +57,22 @@ class TestEntity(id: EntityID<String>) : SpotifyEntity(id = id, table = TestEnti
 }
 
 private object TestRepository : DatabaseRepository<TestEntity, TestNetworkModel>(TestEntity) {
-    val fetchedIds: MutableList<String> = ConcurrentList()
-    val batchFetchedIds: MutableList<List<String>> = ConcurrentList()
+    val fetchedIds = mutableListOf<String>()
+    val batchFetchedIds = mutableListOf<String>()
 
     override suspend fun fetch(id: String): TestNetworkModel? {
-        fetchedIds.add(id)
+        synchronized(fetchedIds) {
+            fetchedIds.add(id)
+        }
+
         return remoteModels[id]
     }
 
     override suspend fun fetch(ids: List<String>): List<TestNetworkModel?> {
-        batchFetchedIds.add(ids)
+        synchronized(batchFetchedIds) {
+            batchFetchedIds.addAll(ids)
+        }
+
         return ids.map { remoteModels[it] }
     }
 }
@@ -208,7 +214,7 @@ internal class DatabaseRepositoryTest {
 
             assertThat(TestRepository.fetchedIds).isEmpty()
             assertThat(TestRepository.batchFetchedIds)
-                .containsExactly(remoteModels.keys.minus(cachedValue.key).toList())
+                .containsExactlyElementsOf(remoteModels.keys.minus(cachedValue.key).toList())
         }
     }
 

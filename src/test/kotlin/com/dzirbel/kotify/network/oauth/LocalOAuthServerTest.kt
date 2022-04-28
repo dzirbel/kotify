@@ -6,9 +6,8 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.prop
 import io.ktor.client.HttpClient
-import io.ktor.client.call.receive
+import io.ktor.client.call.body
 import io.ktor.client.request.get
-import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.params.ParameterizedTest
@@ -23,10 +22,10 @@ internal class LocalOAuthServerTest {
         lateinit var callbackResult: LocalOAuthServer.Result
         LocalOAuthServer(state = expectedState, port = port, callback = { callbackResult = it }).running {
             val response = runBlocking {
-                HttpClient().get<HttpResponse>("http://localhost:$port?state=$inputState")
+                HttpClient().get("http://localhost:$port?state=$inputState")
             }
 
-            val content = runBlocking { response.receive<String>() }
+            val content = runBlocking { response.body<String>() }
 
             assertThat(response.status).isEqualTo(HttpStatusCode.OK)
             assertThat(content).isEqualTo("Mismatched state! Expected $expectedState; got $inputState")
@@ -45,10 +44,10 @@ internal class LocalOAuthServerTest {
         lateinit var callbackResult: LocalOAuthServer.Result
         LocalOAuthServer(state = state, port = port, callback = { callbackResult = it }).running {
             val response = runBlocking {
-                HttpClient().get<HttpResponse>("http://localhost:$port?state=$state&code=$code")
+                HttpClient().get("http://localhost:$port?state=$state&code=$code")
             }
 
-            val content = runBlocking { response.receive<String>() }
+            val content = runBlocking { response.body<String>() }
 
             assertThat(response.status).isEqualTo(HttpStatusCode.OK)
             assertThat(content).isEqualTo("Success! You can now close this tab.\n\nCode: $code")
@@ -64,7 +63,7 @@ internal class LocalOAuthServerTest {
         try {
             block()
         } finally {
-            stop(gracePeriodMillis = 0, timeoutMillis = 0)
+            stop()
         }
     }
 }
