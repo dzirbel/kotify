@@ -47,7 +47,7 @@ dependencyResolutionManagement {
             }
 
             // https://github.com/jacoco/jacoco
-            version("jacoco", "0.8.7")
+            version("jacoco", "0.8.8")
 
             // https://junit.org/junit4/
             version("junit4", "4.13.2").let { version ->
