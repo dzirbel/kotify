@@ -296,14 +296,8 @@ abstract class Presenter<ViewModel, Event : Any>(
      *
      * This method is thread-safe and may be called concurrently, but must block to avoid concurrent writes with
      * [mutateState].
-     *
-     * TODO can this be un-synchronized?
      */
-    protected fun <T> queryState(transform: (ViewModel) -> T): T {
-        return synchronized(this) {
-            transform(stateFlow.value.safeState)
-        }
-    }
+    protected fun <T> queryState(transform: (ViewModel) -> T): T = transform(stateFlow.value.safeState)
 
     private fun onError(throwable: Throwable) {
         Logger.UI.handleError(presenter = this, throwable = throwable)
