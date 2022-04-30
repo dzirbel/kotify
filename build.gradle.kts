@@ -114,11 +114,13 @@ jacoco {
 }
 
 tasks.create<JacocoReport>("jacocoTestReportLocal") {
+    dependsOn(testLocal)
     executionData(testLocal)
     sourceSets(sourceSets.main.get())
 }
 
 tasks.create<JacocoReport>("jacocoTestReportIntegration") {
+    dependsOn(testIntegration)
     executionData(testIntegration)
     sourceSets(sourceSets.main.get())
 }
