@@ -10,8 +10,6 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-// TODO unit test
-
 /**
  * A wrapper around a property which allows access via either a [live] or [cached] version.
  *
