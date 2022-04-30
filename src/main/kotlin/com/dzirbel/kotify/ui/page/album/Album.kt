@@ -53,7 +53,7 @@ fun AlbumPageHeader(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) 
                     album.releaseDate?.let { Text(it) }
 
                     val totalDurationMins = state.totalDurationMs
-                        ?.let { TimeUnit.MILLISECONDS.toMinutes(it.toLong()) }
+                        ?.let { TimeUnit.MILLISECONDS.toMinutes(it) }
                         ?.let { ", $it mins" }
 
                     Text("${state.album.totalTracks} songs" + totalDurationMins)
