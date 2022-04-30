@@ -157,8 +157,6 @@ class OAuth private constructor(
             val state = generateState()
             val codeChallenge = CodeChallenge.generate()
 
-            // TODO add a couple fallback ports in case the default one is taken? (must be whitelisted in the Spotify
-            //  developer dashboard)
             val redirectUri = LocalOAuthServer.redirectUrl(port = port)
 
             val authorizationUrl = authorizationUrl(

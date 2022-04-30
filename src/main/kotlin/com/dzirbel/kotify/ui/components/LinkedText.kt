@@ -69,7 +69,7 @@ fun HyperlinkSpanStyle() = SpanStyle(color = LocalColors.current.primary, textDe
  * Displays text build by [elements] with embedded links, allowing styling the links based on the hover state of the
  * link and handling link clicks.
  *
- * TODO right click to open menu with coping the url as an option
+ * TODO right click to open menu with copying the url as an option
  */
 @Composable
 fun LinkedText(
@@ -86,7 +86,6 @@ fun LinkedText(
     val hoveredOffset = remember { mutableStateOf<Int?>(null) }
     val hoveringLink = remember { mutableStateOf(false) }
 
-    // TODO maybe optimize if unhoveredSpanStyle and hoveredSpanStyle are the same
     val text = remember(hoveredOffset.value, key) {
         LinkElementBuilder(
             hoveredOffset = hoveredOffset.value,

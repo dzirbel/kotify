@@ -620,7 +620,7 @@ style:
     imports:
     forbiddenPatterns: ''
   ForbiddenMethodCall:
-    active: true # TODO does not appear to work at all
+    active: true
     methods:
       - 'kotlin.io.print'
       - 'kotlin.io.println'
