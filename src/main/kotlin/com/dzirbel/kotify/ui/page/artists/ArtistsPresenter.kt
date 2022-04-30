@@ -129,12 +129,12 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                     artist.id.value to TrackRatingRepository.ratingStates(ids = artist.trackIds.cached)
                 }
 
-                mutateState {
-                    val selectedArtistId = it.selectedArtistIndex?.let { index -> it.artists[index]?.id?.value }
+                mutateState { state ->
+                    val selectedArtistId = state.selectedArtistIndex?.let { index -> state.artists[index]?.id?.value }
 
-                    it.copy(
+                    state.copy(
                         refreshing = false,
-                        artists = it.artists.withElements(artists),
+                        artists = state.artists.withElements(artists),
                         selectedArtistIndex = selectedArtistId
                             ?.let { artists.indexOfFirst { artist -> artist.id.value == selectedArtistId } }
                             ?.takeIf { index -> index >= 0 },
@@ -205,11 +205,11 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                             artist.id.value to TrackRatingRepository.ratingStates(ids = artist.trackIds.cached)
                         }
 
-                        mutateState {
-                            val artistRatings = it.artistRatings.plus(missingArtistRatings)
-                            it.copy(
-                                artists = it.artists.plusElements(missingArtists),
-                                savedArtistIds = it.savedArtistIds?.plus(event.artistIds),
+                        mutateState { state ->
+                            val artistRatings = state.artistRatings.plus(missingArtistRatings)
+                            state.copy(
+                                artists = state.artists.plusElements(missingArtists),
+                                savedArtistIds = state.savedArtistIds?.plus(event.artistIds),
                                 artistRatings = artistRatings,
                             )
                         }

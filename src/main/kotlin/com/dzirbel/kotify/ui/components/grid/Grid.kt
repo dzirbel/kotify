@@ -104,7 +104,7 @@ private class FlaredBottomRoundedRect(val cornerSize: Dp, val bottomPadding: Dp 
  * canonical order of [elements].
  */
 @Composable
-@Suppress("UnnecessaryParentheses")
+@Suppress("UnnecessaryParentheses", "UnsafeCallOnNullableType")
 fun <E> Grid(
     elements: ListAdapter<E>,
     selectedElementIndex: Int? = null,
@@ -366,9 +366,9 @@ fun <E> Grid(
                 var y = edgeSpacingTopPx
 
                 divisionElements.forEachIndexed { divisionIndex, division ->
-                    dividerPlaceables?.get(divisionIndex)?.let {
-                        it.place(x = 0, y = y.roundToInt())
-                        y += it.height + verticalSpacingPx
+                    dividerPlaceables?.get(divisionIndex)?.let { placeable ->
+                        placeable.place(x = 0, y = y.roundToInt())
+                        y += placeable.height + verticalSpacingPx
                     }
 
                     rowHeights[divisionIndex].forEachIndexed { rowIndex, rowHeight ->

@@ -52,8 +52,8 @@ fun <T : Any> Iterable<T?>.averageAndCountOrNull(toDouble: (T) -> Double?): Pair
     var count = 0
 
     for (element in this) {
-        element?.let(toDouble)?.let {
-            total += it
+        element?.let(toDouble)?.let { double ->
+            total += double
             count++
         }
     }

@@ -7,6 +7,7 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import com.dzirbel.kotify.assertThat
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.util.zipEach
@@ -42,10 +43,10 @@ internal class TrackRatingRepositoryTest {
             assertThat(ratingState.value?.rating).isEqualTo(rating.rating)
 
             KotifyDatabase.transaction(name = null) { TrackRatingRepository.lastRatingOf(id = trackId) }
-                .let { assertThat(it).isNotNull().matches(rating) }
+                .assertThat { isNotNull().matches(rating) }
 
             KotifyDatabase.transaction(name = null) { TrackRatingRepository.allRatingsOf(id = trackId) }
-                .let { assertThat(it).isNotNull().matches(listOf(rating)) }
+                .assertThat { isNotNull().matches(listOf(rating)) }
         }
     }
 
@@ -64,7 +65,7 @@ internal class TrackRatingRepositoryTest {
         runBlocking {
             KotifyDatabase.transaction(name = null) { TrackRatingRepository.lastRatingOf(id = trackId) }
         }
-            .let { assertThat(it).isNotNull().matches(rating) }
+            .assertThat { isNotNull().matches(rating) }
 
         runBlocking {
             TrackRatingRepository.rate(id = trackId, rating = null)

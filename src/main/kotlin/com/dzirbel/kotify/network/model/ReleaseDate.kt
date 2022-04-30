@@ -20,11 +20,11 @@ data class ReleaseDate(
         return buildString {
             append(year)
 
-            month?.let {
+            if (month != null) {
                 append("-")
                 append("%02d".format(month))
 
-                day?.let {
+                if (day != null) {
                     append("-")
                     append("%02d".format(day))
                 }

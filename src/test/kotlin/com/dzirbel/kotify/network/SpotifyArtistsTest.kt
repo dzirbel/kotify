@@ -6,6 +6,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
+import com.dzirbel.kotify.assertThat
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
 import com.dzirbel.kotify.properties.ArtistProperties
 import com.dzirbel.kotify.zipWithBy
@@ -59,12 +60,12 @@ internal class SpotifyArtistsTest {
             expectedIds
                 .minus(actualIds)
                 .map { id -> Pair(id, idToName[id]) }
-                .let { assertThat(it).isEmpty() }
+                .assertThat { isEmpty() }
 
             actualIds
                 .minus(expectedIds)
                 .map { id -> Pair(id, idToName[id]) }
-                .let { assertThat(it).isEmpty() }
+                .assertThat { isEmpty() }
         }
 
         albums.zipWithBy(artistProperties.albums) { album, albumProperties -> album.id == albumProperties.id }

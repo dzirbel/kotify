@@ -95,12 +95,12 @@ object TrackRatingRepository : RatingRepository {
                     .firstOrNull()
                     ?.get(TrackRatingTable.rateTime)
 
-                TrackRatingTable.insert {
-                    it[track] = id
-                    it[TrackRatingTable.rating] = rating.rating
-                    it[maxRating] = rating.maxRating
-                    it[rateTime] = rating.rateTime
-                    it[TrackRatingTable.userId] = userId
+                TrackRatingTable.insert { statement ->
+                    statement[track] = id
+                    statement[TrackRatingTable.rating] = rating.rating
+                    statement[maxRating] = rating.maxRating
+                    statement[rateTime] = rating.rateTime
+                    statement[TrackRatingTable.userId] = userId
                 }
 
                 lastRateTime

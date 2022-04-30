@@ -131,6 +131,7 @@ abstract class Presenter<ViewModel, Event : Any>(
         data class Error<State>(val lastState: State, val throwable: Throwable) : StateOrError<State>() {
             override val safeState: State = lastState
 
+            @Suppress("CanBeNonNullable") // detekt false positive
             override val stateOrThrow: State
                 get() = throw throwable
         }
@@ -159,8 +160,8 @@ abstract class Presenter<ViewModel, Event : Any>(
      */
     private val stateFlow = MutableStateFlow<StateOrError<ViewModel>>(State(initialState))
 
-    private var stateCount = AtomicInteger(0)
-    private var eventCount = AtomicInteger(0)
+    private val stateCount = AtomicInteger(0)
+    private val eventCount = AtomicInteger(0)
 
     private val events = MutableSharedFlow<Event>()
 
@@ -182,16 +183,18 @@ abstract class Presenter<ViewModel, Event : Any>(
      * This must be its own function to allow restarting the event flow on error by making a recursive call to
      * [eventFlow].
      */
+    @Suppress("CanBeNonNullable") // detekt false positive
     private fun eventFlow(startingEvents: List<Event>? = this.startingEvents): Flow<Event> {
+        @Suppress("UnnecessaryLet")
         return (externalEvents()?.let { merge(it, events) } ?: events)
             .onStart { startingEvents?.forEach { emit(it) } }
-            .onEach {
+            .onEach { event ->
                 assertNotOnUIThread()
-                Logger.UI.handleEvent(presenter = this, event = it, eventCount = eventCount.incrementAndGet())
+                Logger.UI.handleEvent(presenter = this, event = event, eventCount = eventCount.incrementAndGet())
             }
             .let { flow -> reactTo(flow) }
-            .catch {
-                onError(it)
+            .catch { throwable ->
+                onError(throwable)
                 emitAll(eventFlow(null))
             }
     }
@@ -348,8 +351,8 @@ abstract class Presenter<ViewModel, Event : Any>(
                 }
             }
             EventMergeStrategy.LATEST -> events.transformLatest { reactTo(it) }
-            EventMergeStrategy.MERGE -> events.flatMapMerge {
-                flow<Event> { reactTo(it) }.catch { onError(it) }
+            EventMergeStrategy.MERGE -> events.flatMapMerge { event ->
+                flow<Event> { reactTo(event) }.catch { onError(it) }
             }
         }
     }

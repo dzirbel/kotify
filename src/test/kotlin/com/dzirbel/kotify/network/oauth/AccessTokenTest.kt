@@ -190,11 +190,10 @@ internal class AccessTokenTest {
             assertThat(expiredToken.isExpired).isTrue()
             AccessToken.Cache.put(expiredToken)
 
-            val newToken = runBlocking { AccessToken.Cache.get() }
+            val newToken = requireNotNull(runBlocking { AccessToken.Cache.get() })
 
-            assertThat(newToken).isNotNull()
             assertThat(newToken).isNotEqualTo(expiredToken)
-            assertThat(newToken!!.isExpired).isFalse()
+            assertThat(newToken.isExpired).isFalse()
             assertThat(newToken.accessToken).isEqualTo("abc")
             assertThat(newToken.tokenType).isEqualTo("def")
             assertThat(newToken.expiresIn).isEqualTo(30)
@@ -312,7 +311,7 @@ internal class AccessTokenTest {
 
         @BeforeAll
         @JvmStatic
-        @Suppress("unused")
+        @Suppress("unused", "ForbiddenMethodCall")
         fun before() {
             if (AccessToken.Cache.file.exists()) {
                 println("Moving ${AccessToken.Cache.file} to temp file $tempFile")
@@ -325,7 +324,7 @@ internal class AccessTokenTest {
 
         @AfterAll
         @JvmStatic
-        @Suppress("unused")
+        @Suppress("unused", "ForbiddenMethodCall")
         fun after() {
             if (tempFile.exists()) {
                 println("Restoring ${AccessToken.Cache.file} from temp file $tempFile")

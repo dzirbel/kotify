@@ -89,7 +89,7 @@ internal class GridTest {
             .assertLeftPositionInRootIsEqualTo(horizontalSpacing)
             .assertTopPositionInRootIsEqualTo(verticalSpacing * 2 + elementHeight)
 
-        val unexpectedElement = elements.maxOrNull()!! + 1
+        val unexpectedElement = requireNotNull(elements.maxOrNull()) + 1
         rule.onNode(hasText(unexpectedElement.toString())).assertDoesNotExist()
     }
 

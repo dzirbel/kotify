@@ -169,10 +169,10 @@ class PlaylistPresenter(
 
     private suspend fun loadTracksToCache(playlist: Playlist?, tracks: List<PlaylistTrack>) {
         KotifyDatabase.transaction("load tracks, tracks artists, and tracks album for playlist ${playlist?.name}") {
-            tracks.forEach {
-                it.track.loadToCache()
-                it.track.cached.artists.loadToCache()
-                it.track.cached.album.loadToCache()
+            tracks.forEach { playlistTrack ->
+                playlistTrack.track.loadToCache()
+                playlistTrack.track.cached.artists.loadToCache()
+                playlistTrack.track.cached.album.loadToCache()
             }
         }
     }

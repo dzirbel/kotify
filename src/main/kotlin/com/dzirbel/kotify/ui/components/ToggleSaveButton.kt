@@ -25,7 +25,7 @@ fun ToggleSaveButton(
         modifier = modifier.size(size),
         enabled = isSaved != null && expectedState.value == isSaved,
         onClick = {
-            isSaved?.let {
+            if (isSaved != null) {
                 expectedState.value = !isSaved
                 onSave(!isSaved)
             }

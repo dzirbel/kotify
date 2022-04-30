@@ -19,14 +19,17 @@ internal class SpotifyTracksTest {
     @ParameterizedTest
     @MethodSource("tracks")
     fun getAudioFeatures(trackProperties: TrackProperties) {
-        val audioFeatures = runBlocking { Spotify.Tracks.getAudioFeatures(trackProperties.id!!) }
+        val id = requireNotNull(trackProperties.id)
+        val audioFeatures = runBlocking { Spotify.Tracks.getAudioFeatures(id) }
 
         assertThat(audioFeatures).isNotNull()
     }
 
     @Test
     fun getAudioFeatures() {
-        val audioFeatures = runBlocking { Spotify.Tracks.getAudioFeatures(Fixtures.tracks.map { it.id!! }) }
+        val audioFeatures = runBlocking {
+            Spotify.Tracks.getAudioFeatures(Fixtures.tracks.map { requireNotNull(it.id) })
+        }
 
         assertThat(audioFeatures).hasSameSizeAs(Fixtures.tracks)
     }
@@ -34,7 +37,8 @@ internal class SpotifyTracksTest {
     @ParameterizedTest
     @MethodSource("tracks")
     fun getAudioAnalysis(trackProperties: TrackProperties) {
-        val audioAnalysis = runBlocking { Spotify.Tracks.getAudioAnalysis(trackProperties.id!!) }
+        val id = requireNotNull(trackProperties.id)
+        val audioAnalysis = runBlocking { Spotify.Tracks.getAudioAnalysis(id) }
 
         assertThat(audioAnalysis).isNotNull()
     }
@@ -42,7 +46,8 @@ internal class SpotifyTracksTest {
     @ParameterizedTest
     @MethodSource("tracks")
     fun getTrack(trackProperties: TrackProperties) {
-        val track = runBlocking { Spotify.Tracks.getTrack(trackProperties.id!!) }
+        val id = requireNotNull(trackProperties.id)
+        val track = runBlocking { Spotify.Tracks.getTrack(id) }
 
         trackProperties.check(track)
     }
@@ -58,7 +63,9 @@ internal class SpotifyTracksTest {
 
     @Test
     fun getTracks() {
-        val tracks = runBlocking { Spotify.Tracks.getTracks(Fixtures.tracks.map { it.id!! }) }
+        val tracks = runBlocking {
+            Spotify.Tracks.getTracks(Fixtures.tracks.map { requireNotNull(it.id) })
+        }
 
         tracks.zip(Fixtures.tracks).forEach { (track, trackProperties) -> trackProperties.check(track) }
     }

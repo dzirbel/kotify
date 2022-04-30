@@ -50,8 +50,8 @@ internal class ListAdapterTest {
         val elements = ListAdapter.of(list)
 
         var element = 0
-        elements.iterator().forEach {
-            assertThat(it).isEqualTo(element)
+        elements.iterator().forEach { e ->
+            assertThat(e).isEqualTo(element)
             element++
         }
     }

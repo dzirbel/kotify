@@ -1,3 +1,4 @@
+import io.gitlab.arturbosch.detekt.Detekt
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.internal.os.OperatingSystem
@@ -133,8 +134,21 @@ tasks.withType<JacocoReport> {
 }
 
 tasks.create<Task>("checkLocal") {
-    dependsOn("detekt")
+    dependsOn("detektWithTypeResolution")
     dependsOn("testLocal")
+}
+
+tasks.detektTestFixtures.configure {
+    // enable type resolution for detekt on test fixtures
+    jvmTarget = "16"
+    classpath.from(files("src/testFixtures"))
+}
+
+// run with type resolution; see https://detekt.dev/docs/gettingstarted/type-resolution
+tasks.create("detektWithTypeResolution") {
+    dependsOn(tasks.detektMain)
+    dependsOn(tasks.detektTest)
+    dependsOn(tasks.detektTestFixtures)
 }
 
 detekt {

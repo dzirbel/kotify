@@ -50,7 +50,7 @@ private class CurrentUserPresenter(scope: CoroutineScope) : Presenter<User?, Cur
         when (event) {
             is Event.Load -> {
                 val user = UserRepository.getCurrentUser()
-                user?.let {
+                if (user != null) {
                     KotifyDatabase.transaction("load user image") { user.thumbnailImage.loadToCache() }
                 }
 

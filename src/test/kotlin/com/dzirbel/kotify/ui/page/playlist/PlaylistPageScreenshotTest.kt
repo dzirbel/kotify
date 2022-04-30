@@ -28,9 +28,9 @@ internal class PlaylistPageScreenshotTest {
         testTransaction {
             playlist.largestImage.loadToCache()
             playlist.playlistTracksInOrder.loadToCache()
-            playlist.playlistTracksInOrder.cached.forEach {
-                it.track.loadToCache()
-                it.track.cached.artists.loadToCache()
+            playlist.playlistTracksInOrder.cached.forEach { playlistTrack ->
+                playlistTrack.track.loadToCache()
+                playlistTrack.track.cached.artists.loadToCache()
             }
         }
 

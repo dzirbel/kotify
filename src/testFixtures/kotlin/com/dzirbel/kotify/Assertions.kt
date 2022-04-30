@@ -1,6 +1,7 @@
 package com.dzirbel.kotify
 
 import assertk.Assert
+import assertk.assertThat
 import assertk.assertions.containsAll
 import assertk.assertions.containsExactly
 import assertk.assertions.containsExactlyInAnyOrder
@@ -9,6 +10,13 @@ import assertk.assertions.isNull
 import assertk.assertions.support.expected
 import assertk.assertions.support.show
 import java.util.SortedMap
+
+/**
+ * Wraps this value with in an [Assert] and invokes [assertion] on it, as a convenience to avoid calls to let{}.
+ */
+fun <T> T.assertThat(assertion: Assert<T>.() -> Unit) {
+    assertThat(this).assertion()
+}
 
 /**
  * Asserts that the value is null if [shouldBeNull] is true or is non-null if it is false.

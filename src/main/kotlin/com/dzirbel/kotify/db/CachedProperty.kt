@@ -55,13 +55,13 @@ open class ReadOnlyCachedProperty<V>(private val requireGetInTransaction: Boolea
     val live: V
         get() {
             if (requireGetInTransaction) {
-                check(TransactionManager.manager.currentOrNull() != null) {
+                checkNotNull(TransactionManager.manager.currentOrNull()) {
                     "attempted to call getter outside of a transaction"
                 }
             }
 
-            return getter().also {
-                cachedValue = it
+            return getter().also { value ->
+                cachedValue = value
                 hasCachedValue = true
             }
         }
@@ -109,7 +109,7 @@ class ReadWriteCachedProperty<V>(
      */
     fun set(value: V) {
         if (requireSetInTransaction) {
-            check(TransactionManager.manager.currentOrNull() != null) {
+            checkNotNull(TransactionManager.manager.currentOrNull()) {
                 "attempted to call setter outside of a transaction for $value"
             }
         }

@@ -50,7 +50,9 @@ class AlbumPresenter(
             TrackPlayingColumn(
                 trackIdOf = { it.id.value },
                 playContextFromTrack = { track ->
-                    Player.PlayContext.albumTrack(album = album!!, index = track.trackNumber)
+                    album?.let {
+                        Player.PlayContext.albumTrack(album = album, index = track.trackNumber)
+                    }
                 },
             ),
             TrackAlbumIndexProperty,

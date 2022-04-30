@@ -102,7 +102,7 @@ complexity:
     active: true
     threshold: 6
   ReplaceSafeCallChainWithRun:
-    active: true
+    active: false
   StringLiteralDuplication:
     active: false
     excludes: ['**/test/**', '**/testFixtures/**']
@@ -457,7 +457,7 @@ naming:
   NoNameShadowing:
     active: true
   NonBooleanPropertyPrefixedWithIs:
-    active: true
+    active: false # allow types such as Column<Boolean> and State<Boolean> to be prefixed with is
   ObjectPropertyNaming:
     active: true
     constantPattern: '[A-Za-z][_A-Za-z0-9]*'
@@ -512,7 +512,7 @@ potential-bugs:
   DuplicateCaseInWhenExpression:
     active: true
   ElseCaseInsteadOfExhaustiveWhen:
-    active: true
+    active: false
   EqualsAlwaysReturnsTrueOrFalse:
     active: true
   EqualsWithHashCodeExist:
@@ -534,7 +534,7 @@ potential-bugs:
   ImplicitDefaultLocale:
     active: true
   ImplicitUnitReturnType:
-    active: true
+    active: false
     allowExplicitReturnType: true
   InvalidRange:
     active: true
@@ -557,7 +557,7 @@ potential-bugs:
   NullCheckOnMutableProperty:
     active: true
   NullableToStringCall:
-    active: true
+    active: false
   RedundantElseInWhen:
     active: true
   UnconditionalJumpStatementInLoop:
@@ -642,7 +642,7 @@ style:
     ignoreAnnotated:
       - 'dagger.Provides'
   LibraryCodeMustSpecifyReturnType:
-    active: true
+    active: false
   LibraryEntitiesShouldNotBePublic:
     active: false
   LoopWithTooManyJumpStatements:
@@ -729,9 +729,7 @@ style:
     active: true
     acceptableLength: 5
   UnnecessaryAbstractClass:
-    active: true
-    ignoreAnnotated:
-      - 'dagger.Module'
+    active: false
   UnnecessaryAnnotationUseSiteTarget:
     active: true
   UnnecessaryApply:

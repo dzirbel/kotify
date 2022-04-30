@@ -28,7 +28,7 @@ import kotlin.math.roundToInt
  * TODO support adapter divisions in a table (currently the divider content is not inserted between them)
  */
 @Composable
-@Suppress("UnnecessaryParentheses")
+@Suppress("UnnecessaryParentheses", "UnsafeCallOnNullableType")
 fun <E> Table(
     columns: List<Column<E>>,
     items: ListAdapter<E>,
@@ -53,7 +53,7 @@ fun <E> Table(
                         column.header(
                             sortOrder = items.sortOrderFor(column.sortableProperty),
                             onSetSort = { sortOrder ->
-                                onSetSort(sortOrder?.let { column.sortableProperty?.let { Sort(it, sortOrder) } })
+                                onSetSort(sortOrder?.let { _ -> column.sortableProperty?.let { Sort(it, sortOrder) } })
                             },
                         )
                     }

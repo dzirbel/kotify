@@ -101,8 +101,8 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
             Column(modifier = Modifier.verticalScroll(scrollState)) {
                 val headerVisible = remember { mutableStateOf<Boolean?>(null) }
                 Box(
-                    modifier = Modifier.onGloballyPositioned {
-                        val visible = it.boundsInParent().bottom - scrollState.value > 0
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        val visible = coordinates.boundsInParent().bottom - scrollState.value > 0
                         if (visible != headerVisible.value) {
                             headerVisible.value = visible
                             onHeaderVisibilityChanged(visible)

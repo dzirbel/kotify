@@ -186,7 +186,7 @@ private fun ArtistDetailInsert(
         ) {
             Text(artist.name, style = MaterialTheme.typography.h5)
 
-            artistDetails?.let {
+            if (artistDetails != null) {
                 artistDetails.savedTime?.let { savedTime ->
                     Text(liveRelativeDateText(timestamp = savedTime.toEpochMilli()) { "Saved $it" })
                 }

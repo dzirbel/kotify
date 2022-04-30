@@ -29,9 +29,9 @@ internal class ArtistPageScreenshotTest {
         every { artist.albumsFetched } answers { Instant.now() }
 
         testTransaction {
-            artistAlbums.forEach {
-                it.album.loadToCache()
-                it.album.cached.largestImage.loadToCache()
+            artistAlbums.forEach { artistAlbum ->
+                artistAlbum.album.loadToCache()
+                artistAlbum.album.cached.largestImage.loadToCache()
             }
         }
 

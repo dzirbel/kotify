@@ -7,6 +7,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.containsAllElementsOf
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
@@ -36,9 +37,9 @@ data class AlbumProperties(
 
         if (album is FullSpotifyAlbum) {
             assertThat(album.genres).containsAllElementsOf(genres)
-            assertThat(album.popularity).isBetween(0, 100)
+            assertThat(album.popularity).isBetween(0, Fixtures.MAX_POPULARITY)
             assertThat(album.tracks.items).isNotEmpty()
-            totalTracks?.let {
+            if (totalTracks != null) {
                 assertThat(album.tracks.total).isEqualTo(totalTracks)
 
                 val allTracks = runBlocking { album.tracks.fetchAll<SimplifiedSpotifyTrack>() }

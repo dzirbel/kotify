@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.EnumSource
 fun <S, E, P : Presenter<S, E>> testPresenter(
     createPresenter: CoroutineScope.() -> P,
     beforeOpen: (suspend (P) -> Unit)? = null,
+    @Suppress("SuspendFunWithCoroutineScopeReceiver")
     block: suspend TestScope.(P) -> Unit,
 ) {
     KotifyDatabase.withSynchronousTransactions {

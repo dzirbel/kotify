@@ -64,24 +64,27 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
      *
      * Must be called from within a transaction.
      */
+    @Suppress("CanBeNonNullable") // detekt false positive
     fun setSaved(entityId: String, saved: Boolean, savedTime: Instant?, savedCheckTime: Instant = Instant.now()) {
         if (select { id eq entityId }.any()) {
-            update(where = { id eq entityId }) {
-                it[this.saved] = saved
+            update(where = { id eq entityId }) { statement ->
+                statement[this.saved] = saved
                 if (saved) {
                     // only update savedTime if we have a fresh value
-                    savedTime?.let { savedTime -> it[this.savedTime] = savedTime }
+                    if (savedTime != null) {
+                        statement[this.savedTime] = savedTime
+                    }
                 } else {
-                    it[this.savedTime] = null
+                    statement[this.savedTime] = null
                 }
-                it[this.savedCheckTime] = savedCheckTime
+                statement[this.savedCheckTime] = savedCheckTime
             }
         } else {
-            insert {
-                it[id] = entityId
-                it[this.saved] = saved
-                it[this.savedTime] = savedTime
-                it[this.savedCheckTime] = savedCheckTime
+            insert { statement ->
+                statement[id] = entityId
+                statement[this.saved] = saved
+                statement[this.savedTime] = savedTime
+                statement[this.savedCheckTime] = savedCheckTime
             }
         }
     }

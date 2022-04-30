@@ -134,7 +134,7 @@ data class AccessToken(
          * [AccessToken] is fetched based on the old [AccessToken.refreshToken]) and the new token is returned.
          */
         suspend fun getOrThrow(clientId: String = OAuth.DEFAULT_CLIENT_ID): AccessToken {
-            return get(clientId) ?: throw NoAccessTokenError
+            return get(clientId) ?: throw NoAccessTokenError()
         }
 
         /**
@@ -229,10 +229,10 @@ data class AccessToken(
                     null
                 }
 
-                token?.let {
+                if (token != null) {
                     Logger.Events.info("Got refreshed access token")
-                    this.token = it
-                    save(it)
+                    this.token = token
+                    save(token)
                 }
             }
 
@@ -249,6 +249,6 @@ data class AccessToken(
             }
         }
 
-        object NoAccessTokenError : Throwable()
+        class NoAccessTokenError : Throwable()
     }
 }

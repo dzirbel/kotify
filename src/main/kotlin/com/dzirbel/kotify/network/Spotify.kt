@@ -667,7 +667,7 @@ object Spotify {
         suspend fun follow(type: String, ids: List<String>) {
             return put(
                 "me/following",
-                jsonBody = mapOf<String, String>(),
+                jsonBody = emptyMap<String, String>(),
                 queryParams = mapOf("type" to type, "ids" to ids.joinToString(separator = ",")),
             )
         }
@@ -699,7 +699,7 @@ object Spotify {
         suspend fun unfollow(type: String, ids: List<String>) {
             return delete(
                 "me/following",
-                jsonBody = mapOf<String, String>(),
+                jsonBody = emptyMap<String, String>(),
                 queryParams = mapOf("type" to type, "ids" to ids.joinToString(separator = ",")),
             )
         }

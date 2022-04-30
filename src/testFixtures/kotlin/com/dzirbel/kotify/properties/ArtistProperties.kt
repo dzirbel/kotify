@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isBetween
 import assertk.assertions.isGreaterThanOrEqualTo
 import assertk.assertions.isNotEmpty
+import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.containsAllElementsOf
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyArtist
@@ -21,7 +22,7 @@ data class ArtistProperties(
             assertThat(artist.followers.total).isGreaterThanOrEqualTo(0)
             assertThat(artist.genres).containsAllElementsOf(genres)
             assertThat(artist.images).isNotEmpty()
-            assertThat(artist.popularity).isBetween(0, 100)
+            assertThat(artist.popularity).isBetween(0, Fixtures.MAX_POPULARITY)
         }
     }
 }

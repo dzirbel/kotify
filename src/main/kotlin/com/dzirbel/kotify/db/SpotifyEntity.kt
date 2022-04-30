@@ -80,5 +80,5 @@ abstract class SpotifyEntityClass<EntityType : SpotifyEntity, NetworkType : Spot
      *
      * Must be called from within a transaction.
      */
-    fun from(networkModels: List<NetworkType?>): List<EntityType?> = networkModels.map { it?.let { from(it) } }
+    fun from(networkModels: List<NetworkType?>): List<EntityType?> = networkModels.map { it?.let { _ -> from(it) } }
 }

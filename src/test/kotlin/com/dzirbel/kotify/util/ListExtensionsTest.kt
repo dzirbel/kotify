@@ -25,7 +25,7 @@ internal class ListExtensionsTest {
      */
     @Test
     fun testIsSortedBy() {
-        assertThat(listOf<String>().isSortedBy { it.length }).isTrue()
+        assertThat(emptyList<String>().isSortedBy { it.length }).isTrue()
 
         assertThat(listOf("").isSortedBy { it.length }).isTrue()
 
@@ -70,19 +70,19 @@ internal class ListExtensionsTest {
         fun plusSorted(): List<PlusSortedCase> {
             return listOf(
                 PlusSortedCase(
-                    list = listOf(),
-                    elements = listOf(),
+                    list = emptyList(),
+                    elements = emptyList(),
                 ),
                 PlusSortedCase(
-                    list = listOf(),
+                    list = emptyList(),
                     elements = listOf("a"),
                 ),
                 PlusSortedCase(
                     list = listOf("a"),
-                    elements = listOf(),
+                    elements = emptyList(),
                 ),
                 PlusSortedCase(
-                    list = listOf(),
+                    list = emptyList(),
                     elements = listOf("aaa", "bb", "c"),
                 ),
                 PlusSortedCase(

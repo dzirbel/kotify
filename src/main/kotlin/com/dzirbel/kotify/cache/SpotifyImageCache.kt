@@ -64,7 +64,7 @@ object SpotifyImageCache {
 
     private val imageJobs: ConcurrentMap<String, Deferred<ImageBitmap?>> = ConcurrentHashMap()
 
-    private var totalCompleted = AtomicInteger()
+    private val totalCompleted = AtomicInteger()
 
     /**
      * The current [State] of the cache.
@@ -187,9 +187,9 @@ object SpotifyImageCache {
             ?.let { bytes ->
                 val image = Image.makeFromEncoded(bytes).toComposeImageBitmap()
 
-                cacheFile?.let {
+                if (cacheFile != null) {
                     IMAGES_DIR.mkdirs()
-                    it.writeBytes(bytes)
+                    cacheFile.writeBytes(bytes)
                 }
 
                 totalCompleted.incrementAndGet()

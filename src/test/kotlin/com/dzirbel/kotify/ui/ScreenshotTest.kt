@@ -68,6 +68,8 @@ fun Any.screenshotTest(
             recordedScreenshots = true
             classScreenshotsDir.mkdirs()
             screenshotFile.writeBytes(screenshotBytes)
+
+            @Suppress("ForbiddenMethodCall")
             println("Wrote screenshot $filename to $screenshotFile")
         } else {
             val recordedBytes = screenshotFile.readBytes()

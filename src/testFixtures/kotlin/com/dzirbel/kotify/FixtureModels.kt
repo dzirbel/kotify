@@ -21,6 +21,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 /**
  * A collection of convenience functions which construct various model classes with mocked data for use in tests.
  */
+@Suppress("TooManyFunctions")
 object FixtureModels {
     fun artists(count: Int): List<Artist> {
         val networkArtists = networkArtists(count = count)
@@ -54,7 +55,7 @@ object FixtureModels {
             uri = "uri",
             followers = SpotifyFollowers(total = followers),
             genres = listOf("genre"),
-            images = listOf(),
+            images = emptyList(),
             popularity = popularity,
         )
     }
@@ -92,15 +93,15 @@ object FixtureModels {
             href = "href",
             type = "album",
             uri = "uri",
-            images = listOf(),
+            images = emptyList(),
             releaseDate = "",
             releaseDatePrecision = "",
-            copyrights = listOf(),
+            copyrights = emptyList(),
             externalIds = SpotifyExternalId(),
             genres = listOf("genre"),
             label = "",
             popularity = popularity,
-            artists = listOf(),
+            artists = emptyList(),
             tracks = Paging(
                 items = tracks,
                 href = "href",
@@ -128,7 +129,7 @@ object FixtureModels {
             name = name,
             popularity = popularity,
             trackNumber = trackNumber,
-            artists = listOf(),
+            artists = emptyList(),
             discNumber = 1,
             durationMs = 60_000,
             explicit = false,
@@ -197,7 +198,7 @@ object FixtureModels {
             collaborative = false,
             description = null,
             externalUrls = SpotifyExternalUrl(),
-            images = listOf(),
+            images = emptyList(),
             owner = user,
             snapshotId = "snapshot",
         )

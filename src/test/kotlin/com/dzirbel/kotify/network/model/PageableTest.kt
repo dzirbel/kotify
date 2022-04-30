@@ -20,20 +20,20 @@ internal class PageableTest {
                 for (items in allItems.reversed()) {
                     prev = CustomPageable(items = items, next = prev)
                 }
-                return prev!!
+                return requireNotNull(prev)
             }
         }
     }
 
     @Test
     fun fetchAllEmpty() {
-        val pageable = CustomPageable.from(listOf<String>())
+        val pageable = CustomPageable.from(emptyList<String>())
         assertThat(pageable.fetchAll()).isEmpty()
     }
 
     @Test
     fun fetchAll() {
-        val pageable = CustomPageable.from(listOf("a", "b"), listOf("c"), listOf(), listOf("d"), listOf())
+        val pageable = CustomPageable.from(listOf("a", "b"), listOf("c"), emptyList(), listOf("d"), emptyList())
         assertThat(pageable.fetchAll()).containsExactly("a", "b", "c", "d")
     }
 }

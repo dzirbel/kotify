@@ -205,7 +205,7 @@ private fun CurrentTrack(
             size = ALBUM_ART_SIZE,
         )
 
-        track?.let {
+        if (track != null) {
             Column(
                 modifier = Modifier.sizeIn(minHeight = ALBUM_ART_SIZE),
                 verticalArrangement = Arrangement.Center,
@@ -572,7 +572,7 @@ private fun DeviceControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
         Text(text)
 
         if (dropdownEnabled) {
-            devices!!
+            checkNotNull(devices)
 
             HorizontalSpacer(Dimens.space3)
 

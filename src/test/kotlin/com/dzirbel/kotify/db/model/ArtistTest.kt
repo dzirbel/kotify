@@ -152,17 +152,17 @@ internal class ArtistTest {
         val albums = listOf(
             SimplifiedSpotifyAlbum(
                 id = "album1",
-                artists = listOf(),
+                artists = emptyList(),
                 externalUrls = emptyMap(),
-                images = listOf(),
+                images = emptyList(),
                 name = "album 1",
                 type = "album",
             ),
             SimplifiedSpotifyAlbum(
                 id = "album2",
-                artists = listOf(),
+                artists = emptyList(),
                 externalUrls = emptyMap(),
-                images = listOf(),
+                images = emptyList(),
                 name = "album 2",
                 type = "album",
                 albumGroup = SpotifyAlbum.Type.ALBUM,

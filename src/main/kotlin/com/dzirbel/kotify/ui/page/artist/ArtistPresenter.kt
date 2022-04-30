@@ -97,7 +97,7 @@ class ArtistPresenter(
 
                 val albumRatings = artistAlbums.associate { artistAlbum ->
                     val album = artistAlbum.album.cached
-                    album.id.value to album.trackIds.cached.let { TrackRatingRepository.ratingStates(ids = it) }
+                    album.id.value to TrackRatingRepository.ratingStates(ids = album.trackIds.cached)
                 }
 
                 mutateState {

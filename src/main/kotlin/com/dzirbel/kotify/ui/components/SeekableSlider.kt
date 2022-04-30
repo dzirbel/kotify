@@ -80,9 +80,9 @@ fun SeekableSlider(
     val barWidth = remember { mutableStateOf(0) }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
-        leftContent?.let {
+        if (leftContent != null) {
             HorizontalSpacer(Dimens.space2)
-            it()
+            leftContent()
             HorizontalSpacer(Dimens.space2)
         }
 
@@ -94,9 +94,9 @@ fun SeekableSlider(
                 .pointerMoveFilter(
                     onEnter = { true.also { hoverState.value = true } },
                     onExit = { true.also { hoverState.value = false } },
-                    onMove = {
+                    onMove = { position ->
                         // manually adjust for padding
-                        hoverLocation.value = it.x - paddingPx
+                        hoverLocation.value = position.x - paddingPx
                         true
                     },
                 )
@@ -111,7 +111,7 @@ fun SeekableSlider(
                         val maxWidth = barWidth.value
                         val adjustedX = hoverLocation.value.coerceAtLeast(0f).coerceAtMost(maxWidth.toFloat())
                         val seekPercent = adjustedX / maxWidth
-                        drag.value = adjustedX - (progressOverride.value!! * maxWidth)
+                        drag.value = adjustedX - (requireNotNull(progressOverride.value) * maxWidth)
                         onSeek(seekPercent)
                     },
                 )
@@ -180,11 +180,11 @@ fun SeekableSlider(
                         layout(width, height) {
                             progressBar.place(0, 0)
 
-                            seekTarget?.let {
-                                check(it.width == it.height)
-                                val size = it.width
+                            if (seekTarget != null) {
+                                check(seekTarget.width == seekTarget.height)
+                                val size = seekTarget.width
 
-                                it.place(
+                                seekTarget.place(
                                     x = progressBar.width - (size / 2),
                                     y = (height / 2) - (size / 2),
                                 )
@@ -195,9 +195,9 @@ fun SeekableSlider(
             }
         }
 
-        rightContent?.let {
+        if (rightContent != null) {
             HorizontalSpacer(Dimens.space2)
-            it()
+            rightContent()
             HorizontalSpacer(Dimens.space2)
         }
     }

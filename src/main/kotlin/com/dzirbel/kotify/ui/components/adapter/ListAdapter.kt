@@ -110,6 +110,7 @@ class ListAdapter<E> private constructor(
      * in cases when either the divider or sort order are changed, but perhaps could be avoided for changes to just the
      * filter, etc.
      */
+    @Suppress("UnsafeCallOnNullableType")
     val divisions: SortedMap<Any?, out List<IndexedValue<E>>> by lazy {
         val indices = sortIndexes ?: elements?.indices ?: emptyList()
         if (divider == null) {
@@ -157,7 +158,7 @@ class ListAdapter<E> private constructor(
      * [SortableProperty] object as is present in [sorts] does not need to be used.
      */
     fun sortOrderFor(sortableProperty: SortableProperty<E>?): SortOrder? {
-        return sortableProperty?.let {
+        return sortableProperty?.let { _ ->
             sorts?.find { it.sortableProperty.sortTitle == sortableProperty.sortTitle }?.sortOrder
         }
     }
@@ -240,8 +241,8 @@ class ListAdapter<E> private constructor(
     fun withSort(sorts: List<Sort<E>>?): ListAdapter<E> {
         if (sorts == this.sorts) return this
 
-        val sortIndexes = sorts?.let {
-            elements?.let {
+        val sortIndexes = sorts?.let { _ ->
+            elements?.let { _ ->
                 val sortComparator = sorts.asComparator()
                 val indexedComparator = Comparator<IndexedValue<E>> { o1, o2 ->
                     sortComparator.compare(o1.value, o2.value)

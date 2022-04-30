@@ -185,7 +185,7 @@ internal class DatabaseRepositoryTest {
 
             requireNotNull(result4)
             result4.assertMatches(
-                remoteModels.getValue(id),
+                networkModel = remoteModels.getValue(id),
                 createStart = start2,
                 createEnd = end2,
                 updateStart = start4,

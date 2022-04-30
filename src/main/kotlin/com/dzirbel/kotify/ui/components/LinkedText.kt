@@ -185,7 +185,7 @@ private class LinkElementBuilder(
  * Gets the offset of the character at the given [offset] of this [AnnotatedString], according to its [layoutResult].
  */
 private fun AnnotatedString.characterOffset(offset: Offset, layoutResult: TextLayoutResult?): Int? {
-    return layoutResult?.let {
+    return layoutResult?.let { _ ->
         // get the closest offset, but this may not actually be the character being hovered since it is only the closest
         val closestOffset = layoutResult.getOffsetForPosition(offset).coerceAtMost(this.length - 1)
 

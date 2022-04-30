@@ -117,7 +117,7 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
             val networkTracks = Spotify.Playlists.getPlaylistTracks(playlistId = playlistId)
                 .fetchAll<SpotifyPlaylistTrack>()
 
-            return KotifyDatabase.transaction("save playlist ${playlist?.name ?: "id $playlistId"} tracks") {
+            val tracks = KotifyDatabase.transaction("save playlist ${playlist?.name ?: "id $playlistId"} tracks") {
                 playlist = playlist ?: findById(id = playlistId)
                 playlist?.tracksFetched = Instant.now()
 
@@ -125,7 +125,8 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
                     PlaylistTrack.from(spotifyPlaylistTrack = track, playlistId = playlistId, index = index)
                 }
             }
-                .let { Pair(playlist, it) }
+
+            return Pair(playlist, tracks)
         }
     }
 }

@@ -28,13 +28,14 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 @Composable
 fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
-    if (oauth.error.value == null) {
+    val error = oauth.error.value
+    if (error == null) {
         Text("Authentication in progress. Accept the OAuth request from Spotify in your browser to continue.")
     } else {
         Text("Error during authentication!", color = LocalColors.current.error, style = MaterialTheme.typography.h5)
 
         Text(
-            text = oauth.error.value!!.stackTraceToString(),
+            text = error.stackTraceToString(),
             color = LocalColors.current.error,
             fontFamily = FontFamily.Monospace,
         )
@@ -131,10 +132,10 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
             is LocalOAuthServer.Result.Success -> null
         }
 
-        message?.let {
+        if (message != null) {
             VerticalSpacer(Dimens.space3)
 
-            Text(it, color = LocalColors.current.error)
+            Text(message, color = LocalColors.current.error)
         }
     }
 }

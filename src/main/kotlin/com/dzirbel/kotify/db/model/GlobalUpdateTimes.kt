@@ -58,9 +58,9 @@ object GlobalUpdateTimesRepository {
                 it[GlobalUpdateTimesTable.updateTime] = updateTime
             }
         } else {
-            GlobalUpdateTimesTable.insert {
-                it[GlobalUpdateTimesTable.key] = key
-                it[GlobalUpdateTimesTable.updateTime] = updateTime
+            GlobalUpdateTimesTable.insert { statement ->
+                statement[GlobalUpdateTimesTable.key] = key
+                statement[GlobalUpdateTimesTable.updateTime] = updateTime
             }
         }
     }

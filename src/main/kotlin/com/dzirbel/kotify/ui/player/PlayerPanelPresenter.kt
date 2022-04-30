@@ -109,14 +109,14 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
         when (event) {
             is Event.LoadDevices -> {
                 val previousVolume: Int?
-                mutateState {
+                mutateState { state ->
                     previousVolume = if (event.untilVolumeChangeDeviceId != null) {
-                        it.devices?.find { device -> device.id == event.untilVolumeChangeDeviceId }?.volumePercent
+                        state.devices?.find { device -> device.id == event.untilVolumeChangeDeviceId }?.volumePercent
                     } else {
                         null
                     }
 
-                    it.copy(loadingDevices = true)
+                    state.copy(loadingDevices = true)
                 }
 
                 val devices = try {
@@ -152,12 +152,12 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                 val previousIsPlaying: Boolean?
                 val previousRepeatState: String?
                 val previousShuffleState: Boolean?
-                mutateState {
-                    previousIsPlaying = it.playbackIsPlaying
-                    previousRepeatState = it.playbackRepeatState
-                    previousShuffleState = it.playbackShuffleState
+                mutateState { state ->
+                    previousIsPlaying = state.playbackIsPlaying
+                    previousRepeatState = state.playbackRepeatState
+                    previousShuffleState = state.playbackShuffleState
 
-                    it.copy(loadingPlayback = true)
+                    state.copy(loadingPlayback = true)
                 }
 
                 val playback = try {
@@ -167,9 +167,9 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                     throw ex
                 }
 
-                playback?.let {
-                    Player.isPlaying.value = it.isPlaying
-                    Player.playbackContext.value = it.context
+                if (playback != null) {
+                    Player.isPlaying.value = playback.isPlaying
+                    Player.playbackContext.value = playback.context
 
                     playback.item?.let { track ->
                         Player.currentTrackId.value = track.id
@@ -242,9 +242,9 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
 
             is Event.LoadTrackPlayback -> {
                 val currentTrack: SpotifyTrack?
-                mutateState {
-                    currentTrack = it.playbackTrack
-                    it.copy(loadingTrackPlayback = true)
+                mutateState { state ->
+                    currentTrack = state.playbackTrack
+                    state.copy(loadingTrackPlayback = true)
                 }
 
                 val trackPlayback = try {
@@ -254,15 +254,16 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                     throw ex
                 }
 
-                trackPlayback?.let {
-                    Player.isPlaying.value = it.isPlaying
-                    Player.playbackContext.value = it.context
-                }
-                trackPlayback?.item?.let { track ->
-                    Player.currentTrackId.value = track.id
+                if (trackPlayback != null) {
+                    Player.isPlaying.value = trackPlayback.isPlaying
+                    Player.playbackContext.value = trackPlayback.context
 
-                    // cache track in database or update stored data
-                    KotifyDatabase.transaction(name = "save track ${track.name}") { Track.from(track) }
+                    trackPlayback.item?.let { track ->
+                        Player.currentTrackId.value = track.id
+
+                        // cache track in database or update stored data
+                        KotifyDatabase.transaction(name = "save track ${track.name}") { Track.from(track) }
+                    }
                 }
 
                 when {

@@ -44,9 +44,9 @@ internal class KotifyDatabaseTest {
             val jobs = Array(numJobs) { i ->
                 async {
                     KotifyDatabase.transaction(name = null) {
-                        TestTable.insert {
-                            it[name] = "row $i"
-                            it[count] = i
+                        TestTable.insert { statement ->
+                            statement[name] = "row $i"
+                            statement[count] = i
                         }
                     }
                 }
