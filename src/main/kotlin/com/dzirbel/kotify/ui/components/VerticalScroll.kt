@@ -18,11 +18,12 @@ import androidx.compose.ui.Modifier
 @Composable
 fun VerticalScroll(
     modifier: Modifier = Modifier,
+    columnModifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(0),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(modifier) {
-        Column(Modifier.verticalScroll(scrollState)) {
+        Column(columnModifier.verticalScroll(scrollState)) {
             content()
         }
 

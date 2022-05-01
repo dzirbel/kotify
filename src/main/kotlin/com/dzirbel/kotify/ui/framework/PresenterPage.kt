@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -26,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontFamily
+import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import kotlinx.coroutines.CoroutineScope
@@ -133,7 +133,7 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
                 )
             }
         } else {
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            VerticalScroll(columnModifier = Modifier.padding(Dimens.space5)) {
                 Icon(
                     imageVector = Icons.Default.Warning,
                     contentDescription = "Error",
