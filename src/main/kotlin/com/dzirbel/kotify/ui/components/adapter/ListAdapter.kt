@@ -241,25 +241,9 @@ class ListAdapter<E> private constructor(
     fun withSort(sorts: List<Sort<E>>?): ListAdapter<E> {
         if (sorts == this.sorts) return this
 
-        val sortIndexes = sorts?.let { _ ->
-            elements?.let { _ ->
-                val sortComparator = sorts.asComparator()
-                val indexedComparator = Comparator<IndexedValue<E>> { o1, o2 ->
-                    sortComparator.compare(o1.value, o2.value)
-                }
-
-                // order by existing sortIndexes to preserve existing order under stable sorting
-                // TODO avoid creating extra lists in double mapping?
-                (sortIndexes ?: elements.indices)
-                    .map { IndexedValue(it, elements[it].element) }
-                    .sortedWith(indexedComparator)
-                    .map { it.index }
-            }
-        }
-
         return ListAdapter(
             elements = elements,
-            sortIndexes = sortIndexes,
+            sortIndexes = sorts?.let { sortIndexes(sorts = sorts, elements = elements) },
             sorts = sorts,
             divider = divider,
             filter = filter,
@@ -281,36 +265,59 @@ class ListAdapter<E> private constructor(
             )
         }
 
+        val elementData = this.elements?.plus(newElementData)
+
         return ListAdapter(
-            elements = this.elements?.plus(newElementData),
-            sortIndexes = null,
-            sorts = null,
+            elements = elementData,
+            sortIndexes = sorts?.let { sortIndexes(sorts = sorts, elements = elementData) },
+            sorts = sorts,
             divider = divider,
             filter = filter,
             filterString = filterString,
         )
-            .withSort(sorts) // TODO integrate new elements without a new ListAdapter copy
     }
 
     /**
      * Returns a copy of this [ListAdapter] with the given [elements] as its data, retaining sorts, filters, etc.
      */
     fun withElements(elements: List<E>?): ListAdapter<E> {
+        val elementData = elements?.map { element ->
+            ElementData(
+                element = element,
+                filtered = this.filter?.invoke(element) != false,
+                division = this.divider?.dividableProperty?.divisionFor(element),
+            )
+        }
+
         return ListAdapter(
-            elements = elements?.map { element ->
-                ElementData(
-                    element = element,
-                    filtered = this.filter?.invoke(element) != false,
-                    division = this.divider?.dividableProperty?.divisionFor(element),
-                )
-            },
-            sortIndexes = null,
-            sorts = null,
+            elements = elementData,
+            sortIndexes = sorts?.let { sortIndexes(sorts = sorts, elements = elementData) },
+            sorts = sorts,
             divider = divider,
             filter = filter,
             filterString = filterString,
         )
-            .withSort(sorts) // TODO integrate elements without a new ListAdapter copy
+    }
+
+    private fun sortIndexes(sorts: List<Sort<E>>, elements: List<ElementData<E>>?): List<Int>? {
+        if (elements == null) return null
+        if (elements.size <= 1) return elements.indices.toList()
+
+        // retain current sort order as the baseline unless the number of elements has changed
+        val baseIndices = sortIndexes?.takeIf { it.size == elements.size }
+
+        val inputArray = Array(elements.size) { i ->
+            val index = baseIndices?.get(i) ?: i
+            IndexedValue(index, elements[index].element)
+        }
+
+        val sortComparator = sorts.asComparator()
+        val indexedComparator = Comparator<IndexedValue<E>> { o1, o2 ->
+            sortComparator.compare(o1.value, o2.value)
+        }
+        inputArray.sortWith(indexedComparator)
+
+        return inputArray.map { it.index }
     }
 
     companion object {
