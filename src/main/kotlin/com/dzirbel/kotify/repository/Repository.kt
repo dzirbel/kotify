@@ -103,17 +103,30 @@ abstract class Repository<E> {
     }
 
     /**
-     * Returns a [State] reflecting the live state of the entity with the given [id].
+     * Returns a [State] reflecting the live state of the entity with the given [id], with initial value provided by
+     * [initState], by default loading it from the cache.
      *
      * The returned [State] is same object between calls for as long as it stays in context (i.e. is not
      * garbage-collected).
      *
-     * If [fetchMissing] is true (the default), then the state will be fetched asynchronously if it is unknown.
+     * If [fetchMissing] is true (the default) the state will be fetched asynchronously if it is unknown.
      */
-    suspend fun stateOf(id: String, fetchMissing: Boolean = true): State<E?> {
-        states[id]?.get()?.let { return it }
+    suspend fun stateOf(
+        id: String,
+        fetchMissing: Boolean = true,
+        initState: suspend Repository<E>.(id: String) -> E? = { getCached(it) },
+    ): State<E?> {
+        states[id]?.get()?.let { state ->
+            if (state.value == null && fetchMissing) {
+                coroutineScope {
+                    launch { getRemote(id) }
+                }
+            }
 
-        val cached = getCached(id)
+            return state
+        }
+
+        val cached = initState(id)
         val state = mutableStateOf(cached)
         states[id] = WeakReference(state)
 

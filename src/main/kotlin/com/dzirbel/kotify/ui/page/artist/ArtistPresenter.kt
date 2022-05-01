@@ -30,7 +30,7 @@ class ArtistPresenter(
     scope = scope,
     key = artistId,
     startingEvents = listOf(
-        Event.LoadArtist(invalidate = false),
+        Event.LoadArtistState,
         Event.LoadArtistAlbums(invalidate = false),
     ),
     initialState = ViewModel(),
@@ -57,7 +57,9 @@ class ArtistPresenter(
     }
 
     sealed class Event {
-        data class LoadArtist(val invalidate: Boolean) : Event()
+        object LoadArtistState : Event()
+        object RefreshArtist : Event()
+
         data class LoadArtistAlbums(val invalidate: Boolean) : Event()
 
         class ToggleSave(val albumId: String, val save: Boolean) : Event()
@@ -68,15 +70,21 @@ class ArtistPresenter(
 
     override suspend fun reactTo(event: Event) {
         when (event) {
-            is Event.LoadArtist -> {
+            is Event.LoadArtistState -> {
                 mutateState { it.copy(refreshingArtist = true) }
 
-                val artistState = ArtistRepository.stateOf(id = artistId)
+                val artistState = ArtistRepository.stateOf(id = artistId, fetchMissing = false, initState = { get(it) })
                     .requireValue { throw NotFound("Artist $artistId not found") }
 
-                mutateState {
-                    it.copy(artist = artistState, refreshingArtist = false)
-                }
+                mutateState { it.copy(artist = artistState, refreshingArtist = false) }
+            }
+
+            is Event.RefreshArtist -> {
+                mutateState { it.copy(refreshingArtist = true) }
+
+                ArtistRepository.getRemote(id = artistId)
+
+                mutateState { it.copy(refreshingArtist = false) }
             }
 
             is Event.LoadArtistAlbums -> {

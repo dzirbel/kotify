@@ -55,7 +55,7 @@ fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewMode
                             updatedFormat = { "Artist synced $it" },
                             updatedFallback = "Artist never synced",
                             onClick = {
-                                presenter.emitAsync(ArtistPresenter.Event.LoadArtist(invalidate = true))
+                                presenter.emitAsync(ArtistPresenter.Event.RefreshArtist)
                             },
                         )
 
