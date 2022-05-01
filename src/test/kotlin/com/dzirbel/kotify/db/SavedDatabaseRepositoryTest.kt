@@ -10,6 +10,7 @@ import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.dzirbel.kotify.containsExactlyElementsOfInAnyOrder
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
+import com.dzirbel.kotify.isSameInstanceAs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -267,6 +268,28 @@ internal class SavedDatabaseRepositoryTest {
 
             val state3 = TestSavedRepository.stateOf(id = "saved-3", fetchMissing = false)
             assertThat(state3.value).isNotNull().isTrue()
+        }
+    }
+
+    @Test
+    fun testLibraryState() {
+        runTest {
+            val cachedLibrary = setOf("saved-1", "saved-2", "saved-3")
+            val state = TestSavedRepository.libraryState(fetchIfUnknown = false)
+
+            assertThat(state.value).isNotNull().containsExactlyElementsOfInAnyOrder(cachedLibrary)
+
+            TestSavedRepository.save(id = "saved-4")
+
+            assertThat(state.value).isNotNull().containsExactlyElementsOfInAnyOrder(cachedLibrary.plus("saved-4"))
+
+            TestSavedRepository.unsave(id = "saved-2")
+
+            assertThat(state.value)
+                .isNotNull()
+                .containsExactlyElementsOfInAnyOrder(cachedLibrary.plus("saved-4").minus("saved-2"))
+
+            assertThat(TestSavedRepository.libraryState(fetchIfUnknown = false)).isSameInstanceAs(state)
         }
     }
 

@@ -67,8 +67,6 @@ abstract class SavedRepository : Repository<Boolean>() {
      *
      * If [fetchIfUnknown] is true, the library state will be fetched from the remote data source if it is not cached
      * (i.e. null). Otherwise, the returned state may have a null value.
-     *
-     * TODO unit test
      */
     abstract suspend fun libraryState(fetchIfUnknown: Boolean = false): State<Set<String>?>
 

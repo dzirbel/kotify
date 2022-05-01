@@ -264,7 +264,6 @@ internal class DatabaseRepositoryTest {
             TestRepository.stateOf(ids = listOf("id1", "id2", "id3"), fetchMissing = false)
         }
 
-        println(states.map { it.value })
         assertThat(states).hasSize(3)
         assertThat(states).index(0).transform { it.value }.isNull()
         assertThat(states).index(1).transform { it.value }.isNotNull().transform { it.id.value }.isEqualTo("id2")
