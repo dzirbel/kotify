@@ -118,8 +118,10 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
                 .fetchAll<SpotifyPlaylistTrack>()
 
             val tracks = KotifyDatabase.transaction("save playlist ${playlist?.name ?: "id $playlistId"} tracks") {
-                playlist = playlist ?: findById(id = playlistId)
-                playlist?.tracksFetched = Instant.now()
+                (playlist ?: findById(id = playlistId))?.let { playlist ->
+                    playlist.tracksFetched = Instant.now()
+                    PlaylistRepository.updateLiveState(id = playlistId, value = playlist)
+                }
 
                 networkTracks.mapIndexedNotNull { index, track ->
                     PlaylistTrack.from(spotifyPlaylistTrack = track, playlistId = playlistId, index = index)

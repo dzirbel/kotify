@@ -53,6 +53,7 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
 import kotlinx.coroutines.Dispatchers
@@ -93,10 +94,16 @@ fun PlayerPanel() {
                     Column {
                         CurrentTrack(
                             track = state.playbackTrack,
-                            trackIsSaved = state.trackSavedState?.value,
+                            trackIsSaved = state.trackSavedState
+                                ?.collectAsStateSwitchable(key = state.playbackTrack?.id)
+                                ?.value,
                             trackRating = state.trackRatingState?.value,
-                            artistsAreSaved = state.artistSavedStates?.mapValues { it.value.value },
-                            albumIsSaved = state.albumSavedState?.value,
+                            artistsAreSaved = state.artistSavedStates?.mapValues { entry ->
+                                entry.value.collectAsStateSwitchable(key = entry.key).value
+                            },
+                            albumIsSaved = state.albumSavedState
+                                ?.collectAsStateSwitchable(key = state.playbackTrack?.album?.id)
+                                ?.value,
                             presenter = presenter,
                         )
                     }

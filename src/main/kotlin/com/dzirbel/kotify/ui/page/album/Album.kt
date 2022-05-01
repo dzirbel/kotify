@@ -62,7 +62,7 @@ fun AlbumPageHeader(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) 
                         horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        ToggleSaveButton(isSaved = state.isSavedState?.value, size = Dimens.iconMedium) {
+                        ToggleSaveButton(isSaved = state.isSaved, size = Dimens.iconMedium) {
                             presenter.emitAsync(AlbumPresenter.Event.ToggleSave(save = it))
                         }
 

@@ -120,7 +120,7 @@ object ArtistRepository : DatabaseRepository<Artist, SpotifyArtist>(Artist) {
         return KotifyDatabase.transaction("save artist ${artist?.name ?: "id $artistId"} albums") {
             (artist ?: Artist.findById(id = artistId))?.let { artist ->
                 artist.albumsFetched = Instant.now()
-                states[artistId]?.get()?.value = artist
+                updateLiveState(id = artistId, value = artist)
             }
 
             networkAlbums

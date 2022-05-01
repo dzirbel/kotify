@@ -24,6 +24,11 @@ import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onEach
 import java.time.Instant
 
 class AlbumPresenter(
@@ -41,9 +46,9 @@ class AlbumPresenter(
         val album: Album? = null,
         val tracks: ListAdapter<Track> = ListAdapter.empty(defaultSort = TrackAlbumIndexProperty),
         val totalDurationMs: Long? = null,
-        val savedTracksStates: Map<String, State<Boolean?>>? = null,
+        val savedTracksStates: Map<String, StateFlow<Boolean?>>? = null,
         val trackRatings: Map<String, State<Rating?>> = emptyMap(),
-        val isSavedState: State<Boolean?>? = null,
+        val isSaved: Boolean? = null,
         val albumUpdated: Instant? = null,
     ) {
         val trackProperties = listOf(
@@ -58,7 +63,7 @@ class AlbumPresenter(
             TrackAlbumIndexProperty,
             TrackSavedProperty(
                 trackIdOf = { track -> track.id.value },
-                isSaved = { track -> savedTracksStates?.get(track.id.value)?.value },
+                savedStateOf = { track -> savedTracksStates?.get(track.id.value) },
             ),
             TrackNameProperty,
             TrackArtistsProperty,
@@ -72,6 +77,14 @@ class AlbumPresenter(
         data class Load(val invalidate: Boolean) : Event()
         data class SetSort(val sorts: List<Sort<Track>>) : Event()
         data class ToggleSave(val save: Boolean) : Event()
+    }
+
+    override fun externalEvents(): Flow<Event> {
+        return flow {
+            SavedAlbumRepository.flowOf(id = albumId)
+                .onEach { saved -> mutateState { it.copy(isSaved = saved) } }
+                .collect()
+        }
     }
 
     override suspend fun reactTo(event: Event) {
@@ -92,23 +105,20 @@ class AlbumPresenter(
                     tracks.onEach { it.artists.loadToCache() }
                 }
 
-                val isSavedState = SavedAlbumRepository.stateOf(id = albumId)
-
                 val trackIds = tracks.map { it.id.value }
 
-                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.stateOf(ids = trackIds))
+                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.flowOf(ids = trackIds))
 
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
 
                 mutateState {
-                    ViewModel(
+                    it.copy(
                         refreshing = false,
                         album = album,
                         tracks = it.tracks.withElements(tracks),
                         totalDurationMs = tracks.sumOf { track -> track.durationMs },
                         savedTracksStates = savedTracksState,
                         trackRatings = trackRatings,
-                        isSavedState = isSavedState,
                         albumUpdated = album.updatedTime,
                     )
                 }

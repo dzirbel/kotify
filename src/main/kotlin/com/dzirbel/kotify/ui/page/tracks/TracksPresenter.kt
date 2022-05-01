@@ -22,6 +22,7 @@ import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -42,7 +43,10 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
     ) {
         val trackProperties: List<Column<Track>> = listOf(
             TrackAlbumIndexProperty,
-            TrackSavedProperty(trackIdOf = { it.id.value }, isSaved = { savedTrackIds.contains(it.id.value) }),
+            TrackSavedProperty(
+                trackIdOf = { it.id.value },
+                savedStateOf = { MutableStateFlow(savedTrackIds.contains(it.id.value)) },
+            ),
             TrackNameProperty,
             TrackArtistsProperty,
             TrackAlbumProperty,

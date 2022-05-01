@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -27,6 +28,18 @@ fun <T : Any> State<T?>.requireValue(ifNull: () -> Nothing): State<T> {
 
     @Suppress("UNCHECKED_CAST")
     return this as State<T>
+}
+
+/**
+ * Ensures that this [StateFlow] contains a non-null value [T], invoking [ifNull] otherwise.
+ */
+fun <T : Any> StateFlow<T?>.requireValue(ifNull: () -> Nothing): StateFlow<T> {
+    if (value == null) {
+        ifNull()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    return this as StateFlow<T>
 }
 
 /**
@@ -50,6 +63,14 @@ fun <T> callbackAsState(
             }
         }
     }
+}
+
+@Composable
+fun <T> StateFlow<T>.collectAsStateSwitchable(
+    key: Any?,
+    context: CoroutineContext = Dispatchers.IO,
+): State<T> {
+    return collectAsStateSwitchable(initial = { value }, key = key, context = context)
 }
 
 /**

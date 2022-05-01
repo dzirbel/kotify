@@ -16,6 +16,7 @@ import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 
 class PlayerPanelPresenter(scope: CoroutineScope) :
@@ -39,9 +40,9 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
         // non-null when muted, saves the previous volume percent
         val savedVolume: Int? = null,
 
-        val trackSavedState: State<Boolean?>? = null,
-        val artistSavedStates: Map<String, State<Boolean?>>? = null,
-        val albumSavedState: State<Boolean?>? = null,
+        val trackSavedState: StateFlow<Boolean?>? = null,
+        val artistSavedStates: Map<String, StateFlow<Boolean?>>? = null,
+        val albumSavedState: StateFlow<Boolean?>? = null,
 
         val trackRatingState: State<Rating?>? = null,
 
@@ -206,7 +207,7 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                         val track = playback.item
 
                         val trackSavedState = track?.id?.let { trackId ->
-                            SavedTrackRepository.stateOf(id = trackId)
+                            SavedTrackRepository.flowOf(id = trackId)
                         }
 
                         val trackRatingState = track?.id?.let { trackId ->
@@ -214,11 +215,11 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                         }
 
                         val artistSavedStates = track?.artists?.mapNotNull { it.id }?.let { trackArtistIds ->
-                            trackArtistIds.zipToMap(SavedArtistRepository.stateOf(ids = trackArtistIds))
+                            trackArtistIds.zipToMap(SavedArtistRepository.flowOf(ids = trackArtistIds))
                         }
 
                         val albumSavedState = track?.album?.id?.let {
-                            SavedAlbumRepository.stateOf(id = it)
+                            SavedAlbumRepository.flowOf(id = it)
                         }
 
                         mutateState {
@@ -308,15 +309,15 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                     else -> {
                         val track = trackPlayback.item
 
-                        val trackSavedState = SavedTrackRepository.stateOf(id = track.id)
+                        val trackSavedState = SavedTrackRepository.flowOf(id = track.id)
                         val trackRatingState = TrackRatingRepository.ratingState(id = track.id)
 
                         val trackArtistIds = track.artists.mapNotNull { it.id }
                         val artistSavedStates = trackArtistIds
-                            .zipToMap(SavedArtistRepository.stateOf(ids = trackArtistIds))
+                            .zipToMap(SavedArtistRepository.flowOf(ids = trackArtistIds))
 
                         val albumSavedState = track.album.id?.let {
-                            SavedAlbumRepository.stateOf(id = it)
+                            SavedAlbumRepository.flowOf(id = it)
                         }
 
                         mutateState {

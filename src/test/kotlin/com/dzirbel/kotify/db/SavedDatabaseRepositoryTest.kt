@@ -78,7 +78,7 @@ object TestSavedRepository : SavedDatabaseRepository<TestSavedNetworkModel>(
         libraryFetches = 0
         fromIds.clear()
         savedOverrides.clear()
-        clearStates()
+        clearFlows()
     }
 }
 
@@ -248,9 +248,9 @@ internal class SavedDatabaseRepositoryTest {
     }
 
     @Test
-    fun testState() {
+    fun testFlowOf() {
         runTest {
-            val state = TestSavedRepository.stateOf(id = "saved-1", fetchMissing = false)
+            val state = TestSavedRepository.flowOf(id = "saved-1", fetchMissing = false)
             assertThat(state.value).isNull()
 
             TestSavedRepository.setSaved(id = "saved-1", false)
@@ -260,13 +260,13 @@ internal class SavedDatabaseRepositoryTest {
             TestSavedRepository.getRemote(id = "saved-1")
             assertThat(state.value).isNotNull().isTrue()
 
-            val state2 = TestSavedRepository.stateOf(id = "saved-2", fetchMissing = false)
+            val state2 = TestSavedRepository.flowOf(id = "saved-2", fetchMissing = false)
             assertThat(state2.value).isNull()
 
             TestSavedRepository.getLibrary()
             assertThat(state2.value).isNotNull().isTrue()
 
-            val state3 = TestSavedRepository.stateOf(id = "saved-3", fetchMissing = false)
+            val state3 = TestSavedRepository.flowOf(id = "saved-3", fetchMissing = false)
             assertThat(state3.value).isNotNull().isTrue()
         }
     }
@@ -275,7 +275,7 @@ internal class SavedDatabaseRepositoryTest {
     fun testLibraryState() {
         runTest {
             val cachedLibrary = setOf("saved-1", "saved-2", "saved-3")
-            val state = TestSavedRepository.libraryState(fetchIfUnknown = false)
+            val state = TestSavedRepository.libraryState(fetchIfUnknown = true)
 
             assertThat(state.value).isNotNull().containsExactlyElementsOfInAnyOrder(cachedLibrary)
 
@@ -302,9 +302,9 @@ internal class SavedDatabaseRepositoryTest {
      */
     @Test
     @Timeout(value = 5, unit = TimeUnit.SECONDS)
-    fun testStateGC() {
+    fun testFlowOfGC() {
         runBlocking {
-            val state1 = WeakReference(TestSavedRepository.stateOf(id = "saved-1"))
+            val state1 = WeakReference(TestSavedRepository.flowOf(id = "saved-1"))
 
             var attempt = 1
             while (!state1.refersTo(null)) {

@@ -100,7 +100,7 @@ fun PlaylistPageHeader(presenter: PlaylistPresenter, state: PlaylistPresenter.Vi
                 updated = state.playlist?.updatedTime?.toEpochMilli(),
                 updatedFormat = { "Playlist synced $it" },
                 updatedFallback = "Playlist never synced",
-                onClick = { presenter.emitAsync(PlaylistPresenter.Event.Load(invalidate = true)) },
+                onClick = { presenter.emitAsync(PlaylistPresenter.Event.RefreshPlaylist) },
             )
 
             InvalidateButton(

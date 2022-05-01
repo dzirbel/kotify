@@ -45,7 +45,7 @@ abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : Spot
     final override suspend fun getRemote(id: String): EntityType? {
         return fetch(id)?.let { networkModel ->
             KotifyDatabase.transaction("save $entityName $id") { entityClass.from(networkModel) }
-                ?.also { states[id]?.get()?.value = it }
+                ?.also { updateLiveState(id = id, value = it) }
         }
     }
 
@@ -58,7 +58,7 @@ abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : Spot
                 KotifyDatabase.transaction("save ${ids.size} ${entityName}s") { entityClass.from(networkModels) }
                     .onEach { model ->
                         if (model != null) {
-                            states[model.id.value]?.get()?.value = model
+                            updateLiveState(id = model.id.value, value = model)
                         }
                     }
             }

@@ -84,6 +84,8 @@ interface RatingRepository {
      *
      * The returned [State] must be the same object between calls for as long as it stays in context (i.e. is not
      * garbage-collected).
+     *
+     * TODO update to return a StateFlow instead
      */
     suspend fun ratingState(id: String, userId: String = requireUserId()): State<Rating?>
 

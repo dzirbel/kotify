@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +37,7 @@ import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 open class TrackNameProperty<T>(private val toTrack: (T) -> Track) : PropertyByString<T>(title = "Name") {
@@ -141,16 +143,16 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> Track) :
 
 class TrackSavedProperty<T>(
     private val trackIdOf: (T) -> String,
-    private val isSaved: (T) -> Boolean?,
+    private val savedStateOf: (T) -> StateFlow<Boolean?>?,
 ) : SortableProperty<T>, DividableProperty<T>, Column<T> {
     override val title = "Saved"
     override val width = ColumnWidth.Fill()
 
     override fun compare(sortOrder: SortOrder, first: T, second: T): Int {
-        return sortOrder.compareNullable(isSaved(first), isSaved(second))
+        return sortOrder.compareNullable(savedStateOf(first)?.value, savedStateOf(second)?.value)
     }
 
-    override fun divisionFor(element: T): Boolean? = isSaved(element)
+    override fun divisionFor(element: T): Boolean? = savedStateOf(element)?.value
 
     override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
         return sortOrder.compareNullable(first as? Boolean, second as? Boolean)
@@ -169,7 +171,7 @@ class TrackSavedProperty<T>(
         val scope = rememberCoroutineScope { Dispatchers.IO }
         ToggleSaveButton(
             modifier = Modifier.padding(Dimens.space2),
-            isSaved = isSaved(item),
+            isSaved = savedStateOf(item)?.collectAsState()?.value,
         ) { saved ->
             scope.launch { SavedTrackRepository.setSaved(id = trackIdOf(item), saved = saved) }
         }

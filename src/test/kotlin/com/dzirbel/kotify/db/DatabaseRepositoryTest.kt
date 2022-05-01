@@ -239,8 +239,8 @@ internal class DatabaseRepositoryTest {
     }
 
     @Test
-    fun testStateOf() {
-        val state = runBlocking { TestRepository.stateOf(id = "id1", fetchMissing = false) }
+    fun testFlowOf() {
+        val state = runBlocking { TestRepository.flowOf(id = "id1", fetchMissing = false) }
 
         assertThat(state.value).isNull()
 
@@ -250,18 +250,18 @@ internal class DatabaseRepositoryTest {
 
         requireNotNull(state.value).assertMatches(remoteModels.getValue("id1"), createStart = start, createEnd = end)
 
-        val stateB = runBlocking { TestRepository.stateOf(id = "id1") }
+        val stateB = runBlocking { TestRepository.flowOf(id = "id1") }
         assertThat(stateB).isSameInstanceAs(state)
 
-        TestRepository.clearStates()
+        TestRepository.clearFlows()
     }
 
     @Test
-    fun testStatesOf() {
+    fun testFlowsOf() {
         runBlocking { TestRepository.get(id = "id2") }
 
         val states = runBlocking {
-            TestRepository.stateOf(ids = listOf("id1", "id2", "id3"), fetchMissing = false)
+            TestRepository.flowOf(ids = listOf("id1", "id2", "id3"), fetchMissing = false)
         }
 
         assertThat(states).hasSize(3)
@@ -275,7 +275,7 @@ internal class DatabaseRepositoryTest {
         assertThat(states).index(1).transform { it.value }.isNotNull().transform { it.id.value }.isEqualTo("id2")
         assertThat(states).index(2).transform { it.value }.isNull()
 
-        TestRepository.clearStates()
+        TestRepository.clearFlows()
     }
 
     private fun TestEntity.assertMatches(

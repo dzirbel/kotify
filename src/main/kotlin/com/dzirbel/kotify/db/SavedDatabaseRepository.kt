@@ -90,7 +90,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = null)
         }
 
-        states[id]?.get()?.value = saved
+        updateLiveState(id = id, value = saved)
         libraryState.value?.let { library ->
             libraryState.value = library.plusOrMinus(value = id, condition = saved)
         }
@@ -110,7 +110,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         }
 
         ids.zipEach(saveds) { id, saved ->
-            states[id]?.get()?.value = saved
+            updateLiveState(id = id, value = saved)
             libraryState.value?.let { library ->
                 libraryState.value = library.plusOrMinus(value = id, condition = saved)
             }
@@ -145,7 +145,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         }
 
         ids.forEach { id ->
-            states[id]?.get()?.value = saved
+            updateLiveState(id = id, value = saved)
         }
         libraryState.value?.let { library ->
             libraryState.value = library.plusOrMinus(elements = ids, condition = saved)
@@ -193,9 +193,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
                 }
         }
             .also { library ->
-                for ((id, reference) in states.entries) {
-                    reference.get()?.value = library.contains(id)
-                }
+                updateLiveStates { id -> library.contains(id) }
 
                 libraryStateInitialized = true
                 libraryState.value = library
@@ -209,6 +207,6 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             GlobalUpdateTimesRepository.invalidate(libraryUpdateKey)
             savedEntityTable.deleteAll()
         }
-        states.clear()
+        clearFlows()
     }
 }

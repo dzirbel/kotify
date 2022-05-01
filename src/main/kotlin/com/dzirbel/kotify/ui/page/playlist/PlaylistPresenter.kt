@@ -25,9 +25,15 @@ import com.dzirbel.kotify.ui.properties.TrackPlayingColumn
 import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
 import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.properties.TrackSavedProperty
+import com.dzirbel.kotify.ui.util.requireValue
 import com.dzirbel.kotify.util.ReorderCalculator
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onEach
 
 class PlaylistPresenter(
     private val playlistId: String,
@@ -35,7 +41,7 @@ class PlaylistPresenter(
 ) : Presenter<PlaylistPresenter.ViewModel, PlaylistPresenter.Event>(
     scope = scope,
     key = playlistId,
-    startingEvents = listOf(Event.Load(invalidate = false), Event.LoadTracks(invalidate = false)),
+    startingEvents = listOf(Event.LoadTracks(invalidate = false)),
     initialState = ViewModel(),
 ) {
 
@@ -46,7 +52,7 @@ class PlaylistPresenter(
         val playlist: Playlist? = null,
         val tracks: ListAdapter<PlaylistTrack> = ListAdapter.empty(defaultSort = PlaylistTrackIndexProperty),
         val trackRatings: Map<String, State<Rating?>> = emptyMap(),
-        val savedTracksStates: Map<String, State<Boolean?>>? = null,
+        val savedTracksStates: Map<String, StateFlow<Boolean?>>? = null,
         val isSavedState: State<Boolean?>? = null,
     ) {
         val playlistTrackColumns = listOf(
@@ -62,7 +68,7 @@ class PlaylistPresenter(
             PlaylistTrackIndexProperty,
             TrackSavedProperty(
                 trackIdOf = { playlistTrack -> playlistTrack.trackId.value },
-                isSaved = { playlistTrack -> savedTracksStates?.get(playlistTrack.trackId.value)?.value },
+                savedStateOf = { playlistTrack -> savedTracksStates?.get(playlistTrack.trackId.value) },
             ),
             TrackNameProperty.ForPlaylistTrack,
             TrackArtistsProperty.ForPlaylistTrack,
@@ -75,37 +81,37 @@ class PlaylistPresenter(
     }
 
     sealed class Event {
-        data class Load(val invalidate: Boolean) : Event()
+        object RefreshPlaylist : Event()
+
         data class LoadTracks(val invalidate: Boolean) : Event()
         data class ToggleSave(val save: Boolean) : Event()
         data class SetSorts(val sorts: List<Sort<PlaylistTrack>>) : Event()
         data class Order(val tracks: ListAdapter<PlaylistTrack>) : Event()
     }
 
+    override fun externalEvents(): Flow<Event> {
+        return flow {
+            PlaylistRepository.flowOf(id = playlistId, fetchMissing = false, initState = { get(it) })
+                .requireValue { throw NotFound("Playlist $playlistId not found") }
+                .onEach { playlist ->
+                    KotifyDatabase.transaction("load playlist ${playlist.name} owner and image") {
+                        playlist.owner.loadToCache()
+                        playlist.largestImage.loadToCache()
+                    }
+                }
+                .onEach { playlist ->
+                    mutateState { it.copy(refreshing = false, playlist = playlist) }
+                }
+                .collect()
+        }
+    }
+
     override suspend fun reactTo(event: Event) {
         when (event) {
-            is Event.Load -> {
-                if (event.invalidate) {
-                    mutateState { it.copy(refreshing = true) }
-                }
+            is Event.RefreshPlaylist -> {
+                mutateState { it.copy(refreshing = true) }
 
-                val playlist = PlaylistRepository.get(id = playlistId, allowCache = !event.invalidate)
-                    ?: throw NotFound("Playlist $playlistId not found")
-
-                KotifyDatabase.transaction("load playlist ${playlist.name} owner and image") {
-                    playlist.owner.loadToCache()
-                    playlist.largestImage.loadToCache()
-                }
-
-                val isSavedState = SavedPlaylistRepository.stateOf(id = playlistId)
-
-                mutateState {
-                    it.copy(
-                        refreshing = false,
-                        playlist = playlist,
-                        isSavedState = isSavedState,
-                    )
-                }
+                PlaylistRepository.getRemote(id = playlistId)
             }
 
             is Event.LoadTracks -> {
@@ -118,10 +124,9 @@ class PlaylistPresenter(
 
                 val trackIds = tracks.map { it.track.cached.id.value }
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
-                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.stateOf(ids = trackIds))
+                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.flowOf(ids = trackIds))
 
                 mutateState {
-                    // TODO doesn't apply new track loaded time to playlist model in the ViewModel
                     it.copy(
                         refreshingTracks = false,
                         tracks = it.tracks.withElements(tracks),

@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui.page.artist
 
-import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.FixtureModels
 import com.dzirbel.kotify.testTransaction
 import com.dzirbel.kotify.ui.screenshotTest
@@ -37,7 +36,7 @@ internal class ArtistPageScreenshotTest {
 
         val baseState = ArtistPresenter.ViewModel()
         val state = baseState.copy(
-            artist = mutableStateOf(artist),
+            artist = artist,
             artistAlbums = baseState.artistAlbums.withElements(artistAlbums),
         )
 

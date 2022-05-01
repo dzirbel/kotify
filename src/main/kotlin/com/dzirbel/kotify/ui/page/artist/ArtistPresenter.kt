@@ -22,6 +22,11 @@ import com.dzirbel.kotify.ui.properties.AlbumTypeDividableProperty
 import com.dzirbel.kotify.ui.util.requireValue
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onEach
 
 class ArtistPresenter(
     private val artistId: String,
@@ -29,15 +34,12 @@ class ArtistPresenter(
 ) : Presenter<ArtistPresenter.ViewModel, ArtistPresenter.Event>(
     scope = scope,
     key = artistId,
-    startingEvents = listOf(
-        Event.LoadArtistState,
-        Event.LoadArtistAlbums(invalidate = false),
-    ),
+    startingEvents = listOf(Event.LoadArtistAlbums(invalidate = false)),
     initialState = ViewModel(),
 ) {
 
     data class ViewModel(
-        val artist: State<Artist>? = null,
+        val artist: Artist? = null,
         val refreshingArtist: Boolean = false,
         val displayedAlbumTypes: Set<SpotifyAlbum.Type> = setOf(SpotifyAlbum.Type.ALBUM),
         val artistAlbums: ListAdapter<ArtistAlbum> = ListAdapter.empty(
@@ -45,7 +47,7 @@ class ArtistPresenter(
             defaultFilter = filterFor(displayedAlbumTypes),
         ),
         val albumRatings: Map<String, List<State<Rating?>>?> = emptyMap(),
-        val savedAlbumsStates: Map<String, State<Boolean?>>? = null,
+        val savedAlbumsStates: Map<String, StateFlow<Boolean?>>? = null,
         val refreshingArtistAlbums: Boolean = false,
     ) {
         val artistAlbumProperties: List<AdapterProperty<ArtistAlbum>> = listOf(
@@ -57,7 +59,6 @@ class ArtistPresenter(
     }
 
     sealed class Event {
-        object LoadArtistState : Event()
         object RefreshArtist : Event()
 
         data class LoadArtistAlbums(val invalidate: Boolean) : Event()
@@ -68,23 +69,23 @@ class ArtistPresenter(
         class SetDisplayedAlbumTypes(val albumTypes: Set<SpotifyAlbum.Type>) : Event()
     }
 
+    override fun externalEvents(): Flow<Event> {
+        return flow {
+            ArtistRepository.flowOf(id = artistId, fetchMissing = false, initState = { get(it) })
+                .requireValue { throw NotFound("Artist $artistId not found") }
+                .onEach { artist ->
+                    mutateState { it.copy(refreshingArtist = false, artist = artist) }
+                }
+                .collect()
+        }
+    }
+
     override suspend fun reactTo(event: Event) {
         when (event) {
-            is Event.LoadArtistState -> {
-                mutateState { it.copy(refreshingArtist = true) }
-
-                val artistState = ArtistRepository.stateOf(id = artistId, fetchMissing = false, initState = { get(it) })
-                    .requireValue { throw NotFound("Artist $artistId not found") }
-
-                mutateState { it.copy(artist = artistState, refreshingArtist = false) }
-            }
-
             is Event.RefreshArtist -> {
                 mutateState { it.copy(refreshingArtist = true) }
 
                 ArtistRepository.getRemote(id = artistId)
-
-                mutateState { it.copy(refreshingArtist = false) }
             }
 
             is Event.LoadArtistAlbums -> {
@@ -101,7 +102,7 @@ class ArtistPresenter(
                 SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
 
                 val albumIds = artistAlbums.map { it.albumId.value }
-                val savedAlbumsStates = albumIds.zipToMap(SavedAlbumRepository.stateOf(ids = albumIds))
+                val savedAlbumsStates = albumIds.zipToMap(SavedAlbumRepository.flowOf(ids = albumIds))
 
                 val albumRatings = artistAlbums.associate { artistAlbum ->
                     val album = artistAlbum.album.cached
