@@ -3,11 +3,14 @@ package com.dzirbel.kotify.db
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.hasSize
+import assertk.assertions.index
 import assertk.assertions.isBetween
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import com.dzirbel.kotify.containsExactlyElementsOf
+import com.dzirbel.kotify.isSameInstanceAs
 import com.dzirbel.kotify.network.model.SpotifyObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -233,6 +236,47 @@ internal class DatabaseRepositoryTest {
             job1b.await()
             job2b.await()
         }
+    }
+
+    @Test
+    fun testStateOf() {
+        val state = runBlocking { TestRepository.stateOf(id = "id1", fetchMissing = false) }
+
+        assertThat(state.value).isNull()
+
+        val start = Instant.now()
+        runBlocking { TestRepository.get(id = "id1") }
+        val end = Instant.now()
+
+        requireNotNull(state.value).assertMatches(remoteModels.getValue("id1"), createStart = start, createEnd = end)
+
+        val stateB = runBlocking { TestRepository.stateOf(id = "id1") }
+        assertThat(stateB).isSameInstanceAs(state)
+
+        TestRepository.clearStates()
+    }
+
+    @Test
+    fun testStatesOf() {
+        runBlocking { TestRepository.get(id = "id2") }
+
+        val states = runBlocking {
+            TestRepository.stateOf(ids = listOf("id1", "id2", "id3"), fetchMissing = false)
+        }
+
+        println(states.map { it.value })
+        assertThat(states).hasSize(3)
+        assertThat(states).index(0).transform { it.value }.isNull()
+        assertThat(states).index(1).transform { it.value }.isNotNull().transform { it.id.value }.isEqualTo("id2")
+        assertThat(states).index(2).transform { it.value }.isNull()
+
+        runBlocking { TestRepository.get(id = "id1") }
+
+        assertThat(states).index(0).transform { it.value }.isNotNull().transform { it.id.value }.isEqualTo("id1")
+        assertThat(states).index(1).transform { it.value }.isNotNull().transform { it.id.value }.isEqualTo("id2")
+        assertThat(states).index(2).transform { it.value }.isNull()
+
+        TestRepository.clearStates()
     }
 
     private fun TestEntity.assertMatches(

@@ -173,4 +173,11 @@ abstract class Repository<E> {
         @Suppress("UNCHECKED_CAST")
         return existingStates as List<State<E?>>
     }
+
+    /**
+     * Clears the cache of states used by [stateOf], for use in tests.
+     */
+    fun clearStates() {
+        states.clear()
+    }
 }

@@ -137,13 +137,6 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         return libraryState
     }
 
-    /**
-     * Clears the cache of states used by [stateOf], for use in tests.
-     */
-    fun clearStates() {
-        states.clear()
-    }
-
     final override suspend fun setSaved(ids: List<String>, saved: Boolean) {
         pushSaved(ids = ids, saved = saved)
 
