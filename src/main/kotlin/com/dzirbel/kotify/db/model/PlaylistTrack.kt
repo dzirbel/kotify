@@ -59,19 +59,22 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
          * Converts the given [spotifyPlaylistTrack] into an [PlaylistTrack] with the given [playlist], either creating
          * a new entity or updating the existing one based on the new network values.
          *
-         * Returns null if a [Track] could not be created from the [spotifyPlaylistTrack].
+         * Returns null if a [Track] could not be created from the [spotifyPlaylistTrack], which can happen if it is a
+         * local track or an episode instead.
          *
          * Must be called from within a transaction.
          */
         fun from(spotifyPlaylistTrack: SpotifyPlaylistTrack, playlistId: String, index: Int): PlaylistTrack? {
-            return Track.from(spotifyPlaylistTrack.track)?.let { track ->
-                recordFor(trackId = track.id.value, playlistId = playlistId).apply {
-                    User.from(spotifyPlaylistTrack.addedBy)?.let { addedBy.set(it) }
-                    spotifyPlaylistTrack.addedAt?.let { addedAt = it }
-                    isLocal = spotifyPlaylistTrack.isLocal
-                    indexOnPlaylist = index
+            return spotifyPlaylistTrack.track
+                ?.let { Track.from(it) }
+                ?.let { track ->
+                    recordFor(trackId = track.id.value, playlistId = playlistId).apply {
+                        User.from(spotifyPlaylistTrack.addedBy)?.let { addedBy.set(it) }
+                        spotifyPlaylistTrack.addedAt?.let { addedAt = it }
+                        isLocal = spotifyPlaylistTrack.isLocal
+                        indexOnPlaylist = index
+                    }
                 }
-            }
         }
 
         /**

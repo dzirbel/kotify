@@ -17,6 +17,8 @@ import com.dzirbel.kotify.network.model.SpotifyExternalUrl
 import com.dzirbel.kotify.network.model.SpotifyFollowers
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 
 /**
  * A collection of convenience functions which construct various model classes with mocked data for use in tests.
@@ -183,7 +185,7 @@ object FixtureModels {
                         addedAt = null,
                         addedBy = user,
                         isLocal = false,
-                        track = track,
+                        trackOrEpisode = Json.encodeToJsonElement(track),
                     )
                 },
                 href = "href",

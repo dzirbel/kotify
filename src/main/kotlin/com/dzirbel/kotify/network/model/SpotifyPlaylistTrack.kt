@@ -2,6 +2,10 @@ package com.dzirbel.kotify.network.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.decodeFromJsonElement
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-playlisttrackobject
@@ -24,11 +28,35 @@ data class SpotifyPlaylistTrack(
     @SerialName("is_local") val isLocal: Boolean,
 
     /** Information about the track or episode. */
-    val track: SimplifiedSpotifyTrack, // TODO might be episode object instead
+    @SerialName("track") private val trackOrEpisode: JsonElement,
 
     /** Undocumented field. */
     @SerialName("primary_color") val primaryColor: String? = null,
 
     /** Undocumented field. */
     @SerialName("video_thumbnail") val videoThumbnail: Map<String, String?>? = null,
-)
+) {
+    /**
+     * The [SimplifiedSpotifyTrack] wrapped in this [SpotifyPlaylistTrack], may be null if it is an [episode] instead.
+     */
+    val track: SimplifiedSpotifyTrack? by lazy {
+        @Suppress("SwallowedException")
+        try {
+            Json.decodeFromJsonElement<SimplifiedSpotifyTrack>(trackOrEpisode)
+        } catch (ex: SerializationException) {
+            null
+        }
+    }
+
+    /**
+     * The [SimplifiedSpotifyEpisode] wrapped in this [SpotifyPlaylistTrack], may be null if it is an [track] instead.
+     */
+    val episode: SimplifiedSpotifyEpisode? by lazy {
+        @Suppress("SwallowedException")
+        try {
+            Json.decodeFromJsonElement<SimplifiedSpotifyEpisode>(trackOrEpisode)
+        } catch (ex: SerializationException) {
+            null
+        }
+    }
+}
