@@ -1,17 +1,19 @@
 package com.dzirbel.kotify.db
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesRepository
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.util.plusOrMinus
 import com.dzirbel.kotify.util.zipEach
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.deleteAll
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * A [SavedRepository] which uses a database table [savedEntityTable] as its local cache for individual saved states an
@@ -25,11 +27,37 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     private val savedEntityTable: SavedEntityTable,
     private val libraryUpdateKey: String = savedEntityTable.tableName,
 ) : SavedRepository() {
-    private var libraryStateInitialized = false
+    private val libraryStateInitialized = AtomicBoolean(false)
 
-    private val libraryState: MutableState<Set<String>?> = mutableStateOf(null)
+    private val libraryFlow: MutableStateFlow<Set<String>?> = MutableStateFlow(null)
+    private val libraryUpdatedFlow: MutableStateFlow<Instant?> = MutableStateFlow(null)
 
     private val events = MutableSharedFlow<Event>()
+
+    /**
+     * Atomically initializes the values of [libraryFlow] and [libraryUpdatedFlow], and must be invoked before the
+     * values of these flows are used.
+     *
+     * This function is idempotent unless [fetchIfUnknown] is true, in which case a new asynchronous call to
+     * [getLibraryRemote] will be made if the current state of the library is unknown.
+     *
+     * In effect, this asynchronously checks the value of the library from the database and if [fetchIfUnknown] and
+     * there is no cached library then also fetches it from the remote source.
+     */
+    private fun initFlows(fetchIfUnknown: Boolean, scope: CoroutineScope) {
+        if (!libraryStateInitialized.getAndSet(true)) {
+            scope.launch {
+                val library = getLibraryCached()
+                if (fetchIfUnknown && library == null) {
+                    getLibraryRemote()
+                }
+            }
+        } else if (fetchIfUnknown && libraryFlow.value == null) {
+            scope.launch {
+                getLibraryRemote()
+            }
+        }
+    }
 
     /**
      * Fetches the saved state of each of the given [ids] via a remote call to the network.
@@ -91,8 +119,8 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         }
 
         updateLiveState(id = id, value = saved)
-        libraryState.value?.let { library ->
-            libraryState.value = library.plusOrMinus(value = id, condition = saved)
+        libraryFlow.value?.let { library ->
+            libraryFlow.value = library.plusOrMinus(value = id, condition = saved)
         }
         val queryEvents = listOf(QueryEvent(id = id, result = saved))
         events.emit(Event.QueryRemote(queryEvents))
@@ -111,8 +139,8 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
         ids.zipEach(saveds) { id, saved ->
             updateLiveState(id = id, value = saved)
-            libraryState.value?.let { library ->
-                libraryState.value = library.plusOrMinus(value = id, condition = saved)
+            libraryFlow.value?.let { library ->
+                libraryFlow.value = library.plusOrMinus(value = id, condition = saved)
             }
         }
 
@@ -122,19 +150,9 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         return saveds
     }
 
-    final override suspend fun libraryState(fetchIfUnknown: Boolean): State<Set<String>?> {
-        // library state has never been loaded, i.e. the database has never been checked; load it from cache now
-        if (!libraryStateInitialized) {
-            getLibraryCached()
-            assert(libraryStateInitialized)
-        }
-
-        // if the library state is still missing and fetchIfUnknown is true, fetch from the remote
-        if (fetchIfUnknown && libraryState.value == null) {
-            getLibraryRemote()
-        }
-
-        return libraryState
+    final override fun libraryFlow(fetchIfUnknown: Boolean, scope: CoroutineScope): StateFlow<Set<String>?> {
+        initFlows(fetchIfUnknown = fetchIfUnknown, scope = scope)
+        return libraryFlow
     }
 
     final override suspend fun setSaved(ids: List<String>, saved: Boolean) {
@@ -147,8 +165,8 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         ids.forEach { id ->
             updateLiveState(id = id, value = saved)
         }
-        libraryState.value?.let { library ->
-            libraryState.value = library.plusOrMinus(elements = ids, condition = saved)
+        libraryFlow.value?.let { library ->
+            libraryFlow.value = library.plusOrMinus(elements = ids, condition = saved)
         }
         events.emit(Event.SetSaved(ids = ids, saved = saved))
     }
@@ -157,27 +175,38 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         return KotifyDatabase.transaction("check $entityName saved library updated time") {
             GlobalUpdateTimesRepository.updated(libraryUpdateKey)
         }
+            .also { libraryUpdatedFlow.value = it }
+    }
+
+    final override fun libraryUpdatedFlow(scope: CoroutineScope): StateFlow<Instant?> {
+        initFlows(fetchIfUnknown = false, scope = scope)
+        return libraryUpdatedFlow
     }
 
     final override suspend fun invalidateLibrary() {
         KotifyDatabase.transaction("invalidate $entityName saved library") {
             GlobalUpdateTimesRepository.invalidate(libraryUpdateKey)
         }
+        libraryUpdatedFlow.value = null
 
         events.emit(Event.InvalidateLibrary)
     }
 
     final override suspend fun getLibraryCached(): Set<String>? {
+        var updatedTime: Instant? = null
         return KotifyDatabase.transaction("load $entityName saved library") {
-            if (GlobalUpdateTimesRepository.hasBeenUpdated(libraryUpdateKey)) {
+            updatedTime = GlobalUpdateTimesRepository.updated(libraryUpdateKey)
+            if (updatedTime != null) {
                 savedEntityTable.savedEntityIds()
             } else {
                 null
             }
         }
             .also { library ->
-                libraryStateInitialized = true
-                libraryState.value = library
+                libraryStateInitialized.set(true)
+                libraryFlow.value = library
+                assert(libraryFlow.value == library)
+                libraryUpdatedFlow.value = updatedTime
 
                 events.emit(Event.QueryLibraryCached(library = library))
             }
@@ -185,8 +214,9 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
     final override suspend fun getLibraryRemote(): Set<String> {
         val savedNetworkModels = fetchLibrary()
+        val updateTime = Instant.now()
         return KotifyDatabase.transaction("save $entityName saved library") {
-            GlobalUpdateTimesRepository.setUpdated(libraryUpdateKey)
+            GlobalUpdateTimesRepository.setUpdated(libraryUpdateKey, updateTime = updateTime)
             savedNetworkModels.mapNotNullTo(mutableSetOf()) { from(it) }
                 .onEach { id ->
                     savedEntityTable.setSaved(entityId = id, saved = true, savedTime = null)
@@ -195,8 +225,9 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             .also { library ->
                 updateLiveStates { id -> library.contains(id) }
 
-                libraryStateInitialized = true
-                libraryState.value = library
+                libraryStateInitialized.set(true)
+                libraryFlow.value = library
+                libraryUpdatedFlow.value = updateTime
 
                 events.emit(Event.QueryLibraryRemote(library = library))
             }
@@ -207,6 +238,8 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
             GlobalUpdateTimesRepository.invalidate(libraryUpdateKey)
             savedEntityTable.deleteAll()
         }
+        libraryFlow.value = null
+        libraryUpdatedFlow.value = null
         clearFlows()
     }
 }

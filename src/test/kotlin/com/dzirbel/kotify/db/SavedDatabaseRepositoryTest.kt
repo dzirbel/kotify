@@ -13,6 +13,7 @@ import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
 import com.dzirbel.kotify.isSameInstanceAs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.deleteAll
@@ -273,23 +274,27 @@ internal class SavedDatabaseRepositoryTest {
 
     @Test
     fun testLibraryState() {
-        runTest {
-            val cachedLibrary = setOf("saved-1", "saved-2", "saved-3")
-            val state = TestSavedRepository.libraryState(fetchIfUnknown = true)
+        KotifyDatabase.withSynchronousTransactions {
+            runTest {
+                val cachedLibrary = setOf("saved-1", "saved-2", "saved-3")
+                val state = TestSavedRepository.libraryFlow(fetchIfUnknown = true, scope = this)
 
-            assertThat(state.value).isNotNull().containsExactlyElementsOfInAnyOrder(cachedLibrary)
+                advanceUntilIdle()
 
-            TestSavedRepository.save(id = "saved-4")
+                assertThat(state.value).isNotNull().containsExactlyElementsOfInAnyOrder(cachedLibrary)
 
-            assertThat(state.value).isNotNull().containsExactlyElementsOfInAnyOrder(cachedLibrary.plus("saved-4"))
+                TestSavedRepository.save(id = "saved-4")
 
-            TestSavedRepository.unsave(id = "saved-2")
+                assertThat(state.value).isNotNull().containsExactlyElementsOfInAnyOrder(cachedLibrary.plus("saved-4"))
 
-            assertThat(state.value)
-                .isNotNull()
-                .containsExactlyElementsOfInAnyOrder(cachedLibrary.plus("saved-4").minus("saved-2"))
+                TestSavedRepository.unsave(id = "saved-2")
 
-            assertThat(TestSavedRepository.libraryState(fetchIfUnknown = false)).isSameInstanceAs(state)
+                assertThat(state.value)
+                    .isNotNull()
+                    .containsExactlyElementsOfInAnyOrder(cachedLibrary.plus("saved-4").minus("saved-2"))
+
+                assertThat(TestSavedRepository.libraryFlow(fetchIfUnknown = false)).isSameInstanceAs(state)
+            }
         }
     }
 

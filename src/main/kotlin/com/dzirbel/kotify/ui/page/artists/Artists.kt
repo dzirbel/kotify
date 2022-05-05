@@ -66,7 +66,7 @@ fun ArtistsPageHeader(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewM
                             refreshing = state.refreshing,
                             updated = state.artistsUpdated,
                             contentPadding = PaddingValues(all = Dimens.space2),
-                            onClick = { presenter.emitAsync(ArtistsPresenter.Event.Load(invalidate = true)) },
+                            onClick = { presenter.emitAsync(ArtistsPresenter.Event.RefreshArtistLibrary) },
                         )
                     }
                 }
@@ -210,7 +210,7 @@ private fun ArtistDetailInsert(
             ) { _, artistAlbum ->
                 SmallAlbumCell(
                     album = artistAlbum.album.cached,
-                    isSaved = state.savedAlbumsState?.value?.contains(artistAlbum.albumId.value),
+                    isSaved = state.savedAlbumIds?.contains(artistAlbum.albumId.value),
                     onToggleSave = { save ->
                         presenter.emitAsync(
                             ArtistsPresenter.Event.ToggleAlbumSaved(albumId = artistAlbum.albumId.value, save = save),

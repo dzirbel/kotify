@@ -265,7 +265,7 @@ class ListAdapter<E> private constructor(
             )
         }
 
-        val elementData = this.elements?.plus(newElementData)
+        val elementData = this.elements.orEmpty().plus(newElementData)
 
         return ListAdapter(
             elements = elementData,

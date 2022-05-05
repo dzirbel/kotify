@@ -10,7 +10,6 @@ import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedArtistRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.repository.Rating
-import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
 import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
@@ -20,16 +19,16 @@ import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistPopularityProperty
 import com.dzirbel.kotify.ui.properties.ArtistRatingProperty
+import com.dzirbel.kotify.util.ignore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import java.time.Instant
 
 class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewModel, ArtistsPresenter.Event>(
     scope = scope,
-    startingEvents = listOf(Event.Load(invalidate = false)),
     initialState = ViewModel(),
 ) {
 
@@ -73,9 +72,9 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
         val savedArtistIds: Set<String>? = null,
 
         /**
-         * Live set of saved album IDs.
+         * Set of saved album IDs, for use in the artist detail insert.
          */
-        val savedAlbumsState: State<Set<String>?>? = null,
+        val savedAlbumIds: Set<String>? = null,
 
         /**
          * Time when artists were last updated, or null if either this hasn't been loaded yet or the library has never
@@ -88,12 +87,30 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
             ArtistPopularityProperty,
             ArtistRatingProperty(ratings = artistRatings),
         )
+
+        /**
+         * Returns a copy of this [ViewModel] with the given [artists], also disabling [refreshing] and correctly
+         * updating the [selectedArtistIndex].
+         */
+        fun withArtists(artists: ListAdapter<Artist>): ViewModel {
+            val selectedArtistIndex = selectedArtistIndex
+                ?.let { index -> this.artists[index]?.id?.value }
+                ?.let { selectedArtistId ->
+                    artists.indexOfFirst { artist -> artist.id.value == selectedArtistId }
+                }
+                ?.takeIf { it >= 0 }
+
+            return copy(
+                refreshing = false,
+                artists = artists,
+                selectedArtistIndex = selectedArtistIndex,
+            )
+        }
     }
 
     sealed class Event {
-        data class Load(val invalidate: Boolean) : Event()
+        object RefreshArtistLibrary : Event()
         data class SetSelectedArtistIndex(val index: Int?) : Event()
-        data class ReactToArtistsSaved(val artistIds: List<String>, val saved: Boolean) : Event()
         data class ToggleSave(val artistId: String, val save: Boolean) : Event()
         data class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
         data class SetSorts(val sorts: List<Sort<Artist>>) : Event()
@@ -102,46 +119,63 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
 
     override fun externalEvents(): Flow<Event> {
         return merge(
-            SavedArtistRepository.eventsFlow()
-                .filterIsInstance<SavedRepository.Event.SetSaved>()
-                .map { Event.ReactToArtistsSaved(artistIds = it.ids, saved = it.saved) },
+            SavedArtistRepository.libraryFlow(fetchIfUnknown = true)
+                .filterNotNull()
+                .onEach { savedArtistIds ->
+                    mutateState { it.copy(savedArtistIds = savedArtistIds) }
 
-            SavedArtistRepository.eventsFlow()
-                .filterIsInstance<SavedRepository.Event.QueryLibraryRemote>()
-                .map { Event.Load(invalidate = false) },
+                    val loadedArtistIds = queryState { it.artists }.mapTo(mutableSetOf()) { it.id.value }
+
+                    // if an artist has been saved but is now missing from the grid of artists, load and add it
+                    val missingArtistIds = savedArtistIds.minus(loadedArtistIds)
+                    if (missingArtistIds.isNotEmpty()) {
+                        val missingArtists = ArtistRepository.getFull(ids = missingArtistIds.toList()).filterNotNull()
+
+                        val imageUrls = KotifyDatabase.transaction("load artists tracks and image") {
+                            missingArtists.mapNotNull { artist ->
+                                artist.trackIds.loadToCache()
+                                artist.largestImage.live?.url
+                            }
+                        }
+                        SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
+
+                        mutateState { it.withArtists(it.artists.plusElements(missingArtists)) }
+
+                        val missingArtistRatings = missingArtists.associate { artist ->
+                            artist.id.value to TrackRatingRepository.ratingStates(ids = artist.trackIds.cached)
+                        }
+
+                        mutateState { it.copy(artistRatings = it.artistRatings.plus(missingArtistRatings)) }
+                    } else {
+                        mutateState { it.copy(refreshing = false) }
+                    }
+                }
+                .ignore(),
+
+            SavedArtistRepository.libraryUpdatedFlow()
+                .onEach { updated ->
+                    mutateState { it.copy(artistsUpdated = updated?.toEpochMilli()) }
+                }
+                .ignore(),
+
+            SavedAlbumRepository.libraryFlow()
+                .onEach { savedAlbumIds ->
+                    mutateState { it.copy(savedAlbumIds = savedAlbumIds) }
+                }
+                .ignore(),
         )
     }
 
     override suspend fun reactTo(event: Event) {
         when (event) {
-            is Event.Load -> {
+            is Event.RefreshArtistLibrary -> {
                 mutateState { it.copy(refreshing = true) }
 
-                if (event.invalidate) {
-                    SavedArtistRepository.invalidateLibrary()
-                }
+                val library = SavedArtistRepository.getLibraryRemote()
 
-                val savedArtistIds = SavedArtistRepository.getLibrary()
-                val artists = fetchArtists(artistIds = savedArtistIds.toList())
-                val artistsUpdated = SavedArtistRepository.libraryUpdated()
-
-                val artistRatings = artists.associate { artist ->
-                    artist.id.value to TrackRatingRepository.ratingStates(ids = artist.trackIds.cached)
-                }
-
+                // remove unsaved artists from the grid after a refresh
                 mutateState { state ->
-                    val selectedArtistId = state.selectedArtistIndex?.let { index -> state.artists[index]?.id?.value }
-
-                    state.copy(
-                        refreshing = false,
-                        artists = state.artists.withElements(artists),
-                        selectedArtistIndex = selectedArtistId
-                            ?.let { artists.indexOfFirst { artist -> artist.id.value == selectedArtistId } }
-                            ?.takeIf { index -> index >= 0 },
-                        artistRatings = artistRatings,
-                        savedArtistIds = savedArtistIds,
-                        artistsUpdated = artistsUpdated?.toEpochMilli(),
-                    )
+                    state.withArtists(state.artists.withElements(state.artists.filter { it.id.value in library }))
                 }
             }
 
@@ -177,52 +211,10 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                     albums.forEach { it.album.cached.largestImage.loadToCache() }
                 }
 
-                val savedAlbumsState = if (queryState { it.savedAlbumsState } == null) {
-                    SavedAlbumRepository.libraryState()
-                } else {
-                    null
-                }
-
                 mutateState {
                     it.copy(
                         artistDetails = it.artistDetails.plus(artist.id.value to details.copy(albums = albumsAdapter)),
-                        savedAlbumsState = savedAlbumsState ?: it.savedAlbumsState,
                     )
-                }
-            }
-
-            is Event.ReactToArtistsSaved -> {
-                if (event.saved) {
-                    // if an artist has been saved but is now missing from the grid of artists, load and add it
-                    val stateArtists = queryState { it.artists }.mapTo(mutableSetOf()) { it.id.value }
-
-                    val missingArtistIds: List<String> = event.artistIds
-                        .minus(stateArtists)
-
-                    if (missingArtistIds.isNotEmpty()) {
-                        val missingArtists: List<Artist> = fetchArtists(artistIds = missingArtistIds)
-                        val missingArtistRatings = missingArtists.associate { artist ->
-                            artist.id.value to TrackRatingRepository.ratingStates(ids = artist.trackIds.cached)
-                        }
-
-                        mutateState { state ->
-                            val artistRatings = state.artistRatings.plus(missingArtistRatings)
-                            state.copy(
-                                artists = state.artists.plusElements(missingArtists),
-                                savedArtistIds = state.savedArtistIds?.plus(event.artistIds),
-                                artistRatings = artistRatings,
-                            )
-                        }
-                    } else {
-                        mutateState {
-                            it.copy(savedArtistIds = it.savedArtistIds?.plus(event.artistIds))
-                        }
-                    }
-                } else {
-                    // if an artist has been unsaved, retain the grid of artists but toggle its save state
-                    mutateState {
-                        it.copy(savedArtistIds = it.savedArtistIds?.minus(event.artistIds.toSet()))
-                    }
                 }
             }
 
@@ -238,23 +230,5 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                 it.copy(artists = it.artists.withDivider(divider = event.divider))
             }
         }
-    }
-
-    /**
-     * Loads the full [Artist] objects from the [ArtistRepository] and does common initialization - caching their images
-     * from the database and warming the image cache.
-     */
-    private suspend fun fetchArtists(artistIds: List<String>): List<Artist> {
-        val artists = ArtistRepository.getFull(ids = artistIds).filterNotNull()
-
-        val imageUrls = KotifyDatabase.transaction("load artists tracks and image") {
-            artists.mapNotNull { artist ->
-                artist.trackIds.loadToCache()
-                artist.largestImage.live?.url
-            }
-        }
-        SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
-
-        return artists
     }
 }

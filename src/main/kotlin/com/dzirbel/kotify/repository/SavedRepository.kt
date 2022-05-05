@@ -1,7 +1,10 @@
 package com.dzirbel.kotify.repository
 
 import androidx.compose.runtime.State
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.time.Instant
 
 /**
@@ -63,14 +66,19 @@ abstract class SavedRepository : Repository<Boolean>() {
     /**
      * Returns a [State] reflecting the live state of the user's library as entity IDs.
      *
-     * The returned [State] must be the same object between calls.
+     * The returned [StateFlow] must be the same object between calls.
      *
      * If [fetchIfUnknown] is true, the library state will be fetched from the remote data source if it is not cached
      * (i.e. null). Otherwise, the returned state may have a null value.
      *
-     * TODO update to return a StateFlow instead
+     * The [scope] in which the library (either cached or from the remote) is loaded may be provided, but should
+     * typically remain as its default value of [GlobalScope] to ensure the fetch is not cancelled. It is exposed mainly
+     * to allow tests to provide their test scope.
      */
-    abstract suspend fun libraryState(fetchIfUnknown: Boolean = false): State<Set<String>?>
+    abstract fun libraryFlow(
+        fetchIfUnknown: Boolean = false,
+        scope: CoroutineScope = GlobalScope,
+    ): StateFlow<Set<String>?>
 
     /**
      * Saves the entity with the given [id] to the user's library, both via a remote call and in the local cache.
@@ -109,6 +117,18 @@ abstract class SavedRepository : Repository<Boolean>() {
      * if it has never been fetched.
      */
     abstract suspend fun libraryUpdated(): Instant?
+
+    /**
+     * Returns a [State] reflecting the live state of the last time the entire library was updated, or null if it has
+     * never been fetched.
+     *
+     * The returned [StateFlow] must be the same object between calls.
+     *
+     * The [scope] in which the library state is loaded from the cache may be provided, but should typically remain as
+     * its default value of [GlobalScope] to ensure the fetch is not cancelled. It is exposed mainly to allow tests to
+     * provide their test scope.
+     */
+    abstract fun libraryUpdatedFlow(scope: CoroutineScope = GlobalScope): StateFlow<Instant?>
 
     /**
      * Invalidates the library state, i.e. the set of all the user's saved entities, in the local cache.
