@@ -22,12 +22,11 @@ import com.dzirbel.kotify.ui.properties.TrackPlayingColumn
 import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
 import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.properties.TrackSavedProperty
+import com.dzirbel.kotify.util.ignore
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import java.time.Instant
 
@@ -80,11 +79,11 @@ class AlbumPresenter(
     }
 
     override fun externalEvents(): Flow<Event> {
-        return flow {
-            SavedAlbumRepository.flowOf(id = albumId)
-                .onEach { saved -> mutateState { it.copy(isSaved = saved) } }
-                .collect()
-        }
+        return SavedAlbumRepository.stateOf(id = albumId)
+            .onEach { saved ->
+                mutateState { it.copy(isSaved = saved) }
+            }
+            .ignore()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -107,7 +106,7 @@ class AlbumPresenter(
 
                 val trackIds = tracks.map { it.id.value }
 
-                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.flowOf(ids = trackIds))
+                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.statesOf(ids = trackIds))
 
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
 

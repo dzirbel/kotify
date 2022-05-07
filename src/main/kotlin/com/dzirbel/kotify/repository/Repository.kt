@@ -1,7 +1,8 @@
 package com.dzirbel.kotify.repository
 
 import com.dzirbel.kotify.util.zipEach
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -12,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Manages access of entities [E] referenced by String IDs between a local cache and a remote, network-based source.
  */
 abstract class Repository<E> {
-    private val flows = ConcurrentHashMap<String, WeakReference<MutableStateFlow<E?>>>()
+    private val states = ConcurrentHashMap<String, WeakReference<MutableStateFlow<E?>>>()
 
     /**
      * Retrieves the entity with the given [id] in the local cache, if it exists.
@@ -44,15 +45,23 @@ abstract class Repository<E> {
      */
     abstract suspend fun getRemote(ids: List<String>): List<E?>
 
-    // TODO document
+    /**
+     * Updates the live state accessed in [stateOf] for the entity with the given [id] to the given [value], if it is
+     * currently being tracked.
+     */
     fun updateLiveState(id: String, value: E?) {
-        flows[id]?.get()?.value = value
+        states[id]?.get()?.value = value
     }
 
-    // TODO document
+    /**
+     * Updates all the live states accessed in [stateOf] currently being tracked according to the given mapping
+     * function.
+     */
     fun updateLiveStates(updatedValue: (id: String) -> E?) {
-        for ((id, reference) in flows) {
-            reference.get()?.value = updatedValue(id)
+        synchronized(states) {
+            for ((id, reference) in states) {
+                reference.get()?.value = updatedValue(id)
+            }
         }
     }
 
@@ -114,106 +123,147 @@ abstract class Repository<E> {
     }
 
     /**
-     * Hack for [flowOf] to allow provided a default value for initState; as of Kotlin 1.6.10 providing a default value
-     * of suspend functions (at least in some cases) causes an internal compiler error.
-     */
-    @Suppress("SuspendFunWithFlowReturnType") // TODO re-evaluate
-    suspend fun flowOf(id: String, fetchMissing: Boolean = true): StateFlow<E?> {
-        return flowOf(id = id, fetchMissing = fetchMissing, initState = { getCached(id) })
-    }
-
-    /**
-     * Returns a [StateFlow] reflecting the live state of the entity with the given [id], with initial value provided by
-     * [initState], by default loading it from the cache.
+     * Returns a [StateFlow] reflecting the live state of the entity with the given [id].
+     *
+     * If the state has not been previously tracked it is asynchronously initialized from the cached value if
+     * [allowCache] is true, then if either [allowCache] was false or there was no cached value from the remote if
+     * [allowRemote] is true. If neither [allowCache] or [allowRemote] are true an [IllegalArgumentException] is thrown.
+     *
+     * If the state has already been tracked, it must reflect at least the current cached value and as such [allowCache]
+     * is irrelevant. If the state exists but is null (i.e. there is no cached value) and [allowRemote] is true it is
+     * asynchronously initialized from the remote.
+     *
+     * In either case, as soon as an initial value for the state is established [onStateInitialized] is invoked with it
+     * as the argument.
      *
      * The returned [StateFlow] is same object between calls for as long as it stays in context (i.e. is not
      * garbage-collected).
-     *
-     * If [fetchMissing] is true (the default) the state will be fetched asynchronously if it is unknown.
      */
-    @Suppress("SuspendFunWithFlowReturnType") // TODO re-evaluate
-    suspend fun flowOf(
+    fun stateOf(
         id: String,
-        fetchMissing: Boolean = true,
-        initState: suspend Repository<E>.(id: String) -> E?,
+        scope: CoroutineScope = GlobalScope,
+        allowCache: Boolean = true,
+        allowRemote: Boolean = true,
+        onStateInitialized: (E?) -> Unit = {},
     ): StateFlow<E?> {
-        flows[id]?.get()?.let { flow ->
-            if (flow.value == null && fetchMissing) {
-                coroutineScope {
-                    launch { getRemote(id) }
+        require(allowCache || allowRemote) { "must allow either cache or remote source" }
+
+        val state: MutableStateFlow<E?>
+        synchronized(states) {
+            states[id]?.get()?.let { state ->
+                if (allowRemote && state.value == null) {
+                    scope.launch {
+                        val value = getRemote(id)
+                        onStateInitialized(value)
+                    }
+                } else {
+                    onStateInitialized(state.value)
+                }
+
+                return state
+            }
+
+            state = MutableStateFlow(null)
+            states[id] = WeakReference(state)
+        }
+
+        scope.launch {
+            val value = if (allowRemote) get(id = id, allowCache = allowCache) else getCached(id = id)
+            state.value = value
+            onStateInitialized(value)
+        }
+
+        return state
+    }
+
+    /**
+     * Returns [StateFlow]s reflecting the live states of the entities with the given [ids].
+     *
+     * For each entity, if the state has not been previously tracked it is asynchronously initialized from the cached
+     * value if [allowCache] is true, then if either [allowCache] was false or there was no cached value from the remote
+     * if [allowRemote] is true. If neither [allowCache] or [allowRemote] are true an [IllegalArgumentException] is
+     * thrown.
+     *
+     * If the state has already been tracked, it must reflect at least the current cached value and as such [allowCache]
+     * is irrelevant. If the state exists but is null (i.e. there is no cached value) and [allowRemote] is true it is
+     * asynchronously initialized from the remote.
+     *
+     * The returned [StateFlow]s are the same objects between calls for as long as they stay in context (i.e. are not
+     * garbage-collected).
+     */
+    fun statesOf(
+        ids: List<String>,
+        scope: CoroutineScope = GlobalScope,
+        allowCache: Boolean = true,
+        allowRemote: Boolean = true,
+    ): List<StateFlow<E?>> {
+        require(allowCache || allowRemote) { "must allow either cache or remote source" }
+
+        val missingIndices = ArrayList<IndexedValue<String>>()
+        val idsToFetchFromRemote = if (allowRemote) mutableListOf<String>() else null
+
+        // retrieve or create new flows for each of the ids
+        val returnStates = synchronized(states) {
+            ids.mapIndexedTo(ArrayList(ids.size)) { index, id ->
+                val existingState = states[id]?.get()
+                if (existingState != null) {
+                    if (allowRemote && existingState.value == null) {
+                        idsToFetchFromRemote?.add(id)
+                    }
+
+                    existingState
+                } else {
+                    missingIndices.add(IndexedValue(index = index, value = id))
+
+                    val state = MutableStateFlow<E?>(null)
+                    states[id] = WeakReference(state)
+                    state
+                }
+            }
+        }
+
+        val missingIds = missingIndices.map { it.value }
+        when {
+            // if we allow the cache and have states which were just created, try to load them from the cache and then
+            // fall back to loading anything which is still missing (newly created state or not) from the remote, if
+            // allowed
+            allowCache && missingIndices.isNotEmpty() -> {
+                scope.launch {
+                    val missingCached = getCached(ids = missingIds)
+
+                    missingIndices.zipEach(missingCached) { indexedValue, cached ->
+                        states[indexedValue.value]?.get()?.value = cached
+                        if (cached == null) {
+                            // if any value are missing from the cache, add to batch to fetch from the remote (only has
+                            // an effect if fetchMissing is true)
+                            idsToFetchFromRemote?.add(indexedValue.value)
+                        }
+                    }
+
+                    idsToFetchFromRemote?.let { getRemote(ids = it) }
                 }
             }
 
-            return flow
-        }
+            // otherwise, if we allow the remote then do a batch fetch for any state which did not have a value
+            allowRemote -> {
+                requireNotNull(idsToFetchFromRemote)
+                idsToFetchFromRemote.addAll(missingIds)
 
-        val cached = initState(id)
-        val flow = MutableStateFlow(cached)
-        flows[id] = WeakReference(flow)
-
-        if (cached == null && fetchMissing) {
-            coroutineScope {
-                launch { getRemote(id) }
+                scope.launch {
+                    getRemote(ids = idsToFetchFromRemote)
+                }
             }
         }
 
-        return flow
+        return returnStates
     }
 
     /**
-     * Returns [StateFlow]s reflecting the live state of the entities with the given [ids].
-     *
-     * The returned [StateFlow]s are the same objects between calls for as long as it stays in context (i.e. is not
-     * garbage-collected).
-     *
-     * If [fetchMissing] is true (the default), then any unknown states will be fetched asynchronously.
-     *
-     * TODO asynchronously fetch missing values even if the flows already exist, to match singular version
+     * Clears the cache of states used by [statesOf], for use in tests.
      */
-    suspend fun flowOf(ids: List<String>, fetchMissing: Boolean = true): List<StateFlow<E?>> {
-        val missingIndices = ArrayList<IndexedValue<String>>()
-
-        val existingFlows = ids.mapIndexedTo(ArrayList(ids.size)) { index, id ->
-            val flow = flows[id]?.get()
-            if (flow == null) {
-                missingIndices.add(IndexedValue(index = index, value = id))
-            }
-
-            flow
+    fun clearStates() {
+        synchronized(states) {
+            states.clear()
         }
-
-        if (missingIndices.isEmpty()) {
-            @Suppress("UNCHECKED_CAST")
-            return existingFlows as List<StateFlow<E?>>
-        }
-
-        val missingCached = getCached(ids = missingIndices.map { it.value })
-        val idsToFetch = if (fetchMissing) mutableListOf<String>() else null
-
-        missingIndices.zipEach(missingCached) { indexedValue, cached ->
-            val flow = MutableStateFlow(cached)
-            flows[indexedValue.value] = WeakReference(flow)
-            existingFlows[indexedValue.index] = flow
-
-            if (cached == null) {
-                idsToFetch?.add(indexedValue.value)
-            }
-        }
-
-        idsToFetch?.takeIf { it.isNotEmpty() }?.let {
-            coroutineScope {
-                launch { getRemote(ids = it) }
-            }
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        return existingFlows as List<StateFlow<E?>>
-    }
-
-    /**
-     * Clears the cache of states used by [flowOf], for use in tests.
-     */
-    fun clearFlows() {
-        flows.clear()
     }
 }

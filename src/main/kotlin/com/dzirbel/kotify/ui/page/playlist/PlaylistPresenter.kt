@@ -25,14 +25,12 @@ import com.dzirbel.kotify.ui.properties.TrackPlayingColumn
 import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
 import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.properties.TrackSavedProperty
-import com.dzirbel.kotify.ui.util.requireValue
 import com.dzirbel.kotify.util.ReorderCalculator
+import com.dzirbel.kotify.util.ignore
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 
 class PlaylistPresenter(
@@ -90,20 +88,27 @@ class PlaylistPresenter(
     }
 
     override fun externalEvents(): Flow<Event> {
-        return flow {
-            PlaylistRepository.flowOf(id = playlistId, fetchMissing = false, initState = { get(it) })
-                .requireValue { throw NotFound("Playlist $playlistId not found") }
-                .onEach { playlist ->
+        return PlaylistRepository.stateOf(
+            id = playlistId,
+            onStateInitialized = { playlist ->
+                if (playlist == null) {
+                    throw NotFound("Playlist $playlistId not found")
+                } else {
+                    mutateState { it.copy(refreshing = false) }
+                }
+            },
+        )
+            .onEach { playlist ->
+                if (playlist != null) {
                     KotifyDatabase.transaction("load playlist ${playlist.name} owner and image") {
                         playlist.owner.loadToCache()
                         playlist.largestImage.loadToCache()
                     }
                 }
-                .onEach { playlist ->
-                    mutateState { it.copy(refreshing = false, playlist = playlist) }
-                }
-                .collect()
-        }
+
+                mutateState { it.copy(playlist = playlist) }
+            }
+            .ignore()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -124,7 +129,7 @@ class PlaylistPresenter(
 
                 val trackIds = tracks.map { it.track.cached.id.value }
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
-                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.flowOf(ids = trackIds))
+                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.statesOf(ids = trackIds))
 
                 mutateState {
                     it.copy(

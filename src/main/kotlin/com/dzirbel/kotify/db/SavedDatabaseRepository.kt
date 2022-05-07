@@ -35,24 +35,24 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     private val events = MutableSharedFlow<Event>()
 
     /**
-     * Atomically initializes the values of [libraryFlow] and [libraryUpdatedFlow], and must be invoked before the
+     * Atomically initializes the values of [libraryState] and [libraryUpdatedFlow], and must be invoked before the
      * values of these flows are used.
      *
-     * This function is idempotent unless [fetchIfUnknown] is true, in which case a new asynchronous call to
+     * This function is idempotent unless [allowRemote] is true, in which case a new asynchronous call to
      * [getLibraryRemote] will be made if the current state of the library is unknown.
      *
-     * In effect, this asynchronously checks the value of the library from the database and if [fetchIfUnknown] and
+     * In effect, this asynchronously checks the value of the library from the database and if [allowRemote] is true and
      * there is no cached library then also fetches it from the remote source.
      */
-    private fun initFlows(fetchIfUnknown: Boolean, scope: CoroutineScope) {
+    private fun initFlows(allowCache: Boolean, allowRemote: Boolean, scope: CoroutineScope) {
         if (!libraryStateInitialized.getAndSet(true)) {
             scope.launch {
-                val library = getLibraryCached()
-                if (fetchIfUnknown && library == null) {
+                val cached = if (allowCache) getLibraryCached() else null
+                if (allowRemote && cached == null) {
                     getLibraryRemote()
                 }
             }
-        } else if (fetchIfUnknown && libraryFlow.value == null) {
+        } else if (allowRemote && libraryFlow.value == null) {
             scope.launch {
                 getLibraryRemote()
             }
@@ -150,8 +150,12 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         return saveds
     }
 
-    final override fun libraryFlow(fetchIfUnknown: Boolean, scope: CoroutineScope): StateFlow<Set<String>?> {
-        initFlows(fetchIfUnknown = fetchIfUnknown, scope = scope)
+    final override fun libraryState(
+        allowCache: Boolean,
+        allowRemote: Boolean,
+        scope: CoroutineScope,
+    ): StateFlow<Set<String>?> {
+        initFlows(allowCache = allowCache, allowRemote = allowRemote, scope = scope)
         return libraryFlow
     }
 
@@ -179,7 +183,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     }
 
     final override fun libraryUpdatedFlow(scope: CoroutineScope): StateFlow<Instant?> {
-        initFlows(fetchIfUnknown = false, scope = scope)
+        initFlows(allowCache = true, allowRemote = false, scope = scope)
         return libraryUpdatedFlow
     }
 
@@ -240,6 +244,6 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         }
         libraryFlow.value = null
         libraryUpdatedFlow.value = null
-        clearFlows()
+        clearStates()
     }
 }

@@ -207,7 +207,7 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                         val track = playback.item
 
                         val trackSavedState = track?.id?.let { trackId ->
-                            SavedTrackRepository.flowOf(id = trackId)
+                            SavedTrackRepository.stateOf(id = trackId)
                         }
 
                         val trackRatingState = track?.id?.let { trackId ->
@@ -215,11 +215,11 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                         }
 
                         val artistSavedStates = track?.artists?.mapNotNull { it.id }?.let { trackArtistIds ->
-                            trackArtistIds.zipToMap(SavedArtistRepository.flowOf(ids = trackArtistIds))
+                            trackArtistIds.zipToMap(SavedArtistRepository.statesOf(ids = trackArtistIds))
                         }
 
                         val albumSavedState = track?.album?.id?.let {
-                            SavedAlbumRepository.flowOf(id = it)
+                            SavedAlbumRepository.stateOf(id = it)
                         }
 
                         mutateState {
@@ -309,15 +309,15 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                     else -> {
                         val track = trackPlayback.item
 
-                        val trackSavedState = SavedTrackRepository.flowOf(id = track.id)
+                        val trackSavedState = SavedTrackRepository.stateOf(id = track.id)
                         val trackRatingState = TrackRatingRepository.ratingState(id = track.id)
 
                         val trackArtistIds = track.artists.mapNotNull { it.id }
                         val artistSavedStates = trackArtistIds
-                            .zipToMap(SavedArtistRepository.flowOf(ids = trackArtistIds))
+                            .zipToMap(SavedArtistRepository.statesOf(ids = trackArtistIds))
 
                         val albumSavedState = track.album.id?.let {
-                            SavedAlbumRepository.flowOf(id = it)
+                            SavedAlbumRepository.stateOf(id = it)
                         }
 
                         mutateState {

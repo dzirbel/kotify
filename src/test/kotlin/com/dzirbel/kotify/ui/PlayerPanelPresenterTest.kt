@@ -157,9 +157,9 @@ internal class PlayerPanelPresenterTest {
                     playbackRepeatState = playback?.repeatState,
                     playbackCurrentDevice = playback?.device,
                     playbackTrack = playback?.item,
-                    trackSavedState = playback?.item?.let { SavedTrackRepository.flowOf(id = it.id) },
+                    trackSavedState = playback?.item?.let { SavedTrackRepository.stateOf(id = it.id) },
                     trackRatingState = playback?.item?.let { TrackRatingRepository.ratingState(id = it.id) },
-                    albumSavedState = playback?.item?.album?.id?.let { SavedAlbumRepository.flowOf(id = it) },
+                    albumSavedState = playback?.item?.album?.id?.let { SavedAlbumRepository.stateOf(id = it) },
                     artistSavedStates = playback?.item?.let { emptyMap() },
                 ),
             )

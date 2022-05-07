@@ -19,30 +19,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 /**
- * Ensures that this [State] contains a non-null value [T], invoking [ifNull] otherwise.
- */
-fun <T : Any> State<T?>.requireValue(ifNull: () -> Nothing): State<T> {
-    if (value == null) {
-        ifNull()
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    return this as State<T>
-}
-
-/**
- * Ensures that this [StateFlow] contains a non-null value [T], invoking [ifNull] otherwise.
- */
-fun <T : Any> StateFlow<T?>.requireValue(ifNull: () -> Nothing): StateFlow<T> {
-    if (value == null) {
-        ifNull()
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    return this as StateFlow<T>
-}
-
-/**
  * Collects the [callback] value as a [State], initially null, which is assigned a value when [callback] returns.
  *
  * The result of [callback] is [remember]ed as long as [key] is unchanged and only called once as long as the caller is

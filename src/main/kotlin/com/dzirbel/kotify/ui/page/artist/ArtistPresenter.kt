@@ -19,13 +19,11 @@ import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.properties.AlbumRatingProperty
 import com.dzirbel.kotify.ui.properties.AlbumReleaseDateProperty
 import com.dzirbel.kotify.ui.properties.AlbumTypeDividableProperty
-import com.dzirbel.kotify.ui.util.requireValue
+import com.dzirbel.kotify.util.ignore
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 
 class ArtistPresenter(
@@ -70,14 +68,20 @@ class ArtistPresenter(
     }
 
     override fun externalEvents(): Flow<Event> {
-        return flow {
-            ArtistRepository.flowOf(id = artistId, fetchMissing = false, initState = { get(it) })
-                .requireValue { throw NotFound("Artist $artistId not found") }
-                .onEach { artist ->
-                    mutateState { it.copy(refreshingArtist = false, artist = artist) }
+        return ArtistRepository.stateOf(
+            id = artistId,
+            onStateInitialized = { artist ->
+                if (artist == null) {
+                    throw NotFound("Artist $artistId not found")
+                } else {
+                    mutateState { it.copy(refreshingArtist = false) }
                 }
-                .collect()
-        }
+            },
+        )
+            .onEach { artist ->
+                mutateState { it.copy(artist = artist) }
+            }
+            .ignore()
     }
 
     override suspend fun reactTo(event: Event) {
@@ -86,6 +90,8 @@ class ArtistPresenter(
                 mutateState { it.copy(refreshingArtist = true) }
 
                 ArtistRepository.getRemote(id = artistId)
+
+                mutateState { it.copy(refreshingArtist = false) }
             }
 
             is Event.LoadArtistAlbums -> {
@@ -102,7 +108,7 @@ class ArtistPresenter(
                 SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
 
                 val albumIds = artistAlbums.map { it.albumId.value }
-                val savedAlbumsStates = albumIds.zipToMap(SavedAlbumRepository.flowOf(ids = albumIds))
+                val savedAlbumsStates = albumIds.zipToMap(SavedAlbumRepository.statesOf(ids = albumIds))
 
                 val albumRatings = artistAlbums.associate { artistAlbum ->
                     val album = artistAlbum.album.cached

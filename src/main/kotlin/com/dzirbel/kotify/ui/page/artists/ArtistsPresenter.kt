@@ -119,7 +119,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
 
     override fun externalEvents(): Flow<Event> {
         return merge(
-            SavedArtistRepository.libraryFlow(fetchIfUnknown = true)
+            SavedArtistRepository.libraryState()
                 .filterNotNull()
                 .onEach { savedArtistIds ->
                     mutateState { it.copy(savedArtistIds = savedArtistIds) }
@@ -158,7 +158,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                 }
                 .ignore(),
 
-            SavedAlbumRepository.libraryFlow()
+            SavedAlbumRepository.libraryState(allowRemote = false)
                 .onEach { savedAlbumIds ->
                     mutateState { it.copy(savedAlbumIds = savedAlbumIds) }
                 }

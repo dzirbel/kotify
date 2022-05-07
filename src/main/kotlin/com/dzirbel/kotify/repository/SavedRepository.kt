@@ -68,15 +68,17 @@ abstract class SavedRepository : Repository<Boolean>() {
      *
      * The returned [StateFlow] must be the same object between calls.
      *
-     * If [fetchIfUnknown] is true, the library state will be fetched from the remote data source if it is not cached
-     * (i.e. null). Otherwise, the returned state may have a null value.
+     * If [allowCache] is true the library will be asynchronously loaded from the cache; if it is not in the cache or
+     * [allowCache] is false and [allowRemote] is true it will then will be asynchronously loaded from the remote
+     * source.
      *
      * The [scope] in which the library (either cached or from the remote) is loaded may be provided, but should
      * typically remain as its default value of [GlobalScope] to ensure the fetch is not cancelled. It is exposed mainly
      * to allow tests to provide their test scope.
      */
-    abstract fun libraryFlow(
-        fetchIfUnknown: Boolean = false,
+    abstract fun libraryState(
+        allowCache: Boolean = true,
+        allowRemote: Boolean = true,
         scope: CoroutineScope = GlobalScope,
     ): StateFlow<Set<String>?>
 

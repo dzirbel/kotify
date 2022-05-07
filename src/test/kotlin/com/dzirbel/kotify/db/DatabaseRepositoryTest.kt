@@ -1,7 +1,10 @@
 package com.dzirbel.kotify.db
 
+import assertk.all
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.each
+import assertk.assertions.extracting
 import assertk.assertions.hasSize
 import assertk.assertions.index
 import assertk.assertions.isBetween
@@ -14,7 +17,7 @@ import com.dzirbel.kotify.isSameInstanceAs
 import com.dzirbel.kotify.network.model.SpotifyObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
@@ -117,19 +120,24 @@ internal class DatabaseRepositoryTest {
         transaction(KotifyDatabase.db) { TestEntityTable.deleteAll() }
         TestRepository.fetchedIds.clear()
         TestRepository.batchFetchedIds.clear()
+        TestRepository.clearStates()
     }
 
     @Test
     fun testEmpty() {
-        runBlocking {
+        runTest {
             assertThat(TestRepository.getCached(id = "id1")).isNull()
-            assertThat(TestRepository.getCached(ids = List(3) { "id$it" })).isEqualTo(List(3) { null })
+
+            assertThat(TestRepository.getCached(ids = List(3) { "id$it" })).all {
+                hasSize(3)
+                each { it.isNull() }
+            }
         }
     }
 
     @Test
     fun testGetRemote() {
-        runBlocking {
+        runTest {
             val start = Instant.now()
             val result = TestRepository.getRemote(id = "id1")
             val end = Instant.now()
@@ -156,7 +164,7 @@ internal class DatabaseRepositoryTest {
     @Test
     fun testGetSequence() {
         val id = "id1"
-        runBlocking {
+        runTest {
             // first attempt is not in cache
             val result1 = TestRepository.getCached(id = id)
             assertThat(result1).isNull()
@@ -183,7 +191,7 @@ internal class DatabaseRepositoryTest {
 
             // fourth attempt fetches again from the remote, updating the model
             val start4 = Instant.now()
-            val result4 = TestRepository.getRemote(id = id)
+            val result4 = TestRepository.get(id = id, allowCache = false)
             val end4 = Instant.now()
 
             requireNotNull(result4)
@@ -201,7 +209,7 @@ internal class DatabaseRepositoryTest {
 
     @Test
     fun testGetBatched() {
-        runBlocking {
+        runTest {
             val cachedValue = remoteModels.entries.first()
             transaction(KotifyDatabase.db) { TestEntity.from(cachedValue.value) }
 
@@ -223,59 +231,225 @@ internal class DatabaseRepositoryTest {
 
     @RepeatedTest(100)
     fun testGetParallel() {
-        runBlocking {
+        runTest {
             val job1a = async(Dispatchers.IO) { TestRepository.get(id = "id1") }
             val job2a = async(Dispatchers.IO) { TestRepository.get(id = "id2") }
 
-            job1a.await()
-            job2a.await()
+            val result1a = job1a.await()
+            val result2a = job2a.await()
+
+            requireNotNull(result1a)
+            requireNotNull(result2a)
+
+            result1a.assertMatches(remoteModels.getValue("id1"))
+            result2a.assertMatches(remoteModels.getValue("id2"))
 
             val job1b = async(Dispatchers.IO) { TestRepository.get(id = "id1") }
             val job2b = async(Dispatchers.IO) { TestRepository.get(id = "id2") }
 
-            job1b.await()
-            job2b.await()
+            val result1b = job1b.await()
+            val result2b = job2b.await()
+
+            requireNotNull(result1b)
+            requireNotNull(result2b)
+
+            result1b.assertMatches(remoteModels.getValue("id1"))
+            result2b.assertMatches(remoteModels.getValue("id2"))
         }
     }
 
     @Test
-    fun testFlowOf() {
-        val state = runBlocking { TestRepository.flowOf(id = "id1", fetchMissing = false) }
+    fun testStateOf() {
+        KotifyDatabase.withSynchronousTransactions {
+            runTest {
+                val state = TestRepository.stateOf(id = "id1", scope = this)
 
-        assertThat(state.value).isNull()
+                assertThat(TestRepository.fetchedIds).isEmpty()
+                assertThat(state.value).isNull()
 
-        val start = Instant.now()
-        runBlocking { TestRepository.get(id = "id1") }
-        val end = Instant.now()
+                advanceUntilIdle()
 
-        requireNotNull(state.value).assertMatches(remoteModels.getValue("id1"), createStart = start, createEnd = end)
-
-        val stateB = runBlocking { TestRepository.flowOf(id = "id1") }
-        assertThat(stateB).isSameInstanceAs(state)
-
-        TestRepository.clearFlows()
+                assertThat(state.value).isNotNull()
+                requireNotNull(state.value).assertMatches(remoteModels.getValue("id1"))
+                assertThat(TestRepository.fetchedIds).containsExactly("id1")
+            }
+        }
     }
 
     @Test
-    fun testFlowsOf() {
-        runBlocking { TestRepository.get(id = "id2") }
+    fun testStateOfNoRemoteUncached() {
+        KotifyDatabase.withSynchronousTransactions {
+            runTest {
+                var onStateInitializedValue: TestEntity? = null
+                val state = TestRepository.stateOf(
+                    id = "id1",
+                    scope = this,
+                    allowRemote = false,
+                    onStateInitialized = { onStateInitializedValue = it },
+                )
 
-        val states = runBlocking {
-            TestRepository.flowOf(ids = listOf("id1", "id2", "id3"), fetchMissing = false)
+                assertThat(state.value).isNull()
+                assertThat(onStateInitializedValue).isNull()
+
+                advanceUntilIdle()
+
+                assertThat(state.value).isNull()
+                assertThat(onStateInitializedValue).isNull()
+                assertThat(TestRepository.fetchedIds).isEmpty()
+
+                val start = Instant.now()
+                TestRepository.getRemote(id = "id1")
+                val end = Instant.now()
+
+                requireNotNull(state.value)
+                    .assertMatches(remoteModels.getValue("id1"), createStart = start, createEnd = end)
+                assertThat(onStateInitializedValue).isNull()
+                assertThat(TestRepository.fetchedIds).containsExactly("id1")
+
+                val stateB = TestRepository.stateOf(id = "id1")
+                assertThat(stateB).isSameInstanceAs(state)
+                assertThat(TestRepository.fetchedIds).containsExactly("id1")
+            }
         }
+    }
 
-        assertThat(states).hasSize(3)
-        assertThat(states).index(0).transform { it.value }.isNull()
-        assertThat(states).index(1).transform { it.value }.isNotNull().transform { it.id.value }.isEqualTo("id2")
-        assertThat(states).index(2).transform { it.value }.isNull()
+    @Test
+    fun testStateOfCached() {
+        KotifyDatabase.withSynchronousTransactions {
+            runTest {
+                TestRepository.get(id = "id1")
+                assertThat(TestRepository.fetchedIds).containsExactly("id1")
 
-        runBlocking { TestRepository.get(id = "id1") }
+                val state = TestRepository.stateOf(id = "id1", scope = this)
 
-        assertThat(states).index(0).transform { it.value }.isNotNull().transform { it.id.value }.isEqualTo("id1")
-        assertThat(states).index(1).transform { it.value }.isNotNull().transform { it.id.value }.isEqualTo("id2")
-        assertThat(states).index(2).transform { it.value }.isNull()
+                assertThat(state.value).isNull()
 
-        TestRepository.clearFlows()
+                advanceUntilIdle()
+
+                assertThat(state.value).isNotNull()
+                requireNotNull(state.value).assertMatches(remoteModels.getValue("id1"))
+                assertThat(TestRepository.fetchedIds).containsExactly("id1")
+            }
+        }
+    }
+
+    @Test
+    fun testStateOfNoCacheCached() {
+        KotifyDatabase.withSynchronousTransactions {
+            runTest {
+                TestRepository.get(id = "id1")
+                assertThat(TestRepository.fetchedIds).containsExactly("id1")
+
+                val state = TestRepository.stateOf(id = "id1", scope = this, allowCache = false)
+
+                assertThat(state.value).isNull()
+
+                advanceUntilIdle()
+
+                assertThat(state.value).isNotNull()
+                requireNotNull(state.value).assertMatches(remoteModels.getValue("id1"))
+                assertThat(TestRepository.fetchedIds).containsExactly("id1", "id1")
+            }
+        }
+    }
+
+    /**
+     * Ensure that a second call to stateOf() which does more comprehensive loading (from the remote) than a previous
+     * one (just from the cache) still ensures that the value is ultimately loaded.
+     */
+    @Test
+    fun testStateOfReload() {
+        KotifyDatabase.withSynchronousTransactions {
+            runTest {
+                val state = TestRepository.stateOf(id = "id1", scope = this, allowRemote = false)
+
+                advanceUntilIdle()
+                assertThat(state.value).isNull()
+
+                val state2 = TestRepository.stateOf(id = "id1", scope = this, allowRemote = true)
+                assertThat(state2).isSameInstanceAs(state)
+
+                advanceUntilIdle()
+
+                assertThat(state.value).isNotNull()
+                requireNotNull(state.value).assertMatches(remoteModels.getValue("id1"))
+
+                requireNotNull(state.value).assertMatches(remoteModels.getValue("id1"))
+                assertThat(TestRepository.fetchedIds).containsExactly("id1")
+            }
+        }
+    }
+
+    @Test
+    fun testStatesOf() {
+        KotifyDatabase.withSynchronousTransactions {
+            runTest {
+                TestRepository.get(id = "id2")
+                assertThat(TestRepository.fetchedIds).containsExactly("id2")
+
+                val states = TestRepository.statesOf(ids = listOf("id1", "id2", "id3"), scope = this)
+                assertThat(states).hasSize(3)
+                assertThat(states).extracting { it.value }.each { it.isNull() }
+
+                advanceUntilIdle()
+
+                assertThat(states).index(0).transform { it.value }
+                    .isNotNull()
+                    .transform { it.id.value }
+                    .isEqualTo("id1")
+                assertThat(states).index(1).transform { it.value }
+                    .isNotNull()
+                    .transform { it.id.value }
+                    .isEqualTo("id2")
+                assertThat(states).index(2).transform { it.value }
+                    .isNotNull()
+                    .transform { it.id.value }
+                    .isEqualTo("id3")
+
+                assertThat(TestRepository.batchFetchedIds).containsExactly("id1", "id3")
+                assertThat(TestRepository.fetchedIds).containsExactly("id2")
+            }
+        }
+    }
+
+    @Test
+    fun testStatesOfNoRemote() {
+        KotifyDatabase.withSynchronousTransactions {
+            runTest {
+                TestRepository.get(id = "id2")
+                assertThat(TestRepository.fetchedIds).containsExactly("id2")
+
+                val states = TestRepository.statesOf(
+                    ids = listOf("id1", "id2", "id3"),
+                    scope = this,
+                    allowRemote = false,
+                )
+                assertThat(states).hasSize(3)
+                assertThat(states).extracting { it.value }.each { it.isNull() }
+
+                advanceUntilIdle()
+
+                assertThat(states).index(0).transform { it.value }.isNull()
+                assertThat(states).index(1).transform { it.value }
+                    .isNotNull()
+                    .transform { it.id.value }
+                    .isEqualTo("id2")
+                assertThat(states).index(2).transform { it.value }.isNull()
+
+                TestRepository.get(id = "id1")
+                assertThat(TestRepository.fetchedIds).containsExactly("id2", "id1")
+
+                assertThat(states).index(0).transform { it.value }
+                    .isNotNull()
+                    .transform { it.id.value }
+                    .isEqualTo("id1")
+                assertThat(states).index(1).transform { it.value }
+                    .isNotNull()
+                    .transform { it.id.value }
+                    .isEqualTo("id2")
+                assertThat(states).index(2).transform { it.value }.isNull()
+            }
+        }
     }
 
     private fun TestEntity.assertMatches(
