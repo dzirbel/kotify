@@ -261,7 +261,7 @@ abstract class Repository<E> {
     /**
      * Clears the cache of states used by [statesOf], for use in tests.
      */
-    fun clearStates() {
+    open fun clearStates() {
         synchronized(states) {
             states.clear()
         }

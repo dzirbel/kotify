@@ -221,10 +221,21 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         val updateTime = Instant.now()
         return KotifyDatabase.transaction("save $entityName saved library") {
             GlobalUpdateTimesRepository.setUpdated(libraryUpdateKey, updateTime = updateTime)
-            savedNetworkModels.mapNotNullTo(mutableSetOf()) { from(it) }
-                .onEach { id ->
-                    savedEntityTable.setSaved(entityId = id, saved = true, savedTime = null)
-                }
+
+            val cachedLibrary = savedEntityTable.savedEntityIds()
+            val remoteLibrary = savedNetworkModels.mapNotNullTo(mutableSetOf()) { from(it) }
+
+            // remove saved records for entities which are no longer saved
+            cachedLibrary.minus(remoteLibrary).forEach { id ->
+                savedEntityTable.setSaved(entityId = id, savedTime = null, saved = false)
+            }
+
+            // add saved records for entities which are now saved
+            remoteLibrary.minus(cachedLibrary).forEach { id ->
+                savedEntityTable.setSaved(entityId = id, savedTime = null, saved = true)
+            }
+
+            remoteLibrary
         }
             .also { library ->
                 updateLiveStates { id -> library.contains(id) }
@@ -245,5 +256,12 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         libraryFlow.value = null
         libraryUpdatedFlow.value = null
         clearStates()
+    }
+
+    override fun clearStates() {
+        super.clearStates()
+        libraryFlow.value = null
+        libraryUpdatedFlow.value = null
+        libraryStateInitialized.set(false)
     }
 }

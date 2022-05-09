@@ -53,7 +53,10 @@ object TestSavedRepository : SavedDatabaseRepository<TestSavedNetworkModel>(
 
     override suspend fun fetchLibrary(): Iterable<TestSavedNetworkModel> {
         libraryFetches++
-        return remoteLibrary.map { TestSavedNetworkModel(id = it) }
+        return remoteLibrary
+            .minus(savedOverrides.filterValues { !it }.keys) // remove values overridden to be unsaved
+            .plus(savedOverrides.filterValues { it }.keys) // add values overridden to be saved
+            .map { TestSavedNetworkModel(id = it) }
     }
 
     override fun from(savedNetworkType: TestSavedNetworkModel): String {
@@ -225,7 +228,7 @@ internal class SavedDatabaseRepositoryTest {
     }
 
     @Test
-    fun testLibraryChanged() {
+    fun testLibraryChangedLocally() {
         runTest {
             val library = TestSavedRepository.getLibraryRemote()
             assertThat(library).containsExactlyElementsOfInAnyOrder(remoteLibrary)
@@ -245,6 +248,25 @@ internal class SavedDatabaseRepositoryTest {
             assertThat(TestSavedRepository.getLibraryCached())
                 .isNotNull()
                 .containsExactlyElementsOfInAnyOrder(remoteLibrary.plus("saved-x").minus("saved-1").plus("saved-y"))
+        }
+    }
+
+    @Test
+    fun testLibraryChangedRemotely() {
+        runTest {
+            val library = TestSavedRepository.getLibraryRemote()
+            assertThat(library).containsExactlyElementsOfInAnyOrder(remoteLibrary)
+
+            TestSavedRepository.savedOverrides["saved-x"] = true
+            TestSavedRepository.savedOverrides["saved-2"] = false
+
+            val library2 = TestSavedRepository.getLibraryRemote()
+            assertThat(library2).containsExactlyElementsOfInAnyOrder(remoteLibrary.plus("saved-x").minus("saved-2"))
+
+            val cachedLibrary = TestSavedRepository.getLibraryCached()
+            assertThat(cachedLibrary)
+                .isNotNull()
+                .containsExactlyElementsOfInAnyOrder(remoteLibrary.plus("saved-x").minus("saved-2"))
         }
     }
 
