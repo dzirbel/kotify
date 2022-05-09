@@ -67,7 +67,7 @@ internal class SpotifyArtistsTest {
                     "album mismatch for ${artistProperties.name}:\n" +
                         "${unexpected.size} expected from response but missing: $unexpected\n" +
                         "${missing.size} in response but unexpected: $missing" +
-                        "\n\nReceived:\n${albums}"
+                        "\n\nReceived:\n$albums",
                 )
             }
         }
