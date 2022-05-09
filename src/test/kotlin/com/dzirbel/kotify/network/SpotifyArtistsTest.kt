@@ -1,12 +1,10 @@
 package com.dzirbel.kotify.network
 
 import assertk.assertThat
-import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
-import com.dzirbel.kotify.assertThat
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.properties.ArtistProperties
 import com.dzirbel.kotify.zipWithBy
@@ -56,15 +54,22 @@ internal class SpotifyArtistsTest {
             val idToName = artistProperties.albums.associate { it.id to it.name }
                 .plus(albums.associate { it.id to it.name })
 
-            expectedIds
+            val unexpected = expectedIds
                 .minus(actualIds)
                 .map { id -> Pair(id, idToName[id]) }
-                .assertThat { isEmpty() }
 
-            actualIds
+            val missing = actualIds
                 .minus(expectedIds)
                 .map { id -> Pair(id, idToName[id]) }
-                .assertThat { isEmpty() }
+
+            if (unexpected.isNotEmpty() || missing.isNotEmpty()) {
+                error(
+                    "album mismatch for ${artistProperties.name}:\n" +
+                        "${unexpected.size} expected from response but missing: $unexpected\n" +
+                        "${missing.size} in response but unexpected: $missing" +
+                        "\n\nReceived:\n${albums}"
+                )
+            }
         }
 
         albums.zipWithBy(artistProperties.albums) { album, albumProperties -> album.id == albumProperties.id }
