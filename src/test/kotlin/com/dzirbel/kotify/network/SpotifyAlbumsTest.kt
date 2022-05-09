@@ -5,8 +5,9 @@ import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
-import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.properties.AlbumProperties
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -44,9 +45,7 @@ internal class SpotifyAlbumsTest {
     @ParameterizedTest
     @MethodSource("albums")
     fun getAlbumTracks(albumProperties: AlbumProperties) {
-        val tracks = runBlocking {
-            Spotify.Albums.getAlbumTracks(albumProperties.id).fetchAll<SimplifiedSpotifyTrack>()
-        }
+        val tracks = runBlocking { Spotify.Albums.getAlbumTracks(albumProperties.id).asFlow().toList() }
         val trackProperties = Fixtures.albums.getValue(albumProperties)
 
         assertThat(tracks).hasSize(trackProperties.size)

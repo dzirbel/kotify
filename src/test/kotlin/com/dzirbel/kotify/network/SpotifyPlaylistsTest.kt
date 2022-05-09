@@ -9,8 +9,9 @@ import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
-import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
+import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.properties.PlaylistProperties
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -25,7 +26,7 @@ import java.nio.file.Path
 class SpotifyPlaylistsTest {
     @Test
     fun getPlaylists() {
-        val playlists = runBlocking { Spotify.Playlists.getPlaylists().fetchAll<SimplifiedSpotifyPlaylist>() }
+        val playlists = runBlocking { Spotify.Playlists.getPlaylists().asFlow().toList() }
 
         // don't zip since there are playlists that aren't in Fixtures
         Fixtures.playlists.forEach { playlistProperties ->
@@ -36,9 +37,7 @@ class SpotifyPlaylistsTest {
 
     @Test
     fun getPlaylistsByUser() {
-        val playlists = runBlocking {
-            Spotify.Playlists.getPlaylists(userId = Fixtures.userId).fetchAll<SimplifiedSpotifyPlaylist>()
-        }
+        val playlists = runBlocking { Spotify.Playlists.getPlaylists(userId = Fixtures.userId).asFlow().toList() }
 
         // don't zip since there are playlists that aren't in Fixtures
         Fixtures.playlists.forEach { playlistProperties ->

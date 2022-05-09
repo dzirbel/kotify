@@ -10,9 +10,10 @@ import assertk.assertions.isNull
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.containsAllElementsOf
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
-import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
+import com.dzirbel.kotify.network.model.asFlow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 
 data class AlbumProperties(
@@ -42,7 +43,7 @@ data class AlbumProperties(
             if (totalTracks != null) {
                 assertThat(album.tracks.total).isEqualTo(totalTracks)
 
-                val allTracks = runBlocking { album.tracks.fetchAll<SimplifiedSpotifyTrack>() }
+                val allTracks = runBlocking { album.tracks.asFlow().toList() }
                 assertThat(allTracks).hasSize(totalTracks)
             }
         }

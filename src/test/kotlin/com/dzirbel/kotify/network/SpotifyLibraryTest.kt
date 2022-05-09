@@ -9,10 +9,9 @@ import assertk.assertions.isTrue
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
 import com.dzirbel.kotify.containsExactlyElementsOf
-import com.dzirbel.kotify.network.model.SpotifySavedAlbum
-import com.dzirbel.kotify.network.model.SpotifySavedShow
-import com.dzirbel.kotify.network.model.SpotifySavedTrack
+import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.zipWithBy
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -21,7 +20,7 @@ import org.junit.jupiter.api.Test
 class SpotifyLibraryTest {
     @Test
     fun getSavedAlbums() {
-        val albums = runBlocking { Spotify.Library.getSavedAlbums().fetchAll<SpotifySavedAlbum>() }
+        val albums = runBlocking { Spotify.Library.getSavedAlbums().asFlow().toList() }
 
         albums.zipWithBy(Fixtures.savedAlbums) { savedAlbum, albumProperties ->
             savedAlbum.album.id == albumProperties.id
@@ -62,7 +61,7 @@ class SpotifyLibraryTest {
     @Test
     fun getSavedTracks() {
         val tracksPaging = runBlocking { Spotify.Library.getSavedTracks() }
-        val tracks = runBlocking { tracksPaging.fetchAll<SpotifySavedTrack>() }
+        val tracks = runBlocking { tracksPaging.asFlow().toList() }
 
         tracks.zipWithBy(Fixtures.savedTracks) { savedTrack, trackProperties ->
             savedTrack.track.id == trackProperties.id
@@ -103,7 +102,7 @@ class SpotifyLibraryTest {
     @Test
     fun getSavedShows() {
         val showsPaging = runBlocking { Spotify.Library.getSavedShows() }
-        val shows = runBlocking { showsPaging.fetchAll<SpotifySavedShow>() }
+        val shows = runBlocking { showsPaging.asFlow().toList() }
 
         val expected = Fixtures.shows.filter { it.saved }
 

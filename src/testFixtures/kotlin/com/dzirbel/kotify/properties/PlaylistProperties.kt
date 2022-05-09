@@ -5,7 +5,8 @@ import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
-import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
+import com.dzirbel.kotify.network.model.asFlow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 
 data class PlaylistProperties(
@@ -23,7 +24,7 @@ data class PlaylistProperties(
         assertThat(playlist.public).isEqualTo(public)
         assertThat(playlist.owner.displayName).isEqualTo(owner)
         if (tracks != null && playlist is FullSpotifyPlaylist) {
-            val allItems = runBlocking { playlist.tracks.fetchAll<SpotifyPlaylistTrack>() }
+            val allItems = runBlocking { playlist.tracks.asFlow().toList() }
             tracks.zip(allItems).forEach { (trackProperties, playlistTrack) ->
                 trackProperties.check(playlistTrack)
             }

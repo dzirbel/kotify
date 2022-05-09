@@ -14,7 +14,9 @@ import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifySavedTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
+import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.util.flatMapParallel
+import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
@@ -104,9 +106,7 @@ object SavedTrackRepository : SavedDatabaseRepository<SpotifySavedTrack>(
     }
 
     override suspend fun fetchLibrary(): Iterable<SpotifySavedTrack> {
-        return Spotify.Library
-            .getSavedTracks(limit = Spotify.MAX_LIMIT)
-            .fetchAll<SpotifySavedTrack>()
+        return Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
     override fun from(savedNetworkType: SpotifySavedTrack): String? {

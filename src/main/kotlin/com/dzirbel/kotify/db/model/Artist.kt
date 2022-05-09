@@ -15,7 +15,9 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyArtist
+import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.util.flatMapParallel
+import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
@@ -99,7 +101,7 @@ object ArtistRepository : DatabaseRepository<Artist, SpotifyArtist>(Artist) {
         artistId: String,
         allowCache: Boolean = true,
         fetchAlbums: suspend () -> List<SimplifiedSpotifyAlbum> = {
-            Spotify.Artists.getArtistAlbums(id = artistId).fetchAll<SimplifiedSpotifyAlbum>()
+            Spotify.Artists.getArtistAlbums(id = artistId).asFlow().toList()
         },
     ): List<ArtistAlbum> {
         var artist: Artist? = null
@@ -158,7 +160,8 @@ object SavedArtistRepository : SavedDatabaseRepository<FullSpotifyArtist>(
 
     override suspend fun fetchLibrary(): Iterable<FullSpotifyArtist> {
         return Spotify.Follow.getFollowedArtists(limit = Spotify.MAX_LIMIT)
-            .fetchAll { url -> Spotify.get<Spotify.ArtistsCursorPagingModel>(url).artists }
+            .asFlow { url -> Spotify.get<Spotify.ArtistsCursorPagingModel>(url).artists }
+            .toList()
     }
 
     override fun from(savedNetworkType: FullSpotifyArtist): String? {

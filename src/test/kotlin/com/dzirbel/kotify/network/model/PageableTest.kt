@@ -3,22 +3,34 @@ package com.dzirbel.kotify.network.model
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 internal class PageableTest {
     /** A simple [Pageable] with a pre-defined [next], for ease of testing. */
-    data class CustomPageable<T>(override val items: List<T>, val next: CustomPageable<T>?) : Pageable<T>() {
-        override val hasNext = next != null
-
+    data class CustomPageable<T>(
+        override val items: List<T>,
+        override val next: String?,
+        val nextPageable: CustomPageable<T>?,
+    ) : Pageable<T>() {
         fun fetchAll(): List<T> {
-            return fetchAll<CustomPageable<T>> { it.next }
+            var paging: CustomPageable<T>? = this
+            return runBlocking {
+                asFlow { url ->
+                    assertThat(url).isEqualTo(paging?.next)
+                    paging = paging?.nextPageable
+                    paging
+                }.toList()
+            }
         }
 
         companion object {
             fun <T> from(vararg allItems: List<T>): CustomPageable<T> {
                 var prev: CustomPageable<T>? = null
-                for (items in allItems.reversed()) {
-                    prev = CustomPageable(items = items, next = prev)
+                for ((index, items) in allItems.withIndex().reversed()) {
+                    prev = CustomPageable(items = items, next = index.toString(), nextPageable = prev)
                 }
                 return requireNotNull(prev)
             }

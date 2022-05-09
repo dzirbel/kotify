@@ -1,34 +1,37 @@
 package com.dzirbel.kotify.network.model
 
 import com.dzirbel.kotify.network.Spotify
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
+
+/**
+ * Creates a cold [Flow] that produces values from this [Pageable], first iterating through [Pageable.items] and then
+ * continuing recursively though [Pageable]s provided by [fetchNext] with the current [Pageable.next] URL.
+ *
+ * Note that the type of [Pageable] produced by [fetchNext] must be explicitly specified as [P] so that it can be
+ * reified for deserialization by [Spotify.get]; this function is an extension function allow specifying [P] implicitly
+ * by the receiver.
+ */
+inline fun <T, reified P : Pageable<T>> P.asFlow(
+    noinline fetchNext: suspend (String) -> P? = { Spotify.get(it) },
+): Flow<T> {
+    return flow {
+        var paging: Pageable<T>? = this@asFlow
+
+        while (paging != null) {
+            paging.items.forEach { emit(it) }
+            paging = paging.next?.let { fetchNext(it) }
+        }
+    }
+}
 
 /**
  * An abstract wrapper around [Paging] and [CursorPaging] for convenience to provide common paging functions.
  */
 abstract class Pageable<T> {
     abstract val items: List<T>
-    abstract val hasNext: Boolean
-
-    /**
-     * Fetches all the items in this [Pageable], i.e. calls [fetchNext] on each [Pageable] until one where [hasNext] is
-     * false is reached, and accumulates the [items].
-     *
-     * Generally, [Paging.fetchAll] or [CursorPaging.fetchAll] should be used instead for convenience.
-     *
-     * This fetches all values immediately, rather than on-demand, and so may not be appropriate for all use cases.
-     */
-    protected inline fun <reified S : Pageable<out T>> fetchAll(fetchNext: (S) -> S?): List<T> {
-        val all = mutableListOf<T>()
-
-        var current: S? = this as S
-        while (current != null) {
-            all.addAll(current.items)
-            current = current.takeIf { it.hasNext }?.let { fetchNext(it) }
-        }
-
-        return all
-    }
+    abstract val next: String?
 }
 
 /**
@@ -40,7 +43,7 @@ data class Paging<T>(
     override val items: List<T>,
 
     /** URL to the next page of items. (null if none) */
-    val next: String? = null,
+    override val next: String? = null,
 
     /** A link to the Web API endpoint returning the full result of the request. */
     val href: String,
@@ -56,17 +59,7 @@ data class Paging<T>(
 
     /** The maximum number of items available to return. */
     val total: Int,
-) : Pageable<T>() {
-    override val hasNext: Boolean
-        get() = next != null
-
-    /**
-     * Fetches all the items in this [Paging], i.e. its [items] and the [items] in all the [next] [Paging] objects.
-     */
-    suspend fun <S : T> fetchAll(): List<T> {
-        return fetchAll<Paging<S>> { paging -> paging.next?.let { Spotify.get(it) } }
-    }
-}
+) : Pageable<T>()
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-cursorpagingobject
@@ -77,7 +70,7 @@ data class CursorPaging<T>(
     override val items: List<T>,
 
     /** URL to the next page of items. (null if none) */
-    val next: String? = null,
+    override val next: String? = null,
 
     /** A link to the Web API endpoint returning the full result of the request. */
     val href: String,
@@ -90,18 +83,7 @@ data class CursorPaging<T>(
 
     /** The total number of items available to return. */
     val total: Int,
-) : Pageable<T>() {
-    override val hasNext: Boolean
-        get() = next != null
-
-    /**
-     * Fetches all the items in this [CursorPaging], i.e. its [items] and the [items] in all the [next] [CursorPaging]
-     * objects, using [fetchNext] to provide each successive [CursorPaging].
-     */
-    suspend fun <S : T> fetchAll(fetchNext: suspend (String) -> CursorPaging<S>): List<T> {
-        return fetchAll<CursorPaging<S>> { paging -> paging.next?.let { fetchNext(it) } }
-    }
-}
+) : Pageable<T>()
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/#object-cursorobject

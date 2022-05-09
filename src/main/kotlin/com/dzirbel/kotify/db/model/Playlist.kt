@@ -16,8 +16,9 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
-import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
+import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.util.mapParallel
+import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SortOrder
@@ -114,8 +115,7 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
                     ?.let { return Pair(playlist, it) }
             }
 
-            val networkTracks = Spotify.Playlists.getPlaylistTracks(playlistId = playlistId)
-                .fetchAll<SpotifyPlaylistTrack>()
+            val networkTracks = Spotify.Playlists.getPlaylistTracks(playlistId = playlistId).asFlow().toList()
 
             val tracks = KotifyDatabase.transaction("save playlist ${playlist?.name ?: "id $playlistId"} tracks") {
                 (playlist ?: findById(id = playlistId))?.let { playlist ->
@@ -159,8 +159,7 @@ object SavedPlaylistRepository : SavedDatabaseRepository<SpotifyPlaylist>(
     }
 
     override suspend fun fetchLibrary(): Iterable<SpotifyPlaylist> {
-        return Spotify.Playlists.getPlaylists(limit = Spotify.MAX_LIMIT)
-            .fetchAll<SimplifiedSpotifyPlaylist>()
+        return Spotify.Playlists.getPlaylists(limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
     override fun from(savedNetworkType: SpotifyPlaylist): String? {

@@ -7,6 +7,8 @@ import assertk.assertions.isNotEmpty
 import com.dzirbel.kotify.Fixtures
 import com.dzirbel.kotify.TAG_NETWORK
 import com.dzirbel.kotify.containsExactlyElementsOf
+import com.dzirbel.kotify.network.model.asFlow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -47,10 +49,7 @@ class SpotifyFollowTest {
 
     @Test
     fun getFollowedArtists() {
-        val artists = runBlocking {
-            Spotify.Follow.getFollowedArtists(limit = 50)
-                .fetchAll { url -> Spotify.get<Spotify.ArtistsCursorPagingModel>(url).artists }
-        }
+        val artists = runBlocking { Spotify.Follow.getFollowedArtists(limit = 50).asFlow().toList() }
 
         assertThat(artists).isNotEmpty()
 
