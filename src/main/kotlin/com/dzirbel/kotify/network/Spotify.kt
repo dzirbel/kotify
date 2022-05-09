@@ -99,7 +99,7 @@ object Spotify {
     private data class CategoriesModel(val categories: Paging<SpotifyCategory>)
 
     @Serializable
-    private data class EpisodesModel(val episodes: List<FullSpotifyEpisode>)
+    private data class EpisodesModel(val episodes: List<FullSpotifyEpisode?>)
 
     @Serializable
     private data class PlaylistPagingModel(
@@ -597,7 +597,7 @@ object Spotify {
          *  Note: If neither market or user country are provided, the content is considered unavailable for the client.
          *  Users can view the country that is associated with their account in the account settings.
          */
-        suspend fun getEpisodes(ids: List<String>, market: String? = null): List<FullSpotifyEpisode> {
+        suspend fun getEpisodes(ids: List<String>, market: String? = null): List<FullSpotifyEpisode?> {
             return get<EpisodesModel>(
                 "episodes",
                 mapOf("ids" to ids.joinToString(separator = ","), "market" to market),

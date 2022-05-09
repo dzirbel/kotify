@@ -387,16 +387,20 @@ object Fixtures {
 
     val episodes = listOf(
         EpisodeProperties(
-            id = "03tIPON3n9IH5Fwxy02ZZF",
-            name = "Why skin disease is often misdiagnosed in darker skin tones | Jenna C. Lester",
+            id = "6XpUvPS3Y3iGIyguYrXUck",
+            name = "#281 — Western Culture and Its Discontents",
             description = """
-                Skin is one of the most powerful predictors of health, yet nearly half of all new dermatologists admit
-                to feeling uncomfortable identifying health issues on darker skin tones -- resulting in poorer health
-                outcomes for patients of color. In this crucial talk, TED Fellow and dermatologist Jenna C. Lester
-                shares her effort to extend medical training beyond its current limited scope and ensure all medical
-                students get trained in the full spectrum of diseases as they appear in all patients, regardless of skin
-                tone.""".toSingleLine(),
-            releaseDate = "2021-10-15",
+                In this episode of the podcast, Sam Harris speaks with Douglas Murray about his new book, “The War on
+                the West.” They discuss the problem of hyper partisanship on the Left and Right, the primacy of culture,
+                Hunter Biden’s laptop, the de-platforming of Trump and Alex Jones, the new religion of anti-racism, the
+                problem of inequality, the 1619 Project, history of slavery, moral panics, the strange case of Michel
+                Foucault, and other topics. SUBSCRIBE to listen to the rest of this episode and gain access to all
+                full-length episodes of the podcast at samharris.org/subscribe.   Learning how to train your mind is
+                the single greatest investment you can make in life. That’s why Sam Harris created the Waking Up app.
+                From rational mindfulness practice to lessons on some of life’s most important topics, join Sam as he
+                demystifies the practice of meditation and explores the theory behind it."""
+                .toSingleLine(),
+            releaseDate = "2022-05-02",
             releaseDatePrecision = "day",
         ),
         EpisodeProperties(

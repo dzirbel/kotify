@@ -23,7 +23,10 @@ class SpotifyEpisodesTest {
     fun getEpisodes() {
         val episodes = runBlocking { Spotify.Episodes.getEpisodes(ids = Fixtures.episodes.map { it.id }) }
 
-        Fixtures.episodes.zip(episodes).forEach { (episodeProperties, episode) -> episodeProperties.check(episode) }
+        Fixtures.episodes.zip(episodes).forEach { (episodeProperties, episode) ->
+            requireNotNull(episode)
+            episodeProperties.check(episode)
+        }
     }
 
     companion object {
