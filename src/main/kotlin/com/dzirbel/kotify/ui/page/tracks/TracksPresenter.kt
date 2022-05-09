@@ -8,7 +8,9 @@ import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
+import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.properties.TrackAlbumIndexProperty
@@ -42,6 +44,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
         val tracksUpdated: Long? = null,
     ) {
         val trackProperties: List<Column<Track>> = listOf(
+            // TODO find the context to play tracks from the list of all saved tracks
             TrackAlbumIndexProperty,
             TrackSavedProperty(
                 trackIdOf = { it.id.value },
@@ -59,6 +62,8 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
         data class ReactToTracksSaved(val trackIds: List<String>, val saved: Boolean) : Event()
+        data class SetSorts(val sorts: List<Sort<Track>>) : Event()
+        data class SetDivider(val divider: Divider<Track>?) : Event()
     }
 
     override fun externalEvents(): Flow<Event> {
@@ -86,9 +91,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                 val tracks = fetchTracks(trackIds = trackIds)
                 val tracksById = tracks.associateBy { it.id.value }
                 val tracksUpdated = SavedTrackRepository.libraryUpdated()
-                val trackRatings = KotifyDatabase.transaction("load rating states for ${trackIds.size} tracks") {
-                    trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
-                }
+                val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
 
                 mutateState {
                     ViewModel(
@@ -132,6 +135,14 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                         it.copy(savedTrackIds = it.savedTrackIds.minus(event.trackIds.toSet()))
                     }
                 }
+            }
+
+            is Event.SetSorts -> mutateState {
+                it.copy(tracks = it.tracks.withSort(event.sorts))
+            }
+
+            is Event.SetDivider -> mutateState {
+                it.copy(tracks = it.tracks.withDivider(divider = event.divider))
             }
         }
     }

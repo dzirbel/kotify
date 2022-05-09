@@ -14,7 +14,7 @@ object TracksPage : PresenterPage<TracksPresenter.ViewModel, TracksPresenter>() 
 
     @Composable
     override fun content(presenter: TracksPresenter, state: TracksPresenter.ViewModel) {
-        TracksPageContent(state)
+        TracksPageContent(presenter, state)
     }
 
     override fun titleFor(data: TracksPresenter.ViewModel) = "Saved Tracks"
