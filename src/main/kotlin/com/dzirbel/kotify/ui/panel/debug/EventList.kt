@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -59,7 +60,9 @@ fun <T> EventList(
             .value
 
         events.asReversed().forEachIndexed { index, event ->
-            EventItem(event)
+            key(event) {
+                EventItem(event)
+            }
 
             if (index != events.lastIndex) {
                 HorizontalDivider()
@@ -72,8 +75,7 @@ fun <T> EventList(
 private fun <T> EventItem(event: Logger.Event<T>) {
     val canExpand = !event.content.isNullOrBlank()
 
-    // TODO doesn't retain state when adding new events to the list
-    val expandedState = if (canExpand) remember(event) { mutableStateOf(false) } else null
+    val expandedState = if (canExpand) remember { mutableStateOf(false) } else null
     val expanded = expandedState?.value == true
 
     val rightClickMenuExpanded = remember { mutableStateOf(false) }
