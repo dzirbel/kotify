@@ -1,9 +1,11 @@
 package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,12 +15,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerMoveFilter
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.platform.LocalDensity
@@ -40,14 +44,10 @@ val DEFAULT_SEEK_TARGET_SIZE = 12.dp
  * @param sliderWidth the width of the slider, or null for [Dp.Unspecified]
  * @param sliderHeight the height of the slider, by default [DEFAULT_SLIDER_HEIGHT]
  * @param seekTargetSize the size of the seek touch-target, by default [DEFAULT_SEEK_TARGET_SIZE]
- * @param dragKey an optional key which maintains the state of dragging in the slider; when this value changes the drag
- *  state will be reset
  * @param leftContent optional content placed to the left of the slider
  * @param rightContent optional content placed to the right of the slider
  * @param onSeek invoked when the user seeks, either by clicking or dragging, with the seeked location as a percentage
  *  of the maximum slider width, between 0 and 1
- *
- * TODO sometimes jumps for a moment after seeking
  */
 @Composable
 @Suppress("UnnecessaryParentheses")
@@ -56,7 +56,6 @@ fun SeekableSlider(
     sliderWidth: Dp? = null,
     sliderHeight: Dp = DEFAULT_SLIDER_HEIGHT,
     seekTargetSize: Dp = DEFAULT_SEEK_TARGET_SIZE,
-    dragKey: Any? = null,
     leftContent: (@Composable () -> Unit)? = null,
     rightContent: (@Composable () -> Unit)? = null,
     onSeek: (seekPercent: Float) -> Unit = { },
@@ -70,14 +69,20 @@ fun SeekableSlider(
     val hoverLocation = remember { mutableStateOf(0f) }
 
     // the current drag offset, in pixels
-    val drag = remember(dragKey) { mutableStateOf(0f) }
-
-    // the final progress amount, accounting for drag, as a percentage between 0 and 1
-    val progressOverride = remember(dragKey) { mutableStateOf(progress) }
+    val drag = remember { mutableStateOf(0f) }
 
     // the total width of the slider bar, which is necessary for computing the click location as a percentage of the
     // max width
     val barWidth = remember { mutableStateOf(0) }
+
+    // the
+    val hoverSeekPercent = remember {
+        derivedStateOf {
+            val maxWidth = barWidth.value
+            val adjustedX = hoverLocation.value.coerceAtLeast(0f).coerceAtMost(maxWidth.toFloat())
+            adjustedX / maxWidth
+        }
+    }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         if (leftContent != null) {
@@ -88,39 +93,28 @@ fun SeekableSlider(
 
         val padding = Dimens.space3
         val paddingPx = with(LocalDensity.current) { padding.toPx() }
-        val roundedCornerShape = RoundedCornerShape(sliderHeight / 2)
         Box(
             Modifier
-                .pointerMoveFilter(
-                    onEnter = { true.also { hoverState.value = true } },
-                    onExit = { true.also { hoverState.value = false } },
-                    onMove = { position ->
+                .hoverState(hoverState)
+                // use onPointerEvent to get raw pointer data; pointerMoveFilter does not register moves when the cursor
+                // is being dragged
+                .onPointerEvent(PointerEventType.Move) { event ->
+                    event.changes.firstOrNull()?.let {
                         // manually adjust for padding
-                        hoverLocation.value = position.x - paddingPx
-                        true
-                    },
-                )
-                // hack: pointerMoveFilter is not called on drag events (pointer move with mouse down), so we listen for
-                // those manually with draggable(). We also don't need clickable() since regular clicks are captured by
-                // onDragStopped
-                .draggable(
-                    state = rememberDraggableState { hoverLocation.value += it },
-                    orientation = Orientation.Horizontal,
-                    startDragImmediately = true,
-                    onDragStopped = {
-                        val maxWidth = barWidth.value
-                        val adjustedX = hoverLocation.value.coerceAtLeast(0f).coerceAtMost(maxWidth.toFloat())
-                        val seekPercent = adjustedX / maxWidth
-                        drag.value = adjustedX - (requireNotNull(progressOverride.value) * maxWidth)
-                        onSeek(seekPercent)
-                    },
-                )
+                        hoverLocation.value = it.position.x - paddingPx
+                    }
+                }
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                    onSeek(hoverSeekPercent.value)
+                }
                 .padding(padding)
                 .size(width = sliderWidth ?: Dp.Unspecified, height = sliderHeight)
                 .let {
                     if (sliderWidth == null) it.weight(1f) else it
                 },
         ) {
+            val roundedCornerShape = RoundedCornerShape(sliderHeight / 2)
+
             // the background of the slider bar, representing the maximum progress
             LocalColors.current.withSurface {
                 Box(Modifier.fillMaxSize().surfaceBackground(roundedCornerShape))
@@ -145,12 +139,13 @@ fun SeekableSlider(
                                     .clip(CircleShape)
                                     .background(LocalColors.current.text)
                                     .draggable(
-                                        state = rememberDraggableState {
-                                            drag.value += it
-                                        },
+                                        state = rememberDraggableState { drag.value += it },
                                         orientation = Orientation.Horizontal,
                                         startDragImmediately = true,
-                                        onDragStopped = { progressOverride.value?.let(onSeek) },
+                                        onDragStopped = {
+                                            drag.value = 0f
+                                            onSeek(hoverSeekPercent.value)
+                                        },
                                     ),
                             )
                         }
@@ -167,10 +162,6 @@ fun SeekableSlider(
                             .roundToInt()
                             .coerceAtLeast(0)
                             .coerceAtMost(width)
-
-                        // width of the progress bar as a percentage of the total width, between 0 and 1
-                        val finalProgress = progressWidth.toFloat() / constraints.maxWidth
-                        progressOverride.value = finalProgress
 
                         val progressBar = measurables[0].measure(
                             Constraints.fixed(width = progressWidth, height = height),

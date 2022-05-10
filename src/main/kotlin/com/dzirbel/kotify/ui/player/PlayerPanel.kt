@@ -431,7 +431,6 @@ private fun TrackProgress(state: PlayerPanelPresenter.ViewModel, presenter: Play
 
         SeekableSlider(
             progress = progress.toFloat() / track.durationMs,
-            dragKey = state,
             leftContent = {
                 Text(text = remember(progress) { formatDuration(progress) }, style = MaterialTheme.typography.overline)
             },
@@ -453,22 +452,16 @@ private fun TrackProgress(state: PlayerPanelPresenter.ViewModel, presenter: Play
 @Composable
 private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: PlayerPanelPresenter) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        val devices = state.devices
-        val currentDevice = devices?.firstOrNull()
+        val currentDevice = state.devices?.firstOrNull()
 
-        val seekVolume = remember(currentDevice?.volumePercent) { mutableStateOf<Int?>(null) }
-
-        val currentSeekVolume = seekVolume.value
-        val volume = if (state.loadingPlayback && currentSeekVolume != null) {
-            currentSeekVolume
-        } else {
-            currentDevice?.volumePercent
+        val volumeState = remember(currentDevice?.id, currentDevice?.volumePercent) {
+            mutableStateOf(currentDevice?.volumePercent)
         }
+        val volume = volumeState.value
         val muted = volume == 0
 
         SeekableSlider(
             progress = @Suppress("MagicNumber") volume?.let { it.toFloat() / 100 },
-            dragKey = currentDevice,
             sliderWidth = VOLUME_SLIDER_WIDTH,
             leftContent = {
                 IconButton(
@@ -491,7 +484,7 @@ private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
             },
             onSeek = { seekPercent ->
                 val volumeInt = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
-                seekVolume.value = volumeInt
+                volumeState.value = volumeInt
                 presenter.emitAsync(PlayerPanelPresenter.Event.SetVolume(volumeInt))
             },
         )
