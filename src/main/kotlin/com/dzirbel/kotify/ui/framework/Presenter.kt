@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui.framework
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.dzirbel.kotify.Logger
@@ -38,9 +39,10 @@ fun <ViewModel, P : Presenter<ViewModel, *>> rememberPresenter(
     key: Any? = Unit,
     createPresenter: (CoroutineScope) -> P,
 ): P {
-    // TODO remember with key?
-    val scope = rememberCoroutineScope { Dispatchers.IO }
-    return remember(key) { createPresenter(scope) }
+    return key(key) {
+        val scope = rememberCoroutineScope { Dispatchers.IO }
+        remember { createPresenter(scope) }
+    }
 }
 
 /**
