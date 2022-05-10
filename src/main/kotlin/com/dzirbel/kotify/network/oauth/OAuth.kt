@@ -13,6 +13,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import java.security.SecureRandom
 import java.util.Base64
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Represents an in-progress OAuth flow, and wraps a [LocalOAuthServer] which is automatically started and runs until
@@ -29,7 +30,7 @@ class OAuth private constructor(
 ) {
     val error = mutableStateOf<Throwable?>(null)
     val result = mutableStateOf<LocalOAuthServer.Result?>(null)
-    private var stopped = false
+    private val stopped = AtomicBoolean(false)
 
     private val server: LocalOAuthServer = LocalOAuthServer(
         state = state,
@@ -51,11 +52,7 @@ class OAuth private constructor(
      * consumed.
      */
     private fun finish() {
-        val wasFinished = synchronized(this) {
-            stopped.also { stopped = true }
-        }
-
-        if (!wasFinished) {
+        if (!stopped.getAndSet(true)) {
             // run async to avoid deadlock (since in onSuccess() we're still processing a request)
             GlobalScope.launch {
                 runCatching { server.stop() }
