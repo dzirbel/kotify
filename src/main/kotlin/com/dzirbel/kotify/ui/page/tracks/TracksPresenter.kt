@@ -13,11 +13,13 @@ import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.framework.Presenter
+import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.properties.TrackAlbumIndexProperty
 import com.dzirbel.kotify.ui.properties.TrackAlbumProperty
 import com.dzirbel.kotify.ui.properties.TrackArtistsProperty
 import com.dzirbel.kotify.ui.properties.TrackDurationProperty
 import com.dzirbel.kotify.ui.properties.TrackNameProperty
+import com.dzirbel.kotify.ui.properties.TrackPlayingColumn
 import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
 import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.properties.TrackSavedProperty
@@ -44,7 +46,10 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
         val tracksUpdated: Long? = null,
     ) {
         val trackProperties: List<Column<Track>> = listOf(
-            // TODO find the context to play tracks from the list of all saved tracks
+            TrackPlayingColumn(
+                trackIdOf = { it.id.value },
+                playContextFromTrack = { Player.PlayContext.track(it) },
+            ),
             TrackAlbumIndexProperty,
             TrackSavedProperty(
                 trackIdOf = { it.id.value },

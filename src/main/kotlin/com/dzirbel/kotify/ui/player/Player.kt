@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.Playlist
+import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
@@ -25,7 +26,8 @@ object Player {
      * Encapsulates options to start playback.
      */
     data class PlayContext(
-        val contextUri: String,
+        val contextUri: String?,
+        val trackUris: List<String>? = null,
         val offset: Spotify.PlaybackOffset? = null,
         val positionMs: Int? = null,
     ) {
@@ -64,6 +66,11 @@ object Player {
                     PlayContext(contextUri = it, offset = Spotify.PlaybackOffset(position = index))
                 }
             }
+
+            /**
+             * Returns a [PlayContext] which plays the given [track] with no context, i.e. plays only the track.
+             */
+            fun track(track: Track) = track.uri?.let { PlayContext(contextUri = null, trackUris = listOf(it)) }
         }
     }
 
@@ -116,6 +123,7 @@ object Player {
                     contextUri = context?.contextUri?.takeUnless {
                         context.offset == null && context.positionMs == null && resumeIfSameContext && !contextChanged
                     },
+                    uris = context?.trackUris,
                     offset = context?.offset,
                     positionMs = context?.positionMs,
                     deviceId = deviceId,
