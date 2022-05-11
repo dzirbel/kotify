@@ -9,10 +9,16 @@ import java.net.URI
 import java.net.URISyntaxException
 
 /**
- * Sets the system clipboard to the given [contents], i.e. "copy".
+ * Sets the system clipboard to the given [contents], i.e. "copy". Returns true if successful or false otherwise.
  */
-fun setClipboard(contents: String) {
-    Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(contents), null)
+fun setClipboard(contents: String): Boolean {
+    @Suppress("SwallowedException")
+    return try {
+        Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(contents), null)
+        true
+    } catch (ex: IllegalStateException) {
+        false
+    }
 }
 
 /**

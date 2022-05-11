@@ -13,15 +13,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.network.oauth.LocalOAuthServer
 import com.dzirbel.kotify.network.oauth.OAuth
+import com.dzirbel.kotify.ui.components.CopyButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.getClipboard
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.ui.util.setClipboard
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -66,14 +68,14 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
             label = {
                 Text("Authorization URL")
             },
+            trailingIcon = {
+                CopyButton(
+                    // override text pointer from TextField
+                    modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand),
+                    contents = oauth.authorizationUrl.toString(),
+                )
+            },
         )
-
-        // TODO toast/tooltip/etc when copied
-        Button(
-            onClick = { setClipboard(oauth.authorizationUrl.toString()) },
-        ) {
-            Text("Copy to clipboard")
-        }
     }
 
     VerticalSpacer(Dimens.space3)
