@@ -7,6 +7,7 @@ import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
@@ -15,7 +16,6 @@ import com.dzirbel.kotify.ui.player.PlayerPanelPresenter
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.coVerifyAll
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.just
@@ -56,6 +56,8 @@ internal class PlayerPanelPresenterTest {
         coEvery { Spotify.Player.getAvailableDevices() } returns emptyList()
         coEvery { Spotify.Player.getCurrentPlayback() } returns null
         coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returns null
+        coEvery { Spotify.Player.startPlayback(deviceId = any()) } just Runs
+        coEvery { Spotify.Player.pausePlayback(deviceId = any()) } just Runs
 
         coEvery { Spotify.Library.checkTracks(any()) } answers { firstArg<List<String>>().map { false } }
         coEvery { Spotify.Library.checkAlbums(any()) } answers { firstArg<List<String>>().map { false } }
@@ -82,16 +84,16 @@ internal class PlayerPanelPresenterTest {
 
     @Test
     fun loadDevices() {
+        val device1: SpotifyPlaybackDevice = mockk {
+            every { id } returns "device 1"
+        }
+        val device2: SpotifyPlaybackDevice = mockk {
+            every { id } returns "device 2"
+        }
+        coEvery { Spotify.Player.getAvailableDevices() } returnsMany listOf(emptyList(), listOf(device1, device2))
+
         testPresenter(::PlayerPanelPresenter) { presenter ->
             verifyOpenCalls()
-
-            val device1: SpotifyPlaybackDevice = mockk {
-                every { id } returns "device 1"
-            }
-            val device2: SpotifyPlaybackDevice = mockk {
-                every { id } returns "device 2"
-            }
-            coEvery { Spotify.Player.getAvailableDevices() } returns listOf(device1, device2)
 
             presenter.emit(PlayerPanelPresenter.Event.LoadDevices())
             advanceUntilIdle()
@@ -113,6 +115,7 @@ internal class PlayerPanelPresenterTest {
             every { volumePercent } returnsMany listOf(20, 20, 20, 30)
         }
         coEvery { Spotify.Player.getAvailableDevices() } returns listOf(device)
+
         testPresenter(::PlayerPanelPresenter) { presenter ->
             verifyOpenCalls(deviceId = "device_id")
 
@@ -138,60 +141,107 @@ internal class PlayerPanelPresenterTest {
     }
 
     @ParameterizedTest
-    @MethodSource("playback")
+    @MethodSource("playbacks")
     fun loadPlayback(playback: SpotifyPlayback?) {
+        coEvery { Spotify.Player.getCurrentPlayback() } returns playback
+
         testPresenter(::PlayerPanelPresenter) { presenter ->
             verifyOpenCalls()
-
-            coEvery { Spotify.Player.getCurrentPlayback() } returns playback
 
             presenter.emit(PlayerPanelPresenter.Event.LoadPlayback())
             advanceUntilIdle()
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(
-                loadedState.copy(
-                    loadingPlayback = false,
-                    playbackProgressMs = playback?.progressMs,
-                    playbackIsPlaying = playback?.isPlaying,
-                    playbackShuffleState = playback?.shuffleState,
-                    playbackRepeatState = playback?.repeatState,
-                    playbackCurrentDevice = playback?.device,
-                    playbackTrack = playback?.item,
-                    trackSavedState = playback?.item?.let { SavedTrackRepository.stateOf(id = it.id) },
-                    trackRatingState = playback?.item?.let { TrackRatingRepository.ratingState(id = it.id) },
-                    albumSavedState = playback?.item?.album?.id?.let { SavedAlbumRepository.stateOf(id = it) },
-                    artistSavedStates = playback?.item?.let { emptyMap() },
-                ),
-            )
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.withPlayback(playback))
 
-            coVerify {
-                Spotify.Player.getCurrentPlayback()
-                if (playback != null) {
-                    Player.isPlaying
-                    isPlayingState.value = playback.isPlaying
+            verifyLoadPlaybackCalls(playback)
+        }
+    }
 
-                    Player.playbackContext
-                    playbackContextState.value = playback.context
+    @Test
+    fun play() {
+        coEvery { Spotify.Player.getCurrentPlayback() } returnsMany
+            listOf(playbackNotPlaying, playbackNotPlaying, playbackPlaying)
 
-                    playback.item?.let { track ->
-                        Player.currentTrackId
-                        currentTrackIdState.value = track.id
-                    }
+        testPresenter(::PlayerPanelPresenter) { presenter ->
+            verifyOpenCalls(playback = playbackNotPlaying)
+
+            presenter.emit(PlayerPanelPresenter.Event.Play)
+            advanceUntilIdle()
+
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.withPlayback(playbackPlaying))
+
+            coVerify { Spotify.Player.startPlayback(deviceId = deviceId) }
+            verifyLoadPlaybackCalls(playbackNotPlaying)
+            verifyLoadPlaybackCalls(playbackPlaying)
+        }
+    }
+
+    @Test
+    fun pause() {
+        coEvery { Spotify.Player.getCurrentPlayback() } returnsMany
+            listOf(playbackPlaying, playbackPlaying, playbackNotPlaying)
+
+        testPresenter(::PlayerPanelPresenter) { presenter ->
+            verifyOpenCalls(playback = playbackPlaying)
+
+            presenter.emit(PlayerPanelPresenter.Event.Pause)
+            advanceUntilIdle()
+
+            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.withPlayback(playbackNotPlaying))
+
+            coVerify { Spotify.Player.pausePlayback(deviceId = deviceId) }
+            verifyLoadPlaybackCalls(playbackPlaying)
+            verifyLoadPlaybackCalls(playbackNotPlaying)
+        }
+    }
+
+    private fun verifyLoadPlaybackCalls(playback: SpotifyPlayback?) {
+        coVerify {
+            Spotify.Player.getCurrentPlayback()
+            if (playback != null) {
+                Player.isPlaying
+                isPlayingState.value = playback.isPlaying
+
+                Player.playbackContext
+                playbackContextState.value = playback.context
+
+                playback.item?.let { track ->
+                    Player.currentTrackId
+                    currentTrackIdState.value = track.id
                 }
             }
         }
     }
 
-    private fun verifyOpenCalls(deviceId: String? = null) {
-        coVerifyAll {
+    private fun verifyOpenCalls(deviceId: String? = null, playback: SpotifyPlayback? = null) {
+        coVerify {
             Spotify.Player.getAvailableDevices()
-            Spotify.Player.getCurrentPlayback()
             Spotify.Player.getCurrentlyPlayingTrack()
 
             Player.playEvents
             Player.currentPlaybackDeviceId
             currentPlaybackDeviceIdState.value = deviceId
         }
+
+        verifyLoadPlaybackCalls(playback)
+    }
+
+    private suspend fun PlayerPanelPresenter.ViewModel.withPlayback(
+        playback: SpotifyPlayback?,
+    ): PlayerPanelPresenter.ViewModel {
+        return copy(
+            loadingPlayback = false,
+            playbackProgressMs = playback?.progressMs,
+            playbackIsPlaying = playback?.isPlaying,
+            playbackShuffleState = playback?.shuffleState,
+            playbackRepeatState = playback?.repeatState,
+            playbackCurrentDevice = playback?.device,
+            playbackTrack = playback?.item,
+            trackSavedState = playback?.item?.let { SavedTrackRepository.stateOf(id = it.id) },
+            trackRatingState = playback?.item?.let { TrackRatingRepository.ratingState(id = it.id) },
+            albumSavedState = playback?.item?.album?.id?.let { SavedAlbumRepository.stateOf(id = it) },
+            artistSavedStates = playback?.item?.let { emptyMap() },
+        )
     }
 
     companion object {
@@ -203,33 +253,41 @@ internal class PlayerPanelPresenterTest {
             devices = emptyList(),
         )
 
+        const val deviceId = "device"
+        val device: SpotifyPlaybackDevice = mockk {
+            every { id } returns deviceId
+        }
+        val track: FullSpotifyTrack = mockk(relaxed = true)
+
+        val playbackNotPlaying = playback(isPlaying = false, track = null)
+        val playbackPlaying = playback(isPlaying = true)
+
+        fun playback(
+            isPlaying: Boolean = true,
+            device: SpotifyPlaybackDevice = this.device,
+            track: FullSpotifyTrack? = this.track,
+        ): SpotifyPlayback {
+            return SpotifyPlayback(
+                timestamp = 123,
+                device = device,
+                progressMs = 456,
+                isPlaying = isPlaying,
+                currentlyPlayingType = "type",
+                item = track,
+                shuffleState = true,
+                repeatState = "repeat",
+                context = null,
+            )
+        }
+
         @JvmStatic
         @Suppress("unused")
-        fun playback(): List<SpotifyPlayback?> {
+        fun playbacks(): List<SpotifyPlayback?> {
             return listOf(
                 null,
-                SpotifyPlayback(
-                    timestamp = 123,
-                    device = mockk(),
-                    progressMs = 456,
-                    isPlaying = true,
-                    currentlyPlayingType = "type",
-                    item = null,
-                    shuffleState = true,
-                    repeatState = "repeat",
-                    context = null,
-                ),
-                SpotifyPlayback(
-                    timestamp = 0,
-                    device = mockk(),
-                    progressMs = 0,
-                    isPlaying = false,
-                    currentlyPlayingType = "type",
-                    item = mockk(relaxed = true),
-                    shuffleState = false,
-                    repeatState = "repeat",
-                    context = mockk(),
-                ),
+                playback(isPlaying = false),
+                playback(isPlaying = false, track = null),
+                playback(isPlaying = true),
             )
         }
     }
