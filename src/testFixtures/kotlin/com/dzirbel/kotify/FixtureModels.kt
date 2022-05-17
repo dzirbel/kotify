@@ -7,8 +7,10 @@ import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
+import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.Paging
 import com.dzirbel.kotify.network.model.PublicSpotifyUser
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyArtist
@@ -114,13 +116,31 @@ object FixtureModels {
         )
     }
 
+    private fun networkSimplifiedAlbum(
+        id: String = "album",
+        name: String = "Album",
+    ): SimplifiedSpotifyAlbum {
+        return SimplifiedSpotifyAlbum(
+            id = id,
+            name = name,
+            externalUrls = emptyMap(),
+            href = "href",
+            type = "album",
+            uri = "uri",
+            images = emptyList(),
+            releaseDate = "",
+            releaseDatePrecision = "",
+            artists = emptyList(),
+        )
+    }
+
     private fun networkTracks(count: Int): List<SimplifiedSpotifyTrack> {
         return List(count) { index ->
             networkTrack(id = "track-$index", name = "Track $index", trackNumber = index + 1)
         }
     }
 
-    private fun networkTrack(
+    fun networkTrack(
         id: String = "track",
         name: String = "Track",
         popularity: Int = 50,
@@ -141,6 +161,31 @@ object FixtureModels {
             type = "track",
             uri = "uri",
             externalIds = SpotifyExternalId(),
+        )
+    }
+
+    fun networkFullTrack(
+        id: String = "track",
+        name: String = "Track",
+        popularity: Int = 50,
+        trackNumber: Int = 1,
+    ): FullSpotifyTrack {
+        return FullSpotifyTrack(
+            id = id,
+            name = name,
+            popularity = popularity,
+            trackNumber = trackNumber,
+            artists = emptyList(),
+            discNumber = 1,
+            durationMs = 60_000,
+            explicit = false,
+            externalUrls = SpotifyExternalUrl(),
+            href = "href",
+            isLocal = false,
+            type = "track",
+            uri = "uri",
+            externalIds = SpotifyExternalId(),
+            album = networkSimplifiedAlbum(),
         )
     }
 

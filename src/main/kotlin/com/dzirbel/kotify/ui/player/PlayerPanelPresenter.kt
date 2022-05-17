@@ -74,7 +74,7 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
             val retries: Int = 5,
         ) : Event()
 
-        class LoadTrackPlayback(val untilTrackChange: Boolean = false, val retries: Int = 5) : Event()
+        data class LoadTrackPlayback(val untilTrackChange: Boolean = false, val retries: Int = 5) : Event()
 
         object Play : Event()
         object Pause : Event()
