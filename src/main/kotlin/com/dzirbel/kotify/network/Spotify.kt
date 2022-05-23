@@ -103,7 +103,7 @@ object Spotify {
 
     @Serializable
     private data class PlaylistPagingModel(
-        val playlists: Paging<SimplifiedSpotifyPlaylist>,
+        val playlists: Paging<SimplifiedSpotifyPlaylist?>,
         val message: String? = null,
     )
 
@@ -394,7 +394,7 @@ object Spotify {
             country: String? = null,
             limit: Int? = null,
             offset: Int? = null,
-        ): Paging<SimplifiedSpotifyPlaylist> {
+        ): Paging<SimplifiedSpotifyPlaylist?> {
             return get<PlaylistPagingModel>(
                 "browse/categories/$categoryId/playlists",
                 mapOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString()),
@@ -467,7 +467,7 @@ object Spotify {
             timestamp: String? = null,
             limit: Int? = null,
             offset: Int? = null,
-        ): Paging<SimplifiedSpotifyPlaylist> {
+        ): Paging<SimplifiedSpotifyPlaylist?> {
             return get<PlaylistPagingModel>(
                 "browse/featured-playlists",
                 mapOf(
