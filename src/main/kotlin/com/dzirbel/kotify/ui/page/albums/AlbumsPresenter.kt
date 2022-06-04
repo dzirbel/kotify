@@ -69,7 +69,7 @@ class AlbumsPresenter(scope: CoroutineScope) : Presenter<AlbumsPresenter.ViewMod
                 }
             }
 
-            is Event.ReactToAlbumsSaved -> {
+            is Event.ReactToAlbumsSaved ->
                 if (event.saved) {
                     // if an album has been saved but is now missing from the grid of albums, load and add it
                     val stateAlbums = queryState { it.albums }
@@ -95,7 +95,6 @@ class AlbumsPresenter(scope: CoroutineScope) : Presenter<AlbumsPresenter.ViewMod
                         it.copy(savedAlbumIds = it.savedAlbumIds?.minus(event.albumIds.toSet()))
                     }
                 }
-            }
 
             is Event.ToggleSave -> SavedAlbumRepository.setSaved(id = event.albumId, saved = event.save)
         }

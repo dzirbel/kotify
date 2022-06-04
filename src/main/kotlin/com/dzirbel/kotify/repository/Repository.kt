@@ -227,7 +227,7 @@ abstract class Repository<E> {
             // if we allow the cache and have states which were just created, try to load them from the cache and then
             // fall back to loading anything which is still missing (newly created state or not) from the remote, if
             // allowed
-            allowCache && missingIndices.isNotEmpty() -> {
+            allowCache && missingIndices.isNotEmpty() ->
                 scope.launch {
                     val missingCached = getCached(ids = missingIds)
 
@@ -242,7 +242,6 @@ abstract class Repository<E> {
 
                     idsToFetchFromRemote?.let { getRemote(ids = it) }
                 }
-            }
 
             // otherwise, if we allow the remote then do a batch fetch for any state which did not have a value
             allowRemote -> {

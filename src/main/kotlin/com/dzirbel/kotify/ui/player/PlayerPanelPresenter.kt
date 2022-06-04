@@ -279,7 +279,7 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                             )
                         }
 
-                    trackPlayback.item == null -> {
+                    trackPlayback.item == null ->
                         if (event.retries > 0) {
                             // try again until we get a valid track
                             delay(REFRESH_BUFFER_MS)
@@ -293,9 +293,8 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                         } else {
                             mutateState { it.copy(loadingTrackPlayback = false) }
                         }
-                    }
 
-                    event.untilTrackChange && trackPlayback.item == currentTrack -> {
+                    event.untilTrackChange && trackPlayback.item == currentTrack ->
                         if (event.retries > 0) {
                             // try again until the track changes
                             delay(REFRESH_BUFFER_MS)
@@ -304,7 +303,6 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                         } else {
                             mutateState { it.copy(loadingTrackPlayback = false) }
                         }
-                    }
 
                     else -> {
                         val track = trackPlayback.item

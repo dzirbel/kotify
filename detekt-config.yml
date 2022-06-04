@@ -37,6 +37,7 @@ comments:
     active: true
     matchTypeParameters: true
     matchDeclarationsOrder: true
+    allowParamOnConstructorProperties: false
   UndocumentedPublicClass:
     active: false
     searchInNestedClass: true
@@ -488,6 +489,9 @@ performance:
   active: true
   ArrayPrimitive:
     active: true
+  CouldBeSequence:
+    active: true
+    threshold: 3
   ForEachOnRange:
     active: true
   SpreadOperator:
@@ -617,7 +621,7 @@ style:
     allowedPatterns: ''
   ForbiddenImport:
     active: false
-    imports:
+    imports: []
     forbiddenPatterns: ''
   ForbiddenMethodCall:
     active: true
@@ -656,6 +660,7 @@ style:
       - '0'
       - '1'
       - '2'
+      - '100'
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: true
     ignoreLocalVariableDeclaration: false
@@ -687,6 +692,8 @@ style:
   NewLineAtEndOfFile:
     active: true
   NoTabs:
+    active: true
+  NullableBooleanCheck:
     active: true
   ObjectLiteralToLambda:
     active: true
@@ -733,6 +740,8 @@ style:
   UnnecessaryAnnotationUseSiteTarget:
     active: true
   UnnecessaryApply:
+    active: true
+  UnnecessaryBackticks:
     active: true
   UnnecessaryFilter:
     active: true

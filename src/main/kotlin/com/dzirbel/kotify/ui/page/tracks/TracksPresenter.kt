@@ -110,7 +110,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                 }
             }
 
-            is Event.ReactToTracksSaved -> {
+            is Event.ReactToTracksSaved ->
                 if (event.saved) {
                     // if an track has been saved but is now missing from the table of tracks, load and add it
                     val stateTracks = queryState { it.tracksById }.keys
@@ -140,7 +140,6 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                         it.copy(savedTrackIds = it.savedTrackIds.minus(event.trackIds.toSet()))
                     }
                 }
-            }
 
             is Event.SetSorts -> mutateState {
                 it.copy(tracks = it.tracks.withSort(event.sorts))

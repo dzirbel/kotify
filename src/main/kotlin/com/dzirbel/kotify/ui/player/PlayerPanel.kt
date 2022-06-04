@@ -461,7 +461,7 @@ private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
         val muted = volume == 0
 
         SeekableSlider(
-            progress = @Suppress("MagicNumber") volume?.let { it.toFloat() / 100 },
+            progress = volume?.let { it.toFloat() / 100 },
             sliderWidth = VOLUME_SLIDER_WIDTH,
             leftContent = {
                 IconButton(
@@ -483,7 +483,7 @@ private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
                 }
             },
             onSeek = { seekPercent ->
-                val volumeInt = @Suppress("MagicNumber") (seekPercent * 100).roundToInt()
+                val volumeInt = (seekPercent * 100).roundToInt()
                 volumeState.value = volumeInt
                 presenter.emitAsync(PlayerPanelPresenter.Event.SetVolume(volumeInt))
             },

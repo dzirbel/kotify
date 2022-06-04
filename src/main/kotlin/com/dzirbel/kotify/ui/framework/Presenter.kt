@@ -133,7 +133,6 @@ abstract class Presenter<ViewModel, Event : Any>(
         data class Error<State>(val lastState: State, val throwable: Throwable) : StateOrError<State>() {
             override val safeState: State = lastState
 
-            @Suppress("CanBeNonNullable") // detekt false positive
             override val stateOrThrow: State
                 get() = throw throwable
         }
