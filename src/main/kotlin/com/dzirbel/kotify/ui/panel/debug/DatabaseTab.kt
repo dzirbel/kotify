@@ -9,6 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.Logger
+import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.ui.components.AppliedTextField
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
@@ -23,6 +25,17 @@ private val databaseSettings = mutableStateOf(DatabaseSettings())
 fun DatabaseTab(scrollState: ScrollState) {
     val groupByTransaction = databaseSettings.value.groupByTransaction
     Column(Modifier.fillMaxWidth().padding(Dimens.space3)) {
+        AppliedTextField(
+            value = KotifyDatabase.transactionDelayMs.toString(),
+            label = "Transaction delay (ms)",
+            modifier = Modifier.fillMaxWidth(),
+            applyValue = { value ->
+                val valueLong = value.toLongOrNull()
+                valueLong?.let { KotifyDatabase.transactionDelayMs = it }
+                valueLong != null
+            }
+        )
+
         CheckboxWithLabel(
             modifier = Modifier.fillMaxWidth(),
             checked = groupByTransaction,

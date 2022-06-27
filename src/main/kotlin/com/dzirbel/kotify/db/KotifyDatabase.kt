@@ -20,6 +20,7 @@ import com.dzirbel.kotify.db.model.UserRepository
 import com.dzirbel.kotify.db.model.UserTable
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.DatabaseConfig
@@ -96,6 +97,11 @@ object KotifyDatabase {
     private var synchronousTransactions = false
 
     /**
+     * Global delay applied to each transaction to simulate slower database conditions during performance testing.
+     */
+    var transactionDelayMs: Long = 0L
+
+    /**
      * Toggles running [transaction] synchronously (rather than via [newSuspendedTransaction]) inside [block].
      *
      * This is intended for use in tests where a test scheduler is used to advance time; this will cause the test
@@ -114,6 +120,10 @@ object KotifyDatabase {
      */
     suspend fun <T> transaction(name: String?, statement: suspend Transaction.() -> T): T {
         check(db.transactionManager.currentOrNull() == null) { "transaction already in progress" }
+
+        if (transactionDelayMs > 0) {
+            delay(transactionDelayMs)
+        }
 
         return if (synchronousTransactions) {
             transaction(db = db) {

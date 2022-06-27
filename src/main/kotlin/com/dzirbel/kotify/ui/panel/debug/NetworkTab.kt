@@ -4,16 +4,13 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.DelayInterceptor
+import com.dzirbel.kotify.ui.components.AppliedTextField
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -30,31 +27,15 @@ private val networkSettings = mutableStateOf(NetworkSettings())
 @Composable
 fun NetworkTab(scrollState: ScrollState) {
     Column(Modifier.fillMaxWidth().padding(Dimens.space3)) {
-        val delay = remember { mutableStateOf(DelayInterceptor.delayMs.toString()) }
-        val appliedDelay = remember { mutableStateOf(true) }
-
-        OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { focusState ->
-                    if (!focusState.hasFocus) {
-                        delay.value = DelayInterceptor.delayMs.toString()
-                        appliedDelay.value = true
-                    }
-                },
-            value = delay.value,
-            singleLine = true,
-            isError = !appliedDelay.value,
-            onValueChange = { value ->
-                delay.value = value
-
-                value.toLongOrNull()
-                    ?.also { DelayInterceptor.delayMs = it }
-                    .also { appliedDelay.value = it != null }
-            },
-            label = {
-                Text("Network delay (ms)", style = MaterialTheme.typography.overline)
-            },
+        AppliedTextField(
+            value = DelayInterceptor.delayMs.toString(),
+            label = "Network delay (ms)",
+            modifier = Modifier.fillMaxWidth(),
+            applyValue = { value ->
+                val valueLong = value.toLongOrNull()
+                valueLong?.let { DelayInterceptor.delayMs = it }
+                valueLong != null
+            }
         )
 
         VerticalSpacer(Dimens.space2)
