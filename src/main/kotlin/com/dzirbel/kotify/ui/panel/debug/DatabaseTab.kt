@@ -33,7 +33,7 @@ fun DatabaseTab(scrollState: ScrollState) {
                 val valueLong = value.toLongOrNull()
                 valueLong?.let { KotifyDatabase.transactionDelayMs = it }
                 valueLong != null
-            }
+            },
         )
 
         CheckboxWithLabel(

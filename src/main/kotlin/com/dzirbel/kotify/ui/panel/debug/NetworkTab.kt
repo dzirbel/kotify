@@ -35,7 +35,7 @@ fun NetworkTab(scrollState: ScrollState) {
                 val valueLong = value.toLongOrNull()
                 valueLong?.let { DelayInterceptor.delayMs = it }
                 valueLong != null
-            }
+            },
         )
 
         VerticalSpacer(Dimens.space2)
