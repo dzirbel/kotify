@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import com.dzirbel.kotify.Settings
+import kotlin.math.min
 
 val LocalColors: ProvidableCompositionLocal<Colors> = compositionLocalOf { Settings.colors }
 
@@ -123,7 +124,9 @@ enum class Colors(
      */
     @Composable
     fun highlighted(highlight: Boolean, otherwise: Color = LocalContentColor.current): Color {
-        return (if (highlight) primary else otherwise).copy(alpha = LocalContentAlpha.current)
+        return (if (highlight) primary else otherwise).let {
+            it.copy(alpha = min(LocalContentAlpha.current, it.alpha))
+        }
     }
 
     /**
