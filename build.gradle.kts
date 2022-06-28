@@ -4,7 +4,14 @@ import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import proguard.gradle.ProGuardTask
 import java.util.Properties
+
+buildscript {
+    dependencies {
+        classpath(deps.proguard)
+    }
+}
 
 plugins {
     kotlin("jvm") version deps.versions.kotlin.get()
@@ -155,6 +162,27 @@ detekt {
     config = files("detekt-config.yml")
 }
 
+val File.obfuscatedJarFile: File
+    get() = File("${project.buildDir}/tmp/obfuscated/${nameWithoutExtension}.min.jar")
+
+val proGuard = tasks.create<ProGuardTask>("proGuard") {
+    dependsOn(tasks.jar.get())
+
+    val allJars = tasks.jar.get().outputs.files + sourceSets.main.get().runtimeClasspath
+        .filter { it.extension == "jar" }
+        // workaround for https://github.com/JetBrains/compose-jb/issues/1971
+        .filterNot { it.name.startsWith("skiko-awt-") && !it.name.startsWith("skiko-awt-runtime-") }
+
+    for (file in allJars) {
+        injars(file)
+        outjars(file.obfuscatedJarFile)
+    }
+
+    libraryjars("${compose.desktop.application.javaHome ?: System.getProperty("java.home")}/jmods")
+
+    configuration("proguard-rules.pro")
+}
+
 compose.desktop {
     application {
         // workaround for https://github.com/JetBrains/compose-jb/issues/188
@@ -170,6 +198,12 @@ compose.desktop {
             targetFormats(TargetFormat.Deb, TargetFormat.Exe)
             packageName = appProperties["name"] as String
             packageVersion = project.version.toString()
+        }
+
+        if (project.hasProperty("shrink")) {
+            disableDefaultConfiguration()
+            fromFiles(proGuard.outputs.files.asFileTree)
+            mainJar.set(tasks.jar.map { RegularFile { it.archiveFile.get().asFile.obfuscatedJarFile } })
         }
     }
 }

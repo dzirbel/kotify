@@ -90,6 +90,10 @@ dependencyResolutionManagement {
                 library("okhttp", "com.squareup.okhttp3", "okhttp").versionRef(version)
             }
 
+            version("proguard", "7.2.2").let { version ->
+                library("proguard", "com.guardsquare", "proguard-gradle").versionRef(version)
+            }
+
             // http://www.slf4j.org/
             version("slf4j", "1.7.32").let { version ->
                 library("slf4j-nop", "org.slf4j", "slf4j-nop").versionRef(version)
