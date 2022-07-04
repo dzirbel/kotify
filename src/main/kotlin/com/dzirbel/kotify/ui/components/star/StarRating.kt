@@ -1,7 +1,8 @@
 package com.dzirbel.kotify.ui.components.star
 
+import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.mouseClickable
+import androidx.compose.foundation.onClick
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.IconButton
@@ -10,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
@@ -37,10 +38,8 @@ fun StarRating(
 
     Row(
         modifier = if (rating != null) {
-            modifier.mouseClickable {
-                if (buttons.isSecondaryPressed) {
-                    dropdownVisible.value = true
-                }
+            modifier.onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary)) {
+                dropdownVisible.value = true
             }
         } else {
             modifier

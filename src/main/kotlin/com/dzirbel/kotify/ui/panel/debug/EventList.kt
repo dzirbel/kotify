@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.panel.debug
 
+import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -27,11 +29,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.VerticalScroll
-import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
@@ -84,10 +86,13 @@ private fun <T> EventItem(event: Logger.Event<T>) {
         modifier = Modifier
             .let {
                 if (canExpand) {
-                    it.rightLeftClickable(
-                        onLeftClick = { expandedState?.value = !expanded },
-                        onRightClick = { rightClickMenuExpanded.value = true },
-                    )
+                    it
+                        .onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
+                            expandedState?.value = !expanded
+                        }
+                        .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary)) {
+                            rightClickMenuExpanded.value = true
+                        }
                 } else {
                     it
                 }

@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.page.artists
 
+import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.onClick
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
@@ -16,6 +18,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerButton
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.Flow
@@ -34,7 +37,6 @@ import com.dzirbel.kotify.ui.components.adapter.dividableProperties
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
-import com.dzirbel.kotify.ui.components.rightLeftClickable
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.components.star.RatingHistogram
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
@@ -133,12 +135,12 @@ private fun ArtistCell(
 ) {
     Column(
         Modifier
-            .rightLeftClickable(
-                onLeftClick = {
-                    pageStack.mutate { to(ArtistPage(artistId = artist.id.value)) }
-                },
-                onRightClick = onRightClick,
-            )
+            .onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
+                pageStack.mutate { to(ArtistPage(artistId = artist.id.value)) }
+            }
+            .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary)) {
+                onRightClick()
+            }
             .padding(Dimens.space3),
     ) {
         LoadedImage(

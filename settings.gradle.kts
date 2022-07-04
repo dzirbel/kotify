@@ -16,7 +16,7 @@ dependencyResolutionManagement {
             }
 
             // https://github.com/jetbrains/compose-jb
-            version("compose", "1.1.1").let { version ->
+            version("compose", "1.2.0-alpha01-dev731").let { version ->
                 plugin("compose", "org.jetbrains.compose").versionRef(version)
 
                 library("compose-swing", "org.jetbrains.kotlinx", "kotlinx-coroutines-swing").versionRef(version)
@@ -65,7 +65,7 @@ dependencyResolutionManagement {
             }
 
             // https://kotlinlang.org/releases.html
-            version("kotlin", "1.6.10")
+            version("kotlin", "1.6.21")
 
             // https://github.com/Kotlin/kotlinx.serialization
             version("kotlinx-serialization", "1.3.2").let { version ->
