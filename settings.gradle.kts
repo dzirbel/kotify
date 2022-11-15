@@ -55,7 +55,7 @@ dependencyResolutionManagement {
             }
 
             // https://junit.org/junit5/
-            version("junit5", "5.8.2").let { version ->
+            version("junit5", "5.9.1").let { version ->
                 library("junit5-api", "org.junit.jupiter", "junit-jupiter-api").versionRef(version)
                 library("junit5-params", "org.junit.jupiter", "junit-jupiter-params").versionRef(version)
                 library("junit5-engine", "org.junit.jupiter", "junit-jupiter-engine").versionRef(version)
