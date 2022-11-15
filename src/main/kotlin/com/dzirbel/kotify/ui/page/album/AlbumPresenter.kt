@@ -110,11 +110,11 @@ class AlbumPresenter(
 
                 val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
 
-                mutateState {
-                    it.copy(
+                mutateState { state ->
+                    state.copy(
                         refreshing = false,
                         album = album,
-                        tracks = it.tracks.withElements(tracks),
+                        tracks = state.tracks.withElements(tracks),
                         totalDurationMs = tracks.sumOf { track -> track.durationMs },
                         savedTracksStates = savedTracksState,
                         trackRatings = trackRatings,
@@ -128,9 +128,9 @@ class AlbumPresenter(
                     fullTracks.forEach { it.artists.loadToCache() }
                 }
 
-                mutateState {
-                    it.copy(
-                        tracks = it.tracks.withElements(fullTracks),
+                mutateState { state ->
+                    state.copy(
+                        tracks = state.tracks.withElements(fullTracks),
                         totalDurationMs = fullTracks.sumOf { track -> track.durationMs },
                     )
                 }

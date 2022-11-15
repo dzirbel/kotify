@@ -122,8 +122,8 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
 
             // attempt to link artists from network model; do not set albumGroup since it is unavailable from an album
             // context
-            networkModel.artists.forEach {
-                Artist.from(it)?.let { artist ->
+            networkModel.artists.forEach { artistModel ->
+                Artist.from(artistModel)?.let { artist ->
                     ArtistAlbum.from(artistId = artist.id.value, albumId = id.value, albumGroup = null)
                 }
             }

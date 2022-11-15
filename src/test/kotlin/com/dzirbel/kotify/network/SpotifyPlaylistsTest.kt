@@ -196,8 +196,8 @@ class SpotifyPlaylistsTest {
     fun getPlaylistTracks(playlistProperties: PlaylistProperties) {
         val tracks = runBlocking { Spotify.Playlists.getPlaylistTracks(playlistId = playlistProperties.id) }
 
-        playlistProperties.tracks?.let {
-            tracks.items.zip(it).forEach { (playlistTrack, trackProperties) ->
+        playlistProperties.tracks?.let { trackProperties ->
+            tracks.items.zip(trackProperties).forEach { (playlistTrack, trackProperties) ->
                 trackProperties.check(playlistTrack)
             }
         }

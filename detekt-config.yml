@@ -4,6 +4,7 @@ build:
 
 config:
   validation: true
+  checkExhaustiveness: true
   warningsAsErrors: true
   excludes: ''
 
@@ -33,6 +34,8 @@ comments:
   EndOfSentenceFormat:
     active: false
     endOfSentenceFormat: '([.?!][ \t\n\r\f<])|([.?!:]$)'
+  KDocReferencesNonPublicProperty:
+    active: false # TODO false positives: https://github.com/detekt/detekt/pull/5534
   OutdatedDocumentation:
     active: true
     matchTypeParameters: true
@@ -51,6 +54,9 @@ comments:
 
 complexity:
   active: true
+  CognitiveComplexMethod:
+    active: false
+    threshold: 15
   ComplexCondition:
     active: true
     threshold: 4
@@ -59,7 +65,7 @@ complexity:
     threshold: 10
     includeStaticDeclarations: false
     includePrivateDeclarations: false
-  ComplexMethod:
+  CyclomaticComplexMethod:
     active: false
     threshold: 16
     ignoreSingleWhenExpression: false
@@ -102,6 +108,10 @@ complexity:
   NestedBlockDepth:
     active: true
     threshold: 6
+  NestedScopeFunctions:
+    active: true
+    threshold: 1
+    functions: ['kotlin.apply', 'kotlin.run', 'kotlin.with']
   ReplaceSafeCallChainWithRun:
     active: false
   StringLiteralDuplication:
@@ -346,7 +356,6 @@ formatting:
   ParameterListWrapping:
     active: true
     autoCorrect: true
-    indentSize: 4
     maxLineLength: 120
   SpacingAroundAngleBrackets:
     active: true
@@ -390,11 +399,14 @@ formatting:
   StringTemplate:
     active: true
     autoCorrect: true
-  TrailingComma:
+  TrailingCommaOnCallSite:
     active: true
-    allowTrailingComma: true
-    allowTrailingCommaOnCallSite: true
     autoCorrect: true
+    useTrailingCommaOnCallSite: true
+  TrailingCommaOnDeclarationSite:
+    active: true
+    autoCorrect: true
+    useTrailingCommaOnDeclarationSite: true
   TypeArgumentListSpacing:
     active: true
     autoCorrect: true
@@ -496,6 +508,8 @@ performance:
     active: true
   SpreadOperator:
     active: true
+  UnnecessaryPartOfBinaryExpression:
+    active: true
   UnnecessaryTemporaryInstantiation:
     active: true
 
@@ -513,8 +527,6 @@ potential-bugs:
     active: true
   DoubleMutabilityForCollection:
     active: true
-  DuplicateCaseInWhenExpression:
-    active: true
   ElseCaseInsteadOfExhaustiveWhen:
     active: false
   EqualsAlwaysReturnsTrueOrFalse:
@@ -529,7 +541,6 @@ potential-bugs:
     active: true
   IgnoredReturnValue:
     active: false
-    restrictToAnnotatedMethods: true
     returnValueAnnotations:
       - '*.CheckResult'
       - '*.CheckReturnValue'
@@ -555,16 +566,13 @@ potential-bugs:
     active: true
   MissingPackageDeclaration:
     active: true
-  MissingWhenCase:
-    active: true
-    allowElseExpression: true
   NullCheckOnMutableProperty:
     active: true
   NullableToStringCall:
     active: false
-  RedundantElseInWhen:
-    active: true
   UnconditionalJumpStatementInLoop:
+    active: true
+  UnnecessaryNotNullCheck:
     active: true
   UnnecessaryNotNullOperator:
     active: true
@@ -587,7 +595,11 @@ potential-bugs:
 
 style:
   active: true
+  AlsoCouldBeApply:
+    active: false
   CanBeNonNullable:
+    active: true
+  CascadingCallWrapping:
     active: true
   ClassOrdering:
     active: true
@@ -595,7 +607,7 @@ style:
     active: true
   DataClassContainsFunctions:
     active: false
-    conversionFunctionPrefix: 'to'
+    conversionFunctionPrefix: ['to']
   DataClassShouldBeImmutable:
     active: true
   DestructuringDeclarationWithTooManyEntries:
@@ -628,12 +640,9 @@ style:
     methods:
       - 'kotlin.io.print'
       - 'kotlin.io.println'
-  ForbiddenPublicDataClass:
+  ForbiddenSuppress:
     active: false
-    excludes: ['**']
-    ignorePackages:
-      - '*.internal'
-      - '*.internal.*'
+    rules: []
   ForbiddenVoid:
     active: true
     ignoreOverridden: false
@@ -642,25 +651,15 @@ style:
     active: true
     ignoreOverridableFunction: true
     ignoreActualFunction: true
-    excludedFunctions: 'describeContents'
-    ignoreAnnotated:
-      - 'dagger.Provides'
-  LibraryCodeMustSpecifyReturnType:
-    active: false
-  LibraryEntitiesShouldNotBePublic:
-    active: false
+    excludedFunctions: ['describeContents']
+    ignoreAnnotated: ['dagger.Provides']
   LoopWithTooManyJumpStatements:
     active: true
     maxJumpCount: 1
   MagicNumber:
     active: true
     excludes: ['**/test/**', '**/testFixtures/**']
-    ignoreNumbers:
-      - '-1'
-      - '0'
-      - '1'
-      - '2'
-      - '100'
+    ignoreNumbers: ['-1', '0', '1', '2', '100']
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: true
     ignoreLocalVariableDeclaration: false
@@ -675,6 +674,9 @@ style:
     active: true
   MandatoryBracesLoops:
     active: true
+  MaxChainedCallsOnSameLine:
+    active: false
+    maxChainedCalls: 5
   MaxLineLength:
     active: true
     maxLineLength: 120
@@ -687,6 +689,9 @@ style:
     active: true
   MultilineLambdaItParameter:
     active: true
+  MultilineRawStringIndentation:
+    active: true
+    indentSize: 4
   NestedClassesVisibility:
     active: true
   NewLineAtEndOfFile:
@@ -716,7 +721,7 @@ style:
   ReturnCount:
     active: true
     max: 3
-    excludedFunctions: 'equals'
+    excludedFunctions: ['equals']
     excludeLabeled: false
     excludeReturnFromLambda: true
     excludeGuardClauses: false
@@ -732,6 +737,8 @@ style:
     excludeGuardClauses: false
   TrailingWhitespace:
     active: true
+  TrimMultilineRawString:
+    active: false # does not allow for custom singleLine() function in tests
   UnderscoresInNumericLiterals:
     active: true
     acceptableLength: 5
@@ -787,6 +794,8 @@ style:
   UseRequire:
     active: true
   UseRequireNotNull:
+    active: true
+  UseSumOfInsteadOfFlatMapSize:
     active: true
   UselessCallOnNotNull:
     active: true

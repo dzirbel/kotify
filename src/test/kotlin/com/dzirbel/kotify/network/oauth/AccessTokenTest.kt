@@ -164,14 +164,13 @@ internal class AccessTokenTest {
 
     @Test
     fun testRefresh() {
-        val tokenBody =
-            """
+        val tokenBody = """
             {
                 "access_token": "abc",
                 "token_type": "def",
                 "expires_in": 30
             }
-            """.trimIndent()
+        """.trimIndent()
 
         withSpotifyConfiguration(
             Spotify.configuration.copy(
@@ -231,14 +230,13 @@ internal class AccessTokenTest {
 
     @RepeatedTest(3)
     fun testRefreshConcurrent() {
-        val tokenBody =
-            """
+        val tokenBody = """
             {
                 "access_token": "abc",
                 "token_type": "def",
                 "expires_in": 30
             }
-            """.trimIndent()
+        """.trimIndent()
 
         val interceptor = MockRequestInterceptor(
             responseBody = tokenBody.toResponseBody("text/plain".toMediaType()),

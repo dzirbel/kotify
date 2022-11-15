@@ -70,7 +70,7 @@ object FixtureModels {
             albums.map {
                 ArtistAlbum.from(
                     artistId = artistId,
-                    albumId = requireNotNull(it.id.value),
+                    albumId = it.id.value,
                     albumGroup = SpotifyAlbum.Type.ALBUM,
                 )
             }

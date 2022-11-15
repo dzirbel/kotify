@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.applyIf
 import java.awt.Cursor
 
 data class SplitterViewParams(
@@ -52,34 +53,29 @@ fun DraggableSplitter(
                         Orientation.Horizontal -> height(params.dragTargetWidth).fillMaxWidth()
                     }
                 }
-                .run {
-                    if (resizeEnabled) {
-                        this
-                            .draggable(
-                                state = rememberDraggableState {
-                                    with(density) {
-                                        onResize(it.toDp())
-                                    }
+                .applyIf(resizeEnabled) {
+                    draggable(
+                        state = rememberDraggableState {
+                            with(density) {
+                                onResize(it.toDp())
+                            }
+                        },
+                        orientation = when (orientation) {
+                            Orientation.Horizontal -> Orientation.Vertical
+                            Orientation.Vertical -> Orientation.Horizontal
+                        },
+                        startDragImmediately = true,
+                        onDragStarted = { resizing.value = true },
+                        onDragStopped = { resizing.value = false },
+                    )
+                        .pointerHoverIcon(
+                            PointerIcon(
+                                when (orientation) {
+                                    Orientation.Horizontal -> Cursor(Cursor.N_RESIZE_CURSOR)
+                                    Orientation.Vertical -> Cursor(Cursor.E_RESIZE_CURSOR)
                                 },
-                                orientation = when (orientation) {
-                                    Orientation.Horizontal -> Orientation.Vertical
-                                    Orientation.Vertical -> Orientation.Horizontal
-                                },
-                                startDragImmediately = true,
-                                onDragStarted = { resizing.value = true },
-                                onDragStopped = { resizing.value = false },
-                            )
-                            .pointerHoverIcon(
-                                PointerIcon(
-                                    when (orientation) {
-                                        Orientation.Horizontal -> Cursor(Cursor.N_RESIZE_CURSOR)
-                                        Orientation.Vertical -> Cursor(Cursor.E_RESIZE_CURSOR)
-                                    },
-                                ),
-                            )
-                    } else {
-                        this
-                    }
+                            ),
+                        )
                 },
         )
 

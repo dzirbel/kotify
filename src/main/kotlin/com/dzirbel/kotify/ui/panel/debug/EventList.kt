@@ -36,6 +36,7 @@ import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.applyIf
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.setClipboard
 import com.dzirbel.kotify.util.formatDateTime
@@ -84,18 +85,13 @@ private fun <T> EventItem(event: Logger.Event<T>) {
 
     Column(
         modifier = Modifier
-            .let {
-                if (canExpand) {
-                    it
-                        .onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
-                            expandedState?.value = !expanded
-                        }
-                        .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary)) {
-                            rightClickMenuExpanded.value = true
-                        }
-                } else {
-                    it
+            .applyIf(canExpand) {
+                onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
+                    expandedState?.value = !expanded
                 }
+                    .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary)) {
+                        rightClickMenuExpanded.value = true
+                    }
             }
             .padding(Dimens.space2)
             .fillMaxWidth(),

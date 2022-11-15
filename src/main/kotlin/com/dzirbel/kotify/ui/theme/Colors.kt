@@ -112,7 +112,8 @@ enum class Colors(
         scrollBarHover = Color(0x90, 0x90, 0x90),
         scrollBarUnhover = Color(0x78, 0x78, 0x78),
         materialColors = lightColors(),
-    );
+    ),
+    ;
 
     val primary: Color
         get() = materialColors.primary

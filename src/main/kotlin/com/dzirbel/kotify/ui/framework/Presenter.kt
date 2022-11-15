@@ -48,8 +48,8 @@ fun <ViewModel, P : Presenter<ViewModel, *>> rememberPresenter(
 /**
  * A presenter abstraction which controls the state of a particular piece of the UI.
  *
- * The presenter continually listens for [events] and processes them via [reactTo], which calls [mutateState] to update
- * the view [state].
+ * The presenter continually listens for [emit]ted events and processes them via [reactTo], which calls [mutateState] to
+ * update the view [state].
  */
 abstract class Presenter<ViewModel, Event : Any>(
     /**

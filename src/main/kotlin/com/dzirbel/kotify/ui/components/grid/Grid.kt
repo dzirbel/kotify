@@ -40,6 +40,7 @@ import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.util.applyIf
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -149,12 +150,8 @@ fun <E> Grid(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(params.cornerSize))
-                            .let {
-                                if (params.backgroundSurfaceIncrement != 0 && index != selectedElementIndex) {
-                                    it.surfaceBackground()
-                                } else {
-                                    it
-                                }
+                            .applyIf(params.backgroundSurfaceIncrement != 0 && index != selectedElementIndex) {
+                                surfaceBackground()
                             },
                     ) {
                         cellContent(index, element)
@@ -238,8 +235,8 @@ fun <E> Grid(
             )
 
             var maxCellWidth = 0 // find max cell width while measuring to avoid an extra loop
-            val cellPlaceables = cellMeasurables.map {
-                it.measure(cellConstraints).also { placeable ->
+            val cellPlaceables = cellMeasurables.map { measurable ->
+                measurable.measure(cellConstraints).also { placeable ->
                     maxCellWidth = max(maxCellWidth, placeable.width)
                 }
             }

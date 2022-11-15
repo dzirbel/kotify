@@ -13,7 +13,8 @@ internal class CaseInsensitiveEnumSerializerTest {
     private enum class Enum {
         FIRST_VALUE,
         VALUE_2,
-        V3;
+        V3,
+        ;
 
         object Serializer : CaseInsensitiveEnumSerializer<Enum>(Enum::class)
     }

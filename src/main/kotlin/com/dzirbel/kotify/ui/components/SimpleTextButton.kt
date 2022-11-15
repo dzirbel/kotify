@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.applyIf
 
 /**
  * A wrapper around [TextButton] which applies standard colors, padding, and corners.
@@ -40,20 +41,8 @@ fun SimpleTextButton(
 ) {
     TextButton(
         modifier = modifier
-            .let {
-                if (enforceMinWidth) {
-                    it
-                } else {
-                    it.widthIn(min = 1.dp)
-                }
-            }
-            .let {
-                if (enforceMinHeight) {
-                    it
-                } else {
-                    it.heightIn(min = 1.dp)
-                }
-            },
+            .applyIf(!enforceMinWidth) { widthIn(min = 1.dp) }
+            .applyIf(!enforceMinHeight) { heightIn(min = 1.dp) },
         enabled = enabled,
         contentPadding = contentPadding,
         shape = shape,

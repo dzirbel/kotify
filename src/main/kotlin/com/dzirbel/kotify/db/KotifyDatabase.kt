@@ -78,8 +78,8 @@ object KotifyDatabase {
             databaseConfig = DatabaseConfig {
                 sqlLogger = Logger.Database
             },
-        ).also {
-            transaction(it) {
+        ).also { db ->
+            transaction(db) {
                 @Suppress("SpreadOperator")
                 SchemaUtils.createMissingTablesAndColumns(*tables)
 
