@@ -68,7 +68,7 @@ dependencyResolutionManagement {
             version("kotlin", "1.7.20")
 
             // https://github.com/Kotlin/kotlinx.serialization
-            version("kotlinx-serialization", "1.3.2").let { version ->
+            version("kotlinx-serialization", "1.4.1").let { version ->
                 library("kotlinx-serialization", "org.jetbrains.kotlinx", "kotlinx-serialization-json")
                     .versionRef(version)
             }
