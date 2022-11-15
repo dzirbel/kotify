@@ -81,7 +81,7 @@ dependencyResolutionManagement {
             }
 
             // https://github.com/mockk/mockk
-            version("mockk", "1.12.3").let { version ->
+            version("mockk", "1.13.2").let { version ->
                 library("mockk", "io.mockk", "mockk").versionRef(version)
             }
 
