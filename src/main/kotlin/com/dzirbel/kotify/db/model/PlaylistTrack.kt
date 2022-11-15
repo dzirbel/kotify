@@ -8,6 +8,7 @@ import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import java.time.Instant
@@ -84,7 +85,7 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
          * Must be called from within a transaction.
          */
         fun invalidate(playlistId: String) {
-            PlaylistTrackTable.deleteWhere { PlaylistTrackTable.playlist eq playlistId }
+            PlaylistTrackTable.deleteWhere { playlist eq playlistId }
         }
     }
 }

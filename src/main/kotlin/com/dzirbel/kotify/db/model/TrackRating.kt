@@ -14,6 +14,7 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Max
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.deleteAll
@@ -80,7 +81,7 @@ object TrackRatingRepository : RatingRepository {
     override suspend fun rate(id: String, rating: Rating?, userId: String) {
         if (rating == null) {
             KotifyDatabase.transaction("clear rating for track id $id") {
-                TrackRatingTable.deleteWhere { TrackRatingTable.track eq id and (TrackRatingTable.userId eq userId) }
+                TrackRatingTable.deleteWhere { track eq id and (TrackRatingTable.userId eq userId) }
             }
 
             states[userId]?.get(id)?.get()?.value = null
