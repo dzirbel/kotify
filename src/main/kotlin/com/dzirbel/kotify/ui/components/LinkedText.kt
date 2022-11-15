@@ -11,10 +11,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.pointerMoveFilter
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
@@ -105,20 +106,16 @@ fun LinkedText(
     }
 
     val hoverModifier = Modifier
-        .pointerMoveFilter(
-            onMove = { offset ->
-                val characterOffset = text.characterOffset(offset, layoutResult.value)
-                val link = characterOffset?.let { text.linkAnnotationAtOffset(it) }
-                hoveredOffset.value = characterOffset
-                hoveringLink.value = link != null
-                true
-            },
-            onExit = {
-                hoveredOffset.value = null
-                hoveringLink.value = false
-                true
-            },
-        )
+        .onPointerEvent(PointerEventType.Move) { event ->
+            val characterOffset = text.characterOffset(event.changes.first().position, layoutResult.value)
+            val link = characterOffset?.let { text.linkAnnotationAtOffset(it) }
+            hoveredOffset.value = characterOffset
+            hoveringLink.value = link != null
+        }
+        .onPointerEvent(PointerEventType.Exit) {
+            hoveredOffset.value = null
+            hoveringLink.value = false
+        }
         .pointerHoverIcon(if (hoveringLink.value) PointerIconDefaults.Hand else PointerIconDefaults.Default)
 
     val textColor = style.color.takeOrElse {

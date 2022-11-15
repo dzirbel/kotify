@@ -95,7 +95,7 @@ fun <E> Table(
             // column width in pixels after it has been measured
             val colWidths: Array<Float?> = arrayOfNulls(numCols)
 
-            val headerPlaceables = headerMeasurables?.let { arrayOfNulls<Placeable>(it.size) }
+            val headerPlaceables: Array<Placeable?>? = headerMeasurables?.let { arrayOfNulls(it.size) }
             val cellPlaceables = arrayOfNulls<Placeable>(cellMeasurables.size)
 
             // 1: first measure the fixed columns and those determined by header width
@@ -231,7 +231,7 @@ fun <E> Table(
 
                 if (includeHeader) {
                     var headerX = 0
-                    headerPlaceables!!.forEachIndexed { col, placeable ->
+                    headerPlaceables?.forEachIndexed { col, placeable ->
                         val colWidth = colWidths[col].roundToInt()
                         val offset = columns[col].headerAlignment.align(
                             size = IntSize(width = placeable.width, height = placeable.height),
