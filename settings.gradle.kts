@@ -74,7 +74,7 @@ dependencyResolutionManagement {
             }
 
             // https://ktor.io/changelog/
-            version("ktor", "2.0.0").let { version ->
+            version("ktor", "2.1.3").let { version ->
                 library("ktor-netty", "io.ktor", "ktor-server-netty").versionRef(version)
 
                 library("ktor-client", "io.ktor", "ktor-client-java").versionRef(version)
