@@ -101,7 +101,7 @@ dependencyResolutionManagement {
             }
 
             // https://github.com/xerial/sqlite-jdbc
-            version("sqlite-jdbc", "3.36.0.3").let { version ->
+            version("sqlite-jdbc", "3.39.4.0").let { version ->
                 library("sqlite-jdbc", "org.xerial", "sqlite-jdbc").versionRef(version)
             }
         }
