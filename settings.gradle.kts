@@ -90,6 +90,7 @@ dependencyResolutionManagement {
                 library("okhttp", "com.squareup.okhttp3", "okhttp").versionRef(version)
             }
 
+            // https://github.com/Guardsquare/proguard
             version("proguard", "7.2.2").let { version ->
                 library("proguard", "com.guardsquare", "proguard-gradle").versionRef(version)
             }

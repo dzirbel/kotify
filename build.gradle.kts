@@ -177,7 +177,7 @@ val proGuard = tasks.create<ProGuardTask>("proGuard") {
         outjars(file.obfuscatedJarFile)
     }
 
-    libraryjars("${compose.desktop.application.javaHome ?: System.getProperty("java.home")}/jmods")
+    libraryjars("${compose.desktop.application.javaHome}/jmods")
 
     configuration("proguard-rules.pro")
 }
