@@ -13,7 +13,6 @@ import com.dzirbel.kotify.ui.player.Player
  * Handler for global keyboard shortcuts.
  */
 object KeyboardShortcuts {
-    // TODO these are invoked even when focusing a text input field
     @ExperimentalComposeUiApi
     fun handle(event: KeyEvent): Boolean {
         if (event.type != KeyEventType.KeyUp) return false

@@ -14,6 +14,7 @@ import com.dzirbel.kotify.ui.components.AppliedTextField
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.mutate
 
 private data class NetworkSettings(
@@ -30,7 +31,7 @@ fun NetworkTab(scrollState: ScrollState) {
         AppliedTextField(
             value = DelayInterceptor.delayMs.toString(),
             label = "Network delay (ms)",
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().consumeKeyEvents(),
             applyValue = { value ->
                 val valueLong = value.toLongOrNull()
                 valueLong?.let { DelayInterceptor.delayMs = it }

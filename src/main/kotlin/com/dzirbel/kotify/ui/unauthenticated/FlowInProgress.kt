@@ -22,6 +22,7 @@ import com.dzirbel.kotify.ui.components.CopyButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.getClipboard
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.launch
@@ -61,7 +62,7 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
         TextField(
             value = oauth.authorizationUrl.toString(),
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).consumeKeyEvents(),
             singleLine = true,
             readOnly = true,
             onValueChange = { },
@@ -89,7 +90,7 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
     Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
         TextField(
             value = state.value.manualRedirectUrl,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).consumeKeyEvents(),
             singleLine = true,
             onValueChange = { state.mutate { copy(manualRedirectUrl = it) } },
             label = {

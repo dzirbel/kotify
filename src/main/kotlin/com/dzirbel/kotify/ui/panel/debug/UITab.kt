@@ -14,6 +14,7 @@ import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.mutate
 
 private data class UISettings(
@@ -29,7 +30,7 @@ private val uiSettings = mutableStateOf(UISettings())
 fun UITab(scrollState: ScrollState) {
     Column(Modifier.fillMaxWidth().padding(Dimens.space3)) {
         OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().consumeKeyEvents(),
             value = uiSettings.value.presenterRegex,
             singleLine = true,
             onValueChange = {

@@ -29,6 +29,7 @@ import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.mutate
 
 @Composable
@@ -71,6 +72,7 @@ fun ColumnScope.LandingPage(state: MutableState<AuthenticationState>) {
 
     if (detailsExpanded.value) {
         TextField(
+            modifier = Modifier.consumeKeyEvents(),
             value = state.value.clientId,
             singleLine = true,
             onValueChange = { state.mutate { copy(clientId = it) } },
@@ -100,6 +102,7 @@ fun ColumnScope.LandingPage(state: MutableState<AuthenticationState>) {
         VerticalSpacer(Dimens.space3)
 
         TextField(
+            modifier = Modifier.consumeKeyEvents(),
             value = state.value.port.toString(),
             singleLine = true,
             onValueChange = { value ->
