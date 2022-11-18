@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui
 
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -13,7 +12,6 @@ import com.dzirbel.kotify.ui.player.Player
  * Handler for global keyboard shortcuts.
  */
 object KeyboardShortcuts {
-    @ExperimentalComposeUiApi
     fun handle(event: KeyEvent): Boolean {
         if (event.type != KeyEventType.KeyUp) return false
 
