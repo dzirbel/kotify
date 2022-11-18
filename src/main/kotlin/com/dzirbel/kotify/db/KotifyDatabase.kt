@@ -126,9 +126,11 @@ object KotifyDatabase {
         }
 
         return if (synchronousTransactions) {
-            transaction(db = db) {
-                Logger.Database.registerTransaction(transaction = this, name = name)
-                runBlocking { statement() }
+            synchronized(this) {
+                transaction(db = db) {
+                    Logger.Database.registerTransaction(transaction = this, name = name)
+                    runBlocking { statement() }
+                }
             }
         } else {
             newSuspendedTransaction(context = dbDispatcher, db = db) {
