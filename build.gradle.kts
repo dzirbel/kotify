@@ -8,16 +8,16 @@ import java.util.Properties
 
 buildscript {
     dependencies {
-        classpath(deps.proguard)
+        classpath(libs.proguard)
     }
 }
 
 plugins {
-    kotlin("jvm") version deps.versions.kotlin.get()
-    kotlin("plugin.serialization") version deps.versions.kotlin.get()
+    kotlin("jvm") version libs.versions.kotlin.get()
+    kotlin("plugin.serialization") version libs.versions.kotlin.get()
 
-    alias(deps.plugins.detekt)
-    alias(deps.plugins.compose)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.compose)
 
     `java-test-fixtures`
 
@@ -37,37 +37,38 @@ repositories {
 dependencies {
     implementation(compose.desktop.currentOs)
 
-    implementation(deps.okhttp)
-    implementation(deps.ktor.netty)
-    implementation(deps.coroutines.core)
-    implementation(deps.kotlinx.serialization)
-    implementation(deps.slf4j.nop)
+    implementation(libs.okhttp)
+    implementation(libs.ktor.netty)
+    implementation(libs.coroutines.core)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.slf4j.nop)
 
-    implementation(deps.bundles.exposed)
-    implementation(deps.sqlite.jdbc)
+    implementation(libs.bundles.exposed)
+    implementation(libs.sqlite.jdbc)
 
-    testImplementation(deps.coroutines.test)
-    testImplementation(deps.bundles.junit5.api)
-    testRuntimeOnly(deps.junit5.engine)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.junit5.api)
+    testImplementation(libs.junit5.params)
+    testRuntimeOnly(libs.junit5.engine)
 
     // JUnit 4 is required to run Compose tests
-    testCompileOnly(deps.junit4)
-    testRuntimeOnly(deps.junit5.vintage.engine)
-    testImplementation(deps.compose.test.junit4)
+    testCompileOnly(libs.junit4)
+    testRuntimeOnly(libs.junit5.engine.vintage)
+    testImplementation(libs.compose.junit4)
 
-    testImplementation(deps.assertk)
-    testImplementation(deps.ktor.client)
-    testImplementation(deps.mockk)
-    testImplementation(deps.compose.swing) // Swing dispatcher for screenshot tests
+    testImplementation(libs.assertk)
+    testImplementation(libs.ktor.client)
+    testImplementation(libs.mockk)
+    testImplementation(libs.coroutines.swing) // Swing dispatcher for screenshot tests
 
-    testFixturesImplementation(deps.assertk)
-    testFixturesImplementation(deps.bundles.exposed)
+    testFixturesImplementation(libs.assertk)
+    testFixturesImplementation(libs.bundles.exposed)
     testFixturesImplementation(compose.desktop.currentOs)
-    testFixturesImplementation(deps.kotlinx.serialization) // TODO necessary for the opt-in
-    testFixturesImplementation(deps.okhttp)
-    testFixturesImplementation(deps.coroutines.core)
+    testFixturesImplementation(libs.kotlinx.serialization.json)
+    testFixturesImplementation(libs.okhttp)
+    testFixturesImplementation(libs.coroutines.core)
 
-    detektPlugins(deps.detekt.formatting)
+    detektPlugins(libs.detekt.formatting)
 }
 
 tasks.withType<KotlinCompile>().configureEach {
@@ -116,7 +117,7 @@ tasks.withType<Test>().configureEach {
 }
 
 jacoco {
-    toolVersion = deps.versions.jacoco.get()
+    toolVersion = libs.versions.jacoco.get()
 }
 
 tasks.create<JacocoReport>("jacocoTestReportLocal") {
