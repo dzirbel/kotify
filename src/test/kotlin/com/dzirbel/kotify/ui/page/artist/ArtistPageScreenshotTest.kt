@@ -3,8 +3,7 @@ package com.dzirbel.kotify.ui.page.artist
 import com.dzirbel.kotify.FixtureModels
 import com.dzirbel.kotify.testTransaction
 import com.dzirbel.kotify.ui.screenshotTest
-import io.mockk.every
-import io.mockk.spyk
+import com.dzirbel.kotify.util.RelativeTimeInfo
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
@@ -20,12 +19,9 @@ internal class ArtistPageScreenshotTest {
 
     @Test
     fun full() {
-        val artist = spyk(FixtureModels.artist())
+        val now = Instant.now()
+        val artist = FixtureModels.artist(fullUpdateTime = now, albumsFetched = now)
         val artistAlbums = FixtureModels.artistAlbums(artistId = artist.id.value, count = 20)
-
-        // hack: ensure updated time is rendered consistently as now
-        every { artist.fullUpdatedTime } answers { Instant.now() }
-        every { artist.albumsFetched } answers { Instant.now() }
 
         testTransaction {
             artistAlbums.forEach { artistAlbum ->
@@ -40,8 +36,10 @@ internal class ArtistPageScreenshotTest {
             artistAlbums = baseState.artistAlbums.withElements(artistAlbums),
         )
 
-        screenshotTest(filename = "full", windowWidth = 1500) {
-            ArtistPage(artistId = artist.id.value).renderState(state)
+        RelativeTimeInfo.withMockedTime(now) {
+            screenshotTest(filename = "full", windowWidth = 1500) {
+                ArtistPage(artistId = artist.id.value).renderState(state)
+            }
         }
     }
 }

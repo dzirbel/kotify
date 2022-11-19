@@ -21,6 +21,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import java.time.Instant
 
 /**
  * A collection of convenience functions which construct various model classes with mocked data for use in tests.
@@ -34,8 +35,14 @@ object FixtureModels {
         }
     }
 
-    fun artist(): Artist {
-        return testTransaction { requireNotNull(Artist.from(networkArtist())) }
+    fun artist(fullUpdateTime: Instant? = null, albumsFetched: Instant? = null): Artist {
+        return testTransaction {
+            val artist = requireNotNull(Artist.from(networkArtist()))
+            fullUpdateTime?.let { artist.fullUpdatedTime = it }
+            albumsFetched?.let { artist.albumsFetched = it }
+
+            artist
+        }
     }
 
     private fun networkArtists(count: Int): List<SpotifyArtist> {
@@ -64,8 +71,8 @@ object FixtureModels {
         )
     }
 
-    fun artistAlbums(artistId: String, count: Int): List<ArtistAlbum> {
-        val albums = albums(count)
+    fun artistAlbums(artistId: String, count: Int, fullUpdateTime: Instant? = null): List<ArtistAlbum> {
+        val albums = albums(count, fullUpdateTime = fullUpdateTime)
         return testTransaction {
             albums.map {
                 ArtistAlbum.from(
@@ -77,10 +84,15 @@ object FixtureModels {
         }
     }
 
-    fun albums(count: Int): List<Album> {
+    fun albums(count: Int, fullUpdateTime: Instant? = null): List<Album> {
         val networkAlbums = List(count) { networkAlbum(id = "album-$it", name = "Album $it") }
         return testTransaction {
-            networkAlbums.map { requireNotNull(Album.from(it)) }
+            networkAlbums.map {
+                val album = requireNotNull(Album.from(it))
+                fullUpdateTime?.let { album.fullUpdatedTime = it }
+
+                album
+            }
         }
     }
 
@@ -194,6 +206,7 @@ object FixtureModels {
         name: String = "Playlist",
         trackCount: Int = 25,
         followers: Int = 10,
+        fullUpdateTime: Instant? = null,
     ): Playlist {
         val networkPlaylist = networkPlaylist(
             id = id,
@@ -202,7 +215,10 @@ object FixtureModels {
             followers = followers,
         )
         return testTransaction {
-            requireNotNull(Playlist.from(networkPlaylist))
+            val playlist = requireNotNull(Playlist.from(networkPlaylist))
+            fullUpdateTime?.let { playlist.fullUpdatedTime = it }
+
+            playlist
         }
     }
 

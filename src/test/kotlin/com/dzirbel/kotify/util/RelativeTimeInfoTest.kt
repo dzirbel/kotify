@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 internal class RelativeTimeInfoTest {
@@ -13,8 +14,10 @@ internal class RelativeTimeInfoTest {
     @ParameterizedTest
     @MethodSource
     fun testRelative(case: RelativeTestCase) {
-        val info = RelativeTimeInfo.of(timestamp = case.timestamp, now = case.now)
-        assertThat(info).isEqualTo(case.expected)
+        RelativeTimeInfo.withMockedTime(Instant.ofEpochMilli(case.now)) {
+            val info = RelativeTimeInfo.of(timestamp = case.timestamp)
+            assertThat(info).isEqualTo(case.expected)
+        }
     }
 
     @ParameterizedTest
