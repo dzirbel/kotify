@@ -87,8 +87,8 @@ object FixtureModels {
     fun albums(count: Int, fullUpdateTime: Instant? = null): List<Album> {
         val networkAlbums = List(count) { networkAlbum(id = "album-$it", name = "Album $it") }
         return testTransaction {
-            networkAlbums.map {
-                val album = requireNotNull(Album.from(it))
+            networkAlbums.map { networkAlbum ->
+                val album = requireNotNull(Album.from(networkAlbum))
                 fullUpdateTime?.let { album.fullUpdatedTime = it }
 
                 album
