@@ -58,7 +58,6 @@ dependencies {
 
     testImplementation(libs.assertk)
     testImplementation(libs.ktor.client)
-    testImplementation(libs.mockk)
     testImplementation(libs.coroutines.swing) // Swing dispatcher for screenshot tests
 
     testFixturesImplementation(libs.assertk)
@@ -74,6 +73,10 @@ dependencies {
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.allWarningsAsErrors = true
     kotlinOptions.jvmTarget = "16"
+
+    // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
+    kotlinOptions.freeCompilerArgs += "-Xcontext-receivers"
+
     kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.time.ExperimentalTime"
     kotlinOptions.freeCompilerArgs += "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
     kotlinOptions.freeCompilerArgs += "-opt-in=kotlinx.coroutines.FlowPreview"

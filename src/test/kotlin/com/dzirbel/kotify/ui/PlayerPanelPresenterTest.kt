@@ -1,30 +1,22 @@
 package com.dzirbel.kotify.ui
 
-import androidx.compose.runtime.MutableState
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.FixtureModels
+import com.dzirbel.kotify.TestSpotifyInterceptor
+import com.dzirbel.kotify.assertStateEquals
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
+import com.dzirbel.kotify.emitAndIdle
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
-import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
+import com.dzirbel.kotify.testPresenter
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.player.PlayerPanelPresenter
-import io.mockk.Runs
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.confirmVerified
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkAll
-import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -32,50 +24,20 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 internal class PlayerPanelPresenterTest {
-    private val currentPlaybackDeviceIdState: MutableState<String?> = mockk {
-        every { value = any() } just Runs
-    }
-    private val currentTrackIdState: MutableState<String?> = mockk {
-        every { value = any() } just Runs
-    }
-    private val isPlayingState: MutableState<Boolean> = mockk {
-        every { value = any() } just Runs
-    }
-    private val playbackContextState: MutableState<SpotifyPlaybackContext?> = mockk {
-        every { value = any() } just Runs
-    }
-
     @BeforeEach
     fun setup() {
-        mockkObject(Spotify.Player, Spotify.Library, Player)
-
-        every { Player.currentPlaybackDeviceId } returns currentPlaybackDeviceIdState
-        every { Player.currentTrackId } returns currentTrackIdState
-        every { Player.isPlaying } returns isPlayingState
-        every { Player.playbackContext } returns playbackContextState
-
-        coEvery { Spotify.Player.getAvailableDevices() } returns emptyList()
-        coEvery { Spotify.Player.getCurrentPlayback() } returns null
-        coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returns null
-        coEvery { Spotify.Player.startPlayback(deviceId = any()) } just Runs
-        coEvery { Spotify.Player.pausePlayback(deviceId = any()) } just Runs
-        coEvery { Spotify.Player.skipToNext(deviceId = any()) } just Runs
-        coEvery { Spotify.Player.skipToPrevious(deviceId = any()) } just Runs
-        coEvery { Spotify.Player.toggleShuffle(state = any(), deviceId = any()) } just Runs
-        coEvery { Spotify.Player.setRepeatMode(state = any(), deviceId = any()) } just Runs
-        coEvery { Spotify.Player.setVolume(volumePercent = any(), deviceId = any()) } just Runs
-        coEvery { Spotify.Player.seekToPosition(positionMs = any(), deviceId = any()) } just Runs
-        coEvery { Spotify.Player.transferPlayback(deviceIds = any()) } just Runs
-
-        coEvery { Spotify.Library.checkTracks(any()) } answers { firstArg<List<String>>().map { false } }
-        coEvery { Spotify.Library.checkAlbums(any()) } answers { firstArg<List<String>>().map { false } }
+        TestSpotifyInterceptor.intercept(Spotify.Player.GET_CURRENT_PLAYBACK_PATH, null)
+        TestSpotifyInterceptor.intercept(Spotify.Player.GET_CURRENT_PLAYING_TRACK_PATH, null)
+        TestSpotifyInterceptor.intercept(
+            Spotify.Player.GET_AVAILABLE_DEVICES_PATH,
+            Spotify.Player.AvailableDevicesResponse(devices = emptyList()),
+        )
     }
 
     @AfterEach
     fun finish() {
-        confirmVerified(Spotify.Player, Player)
-        confirmVerified(currentPlaybackDeviceIdState, currentTrackIdState, isPlayingState, playbackContextState)
-        unmockkAll()
+        TestSpotifyInterceptor.verifyAllIntercepted()
+        Player.resetState()
     }
 
     @Test
@@ -85,8 +47,9 @@ internal class PlayerPanelPresenterTest {
             beforeOpen = { presenter ->
                 assertThat(presenter.testState.stateOrThrow).isEqualTo(loadingState)
             },
-        ) {
-            verifyOpenCalls()
+        ) { presenter ->
+            verifyOpenState(playback = null, trackPlayback = null, deviceId = null)
+            presenter.assertStateEquals(loadedState)
         }
     }
 
@@ -94,21 +57,19 @@ internal class PlayerPanelPresenterTest {
     fun loadDevices() {
         val device1: SpotifyPlaybackDevice = device(id = "device 1")
         val device2: SpotifyPlaybackDevice = device(id = "device 2")
-        coEvery { Spotify.Player.getAvailableDevices() } returnsMany listOf(emptyList(), listOf(device1, device2))
+        TestSpotifyInterceptor.intercept(
+            Spotify.Player.GET_AVAILABLE_DEVICES_PATH,
+            Spotify.Player.AvailableDevicesResponse(devices = emptyList()),
+            Spotify.Player.AvailableDevicesResponse(devices = listOf(device1, device2)),
+        )
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls()
+            verifyOpenState(playback = null, trackPlayback = null, deviceId = null)
 
-            presenter.emit(PlayerPanelPresenter.Event.LoadDevices())
-            advanceUntilIdle()
+            presenter.emitAndIdle(PlayerPanelPresenter.Event.LoadDevices())
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.copy(devices = listOf(device1, device2)))
-
-            coVerify {
-                Spotify.Player.getAvailableDevices()
-                Player.currentPlaybackDeviceId
-                currentPlaybackDeviceIdState.value = device1.id
-            }
+            presenter.assertStateEquals(loadedState.copy(devices = listOf(device1, device2)))
+            assertThat(Player.currentPlaybackDeviceId.value).isEqualTo(device1.id)
         }
     }
 
@@ -118,85 +79,88 @@ internal class PlayerPanelPresenterTest {
         val device2 = device(volumePercent = 20)
         val device3 = device(volumePercent = 20)
         val device4 = device(volumePercent = 50)
-        coEvery { Spotify.Player.getAvailableDevices() } returnsMany
-            listOf(listOf(device1), listOf(device2), listOf(device3), listOf(device4))
+        TestSpotifyInterceptor.intercept(
+            Spotify.Player.GET_AVAILABLE_DEVICES_PATH,
+            Spotify.Player.AvailableDevicesResponse(devices = listOf(device1)),
+            Spotify.Player.AvailableDevicesResponse(devices = listOf(device2)),
+            Spotify.Player.AvailableDevicesResponse(devices = listOf(device3)),
+            Spotify.Player.AvailableDevicesResponse(devices = listOf(device4)),
+        )
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls(deviceId = deviceId)
+            verifyOpenState(playback = null, trackPlayback = null, deviceId = deviceId)
 
-            presenter.emit(
-                PlayerPanelPresenter.Event.LoadDevices(
-                    untilVolumeChange = true,
-                    untilVolumeChangeDeviceId = deviceId,
-                ),
+            presenter.emitAndIdle(
+                PlayerPanelPresenter.Event.LoadDevices(untilVolumeChange = true, untilVolumeChangeDeviceId = deviceId),
             )
-            advanceUntilIdle()
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.copy(devices = listOf(device4)))
-
-            coVerify(exactly = 4) {
-                Spotify.Player.getAvailableDevices()
-            }
-
-            coVerify {
-                Player.currentPlaybackDeviceId
-                currentPlaybackDeviceIdState.value = deviceId
-            }
+            presenter.assertStateEquals(loadedState.copy(devices = listOf(device4)))
+            assertThat(Player.currentPlaybackDeviceId.value).isEqualTo(deviceId)
         }
     }
 
     @ParameterizedTest
     @MethodSource("playbacks")
     fun loadPlayback(playback: SpotifyPlayback?) {
-        coEvery { Spotify.Player.getCurrentPlayback() } returns playback
+        TestSpotifyInterceptor.intercept(Spotify.Player.GET_CURRENT_PLAYBACK_PATH, playback, playback)
+        if (playback?.item != null) {
+            TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_TRACKS_PATH, listOf(false))
+            if (playback.item?.album != null) {
+                TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_ALBUMS_PATH, listOf(false))
+            }
+        }
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls()
+            verifyOpenState(playback = playback, trackPlayback = null, deviceId = null)
 
-            presenter.emit(PlayerPanelPresenter.Event.LoadPlayback())
-            advanceUntilIdle()
+            presenter.emitAndIdle(PlayerPanelPresenter.Event.LoadPlayback())
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.withPlayback(playback))
-
-            verifyLoadPlaybackCalls(playback)
+            presenter.assertStateEquals(loadedState.withPlayback(playback))
+            Player.verifyState(playback = playback, trackPlayback = null, deviceId = null)
         }
     }
 
     @Test
     fun play() {
-        coEvery { Spotify.Player.getCurrentPlayback() } returnsMany
-            listOf(playbackNotPlaying, playbackNotPlaying, playbackPlaying)
+        TestSpotifyInterceptor.intercept(
+            Spotify.Player.GET_CURRENT_PLAYBACK_PATH,
+            playbackNotPlaying,
+            playbackNotPlaying,
+            playbackPlaying,
+        )
+        TestSpotifyInterceptor.intercept(Spotify.Player.START_PLAYBACK_PATH, method = "PUT", Unit)
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_TRACKS_PATH, listOf(false))
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_ALBUMS_PATH, listOf(false))
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls(playback = playbackNotPlaying)
+            verifyOpenState(playback = playbackNotPlaying, trackPlayback = null, deviceId = null)
 
-            presenter.emit(PlayerPanelPresenter.Event.Play)
-            advanceUntilIdle()
+            presenter.emitAndIdle(PlayerPanelPresenter.Event.Play)
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.withPlayback(playbackPlaying))
-
-            coVerify { Spotify.Player.startPlayback(deviceId = deviceId) }
-            verifyLoadPlaybackCalls(playbackNotPlaying)
-            verifyLoadPlaybackCalls(playbackPlaying)
+            presenter.assertStateEquals(loadedState.withPlayback(playbackPlaying))
+            Player.verifyState(playback = playbackPlaying, trackPlayback = null, deviceId = null)
         }
     }
 
     @Test
     fun pause() {
-        coEvery { Spotify.Player.getCurrentPlayback() } returnsMany
-            listOf(playbackPlaying, playbackPlaying, playbackNotPlaying)
+        TestSpotifyInterceptor.intercept(
+            Spotify.Player.GET_CURRENT_PLAYBACK_PATH,
+            playbackPlaying,
+            playbackPlaying,
+            playbackNotPlaying,
+        )
+        TestSpotifyInterceptor.intercept(Spotify.Player.PAUSE_PLAYBACK_PATH, method = "PUT", Unit)
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_TRACKS_PATH, listOf(false))
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_ALBUMS_PATH, listOf(false))
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls(playback = playbackPlaying)
+            verifyOpenState(playback = playbackPlaying, trackPlayback = null, deviceId = null)
 
-            presenter.emit(PlayerPanelPresenter.Event.Pause)
-            advanceUntilIdle()
+            presenter.emitAndIdle(PlayerPanelPresenter.Event.Pause)
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.withPlayback(playbackNotPlaying))
-
-            coVerify { Spotify.Player.pausePlayback(deviceId = deviceId) }
-            verifyLoadPlaybackCalls(playbackPlaying)
-            verifyLoadPlaybackCalls(playbackNotPlaying)
+            presenter.assertStateEquals(loadedState.withPlayback(playbackNotPlaying))
+            Player.verifyState(playback = playbackNotPlaying, trackPlayback = null, deviceId = null)
         }
     }
 
@@ -204,19 +168,18 @@ internal class PlayerPanelPresenterTest {
     fun skipNext() {
         val playbackA = trackPlayback(track = trackA)
         val playbackB = trackPlayback(track = trackB)
-        coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returnsMany listOf(playbackA, playbackA, playbackB)
+        TestSpotifyInterceptor.intercept(Spotify.Player.GET_CURRENT_PLAYING_TRACK_PATH, playbackA, playbackA, playbackB)
+        TestSpotifyInterceptor.intercept(Spotify.Player.SKIP_TO_NEXT_PATH, method = "POST", Unit)
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_TRACKS_PATH, listOf(false), listOf(false))
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_ALBUMS_PATH, listOf(false))
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls(trackPlayback = playbackA)
+            verifyOpenState(playback = null, trackPlayback = playbackA, deviceId = null)
 
-            presenter.emit(PlayerPanelPresenter.Event.SkipNext)
-            advanceUntilIdle()
+            presenter.emitAndIdle(PlayerPanelPresenter.Event.SkipNext)
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.withTrackPlayback(playbackB))
-
-            coVerify { Spotify.Player.skipToNext() }
-            verifyLoadTrackPlaybackCalls(trackPlayback(track = trackA))
-            verifyLoadTrackPlaybackCalls(trackPlayback(track = trackB))
+            presenter.assertStateEquals(loadedState.withTrackPlayback(playbackB))
+            Player.verifyState(playback = null, trackPlayback = playbackB, deviceId = null)
         }
     }
 
@@ -224,19 +187,18 @@ internal class PlayerPanelPresenterTest {
     fun skipPrevious() {
         val playbackA = trackPlayback(track = trackA)
         val playbackB = trackPlayback(track = trackB)
-        coEvery { Spotify.Player.getCurrentlyPlayingTrack() } returnsMany listOf(playbackA, playbackA, playbackB)
+        TestSpotifyInterceptor.intercept(Spotify.Player.GET_CURRENT_PLAYING_TRACK_PATH, playbackA, playbackA, playbackB)
+        TestSpotifyInterceptor.intercept(Spotify.Player.SKIP_TO_PREVIOUS_PATH, method = "POST", Unit)
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_TRACKS_PATH, listOf(false), listOf(false))
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_ALBUMS_PATH, listOf(false))
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls(trackPlayback = playbackA)
+            verifyOpenState(playback = null, trackPlayback = playbackA, deviceId = null)
 
-            presenter.emit(PlayerPanelPresenter.Event.SkipPrevious)
-            advanceUntilIdle()
+            presenter.emitAndIdle(PlayerPanelPresenter.Event.SkipPrevious)
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.withTrackPlayback(playbackB))
-
-            coVerify { Spotify.Player.skipToPrevious() }
-            verifyLoadTrackPlaybackCalls(trackPlayback(track = trackA))
-            verifyLoadTrackPlaybackCalls(trackPlayback(track = trackB))
+            presenter.assertStateEquals(loadedState.withTrackPlayback(playbackB))
+            Player.verifyState(playback = null, trackPlayback = playbackB, deviceId = null)
         }
     }
 
@@ -244,20 +206,23 @@ internal class PlayerPanelPresenterTest {
     fun toggleShuffle() {
         val playbackShuffle = playback(shuffleState = true)
         val playbackNoShuffle = playback(shuffleState = false)
-        coEvery { Spotify.Player.getCurrentPlayback() } returnsMany
-            listOf(playbackNoShuffle, playbackNoShuffle, playbackShuffle)
+        TestSpotifyInterceptor.intercept(
+            Spotify.Player.GET_CURRENT_PLAYBACK_PATH,
+            playbackNoShuffle,
+            playbackNoShuffle,
+            playbackShuffle,
+        )
+        TestSpotifyInterceptor.intercept(Spotify.Player.TOGGLE_SHUFFLE_PATH, method = "PUT", Unit)
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_TRACKS_PATH, listOf(false))
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_ALBUMS_PATH, listOf(false))
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls(playback = playbackNoShuffle)
+            verifyOpenState(playback = playbackNoShuffle, trackPlayback = null, deviceId = null)
 
-            presenter.emit(PlayerPanelPresenter.Event.ToggleShuffle(shuffle = true))
-            advanceUntilIdle()
+            presenter.emitAndIdle(PlayerPanelPresenter.Event.ToggleShuffle(shuffle = true))
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.withPlayback(playbackShuffle))
-
-            coVerify { Spotify.Player.toggleShuffle(state = true, deviceId = deviceId) }
-            verifyLoadPlaybackCalls(playbackNoShuffle)
-            verifyLoadPlaybackCalls(playbackShuffle)
+            presenter.assertStateEquals(loadedState.withPlayback(playbackShuffle))
+            Player.verifyState(playback = playbackShuffle, trackPlayback = null, deviceId = null)
         }
     }
 
@@ -265,20 +230,23 @@ internal class PlayerPanelPresenterTest {
     fun setRepeat() {
         val playbackRepeatA = playback(repeatState = "A")
         val playbackRepeatB = playback(repeatState = "B")
-        coEvery { Spotify.Player.getCurrentPlayback() } returnsMany
-            listOf(playbackRepeatA, playbackRepeatA, playbackRepeatB)
+        TestSpotifyInterceptor.intercept(
+            Spotify.Player.GET_CURRENT_PLAYBACK_PATH,
+            playbackRepeatA,
+            playbackRepeatA,
+            playbackRepeatB,
+        )
+        TestSpotifyInterceptor.intercept(Spotify.Player.SET_REPEAT_MODE_PATH, method = "PUT", Unit)
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_TRACKS_PATH, listOf(false))
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_ALBUMS_PATH, listOf(false))
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls(playback = playbackRepeatA)
+            verifyOpenState(playback = playbackRepeatA, trackPlayback = null, deviceId = null)
 
-            presenter.emit(PlayerPanelPresenter.Event.SetRepeat(repeatState = "B"))
-            advanceUntilIdle()
+            presenter.emitAndIdle(PlayerPanelPresenter.Event.SetRepeat(repeatState = "B"))
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.withPlayback(playbackRepeatB))
-
-            coVerify { Spotify.Player.setRepeatMode(state = "B", deviceId = deviceId) }
-            verifyLoadPlaybackCalls(playbackRepeatA)
-            verifyLoadPlaybackCalls(playbackRepeatB)
+            presenter.assertStateEquals(loadedState.withPlayback(playbackRepeatB))
+            Player.verifyState(playback = playbackRepeatB, trackPlayback = null, deviceId = null)
         }
     }
 
@@ -289,26 +257,21 @@ internal class PlayerPanelPresenterTest {
 
         val device1 = device(volumePercent = oldVolume)
         val device2 = device(volumePercent = newVolume)
-        coEvery { Spotify.Player.getAvailableDevices() } returnsMany
-            listOf(listOf(device1), listOf(device1), listOf(device2))
+        TestSpotifyInterceptor.intercept(
+            Spotify.Player.GET_AVAILABLE_DEVICES_PATH,
+            Spotify.Player.AvailableDevicesResponse(listOf(device1)),
+            Spotify.Player.AvailableDevicesResponse(listOf(device1)),
+            Spotify.Player.AvailableDevicesResponse(listOf(device2)),
+        )
+        TestSpotifyInterceptor.intercept(Spotify.Player.SET_VOLUME_PATH, method = "PUT", Unit)
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls(deviceId = deviceId)
+            verifyOpenState(playback = null, trackPlayback = null, deviceId = deviceId)
 
-            presenter.emit(PlayerPanelPresenter.Event.SetVolume(volume = newVolume))
-            advanceUntilIdle()
+            presenter.emitAndIdle(PlayerPanelPresenter.Event.SetVolume(volume = newVolume))
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(
-                loadedState.copy(devices = listOf(device2), savedVolume = 60),
-            )
-
-            coVerify { Spotify.Player.setVolume(volumePercent = newVolume, deviceId = deviceId) }
-            coVerify(exactly = 3) { Spotify.Player.getAvailableDevices() }
-
-            coVerify {
-                Player.currentPlaybackDeviceId
-                currentPlaybackDeviceIdState.value = deviceId
-            }
+            presenter.assertStateEquals(loadedState.copy(devices = listOf(device2), savedVolume = 60))
+            assertThat(Player.currentPlaybackDeviceId.value).isEqualTo(deviceId)
         }
     }
 
@@ -318,39 +281,31 @@ internal class PlayerPanelPresenterTest {
 
         val deviceUnmuted = device(volumePercent = originalVolume)
         val deviceMuted = device(volumePercent = 0)
-        coEvery { Spotify.Player.getAvailableDevices() } returnsMany listOf(
-            listOf(deviceUnmuted),
-            listOf(deviceUnmuted),
-            listOf(deviceMuted),
-            listOf(deviceMuted),
-            listOf(deviceUnmuted),
+        TestSpotifyInterceptor.intercept(
+            Spotify.Player.GET_AVAILABLE_DEVICES_PATH,
+            Spotify.Player.AvailableDevicesResponse(listOf(deviceUnmuted)),
+            Spotify.Player.AvailableDevicesResponse(listOf(deviceUnmuted)),
+            Spotify.Player.AvailableDevicesResponse(listOf(deviceMuted)),
+            Spotify.Player.AvailableDevicesResponse(listOf(deviceMuted)),
+            Spotify.Player.AvailableDevicesResponse(listOf(deviceUnmuted)),
         )
+        TestSpotifyInterceptor.intercept(Spotify.Player.SET_VOLUME_PATH, method = "PUT", Unit, Unit)
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls(deviceId = deviceId)
+            verifyOpenState(playback = null, trackPlayback = null, deviceId = deviceId)
 
-            presenter.emit(PlayerPanelPresenter.Event.ToggleMuteVolume(mute = true, previousVolume = originalVolume))
-            advanceUntilIdle()
-
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(
-                loadedState.copy(devices = listOf(deviceMuted), savedVolume = originalVolume),
+            presenter.emitAndIdle(
+                PlayerPanelPresenter.Event.ToggleMuteVolume(mute = true, previousVolume = originalVolume),
             )
 
-            presenter.emit(PlayerPanelPresenter.Event.ToggleMuteVolume(mute = false, previousVolume = originalVolume))
-            advanceUntilIdle()
+            presenter.assertStateEquals(loadedState.copy(devices = listOf(deviceMuted), savedVolume = originalVolume))
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(
-                loadedState.copy(devices = listOf(deviceUnmuted), savedVolume = originalVolume),
+            presenter.emitAndIdle(
+                PlayerPanelPresenter.Event.ToggleMuteVolume(mute = false, previousVolume = originalVolume),
             )
 
-            coVerify { Spotify.Player.setVolume(volumePercent = 0, deviceId = deviceId) }
-            coVerify { Spotify.Player.setVolume(volumePercent = originalVolume, deviceId = deviceId) }
-            coVerify(exactly = 5) { Spotify.Player.getAvailableDevices() }
-
-            coVerify {
-                Player.currentPlaybackDeviceId
-                currentPlaybackDeviceIdState.value = deviceId
-            }
+            presenter.assertStateEquals(loadedState.copy(devices = listOf(deviceUnmuted), savedVolume = originalVolume))
+            assertThat(Player.currentPlaybackDeviceId.value).isEqualTo(deviceId)
         }
     }
 
@@ -358,89 +313,76 @@ internal class PlayerPanelPresenterTest {
     fun seekTo() {
         val playback1 = playback(progressMs = 200)
         val playback2 = playback(progressMs = 100)
-
-        coEvery { Spotify.Player.getCurrentPlayback() } returnsMany listOf(playback1, playback2)
+        TestSpotifyInterceptor.intercept(Spotify.Player.GET_CURRENT_PLAYBACK_PATH, playback1, playback2)
+        TestSpotifyInterceptor.intercept(Spotify.Player.SEEK_TO_POSITION_PATH, method = "PUT", Unit)
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_TRACKS_PATH, listOf(false))
+        TestSpotifyInterceptor.intercept(Spotify.Library.CHECK_ALBUMS_PATH, listOf(false))
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls(playback = playback1)
+            verifyOpenState(playback = playback1, trackPlayback = null, deviceId = null)
 
-            presenter.emit(PlayerPanelPresenter.Event.SeekTo(positionMs = 100))
-            advanceUntilIdle()
+            presenter.emitAndIdle(PlayerPanelPresenter.Event.SeekTo(positionMs = 100))
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.withPlayback(playback2))
-
-            coVerify { Spotify.Player.seekToPosition(positionMs = 100, deviceId = deviceId) }
-            verifyLoadPlaybackCalls(playback = playback2)
+            presenter.assertStateEquals(loadedState.withPlayback(playback2))
+            Player.verifyState(playback = playback2, trackPlayback = null, deviceId = null)
         }
     }
 
     @Test
     fun selectDevice() {
         val newDevice = device(id = "new device")
+        TestSpotifyInterceptor.intercept(Spotify.Player.TRANSFER_PLAYBACK_PATH, method = "PUT", Unit)
 
         testPresenter(::PlayerPanelPresenter) { presenter ->
-            verifyOpenCalls()
+            verifyOpenState(playback = null, trackPlayback = null, deviceId = null)
 
-            presenter.emit(PlayerPanelPresenter.Event.SelectDevice(device = newDevice))
-            advanceUntilIdle()
+            presenter.emitAndIdle(PlayerPanelPresenter.Event.SelectDevice(device = newDevice))
 
-            assertThat(presenter.testState.stateOrThrow).isEqualTo(loadedState.copy(selectedDevice = newDevice))
-
-            coVerify { Spotify.Player.transferPlayback(deviceIds = listOf(newDevice.id)) }
+            presenter.assertStateEquals(loadedState.copy(selectedDevice = newDevice))
+            // TODO probably should switch to the new device ID
+            Player.verifyState(playback = null, trackPlayback = null, deviceId = null)
         }
     }
 
-    private fun verifyLoadPlaybackCalls(playback: SpotifyPlayback?) {
-        coVerify {
-            Spotify.Player.getCurrentPlayback()
-            if (playback != null) {
-                Player.isPlaying
-                isPlayingState.value = playback.isPlaying
-
-                Player.playbackContext
-                playbackContextState.value = playback.context
-
-                playback.item?.let { track ->
-                    Player.currentTrackId
-                    currentTrackIdState.value = track.id
-                }
-            }
-        }
-    }
-
-    private fun verifyLoadTrackPlaybackCalls(playback: SpotifyTrackPlayback?) {
-        coVerify {
-            Spotify.Player.getCurrentlyPlayingTrack()
-            if (playback != null) {
-                Player.isPlaying
-                isPlayingState.value = playback.isPlaying
-
-                Player.playbackContext
-                playbackContextState.value = playback.context
-
-                playback.item?.let { track ->
-                    Player.currentTrackId
-                    currentTrackIdState.value = track.id
-                }
-            }
-        }
-    }
-
-    private fun verifyOpenCalls(
-        deviceId: String? = null,
-        playback: SpotifyPlayback? = null,
-        trackPlayback: SpotifyTrackPlayback? = null,
+    private fun Player.verifyState(
+        playback: SpotifyPlayback?,
+        trackPlayback: SpotifyTrackPlayback?,
+        deviceId: String?,
     ) {
-        coVerify {
-            Spotify.Player.getAvailableDevices()
-
-            Player.playEvents
-            Player.currentPlaybackDeviceId
-            currentPlaybackDeviceIdState.value = deviceId
+        assertThat(isPlaying.value).isEqualTo(playback?.isPlaying == true || trackPlayback?.isPlaying == true)
+        assertThat(playbackContext.value).isEqualTo(playback?.context ?: trackPlayback?.context)
+        (playback?.item ?: trackPlayback?.item)?.let { track ->
+            assertThat(currentTrackId.value).isEqualTo(track.id)
         }
 
-        verifyLoadPlaybackCalls(playback)
-        verifyLoadTrackPlaybackCalls(trackPlayback)
+        assertThat(currentPlaybackDeviceId.value).isEqualTo(deviceId)
+    }
+
+    private fun verifyOpenState(
+        playback: SpotifyPlayback?,
+        trackPlayback: SpotifyTrackPlayback?,
+        deviceId: String?,
+    ) {
+        val openCalls = buildList {
+            add(Spotify.Player.GET_AVAILABLE_DEVICES_PATH)
+            add(Spotify.Player.GET_CURRENT_PLAYBACK_PATH)
+            add(Spotify.Player.GET_CURRENT_PLAYING_TRACK_PATH)
+            if (playback?.item != null) {
+                add(Spotify.Library.CHECK_TRACKS_PATH)
+                if (playback.item?.album != null) {
+                    add(Spotify.Library.CHECK_ALBUMS_PATH)
+                }
+            }
+            if (trackPlayback?.item != null) {
+                add(Spotify.Library.CHECK_TRACKS_PATH)
+                if (trackPlayback.item?.album != null) {
+                    add(Spotify.Library.CHECK_ALBUMS_PATH)
+                }
+            }
+        }
+
+        TestSpotifyInterceptor.verifyInterceptedCalls(openCalls)
+        Player.verifyState(playback, trackPlayback, deviceId)
     }
 
     private suspend fun PlayerPanelPresenter.ViewModel.withPlayback(
@@ -485,16 +427,16 @@ internal class PlayerPanelPresenterTest {
             devices = emptyList(),
         )
 
-        const val deviceId = "device"
-        val device: SpotifyPlaybackDevice = device()
-        val track: FullSpotifyTrack = FixtureModels.networkFullTrack()
-        val trackA: FullSpotifyTrack = FixtureModels.networkFullTrack(id = "track-a", name = "Track A")
-        val trackB: FullSpotifyTrack = FixtureModels.networkFullTrack(id = "track-b", name = "Track B")
+        private const val deviceId = "device"
+        private val device: SpotifyPlaybackDevice = device()
+        private val track: FullSpotifyTrack = FixtureModels.networkFullTrack()
+        private val trackA: FullSpotifyTrack = FixtureModels.networkFullTrack(id = "track-a", name = "Track A")
+        private val trackB: FullSpotifyTrack = FixtureModels.networkFullTrack(id = "track-b", name = "Track B")
 
-        val playbackNotPlaying = playback(isPlaying = false, track = null)
-        val playbackPlaying = playback(isPlaying = true)
+        private val playbackNotPlaying = playback(isPlaying = false, track = null)
+        private val playbackPlaying = playback(isPlaying = true)
 
-        fun device(id: String = deviceId, volumePercent: Int = 50): SpotifyPlaybackDevice {
+        private fun device(id: String = deviceId, volumePercent: Int = 50): SpotifyPlaybackDevice {
             return SpotifyPlaybackDevice(
                 id = id,
                 isActive = true,
@@ -506,7 +448,7 @@ internal class PlayerPanelPresenterTest {
             )
         }
 
-        fun playback(
+        private fun playback(
             isPlaying: Boolean = true,
             device: SpotifyPlaybackDevice = this.device,
             track: FullSpotifyTrack? = this.track,
@@ -527,7 +469,7 @@ internal class PlayerPanelPresenterTest {
             )
         }
 
-        fun trackPlayback(
+        private fun trackPlayback(
             isPlaying: Boolean = false,
             track: FullSpotifyTrack? = this.track,
         ): SpotifyTrackPlayback {

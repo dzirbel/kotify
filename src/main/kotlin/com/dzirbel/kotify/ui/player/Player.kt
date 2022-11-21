@@ -108,13 +108,15 @@ object Player {
      */
     val playEvents: SharedFlow<PlayEvent> = _playEvents.asSharedFlow()
 
+    private var playerScope: CoroutineScope = GlobalScope
+
     /**
      * Plays from the given [context], returning true if this is possible (i.e. [playable] is true) or false if not.
      */
     fun play(
         context: PlayContext? = null,
         resumeIfSameContext: Boolean = true,
-        scope: CoroutineScope = GlobalScope,
+        scope: CoroutineScope = playerScope,
     ): Boolean {
         currentPlaybackDeviceId.value?.let { deviceId ->
             scope.launch {
@@ -140,7 +142,7 @@ object Player {
     /**
      * Pauses the current playback, returning true if this is possible (i.e. [playable] is true) or false if not.
      */
-    fun pause(scope: CoroutineScope = GlobalScope): Boolean {
+    fun pause(scope: CoroutineScope = playerScope): Boolean {
         currentPlaybackDeviceId.value?.let { deviceId ->
             scope.launch {
                 Spotify.Player.pausePlayback(deviceId = deviceId)
@@ -157,7 +159,28 @@ object Player {
      * Toggles the current playback, pausing if it is playing and resuming if it is paused, returning true on success or
      * false on failure.
      */
-    fun togglePlayback(scope: CoroutineScope = GlobalScope): Boolean {
+    fun togglePlayback(scope: CoroutineScope = playerScope): Boolean {
         return if (isPlaying.value) pause(scope = scope) else play(scope = scope)
+    }
+
+    /**
+     * Resets the locally held state of the player, for use at the end of tests to ensure state does not carry over.
+     */
+    fun resetState() {
+        currentPlaybackDeviceId.value = null
+        playbackContext.value = null
+        isPlaying.value = false
+        currentTrackId.value = null
+    }
+
+    /**
+     * Runs [block] with [scope] used as the [CoroutineScope] in which player operations are submitted. By default this
+     * is the [GlobalScope] so that network requests are not constrained to any particular screen/etc, but for tests it
+     * can be restricted to the test itself to prevent requests escaping the test context.
+     */
+    suspend fun withPlayerScope(scope: CoroutineScope, block: suspend () -> Unit) {
+        playerScope = scope
+        block()
+        playerScope = GlobalScope
     }
 }

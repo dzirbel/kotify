@@ -51,15 +51,28 @@ object Spotify {
     data class Configuration(
         val okHttpClient: OkHttpClient = OkHttpClient(),
         val oauthOkHttpClient: OkHttpClient = OkHttpClient(),
+        val requestInterceptor: RequestInterceptor? = null,
     )
 
-    var configuration: Configuration = Configuration()
-
     /**
-     * A global flag which throws an [IllegalStateException] when making any network call when it is enabled, for use in
-     * tests to prohibit any dependency on the network.
+     * A simple [Configuration] option which allows intercepting HTTP requests, preventing them from actually being sent
+     * over the network.
+     *
+     * Note that if the [Configuration] has a [Configuration.requestInterceptor] then all requests will be intercepted,
+     * i.e. all-or-nothing. This could be generalized in the future, but works for the current use case of intercepting
+     * network requests in unit tests.
+     *
+     * TODO consider using OkHttp interceptors instead
      */
-    var allowNetworkCalls = true
+    fun interface RequestInterceptor {
+        /**
+         * Returns the intercepted value for the given [method] and [path]. Even null values will be returned as the
+         * response, since some requests may have optional return types.
+         */
+        fun interceptFor(method: String, path: String): Any?
+    }
+
+    var configuration: Configuration = Configuration()
 
     const val FROM_TOKEN = "from_token"
     const val API_URL = "https://api.spotify.com/v1/"
@@ -162,14 +175,17 @@ object Spotify {
         )
     }
 
-    suspend inline fun <reified T : Any> request(
+    suspend inline fun <reified T : Any?> request(
         method: String,
         path: String,
         queryParams: Map<String, String?>? = null,
         body: RequestBody? = null,
     ): T {
         assertNotOnUIThread()
-        check(allowNetworkCalls)
+
+        configuration.requestInterceptor?.let {
+            return it.interceptFor(method = method, path = path) as T
+        }
 
         val token = AccessToken.Cache.getOrThrow()
 
@@ -728,6 +744,9 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference/#category-library
      */
     object Library {
+        const val CHECK_TRACKS_PATH = "me/tracks/contains"
+        const val CHECK_ALBUMS_PATH = "me/albums/contains"
+
         /**
          * Get a list of the albums saved in the current Spotify user’s ‘Your Music’ library.
          *
@@ -790,7 +809,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs for the albums. Maximum: 50 IDs.
          */
         suspend fun checkAlbums(ids: List<String>): List<Boolean> {
-            return get("me/albums/contains", mapOf("ids" to ids.joinToString(separator = ",")))
+            return get(CHECK_ALBUMS_PATH, mapOf("ids" to ids.joinToString(separator = ",")))
         }
 
         /**
@@ -855,7 +874,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun checkTracks(ids: List<String>): List<Boolean> {
-            return get("me/tracks/contains", mapOf("ids" to ids.joinToString(separator = ",")))
+            return get(CHECK_TRACKS_PATH, mapOf("ids" to ids.joinToString(separator = ",")))
         }
 
         /**
@@ -1001,6 +1020,22 @@ object Spotify {
      * https://developer.spotify.com/documentation/web-api/reference/#category-player
      */
     object Player {
+        const val GET_CURRENT_PLAYBACK_PATH = "me/player"
+        const val GET_CURRENT_PLAYING_TRACK_PATH = "me/player/currently-playing"
+        const val GET_AVAILABLE_DEVICES_PATH = "me/player/devices"
+        const val START_PLAYBACK_PATH = "me/player/play"
+        const val PAUSE_PLAYBACK_PATH = "me/player/pause"
+        const val TRANSFER_PLAYBACK_PATH = "me/player"
+        const val SKIP_TO_NEXT_PATH = "me/player/next"
+        const val SKIP_TO_PREVIOUS_PATH = "me/player/previous"
+        const val TOGGLE_SHUFFLE_PATH = "me/player/shuffle"
+        const val SET_REPEAT_MODE_PATH = "me/player/repeat"
+        const val SET_VOLUME_PATH = "me/player/volume"
+        const val SEEK_TO_POSITION_PATH = "me/player/seek"
+
+        @Serializable
+        data class AvailableDevicesResponse(val devices: List<SpotifyPlaybackDevice>)
+
         /**
          * Get information about the user's current playback state, including track or episode, progress, and active
          * device.
@@ -1021,7 +1056,7 @@ object Spotify {
             additionalTypes: List<String>? = null,
         ): SpotifyPlayback? {
             return get(
-                "me/player",
+                GET_CURRENT_PLAYBACK_PATH,
                 mapOf("market" to market, "additional_types" to additionalTypes?.joinToString(separator = ",")),
             )
         }
@@ -1045,7 +1080,7 @@ object Spotify {
                 val play: String? = null,
             )
 
-            return put("me/player", jsonBody = Body(deviceIds = deviceIds, play = play))
+            return put(TRANSFER_PLAYBACK_PATH, jsonBody = Body(deviceIds = deviceIds, play = play))
         }
 
         /**
@@ -1054,10 +1089,7 @@ object Spotify {
          * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-a-users-available-devices
          */
         suspend fun getAvailableDevices(): List<SpotifyPlaybackDevice> {
-            @Serializable
-            data class Response(val devices: List<SpotifyPlaybackDevice>)
-
-            return get<Response>("me/player/devices").devices
+            return get<AvailableDevicesResponse>(GET_AVAILABLE_DEVICES_PATH).devices
         }
 
         /**
@@ -1079,7 +1111,7 @@ object Spotify {
             additionalTypes: List<String>? = null,
         ): SpotifyTrackPlayback? {
             return get(
-                "me/player/currently-playing",
+                GET_CURRENT_PLAYING_TRACK_PATH,
                 mapOf("market" to market, "additional_types" to additionalTypes?.joinToString(separator = ",")),
             )
         }
@@ -1112,7 +1144,7 @@ object Spotify {
             )
 
             return put(
-                "me/player/play",
+                START_PLAYBACK_PATH,
                 jsonBody = Body(contextUri = contextUri, uris = uris, offset = offset, positionMs = positionMs),
                 queryParams = mapOf("device_id" to deviceId),
             )
@@ -1129,7 +1161,7 @@ object Spotify {
         suspend fun pausePlayback(deviceId: String? = null) {
             @Suppress("CastToNullableType")
             return put(
-                "me/player/pause",
+                PAUSE_PLAYBACK_PATH,
                 jsonBody = null as Unit?,
                 queryParams = mapOf("device_id" to deviceId),
             )
@@ -1146,7 +1178,7 @@ object Spotify {
         suspend fun skipToNext(deviceId: String? = null) {
             @Suppress("CastToNullableType")
             return post(
-                "me/player/next",
+                SKIP_TO_NEXT_PATH,
                 jsonBody = null as Unit?,
                 queryParams = mapOf("device_id" to deviceId),
             )
@@ -1163,7 +1195,7 @@ object Spotify {
         suspend fun skipToPrevious(deviceId: String? = null) {
             @Suppress("CastToNullableType")
             return post(
-                "me/player/previous",
+                SKIP_TO_PREVIOUS_PATH,
                 jsonBody = null as Unit?,
                 queryParams = mapOf("device_id" to deviceId),
             )
@@ -1183,7 +1215,7 @@ object Spotify {
         suspend fun seekToPosition(positionMs: Int, deviceId: String? = null) {
             @Suppress("CastToNullableType")
             return put(
-                "me/player/seek",
+                SEEK_TO_POSITION_PATH,
                 jsonBody = null as Unit?,
                 queryParams = mapOf("position_ms" to positionMs.toString(), "device_id" to deviceId),
             )
@@ -1204,7 +1236,7 @@ object Spotify {
         suspend fun setRepeatMode(state: String, deviceId: String? = null) {
             @Suppress("CastToNullableType")
             return put(
-                "me/player/repeat",
+                SET_REPEAT_MODE_PATH,
                 jsonBody = null as Unit?,
                 queryParams = mapOf("state" to state, "device_id" to deviceId),
             )
@@ -1222,7 +1254,7 @@ object Spotify {
         suspend fun setVolume(volumePercent: Int, deviceId: String? = null) {
             @Suppress("CastToNullableType")
             return put(
-                "me/player/volume",
+                SET_VOLUME_PATH,
                 jsonBody = null as Unit?,
                 queryParams = mapOf("volume_percent" to volumePercent.toString(), "device_id" to deviceId),
             )
@@ -1240,7 +1272,7 @@ object Spotify {
         suspend fun toggleShuffle(state: Boolean, deviceId: String? = null) {
             @Suppress("CastToNullableType")
             return put(
-                "me/player/shuffle",
+                TOGGLE_SHUFFLE_PATH,
                 jsonBody = null as Unit?,
                 queryParams = mapOf("state" to state.toString(), "device_id" to deviceId),
             )

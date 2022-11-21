@@ -61,6 +61,13 @@ private val tables = arrayOf(
     UserTable.UserImageTable,
 )
 
+private val savedRepositories = arrayOf(
+    SavedArtistRepository,
+    SavedAlbumRepository,
+    SavedTrackRepository,
+    SavedPlaylistRepository,
+)
+
 /**
  * Global wrapper on the database connection [KotifyDatabase.db].
  */
@@ -147,15 +154,13 @@ object KotifyDatabase {
         transaction(db) {
             tables.forEach { it.deleteAll() }
         }
+        savedRepositories.forEach { it.clearStates() }
     }
 
     /**
      * Invalidates the saved state of all savable entities, typically for use when the user logs out.
      */
     suspend fun clearSaved() {
-        SavedArtistRepository.invalidateAll()
-        SavedAlbumRepository.invalidateAll()
-        SavedTrackRepository.invalidateAll()
-        SavedPlaylistRepository.invalidateAll()
+        savedRepositories.forEach { it.invalidateAll() }
     }
 }

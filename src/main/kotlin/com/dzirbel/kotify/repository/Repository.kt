@@ -141,7 +141,7 @@ abstract class Repository<E> {
      */
     fun stateOf(
         id: String,
-        scope: CoroutineScope = GlobalScope,
+        scope: CoroutineScope = repositoryScope,
         allowCache: Boolean = true,
         allowRemote: Boolean = true,
         onStateInitialized: (E?) -> Unit = {},
@@ -154,6 +154,7 @@ abstract class Repository<E> {
                 if (allowRemote && state.value == null) {
                     scope.launch {
                         val value = getRemote(id)
+                        state.value = value
                         onStateInitialized(value)
                     }
                 } else {
@@ -193,7 +194,7 @@ abstract class Repository<E> {
      */
     fun statesOf(
         ids: List<String>,
-        scope: CoroutineScope = GlobalScope,
+        scope: CoroutineScope = repositoryScope,
         allowCache: Boolean = true,
         allowRemote: Boolean = true,
     ): List<StateFlow<E?>> {
@@ -263,6 +264,21 @@ abstract class Repository<E> {
     open fun clearStates() {
         synchronized(states) {
             states.clear()
+        }
+    }
+
+    companion object {
+        private var repositoryScope: CoroutineScope = GlobalScope
+
+        /**
+         * Runs [block] with [scope] used as the [CoroutineScope] in which [states] are fetched. By default this is the
+         * [GlobalScope] so that network requests are not constrained to any particular screen/etc, but for tests it can
+         * be restricted to the test itself to prevent requests escaping the test context.
+         */
+        suspend fun withRepositoryScope(scope: CoroutineScope, block: suspend () -> Unit) {
+            repositoryScope = scope
+            block()
+            repositoryScope = GlobalScope
         }
     }
 }

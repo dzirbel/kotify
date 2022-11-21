@@ -6,18 +6,22 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
 /**
- * A JUnit test extension which disables [Spotify.allowNetworkCalls] for non-network tests.
+ * A JUnit test extension which provides a [TestSpotifyInterceptor] for non-network tests.
  *
- * This extension is applied automatically to all tests via a service loader.
+ * This extension is applied automatically to all tests which are run without the [TAG_NETWORK] tag via a service
+ * loader.
  */
 class NetworkExtension : BeforeEachCallback, AfterEachCallback {
     override fun beforeEach(context: ExtensionContext) {
         if (!context.tags.contains(TAG_NETWORK)) {
-            Spotify.allowNetworkCalls = false
+            Spotify.configuration = Spotify.Configuration(
+                requestInterceptor = TestSpotifyInterceptor,
+            )
         }
     }
 
     override fun afterEach(context: ExtensionContext) {
-        Spotify.allowNetworkCalls = true
+        Spotify.configuration = Spotify.Configuration()
+        TestSpotifyInterceptor.reset()
     }
 }

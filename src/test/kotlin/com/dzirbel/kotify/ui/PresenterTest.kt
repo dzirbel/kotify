@@ -4,45 +4,18 @@ import assertk.assertThat
 import assertk.assertions.hasSize
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
-import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.testPresenter
 import com.dzirbel.kotify.ui.framework.Presenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
-
-/**
- * Wraps the common setup for testing a [Presenter].
- */
-fun <S, E, P : Presenter<S, E>> testPresenter(
-    createPresenter: CoroutineScope.() -> P,
-    beforeOpen: (suspend (P) -> Unit)? = null,
-    @Suppress("SuspendFunWithCoroutineScopeReceiver")
-    block: suspend TestScope.(P) -> Unit,
-) {
-    KotifyDatabase.withSynchronousTransactions {
-        runTest {
-            val presenter = createPresenter()
-
-            beforeOpen?.invoke(presenter)
-
-            val job = launch { presenter.open() }
-            advanceUntilIdle()
-
-            block(presenter)
-
-            job.cancel()
-        }
-    }
-}
 
 internal class PresenterTest {
     private data class ViewModel(val field: String)
