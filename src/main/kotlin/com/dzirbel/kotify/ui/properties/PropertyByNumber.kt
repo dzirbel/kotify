@@ -24,12 +24,12 @@ abstract class PropertyByNumber<E>(override val title: String, private val divis
     }
 
     override fun divisionTitle(division: Any?): String? {
-        val number = division as Int
+        val number = requireNotNull(division) as Int
         return "$number - ${number + divisionRange}"
     }
 
     override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
-        return sortOrder.compare(first as Int, second as Int)
+        return sortOrder.compare(requireNotNull(first) as Int, requireNotNull(second) as Int)
     }
 
     companion object {

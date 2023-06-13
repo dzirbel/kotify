@@ -126,12 +126,12 @@ internal class AccessTokenTest {
 
         val accessToken = Json.decodeFromString<AccessToken>(
             """
-            {
-                "access_token": "abc",
-                "token_type": "def",
-                "expires_in": 30
-            }
-            """,
+                {
+                    "access_token": "abc",
+                    "token_type": "def",
+                    "expires_in": 30
+                }
+            """.trimIndent(),
         )
 
         val after = System.currentTimeMillis()
@@ -146,13 +146,13 @@ internal class AccessTokenTest {
     fun testFromJsonWithReceived() {
         val accessToken = Json.decodeFromString<AccessToken>(
             """
-            {
-                "access_token": "abc",
-                "token_type": "def",
-                "expires_in": 30,
-                "received": 123
-            }
-            """,
+                {
+                    "access_token": "abc",
+                    "token_type": "def",
+                    "expires_in": 30,
+                    "received": 123
+                }
+            """.trimIndent(),
         )
 
         assertThat(accessToken.accessToken).isEqualTo("abc")

@@ -161,8 +161,8 @@ tasks.create("detektWithTypeResolution") {
 }
 
 detekt {
-    source = files("src")
-    config = files("detekt-config.yml")
+    source.from(files("src"))
+    config.from(files("detekt-config.yml"))
 }
 
 val File.obfuscatedJarFile: File

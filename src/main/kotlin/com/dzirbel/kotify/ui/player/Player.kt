@@ -122,8 +122,8 @@ object Player {
             scope.launch {
                 val contextChanged = context?.contextUri != playbackContext.value?.uri
                 Spotify.Player.startPlayback(
-                    contextUri = context?.contextUri?.takeUnless {
-                        context.offset == null && context.positionMs == null && resumeIfSameContext && !contextChanged
+                    contextUri = context?.contextUri?.takeIf {
+                        context.offset != null || context.positionMs != null || !resumeIfSameContext || contextChanged
                     },
                     uris = context?.trackUris,
                     offset = context?.offset,

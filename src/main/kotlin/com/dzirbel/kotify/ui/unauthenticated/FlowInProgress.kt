@@ -81,6 +81,7 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
 
     VerticalSpacer(Dimens.space3)
 
+    @Suppress("StringShouldBeRawString")
     Text(
         "If you've accepted the authorization request in Spotify but it wasn't automatically captured (the browser " +
             "may be showing a \"site can't be reached\" error), copy the entire URL here (should start with " +

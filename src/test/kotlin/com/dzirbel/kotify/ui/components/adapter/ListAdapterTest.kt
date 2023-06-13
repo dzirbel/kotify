@@ -29,7 +29,7 @@ internal class ListAdapterTest {
 
         override fun divisionFor(element: Int): Int = element % 3
         override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
-            return sortOrder.compare(first as Int, second as Int)
+            return sortOrder.compare(requireNotNull(first) as Int, requireNotNull(second) as Int)
         }
     }
 

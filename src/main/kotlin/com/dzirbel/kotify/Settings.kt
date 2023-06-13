@@ -60,7 +60,9 @@ object Settings {
         mutateSettings: SettingsData.(V) -> SettingsData,
     ): ReadWriteProperty<T, V> {
         return object : ReadWriteProperty<T, V> {
+            @Suppress("DoubleMutabilityForCollection")
             private var nullableState: MutableState<V>? = null
+
             private val state: MutableState<V>
                 get() = nullableState ?: mutableStateOf(settings.init()).also { nullableState = it }
 

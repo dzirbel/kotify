@@ -14,12 +14,7 @@ import androidx.compose.ui.focus.onFocusChanged
  * field as an error state if it returns false.
  */
 @Composable
-fun AppliedTextField(
-    value: String,
-    label: String,
-    modifier: Modifier = Modifier,
-    applyValue: (String) -> Boolean,
-) {
+fun AppliedTextField(value: String, label: String, modifier: Modifier = Modifier, applyValue: (String) -> Boolean) {
     val textFieldValue = remember(value) { mutableStateOf(value) }
     val appliedValue = remember { mutableStateOf(true) }
 

@@ -172,11 +172,7 @@ private const val DETAILS_COLUMN_WEIGHT = 0.3f
 private const val DETAILS_ALBUMS_WEIGHT = 0.7f
 
 @Composable
-private fun ArtistDetailInsert(
-    artist: Artist,
-    presenter: ArtistsPresenter,
-    state: ArtistsPresenter.ViewModel,
-) {
+private fun ArtistDetailInsert(artist: Artist, presenter: ArtistsPresenter, state: ArtistsPresenter.ViewModel) {
     Row(modifier = Modifier.padding(Dimens.space4), horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
         val artistDetails = state.artistDetails[artist.id.value]
 

@@ -200,11 +200,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         var updatedTime: Instant? = null
         return KotifyDatabase.transaction("load $entityName saved library") {
             updatedTime = GlobalUpdateTimesRepository.updated(libraryUpdateKey)
-            if (updatedTime != null) {
-                savedEntityTable.savedEntityIds()
-            } else {
-                null
-            }
+            updatedTime?.let { savedEntityTable.savedEntityIds() }
         }
             .also { library ->
                 libraryStateInitialized.set(true)

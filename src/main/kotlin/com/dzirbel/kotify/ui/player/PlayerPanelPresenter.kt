@@ -111,10 +111,8 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
             is Event.LoadDevices -> {
                 val previousVolume: Int?
                 mutateState { state ->
-                    previousVolume = if (event.untilVolumeChangeDeviceId != null) {
-                        state.devices?.find { device -> device.id == event.untilVolumeChangeDeviceId }?.volumePercent
-                    } else {
-                        null
+                    previousVolume = event.untilVolumeChangeDeviceId?.let { deviceId ->
+                        state.devices?.find { it.id == deviceId }?.volumePercent
                     }
 
                     state.copy(loadingDevices = true)
@@ -127,10 +125,8 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                     throw ex
                 }
 
-                val expectedChangeDevice = if (event.untilVolumeChangeDeviceId != null) {
-                    devices.find { it.id == event.untilVolumeChangeDeviceId }
-                } else {
-                    null
+                val expectedChangeDevice = event.untilVolumeChangeDeviceId?.let { deviceId ->
+                    devices.find { it.id == deviceId }
                 }
 
                 @Suppress("ComplexCondition")

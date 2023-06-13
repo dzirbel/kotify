@@ -64,10 +64,14 @@ internal class SpotifyArtistsTest {
 
             if (unexpected.isNotEmpty() || missing.isNotEmpty()) {
                 error(
-                    "album mismatch for ${artistProperties.name}:\n" +
-                        "${unexpected.size} expected from response but missing: $unexpected\n" +
-                        "${missing.size} in response but unexpected: $missing" +
-                        "\n\nReceived:\n$albums",
+                    """
+                        album mismatch for ${artistProperties.name}:
+                        ${unexpected.size} expected from response but missing: $unexpected
+                        ${missing.size} in response but unexpected: $missing
+
+                        Received:
+                        $albums
+                    """.trimIndent(),
                 )
             }
         }

@@ -25,7 +25,7 @@ fun setClipboard(contents: String): Boolean {
  * Returns the current contents of the system clipboard, i.e. "paste".
  */
 fun getClipboard(): String {
-    return Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as String
+    return checkNotNull(Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor)) as String
 }
 
 /**

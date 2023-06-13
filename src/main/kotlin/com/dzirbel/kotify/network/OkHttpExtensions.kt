@@ -57,7 +57,14 @@ inline fun <reified T> Response.bodyFromJson(): T {
             Json.decodeFromString<T>(bodyString)
         } catch (ex: SerializationException) {
             // the default message is not very helpful
-            throw SerializationException(message = "Error deserializing ${T::class} from:\n\n$bodyString\n", cause = ex)
+            throw SerializationException(
+                message = """
+                    Error deserializing ${T::class} from:
+
+                    $bodyString
+                """.trimIndent(),
+                cause = ex,
+            )
         }
     } as T
 }

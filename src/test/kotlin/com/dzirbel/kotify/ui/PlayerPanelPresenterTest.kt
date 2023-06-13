@@ -358,11 +358,7 @@ internal class PlayerPanelPresenterTest {
         assertThat(currentPlaybackDeviceId.value).isEqualTo(deviceId)
     }
 
-    private fun verifyOpenState(
-        playback: SpotifyPlayback?,
-        trackPlayback: SpotifyTrackPlayback?,
-        deviceId: String?,
-    ) {
+    private fun verifyOpenState(playback: SpotifyPlayback?, trackPlayback: SpotifyTrackPlayback?, deviceId: String?) {
         val openCalls = buildList {
             add(Spotify.Player.GET_AVAILABLE_DEVICES_PATH)
             add(Spotify.Player.GET_CURRENT_PLAYBACK_PATH)

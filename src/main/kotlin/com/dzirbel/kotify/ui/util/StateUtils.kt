@@ -42,10 +42,7 @@ fun <T> callbackAsState(
 }
 
 @Composable
-fun <T> StateFlow<T>.collectAsStateSwitchable(
-    key: Any?,
-    context: CoroutineContext = Dispatchers.IO,
-): State<T> {
+fun <T> StateFlow<T>.collectAsStateSwitchable(key: Any?, context: CoroutineContext = Dispatchers.IO): State<T> {
     return collectAsStateSwitchable(initial = { value }, key = key, context = context)
 }
 

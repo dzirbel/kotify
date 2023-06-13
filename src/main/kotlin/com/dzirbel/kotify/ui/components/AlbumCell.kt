@@ -96,11 +96,7 @@ fun AlbumCell(
 }
 
 @Composable
-fun SmallAlbumCell(
-    album: Album,
-    isSaved: Boolean?,
-    onToggleSave: (Boolean) -> Unit,
-) {
+fun SmallAlbumCell(album: Album, isSaved: Boolean?, onToggleSave: (Boolean) -> Unit) {
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(Dimens.cornerSize))

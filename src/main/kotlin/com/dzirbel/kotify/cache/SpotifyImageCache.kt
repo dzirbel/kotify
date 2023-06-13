@@ -41,20 +41,6 @@ sealed class ImageCacheEvent {
  * A simple disk cache for images loaded from Spotify's image CDN.
  */
 object SpotifyImageCache {
-    /**
-     * Represents the current state of the image cache.
-     *
-     * Creating a new object with the default values reflects the current state.
-     *
-     * We use a single object for this rather than many [androidx.compose.runtime.MutableState] instances so that
-     * updates only trigger a single recomposition.
-     */
-    data class State(
-        val inMemoryCount: Int = totalCompleted.get(),
-        val diskCount: Int = IMAGES_DIR.list()?.size ?: 0,
-        val totalDiskSize: Int = IMAGES_DIR.listFiles()?.sumOf { it.length().toInt() } ?: 0,
-    )
-
     private const val SPOTIFY_IMAGE_URL_PREFIX = "https://i.scdn.co/image/"
     private val IMAGES_DIR by lazy {
         Application.cacheDir.resolve("images")
@@ -200,4 +186,18 @@ object SpotifyImageCache {
                 image
             }
     }
+
+    /**
+     * Represents the current state of the image cache.
+     *
+     * Creating a new object with the default values reflects the current state.
+     *
+     * We use a single object for this rather than many [androidx.compose.runtime.MutableState] instances so that
+     * updates only trigger a single recomposition.
+     */
+    data class State(
+        val inMemoryCount: Int = totalCompleted.get(),
+        val diskCount: Int = IMAGES_DIR.list()?.size ?: 0,
+        val totalDiskSize: Int = IMAGES_DIR.listFiles()?.sumOf { it.length().toInt() } ?: 0,
+    )
 }

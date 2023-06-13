@@ -21,20 +21,12 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 
 @Composable
-fun StarIcon(
-    filled: Boolean,
-    starSize: Dp = Dimens.iconSmall,
-    contentDescription: String? = null,
-) {
+fun StarIcon(filled: Boolean, starSize: Dp = Dimens.iconSmall, contentDescription: String? = null) {
     StarIcon(filledPercent = if (filled) 1.0 else 0.0, starSize = starSize, contentDescription = contentDescription)
 }
 
 @Composable
-fun StarIcon(
-    filledPercent: Double,
-    starSize: Dp = Dimens.iconSmall,
-    contentDescription: String? = null,
-) {
+fun StarIcon(filledPercent: Double, starSize: Dp = Dimens.iconSmall, contentDescription: String? = null) {
     require(filledPercent in 0.0..1.0)
 
     when (filledPercent) {

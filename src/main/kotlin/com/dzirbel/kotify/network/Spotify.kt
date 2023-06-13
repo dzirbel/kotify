@@ -1443,11 +1443,7 @@ object Spotify {
          *  request body.
          * @param uris A JSON array of the Spotify URIs to add. A maximum of 100 items can be added in one request.
          */
-        suspend fun addItemsToPlaylist(
-            playlistId: String,
-            position: Int? = null,
-            uris: List<String>,
-        ): String {
+        suspend fun addItemsToPlaylist(playlistId: String, position: Int? = null, uris: List<String>): String {
             @Serializable
             data class Body(val position: Int? = null, val uris: List<String>)
 

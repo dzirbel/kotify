@@ -128,10 +128,7 @@ object FixtureModels {
         )
     }
 
-    private fun networkSimplifiedAlbum(
-        id: String = "album",
-        name: String = "Album",
-    ): SimplifiedSpotifyAlbum {
+    private fun networkSimplifiedAlbum(id: String = "album", name: String = "Album"): SimplifiedSpotifyAlbum {
         return SimplifiedSpotifyAlbum(
             id = id,
             name = name,

@@ -147,12 +147,6 @@ abstract class Presenter<ViewModel, Event : Any>(
     class NotFound(message: String = "Not found") : Throwable(message)
 
     /**
-     * Exposes the current state for tests, where the composable [state] cannot be called.
-     */
-    internal val testState: StateOrError<ViewModel>
-        get() = synchronized(this) { stateFlow.value }
-
-    /**
      * A [MutableStateFlow] which exposes the current state (via the [StateOrError] wrapper, possibly wrapping an
      * exception instead). Should only be modified internally, and writes must be synchronized.
      *
@@ -160,6 +154,12 @@ abstract class Presenter<ViewModel, Event : Any>(
      * does not allow writes during a snapshot and so cannot support arbitrary concurrency.
      */
     private val stateFlow = MutableStateFlow<StateOrError<ViewModel>>(State(initialState))
+
+    /**
+     * Exposes the current state for tests, where the composable [state] cannot be called.
+     */
+    internal val testState: StateOrError<ViewModel>
+        get() = synchronized(this) { stateFlow.value }
 
     private val stateCount = AtomicInteger(0)
     private val eventCount = AtomicInteger(0)
