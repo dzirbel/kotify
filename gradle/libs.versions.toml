@@ -12,7 +12,7 @@ kotlinx-serialization = "1.5.1" # https://github.com/Kotlin/kotlinx.serializatio
 ktor = "2.3.1" # https://ktor.io/changelog/
 okhttp = "4.10.0" # https://square.github.io/okhttp
 proguard = "7.3.1" # https://github.com/Guardsquare/proguard
-slf4j = "2.0.6" # http://www.slf4j.org/
+slf4j = "2.0.7" # http://www.slf4j.org/
 sqlite-jdbc = "3.41.0.0" # https://github.com/xerial/sqlite-jdbc
 
 [libraries]
