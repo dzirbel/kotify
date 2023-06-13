@@ -13,7 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.network.oauth.LocalOAuthServer
@@ -72,7 +72,7 @@ fun FlowInProgress(state: MutableState<AuthenticationState>, oauth: OAuth) {
             trailingIcon = {
                 CopyButton(
                     // override text pointer from TextField
-                    modifier = Modifier.pointerHoverIcon(PointerIconDefaults.Hand),
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
                     contents = oauth.authorizationUrl.toString(),
                 )
             },

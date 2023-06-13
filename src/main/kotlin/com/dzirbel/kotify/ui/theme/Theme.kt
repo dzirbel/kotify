@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.ui.theme
 
-import androidx.compose.material.LocalMinimumTouchTargetEnforcement
+import androidx.compose.material.LocalMinimumInteractiveComponentEnforcement
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import com.dzirbel.kotify.Settings
@@ -13,7 +13,7 @@ object Theme {
     fun apply(colors: Colors = Settings.colors, content: @Composable () -> Unit) {
         colors.applyColors {
             Dimens.applyDimens {
-                CompositionLocalProvider(LocalMinimumTouchTargetEnforcement provides false) {
+                CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
                     LocalColors.current.withSurface(increment = 0, content = content)
                 }
             }

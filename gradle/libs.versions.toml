@@ -1,13 +1,13 @@
 [versions]
 assertk = "0.26.1" # https://github.com/willowtreeapps/assertk
-compose = "1.3.0" # https://github.com/jetbrains/compose-jb
+compose = "1.4.0" # https://github.com/jetbrains/compose-jb
 coroutines = "1.6.4" # https://github.com/Kotlin/kotlinx.coroutines
 detekt = "1.22.0" # https://github.com/detekt/detekt
 exposed = "0.41.1" # https://github.com/JetBrains/Exposed
 jacoco = "0.8.8" # https://github.com/jacoco/jacoco
 junit4 = "4.13.2" # https://junit.org/junit4/
 junit5 = "5.9.2" # https://junit.org/junit5/
-kotlin = "1.8.0" # https://kotlinlang.org/releases.html
+kotlin = "1.8.20" # https://kotlinlang.org/releases.html
 kotlinx-serialization = "1.5.0" # https://github.com/Kotlin/kotlinx.serialization
 ktor = "2.2.4" # https://ktor.io/changelog/
 okhttp = "4.10.0" # https://square.github.io/okhttp

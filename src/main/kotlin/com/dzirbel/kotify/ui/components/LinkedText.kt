@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.PointerIconDefaults
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
@@ -116,7 +116,7 @@ fun LinkedText(
             hoveredOffset.value = null
             hoveringLink.value = false
         }
-        .pointerHoverIcon(if (hoveringLink.value) PointerIconDefaults.Hand else PointerIconDefaults.Default)
+        .pointerHoverIcon(if (hoveringLink.value) PointerIcon.Hand else PointerIcon.Default)
 
     val textColor = style.color.takeOrElse {
         LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
