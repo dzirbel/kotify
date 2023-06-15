@@ -21,7 +21,7 @@ internal class SpotifyUsersProfileTest {
         assertThat(user.email).isEqualTo("dominiczirbel+test@gmail.com")
         assertThat(user.id).isEqualTo("34m1o83qloqkyzdt4z3qbveoy")
         assertThat(user.country).isEqualTo("US")
-        assertThat(user.product).isEqualTo("open")
+        assertThat(user.product).isEqualTo("free")
         assertThat(user.explicitContent.filterEnabled).isFalse()
         assertThat(user.explicitContent.filterLocked).isFalse()
     }

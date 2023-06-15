@@ -1,4 +1,4 @@
-name: Integration Test
+name: Integration Tests
 
 on:
   schedule:
@@ -35,7 +35,8 @@ jobs:
         env:
           B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
 
-      - run: ./gradlew --stacktrace testIntegration jacocoTestReportIntegration
+      - name: Run tests
+        run: ./gradlew --stacktrace testIntegration jacocoTestReportIntegration
 
       - name: Upload test results to codecov
         run: |

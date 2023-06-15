@@ -47,12 +47,14 @@ class SpotifyLibraryTest {
         assertThat(runBlocking { Spotify.Library.checkAlbums(Fixtures.unsavedAlbums) })
             .containsExactlyElementsOf(Fixtures.unsavedAlbums.map { false })
 
-        runBlocking { Spotify.Library.saveAlbums(Fixtures.unsavedAlbums) }
+        try {
+            runBlocking { Spotify.Library.saveAlbums(Fixtures.unsavedAlbums) }
 
-        assertThat(runBlocking { Spotify.Library.checkAlbums(Fixtures.unsavedAlbums) })
-            .containsExactlyElementsOf(Fixtures.unsavedAlbums.map { true })
-
-        runBlocking { Spotify.Library.removeAlbums(Fixtures.unsavedAlbums) }
+            assertThat(runBlocking { Spotify.Library.checkAlbums(Fixtures.unsavedAlbums) })
+                .containsExactlyElementsOf(Fixtures.unsavedAlbums.map { true })
+        } finally {
+            runBlocking { Spotify.Library.removeAlbums(Fixtures.unsavedAlbums) }
+        }
 
         assertThat(runBlocking { Spotify.Library.checkAlbums(Fixtures.unsavedAlbums) })
             .containsExactlyElementsOf(Fixtures.unsavedAlbums.map { false })
@@ -88,12 +90,14 @@ class SpotifyLibraryTest {
         assertThat(runBlocking { Spotify.Library.checkTracks(Fixtures.unsavedTracks) })
             .containsExactlyElementsOf(Fixtures.unsavedTracks.map { false })
 
-        runBlocking { Spotify.Library.saveTracks(Fixtures.unsavedTracks) }
+        try {
+            runBlocking { Spotify.Library.saveTracks(Fixtures.unsavedTracks) }
 
-        assertThat(runBlocking { Spotify.Library.checkTracks(Fixtures.unsavedTracks) })
-            .containsExactlyElementsOf(Fixtures.unsavedTracks.map { true })
-
-        runBlocking { Spotify.Library.removeTracks(Fixtures.unsavedTracks) }
+            assertThat(runBlocking { Spotify.Library.checkTracks(Fixtures.unsavedTracks) })
+                .containsExactlyElementsOf(Fixtures.unsavedTracks.map { true })
+        } finally {
+            runBlocking { Spotify.Library.removeTracks(Fixtures.unsavedTracks) }
+        }
 
         assertThat(runBlocking { Spotify.Library.checkTracks(Fixtures.unsavedTracks) })
             .containsExactlyElementsOf(Fixtures.unsavedTracks.map { false })
@@ -125,14 +129,16 @@ class SpotifyLibraryTest {
             each { it.isFalse() }
         }
 
-        runBlocking { Spotify.Library.saveShows(unsaved) }
+        try {
+            runBlocking { Spotify.Library.saveShows(unsaved) }
 
-        assertThat(runBlocking { Spotify.Library.checkShows(unsaved) }).all {
-            hasSameSizeAs(unsaved)
-            each { it.isTrue() }
+            assertThat(runBlocking { Spotify.Library.checkShows(unsaved) }).all {
+                hasSameSizeAs(unsaved)
+                each { it.isTrue() }
+            }
+        } finally {
+            runBlocking { Spotify.Library.removeShows(unsaved) }
         }
-
-        runBlocking { Spotify.Library.removeShows(unsaved) }
 
         assertThat(runBlocking { Spotify.Library.checkShows(unsaved) }).all {
             hasSameSizeAs(unsaved)

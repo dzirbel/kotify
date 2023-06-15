@@ -214,93 +214,52 @@ object Fixtures {
 
     val artists = listOf(
         ArtistProperties(
-            id = "4Lm0pUvmisUHMdoky5ch2I",
-            name = "Apocalyptica",
-            genres = listOf("alternative metal", "cello"),
-            albums = listOf(
-                AlbumProperties("1H3J2vxFHf0WxYUa9iklzu", "Cell-0"),
-                AlbumProperties("7FkhDs6IRwacn029AM7NQu", "Plays Metallica by Four Cellos - a Live Performance"),
-                AlbumProperties("4TwdbWtWDxgeLykyt4ExRr", "Plays Metallica by Four Cellos (Remastered)"),
-                AlbumProperties("3SAl71qdd63DXgbhk5U9ML", "Shadowmaker - Commentary"),
-                AlbumProperties("34RyPrb9qW7uSCLGpeLrBQ", "Shadowmaker"),
-                AlbumProperties("1FYyFV2BXQq34Juzb9JYYS", "Wagner Reloaded: Live in Leipzig"),
-                AlbumProperties("728y0VvMcIuamGmKhDpa6X", "7th Symphony"),
-                AlbumProperties("1rcVwAd9FXK9ONouJVeRSF", "Worlds Collide"),
-                AlbumProperties("4hdqEMOKD7aG2izjUOmk20", "Amplified - A Decade of Reinventing the Cello"),
-                AlbumProperties("3kVg4RGYRa4LgPICgQ621o", "Apocalyptica"),
-                AlbumProperties("2yQpD74IRHxQ7WQfucOGLM", "Reflections"),
-                AlbumProperties("2xrgIlEh2iWaxDrwJOh5Wp", "Cult"),
-                AlbumProperties("6leqa6QQESn76w64IdN9yQ", "Inquisition Symphony"),
-                AlbumProperties("1a41bF4VOFX3rMt5BjL6X1", "Venomous Moon"),
-                AlbumProperties("06y3HY4YTWEQxMPgCK6oEy", "White Room (feat. Jacoby Shaddix)"),
-                AlbumProperties("2ngB7G5SEpiKmxS1cR4gNO", "Ei Vaihtoehtoo (feat. Paleface)"),
-                AlbumProperties("3W8ep9kCGVEf5TLFtRRB2T", "Talk To Me (feat. Lzzy Hale)"),
-                AlbumProperties("6dksdceqBM8roInjffIaZw", "Live Or Die (feat. Joakim Brodén)"),
-                AlbumProperties("3slBXddUn27FSk2rOB1Uy1", "Angels Calling"),
-                AlbumProperties("6nqjuNc9S9Kt94YrPNGgVv", "En Route To Mayhem"),
-                AlbumProperties("6Kl1sPJPUrdL9Z8UQ3NPS7", "Rise"),
-                AlbumProperties("7CV5jE3EVEIDg3fjOgULx9", "Ashes Of The Modern World"),
-                AlbumProperties("2bVcRvPNpHB0r6VuHi09K9", "Aquarela (Original Motion Picture Soundtrack)"),
-                AlbumProperties("1OHQIfJtUV6alMdcwVq61U", "Fields of Verdun"),
-                AlbumProperties("52S2SkEx16UR5S3PWcL5L2", "Me melkein kuoltiin"),
-                AlbumProperties("6AkHNu3TKUWJd76TIi4xjE", "Enter Sandman"),
-                AlbumProperties("0D0lCK4s2z2LNE9vpnwRkz", "Nothing Else Matters"),
-                AlbumProperties("13BtcppTiSeizmRSwb72Eb", "The Symphony of Extremes"),
-                AlbumProperties("42tcdx3xxBlvc8jtbZSf6z", "SIN IN JUSTICE"),
-                AlbumProperties("5nnP9BZioUrD7rfQTiNTvd", "Slow Burn"),
-                AlbumProperties("3qKoIXG5DcdGAXK4Z1cEX3", "Till Death Do Us Part"),
-                AlbumProperties("62yU9W5w6RKG8GNRSqLRSo", "Cold Blood"),
-                AlbumProperties("3LOkBwbJvPgHif5XiEWLQf", "Shadowmaker"),
-                AlbumProperties("4eCr10DErj4bSSzDH2SmrR", "Psalm (Performed by Perttu Kivilaakso)"),
-                AlbumProperties("6bi1C7G6EICqx7dpn1fzxO", "End of Me"),
-                AlbumProperties("27OFr5uKH6sInUavkkVMmH", "I Don't Care"),
-                AlbumProperties("1gOOgd8SeGiNZWJtzTZNfA", "S.O.S. (Anything but Love)"),
-                AlbumProperties("0J5JZft7fQGAqGHG4H9arD", "I'm Not Jesus"),
-                AlbumProperties("1whgSNqpUgqhFid5LLeV9l", "Oh Holy Night"),
-                AlbumProperties("7AamTlpklHzHo8Ki6mhQfK", "Oh Holy Night"),
-                AlbumProperties("4Ab1f4ThdvTJZl1xrwavtk", "Sounds of Heaven"),
-                AlbumProperties("4J53FaRZIbr95I6TzZw4Xr", "It Doesn't Matter Two (Lockdown Version)"),
-                AlbumProperties("69fr2Pcl9qaDIHPG2OovIS", "Funeral Songs"),
-                AlbumProperties("3P39JR7Kqv8z6CnW5C53Ux", "Remixes"),
-                AlbumProperties("7Jr3AHWcPDUAQx3gGFO4lD", "No Absolution"),
-                AlbumProperties("1H5k5QgsFjnMPzlXfWq8QH", "Death Stranding (Songs from the Video Game)"),
-                AlbumProperties("1ZFgVY4Op7A4oSAx2EALVj", "Into Eternity"),
-                AlbumProperties("3XdOaVUr2YMaIFw8VWAik4", "Live At Wacken 2017: 28 Years Louder Than Hell"),
-                AlbumProperties("0zoX0Nu3Fqy5dQEyGYJFF0", "Angry Birds Seasons (Original Game Soundtrack)"),
-                AlbumProperties("7hTh0cY5Gk4IZko0tdAlrx", "Vain elämää - kausi 7 toinen kattaus"),
-                AlbumProperties("3nXB9yTfBqkMlRQrpJygX2", "Kelpaat kelle vaan (Vain elämää kausi 7) [Apocalyptica]"),
-                AlbumProperties("5DNOlPWFn0IxTFd3keOMPf", "MTV Unplugged: VAMPS"),
-                AlbumProperties("2zA5SUEocM3Jeyp6PF102h", "Moments"),
-                AlbumProperties("6lgRorpnVc7QMPx5iXtqr6", "Moments Extended Mixes"),
-                AlbumProperties("2jHbUdX8o1SutlRZDBMmV4", "Few Against Many"),
-                AlbumProperties("1ZQ3n54DZU7aFmDbtbyLcO", "Can’t Stand The Silence"),
-                AlbumProperties("6EJQZGtgCftGiFSKHg5Usl", "Избранное: музыка из кинофильмов и сериалов"),
-                AlbumProperties("5P54iC1TsPsEUtsRj7AqeB", "Albüm"),
-                AlbumProperties(
-                    "7jWLdyYqBTqXH1PAFVL7vN",
-                    "The Midnight Meat Train (Original Motion Picture Soundtrack)",
-                ),
-                AlbumProperties("4uNzDULQ9RAy0nxGaPbCDn", "The Poison (Deluxe Version)"),
-                AlbumProperties("4gHIcZWRHEWY0TyPrS8r01", "Delikatessen"),
-                AlbumProperties("7zU9hmH9CKQ9Yf5SruqOLM", "The Poison"),
-                AlbumProperties("47IoCLkvmHFxxq9NntxyIi", "Бой с тенью (Оригинальный саундтрек к фильму)"),
-                AlbumProperties("0uLrUJVzrbHf6vcg58ooY1", "Angelzoom"),
-                AlbumProperties("19Gkms8Mb4wmoqm1a5VYys", "Metal Rock Cavalcade I"),
-                AlbumProperties("3PH0jVnduEPrwz0OOThXaq", "Die Schlinge"),
-                AlbumProperties("1GmDsPP1uC9vUBC9aQeVzf", "I'll Get Through It"),
-                AlbumProperties("0Vp1T9hEne9rQ71D7Jp72n", "Peltirumpu (Laulu Rakkaudelle kausi 2)"),
-                AlbumProperties("4drZZN0HTkJzcdlPmmQyqG", "EXPLOSIONS"),
-            )
-                // ignore albumType since there are so many of these
-                .map { it.copy(albumType = null) },
-        ),
-
-        ArtistProperties(
             id = "7IxOJnsT8vXhTTzb6nlPOO",
             name = "Trees of Eternity",
             genres = listOf("atmospheric doom", "doom metal", "gaian doom", "gothic metal", "swedish doom metal"),
             albums = listOf(
                 AlbumProperties("6sFhi9TivgwN6XzcEYcfAy", "Hour of the Nightingale", totalTracks = 10),
+            ),
+        ),
+
+        ArtistProperties(
+            id = "7lY8eBGG8mYelACRSlrpVr",
+            name = "The Luna Sequence",
+            genres = listOf("future rock"),
+            albums = listOf(
+                AlbumProperties("2xP1saNrb2En9IlVLycThQ", "Fearful Shepherds Hunt Their Sheep"),
+                AlbumProperties("4aZJpsDmdhqdcoItwz13a5", "The Day the Curse Grew Stronger"),
+                AlbumProperties("26CHBY1QH7PrZBXC2SBxaL", "This is Bloodlust"),
+                AlbumProperties("3k883vMgteA5mJ6CFUAYL0", "They Follow You Home"),
+                AlbumProperties(
+                    "7qoxxvAcDhkYZ606Tx1bkx",
+                    "Darkness Leaves Nowhere to Go",
+                    albumType = SpotifyAlbum.Type.SINGLE,
+                ),
+                AlbumProperties("4eFzoRUFNILC8rOtCcYGaS", "Persona", albumType = SpotifyAlbum.Type.SINGLE),
+                AlbumProperties("2iXHYo2oHrSET4ynAAODQi", "After Sunfall", albumType = SpotifyAlbum.Type.SINGLE),
+                AlbumProperties("05rKXWgCCArwiIgqRgdj6h", "Underneath", albumType = SpotifyAlbum.Type.SINGLE),
+                AlbumProperties(
+                    "7uxbvtafrdoShwwah2OKLX",
+                    "Erasus (FiXT Remix Compilation)",
+                    albumType = SpotifyAlbum.Type.COMPILATION,
+                ),
+                AlbumProperties(
+                    "3JjPyBKbUXK20iJGnp7vgc",
+                    "Wish Upon A Blackstar (Remix Contest Compilation)",
+                    albumType = SpotifyAlbum.Type.COMPILATION,
+                ),
+                AlbumProperties("4TIsfEUceYAfABg01yq0jV", "Around The World", albumType = SpotifyAlbum.Type.SINGLE),
+                AlbumProperties(
+                    "6w1FseZ89KHZY5x8mXH6kJ",
+                    "Debut Remixes Vol. 02",
+                    albumType = SpotifyAlbum.Type.COMPILATION,
+                ),
+                AlbumProperties(
+                    "2uXrzdhd7MlzKndZd2DRxk",
+                    "Worldless (The FiXT Remixes)",
+                    albumType = SpotifyAlbum.Type.COMPILATION,
+                ),
             ),
         ),
 
@@ -340,12 +299,6 @@ object Fixtures {
                     albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
-                    id = "5nU3OZkQWBJnz1SijLLepR",
-                    name = "Into the Fire (Acoustic)",
-                    totalTracks = 1,
-                    albumType = SpotifyAlbum.Type.SINGLE,
-                ),
-                AlbumProperties(
                     id = "3dXyenZqQJOktXiLRBXU55",
                     name = "Home",
                     totalTracks = 2,
@@ -370,12 +323,6 @@ object Fixtures {
                     albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
                 AlbumProperties(
-                    id = "0fvoWtxY2mO6zgzCm9cqrj",
-                    name = "Bones (Original Television Soundtrack)",
-                    totalTracks = 13,
-                    albumType = SpotifyAlbum.Type.COMPILATION,
-                ),
-                AlbumProperties(
                     id = "3ZCqORuVBN89Do4oYVDVnt",
                     name = "Chill Rock",
                     totalTracks = 30,
@@ -390,15 +337,15 @@ object Fixtures {
             id = "6XpUvPS3Y3iGIyguYrXUck",
             name = "#281 — Western Culture and Its Discontents",
             description = """
-                In this episode of the podcast, Sam Harris speaks with Douglas Murray about his new book, “The War on
-                the West.” They discuss the problem of hyper partisanship on the Left and Right, the primacy of culture,
-                Hunter Biden’s laptop, the de-platforming of Trump and Alex Jones, the new religion of anti-racism, the
-                problem of inequality, the 1619 Project, history of slavery, moral panics, the strange case of Michel
-                Foucault, and other topics. SUBSCRIBE to listen to the rest of this episode and gain access to all
-                full-length episodes of the podcast at samharris.org/subscribe.   Learning how to train your mind is
-                the single greatest investment you can make in life. That’s why Sam Harris created the Waking Up app.
-                From rational mindfulness practice to lessons on some of life’s most important topics, join Sam as he
-                demystifies the practice of meditation and explores the theory behind it."""
+                Sam Harris speaks with Douglas Murray about his new book, “The War on the West.” They discuss the
+                problem of hyper partisanship on the Left and Right, the primacy of culture, Hunter Biden’s laptop,
+                the de-platforming of Trump and Alex Jones, the new religion of anti-racism, the problem of inequality,
+                the 1619 Project, history of slavery, moral panics, the strange case of Michel Foucault, and other
+                topics. If the Making Sense podcast logo in your player is BLACK, you can SUBSCRIBE to gain access to
+                all full-length episodes at samharris.org/subscribe.   Learning how to train your mind is the single
+                greatest investment you can make in life. That’s why Sam Harris created the Waking Up app. From rational
+                mindfulness practice to lessons on some of life’s most important topics, join Sam as he demystifies the
+                practice of meditation and explores the theory behind it."""
                 .toSingleLine(),
             releaseDate = "2022-05-02",
             releaseDatePrecision = "day",
@@ -454,10 +401,10 @@ object Fixtures {
             name = "StarTalk Radio",
             saved = false,
             description = """
-                Science, pop culture and comedy collide on StarTalk Radio! Astrophysicist and Hayden Planetarium
-                director Neil deGrasse Tyson, his comic co-hosts, guest celebrities and scientists discuss astronomy,
-                physics, and everything else about life in the universe. Keep Looking Up! New episodes premiere Monday
-                nights at 7pm ET.
+                Science, pop culture, and comedy collide on StarTalk Radio! Neil deGrasse Tyson, astrophysicist and
+                Director of New York's Hayden Planetarium, and his comic co-hosts, guest celebrities, and scientific
+                experts explore astronomy, physics, and everything else there is to know about life in the universe. New
+                episodes premiere Tuesdays. Keep Looking Up!
                 """
                 .toSingleLine(),
         ),
@@ -469,10 +416,11 @@ object Fixtures {
             description = """
                 NPR's Up First is the news you need to start your day. The three biggest stories of the day, with
                 reporting and analysis from NPR News — in 10 minutes. Available weekdays by 6 a.m. ET, with hosts Leila
-                Fadel, Steve Inskeep, Rachel Martin and A Martinez. Also available on Saturdays by 8 a.m. ET, with
+                Fadel, Steve Inskeep, Michel Martin and A Martinez. Also available on Saturdays by 8 a.m. ET, with
                 Ayesha Rascoe and Scott Simon. On Sundays, hear a longer exploration behind the headlines with Rachel
                 Martin, available by 8 a.m. ET. Subscribe and listen, then support your local NPR station at
-                donate.npr.org.
+                donate.npr.org.Support NPR's reporting by subscribing to Up First+ and unlock sponsor-free listening.
+                Learn more at plus.npr.org/upfirst
                 """
                 .toSingleLine(),
         ),

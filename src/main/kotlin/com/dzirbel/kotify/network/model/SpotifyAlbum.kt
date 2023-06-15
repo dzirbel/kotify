@@ -41,6 +41,8 @@ interface SpotifyAlbum : SpotifyObject {
     /** The cover art for the album in various sizes, widest first. */
     val images: List<SpotifyImage>
 
+    val isPlayable: Boolean?
+
     /**
      * The date the album was first released, for example 1981. Depending on the precision, it might be shown as
      * 1981-12 or 1981-12-15.
@@ -84,6 +86,7 @@ data class SimplifiedSpotifyAlbum(
     @SerialName("external_urls") override val externalUrls: Map<String, String>,
     override val href: String? = null,
     override val id: String? = null,
+    @SerialName("is_playable") override val isPlayable: Boolean? = null,
     override val images: List<SpotifyImage>,
     override val name: String,
     @SerialName("release_date") override val releaseDate: String? = null,
@@ -112,6 +115,7 @@ data class FullSpotifyAlbum(
     @SerialName("external_urls") override val externalUrls: Map<String, String>,
     override val href: String,
     override val id: String,
+    @SerialName("is_playable") override val isPlayable: Boolean? = null,
     override val images: List<SpotifyImage>,
     override val name: String,
     @SerialName("release_date") override val releaseDate: String,
