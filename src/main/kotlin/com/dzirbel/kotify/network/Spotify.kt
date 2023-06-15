@@ -24,6 +24,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlayHistoryObject
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
+import com.dzirbel.kotify.network.model.SpotifyQueue
 import com.dzirbel.kotify.network.model.SpotifyRecommendations
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
 import com.dzirbel.kotify.network.model.SpotifySavedShow
@@ -124,6 +125,9 @@ object Spotify {
     private data class RecommendationGenresModel(val genres: List<String>)
 
     @Serializable
+    private data class AvailableMarketsModel(val markets: List<String>)
+
+    @Serializable
     private data class ShowsModel(val shows: List<SimplifiedSpotifyShow>)
 
     @Serializable
@@ -220,30 +224,50 @@ object Spotify {
 
     /**
      * Endpoints for retrieving information about one or more albums from the Spotify catalog.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-albums
      */
     object Albums {
         /**
          * Get Spotify catalog information for a single album.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-an-album
+         * https://developer.spotify.com/documentation/web-api/reference/get-an-album
          *
-         * @param id The Spotify ID for the album.
-         * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
-         *  if you want to apply Track Relinking.
+         * @param id The Spotify ID of the album.
+         * @param market An ISO 3166-1 alpha-2 country code. If a country code is specified, only content that is
+         *  available in that market will be returned. If a valid user access token is specified in the request header,
+         *  the country associated with the user account will take priority over this parameter. Note: If neither market
+         *  or user country are provided, the content is considered unavailable for the client. Users can view the
+         *  country that is associated with their account in the account settings.
          */
         suspend fun getAlbum(id: String, market: String? = null): FullSpotifyAlbum {
             return get("albums/$id", mapOf("market" to market))
         }
 
         /**
+         * Get Spotify catalog information for multiple albums identified by their Spotify IDs.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/get-multiple-albums
+         *
+         * @param ids A comma-separated list of the Spotify IDs for the albums. Maximum: 20 IDs.
+         * @param market An ISO 3166-1 alpha-2 country code. If a country code is specified, only content that is
+         *  available in that market will be returned. If a valid user access token is specified in the request header,
+         *  the country associated with the user account will take priority over this parameter. Note: If neither market
+         *  or user country are provided, the content is considered unavailable for the client. Users can view the
+         *  country that is associated with their account in the account settings.
+         */
+        suspend fun getAlbums(ids: List<String>, market: String? = null): List<FullSpotifyAlbum> {
+            return get<AlbumsModel>(
+                "albums",
+                mapOf("ids" to ids.joinToString(separator = ","), "market" to market),
+            ).albums
+        }
+
+        /**
          * Get Spotify catalog information about an album’s tracks. Optional parameters can be used to limit the number
          * of tracks returned.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-an-albums-tracks
+         * https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks
          *
-         * @param id The Spotify ID for the album.
+         * @param id The Spotify ID of the album.
          * @param limit Optional. The maximum number of tracks to return. Default: 20. Minimum: 1. Maximum: 50.
          * @param offset Optional. The index of the first track to return. Default: 0 (the first object). Use with limit
          *  to get the next set of tracks.
@@ -261,43 +285,25 @@ object Spotify {
                 mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "market" to market),
             )
         }
-
-        /**
-         * Get Spotify catalog information for multiple albums identified by their Spotify IDs.
-         *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-multiple-albums
-         *
-         * @param ids Required. A comma-separated list of the Spotify IDs for the albums. Maximum: 20 IDs.
-         * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
-         *  if you want to apply Track Relinking.
-         */
-        suspend fun getAlbums(ids: List<String>, market: String? = null): List<FullSpotifyAlbum> {
-            return get<AlbumsModel>(
-                "albums",
-                mapOf("ids" to ids.joinToString(separator = ","), "market" to market),
-            ).albums
-        }
     }
 
     /**
      * Endpoints for retrieving information about one or more artists from the Spotify catalog.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-artists
      */
     object Artists {
         /**
          * Get Spotify catalog information for a single artist identified by their unique Spotify ID.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-an-artist
+         * https://developer.spotify.com/documentation/web-api/reference/get-an-artist
          *
-         * @param id The Spotify ID for the artist.
+         * @param id The Spotify ID of the artist.
          */
         suspend fun getArtist(id: String): FullSpotifyArtist = get("artists/$id")
 
         /**
          * Get Spotify catalog information for several artists based on their Spotify IDs.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-multiple-artists
+         * https://developer.spotify.com/documentation/web-api/reference/get-multiple-artists
          *
          * @param ids A comma-separated list of the Spotify IDs for the artists. Maximum: 50 IDs.
          */
@@ -306,31 +312,26 @@ object Spotify {
         }
 
         /**
-         * Get Spotify catalog information about an artist’s albums.
+         * Get Spotify catalog information about an artist's albums.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-an-artists-albums
+         * https://developer.spotify.com/documentation/web-api/reference/get-an-artists-albums
          *
-         * @param id The Spotify ID for the artist.
-         * @param includeGroups Optional. A comma-separated list of keywords that will be used to filter the response.
-         *  If not supplied, all album types will be returned. Valid values are:
-         *  - album
-         *  - single
-         *  - appears_on
-         *  - compilation
-         *  For example: include_groups=album,single.
-         * @param country Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Supply this parameter
-         *  to limit the response to one particular geographical market. For example, for albums available in Sweden:
-         *  country=SE. If not given, results will be returned for all countries and you are likely to get duplicate
-         *  results per album, one for each country in which the album is available!
-         * @param limit The number of album objects to return. Default: 20. Minimum: 1. Maximum: 50. For example:
-         *  limit=2
-         * @Param offset The index of the first album to return. Default: 0 (i.e., the first album). Use with limit to
-         *  get the next set of albums.
+         * @param id The Spotify ID of the artist.
+         * @param includeGroups A comma-separated list of keywords that will be used to filter the response. If not
+         *  supplied, all album types will be returned.
+         * @param market An ISO 3166-1 alpha-2 country code. If a country code is specified, only content that is
+         *  available in that market will be returned. If a valid user access token is specified in the request header,
+         *  the country associated with the user account will take priority over this parameter. Note: If neither market
+         *  or user country are provided, the content is considered unavailable for the client. Users can view the
+         *  country that is associated with their account in the account settings.
+         * @param limit The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @Param offset The index of the first item to return. Default: 0 (the first item). Use with limit to get the
+         *  next set of items.
          */
         suspend fun getArtistAlbums(
             id: String,
             includeGroups: List<SpotifyAlbum.Type>? = null,
-            country: String? = null,
+            market: String? = null,
             limit: Int? = null,
             offset: Int? = null,
         ): Paging<SimplifiedSpotifyAlbum> {
@@ -338,7 +339,7 @@ object Spotify {
                 "artists/$id/albums",
                 mapOf(
                     "include_groups" to includeGroups?.joinToString(separator = ",") { it.name.lowercase(Locale.US) },
-                    "country" to country,
+                    "market" to market,
                     "limit" to limit?.toString(),
                     "offset" to offset?.toString(),
                 ),
@@ -346,24 +347,28 @@ object Spotify {
         }
 
         /**
-         * Get Spotify catalog information about an artist’s top tracks by country.
+         * Get Spotify catalog information about an artist's top tracks by country.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-an-artists-top-tracks
+         * https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
          *
-         * @param id The Spotify ID for the artist
-         * @param country Required. An ISO 3166-1 alpha-2 country code or the string from_token.
+         * @param id The Spotify ID of the artist.
+         * @param market An ISO 3166-1 alpha-2 country code. If a country code is specified, only content that is
+         *  available in that market will be returned. If a valid user access token is specified in the request header,
+         *  the country associated with the user account will take priority over this parameter. Note: If neither market
+         *  or user country are provided, the content is considered unavailable for the client. Users can view the
+         *  country that is associated with their account in the account settings.
          */
-        suspend fun getArtistTopTracks(id: String, country: String): List<FullSpotifyTrack> {
-            return get<TracksModel>("artists/$id/top-tracks", mapOf("country" to country)).tracks
+        suspend fun getArtistTopTracks(id: String, market: String): List<FullSpotifyTrack> {
+            return get<TracksModel>("artists/$id/top-tracks", mapOf("market" to market)).tracks
         }
 
         /**
          * Get Spotify catalog information about artists similar to a given artist. Similarity is based on analysis of
-         * the Spotify community’s listening history.
+         * the Spotify community's listening history.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-an-artists-related-artists
+         * https://developer.spotify.com/documentation/web-api/reference/get-an-artists-related-artists
          *
-         * @param id The Spotify ID for the artist
+         * @param id The Spotify ID of the artist.
          */
         suspend fun getArtistRelatedArtists(id: String): List<FullSpotifyArtist> {
             return get<ArtistsModel>("artists/$id/related-artists").artists
@@ -372,21 +377,19 @@ object Spotify {
 
     /**
      * Endpoints for getting playlists and new album releases featured on Spotify’s Browse tab.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-browse
      */
     object Browse {
         /**
-         * Get a single category used to tag items in Spotify (on, for example, the Spotify player’s "Browse" tab).
+         * Get a single category used to tag items in Spotify (on, for example, the Spotify player’s “Browse” tab).
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-a-category
+         * https://developer.spotify.com/documentation/web-api/reference/get-a-category
          *
          * @param categoryId The Spotify category ID for the category.
-         * @param country Optional. A country: an ISO 3166-1 alpha-2 country code. Provide this parameter to ensure that
-         *  the category exists for a particular country.
-         * @param locale Optional. The desired language, consisting of an ISO 639-1 language code and an ISO 3166-1
-         *  alpha-2 country code, joined by an underscore. For example: es_MX, meaning "Spanish (Mexico)". Provide this
-         *  parameter if you want the category strings returned in a particular language. Note that, if locale is not
+         * @param country A country: an ISO 3166-1 alpha-2 country code. Provide this parameter to ensure that the
+         *  category exists for a particular country.
+         * @param locale The desired language, consisting of an ISO 639-1 language code and an ISO 3166-1 alpha-2
+         *  country code, joined by an underscore. For example: es_MX, meaning "Spanish (Mexico)". Provide this
+         *  parameter if you want the category strings returned in a particular language. Note: if locale is not
          *  supplied, or if the specified language is not available, the category strings returned will be in the
          *  Spotify default language (American English).
          */
@@ -395,9 +398,45 @@ object Spotify {
         }
 
         /**
+         * Get a list of categories used to tag items in Spotify (on, for example, the Spotify player’s “Browse” tab).
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/get-categories
+         *
+         * @param country A country: an ISO 3166-1 alpha-2 country code. Provide this parameter if you want to narrow
+         *  the list of returned categories to those relevant to a particular country. If omitted, the returned items
+         *  will be globally relevant.
+         * @param locale The desired language, consisting of an ISO 639-1 language code and an ISO 3166-1 alpha-2
+         *  country code, joined by an underscore. For example: es_MX, meaning "Spanish (Mexico)". Provide this
+         *  parameter if you want the category metadata returned in a particular language. Note: if locale is not
+         *  supplied, or if the specified language is not available, all strings will be returned in the Spotify default
+         *  language (American English). The locale parameter, combined with the country parameter, may give odd results
+         *  if not carefully matched. For example country=SE&locale=de_DE will return a list of categories relevant to
+         *  Sweden but as German language strings.
+         * @param limit The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset The index of the first item to return. Default: 0 (the first item). Use with limit to get the
+         *  next set of items.
+         */
+        suspend fun getCategories(
+            country: String? = null,
+            locale: String? = null,
+            limit: Int? = null,
+            offset: Int? = null,
+        ): Paging<SpotifyCategory> {
+            return get<CategoriesModel>(
+                "browse/categories",
+                mapOf(
+                    "country" to country,
+                    "locale" to locale,
+                    "limit" to limit?.toString(),
+                    "offset" to offset?.toString(),
+                ),
+            ).categories
+        }
+
+        /**
          * Get a list of Spotify playlists tagged with a particular category.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-a-categories-playlists
+         * https://developer.spotify.com/documentation/web-api/reference/get-a-categories-playlists
          *
          * @param categoryId The Spotify category ID for the category.
          * @param country Optional. A country: an ISO 3166-1 alpha-2 country code.
@@ -418,45 +457,9 @@ object Spotify {
         }
 
         /**
-         * Get a list of categories used to tag items in Spotify (on, for example, the Spotify player’s “Browse” tab).
-         *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-categories
-         *
-         * @param country Optional. A country: an ISO 3166-1 alpha-2 country code. Provide this parameter if you want to
-         *  narrow the list of returned categories to those relevant to a particular country. If omitted, the returned
-         *  items will be globally relevant.
-         * @param locale Optional. The desired language, consisting of an ISO 639-1 language code and an ISO 3166-1
-         *  alpha-2 country code, joined by an underscore. For example: es_MX, meaning “Spanish (Mexico)”. Provide this
-         *  parameter if you want the category metadata returned in a particular language. Note that, if locale is not
-         *  supplied, or if the specified language is not available, all strings will be returned in the Spotify default
-         *  language (American English). The locale parameter, combined with the country parameter, may give odd results
-         *  if not carefully matched. For example country=SE&locale=de_DE will return a list of categories relevant to
-         *  Sweden but as German language strings.
-         * @param limit Optional. The maximum number of categories to return. Default: 20. Minimum: 1. Maximum: 50.
-         * @param offset Optional. The index of the first item to return. Default: 0 (the first object). Use with limit
-         *  to get the next set of categories.
-         */
-        suspend fun getCategories(
-            country: String? = null,
-            locale: String? = null,
-            limit: Int? = null,
-            offset: Int? = null,
-        ): Paging<SpotifyCategory> {
-            return get<CategoriesModel>(
-                "browse/categories",
-                mapOf(
-                    "country" to country,
-                    "locale" to locale,
-                    "limit" to limit?.toString(),
-                    "offset" to offset?.toString(),
-                ),
-            ).categories
-        }
-
-        /**
          * Get a list of Spotify featured playlists (shown, for example, on a Spotify player's 'Browse' tab).
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-featured-playlists
+         * https://developer.spotify.com/documentation/web-api/reference/get-featured-playlists
          *
          * @param locale Optional. The desired language, consisting of a lowercase ISO 639-1 language code and an
          *  uppercase ISO 3166-1 alpha-2 country code, joined by an underscore. For example: es_MX, meaning "Spanish
@@ -497,17 +500,17 @@ object Spotify {
         }
 
         /**
-         * Get a list of new album releases featured in Spotify (shown, for example, on a Spotify player's "Browse"
+         * Get a list of new album releases featured in Spotify (shown, for example, on a Spotify player’s “Browse”
          * tab).
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-new-releases
+         *https://developer.spotify.com/documentation/web-api/reference/get-new-releases
          *
-         * @param country Optional. A country: an ISO 3166-1 alpha-2 country code. Provide this parameter if you want
-         *  the list of returned items to be relevant to a particular country. If omitted, the returned items will be
-         *  relevant to all countries.
-         * @param limit Optional. The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
-         * @param offset Optional. The index of the first item to return. Default: 0 (the first object). Use with limit
-         *  to get the next set of items.
+         * @param country A country: an ISO 3166-1 alpha-2 country code. Provide this parameter if you want the list of
+         *  returned items to be relevant to a particular country. If omitted, the returned items will be relevant to
+         *  all countries.
+         * @param limit The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
+         * @param offset The index of the first item to return. Default: 0 (the first item). Use with limit to get the
+         *  next set of items.
          */
         suspend fun getNewReleases(
             country: String? = null,
@@ -530,7 +533,7 @@ object Spotify {
          * For artists and tracks that are very new or obscure there might not be enough data to generate a list of
          * tracks.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-recommendations
+         * https://developer.spotify.com/documentation/web-api/reference/get-recommendations
          *
          * @param limit Optional. The target size of the list of recommended tracks. For seeds with unusually small
          *  pools or when highly restrictive filtering is applied, it may be impossible to generate the requested number
@@ -572,23 +575,30 @@ object Spotify {
         /**
          * Retrieve a list of available genres seed parameter values for recommendations.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-recommendation-genres
+         * https://developer.spotify.com/documentation/web-api/reference/get-recommendation-genres
          */
         suspend fun getRecommendationGenres(): List<String> {
             return get<RecommendationGenresModel>("recommendations/available-genre-seeds").genres
+        }
+
+        /**
+         * Get the list of markets where Spotify is available.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/get-available-markets
+         */
+        suspend fun getAvailableMarkets(): List<String> {
+            return get<AvailableMarketsModel>("markets").markets
         }
     }
 
     /**
      * Endpoints for retrieving information about one or more episodes from the Spotify catalog.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-episodes
      */
     object Episodes {
         /**
          * Get Spotify catalog information for a single episode identified by its unique Spotify ID.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-an-episode
+         * https://developer.spotify.com/documentation/web-api/reference/get-an-episode
          *
          * @param id The Spotify ID for the episode.
          * @param market Optional. An ISO 3166-1 alpha-2 country code. If a country code is specified, only shows and
@@ -604,7 +614,7 @@ object Spotify {
         /**
          * Get Spotify catalog information for multiple episodes based on their Spotify IDs.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-multiple-episodes
+         * https://developer.spotify.com/documentation/web-api/reference/get-multiple-episodes
          *
          * @param ids Required. A comma-separated list of the Spotify IDs for the episodes. Maximum: 50 IDs.
          * @param market Optional. An ISO 3166-1 alpha-2 country code. If a country code is specified, only shows and
@@ -623,14 +633,12 @@ object Spotify {
 
     /**
      * Endpoints for managing the artists, users, and playlists that a Spotify user follows.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-follow
      */
     object Follow {
         /**
          * Check to see if the current user is following one or more artists or other Spotify users.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-check-current-user-follows
+         * https://developer.spotify.com/documentation/web-api/reference/check-current-user-follows
          *
          * @param type Required. The ID type: either artist or user.
          * @param ids Required. A comma-separated list of the artist or the user Spotify IDs to check. For example:
@@ -643,7 +651,7 @@ object Spotify {
         /**
          * Check to see if one or more Spotify users are following a specified playlist.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-check-if-user-follows-playlist
+         * https://developer.spotify.com/documentation/web-api/reference/check-if-user-follows-playlist
          *
          * @param playlistId The Spotify ID of the playlist.
          * @param userIds Required. A comma-separated list of Spotify User IDs ; the ids of the users that you want to
@@ -659,7 +667,7 @@ object Spotify {
         /**
          * Get the current user’s followed artists.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-followed
+         * https://developer.spotify.com/documentation/web-api/reference/get-followed
          *
          * @param limit Optional. The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
          * @param after Optional. The last artist ID retrieved from the previous request.
@@ -674,7 +682,7 @@ object Spotify {
         /**
          * Add the current user as a follower of one or more artists or other Spotify users.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-follow-artists-users
+         * https://developer.spotify.com/documentation/web-api/reference/follow-artists-users
          *
          * @param type Required. The ID type: either artist or user.
          * @param ids Optional. A comma-separated list of the artist or the user Spotify IDs. For example:
@@ -691,7 +699,7 @@ object Spotify {
         /**
          * Add the current user as a follower of a playlist.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-follow-playlist
+         * https://developer.spotify.com/documentation/web-api/reference/follow-playlist
          *
          * @param playlistId The Spotify ID of the playlist. Any playlist can be followed, regardless of its
          *  public/private status, as long as you know its playlist ID.
@@ -706,7 +714,7 @@ object Spotify {
         /**
          * Remove the current user as a follower of one or more artists or other Spotify users.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-unfollow-artists-users
+         * https://developer.spotify.com/documentation/web-api/reference/unfollow-artists-users
          *
          * @param type Required. The ID type: either artist or user.
          * @param ids Optional. A comma-separated list of the artist or the user Spotify IDs. For example:
@@ -723,7 +731,7 @@ object Spotify {
         /**
          * Remove the current user as a follower of a playlist.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-unfollow-playlist
+         * https://developer.spotify.com/documentation/web-api/reference/unfollow-playlist
          *
          * @param playlistId The Spotify ID of the playlist that is to be no longer followed.
          */
@@ -740,17 +748,15 @@ object Spotify {
     /**
      * Endpoints for retrieving information about, and managing, tracks that the current user has saved in their "Your
      * Music" library.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-library
      */
     object Library {
         const val CHECK_TRACKS_PATH = "me/tracks/contains"
         const val CHECK_ALBUMS_PATH = "me/albums/contains"
 
         /**
-         * Get a list of the albums saved in the current Spotify user’s ‘Your Music’ library.
+         * Get a list of the albums saved in the current Spotify user's 'Your Music' library.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-users-saved-albums
+         * https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
          *
          * @param limit The maximum number of objects to return. Default: 20. Minimum: 1. Maximum: 50.
          * @param offset The index of the first object to return. Default: 0 (i.e., the first object). Use with limit to
@@ -770,9 +776,9 @@ object Spotify {
         }
 
         /**
-         * Save one or more albums to the current user’s ‘Your Music’ library.
+         * Save one or more albums to the current user's 'Your Music' library.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-save-albums-user
+         * https://developer.spotify.com/documentation/web-api/reference/save-albums-user
          *
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
@@ -780,15 +786,16 @@ object Spotify {
             @Suppress("CastToNullableType")
             return put(
                 "me/albums",
+                // TODO move to body; documentation specifies the maximum for in query params is 20
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
                 jsonBody = null as Unit?,
             )
         }
 
         /**
-         * Remove one or more albums from the current user’s ‘Your Music’ library.
+         * Remove one or more albums from the current user's 'Your Music' library.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-remove-albums-user
+         * https://developer.spotify.com/documentation/web-api/reference/remove-albums-user
          *
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
@@ -796,6 +803,7 @@ object Spotify {
             @Suppress("CastToNullableType")
             return delete(
                 "me/albums",
+                // TODO move to body; documentation specifies the maximum for in query params is 20
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
                 jsonBody = null as Unit?,
             )
@@ -804,9 +812,9 @@ object Spotify {
         /**
          * Check if one or more albums is already saved in the current Spotify user’s ‘Your Music’ library.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-check-users-saved-albums
+         * https://developer.spotify.com/documentation/web-api/reference/check-users-saved-albums
          *
-         * @param ids A comma-separated list of the Spotify IDs for the albums. Maximum: 50 IDs.
+         * @param ids A comma-separated list of the Spotify IDs for the albums. Maximum: 20 IDs.
          */
         suspend fun checkAlbums(ids: List<String>): List<Boolean> {
             return get(CHECK_ALBUMS_PATH, mapOf("ids" to ids.joinToString(separator = ",")))
@@ -815,7 +823,7 @@ object Spotify {
         /**
          * Get a list of the songs saved in the current Spotify user’s ‘Your Music’ library.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-users-saved-tracks
+         * https://developer.spotify.com/documentation/web-api/reference/check-users-saved-tracks
          *
          * @param limit The maximum number of objects to return. Default: 20. Minimum: 1. Maximum: 50.
          * @param offset The index of the first object to return. Default: 0 (i.e., the first object). Use with limit to
@@ -837,7 +845,7 @@ object Spotify {
         /**
          * Save one or more tracks to the current user’s ‘Your Music’ library.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-save-tracks-user
+         *https://developer.spotify.com/documentation/web-api/reference/save-tracks-user
          *
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
@@ -853,7 +861,7 @@ object Spotify {
         /**
          * Remove one or more tracks from the current user’s ‘Your Music’ library.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-remove-tracks-user
+         * https://developer.spotify.com/documentation/web-api/reference/remove-tracks-user
          *
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
@@ -869,7 +877,7 @@ object Spotify {
         /**
          * Check if one or more tracks is already saved in the current Spotify user’s ‘Your Music’ library.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-check-users-saved-tracks
+         * https://developer.spotify.com/documentation/web-api/reference/check-users-saved-tracks
          *
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
@@ -881,7 +889,7 @@ object Spotify {
          * Get a list of shows saved in the current Spotify user’s library. Optional parameters can be used to limit the
          * number of shows returned.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-users-saved-shows
+         * https://developer.spotify.com/documentation/web-api/reference/get-users-saved-shows
          *
          * @param limit The maximum number of shows to return. Default: 20. Minimum: 1. Maximum: 50
          * @param offset The index of the first show to return. Default: 0 (the first object). Use with limit to get the
@@ -894,7 +902,7 @@ object Spotify {
         /**
          * Save one or more shows to current Spotify user’s library.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-save-shows-user
+         * https://developer.spotify.com/documentation/web-api/reference/save-shows-user
          *
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
@@ -910,7 +918,7 @@ object Spotify {
         /**
          * Delete one or more shows from current Spotify user’s library.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-remove-shows-user
+         * https://developer.spotify.com/documentation/web-api/reference/remove-shows-user
          *
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
@@ -926,7 +934,7 @@ object Spotify {
         /**
          * Check if one or more shows is already saved in the current Spotify user’s library.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-check-users-saved-shows
+         * https://developer.spotify.com/documentation/web-api/reference/check-users-saved-shows
          *
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
@@ -935,90 +943,6 @@ object Spotify {
         }
     }
 
-    /**
-     * Endpoints for retrieving information about the user's listening habits.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-personalization
-     */
-    object Personalization {
-        enum class TimeRange(val value: String) {
-            SHORT_TERM("short_term"),
-            MEDIUM_TERM("medium_term"),
-            LONG_TERM("long_term"),
-        }
-
-        /**
-         * Get the current user’s top artists or tracks based on calculated affinity.
-         *
-         * Affinity is a measure of the expected preference a user has for a particular track or artist. It is based on
-         * user behavior, including play history, but does not include actions made while in incognito mode. Light or
-         * infrequent users of Spotify may not have sufficient play history to generate a full affinity data set. As a
-         * user's behavior is likely to shift over time, this preference data is available over three time spans. See
-         * time_range in the query parameter table for more information. For each time range, the top 50 tracks and
-         * artists are available for each user. In the future, it is likely that this restriction will be relaxed.
-         * This data is typically updated once each day for each user.
-         *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-users-top-artists-and-tracks
-         *
-         * @Param limit Optional. The number of entities to return. Default: 20. Minimum: 1. Maximum: 50. For example:
-         *  limit=2
-         * @param offset Optional. The index of the first entity to return. Default: 0 (i.e., the first track). Use with
-         *  limit to get the next set of entities.
-         * @param timeRange Optional. Over what time frame the affinities are computed. Valid values: long_term
-         *  (calculated from several years of data and including all new data as it becomes available), medium_term
-         *  (approximately last 6 months), short_term (approximately last 4 weeks). Default: medium_term.
-         */
-        suspend fun topArtists(
-            limit: Int? = null,
-            offset: Int? = null,
-            timeRange: TimeRange? = null,
-        ): Paging<FullSpotifyArtist> {
-            return get(
-                "me/top/artists",
-                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value),
-            )
-        }
-
-        /**
-         * Get the current user’s top artists or tracks based on calculated affinity.
-         *
-         * Affinity is a measure of the expected preference a user has for a particular track or artist. It is based on
-         * user behavior, including play history, but does not include actions made while in incognito mode. Light or
-         * infrequent users of Spotify may not have sufficient play history to generate a full affinity data set. As a
-         * user's behavior is likely to shift over time, this preference data is available over three time spans. See
-         * time_range in the query parameter table for more information. For each time range, the top 50 tracks and
-         * artists are available for each user. In the future, it is likely that this restriction will be relaxed.
-         * This data is typically updated once each day for each user.
-         *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-users-top-artists-and-tracks
-         *
-         * @Param limit Optional. The number of entities to return. Default: 20. Minimum: 1. Maximum: 50. For example:
-         *  limit=2
-         * @param offset Optional. The index of the first entity to return. Default: 0 (i.e., the first track). Use with
-         *  limit to get the next set of entities.
-         * @param timeRange Optional. Over what time frame the affinities are computed. Valid values: long_term
-         *  (calculated from several years of data and including all new data as it becomes available), medium_term
-         *  (approximately last 6 months), short_term (approximately last 4 weeks). Default: medium_term.
-         */
-        suspend fun topTracks(
-            limit: Int? = null,
-            offset: Int? = null,
-            timeRange: TimeRange? = null,
-        ): Paging<FullSpotifyTrack> {
-            return get(
-                "me/top/tracks",
-                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value),
-            )
-        }
-    }
-
-    /**
-     * These endpoints are in beta. While we encourage you to build with them, a situation may arise where we need to
-     * disable some or all of the functionality and/or change how they work without prior notice. Please report any
-     * issues via our developer community forum.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-player
-     */
     object Player {
         const val GET_CURRENT_PLAYBACK_PATH = "me/player"
         const val GET_CURRENT_PLAYING_TRACK_PATH = "me/player/currently-playing"
@@ -1037,11 +961,11 @@ object Spotify {
         data class AvailableDevicesResponse(val devices: List<SpotifyPlaybackDevice>)
 
         /**
-         * Get information about the user's current playback state, including track or episode, progress, and active
+         * Get information about the user’s current playback state, including track or episode, progress, and active
          * device.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-information-about-the-users-
-         * current-playback
+         * https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-
+         * playback
          *
          * @param market An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter if you want
          *  to apply Track Relinking.
@@ -1064,7 +988,7 @@ object Spotify {
         /**
          * Transfer playback to a new device and determine if it should start playing.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-transfer-a-users-playback
+         * https://developer.spotify.com/documentation/web-api/reference/transfer-a-users-playback
          *
          * @param deviceIds A JSON array containing the ID of the device on which playback should be
          *  started/transferred. For example:{device_ids:["74ASZWbe4lXaubB36ztrGX"]}
@@ -1086,7 +1010,7 @@ object Spotify {
         /**
          * Get information about a user’s available devices.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-a-users-available-devices
+         * https://developer.spotify.com/documentation/web-api/reference/get-a-users-available-devices
          */
         suspend fun getAvailableDevices(): List<SpotifyPlaybackDevice> {
             return get<AvailableDevicesResponse>(GET_AVAILABLE_DEVICES_PATH).devices
@@ -1095,7 +1019,7 @@ object Spotify {
         /**
          * Get the object currently being played on the user’s Spotify account.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-the-users-currently-playing-track
+         * https://developer.spotify.com/documentation/web-api/reference/get-the-users-currently-playing-track
          *
          * @param market An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter if you want
          *  to apply Track Relinking.
@@ -1119,7 +1043,7 @@ object Spotify {
         /**
          * Start a new context or resume current playback on the user’s active device.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-start-a-users-playback
+         * https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
          *
          * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
          *  device is the target.
@@ -1153,7 +1077,7 @@ object Spotify {
         /**
          * Pause playback on the user’s account.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-pause-a-users-playback
+         * https://developer.spotify.com/documentation/web-api/reference/pause-a-users-playback
          *
          * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
          *  device is the target.
@@ -1170,7 +1094,7 @@ object Spotify {
         /**
          * Skips to next track in the user’s queue.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-skip-users-playback-to-next-track
+         * https://developer.spotify.com/documentation/web-api/reference/skip-users-playback-to-next-track
          *
          * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
          *  device is the target.
@@ -1187,7 +1111,7 @@ object Spotify {
         /**
          * Skips to previous track in the user’s queue.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-skip-users-playback-to-previous-track
+         * https://developer.spotify.com/documentation/web-api/reference/skip-users-playback-to-previous-track
          *
          * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
          *  device is the target.
@@ -1204,8 +1128,7 @@ object Spotify {
         /**
          * Seeks to the given position in the user’s currently playing track.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-seek-to-position-in-currently-
-         * playing-track
+         * https://developer.spotify.com/documentation/web-api/reference/seek-to-position-in-currently-playing-track
          *
          * @param positionMs The position in milliseconds to seek to. Must be a positive number. Passing in a position
          *  that is greater than the length of the track will cause the player to start playing the next song.
@@ -1224,7 +1147,7 @@ object Spotify {
         /**
          * Set the repeat mode for the user’s playback. Options are repeat-track, repeat-context, and off.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-set-repeat-mode-on-users-playback
+         * https://developer.spotify.com/documentation/web-api/reference/set-repeat-mode-on-users-playback
          *
          * @param state track, context or off.
          *  track will repeat the current track.
@@ -1245,7 +1168,7 @@ object Spotify {
         /**
          * Set the volume for the user’s current playback device.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-set-volume-for-users-playback
+         * https://developer.spotify.com/documentation/web-api/reference/set-volume-for-users-playback
          *
          * @param volumePercent The volume to set. Must be a value from 0 to 100 inclusive.
          * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
@@ -1263,7 +1186,7 @@ object Spotify {
         /**
          * Toggle shuffle on or off for user’s playback.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-toggle-shuffle-for-users-playback
+         * https://developer.spotify.com/documentation/web-api/reference/toggle-shuffle-for-users-playback
          *
          * @param state true : Shuffle user’s playback. false : Do not shuffle user’s playback.
          * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
@@ -1281,7 +1204,7 @@ object Spotify {
         /**
          * Get tracks from the current user’s recently played tracks. Note: Currently doesn't support podcast episodes.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-recently-played
+         * https://developer.spotify.com/documentation/web-api/reference/get-recently-played
          *
          * @param limit The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.
          * @param after A Unix timestamp in milliseconds. Returns all items after (but not including) this cursor
@@ -1305,9 +1228,18 @@ object Spotify {
         }
 
         /**
+         * Get the list of objects that make up the user's queue.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/get-queue
+         */
+        suspend fun getQueue(): SpotifyQueue {
+            return get("me/player/queue")
+        }
+
+        /**
          * Add an item to the end of the user’s current playback queue.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-add-to-queue
+         * https://developer.spotify.com/documentation/web-api/reference/add-to-queue
          *
          * @param uri The uri of the item to add to the queue. Must be a track or an episode uri.
          * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
@@ -1325,14 +1257,12 @@ object Spotify {
 
     /**
      * Endpoints for retrieving information about a user’s playlists and for managing a user’s playlists.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-playlists
      */
     object Playlists {
         /**
          * Get a list of the playlists owned or followed by the current Spotify user.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-a-list-of-current-users-playlists
+         * https://developer.spotify.com/documentation/web-api/reference/get-a-list-of-current-users-playlists
          *
          * @param limit Optional. The maximum number of playlists to return. Default: 20. Minimum: 1. Maximum: 50.
          * @param offset Optional. The index of the first playlist to return. Default: 0 (the first object). Maximum
@@ -1345,7 +1275,7 @@ object Spotify {
         /**
          * Get a list of the playlists owned or followed by a Spotify user.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-list-users-playlists
+         * https://developer.spotify.com/documentation/web-api/reference/get-list-users-playlists
          *
          * @param userId The user's Spotify user ID.
          * @param limit Optional. The maximum number of playlists to return. Default: 20. Minimum: 1. Maximum: 50.
@@ -1363,7 +1293,7 @@ object Spotify {
         /**
          * Create a playlist for a Spotify user. (The playlist will be empty until you add tracks.)
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-create-playlist
+         * https://developer.spotify.com/documentation/web-api/reference/create-playlist
          *
          * @param userId The user's Spotify user ID.
          * @param name The name for the new playlist, for example "Your Coolest Playlist" . This name does not need to
@@ -1396,7 +1326,7 @@ object Spotify {
         /**
          * Change a playlist’s name and public/private state. (The user must, of course, own the playlist.)
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-change-playlist-details
+         * https://developer.spotify.com/documentation/web-api/reference/change-playlist-details
          *
          * @param playlistId The Spotify ID for the playlist.
          * @param name The new name for the playlist, for example "My New Playlist Title"
@@ -1434,7 +1364,7 @@ object Spotify {
         /**
          * Add one or more items to a user’s playlist.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-add-tracks-to-playlist
+         * https://developer.spotify.com/documentation/web-api/reference/add-tracks-to-playlist
          *
          * @param playlistId The Spotify ID for the playlist.
          * @param position The position to insert the items, a zero-based index. For example, to insert the items in the
@@ -1454,7 +1384,7 @@ object Spotify {
         }
 
         /**
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-reorder-or-replace-playlists-tracks
+         * https://developer.spotify.com/documentation/web-api/reference/reorder-or-replace-playlists-tracks
          *
          * @param playlistId The Spotify ID for the playlist.
          * @param rangeStart The position of the first item to be reordered.
@@ -1496,7 +1426,7 @@ object Spotify {
         }
 
         /**
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-reorder-or-replace-playlists-tracks
+         * https://developer.spotify.com/documentation/web-api/reference/reorder-or-replace-playlists-tracks
          *
          * @param playlistId The Spotify ID for the playlist.
          * @param uris A comma-separated list of Spotify URIs to set, can be track or episode URIs. A maximum of 100
@@ -1513,7 +1443,7 @@ object Spotify {
         }
 
         /**
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-remove-tracks-playlist
+         * https://developer.spotify.com/documentation/web-api/reference/remove-tracks-playlist
          *
          * @param playlistId The Spotify ID
          * @param tracks An array of objects containing Spotify URIs of the tracks or episodes to remove. A maximum of
@@ -1535,7 +1465,7 @@ object Spotify {
         /**
          * Get the current image associated with a specific playlist.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-playlist-cover
+         * https://developer.spotify.com/documentation/web-api/reference/get-playlist-cover
          *
          * @param playlistId The Spotify ID for the playlist.
          */
@@ -1546,7 +1476,7 @@ object Spotify {
         /**
          * Replace the image used to represent a specific playlist.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-upload-custom-playlist-cover
+         * https://developer.spotify.com/documentation/web-api/reference/upload-custom-playlist-cover
          *
          * @param playlistId The Spotify ID for the playlist.
          * @param jpegImage The request should contain a Base64 encoded JPEG image data, maximum payload size is 256 KB.
@@ -1563,7 +1493,7 @@ object Spotify {
         /**
          * Get a playlist owned by a Spotify user.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-playlist
+         * https://developer.spotify.com/documentation/web-api/reference/get-playlist
          *
          * @param playlistId The Spotify ID for the playlist.
          * @param fields Optional. Filters for the query: a comma-separated list of the fields to return. If omitted,
@@ -1601,9 +1531,9 @@ object Spotify {
         }
 
         /**
-         * Get full details of the tracks or episodes of a playlist owned by a Spotify user.
+         * Get full details of the items of a playlist owned by a Spotify user.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-playlists-tracks
+         * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
          *
          * @param playlistId The Spotify ID of the playlist.
          * @param fields Optional. Filters for the query: a comma-separated list of the fields to return. If omitted,
@@ -1652,8 +1582,6 @@ object Spotify {
     /**
      * Get Spotify Catalog information about albums, artists, playlists, tracks, shows or episodes that match a keyword
      * string.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-search
      */
     object Search {
         @Serializable
@@ -1670,7 +1598,7 @@ object Spotify {
          * Get Spotify Catalog information about albums, artists, playlists, tracks, shows or episodes that match a
          * keyword string.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-search
+         * https://developer.spotify.com/documentation/web-api/reference/search
          *
          * @param q Required. Search query keywords and optional field filters and operators. For example:
          *  q=roadhouse%20blues.
@@ -1717,14 +1645,12 @@ object Spotify {
 
     /**
      * Endpoints for retrieving information about one or more shows from the Spotify catalog.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-shows
      */
     object Shows {
         /**
          * Get Spotify catalog information for a single show identified by its unique Spotify ID.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-a-show
+         * https://developer.spotify.com/documentation/web-api/reference/get-a-show
          *
          * @param id The Spotify ID for the show.
          * @param market Optional. An ISO 3166-1 alpha-2 country code. If a country code is specified, only shows and
@@ -1740,7 +1666,7 @@ object Spotify {
         /**
          * Get Spotify catalog information for multiple shows based on their Spotify IDs.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-multiple-shows
+         * https://developer.spotify.com/documentation/web-api/reference/get-multiple-shows
          *
          * @param ids Required. A comma-separated list of the Spotify IDs for the shows. Maximum: 50 IDs.
          * @param market Optional. An ISO 3166-1 alpha-2 country code. If a country code is specified, only shows and
@@ -1760,7 +1686,7 @@ object Spotify {
          * Get Spotify catalog information about a show’s episodes. Optional parameters can be used to limit the number
          * of episodes returned.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-a-shows-episodes
+         * https://developer.spotify.com/documentation/web-api/reference/get-a-shows-episodes
          *
          * @param id The Spotify ID for the show.
          * @param limit Optional. The maximum number of episodes to return. Default: 20. Minimum: 1. Maximum: 50.
@@ -1787,55 +1713,12 @@ object Spotify {
 
     /**
      * Endpoints for retrieving information about one or more tracks from the Spotify catalog.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-tracks
      */
     object Tracks {
         /**
-         * Get a detailed audio analysis for a single track identified by its unique Spotify ID.
-         *
-         * The Audio Analysis endpoint provides low-level audio analysis for all of the tracks in the Spotify catalog.
-         * The Audio Analysis describes the track’s structure and musical content, including rhythm, pitch, and timbre.
-         * All information is precise to the audio sample.
-         *
-         * Many elements of analysis include confidence values, a floating-point number ranging from 0.0 to 1.0.
-         * Confidence indicates the reliability of its corresponding attribute. Elements carrying a small confidence
-         * value should be considered speculative. There may not be sufficient data in the audio to compute the
-         * attribute with high certainty.
-         *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-audio-analysis
-         *
-         * @param id Required. The Spotify ID for the track.
-         */
-        suspend fun getAudioAnalysis(id: String): SpotifyAudioAnalysis = get("audio-analysis/$id")
-
-        /**
-         * Get audio feature information for a single track identified by its unique Spotify ID.
-         *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-audio-features
-         *
-         * @param id Required. The Spotify ID for the track.
-         */
-        suspend fun getAudioFeatures(id: String): SpotifyAudioFeatures = get("audio-features/$id")
-
-        /**
-         * Get audio features for multiple tracks based on their Spotify IDs.
-         *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-several-audio-features
-         *
-         * @param ids Required. A comma-separated list of the Spotify IDs for the tracks. Maximum: 100 IDs.
-         */
-        suspend fun getAudioFeatures(ids: List<String>): List<SpotifyAudioFeatures> {
-            return get<AudioFeaturesModel>(
-                "audio-features",
-                mapOf("ids" to ids.joinToString(separator = ",")),
-            ).audioFeatures
-        }
-
-        /**
          * Get Spotify catalog information for a single track identified by its unique Spotify ID.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-track
+         * https://developer.spotify.com/documentation/web-api/reference/get-track
          *
          * @param id The Spotify ID for the track.
          * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
@@ -1848,7 +1731,7 @@ object Spotify {
         /**
          * Get Spotify catalog information for multiple tracks based on their Spotify IDs.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-several-tracks
+         * https://developer.spotify.com/documentation/web-api/reference/get-several-tracks
          *
          * @param ids Required. A comma-separated list of the Spotify IDs for the tracks. Maximum: 50 IDs.
          * @param market Optional. An ISO 3166-1 alpha-2 country code or the string from_token. Provide this parameter
@@ -1860,18 +1743,63 @@ object Spotify {
                 mapOf("ids" to ids.joinToString(separator = ","), "market" to market),
             ).tracks
         }
+
+        /**
+         * Get a detailed audio analysis for a single track identified by its unique Spotify ID.
+         *
+         * The Audio Analysis endpoint provides low-level audio analysis for all of the tracks in the Spotify catalog.
+         * The Audio Analysis describes the track’s structure and musical content, including rhythm, pitch, and timbre.
+         * All information is precise to the audio sample.
+         *
+         * Many elements of analysis include confidence values, a floating-point number ranging from 0.0 to 1.0.
+         * Confidence indicates the reliability of its corresponding attribute. Elements carrying a small confidence
+         * value should be considered speculative. There may not be sufficient data in the audio to compute the
+         * attribute with high certainty.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/get-audio-analysis
+         *
+         * @param id Required. The Spotify ID for the track.
+         */
+        suspend fun getAudioAnalysis(id: String): SpotifyAudioAnalysis = get("audio-analysis/$id")
+
+        /**
+         * Get audio feature information for a single track identified by its unique Spotify ID.
+         *
+         *https://developer.spotify.com/documentation/web-api/reference/get-audio-features
+         *
+         * @param id Required. The Spotify ID for the track.
+         */
+        suspend fun getAudioFeatures(id: String): SpotifyAudioFeatures = get("audio-features/$id")
+
+        /**
+         * Get audio features for multiple tracks based on their Spotify IDs.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/get-several-audio-features
+         *
+         * @param ids Required. A comma-separated list of the Spotify IDs for the tracks. Maximum: 100 IDs.
+         */
+        suspend fun getAudioFeatures(ids: List<String>): List<SpotifyAudioFeatures> {
+            return get<AudioFeaturesModel>(
+                "audio-features",
+                mapOf("ids" to ids.joinToString(separator = ",")),
+            ).audioFeatures
+        }
     }
 
     /**
      * Endpoints for retrieving information about a user’s profile.
-     *
-     * https://developer.spotify.com/documentation/web-api/reference/#category-users-profile
      */
     object UsersProfile {
+        enum class TimeRange(val value: String) {
+            SHORT_TERM("short_term"),
+            MEDIUM_TERM("medium_term"),
+            LONG_TERM("long_term"),
+        }
+
         /**
          * Get detailed profile information about the current user (including the current user’s username).
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-current-users-profile
+         * https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
          */
         suspend fun getCurrentUser(): PrivateSpotifyUser {
             return get("me")
@@ -1880,12 +1808,76 @@ object Spotify {
         /**
          * Get public profile information about a Spotify user.
          *
-         * https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-users-profile
+         * https://developer.spotify.com/documentation/web-api/reference/get-users-profile
          *
          * @param userId The user’s Spotify user ID.
          */
         suspend fun getUser(userId: String): PublicSpotifyUser {
             return get("users/$userId")
+        }
+
+        /**
+         * Get the current user’s top artists or tracks based on calculated affinity.
+         *
+         * Affinity is a measure of the expected preference a user has for a particular track or artist. It is based on
+         * user behavior, including play history, but does not include actions made while in incognito mode. Light or
+         * infrequent users of Spotify may not have sufficient play history to generate a full affinity data set. As a
+         * user's behavior is likely to shift over time, this preference data is available over three time spans. See
+         * time_range in the query parameter table for more information. For each time range, the top 50 tracks and
+         * artists are available for each user. In the future, it is likely that this restriction will be relaxed.
+         * This data is typically updated once each day for each user.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
+         *
+         * @Param limit Optional. The number of entities to return. Default: 20. Minimum: 1. Maximum: 50. For example:
+         *  limit=2
+         * @param offset Optional. The index of the first entity to return. Default: 0 (i.e., the first track). Use with
+         *  limit to get the next set of entities.
+         * @param timeRange Optional. Over what time frame the affinities are computed. Valid values: long_term
+         *  (calculated from several years of data and including all new data as it becomes available), medium_term
+         *  (approximately last 6 months), short_term (approximately last 4 weeks). Default: medium_term.
+         */
+        suspend fun topArtists(
+            limit: Int? = null,
+            offset: Int? = null,
+            timeRange: TimeRange? = null,
+        ): Paging<FullSpotifyArtist> {
+            return get(
+                "me/top/artists",
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value),
+            )
+        }
+
+        /**
+         * Get the current user’s top artists or tracks based on calculated affinity.
+         *
+         * Affinity is a measure of the expected preference a user has for a particular track or artist. It is based on
+         * user behavior, including play history, but does not include actions made while in incognito mode. Light or
+         * infrequent users of Spotify may not have sufficient play history to generate a full affinity data set. As a
+         * user's behavior is likely to shift over time, this preference data is available over three time spans. See
+         * time_range in the query parameter table for more information. For each time range, the top 50 tracks and
+         * artists are available for each user. In the future, it is likely that this restriction will be relaxed.
+         * This data is typically updated once each day for each user.
+         *
+         * https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
+         *
+         * @Param limit Optional. The number of entities to return. Default: 20. Minimum: 1. Maximum: 50. For example:
+         *  limit=2
+         * @param offset Optional. The index of the first entity to return. Default: 0 (i.e., the first track). Use with
+         *  limit to get the next set of entities.
+         * @param timeRange Optional. Over what time frame the affinities are computed. Valid values: long_term
+         *  (calculated from several years of data and including all new data as it becomes available), medium_term
+         *  (approximately last 6 months), short_term (approximately last 4 weeks). Default: medium_term.
+         */
+        suspend fun topTracks(
+            limit: Int? = null,
+            offset: Int? = null,
+            timeRange: TimeRange? = null,
+        ): Paging<FullSpotifyTrack> {
+            return get(
+                "me/top/tracks",
+                mapOf("limit" to limit?.toString(), "offset" to offset?.toString(), "time_range" to timeRange?.value),
+            )
         }
     }
 }
