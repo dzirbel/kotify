@@ -11,7 +11,6 @@ kotlin = "1.8.20" # https://kotlinlang.org/releases.html
 kotlinx-serialization = "1.5.1" # https://github.com/Kotlin/kotlinx.serialization
 ktor = "2.3.1" # https://ktor.io/changelog/
 okhttp = "4.10.0" # https://square.github.io/okhttp
-proguard = "7.3.1" # https://github.com/Guardsquare/proguard
 slf4j = "2.0.7" # http://www.slf4j.org/
 sqlite-jdbc = "3.42.0.0" # https://github.com/xerial/sqlite-jdbc
 
@@ -44,8 +43,6 @@ ktor-client = { module = "io.ktor:ktor-client-java", version.ref = "ktor" }
 ktor-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
-
-proguard = { module = "com.guardsquare:proguard-gradle", version.ref = "proguard" }
 
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 

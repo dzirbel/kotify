@@ -16,7 +16,7 @@ jobs:
           distribution: 'adopt'
           java-version: '16'
 
-      - run: ./gradlew --no-daemon --stacktrace --console=plain package
+      - run: ./gradlew --no-daemon --stacktrace --console=plain packageReleaseForCurrentOS
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v3
