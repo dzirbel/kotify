@@ -10,7 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="runRelease" />
+          <option value="runReleaseDistributable" />
         </list>
       </option>
       <option name="vmOptions" value="" />

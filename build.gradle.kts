@@ -65,7 +65,7 @@ dependencies {
 
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.allWarningsAsErrors = true
-    kotlinOptions.jvmTarget = "16"
+    kotlinOptions.jvmTarget = libs.versions.jvm.get()
 
     // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
     kotlinOptions.freeCompilerArgs += "-Xcontext-receivers"
@@ -79,6 +79,10 @@ tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.freeCompilerArgs += "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi"
     kotlinOptions.freeCompilerArgs += "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi"
     kotlinOptions.freeCompilerArgs += "-opt-in=androidx.compose.material.ExperimentalMaterialApi"
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    targetCompatibility = libs.versions.jvm.get()
 }
 
 configurations.all {
@@ -142,7 +146,7 @@ tasks.create<Task>("checkLocal") {
 
 tasks.detektTestFixtures.configure {
     // enable type resolution for detekt on test fixtures
-    jvmTarget = "16"
+    jvmTarget = libs.versions.jvm.get()
     classpath.from(files("src/testFixtures"))
 }
 
@@ -167,7 +171,12 @@ compose.desktop {
 
         mainClass = "com.dzirbel.kotify.MainKt"
 
+        buildTypes.release.proguard {
+            configurationFiles.from(project.file("proguard-rules.pro"))
+        }
+
         nativeDistributions {
+            modules("java.sql")
             modules("jdk.crypto.ec") // required for SSL, see https://github.com/JetBrains/compose-jb/issues/429
 
             targetFormats(TargetFormat.Deb, TargetFormat.Exe)

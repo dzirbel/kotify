@@ -2,7 +2,7 @@
 -dontobfuscate
 
 # do not create notes, which clutter the log
--dontnote
+-dontnote **
 
 # keep main method
 -keepclasseswithmembers public class com.dzirbel.kotify.MainKt {
@@ -32,6 +32,9 @@
 -keep class io.netty.** { *; }
 -keep class kotlinx.coroutines.** { *; }
 -dontwarn io.netty.**
+
+# workaround for https://youtrack.jetbrains.com/issue/KTOR-5985
+-dontwarn io.ktor.events.Events$HandlerRegistration
 
 
 ### OkHttp
