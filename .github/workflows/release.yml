@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: '16'
+          java-version: '18'
 
       - run: ./gradlew --no-daemon --stacktrace --console=plain packageReleaseForCurrentOS
 
