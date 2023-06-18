@@ -9,6 +9,7 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
+import com.dzirbel.kotify.network.model.SpotifyPlaybackOffset
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,7 +29,7 @@ object Player {
     data class PlayContext(
         val contextUri: String?,
         val trackUris: List<String>? = null,
-        val offset: Spotify.PlaybackOffset? = null,
+        val offset: SpotifyPlaybackOffset? = null,
         val positionMs: Int? = null,
     ) {
         companion object {
@@ -47,7 +48,7 @@ object Player {
              */
             fun albumTrack(album: Album, index: Int): PlayContext? {
                 return album.uri?.let { uri ->
-                    PlayContext(contextUri = uri, offset = Spotify.PlaybackOffset(position = index))
+                    PlayContext(contextUri = uri, offset = SpotifyPlaybackOffset(position = index))
                 }
             }
 
@@ -63,7 +64,7 @@ object Player {
              */
             fun playlistTrack(playlist: Playlist, index: Int): PlayContext? {
                 return playlist.uri?.let {
-                    PlayContext(contextUri = it, offset = Spotify.PlaybackOffset(position = index))
+                    PlayContext(contextUri = it, offset = SpotifyPlaybackOffset(position = index))
                 }
             }
 

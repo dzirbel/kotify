@@ -23,6 +23,7 @@ import com.dzirbel.kotify.network.model.SpotifyImage
 import com.dzirbel.kotify.network.model.SpotifyPlayHistoryObject
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
+import com.dzirbel.kotify.network.model.SpotifyPlaybackOffset
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.SpotifyQueue
 import com.dzirbel.kotify.network.model.SpotifyRecommendations
@@ -42,6 +43,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import java.util.Base64
 import java.util.Locale
 
@@ -83,58 +85,27 @@ object Spotify {
      */
     const val MAX_LIMIT = 50
 
-    class SpotifyError(val code: Int, message: String) : Throwable(message = "HTTP $code : $message")
+    class SpotifyError(val code: Int, message: String) : Throwable(message = "HTTP $code : $message") {
+        @Serializable
+        private data class ErrorObject(val error: Details) {
+            @Serializable
+            data class Details(val status: Int, val message: String)
+        }
 
-    @Serializable
-    data class ErrorObject(val error: ErrorDetails)
-
-    @Serializable
-    data class PlaybackOffset(val position: Int? = null)
-
-    @Serializable
-    data class ErrorDetails(val status: Int, val message: String)
-
-    @Serializable
-    private data class AlbumsModel(val albums: List<FullSpotifyAlbum>)
-
-    @Serializable
-    private data class AlbumsPagingModel(val albums: Paging<SimplifiedSpotifyAlbum>)
-
-    @Serializable
-    private data class ArtistsModel(val artists: List<FullSpotifyArtist>)
-
-    @Serializable
-    data class ArtistsCursorPagingModel(val artists: CursorPaging<FullSpotifyArtist>)
-
-    @Serializable
-    private data class AudioFeaturesModel(@SerialName("audio_features") val audioFeatures: List<SpotifyAudioFeatures>)
-
-    @Serializable
-    private data class CategoriesModel(val categories: Paging<SpotifyCategory>)
-
-    @Serializable
-    private data class EpisodesModel(val episodes: List<FullSpotifyEpisode?>)
-
-    @Serializable
-    private data class PlaylistPagingModel(
-        val playlists: Paging<SimplifiedSpotifyPlaylist?>,
-        val message: String? = null,
-    )
-
-    @Serializable
-    private data class RecommendationGenresModel(val genres: List<String>)
-
-    @Serializable
-    private data class AvailableMarketsModel(val markets: List<String>)
-
-    @Serializable
-    private data class ShowsModel(val shows: List<SimplifiedSpotifyShow>)
+        companion object {
+            fun from(response: Response): SpotifyError {
+                val message = runCatching { response.bodyFromJson<ErrorObject>() }
+                    .getOrNull()
+                    ?.error
+                    ?.message
+                    ?: response.message
+                return SpotifyError(code = response.code, message = message)
+            }
+        }
+    }
 
     @Serializable
     private data class SnaphshotId(@SerialName("snapshot_id") val snapshotId: String)
-
-    @Serializable
-    private data class TracksModel(val tracks: List<FullSpotifyTrack>)
 
     suspend inline fun <reified T : Any?> get(path: String, queryParams: Map<String, String?>? = null): T {
         return request(method = "GET", path = path, queryParams = queryParams, body = null)
@@ -210,12 +181,7 @@ object Spotify {
 
         return configuration.okHttpClient.newCall(request).await().use { response ->
             if (!response.isSuccessful) {
-                val message = runCatching { response.bodyFromJson<ErrorObject>() }
-                    .getOrNull()
-                    ?.error
-                    ?.message
-                    ?: response.message
-                throw SpotifyError(code = response.code, message = message)
+                throw SpotifyError.from(response)
             }
 
             response.bodyFromJson()
@@ -255,6 +221,9 @@ object Spotify {
          *  country that is associated with their account in the account settings.
          */
         suspend fun getAlbums(ids: List<String>, market: String? = null): List<FullSpotifyAlbum> {
+            @Serializable
+            data class AlbumsModel(val albums: List<FullSpotifyAlbum>)
+
             return get<AlbumsModel>(
                 "albums",
                 mapOf("ids" to ids.joinToString(separator = ","), "market" to market),
@@ -308,6 +277,9 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs for the artists. Maximum: 50 IDs.
          */
         suspend fun getArtists(ids: List<String>): List<FullSpotifyArtist> {
+            @Serializable
+            data class ArtistsModel(val artists: List<FullSpotifyArtist>)
+
             return get<ArtistsModel>("artists", mapOf("ids" to ids.joinToString(separator = ","))).artists
         }
 
@@ -359,6 +331,9 @@ object Spotify {
          *  country that is associated with their account in the account settings.
          */
         suspend fun getArtistTopTracks(id: String, market: String): List<FullSpotifyTrack> {
+            @Serializable
+            data class TracksModel(val tracks: List<FullSpotifyTrack>)
+
             return get<TracksModel>("artists/$id/top-tracks", mapOf("market" to market)).tracks
         }
 
@@ -371,6 +346,9 @@ object Spotify {
          * @param id The Spotify ID of the artist.
          */
         suspend fun getArtistRelatedArtists(id: String): List<FullSpotifyArtist> {
+            @Serializable
+            data class ArtistsModel(val artists: List<FullSpotifyArtist>)
+
             return get<ArtistsModel>("artists/$id/related-artists").artists
         }
     }
@@ -422,6 +400,9 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null,
         ): Paging<SpotifyCategory> {
+            @Serializable
+            data class CategoriesModel(val categories: Paging<SpotifyCategory>)
+
             return get<CategoriesModel>(
                 "browse/categories",
                 mapOf(
@@ -450,6 +431,12 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null,
         ): Paging<SimplifiedSpotifyPlaylist?> {
+            @Serializable
+            data class PlaylistPagingModel(
+                val playlists: Paging<SimplifiedSpotifyPlaylist?>,
+                val message: String? = null,
+            )
+
             return get<PlaylistPagingModel>(
                 "browse/categories/$categoryId/playlists",
                 mapOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString()),
@@ -487,6 +474,12 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null,
         ): Paging<SimplifiedSpotifyPlaylist?> {
+            @Serializable
+            data class PlaylistPagingModel(
+                val playlists: Paging<SimplifiedSpotifyPlaylist?>,
+                val message: String? = null,
+            )
+
             return get<PlaylistPagingModel>(
                 "browse/featured-playlists",
                 mapOf(
@@ -517,6 +510,9 @@ object Spotify {
             limit: Int? = null,
             offset: Int? = null,
         ): Paging<SimplifiedSpotifyAlbum> {
+            @Serializable
+            data class AlbumsPagingModel(val albums: Paging<SimplifiedSpotifyAlbum>)
+
             return get<AlbumsPagingModel>(
                 "browse/new-releases",
                 mapOf("country" to country, "limit" to limit?.toString(), "offset" to offset?.toString()),
@@ -578,6 +574,9 @@ object Spotify {
          * https://developer.spotify.com/documentation/web-api/reference/get-recommendation-genres
          */
         suspend fun getRecommendationGenres(): List<String> {
+            @Serializable
+            data class RecommendationGenresModel(val genres: List<String>)
+
             return get<RecommendationGenresModel>("recommendations/available-genre-seeds").genres
         }
 
@@ -587,6 +586,9 @@ object Spotify {
          * https://developer.spotify.com/documentation/web-api/reference/get-available-markets
          */
         suspend fun getAvailableMarkets(): List<String> {
+            @Serializable
+            data class AvailableMarketsModel(val markets: List<String>)
+
             return get<AvailableMarketsModel>("markets").markets
         }
     }
@@ -624,6 +626,9 @@ object Spotify {
          *  Users can view the country that is associated with their account in the account settings.
          */
         suspend fun getEpisodes(ids: List<String>, market: String? = null): List<FullSpotifyEpisode?> {
+            @Serializable
+            data class EpisodesModel(val episodes: List<FullSpotifyEpisode?>)
+
             return get<EpisodesModel>(
                 "episodes",
                 mapOf("ids" to ids.joinToString(separator = ","), "market" to market),
@@ -673,6 +678,9 @@ object Spotify {
          * @param after Optional. The last artist ID retrieved from the previous request.
          */
         suspend fun getFollowedArtists(limit: Int? = null, after: String? = null): CursorPaging<FullSpotifyArtist> {
+            @Serializable
+            data class ArtistsCursorPagingModel(val artists: CursorPaging<FullSpotifyArtist>)
+
             return get<ArtistsCursorPagingModel>(
                 "me/following",
                 mapOf("type" to "artist", "limit" to limit?.toString(), "after" to after),
@@ -783,12 +791,11 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun saveAlbums(ids: List<String>) {
-            @Suppress("CastToNullableType")
-            return put(
+            return put<Unit?, Unit>(
                 "me/albums",
                 // TODO move to body; documentation specifies the maximum for in query params is 20
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?,
+                jsonBody = null,
             )
         }
 
@@ -1056,14 +1063,14 @@ object Spotify {
             deviceId: String? = null,
             contextUri: String? = null,
             uris: List<String>? = null,
-            offset: PlaybackOffset? = null,
+            offset: SpotifyPlaybackOffset? = null,
             positionMs: Int? = null,
         ) {
             @Serializable
             data class Body(
                 @SerialName("context_uri") val contextUri: String? = null,
                 @SerialName("uris") val uris: List<String>? = null,
-                @SerialName("offset") val offset: PlaybackOffset? = null,
+                @SerialName("offset") val offset: SpotifyPlaybackOffset? = null,
                 @SerialName("position_ms") val positionMs: Int? = null,
             )
 
@@ -1676,6 +1683,9 @@ object Spotify {
          *  Users can view the country that is associated with their account in the account settings.
          */
         suspend fun getShows(ids: List<String>, market: String? = null): List<SimplifiedSpotifyShow> {
+            @Serializable
+            data class ShowsModel(val shows: List<SimplifiedSpotifyShow>)
+
             return get<ShowsModel>(
                 "shows",
                 mapOf("ids" to ids.joinToString(separator = ","), "market" to market),
@@ -1738,6 +1748,9 @@ object Spotify {
          *  if you want to apply Track Relinking.
          */
         suspend fun getTracks(ids: List<String>, market: String? = null): List<FullSpotifyTrack> {
+            @Serializable
+            data class TracksModel(val tracks: List<FullSpotifyTrack>)
+
             return get<TracksModel>(
                 "tracks",
                 mapOf("ids" to ids.joinToString(separator = ","), "market" to market),
@@ -1779,6 +1792,9 @@ object Spotify {
          * @param ids Required. A comma-separated list of the Spotify IDs for the tracks. Maximum: 100 IDs.
          */
         suspend fun getAudioFeatures(ids: List<String>): List<SpotifyAudioFeatures> {
+            @Serializable
+            data class AudioFeaturesModel(@SerialName("audio_features") val audioFeatures: List<SpotifyAudioFeatures>)
+
             return get<AudioFeaturesModel>(
                 "audio-features",
                 mapOf("ids" to ids.joinToString(separator = ",")),

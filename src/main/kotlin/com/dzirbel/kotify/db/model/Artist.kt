@@ -12,6 +12,7 @@ import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.network.model.CursorPaging
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyArtist
@@ -160,7 +161,7 @@ object SavedArtistRepository : SavedDatabaseRepository<FullSpotifyArtist>(
 
     override suspend fun fetchLibrary(): Iterable<FullSpotifyArtist> {
         return Spotify.Follow.getFollowedArtists(limit = Spotify.MAX_LIMIT)
-            .asFlow { url -> Spotify.get<Spotify.ArtistsCursorPagingModel>(url).artists }
+            .asFlow<FullSpotifyArtist, CursorPaging<FullSpotifyArtist>>()
             .toList()
     }
 
