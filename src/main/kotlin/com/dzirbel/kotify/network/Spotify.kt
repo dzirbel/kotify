@@ -697,9 +697,9 @@ object Spotify {
          *  ids=74ASZWbe4lXaubB36ztrGX,08td7MxkoHQkXnWAYD8d6Q. A maximum of 50 IDs can be sent in one request.
          */
         suspend fun follow(type: String, ids: List<String>) {
-            return put(
+            put<Unit?, Unit>(
                 "me/following",
-                jsonBody = emptyMap<String, String>(),
+                jsonBody = null,
                 queryParams = mapOf("type" to type, "ids" to ids.joinToString(separator = ",")),
             )
         }
@@ -716,7 +716,7 @@ object Spotify {
          *  playlist-modify-private scope.
          */
         suspend fun followPlaylist(playlistId: String, public: Boolean = true) {
-            return put("playlists/$playlistId/followers", jsonBody = mapOf("public" to public))
+            put<_, Unit>("playlists/$playlistId/followers", jsonBody = mapOf("public" to public))
         }
 
         /**
@@ -729,9 +729,9 @@ object Spotify {
          *  ids=74ASZWbe4lXaubB36ztrGX,08td7MxkoHQkXnWAYD8d6Q. A maximum of 50 IDs can be sent in one request.
          */
         suspend fun unfollow(type: String, ids: List<String>) {
-            return delete(
+            delete<Unit?, Unit>(
                 "me/following",
-                jsonBody = emptyMap<String, String>(),
+                jsonBody = null,
                 queryParams = mapOf("type" to type, "ids" to ids.joinToString(separator = ",")),
             )
         }
@@ -744,10 +744,9 @@ object Spotify {
          * @param playlistId The Spotify ID of the playlist that is to be no longer followed.
          */
         suspend fun unfollowPlaylist(playlistId: String) {
-            @Suppress("CastToNullableType")
-            return delete(
+            delete<Unit?, Unit>(
                 "playlists/$playlistId/followers",
-                jsonBody = null as Map<String, String>?,
+                jsonBody = null,
                 queryParams = null,
             )
         }
@@ -791,12 +790,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun saveAlbums(ids: List<String>) {
-            return put<Unit?, Unit>(
-                "me/albums",
-                // TODO move to body; documentation specifies the maximum for in query params is 20
-                queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null,
-            )
+            put<_, Unit>("me/albums", jsonBody = mapOf("ids" to ids))
         }
 
         /**
@@ -807,13 +801,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun removeAlbums(ids: List<String>) {
-            @Suppress("CastToNullableType")
-            return delete(
-                "me/albums",
-                // TODO move to body; documentation specifies the maximum for in query params is 20
-                queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?,
-            )
+            delete<_, Unit>("me/albums", jsonBody = mapOf("ids" to ids))
         }
 
         /**
@@ -852,17 +840,12 @@ object Spotify {
         /**
          * Save one or more tracks to the current user’s ‘Your Music’ library.
          *
-         *https://developer.spotify.com/documentation/web-api/reference/save-tracks-user
+         * https://developer.spotify.com/documentation/web-api/reference/save-tracks-user
          *
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun saveTracks(ids: List<String>) {
-            @Suppress("CastToNullableType")
-            return put(
-                "me/tracks",
-                queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?,
-            )
+            put<_, Unit>("me/tracks", jsonBody = mapOf("ids" to ids))
         }
 
         /**
@@ -873,12 +856,7 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun removeTracks(ids: List<String>) {
-            @Suppress("CastToNullableType")
-            return delete(
-                "me/tracks",
-                queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?,
-            )
+            return delete("me/tracks", jsonBody = mapOf("ids" to ids))
         }
 
         /**
@@ -914,11 +892,10 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun saveShows(ids: List<String>) {
-            @Suppress("CastToNullableType")
-            return put(
+            put<Unit?, Unit>(
                 "me/shows",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?,
+                jsonBody = null,
             )
         }
 
@@ -930,11 +907,10 @@ object Spotify {
          * @param ids A comma-separated list of the Spotify IDs. Maximum: 50 IDs.
          */
         suspend fun removeShows(ids: List<String>) {
-            @Suppress("CastToNullableType")
-            return delete(
+            delete<Unit?, Unit>(
                 "me/shows",
                 queryParams = mapOf("ids" to ids.joinToString(separator = ",")),
-                jsonBody = null as Unit?,
+                jsonBody = null,
             )
         }
 
@@ -1011,7 +987,7 @@ object Spotify {
                 val play: String? = null,
             )
 
-            return put(TRANSFER_PLAYBACK_PATH, jsonBody = Body(deviceIds = deviceIds, play = play))
+            put<_, Unit>(TRANSFER_PLAYBACK_PATH, jsonBody = Body(deviceIds = deviceIds, play = play))
         }
 
         /**
@@ -1074,7 +1050,7 @@ object Spotify {
                 @SerialName("position_ms") val positionMs: Int? = null,
             )
 
-            return put(
+            put<_, Unit>(
                 START_PLAYBACK_PATH,
                 jsonBody = Body(contextUri = contextUri, uris = uris, offset = offset, positionMs = positionMs),
                 queryParams = mapOf("device_id" to deviceId),
@@ -1090,10 +1066,9 @@ object Spotify {
          *  device is the target.
          */
         suspend fun pausePlayback(deviceId: String? = null) {
-            @Suppress("CastToNullableType")
-            return put(
+            put<Unit?, Unit>(
                 PAUSE_PLAYBACK_PATH,
-                jsonBody = null as Unit?,
+                jsonBody = null,
                 queryParams = mapOf("device_id" to deviceId),
             )
         }
@@ -1107,10 +1082,9 @@ object Spotify {
          *  device is the target.
          */
         suspend fun skipToNext(deviceId: String? = null) {
-            @Suppress("CastToNullableType")
-            return post(
+            post<Unit?, Unit>(
                 SKIP_TO_NEXT_PATH,
-                jsonBody = null as Unit?,
+                jsonBody = null,
                 queryParams = mapOf("device_id" to deviceId),
             )
         }
@@ -1124,10 +1098,9 @@ object Spotify {
          *  device is the target.
          */
         suspend fun skipToPrevious(deviceId: String? = null) {
-            @Suppress("CastToNullableType")
-            return post(
+            post<Unit?, Unit>(
                 SKIP_TO_PREVIOUS_PATH,
-                jsonBody = null as Unit?,
+                jsonBody = null,
                 queryParams = mapOf("device_id" to deviceId),
             )
         }
@@ -1143,8 +1116,7 @@ object Spotify {
          *  device is the target.
          */
         suspend fun seekToPosition(positionMs: Int, deviceId: String? = null) {
-            @Suppress("CastToNullableType")
-            return put(
+            put<Unit?, Unit>(
                 SEEK_TO_POSITION_PATH,
                 jsonBody = null as Unit?,
                 queryParams = mapOf("position_ms" to positionMs.toString(), "device_id" to deviceId),
@@ -1164,10 +1136,9 @@ object Spotify {
          *  device is the target.
          */
         suspend fun setRepeatMode(state: String, deviceId: String? = null) {
-            @Suppress("CastToNullableType")
-            return put(
+            put<Unit?, Unit>(
                 SET_REPEAT_MODE_PATH,
-                jsonBody = null as Unit?,
+                jsonBody = null,
                 queryParams = mapOf("state" to state, "device_id" to deviceId),
             )
         }
@@ -1182,10 +1153,9 @@ object Spotify {
          *  device is the target.
          */
         suspend fun setVolume(volumePercent: Int, deviceId: String? = null) {
-            @Suppress("CastToNullableType")
-            return put(
+            put<Unit?, Unit>(
                 SET_VOLUME_PATH,
-                jsonBody = null as Unit?,
+                jsonBody = null,
                 queryParams = mapOf("volume_percent" to volumePercent.toString(), "device_id" to deviceId),
             )
         }
@@ -1200,10 +1170,9 @@ object Spotify {
          *  device is the target.
          */
         suspend fun toggleShuffle(state: Boolean, deviceId: String? = null) {
-            @Suppress("CastToNullableType")
-            return put(
+            put<Unit?, Unit>(
                 TOGGLE_SHUFFLE_PATH,
-                jsonBody = null as Unit?,
+                jsonBody = null,
                 queryParams = mapOf("state" to state.toString(), "device_id" to deviceId),
             )
         }
@@ -1253,10 +1222,9 @@ object Spotify {
          *  device is the target.
          */
         suspend fun addItemToQueue(uri: String, deviceId: String? = null) {
-            @Suppress("CastToNullableType")
-            return post(
+            post<Unit?, Unit>(
                 "me/player/queue",
-                jsonBody = null as Unit?,
+                jsonBody = null,
                 queryParams = mapOf("uri" to uri, "device_id" to deviceId),
             )
         }
@@ -1357,7 +1325,7 @@ object Spotify {
                 val description: String? = null,
             )
 
-            return put(
+            put<_, Unit>(
                 "playlists/$playlistId",
                 jsonBody = Body(
                     name = name,
@@ -1384,7 +1352,7 @@ object Spotify {
             @Serializable
             data class Body(val position: Int? = null, val uris: List<String>)
 
-            return post<Body, SnaphshotId>(
+            return post<_, SnaphshotId>(
                 "playlists/$playlistId/tracks",
                 jsonBody = Body(position = position, uris = uris),
             ).snapshotId
@@ -1421,7 +1389,7 @@ object Spotify {
                 @SerialName("snapshot_id") val snapshotId: String? = null,
             )
 
-            return put<Body, SnaphshotId>(
+            return put<_, SnaphshotId>(
                 "playlists/$playlistId/tracks",
                 jsonBody = Body(
                     rangeStart = rangeStart,
@@ -1443,7 +1411,7 @@ object Spotify {
             @Serializable
             data class Body(val uris: List<String>)
 
-            return put<Body, SnaphshotId>(
+            return put<_, SnaphshotId>(
                 "playlists/$playlistId/tracks",
                 jsonBody = Body(uris = uris),
             ).snapshotId
@@ -1463,7 +1431,7 @@ object Spotify {
             @Serializable
             data class Body(val uris: List<String>, val snapshotId: String? = null)
 
-            return delete<Body, SnaphshotId>(
+            return delete<_, SnaphshotId>(
                 "playlists/$playlistId/tracks",
                 jsonBody = Body(uris = tracks, snapshotId = snapshotId),
             ).snapshotId
