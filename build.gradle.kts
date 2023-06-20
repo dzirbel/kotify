@@ -64,21 +64,36 @@ dependencies {
 }
 
 tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions.allWarningsAsErrors = true
-    kotlinOptions.jvmTarget = libs.versions.jvm.get()
+    kotlinOptions {
+        allWarningsAsErrors = true
+        jvmTarget = libs.versions.jvm.get()
 
-    // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
-    kotlinOptions.freeCompilerArgs += "-Xcontext-receivers"
+        freeCompilerArgs += "-opt-in=kotlin.time.ExperimentalTime"
+        freeCompilerArgs += "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
+        freeCompilerArgs += "-opt-in=kotlinx.coroutines.FlowPreview"
+        freeCompilerArgs += "-opt-in=kotlin.contracts.ExperimentalContracts"
+        freeCompilerArgs += "-opt-in=kotlinx.coroutines.DelicateCoroutinesApi" // allow use of GlobalScope
+        freeCompilerArgs += "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
+        freeCompilerArgs += "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi"
+        freeCompilerArgs += "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi"
+        freeCompilerArgs += "-opt-in=androidx.compose.material.ExperimentalMaterialApi"
 
-    kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.time.ExperimentalTime"
-    kotlinOptions.freeCompilerArgs += "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
-    kotlinOptions.freeCompilerArgs += "-opt-in=kotlinx.coroutines.FlowPreview"
-    kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.contracts.ExperimentalContracts"
-    kotlinOptions.freeCompilerArgs += "-opt-in=kotlinx.coroutines.DelicateCoroutinesApi" // allow use of GlobalScope
-    kotlinOptions.freeCompilerArgs += "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
-    kotlinOptions.freeCompilerArgs += "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi"
-    kotlinOptions.freeCompilerArgs += "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi"
-    kotlinOptions.freeCompilerArgs += "-opt-in=androidx.compose.material.ExperimentalMaterialApi"
+        // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
+        freeCompilerArgs += "-Xcontext-receivers"
+
+        // enable Compose compiler metrics and reports:
+        // https://github.com/androidx/androidx/blob/androidx-main/compose/compiler/design/compiler-metrics.md
+        val composeCompilerReportsDir = project.buildDir.resolve("compose")
+        freeCompilerArgs += listOf(
+            "-P",
+            "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$composeCompilerReportsDir"
+        )
+
+        freeCompilerArgs += listOf(
+            "-P",
+            "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$composeCompilerReportsDir"
+        )
+    }
 }
 
 tasks.withType<JavaCompile>().configureEach {
