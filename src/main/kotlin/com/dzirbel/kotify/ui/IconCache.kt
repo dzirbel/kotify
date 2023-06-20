@@ -5,6 +5,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -15,12 +16,14 @@ import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.util.callbackAsState
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -38,7 +41,10 @@ fun CachedIcon(
     tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
 ) {
     Icon(
-        painter = IconCache.load(name, size = size),
+        painter = IconCache
+            .load(name, density = LocalDensity.current, size = size)
+            .collectAsState(EmptyPainter, context = Dispatchers.IO)
+            .value,
         modifier = modifier.size(size),
         contentDescription = contentDescription,
         tint = tint,
@@ -76,29 +82,29 @@ object IconCache {
      * This [Painter] behaves incorrectly when drawing the same icon at different sizes, so we simply use a different
      * key in the cache for each icon-size combination.
      */
-    @Composable
-    fun load(name: String, size: Dp = Dimens.iconMedium): Painter {
-        val density = LocalDensity.current
+    fun load(name: String, density: Density, size: Dp = Dimens.iconMedium): Flow<Painter> {
         val key = IconHash(name = name, density = density, size = size)
 
         // happy path: icon is already loaded
         jobs[key]
             ?.takeIf { it.isCompleted }
             ?.getCompleted()
-            ?.let { return it }
+            ?.let { return flowOf(it) }
 
         return if (loadBlocking) {
             readIcon(name, density)
                 .also { jobs[key] = CompletableDeferred(it) }
+                .let { flowOf(it) }
         } else {
-            callbackAsState(context = Dispatchers.IO, key = name) {
-                jobs.computeIfAbsent(key) {
+            flow {
+                val deferred = jobs.computeIfAbsent(key) {
                     // cannot use scope local to the composition in case it is removed from the composition before
                     // finishing, but then the same icon is requested again
                     GlobalScope.async { readIcon(name, density) }
                 }
-                    .await()
-            }.value ?: EmptyPainter
+
+                emit(deferred.await())
+            }
         }
     }
 
