@@ -20,6 +20,7 @@ import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.util.flatMapParallel
 import kotlinx.coroutines.flow.toList
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
@@ -162,8 +163,11 @@ object SavedArtistRepository : SavedDatabaseRepository<FullSpotifyArtist>(
     }
 
     override suspend fun fetchLibrary(): Iterable<FullSpotifyArtist> {
+        @Serializable
+        data class ArtistsCursorPagingModel(val artists: CursorPaging<FullSpotifyArtist>)
+
         return Spotify.Follow.getFollowedArtists(limit = Spotify.MAX_LIMIT)
-            .asFlow<FullSpotifyArtist, CursorPaging<FullSpotifyArtist>>()
+            .asFlow { url -> Spotify.get<ArtistsCursorPagingModel>(url).artists }
             .toList()
     }
 
