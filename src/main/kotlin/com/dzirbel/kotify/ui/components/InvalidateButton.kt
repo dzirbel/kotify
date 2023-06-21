@@ -35,9 +35,9 @@ fun RefreshIcon(refreshing: Boolean, size: Dp = Dimens.iconMedium) {
  */
 @Composable
 fun InvalidateButton(
-    modifier: Modifier = Modifier,
     refreshing: Boolean,
     updated: Long?,
+    modifier: Modifier = Modifier,
     updatedFormat: (String) -> String = { "Synced $it" },
     updatedFallback: String = "Never synced",
     contentPadding: PaddingValues = PaddingValues(Dimens.space3),

@@ -26,8 +26,8 @@ import kotlin.coroutines.EmptyCoroutineContext
  */
 @Composable
 fun <T> callbackAsState(
-    context: CoroutineContext = EmptyCoroutineContext,
     key: Any,
+    context: CoroutineContext = EmptyCoroutineContext,
     callback: suspend () -> T?,
 ): State<T?> {
     return produceState<T?>(initialValue = null, key1 = key) {

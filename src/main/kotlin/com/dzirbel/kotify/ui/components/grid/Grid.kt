@@ -108,8 +108,8 @@ private class FlaredBottomRoundedRect(val cornerSize: Dp, val bottomPadding: Dp 
 @Suppress("UnnecessaryParentheses", "UnsafeCallOnNullableType")
 fun <E> Grid(
     elements: ListAdapter<E>,
-    selectedElementIndex: Int? = null,
     modifier: Modifier = Modifier,
+    selectedElementIndex: Int? = null,
     horizontalSpacing: Dp = Dimens.space2,
     verticalSpacing: Dp = Dimens.space2,
     edgePadding: PaddingValues = PaddingValues(horizontal = horizontalSpacing, vertical = verticalSpacing),
@@ -146,7 +146,7 @@ fun <E> Grid(
             val colors = LocalColors.current
             elements.forEachIndexed { index, element ->
                 val params = if (index == selectedElementIndex) detailInsertCellParams else cellParams
-                colors.withSurface(increment = params.backgroundSurfaceIncrement) {
+                colors.WithSurface(increment = params.backgroundSurfaceIncrement) {
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(params.cornerSize))
@@ -162,13 +162,13 @@ fun <E> Grid(
             elements.divider?.let { divider ->
                 divisions.forEach { division ->
                     Box {
-                        divider.dividableProperty.divisionHeader(division = division.key)
+                        divider.dividableProperty.DivisionHeader(division = division.key)
                     }
                 }
             }
 
             if (detailInsertContent != null && lastSelectedElementIndex != null) {
-                colors.withSurface(increment = detailInsertCellParams.backgroundSurfaceIncrement) {
+                colors.WithSurface(increment = detailInsertCellParams.backgroundSurfaceIncrement) {
                     AnimatedVisibility(
                         visibleState = insertAnimationState,
                         enter = fadeIn(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),

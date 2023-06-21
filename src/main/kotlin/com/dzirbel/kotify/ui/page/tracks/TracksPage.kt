@@ -8,12 +8,12 @@ object TracksPage : PresenterPage<TracksPresenter.ViewModel, TracksPresenter>() 
     override fun createPresenter(scope: CoroutineScope) = TracksPresenter(scope)
 
     @Composable
-    override fun header(presenter: TracksPresenter, state: TracksPresenter.ViewModel) {
+    override fun Header(presenter: TracksPresenter, state: TracksPresenter.ViewModel) {
         TracksPageHeader(presenter, state)
     }
 
     @Composable
-    override fun content(presenter: TracksPresenter, state: TracksPresenter.ViewModel) {
+    override fun Content(presenter: TracksPresenter, state: TracksPresenter.ViewModel) {
         TracksPageContent(presenter, state)
     }
 

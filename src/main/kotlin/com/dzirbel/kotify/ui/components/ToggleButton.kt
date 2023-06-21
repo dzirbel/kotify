@@ -19,12 +19,12 @@ import kotlinx.collections.immutable.PersistentSet
 
 @Composable
 fun ToggleButton(
-    shape: Shape = RectangleShape,
     toggled: Boolean,
     onToggle: (Boolean) -> Unit,
+    shape: Shape = RectangleShape,
     content: @Composable RowScope.() -> Unit,
 ) {
-    LocalColors.current.withSurface(increment = if (toggled) Colors.INCREMENT_LARGE else 0) {
+    LocalColors.current.WithSurface(increment = if (toggled) Colors.INCREMENT_LARGE else 0) {
         SimpleTextButton(
             modifier = Modifier
                 .border(

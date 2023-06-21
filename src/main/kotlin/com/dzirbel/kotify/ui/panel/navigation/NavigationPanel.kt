@@ -34,7 +34,7 @@ import com.dzirbel.kotify.ui.util.mutate
 
 @Composable
 fun NavigationPanel(headerVisibleState: MutableTransitionState<Boolean>, titles: List<String?>) {
-    LocalColors.current.withSurface(increment = if (headerVisibleState.targetState) Colors.INCREMENT_SMALL else 0) {
+    LocalColors.current.WithSurface(increment = if (headerVisibleState.targetState) Colors.INCREMENT_SMALL else 0) {
         Row(
             modifier = Modifier.fillMaxWidth().animatedSurfaceBackground(key = headerVisibleState),
             horizontalArrangement = Arrangement.SpaceBetween,

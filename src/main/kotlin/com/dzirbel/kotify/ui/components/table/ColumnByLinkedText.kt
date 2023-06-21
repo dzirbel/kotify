@@ -14,7 +14,7 @@ interface ColumnByLinkedText<T> : Column<T> {
     data class Link(val text: String, val link: String)
 
     @Composable
-    override fun item(item: T) {
+    override fun Item(item: T) {
         val links = links(item)
         if (links.isNotEmpty()) {
             LinkedText(

@@ -50,7 +50,7 @@ fun LibraryPanel() {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val presenter = remember { LibraryPanelPresenter(scope = scope) }
 
-    LocalColors.current.withSurface {
+    LocalColors.current.WithSurface {
         VerticalScroll(Modifier.surfaceBackground()) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(Dimens.space3),

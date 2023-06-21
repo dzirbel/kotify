@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -62,7 +61,9 @@ fun DebugPanel(content: @Composable () -> Unit) {
         direction = PanelDirection.RIGHT,
         panelSize = debugPanelSize,
         panelEnabled = Settings.debugPanelOpen && !Settings.debugPanelDetached,
-        panelContent = { DebugPanelContent(tab = tab, scrollState = scrollState) },
+        panelContent = {
+            DebugPanelContent(tab = tab.value, scrollState = scrollState, onClickTab = { tab.value = it })
+        },
         mainContent = content,
     )
 
@@ -74,15 +75,15 @@ fun DebugPanel(content: @Composable () -> Unit) {
                 Settings.debugPanelOpen = false
             },
         ) {
-            Theme.apply {
-                DebugPanelContent(tab = tab, scrollState = scrollState)
+            Theme.Apply {
+                DebugPanelContent(tab = tab.value, scrollState = scrollState, onClickTab = { tab.value = it })
             }
         }
     }
 }
 
 @Composable
-private fun DebugPanelContent(tab: MutableState<DebugTab>, scrollState: ScrollState) {
+private fun DebugPanelContent(tab: DebugTab, scrollState: ScrollState, onClickTab: (DebugTab) -> Unit) {
     Column(modifier = Modifier.surfaceBackground()) {
         Column(Modifier.fillMaxHeight().weight(1f)) {
             Row(Modifier.fillMaxWidth()) {
@@ -103,9 +104,9 @@ private fun DebugPanelContent(tab: MutableState<DebugTab>, scrollState: ScrollSt
 
                 DebugTab.values().forEach { buttonTab ->
                     SimpleTextButton(
-                        onClick = { tab.value = buttonTab },
+                        onClick = { onClickTab(buttonTab) },
                         modifier = Modifier.fillMaxWidth().weight(1f),
-                        backgroundColor = if (tab.value == buttonTab) {
+                        backgroundColor = if (tab == buttonTab) {
                             LocalColors.current.primary
                         } else {
                             Color.Transparent
@@ -118,7 +119,7 @@ private fun DebugPanelContent(tab: MutableState<DebugTab>, scrollState: ScrollSt
 
             HorizontalDivider()
 
-            when (tab.value) {
+            when (tab) {
                 DebugTab.EVENTS -> EventsTab(scrollState)
                 DebugTab.NETWORK -> NetworkTab(scrollState)
                 DebugTab.DATABASE -> DatabaseTab(scrollState)
@@ -130,7 +131,7 @@ private fun DebugPanelContent(tab: MutableState<DebugTab>, scrollState: ScrollSt
         HorizontalDivider()
 
         SimpleTextButton(
-            onClick = { tab.value.log.clear() },
+            onClick = { tab.log.clear() },
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Clear log")

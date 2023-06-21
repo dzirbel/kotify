@@ -15,9 +15,9 @@ import com.dzirbel.kotify.ui.theme.Dimens
  */
 @Composable
 fun CheckboxWithLabel(
-    modifier: Modifier = Modifier,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
     label: @Composable RowScope.() -> Unit,
 ) {
     Row(

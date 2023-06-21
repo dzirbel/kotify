@@ -36,12 +36,12 @@ class TrackPlayingColumn<T>(
     override val cellAlignment = Alignment.Center
 
     @Composable
-    override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
+    override fun Header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
         Box(Modifier)
     }
 
     @Composable
-    override fun item(item: T) {
+    override fun Item(item: T) {
         val hoverState = remember { mutableStateOf(false) }
         Box(Modifier.hoverState(hoverState).padding(Dimens.space2).size(Dimens.fontBodyDp)) {
             if (Player.currentTrackId.value == trackIdOf(item)) {

@@ -24,12 +24,12 @@ import com.dzirbel.kotify.util.coerceAtMostNullable
 fun SidePanel(
     direction: PanelDirection,
     panelSize: PanelSize,
+    panelContent: @Composable () -> Unit,
     modifier: Modifier = Modifier.fillMaxSize(),
-    panelEnabled: Boolean = true,
     panelModifier: Modifier = Modifier.fillMaxSize(),
     contentModifier: Modifier = Modifier.fillMaxSize(),
+    panelEnabled: Boolean = true,
     splitterViewParams: SplitterViewParams = SplitterViewParams(),
-    panelContent: @Composable () -> Unit,
     mainContent: @Composable () -> Unit,
 ) {
     val splitterOrientation = when (direction) {

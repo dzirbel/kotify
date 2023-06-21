@@ -23,7 +23,7 @@ interface ColumnByNumber<T> : Column<T> {
     fun toString(item: T): String = toNumber(item)?.toString().orEmpty()
 
     @Composable
-    override fun item(item: T) {
+    override fun Item(item: T) {
         Text(text = toString(item), modifier = Modifier.padding(cellPadding))
     }
 }

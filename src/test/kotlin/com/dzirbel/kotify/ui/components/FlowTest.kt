@@ -46,7 +46,7 @@ internal class FlowTest {
                 verticalAlignment = case.alignment,
             ) {
                 List(case.elements) { index ->
-                    LocalColors.current.withSurface(increment = Colors.INCREMENT_LARGE) {
+                    LocalColors.current.WithSurface(increment = Colors.INCREMENT_LARGE) {
                         Text(
                             text = "element ${index + 1}",
                             modifier = Modifier

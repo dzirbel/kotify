@@ -23,7 +23,7 @@ internal class SidePanelTest {
                 direction = direction,
                 panelSize = PanelSize(initialSize = FixedOrPercent.Fixed(200.dp)),
                 panelContent = {
-                    LocalColors.current.withSurface {
+                    LocalColors.current.WithSurface {
                         Box(Modifier.fillMaxSize().surfaceBackground()) {
                             Text("Panel", modifier = Modifier.align(Alignment.Center))
                         }
@@ -48,7 +48,7 @@ internal class SidePanelTest {
                 direction = direction,
                 panelSize = PanelSize(initialSize = FixedOrPercent.Percent(0.25f)),
                 panelContent = {
-                    LocalColors.current.withSurface {
+                    LocalColors.current.WithSurface {
                         Box(Modifier.fillMaxSize().surfaceBackground()) {
                             Text("Panel", modifier = Modifier.align(Alignment.Center))
                         }

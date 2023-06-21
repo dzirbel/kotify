@@ -25,8 +25,8 @@ import kotlinx.coroutines.Dispatchers
 @Composable
 fun LoadedImage(
     url: String?,
-    size: Dp = Dimens.contentImage,
     modifier: Modifier = Modifier,
+    size: Dp = Dimens.contentImage,
     scope: CoroutineScope = rememberCoroutineScope { Dispatchers.IO },
     contentDescription: String? = null,
 ) {

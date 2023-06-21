@@ -37,7 +37,7 @@ fun Unauthenticated() {
     val state = remember { mutableStateOf(AuthenticationState()) }
     val scrollState: ScrollState = rememberScrollState(0)
 
-    LocalColors.current.withSurface {
+    LocalColors.current.WithSurface {
         Box(Modifier.fillMaxSize().surfaceBackground()) {
             Box(Modifier.verticalScroll(scrollState).fillMaxSize()) {
                 Column(
@@ -56,9 +56,13 @@ fun Unauthenticated() {
 
                     val oauth = state.value.oauth
                     if (oauth == null) {
-                        LandingPage(state)
+                        LandingPage(state = state.value, onSetState = { state.value = it })
                     } else {
-                        FlowInProgress(state, oauth)
+                        FlowInProgress(
+                            state = state.value,
+                            oauth = oauth,
+                            onSetState = { state.value = it },
+                        )
                     }
                 }
             }

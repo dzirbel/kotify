@@ -9,12 +9,12 @@ data class PlaylistPage(val playlistId: String) :
     override fun createPresenter(scope: CoroutineScope) = PlaylistPresenter(playlistId, scope)
 
     @Composable
-    override fun header(presenter: PlaylistPresenter, state: PlaylistPresenter.ViewModel) {
+    override fun Header(presenter: PlaylistPresenter, state: PlaylistPresenter.ViewModel) {
         PlaylistPageHeader(presenter, state)
     }
 
     @Composable
-    override fun content(presenter: PlaylistPresenter, state: PlaylistPresenter.ViewModel) {
+    override fun Content(presenter: PlaylistPresenter, state: PlaylistPresenter.ViewModel) {
         PlaylistPageContent(presenter, state)
     }
 

@@ -62,6 +62,7 @@ dependencies {
     testFixturesImplementation(libs.coroutines.core)
 
     detektPlugins(libs.detekt.formatting)
+    detektPlugins(libs.twitter.compose.rules)
 }
 
 tasks.withType<KotlinCompile>().configureEach {

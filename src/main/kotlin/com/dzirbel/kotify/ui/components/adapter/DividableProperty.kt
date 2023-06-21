@@ -18,7 +18,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
  *
  * Divisions may be any object, possibly null, as determined by [divisionFor] for each element. A [DividableProperty]
  * must provide a way to order divisions based on [compareDivisions] and content to be rendered as the header of a
- * division in [divisionHeader].
+ * division in [DivisionHeader].
  */
 interface DividableProperty<E> : AdapterProperty<E> {
     /**
@@ -49,7 +49,7 @@ interface DividableProperty<E> : AdapterProperty<E> {
     fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int
 
     /**
-     * Renders [division] as a string; used to render its [divisionHeader].
+     * Renders [division] as a string; used to render its [DivisionHeader].
      */
     fun divisionTitle(division: Any?): String? = division?.toString().orEmpty()
 
@@ -59,7 +59,7 @@ interface DividableProperty<E> : AdapterProperty<E> {
      * Renders a display of the header of the given [division], using its [divisionTitle].
      */
     @Composable
-    fun divisionHeader(division: Any?) {
+    fun DivisionHeader(division: Any?) {
         divisionTitle(division)?.let { divisionTitle ->
             Box {
                 Row(

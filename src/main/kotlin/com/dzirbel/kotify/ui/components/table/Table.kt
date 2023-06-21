@@ -32,8 +32,8 @@ import kotlin.math.roundToInt
 fun <E> Table(
     columns: List<Column<E>>,
     items: ListAdapter<E>,
-    includeHeader: Boolean = true,
     modifier: Modifier = Modifier,
+    includeHeader: Boolean = true,
     onSetSort: (Sort<E>?) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -50,7 +50,7 @@ fun <E> Table(
             if (includeHeader) {
                 columns.forEach { column: Column<E> ->
                     Box {
-                        column.header(
+                        column.Header(
                             sortOrder = items.sortOrderFor(column.sortableProperty),
                             onSetSort = { sortOrder ->
                                 onSetSort(sortOrder?.let { _ -> column.sortableProperty?.let { Sort(it, sortOrder) } })
@@ -63,7 +63,7 @@ fun <E> Table(
             items.forEach { item ->
                 columns.forEach { column ->
                     Box {
-                        column.item(item)
+                        column.Item(item)
                     }
                 }
             }

@@ -58,7 +58,7 @@ interface Column<E> : AdapterProperty<E> {
      * The content for the header of this column.
      */
     @Composable
-    fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
+    fun Header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
         if (sortableProperty != null) {
             SimpleTextButton(
                 contentPadding = PaddingValues(end = headerPadding),
@@ -99,5 +99,5 @@ interface Column<E> : AdapterProperty<E> {
      * The cell content for the given [item].
      */
     @Composable
-    fun item(item: E)
+    fun Item(item: E)
 }

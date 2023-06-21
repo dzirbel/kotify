@@ -113,11 +113,11 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> Track) :
     override fun toNumber(item: T) = toTrack(item).popularity
 
     @Composable
-    override fun item(item: T) {
+    override fun Item(item: T) {
         val popularity = toNumber(item) ?: 0
         val color = LocalColors.current.text.copy(alpha = ContentAlpha.disabled)
 
-        LocalColors.current.withSurface {
+        LocalColors.current.WithSurface {
             Box(
                 Modifier
                     .padding(Dimens.space3)
@@ -167,7 +167,7 @@ class TrackSavedProperty<T>(
     }
 
     @Composable
-    override fun item(item: T) {
+    override fun Item(item: T) {
         val scope = rememberCoroutineScope { Dispatchers.IO }
         ToggleSaveButton(
             modifier = Modifier.padding(Dimens.space2),
@@ -199,7 +199,7 @@ class TrackRatingProperty<T>(
     }
 
     @Composable
-    override fun item(item: T) {
+    override fun Item(item: T) {
         val trackId = trackIdOf(item)
 
         val scope = rememberCoroutineScope { Dispatchers.IO }

@@ -33,18 +33,18 @@ private val LocalSurfaceHeight: ProvidableCompositionLocal<Int> = compositionLoc
 private val LocalSurfaceBackground: ProvidableCompositionLocal<Color> = compositionLocalOf { error("uninitialized") }
 
 /**
- * Applies a background for the local surface as determined by calls to [Colors.withSurface] higher in the composition.
+ * Applies a background for the local surface as determined by calls to [Colors.WithSurface] higher in the composition.
  */
-@Composable
-fun Modifier.surfaceBackground(shape: Shape = RectangleShape) = background(LocalSurfaceBackground.current, shape)
+fun Modifier.surfaceBackground(shape: Shape = RectangleShape): Modifier = composed {
+    background(LocalSurfaceBackground.current, shape)
+}
 
 /**
- * Applies an animated background for the local surface as determined by calls to [Colors.withSurface] higher in the
+ * Applies an animated background for the local surface as determined by calls to [Colors.WithSurface] higher in the
  * composition, fading between the surface background color via [animationSpec].
  *
  * An optional [key] may be provided in order to recreate (jump) the animation when the value of [key] changes.
  */
-@Composable
 fun Modifier.animatedSurfaceBackground(
     shape: Shape = RectangleShape,
     animationSpec: AnimationSpec<Color> = spring(stiffness = Spring.StiffnessMediumLow),
@@ -134,7 +134,7 @@ enum class Colors(
      * Applies this set of [Colors] to the given [content].
      */
     @Composable
-    fun applyColors(content: @Composable () -> Unit) {
+    fun ApplyColors(content: @Composable () -> Unit) {
         CompositionLocalProvider(
             LocalContentColor provides text,
             LocalScrollbarStyle provides defaultScrollbarStyle().copy(
@@ -149,7 +149,7 @@ enum class Colors(
     }
 
     @Composable
-    fun withSurface(increment: Int = INCREMENT_SMALL, content: @Composable () -> Unit) {
+    fun WithSurface(increment: Int = INCREMENT_SMALL, content: @Composable () -> Unit) {
         val height = LocalSurfaceHeight.current + increment
         val background = surfaces.getOrNull(height)
             ?: error("no surface background for height $height")

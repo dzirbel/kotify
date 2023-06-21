@@ -54,7 +54,7 @@ internal class GridTest {
         val elements = ListAdapter.of(listOf(1, 2, 3))
 
         rule.setContent {
-            Theme.apply(colors = Colors.DARK) {
+            Theme.Apply(colors = Colors.DARK) {
                 Grid(
                     elements = elements,
                     columns = columns,
@@ -133,7 +133,7 @@ internal class GridTest {
             }
 
             @Composable
-            override fun divisionHeader(division: Any?) {
+            override fun DivisionHeader(division: Any?) {
                 Text(
                     text = division.toString(),
                     textAlign = TextAlign.Center,

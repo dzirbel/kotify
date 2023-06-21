@@ -12,7 +12,7 @@ import com.dzirbel.kotify.ui.theme.LocalColors
  * A divider which has [Dimens.divider] height, fills the maximum width, and uses [color] background color.
  */
 @Composable
-fun HorizontalDivider(color: Color = LocalColors.current.dividerColor, modifier: Modifier = Modifier) {
+fun HorizontalDivider(modifier: Modifier = Modifier, color: Color = LocalColors.current.dividerColor) {
     Layout(
         modifier = modifier.background(color),
         content = {},
@@ -26,7 +26,7 @@ fun HorizontalDivider(color: Color = LocalColors.current.dividerColor, modifier:
  * A divider which has [Dimens.divider] width, fills the maximum height, and uses [color] background color.
  */
 @Composable
-fun VerticalDivider(color: Color = LocalColors.current.dividerColor, modifier: Modifier = Modifier) {
+fun VerticalDivider(modifier: Modifier = Modifier, color: Color = LocalColors.current.dividerColor) {
     Layout(
         modifier = modifier.background(color),
         content = {},

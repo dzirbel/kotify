@@ -36,7 +36,7 @@ fun <E> DividerSelector(
     currentDivider: Divider<E>?,
     onSelectDivider: (Divider<E>?) -> Unit,
 ) {
-    LocalColors.current.withSurface {
+    LocalColors.current.WithSurface {
         Row(
             modifier = Modifier.surfaceBackground(RoundedCornerShape(size = Dimens.cornerSize)),
             verticalAlignment = Alignment.CenterVertically,

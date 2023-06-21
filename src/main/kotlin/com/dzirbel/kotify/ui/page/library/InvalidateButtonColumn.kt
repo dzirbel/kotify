@@ -21,7 +21,7 @@ interface InvalidateButtonColumn<T> : Column<T> {
         }
 
     @Composable
-    override fun item(item: T) {
+    override fun Item(item: T) {
         InvalidateButton(
             refreshing = isRefreshing(item),
             updated = timestampFor(item),

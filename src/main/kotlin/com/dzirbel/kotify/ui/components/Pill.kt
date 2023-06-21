@@ -24,7 +24,7 @@ fun Pill(
     cornerSize: Dp = Dimens.cornerSize,
     padding: PaddingValues = PaddingValues(horizontal = Dimens.space2, vertical = Dimens.space1),
 ) {
-    LocalColors.current.withSurface(increment = Colors.INCREMENT_LARGE) {
+    LocalColors.current.WithSurface(increment = Colors.INCREMENT_LARGE) {
         Text(
             text = text,
             maxLines = 1,

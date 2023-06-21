@@ -37,7 +37,7 @@ fun <T> SortSelector(
     allowEmpty: Boolean = false,
     onSetSort: (List<Sort<T>>) -> Unit,
 ) {
-    LocalColors.current.withSurface {
+    LocalColors.current.WithSurface {
         Row(
             modifier = Modifier.surfaceBackground(RoundedCornerShape(size = Dimens.cornerSize)),
             verticalAlignment = Alignment.CenterVertically,
@@ -54,8 +54,8 @@ fun <T> SortSelector(
                 Row {
                     val changeDropdownExpanded = remember { mutableStateOf(false) }
                     SortSelectorButton(
-                        contentPadding = PaddingValues(horizontal = Dimens.space3),
                         onClick = { changeDropdownExpanded.value = true },
+                        contentPadding = PaddingValues(horizontal = Dimens.space3),
                     ) {
                         if (index == 0) {
                             CachedIcon(
@@ -151,8 +151,8 @@ fun <T> SortSelector(
 
 @Composable
 private fun SortSelectorButton(
-    contentPadding: PaddingValues = PaddingValues(all = Dimens.space2),
     onClick: () -> Unit,
+    contentPadding: PaddingValues = PaddingValues(all = Dimens.space2),
     content: @Composable RowScope.() -> Unit,
 ) {
     SimpleTextButton(

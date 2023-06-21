@@ -20,7 +20,7 @@ interface ColumnByString<T> : Column<T> {
     fun toString(item: T): String?
 
     @Composable
-    override fun item(item: T) {
+    override fun Item(item: T) {
         Text(text = toString(item).orEmpty(), modifier = Modifier.padding(cellPadding))
     }
 }

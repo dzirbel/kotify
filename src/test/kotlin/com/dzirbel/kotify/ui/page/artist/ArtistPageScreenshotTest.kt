@@ -13,7 +13,7 @@ internal class ArtistPageScreenshotTest {
         val state = ArtistPresenter.ViewModel()
 
         screenshotTest(filename = "empty") {
-            ArtistPage(artistId = "id").renderState(state)
+            ArtistPage(artistId = "id").RenderState(state)
         }
     }
 
@@ -38,7 +38,7 @@ internal class ArtistPageScreenshotTest {
 
         RelativeTimeInfo.withMockedTime(now) {
             screenshotTest(filename = "full", windowWidth = 1500) {
-                ArtistPage(artistId = artist.id.value).renderState(state)
+                ArtistPage(artistId = artist.id.value).RenderState(state)
             }
         }
     }

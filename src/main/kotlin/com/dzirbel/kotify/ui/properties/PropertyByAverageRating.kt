@@ -57,7 +57,7 @@ abstract class PropertyByAverageRating<E>(
     }
 
     @Composable
-    override fun item(item: E) {
+    override fun Item(item: E) {
         AverageStarRating(
             ratings = ratings[idOf(item)]?.map { it.value },
             maxRating = maxRating,

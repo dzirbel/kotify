@@ -12,7 +12,7 @@ internal class ArtistsPageScreenshotTest {
         val state = ArtistsPresenter.ViewModel()
 
         screenshotTest(filename = "empty") {
-            ArtistsPage.renderState(state)
+            ArtistsPage.RenderState(state)
         }
     }
 
@@ -29,7 +29,7 @@ internal class ArtistsPageScreenshotTest {
         )
 
         screenshotTest(filename = "full") {
-            ArtistsPage.renderState(state)
+            ArtistsPage.RenderState(state)
         }
     }
 }

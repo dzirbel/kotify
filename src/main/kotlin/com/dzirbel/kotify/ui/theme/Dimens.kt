@@ -42,7 +42,7 @@ object Dimens {
     private val scrollbarWidth = 12.dp
 
     @Composable
-    fun applyDimens(content: @Composable () -> Unit) {
+    fun ApplyDimens(content: @Composable () -> Unit) {
         // convenience calculation of dp sizes of fonts, for easy of use outside of composable context
         if (!fontDpInitialized) {
             fontDpInitialized = true

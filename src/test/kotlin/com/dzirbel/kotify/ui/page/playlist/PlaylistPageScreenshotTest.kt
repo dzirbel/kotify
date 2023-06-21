@@ -13,7 +13,7 @@ internal class PlaylistPageScreenshotTest {
         val state = PlaylistPresenter.ViewModel()
 
         screenshotTest(filename = "empty") {
-            PlaylistPage(playlistId = "id").renderState(state)
+            PlaylistPage(playlistId = "id").RenderState(state)
         }
     }
 
@@ -39,7 +39,7 @@ internal class PlaylistPageScreenshotTest {
 
         RelativeTimeInfo.withMockedTime(now) {
             screenshotTest(filename = "full", windowWidth = 1500) {
-                PlaylistPage(playlistId = playlist.id.value).renderState(state)
+                PlaylistPage(playlistId = playlist.id.value).RenderState(state)
             }
         }
     }

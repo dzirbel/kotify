@@ -44,7 +44,7 @@ fun Any.screenshotTest(
         val screenshotData = runBlocking(Dispatchers.Swing) {
             val window = ImageComposeScene(width = windowWidth, height = windowHeight)
             window.setContent {
-                Theme.apply(colors = colors) {
+                Theme.Apply(colors = colors) {
                     Box(Modifier.surfaceBackground()) {
                         content()
                     }

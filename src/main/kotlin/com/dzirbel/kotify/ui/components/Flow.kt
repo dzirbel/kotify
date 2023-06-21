@@ -17,10 +17,10 @@ import kotlin.math.min
  */
 @Composable
 fun Flow(
+    modifier: Modifier = Modifier,
     horizontalSpacing: Dp = Dimens.space2,
     verticalSpacing: Dp = Dimens.space2,
     verticalAlignment: Alignment.Vertical = Alignment.Top,
-    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     Layout(

@@ -10,11 +10,11 @@ object Theme {
      * Applies all theme elements ([colors], dimensions, etc) to [content].
      */
     @Composable
-    fun apply(colors: Colors = Settings.colors, content: @Composable () -> Unit) {
-        colors.applyColors {
-            Dimens.applyDimens {
+    fun Apply(colors: Colors = Settings.colors, content: @Composable () -> Unit) {
+        colors.ApplyColors {
+            Dimens.ApplyDimens {
                 CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
-                    LocalColors.current.withSurface(increment = 0, content = content)
+                    LocalColors.current.WithSurface(increment = 0, content = content)
                 }
             }
         }

@@ -85,7 +85,7 @@ fun PlayerPanel() {
     Column(Modifier.fillMaxWidth().wrapContentHeight()) {
         Box(Modifier.fillMaxWidth().height(Dimens.divider).background(LocalColors.current.dividerColor))
 
-        LocalColors.current.withSurface {
+        LocalColors.current.WithSurface {
             val layoutDirection = LocalLayoutDirection.current
 
             Layout(

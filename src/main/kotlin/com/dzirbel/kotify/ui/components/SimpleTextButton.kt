@@ -24,6 +24,7 @@ import com.dzirbel.kotify.ui.util.applyIf
  */
 @Composable
 fun SimpleTextButton(
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(Dimens.space3),
@@ -36,7 +37,6 @@ fun SimpleTextButton(
     } else {
         LocalColors.current.textOnSurface.copy(alpha = LocalContentAlpha.current)
     },
-    onClick: () -> Unit,
     content: @Composable RowScope.() -> Unit,
 ) {
     TextButton(

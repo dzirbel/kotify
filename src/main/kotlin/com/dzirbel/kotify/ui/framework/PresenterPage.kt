@@ -50,17 +50,17 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
     /**
      * Renders the header of the page with the given [presenter] (in order to emit events) and [state].
      *
-     * The page header is rendered above the [content] and distinct in that when the user scrolls past the header the
+     * The page header is rendered above the [Content] and distinct in that when the user scrolls past the header the
      * page title (provided by [titleFor]) is displayed in the navigation bar.
      */
     @Composable
-    abstract fun header(presenter: P, state: VM)
+    abstract fun Header(presenter: P, state: VM)
 
     /**
      * Renders the main content of the page with the given [presenter] (in order to emit events) and [state].
      */
     @Composable
-    abstract fun content(presenter: P, state: VM)
+    abstract fun Content(presenter: P, state: VM)
 
     @Composable
     final override fun BoxScope.bind(visible: Boolean): VM {
@@ -70,8 +70,8 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
 
         if (visible) {
             when (stateOrError) {
-                is Presenter.StateOrError.Error -> errorState(throwable = stateOrError.throwable, presenter = presenter)
-                is Presenter.StateOrError.State -> renderState(
+                is Presenter.StateOrError.Error -> ErrorState(throwable = stateOrError.throwable, presenter = presenter)
+                is Presenter.StateOrError.State -> RenderState(
                     presenter = presenter,
                     state = stateOrError.state,
                     scrollState = scrollState,
@@ -91,7 +91,7 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
      * should not be used outside of tests.
      */
     @Composable
-    fun renderState(
+    fun RenderState(
         state: VM,
         presenter: P = rememberPresenter(key = key, createPresenter = ::createPresenter),
         scrollState: ScrollState = ScrollState(0),
@@ -109,10 +109,10 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
                         }
                     },
                 ) {
-                    header(presenter, state)
+                    Header(presenter, state)
                 }
 
-                content(presenter, state)
+                Content(presenter, state)
             }
 
             VerticalScrollbar(
@@ -123,7 +123,7 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
     }
 
     @Composable
-    private fun <T> errorState(throwable: Throwable, presenter: Presenter<T, *>) {
+    private fun <T> ErrorState(throwable: Throwable, presenter: Presenter<T, *>) {
         if (throwable is Presenter.NotFound) {
             Box(Modifier.fillMaxSize().padding(Dimens.space5)) {
                 Text(

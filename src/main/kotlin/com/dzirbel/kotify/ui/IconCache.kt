@@ -35,9 +35,9 @@ import java.util.concurrent.ConcurrentMap
 @Composable
 fun CachedIcon(
     name: String,
+    modifier: Modifier = Modifier,
     size: Dp = Dimens.iconMedium,
     contentDescription: String? = null,
-    modifier: Modifier = Modifier,
     tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
 ) {
     Icon(

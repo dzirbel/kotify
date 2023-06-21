@@ -8,12 +8,12 @@ data class AlbumPage(val albumId: String) : PresenterPage<AlbumPresenter.ViewMod
     override fun createPresenter(scope: CoroutineScope) = AlbumPresenter(albumId, scope)
 
     @Composable
-    override fun header(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) {
+    override fun Header(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) {
         AlbumPageHeader(presenter, state)
     }
 
     @Composable
-    override fun content(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) {
+    override fun Content(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) {
         AlbumPageContent(presenter, state)
     }
 

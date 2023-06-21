@@ -44,7 +44,7 @@ fun main(args: Array<String>) {
             state = rememberWindowState(placement = WindowPlacement.Maximized, size = DpSize.Unspecified),
             onKeyEvent = KeyboardShortcuts::handle,
         ) {
-            Theme.apply { Root() }
+            Theme.Apply { Root() }
         }
     }
 }

@@ -116,7 +116,7 @@ fun SeekableSlider(
             val roundedCornerShape = RoundedCornerShape(sliderHeight / 2)
 
             // the background of the slider bar, representing the maximum progress
-            LocalColors.current.withSurface {
+            LocalColors.current.WithSurface {
                 Box(Modifier.fillMaxSize().surfaceBackground(roundedCornerShape))
             }
 

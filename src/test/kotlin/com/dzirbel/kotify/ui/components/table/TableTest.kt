@@ -77,7 +77,7 @@ internal class TableTest {
                             override val cellAlignment = Alignment.BottomEnd
 
                             @Composable
-                            override fun item(item: IndexedValue<String>) {
+                            override fun Item(item: IndexedValue<String>) {
                                 val color = when {
                                     item.index % 3 == 0 -> Color.Red
                                     item.index % 3 == 1 -> Color.Green
@@ -111,12 +111,12 @@ internal class TableTest {
                             override val headerAlignment = Alignment.Center
 
                             @Composable
-                            override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
+                            override fun Header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
                                 Text("Custom header")
                             }
 
                             @Composable
-                            override fun item(item: Int) {
+                            override fun Item(item: Int) {
                                 Icon(
                                     imageVector = Icons.Default.Star,
                                     contentDescription = null,
@@ -132,12 +132,12 @@ internal class TableTest {
                             override val headerAlignment = Alignment.Center
 
                             @Composable
-                            override fun header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
+                            override fun Header(sortOrder: SortOrder?, onSetSort: (SortOrder?) -> Unit) {
                                 Text("H", modifier = Modifier.padding(Dimens.space1))
                             }
 
                             @Composable
-                            override fun item(item: Int) {
+                            override fun Item(item: Int) {
                                 Box(Modifier.fillMaxWidth().height(20.dp).background(Color.Gray))
                             }
                         },
