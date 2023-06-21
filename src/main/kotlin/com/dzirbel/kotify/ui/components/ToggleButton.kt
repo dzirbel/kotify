@@ -14,7 +14,8 @@ import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
-import com.dzirbel.kotify.util.plusOrMinus
+import com.dzirbel.kotify.util.immutable.plusOrMinus
+import kotlinx.collections.immutable.PersistentSet
 
 @Composable
 fun ToggleButton(
@@ -45,8 +46,8 @@ fun ToggleButton(
 @Composable
 fun <T> ToggleButtonGroup(
     elements: List<T>,
-    selectedElements: Set<T>,
-    onSelectElements: (Set<T>) -> Unit,
+    selectedElements: PersistentSet<T>,
+    onSelectElements: (PersistentSet<T>) -> Unit,
     content: @Composable (T) -> Unit,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(-Dimens.divider)) {

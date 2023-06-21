@@ -29,13 +29,14 @@ import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.mutate
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun AlbumCell(
     album: Album,
     isSaved: Boolean?,
     showRating: Boolean = false,
-    ratings: List<Rating?>? = null,
+    ratings: ImmutableList<Rating?>? = null,
     onToggleSave: (Boolean) -> Unit,
 ) {
     Column(

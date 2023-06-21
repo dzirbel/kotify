@@ -10,6 +10,7 @@ junit5 = "5.9.3" # https://junit.org/junit5/
 jvm = "18" # https://www.java.com/releases/; also update versions in CI workflows
 kotlin = "1.8.20" # https://kotlinlang.org/releases.html
 kotlinx-serialization = "1.5.1" # https://github.com/Kotlin/kotlinx.serialization
+kotlinx-immutable-collections = "0.3.5" # https://github.com/Kotlin/kotlinx.collections.immutable
 ktor = "2.3.1" # https://ktor.io/changelog/
 okhttp = "4.10.0" # https://square.github.io/okhttp
 slf4j = "2.0.7" # http://www.slf4j.org/
@@ -39,6 +40,7 @@ junit5-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref
 junit5-engine-vintage = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "junit5" }
 
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-immutable-collections = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-immutable-collections" }
 
 ktor-client = { module = "io.ktor:ktor-client-java", version.ref = "ktor" }
 ktor-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }

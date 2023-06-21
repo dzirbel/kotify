@@ -26,6 +26,7 @@ import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.util.countsBy
+import com.dzirbel.kotify.util.immutable.mapToImmutableList
 
 @Composable
 fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewModel) {
@@ -115,7 +116,7 @@ fun ArtistPageContent(presenter: ArtistPresenter, state: ArtistPresenter.ViewMod
                 album = artistAlbum.album.cached,
                 isSaved = state.savedAlbumsStates?.get(artistAlbum.albumId.value)?.value,
                 showRating = true,
-                ratings = state.albumRatings[artistAlbum.albumId.value]?.map { it.value },
+                ratings = state.albumRatings[artistAlbum.albumId.value]?.mapToImmutableList { it.value },
                 onToggleSave = { save ->
                     presenter.emitAsync(
                         ArtistPresenter.Event.ToggleSave(albumId = artistAlbum.albumId.value, save = save),

@@ -21,6 +21,8 @@ import com.dzirbel.kotify.ui.properties.AlbumReleaseDateProperty
 import com.dzirbel.kotify.ui.properties.AlbumTypeDividableProperty
 import com.dzirbel.kotify.util.ignore
 import com.dzirbel.kotify.util.zipToMap
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,7 +41,7 @@ class ArtistPresenter(
     data class ViewModel(
         val artist: Artist? = null,
         val refreshingArtist: Boolean = false,
-        val displayedAlbumTypes: Set<SpotifyAlbum.Type> = setOf(SpotifyAlbum.Type.ALBUM),
+        val displayedAlbumTypes: PersistentSet<SpotifyAlbum.Type> = persistentSetOf(SpotifyAlbum.Type.ALBUM),
         val artistAlbums: ListAdapter<ArtistAlbum> = ListAdapter.empty(
             defaultSort = AlbumReleaseDateProperty.ForArtistAlbum,
             defaultFilter = filterFor(displayedAlbumTypes),
@@ -64,7 +66,7 @@ class ArtistPresenter(
         class ToggleSave(val albumId: String, val save: Boolean) : Event()
         class SetSorts(val sorts: List<Sort<ArtistAlbum>>) : Event()
         class SetDivider(val divider: Divider<ArtistAlbum>?) : Event()
-        class SetDisplayedAlbumTypes(val albumTypes: Set<SpotifyAlbum.Type>) : Event()
+        class SetDisplayedAlbumTypes(val albumTypes: PersistentSet<SpotifyAlbum.Type>) : Event()
     }
 
     override fun externalEvents(): Flow<Event> {

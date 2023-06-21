@@ -1,5 +1,8 @@
 package com.dzirbel.kotify.util
 
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toImmutableMap
+
 /**
  * Returns a new [List] containing the elements of this [List] and the given [elements], inserted according to the
  * natural order of [selector].
@@ -39,12 +42,12 @@ fun <T> List<T>.minusAt(index: Int): List<T> {
 }
 
 /**
- * Returns a map from the results of [map] to the number of times they occur.
+ * Returns an [ImmutableMap] from the results of [map] to the number of times they occur.
  */
-fun <T, K> Iterable<T>.countsBy(map: (T) -> K): Map<K, Int> {
+fun <T, K> Iterable<T>.countsBy(map: (T) -> K): ImmutableMap<K, Int> {
     val counts = mutableMapOf<K, Int>()
     for (element in this) {
         counts.compute(map(element)) { _, count -> if (count == null) 1 else count + 1 }
     }
-    return counts
+    return counts.toImmutableMap()
 }

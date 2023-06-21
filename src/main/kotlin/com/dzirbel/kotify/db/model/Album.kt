@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.db.model
 
+import androidx.compose.runtime.Immutable
 import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadOnlyCachedProperty
@@ -54,6 +55,7 @@ object AlbumTable : SpotifyEntityTable(name = "albums") {
     object SavedAlbumsTable : SavedEntityTable(name = "saved_albums")
 }
 
+@Immutable
 class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
     var albumType: SpotifyAlbum.Type? by AlbumTable.albumType
     var releaseDate: String? by AlbumTable.releaseDate

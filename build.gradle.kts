@@ -34,6 +34,7 @@ dependencies {
     implementation(libs.ktor.netty)
     implementation(libs.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.immutable.collections)
     implementation(libs.slf4j.nop)
 
     implementation(libs.bundles.exposed)

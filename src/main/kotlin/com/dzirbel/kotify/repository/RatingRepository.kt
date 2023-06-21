@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.model.UserRepository
 import java.time.Instant
@@ -8,6 +9,7 @@ import java.time.Instant
  * Wrapper around a singe user-provided rating. To allow changing the rating format in the future, both the current
  * [rating] and the [maxRating] are included, as well as the [rateTime] when the rating was given.
  */
+@Immutable
 data class Rating(
     val rating: Int,
     val maxRating: Int = DEFAULT_MAX_RATING,
