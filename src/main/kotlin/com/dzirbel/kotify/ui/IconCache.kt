@@ -5,7 +5,6 @@ import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -16,14 +15,13 @@ import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.assertNotOnUIThread
+import com.dzirbel.kotify.ui.util.collectAsState
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -43,7 +41,7 @@ fun CachedIcon(
     Icon(
         painter = IconCache
             .load(name, density = LocalDensity.current, size = size)
-            .collectAsState(EmptyPainter, context = Dispatchers.IO)
+            .collectAsState(initial = EmptyPainter, context = Dispatchers.IO)
             .value,
         modifier = modifier.size(size),
         contentDescription = contentDescription,
@@ -82,33 +80,35 @@ object IconCache {
      * This [Painter] behaves incorrectly when drawing the same icon at different sizes, so we simply use a different
      * key in the cache for each icon-size combination.
      */
-    fun load(name: String, density: Density, size: Dp = Dimens.iconMedium): Flow<Painter> {
+    fun load(name: String, density: Density, size: Dp = Dimens.iconMedium): Deferred<Painter> {
         val key = IconHash(name = name, density = density, size = size)
 
         // happy path: icon is already loaded
         jobs[key]
             ?.takeIf { it.isCompleted }
             ?.getCompleted()
-            ?.let { return flowOf(it) }
+            ?.let { return CompletableDeferred(it) }
 
         return if (loadBlocking) {
             readIcon(name, density)
                 .also { jobs[key] = CompletableDeferred(it) }
-                .let { flowOf(it) }
+                .let { CompletableDeferred(it) }
         } else {
-            flow {
-                val deferred = jobs.computeIfAbsent(key) {
-                    // cannot use scope local to the composition in case it is removed from the composition before
-                    // finishing, but then the same icon is requested again
-                    GlobalScope.async { readIcon(name, density) }
+            jobs.computeIfAbsent(key) {
+                // cannot use scope local to the composition in case it is removed from the composition before
+                // finishing, but then the same icon is requested again
+                GlobalScope.async(Dispatchers.IO) {
+                    readIcon(name, density)
                 }
-
-                emit(deferred.await())
             }
         }
     }
 
     private fun readIcon(name: String, density: Density): Painter {
+        if (!loadBlocking) {
+            assertNotOnUIThread()
+        }
+
         val iconPath = "$name.svg"
         return requireNotNull(classLoader.getResourceAsStream(iconPath)) { "Icon $iconPath not found" }
             .use { loadSvgPainter(it, density) }

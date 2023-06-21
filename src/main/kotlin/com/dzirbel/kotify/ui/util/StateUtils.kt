@@ -9,10 +9,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -105,4 +107,18 @@ fun <T> iterativeState(key: Any? = null, generate: () -> Pair<T, Long>): T {
             delay(delay)
         }
     }.value
+}
+
+/**
+ * Returns a [State] backed by this [Deferred]; if already completed, then simply the completed value, otherwise
+ * providing [initial] until the [Deferred] completes (awaiting on the given [context]).
+ */
+@Composable
+fun <T> Deferred<T>.collectAsState(initial: T, context: CoroutineContext = EmptyCoroutineContext): State<T> {
+    return if (isCompleted) {
+        remember { mutableStateOf(getCompleted()) }
+    } else {
+        flow { emit(await()) }
+            .collectAsState(initial = initial, context = context)
+    }
 }
