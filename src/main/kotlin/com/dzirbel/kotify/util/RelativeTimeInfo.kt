@@ -47,8 +47,11 @@ data class RelativeTimeInfo(
         fun withMockedTime(time: Instant, block: () -> Unit) {
             require(mockedTime == null)
             mockedTime = time
-            block()
-            mockedTime = null
+            try {
+                block()
+            } finally {
+                mockedTime = null
+            }
         }
 
         /**
