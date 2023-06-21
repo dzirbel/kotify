@@ -10,6 +10,7 @@ import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.util.filterNotNullValues
 import com.dzirbel.kotify.util.zipToMap
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.CoroutineScope
 
 class RatingsLibraryStatePresenter(scope: CoroutineScope) :
@@ -36,7 +37,7 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
 
         object ClearAllRatings : Event()
 
-        class SetSort(val sorts: List<Sort<String>>) : Event()
+        class SetSort(val sorts: PersistentList<Sort<String>>) : Event()
     }
 
     override suspend fun reactTo(event: Event) {

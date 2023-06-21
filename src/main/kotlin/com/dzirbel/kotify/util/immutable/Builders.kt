@@ -1,18 +1,19 @@
 package com.dzirbel.kotify.util.immutable
 
-import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.persistentListOf
 
-/**
- * Returns an [ImmutableList] with the given known [size] by invoking [elementForIndex] for each of the elements in the
- * list.
- */
-inline fun <reified E> buildImmutableList(size: Int, elementForIndex: (Int) -> E): ImmutableList<E> {
-    val array = arrayOfNulls<E>(size)
+fun <T : Any> persistentListOfNotNull(element: T?): PersistentList<T> {
+    return if (element != null) persistentListOf(element) else persistentListOf()
+}
 
-    repeat(size) { index ->
-        array[index] = elementForIndex(index)
+fun <T : Any> persistentListOfNotNull(vararg elements: T?): PersistentList<T> {
+    return persistentListOf<T>().mutate { mutableList ->
+        for (element in elements) {
+            if (element != null) {
+                mutableList.add(element)
+            }
+        }
     }
-
-    @Suppress("UNCHECKED_CAST")
-    return ImmutableArray(array as Array<E>)
 }

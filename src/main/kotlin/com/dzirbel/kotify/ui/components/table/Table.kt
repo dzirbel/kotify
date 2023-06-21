@@ -16,6 +16,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.util.coerceAtLeastNullable
 import com.dzirbel.kotify.util.sumOfNullable
+import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.roundToInt
 
 /**
@@ -30,7 +31,7 @@ import kotlin.math.roundToInt
 @Composable
 @Suppress("UnnecessaryParentheses", "UnsafeCallOnNullableType")
 fun <E> Table(
-    columns: List<Column<E>>,
+    columns: ImmutableList<Column<E>>,
     items: ListAdapter<E>,
     modifier: Modifier = Modifier,
     includeHeader: Boolean = true,

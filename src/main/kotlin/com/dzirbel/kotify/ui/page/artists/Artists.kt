@@ -44,6 +44,10 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.immutable.mapToImmutableList
+import com.dzirbel.kotify.util.immutable.orEmpty
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 
 @Composable
 fun ArtistsPageHeader(presenter: ArtistsPresenter, state: ArtistsPresenter.ViewModel) {
@@ -128,8 +132,8 @@ fun ArtistsPageContent(presenter: ArtistsPresenter, state: ArtistsPresenter.View
 @Composable
 private fun ArtistCell(
     artist: Artist,
-    savedArtists: Set<String>?,
-    artistRatings: List<State<Rating?>>?,
+    savedArtists: ImmutableSet<String>?,
+    artistRatings: ImmutableList<State<Rating?>>?,
     presenter: ArtistsPresenter,
     onRightClick: () -> Unit,
 ) {
@@ -164,7 +168,7 @@ private fun ArtistCell(
             PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
         }
 
-        AverageStarRating(ratings = artistRatings?.map { it.value })
+        AverageStarRating(ratings = artistRatings?.mapToImmutableList { it.value })
     }
 }
 

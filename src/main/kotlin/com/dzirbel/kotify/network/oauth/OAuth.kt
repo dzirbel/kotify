@@ -1,10 +1,13 @@
 package com.dzirbel.kotify.network.oauth
 
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.await
 import com.dzirbel.kotify.network.bodyFromJson
 import com.dzirbel.kotify.ui.util.openInBrowser
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import okhttp3.FormBody
@@ -21,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * See https://developer.spotify.com/documentation/general/guides/authorization-guide/
  */
+@Stable // necessary due to use of HttpUrl
 class OAuth private constructor(
     state: String,
     private val clientId: String,
@@ -105,7 +109,7 @@ class OAuth private constructor(
          *
          * See https://developer.spotify.com/documentation/general/guides/scopes/
          */
-        val ALL_SCOPES = setOf(
+        val ALL_SCOPES: PersistentSet<String> = persistentSetOf(
             "app-remote-control", // only for Android/iOS
             "playlist-modify-private",
             "playlist-modify-public",
@@ -132,7 +136,7 @@ class OAuth private constructor(
          *
          * See https://developer.spotify.com/documentation/general/guides/scopes/
          */
-        val DEFAULT_SCOPES = ALL_SCOPES.minus("app-remote-control").minus("streaming").toSet()
+        val DEFAULT_SCOPES: PersistentSet<String> = ALL_SCOPES.remove("app-remote-control").remove("streaming")
 
         // number of bytes in the state buffer; 16 bytes -> 22 characters
         private const val STATE_BUFFER_SIZE = 16

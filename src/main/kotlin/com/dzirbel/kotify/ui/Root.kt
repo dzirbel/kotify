@@ -24,6 +24,8 @@ import com.dzirbel.kotify.ui.panel.navigation.NavigationPanel
 import com.dzirbel.kotify.ui.player.PlayerPanel
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.unauthenticated.Unauthenticated
+import com.dzirbel.kotify.util.immutable.mapIndexedToImmutableList
+import kotlinx.collections.immutable.ImmutableList
 
 /**
  * State of the [PageStack], available globally for convenience, rather than passing it into each function which
@@ -84,9 +86,9 @@ private fun PageStackContent() {
             }
 
             val pageStack = pageStack.value
-            lateinit var titles: List<String?>
+            lateinit var titles: ImmutableList<String?>
             Box {
-                titles = pageStack.pages.mapIndexed { index, page ->
+                titles = pageStack.pages.mapIndexedToImmutableList { index, page ->
                     page.bindAndGetTitle(scope = this, visible = index == pageStack.currentIndex)
                 }
             }

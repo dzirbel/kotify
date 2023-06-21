@@ -56,6 +56,8 @@ import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
@@ -98,9 +100,11 @@ fun PlayerPanel() {
                                 ?.collectAsStateSwitchable(key = state.playbackTrack?.id)
                                 ?.value,
                             trackRating = state.trackRatingState?.value,
-                            artistsAreSaved = state.artistSavedStates?.mapValues { entry ->
-                                entry.value.collectAsStateSwitchable(key = entry.key).value
-                            },
+                            artistsAreSaved = state.artistSavedStates
+                                ?.mapValues { entry ->
+                                    entry.value.collectAsStateSwitchable(key = entry.key).value
+                                }
+                                ?.toPersistentMap(),
                             albumIsSaved = state.albumSavedState
                                 ?.collectAsStateSwitchable(key = state.playbackTrack?.album?.id)
                                 ?.value,
@@ -200,7 +204,7 @@ private fun CurrentTrack(
     track: SpotifyTrack?,
     trackIsSaved: Boolean?,
     trackRating: Rating?,
-    artistsAreSaved: Map<String, Boolean?>?,
+    artistsAreSaved: ImmutableMap<String, Boolean?>?,
     albumIsSaved: Boolean?,
     presenter: PlayerPanelPresenter,
 ) {

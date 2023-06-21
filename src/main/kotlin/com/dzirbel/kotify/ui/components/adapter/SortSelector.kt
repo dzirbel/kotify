@@ -24,7 +24,10 @@ import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
-import com.dzirbel.kotify.util.minusAt
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.mutate
+import kotlinx.collections.immutable.toPersistentList
 
 /**
  * Renders a standard selector among the given [sortableProperties], displaying [sorts] as the currently selected
@@ -32,10 +35,10 @@ import com.dzirbel.kotify.util.minusAt
  */
 @Composable
 fun <T> SortSelector(
-    sortableProperties: List<SortableProperty<T>>,
-    sorts: List<Sort<T>>,
+    sortableProperties: ImmutableList<SortableProperty<T>>,
+    sorts: PersistentList<Sort<T>>,
     allowEmpty: Boolean = false,
-    onSetSort: (List<Sort<T>>) -> Unit,
+    onSetSort: (PersistentList<Sort<T>>) -> Unit,
 ) {
     LocalColors.current.WithSurface {
         Row(
@@ -81,7 +84,8 @@ fun <T> SortSelector(
                                         // replace the sort at this index with the new property
                                         .apply { set(index, newSort) }
                                         // remove any other (i.e. not at this index) sorts which also use this property
-                                        .filterIndexed { i, s -> i == index || s.sortableProperty != property },
+                                        .filterIndexed { i, s -> i == index || s.sortableProperty != property }
+                                        .toPersistentList(),
                                 )
                             },
                         )
@@ -91,7 +95,7 @@ fun <T> SortSelector(
                         onClick = {
                             // flip the sort at this index
                             val flipped = sort.copy(sortOrder = sort.sortOrder.flipped)
-                            onSetSort(sorts.toMutableList().apply { set(index, flipped) })
+                            onSetSort(sorts.mutate { it[index] = flipped })
                         },
                     ) {
                         Icon(
@@ -103,7 +107,7 @@ fun <T> SortSelector(
                     }
 
                     if (allowEmpty || sorts.size > 1) {
-                        SortSelectorButton(onClick = { onSetSort(sorts.minusAt(index)) }) {
+                        SortSelectorButton(onClick = { onSetSort(sorts.mutate { it.removeAt(index) }) }) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = null,
@@ -140,7 +144,7 @@ fun <T> SortSelector(
                         onDismissRequest = { addDropdownExpanded.value = false },
                         onPickSort = { property ->
                             val newSort = Sort(sortableProperty = property, sortOrder = property.defaultSortOrder)
-                            onSetSort(sorts.plus(newSort))
+                            onSetSort(sorts.mutate { it.plus(newSort) })
                         },
                     )
                 }

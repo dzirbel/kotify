@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.page.artist
 
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
@@ -20,9 +21,13 @@ import com.dzirbel.kotify.ui.properties.AlbumRatingProperty
 import com.dzirbel.kotify.ui.properties.AlbumReleaseDateProperty
 import com.dzirbel.kotify.ui.properties.AlbumTypeDividableProperty
 import com.dzirbel.kotify.util.ignore
-import com.dzirbel.kotify.util.zipToMap
+import com.dzirbel.kotify.util.zipToPersistentMap
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +43,7 @@ class ArtistPresenter(
     initialState = ViewModel(),
 ) {
 
+    @Stable // necessary due to use of StateFlow
     data class ViewModel(
         val artist: Artist? = null,
         val refreshingArtist: Boolean = false,
@@ -46,8 +52,8 @@ class ArtistPresenter(
             defaultSort = AlbumReleaseDateProperty.ForArtistAlbum,
             defaultFilter = filterFor(displayedAlbumTypes),
         ),
-        val albumRatings: Map<String, List<State<Rating?>>?> = emptyMap(),
-        val savedAlbumsStates: Map<String, StateFlow<Boolean?>>? = null,
+        val albumRatings: PersistentMap<String, List<State<Rating?>>?> = persistentMapOf(),
+        val savedAlbumsStates: PersistentMap<String, StateFlow<Boolean?>>? = null,
         val refreshingArtistAlbums: Boolean = false,
     ) {
         val artistAlbumProperties: List<AdapterProperty<ArtistAlbum>> = listOf(
@@ -64,7 +70,7 @@ class ArtistPresenter(
         data class LoadArtistAlbums(val invalidate: Boolean) : Event()
 
         class ToggleSave(val albumId: String, val save: Boolean) : Event()
-        class SetSorts(val sorts: List<Sort<ArtistAlbum>>) : Event()
+        class SetSorts(val sorts: PersistentList<Sort<ArtistAlbum>>) : Event()
         class SetDivider(val divider: Divider<ArtistAlbum>?) : Event()
         class SetDisplayedAlbumTypes(val albumTypes: PersistentSet<SpotifyAlbum.Type>) : Event()
     }
@@ -110,12 +116,14 @@ class ArtistPresenter(
                 SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
 
                 val albumIds = artistAlbums.map { it.albumId.value }
-                val savedAlbumsStates = albumIds.zipToMap(SavedAlbumRepository.statesOf(ids = albumIds))
+                val savedAlbumsStates = albumIds.zipToPersistentMap(SavedAlbumRepository.statesOf(ids = albumIds))
 
-                val albumRatings = artistAlbums.associate { artistAlbum ->
-                    val album = artistAlbum.album.cached
-                    album.id.value to TrackRatingRepository.ratingStates(ids = album.trackIds.cached)
-                }
+                val albumRatings = artistAlbums
+                    .associate { artistAlbum ->
+                        val album = artistAlbum.album.cached
+                        album.id.value to TrackRatingRepository.ratingStates(ids = album.trackIds.cached)
+                    }
+                    .toPersistentMap()
 
                 mutateState {
                     it.copy(

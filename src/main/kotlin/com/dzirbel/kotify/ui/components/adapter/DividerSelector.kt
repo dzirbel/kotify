@@ -25,6 +25,7 @@ import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
+import kotlinx.collections.immutable.ImmutableList
 
 /**
  * Renders a standard selector among the given [dividableProperties], displaying [currentDivider] as the currently
@@ -32,7 +33,7 @@ import com.dzirbel.kotify.ui.theme.surfaceBackground
  */
 @Composable
 fun <E> DividerSelector(
-    dividableProperties: List<DividableProperty<E>>,
+    dividableProperties: ImmutableList<DividableProperty<E>>,
     currentDivider: Divider<E>?,
     onSelectDivider: (Divider<E>?) -> Unit,
 ) {

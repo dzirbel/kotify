@@ -17,6 +17,8 @@ import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.properties.TrackNameProperty
 import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
+import kotlinx.collections.immutable.persistentListOf
 
 private val RATINGS_TABLE_WIDTH = 750.dp
 
@@ -44,14 +46,14 @@ fun RatingsLibraryState(presenter: RatingsLibraryStatePresenter) {
 
     if (ratingsExpanded.value) {
         Table(
-            columns = listOf(
+            columns = persistentListOf(
                 TrackNameProperty(toTrack = { requireNotNull(state.tracks[it]) }),
                 TrackRatingProperty(trackIdOf = { it }, trackRatings = state.trackRatings),
             ),
             items = state.ratedTracksIds,
             modifier = Modifier.widthIn(max = RATINGS_TABLE_WIDTH),
             onSetSort = {
-                presenter.emitAsync(RatingsLibraryStatePresenter.Event.SetSort(sorts = listOfNotNull(it)))
+                presenter.emitAsync(RatingsLibraryStatePresenter.Event.SetSort(sorts = persistentListOfNotNull(it)))
             },
         )
     }

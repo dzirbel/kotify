@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.CachedIcon
@@ -20,6 +22,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
  * must provide a way to order divisions based on [compareDivisions] and content to be rendered as the header of a
  * division in [DivisionHeader].
  */
+@Immutable
 interface DividableProperty<E> : AdapterProperty<E> {
     /**
      * A user-readable name of this property, specific to its use in dividing. By default uses [title] but may be
@@ -60,6 +63,8 @@ interface DividableProperty<E> : AdapterProperty<E> {
      */
     @Composable
     fun DivisionHeader(division: Any?) {
+        remember(division) {}
+
         divisionTitle(division)?.let { divisionTitle ->
             Box {
                 Row(

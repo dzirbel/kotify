@@ -1,5 +1,6 @@
 package com.dzirbel.kotify
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.Logger.Event
 import com.dzirbel.kotify.Logger.Network.intercept
 import com.dzirbel.kotify.cache.ImageCacheEvent
@@ -24,6 +25,7 @@ import kotlin.time.measureTimedValue
  * A simple in-memory log of [Event]s storing arbitrary data of type [T], which can be [log]ed variously throughout the
  * application and retrieved to be exposed in the UI by [eventsFlow].
  */
+@Stable
 sealed class Logger<T> {
     /**
      * A single event that can be logged.

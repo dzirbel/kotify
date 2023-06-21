@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.db
 
+import androidx.compose.runtime.Immutable
 import com.dzirbel.kotify.network.model.SpotifyObject
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
@@ -23,6 +24,7 @@ abstract class SpotifyEntityTable(name: String = "") : StringIdTable(name = name
 /**
  * Base class for entity objects in a [SpotifyEntityTable].
  */
+@Immutable
 abstract class SpotifyEntity(id: EntityID<String>, table: SpotifyEntityTable) : Entity<String>(id) {
     var name: String by table.name
     var uri: String? by table.uri

@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.db.model
 
+import androidx.compose.runtime.Immutable
 import com.dzirbel.kotify.db.DatabaseRepository
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadOnlyCachedProperty
@@ -47,6 +48,7 @@ object PlaylistTable : SpotifyEntityTable(name = "playlists") {
     object SavedPlaylistsTable : SavedEntityTable(name = "saved_playlists")
 }
 
+@Immutable
 class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTable) {
     var collaborative: Boolean by PlaylistTable.collaborative
     var description: String? by PlaylistTable.description

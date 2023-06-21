@@ -1,6 +1,8 @@
 package com.dzirbel.kotify.ui.components.adapter
 
 import com.dzirbel.kotify.ui.components.table.Column
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * Represents a property of an object of type [E]. This is a marker interface for a number of functional properties such
@@ -16,15 +18,15 @@ interface AdapterProperty<E> {
 /**
  * Filters this [List] for only the [SortableProperty]s it contains.
  */
-fun <E> List<AdapterProperty<E>>.sortableProperties(): List<SortableProperty<E>> {
-    return filterIsInstance<SortableProperty<E>>()
+fun <E> List<AdapterProperty<E>>.sortableProperties(): ImmutableList<SortableProperty<E>> {
+    return filterIsInstance<SortableProperty<E>>().toImmutableList()
 }
 
 /**
  * Filters this [List] for only the [DividableProperty]s it contains.
  */
-fun <E> List<AdapterProperty<E>>.dividableProperties(): List<DividableProperty<E>> {
-    return filterIsInstance<DividableProperty<E>>()
+fun <E> List<AdapterProperty<E>>.dividableProperties(): ImmutableList<DividableProperty<E>> {
+    return filterIsInstance<DividableProperty<E>>().toImmutableList()
 }
 
 /**

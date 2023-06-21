@@ -28,14 +28,17 @@ import com.dzirbel.kotify.ui.page.library.InvalidateButtonColumn
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 private fun artistColumns(
     presenter: ArtistsLibraryStatePresenter,
     artists: Map<String, Artist>,
     syncingArtists: Set<String>,
     syncingArtistAlbums: Set<String>,
-): List<Column<String>> {
-    return listOf(
+): ImmutableList<Column<String>> {
+    return persistentListOf(
         object : ColumnByLinkedText<String> {
             override val title = "Name"
 
@@ -221,7 +224,7 @@ fun ArtistsLibraryState(presenter: ArtistsLibraryStatePresenter) {
             ),
             items = state.savedArtistIds,
             onSetSort = {
-                presenter.emitAsync(ArtistsLibraryStatePresenter.Event.SetSort(sorts = listOfNotNull(it)))
+                presenter.emitAsync(ArtistsLibraryStatePresenter.Event.SetSort(sorts = persistentListOfNotNull(it)))
             },
         )
     }

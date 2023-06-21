@@ -1,10 +1,13 @@
 package com.dzirbel.kotify.ui.components.adapter
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Represents a property by which objects of type [E] can be sorted.
  *
  * Note that [SortableProperty] extends [Comparator] whose functions can be used to compare elements of type [E].
  */
+@Immutable
 interface SortableProperty<E> : AdapterProperty<E> {
     /**
      * A user-readable name of this property, specific to its use in sorting. By default uses [title] but may be

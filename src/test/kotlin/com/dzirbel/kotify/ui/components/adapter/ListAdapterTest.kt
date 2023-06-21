@@ -3,6 +3,7 @@ package com.dzirbel.kotify.ui.components.adapter
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.containsExactly
+import kotlinx.collections.immutable.persistentListOf
 import org.junit.jupiter.api.Test
 
 internal class ListAdapterTest {
@@ -79,13 +80,13 @@ internal class ListAdapterTest {
     @Test
     fun testSort() {
         val elementsDescending = ListAdapter.of(list)
-            .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
+            .withSort(persistentListOf(Sort(naturalOrder, SortOrder.DESCENDING)))
 
         assertThat(elementsDescending.divisions)
             .isEqualTo(mapOf(null to list.withIndex().reversed()))
 
         val elementsByMod2 = elementsDescending
-            .withSort(listOf(Sort(orderByMod2, SortOrder.ASCENDING)))
+            .withSort(persistentListOf(Sort(orderByMod2, SortOrder.ASCENDING)))
 
         // sort should be stable: preserve descending sort after sorting by mod 2
         assertThat(elementsByMod2.divisions)
@@ -126,7 +127,7 @@ internal class ListAdapterTest {
 
         val elements = ListAdapter.of(list)
             .withFilter(filter = predicate)
-            .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
+            .withSort(persistentListOf(Sort(naturalOrder, SortOrder.DESCENDING)))
             .withDivider(Divider(Mod3DividableProperty, SortOrder.DESCENDING))
 
         assertThat(elements.divisions)
@@ -151,7 +152,7 @@ internal class ListAdapterTest {
 
         val elements = ListAdapter.of(listOf(0, 1, 2, 3, 4, 5, 16, 17, 18, 19, 20))
             .withFilter(filter = predicate)
-            .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
+            .withSort(persistentListOf(Sort(naturalOrder, SortOrder.DESCENDING)))
             .withDivider(Divider(Mod3DividableProperty, SortOrder.DESCENDING))
             .plusElements(listOf(6, 7, 50))
 
@@ -169,7 +170,7 @@ internal class ListAdapterTest {
 
         val elements = ListAdapter.of(List(10) { it })
             .withFilter(filter = predicate)
-            .withSort(listOf(Sort(naturalOrder, SortOrder.DESCENDING)))
+            .withSort(persistentListOf(Sort(naturalOrder, SortOrder.DESCENDING)))
             .withDivider(Divider(Mod3DividableProperty, SortOrder.DESCENDING))
             .withElements(List(10) { it + 10 })
 

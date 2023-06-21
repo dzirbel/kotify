@@ -9,6 +9,8 @@ import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.properties.AlbumNameProperty
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -24,7 +26,7 @@ class AlbumsPresenter(scope: CoroutineScope) : Presenter<AlbumsPresenter.ViewMod
     data class ViewModel(
         val refreshing: Boolean = false,
         val albums: ListAdapter<Album> = ListAdapter.empty(defaultSort = AlbumNameProperty),
-        val savedAlbumIds: Set<String>? = null,
+        val savedAlbumIds: PersistentSet<String>? = null,
         val albumsUpdated: Long? = null,
     )
 
@@ -55,7 +57,7 @@ class AlbumsPresenter(scope: CoroutineScope) : Presenter<AlbumsPresenter.ViewMod
                     SavedAlbumRepository.invalidateLibrary()
                 }
 
-                val savedAlbumIds = SavedAlbumRepository.getLibrary()
+                val savedAlbumIds = SavedAlbumRepository.getLibrary().toPersistentSet()
                 val albums = fetchAlbums(albumIds = savedAlbumIds.toList())
                 val albumsUpdated = SavedAlbumRepository.libraryUpdated()
 
@@ -82,17 +84,17 @@ class AlbumsPresenter(scope: CoroutineScope) : Presenter<AlbumsPresenter.ViewMod
                         val allAlbums = stateAlbums.plusElements(missingAlbums)
 
                         mutateState {
-                            it.copy(albums = allAlbums, savedAlbumIds = it.savedAlbumIds?.plus(event.albumIds))
+                            it.copy(albums = allAlbums, savedAlbumIds = it.savedAlbumIds?.addAll(event.albumIds))
                         }
                     } else {
                         mutateState {
-                            it.copy(savedAlbumIds = it.savedAlbumIds?.plus(event.albumIds))
+                            it.copy(savedAlbumIds = it.savedAlbumIds?.addAll(event.albumIds))
                         }
                     }
                 } else {
                     // if an album has been unsaved, retain the grid of albums but toggle its save state
                     mutateState {
-                        it.copy(savedAlbumIds = it.savedAlbumIds?.minus(event.albumIds.toSet()))
+                        it.copy(savedAlbumIds = it.savedAlbumIds?.removeAll(event.albumIds.toSet()))
                     }
                 }
 

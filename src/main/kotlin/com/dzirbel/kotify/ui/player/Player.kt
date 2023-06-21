@@ -10,6 +10,8 @@ import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaybackOffset
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,7 +30,7 @@ object Player {
      */
     data class PlayContext(
         val contextUri: String?,
-        val trackUris: List<String>? = null,
+        val trackUris: ImmutableList<String>? = null,
         val offset: SpotifyPlaybackOffset? = null,
         val positionMs: Int? = null,
     ) {
@@ -71,7 +73,11 @@ object Player {
             /**
              * Returns a [PlayContext] which plays the given [track] with no context, i.e. plays only the track.
              */
-            fun track(track: Track) = track.uri?.let { PlayContext(contextUri = null, trackUris = listOf(it)) }
+            fun track(track: Track): PlayContext? {
+                return track.uri?.let {
+                    PlayContext(contextUri = null, trackUris = persistentListOf(it))
+                }
+            }
         }
     }
 

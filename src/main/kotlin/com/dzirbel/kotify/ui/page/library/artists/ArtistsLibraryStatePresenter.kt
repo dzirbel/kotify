@@ -12,6 +12,7 @@ import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.util.filterNotNullValues
 import com.dzirbel.kotify.util.flatMapParallel
 import com.dzirbel.kotify.util.zipToMap
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.deleteAll
@@ -53,7 +54,7 @@ class ArtistsLibraryStatePresenter(scope: CoroutineScope) :
         object FetchMissingArtistAlbums : Event()
         object InvalidateArtistAlbums : Event()
 
-        class SetSort(val sorts: List<Sort<String>>) : Event()
+        class SetSort(val sorts: PersistentList<Sort<String>>) : Event()
     }
 
     override suspend fun reactTo(event: Event) {

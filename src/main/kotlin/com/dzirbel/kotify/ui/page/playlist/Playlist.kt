@@ -22,6 +22,8 @@ import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.util.immutable.orEmpty
+import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
 import java.util.concurrent.TimeUnit
 
 @Composable
@@ -121,7 +123,7 @@ fun PlaylistPageContent(presenter: PlaylistPresenter, state: PlaylistPresenter.V
             columns = state.playlistTrackColumns,
             items = state.tracks,
             onSetSort = { sort ->
-                presenter.emitAsync(PlaylistPresenter.Event.SetSorts(sorts = listOfNotNull(sort)))
+                presenter.emitAsync(PlaylistPresenter.Event.SetSorts(sorts = persistentListOfNotNull(sort)))
             },
         )
     } else {

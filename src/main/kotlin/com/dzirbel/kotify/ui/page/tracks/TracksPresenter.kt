@@ -11,7 +11,6 @@ import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
-import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.properties.TrackAlbumIndexProperty
@@ -23,7 +22,16 @@ import com.dzirbel.kotify.ui.properties.TrackPlayingColumn
 import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
 import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.properties.TrackSavedProperty
-import com.dzirbel.kotify.util.zipToMap
+import com.dzirbel.kotify.util.zipToPersistentMap
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toPersistentMap
+import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,12 +48,12 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
     data class ViewModel(
         val refreshing: Boolean = false,
         val tracks: ListAdapter<Track> = ListAdapter.empty(),
-        val tracksById: Map<String, Track> = emptyMap(),
-        val savedTrackIds: Set<String> = emptySet(),
-        val trackRatings: Map<String, State<Rating?>> = emptyMap(),
+        val tracksById: PersistentMap<String, Track> = persistentMapOf(),
+        val savedTrackIds: PersistentSet<String> = persistentSetOf(),
+        val trackRatings: ImmutableMap<String, State<Rating?>> = persistentMapOf(),
         val tracksUpdated: Long? = null,
     ) {
-        val trackProperties: List<Column<Track>> = listOf(
+        val trackProperties = persistentListOf(
             TrackPlayingColumn(
                 trackIdOf = { it.id.value },
                 playContextFromTrack = { Player.PlayContext.track(it) },
@@ -67,7 +75,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
         data class ReactToTracksSaved(val trackIds: List<String>, val saved: Boolean) : Event()
-        data class SetSorts(val sorts: List<Sort<Track>>) : Event()
+        data class SetSorts(val sorts: PersistentList<Sort<Track>>) : Event()
         data class SetDivider(val divider: Divider<Track>?) : Event()
     }
 
@@ -94,16 +102,16 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
 
                 val trackIds = SavedTrackRepository.getLibrary().toList()
                 val tracks = fetchTracks(trackIds = trackIds)
-                val tracksById = tracks.associateBy { it.id.value }
+                val tracksById = tracks.associateBy { it.id.value }.toPersistentMap()
                 val tracksUpdated = SavedTrackRepository.libraryUpdated()
-                val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
+                val trackRatings = trackIds.zipToPersistentMap(TrackRatingRepository.ratingStates(ids = trackIds))
 
                 mutateState {
                     ViewModel(
                         refreshing = false,
                         tracks = it.tracks.withElements(tracks),
                         tracksById = tracksById,
-                        savedTrackIds = trackIds.toSet(),
+                        savedTrackIds = trackIds.toPersistentSet(),
                         trackRatings = trackRatings,
                         tracksUpdated = tracksUpdated?.toEpochMilli(),
                     )
@@ -124,20 +132,20 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
 
                         mutateState {
                             it.copy(
-                                tracksById = it.tracksById.plus(missingTracksById),
+                                tracksById = it.tracksById.putAll(missingTracksById),
                                 tracks = it.tracks.plusElements(missingTracks),
-                                savedTrackIds = it.savedTrackIds.plus(event.trackIds),
+                                savedTrackIds = it.savedTrackIds.addAll(event.trackIds),
                             )
                         }
                     } else {
                         mutateState {
-                            it.copy(savedTrackIds = it.savedTrackIds.plus(event.trackIds))
+                            it.copy(savedTrackIds = it.savedTrackIds.addAll(event.trackIds))
                         }
                     }
                 } else {
                     // if an track has been unsaved, retain the table of tracks but toggle its save state
                     mutateState {
-                        it.copy(savedTrackIds = it.savedTrackIds.minus(event.trackIds.toSet()))
+                        it.copy(savedTrackIds = it.savedTrackIds.removeAll(event.trackIds.toSet()))
                     }
                 }
 

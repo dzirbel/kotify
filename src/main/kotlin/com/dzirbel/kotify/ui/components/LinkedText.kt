@@ -6,6 +6,7 @@ import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -64,6 +65,7 @@ interface LinkElementScope {
  * [Colors.primary].
  */
 @Composable
+@ReadOnlyComposable
 fun HyperlinkSpanStyle() = SpanStyle(color = LocalColors.current.primary, textDecoration = TextDecoration.Underline)
 
 /**

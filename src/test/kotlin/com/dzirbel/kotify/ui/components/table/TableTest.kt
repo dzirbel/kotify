@@ -20,13 +20,15 @@ import com.dzirbel.kotify.ui.properties.PropertyByNumber
 import com.dzirbel.kotify.ui.properties.PropertyByString
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.theme.Dimens
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 internal class TableTest {
     data class ScreenshotTestCase<T>(
         val filename: String,
-        val columns: List<Column<T>>,
+        val columns: ImmutableList<Column<T>>,
         val items: List<T>,
         val windowHeight: Int = 768,
     )
@@ -50,7 +52,7 @@ internal class TableTest {
             return listOf(
                 ScreenshotTestCase(
                     filename = "simple",
-                    columns = listOf(
+                    columns = persistentListOf(
                         object : PropertyByString<String>(title = "Col 1") {
                             override fun toString(item: String) = item
                         },
@@ -60,7 +62,7 @@ internal class TableTest {
 
                 ScreenshotTestCase(
                     filename = "medium",
-                    columns = listOf(
+                    columns = persistentListOf(
                         object : ColumnByNumber<IndexedValue<String>> {
                             override val title = "#"
 
@@ -97,7 +99,7 @@ internal class TableTest {
                 ScreenshotTestCase(
                     filename = "complex",
                     windowHeight = 7_000,
-                    columns = listOf(
+                    columns = persistentListOf(
                         object : ColumnByNumber<Int> {
                             override val title = "#"
 

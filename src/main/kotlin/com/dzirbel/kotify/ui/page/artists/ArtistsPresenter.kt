@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.page.artists
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
@@ -20,6 +21,14 @@ import com.dzirbel.kotify.ui.properties.ArtistNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistPopularityProperty
 import com.dzirbel.kotify.ui.properties.ArtistRatingProperty
 import com.dzirbel.kotify.util.ignore
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
@@ -32,6 +41,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
     initialState = ViewModel(),
 ) {
 
+    @Immutable // necessary due to use of Instant
     data class ArtistDetails(
         val savedTime: Instant?,
         val genres: List<String>,
@@ -52,13 +62,13 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
         /**
          * Map from artist ID to the live [Rating]s for all of their tracks.
          */
-        val artistRatings: Map<String, List<State<Rating?>>?> = emptyMap(),
+        val artistRatings: PersistentMap<String, ImmutableList<State<Rating?>>?> = persistentMapOf(),
 
         /**
          * Map from artist ID to [ArtistDetails] which are loaded individually for each artist on demand (i.e. when the
          * grid insert is displayed).
          */
-        val artistDetails: Map<String, ArtistDetails> = emptyMap(),
+        val artistDetails: PersistentMap<String, ArtistDetails> = persistentMapOf(),
 
         /**
          * Index of the selected artist whose details are shown as an insert in the grid.
@@ -69,12 +79,12 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
          * Set of artist IDs which are currently in the user's library. May not always match [artists] exactly since the
          * user could remove an artist, but it will still be displayed.
          */
-        val savedArtistIds: Set<String>? = null,
+        val savedArtistIds: ImmutableSet<String>? = null,
 
         /**
          * Set of saved album IDs, for use in the artist detail insert.
          */
-        val savedAlbumIds: Set<String>? = null,
+        val savedAlbumIds: ImmutableSet<String>? = null,
 
         /**
          * Time when artists were last updated, or null if either this hasn't been loaded yet or the library has never
@@ -82,7 +92,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
          */
         val artistsUpdated: Long? = null,
     ) {
-        val artistProperties: List<AdapterProperty<Artist>> = listOf(
+        val artistProperties: ImmutableList<AdapterProperty<Artist>> = persistentListOf(
             ArtistNameProperty,
             ArtistPopularityProperty,
             ArtistRatingProperty(ratings = artistRatings),
@@ -113,7 +123,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
         data class SetSelectedArtistIndex(val index: Int?) : Event()
         data class ToggleSave(val artistId: String, val save: Boolean) : Event()
         data class ToggleAlbumSaved(val albumId: String, val save: Boolean) : Event()
-        data class SetSorts(val sorts: List<Sort<Artist>>) : Event()
+        data class SetSorts(val sorts: PersistentList<Sort<Artist>>) : Event()
         data class SetDivider(val divider: Divider<Artist>?) : Event()
     }
 
@@ -122,7 +132,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
             SavedArtistRepository.libraryState()
                 .filterNotNull()
                 .onEach { savedArtistIds ->
-                    mutateState { it.copy(savedArtistIds = savedArtistIds) }
+                    mutateState { it.copy(savedArtistIds = savedArtistIds.toImmutableSet()) }
 
                     val loadedArtistIds = queryState { it.artists }.mapTo(mutableSetOf()) { it.id.value }
 
@@ -143,9 +153,10 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
 
                         val missingArtistRatings = missingArtists.associate { artist ->
                             artist.id.value to TrackRatingRepository.ratingStates(ids = artist.trackIds.cached)
+                                .toImmutableList()
                         }
 
-                        mutateState { it.copy(artistRatings = it.artistRatings.plus(missingArtistRatings)) }
+                        mutateState { it.copy(artistRatings = it.artistRatings.putAll(missingArtistRatings)) }
                     } else {
                         mutateState { it.copy(refreshing = false) }
                     }
@@ -160,7 +171,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
 
             SavedAlbumRepository.libraryState(allowRemote = false)
                 .onEach { savedAlbumIds ->
-                    mutateState { it.copy(savedAlbumIds = savedAlbumIds) }
+                    mutateState { it.copy(savedAlbumIds = savedAlbumIds?.toImmutableSet()) }
                 }
                 .ignore(),
         )
@@ -202,7 +213,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                 )
 
                 mutateState {
-                    it.copy(artistDetails = it.artistDetails.plus(artist.id.value to details))
+                    it.copy(artistDetails = it.artistDetails.put(artist.id.value, details))
                 }
 
                 val albums = ArtistRepository.getAllAlbums(artistId = artist.id.value)
@@ -213,7 +224,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
 
                 mutateState {
                     it.copy(
-                        artistDetails = it.artistDetails.plus(artist.id.value to details.copy(albums = albumsAdapter)),
+                        artistDetails = it.artistDetails.put(artist.id.value, details.copy(albums = albumsAdapter)),
                     )
                 }
             }

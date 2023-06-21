@@ -18,6 +18,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,6 +42,7 @@ import kotlinx.coroutines.CoroutineScope
  * in order to maintain distinct presenters when pages for two different artists are present on the page stack, the
  * [key] could be the artist ID.
  */
+@Stable
 abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = null) : Page<VM>() {
     /**
      * Creates an instance of the presenter [P] under the given scope, typically by simply calling its constructor.

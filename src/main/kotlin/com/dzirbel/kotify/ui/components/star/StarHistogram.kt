@@ -26,6 +26,7 @@ import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.hoverState
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -35,7 +36,7 @@ private val BAR_HEIGHT_DEFAULT = 150.dp
 
 @Composable
 fun RatingHistogram(
-    ratings: List<State<Rating?>>,
+    ratings: ImmutableList<State<Rating?>>,
     maxRating: Int = Rating.DEFAULT_MAX_RATING,
     barWidth: Dp = BAR_WIDTH_DEFAULT,
     barHeight: Dp = BAR_HEIGHT_DEFAULT,

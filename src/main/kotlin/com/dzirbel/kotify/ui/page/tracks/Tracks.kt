@@ -23,6 +23,8 @@ import com.dzirbel.kotify.ui.components.adapter.dividableProperties
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.util.immutable.orEmpty
+import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
 
 @Composable
 fun TracksPageHeader(presenter: TracksPresenter, state: TracksPresenter.ViewModel) {
@@ -77,7 +79,7 @@ fun TracksPageContent(presenter: TracksPresenter, state: TracksPresenter.ViewMod
             columns = state.trackProperties,
             items = state.tracks,
             onSetSort = {
-                presenter.emitAsync(TracksPresenter.Event.SetSorts(sorts = listOfNotNull(it)))
+                presenter.emitAsync(TracksPresenter.Event.SetSorts(sorts = persistentListOfNotNull(it)))
             },
         )
     } else {

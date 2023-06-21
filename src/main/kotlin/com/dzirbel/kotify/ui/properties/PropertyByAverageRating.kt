@@ -10,6 +10,7 @@ import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.util.averageOrNull
+import com.dzirbel.kotify.util.immutable.mapToImmutableList
 import java.util.Locale
 import kotlin.math.floor
 
@@ -59,7 +60,7 @@ abstract class PropertyByAverageRating<E>(
     @Composable
     override fun Item(item: E) {
         AverageStarRating(
-            ratings = ratings[idOf(item)]?.map { it.value },
+            ratings = ratings[idOf(item)]?.mapToImmutableList { it.value },
             maxRating = maxRating,
         )
     }

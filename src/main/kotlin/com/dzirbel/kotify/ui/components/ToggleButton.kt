@@ -15,6 +15,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.util.immutable.plusOrMinus
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentSet
 
 @Composable
@@ -45,7 +46,7 @@ fun ToggleButton(
 
 @Composable
 fun <T> ToggleButtonGroup(
-    elements: List<T>,
+    elements: ImmutableList<T>,
     selectedElements: PersistentSet<T>,
     onSelectElements: (PersistentSet<T>) -> Unit,
     content: @Composable (T) -> Unit,

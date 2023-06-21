@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.player
 
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
@@ -26,6 +27,7 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
         initialState = ViewModel(),
     ) {
 
+    @Stable // necessary due to use of StateFlow
     data class ViewModel(
         val playbackTrack: SpotifyTrack? = null,
         val playbackProgressMs: Long? = null,

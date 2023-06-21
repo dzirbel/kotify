@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.page.album
 
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
@@ -23,7 +24,11 @@ import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
 import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.util.ignore
-import com.dzirbel.kotify.util.zipToMap
+import com.dzirbel.kotify.util.zipToPersistentMap
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,17 +45,18 @@ class AlbumPresenter(
     initialState = ViewModel(),
 ) {
 
+    @Stable // necessary due to use of Instant and StateFlow
     data class ViewModel(
         val refreshing: Boolean = false,
         val album: Album? = null,
         val tracks: ListAdapter<Track> = ListAdapter.empty(defaultSort = TrackAlbumIndexProperty),
         val totalDurationMs: Long? = null,
-        val savedTracksStates: Map<String, StateFlow<Boolean?>>? = null,
-        val trackRatings: Map<String, State<Rating?>> = emptyMap(),
+        val savedTracksStates: ImmutableMap<String, StateFlow<Boolean?>>? = null,
+        val trackRatings: ImmutableMap<String, State<Rating?>> = persistentMapOf(),
         val isSaved: Boolean? = null,
-        val albumUpdated: Instant? = null,
+        val albumUpdatedMs: Instant? = null,
     ) {
-        val trackProperties = listOf(
+        val trackProperties = persistentListOf(
             TrackPlayingColumn(
                 trackIdOf = { it.id.value },
                 playContextFromTrack = { track ->
@@ -74,7 +80,7 @@ class AlbumPresenter(
 
     sealed class Event {
         data class Load(val invalidate: Boolean) : Event()
-        data class SetSort(val sorts: List<Sort<Track>>) : Event()
+        data class SetSort(val sorts: PersistentList<Sort<Track>>) : Event()
         data class ToggleSave(val save: Boolean) : Event()
     }
 
@@ -106,9 +112,9 @@ class AlbumPresenter(
 
                 val trackIds = tracks.map { it.id.value }
 
-                val savedTracksState = trackIds.zipToMap(SavedTrackRepository.statesOf(ids = trackIds))
+                val savedTracksState = trackIds.zipToPersistentMap(SavedTrackRepository.statesOf(ids = trackIds))
 
-                val trackRatings = trackIds.zipToMap(TrackRatingRepository.ratingStates(ids = trackIds))
+                val trackRatings = trackIds.zipToPersistentMap(TrackRatingRepository.ratingStates(ids = trackIds))
 
                 mutateState { state ->
                     state.copy(
@@ -118,7 +124,7 @@ class AlbumPresenter(
                         totalDurationMs = tracks.sumOf { track -> track.durationMs },
                         savedTracksStates = savedTracksState,
                         trackRatings = trackRatings,
-                        albumUpdated = album.updatedTime,
+                        albumUpdatedMs = album.updatedTime,
                     )
                 }
 

@@ -23,6 +23,8 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.immutable.mapToImmutableList
+import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
 import java.util.concurrent.TimeUnit
 
 @Composable
@@ -69,7 +71,7 @@ fun AlbumPageHeader(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) 
                         PlayButton(context = Player.PlayContext.album(state.album))
                     }
 
-                    AverageStarRating(ratings = state.trackRatings.values.map { it.value })
+                    AverageStarRating(ratings = state.trackRatings.values.mapToImmutableList { it.value })
                 }
             }
         }
@@ -77,7 +79,7 @@ fun AlbumPageHeader(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) 
         if (state.album != null) {
             InvalidateButton(
                 refreshing = state.refreshing,
-                updated = state.albumUpdated?.toEpochMilli(),
+                updated = state.albumUpdatedMs?.toEpochMilli(),
                 updatedFormat = { "Album synced $it" },
                 updatedFallback = "Album never synced",
                 onClick = { presenter.emitAsync(AlbumPresenter.Event.Load(invalidate = true)) },
@@ -93,7 +95,7 @@ fun AlbumPageContent(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel)
             columns = state.trackProperties,
             items = state.tracks,
             onSetSort = {
-                presenter.emitAsync(AlbumPresenter.Event.SetSort(listOfNotNull(it)))
+                presenter.emitAsync(AlbumPresenter.Event.SetSort(persistentListOfNotNull(it)))
             },
         )
     } else {

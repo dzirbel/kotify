@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui.framework
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,6 +52,7 @@ fun <ViewModel, P : Presenter<ViewModel, *>> rememberPresenter(
  * The presenter continually listens for [emit]ted events and processes them via [reactTo], which calls [mutateState] to
  * update the view [state].
  */
+@Stable
 abstract class Presenter<ViewModel, Event : Any>(
     /**
      * The [CoroutineScope] under which this presenter operates, typically bound to the UI's point in the composition

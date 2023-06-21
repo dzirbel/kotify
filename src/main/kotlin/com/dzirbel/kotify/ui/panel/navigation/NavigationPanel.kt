@@ -31,9 +31,10 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.animatedSurfaceBackground
 import com.dzirbel.kotify.ui.util.mutate
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
-fun NavigationPanel(headerVisibleState: MutableTransitionState<Boolean>, titles: List<String?>) {
+fun NavigationPanel(headerVisibleState: MutableTransitionState<Boolean>, titles: ImmutableList<String?>) {
     LocalColors.current.WithSurface(increment = if (headerVisibleState.targetState) Colors.INCREMENT_SMALL else 0) {
         Row(
             modifier = Modifier.fillMaxWidth().animatedSurfaceBackground(key = headerVisibleState),
@@ -60,7 +61,7 @@ fun NavigationPanel(headerVisibleState: MutableTransitionState<Boolean>, titles:
 }
 
 @Composable
-private fun NavigationButtons(titles: List<String?>) {
+private fun NavigationButtons(titles: ImmutableList<String?>) {
     Row(Modifier.padding(Dimens.space2)) {
         IconButton(
             enabled = pageStack.value.hasPrevious,

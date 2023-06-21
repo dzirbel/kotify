@@ -27,6 +27,7 @@ import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.util.countsBy
 import com.dzirbel.kotify.util.immutable.mapToImmutableList
+import com.dzirbel.kotify.util.immutable.orEmpty
 
 @Composable
 fun ArtistPageHeader(presenter: ArtistPresenter, state: ArtistPresenter.ViewModel) {

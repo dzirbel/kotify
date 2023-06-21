@@ -1,8 +1,11 @@
 package com.dzirbel.kotify.network.model
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Common interface for properties found in most Spotify network objects.
  */
+@Immutable
 interface SpotifyObject {
     /** The Spotify ID for the object. */
     val id: String?

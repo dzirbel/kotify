@@ -1,6 +1,9 @@
 package com.dzirbel.kotify.ui.components.adapter
 
+import androidx.compose.runtime.Immutable
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter.ElementData
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import java.util.SortedMap
 import java.util.TreeMap
 
@@ -13,6 +16,7 @@ import java.util.TreeMap
  * attaching [ElementData] to each element to hold its filter/division state and keeping a [sortIndexes] map for the
  * sort order. Nevertheless, the divisions must be (partially) recomputed in [divisions] for each modified adapter.
  */
+@Immutable
 class ListAdapter<E> private constructor(
     /**
      * Holds the [ElementData] for each element [E] in its canonical order (i.e. the order initially provided in the
@@ -41,7 +45,7 @@ class ListAdapter<E> private constructor(
      *
      * This is retained as a field to properly sort newly added elements (e.g. [plusElements]).
      */
-    val sorts: List<Sort<E>>?,
+    val sorts: PersistentList<Sort<E>>?,
 
     /**
      * The currently applied [Divider] determining how elements are split into groupings.
@@ -238,7 +242,7 @@ class ListAdapter<E> private constructor(
      * Note that the new sort order is stable relative to the previous sort order (not the canonical order), preserving
      * order of equal elements according to the last sort order when a new one is applied.
      */
-    fun withSort(sorts: List<Sort<E>>?): ListAdapter<E> {
+    fun withSort(sorts: PersistentList<Sort<E>>?): ListAdapter<E> {
         if (sorts == this.sorts) return this
 
         return ListAdapter(
@@ -334,7 +338,7 @@ class ListAdapter<E> private constructor(
             return ListAdapter(
                 elements = null,
                 sortIndexes = null,
-                sorts = defaultSort?.let { listOf(Sort(it)) },
+                sorts = defaultSort?.let { persistentListOf(Sort(it)) },
                 divider = null,
                 filter = defaultFilter,
                 filterString = null,

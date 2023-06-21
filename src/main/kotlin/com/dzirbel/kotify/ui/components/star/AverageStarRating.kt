@@ -12,11 +12,12 @@ import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.util.averageAndCountOrNull
+import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.floor
 
 @Composable
 fun AverageStarRating(
-    ratings: Iterable<Rating?>?,
+    ratings: ImmutableList<Rating?>?,
     maxRating: Int = Rating.DEFAULT_MAX_AVERAGE_RATING,
     starSize: Dp = Dimens.iconSmall,
 ) {

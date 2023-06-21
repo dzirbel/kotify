@@ -30,7 +30,7 @@ import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.plusOrMinus
+import com.dzirbel.kotify.util.immutable.plusOrMinus
 
 @Composable
 fun ColumnScope.LandingPage(state: AuthenticationState, onSetState: (AuthenticationState) -> Unit) {
