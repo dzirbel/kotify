@@ -39,7 +39,7 @@ internal class SpotifyImageCacheTest {
 
         assertThat(image).isNotNull()
         assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(1)
+        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
     }
 
     @RepeatedTest(5)
@@ -65,7 +65,7 @@ internal class SpotifyImageCacheTest {
         assertThat(image2).isNotNull()
         assertThat(image1).isSameInstanceAs(image2)
         assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(1)
+        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
     }
 
     @Test
@@ -76,7 +76,7 @@ internal class SpotifyImageCacheTest {
 
         assertThat(image).isNull()
         assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(0)
+        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(0)
     }
 
     @Test
@@ -88,7 +88,7 @@ internal class SpotifyImageCacheTest {
 
         assertThat(image).isNull()
         assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(0)
+        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(0)
     }
 
     @Test
@@ -99,14 +99,14 @@ internal class SpotifyImageCacheTest {
 
         assertThat(image1).isNotNull()
         assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(1)
+        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
 
         val image2 = getImage()
 
         assertThat(image2).isNotNull()
         assertThat(image2).isSameInstanceAs(image1)
         assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(1)
+        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
     }
 
     @Test
@@ -119,7 +119,7 @@ internal class SpotifyImageCacheTest {
         val image1 = requireNotNull(getImage(url = url))
 
         assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(1)
+        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
 
         runBlocking { SpotifyImageCache.clear(scope = this, deleteFileCache = false) }
         assertThat(SpotifyImageCache.getInMemory(url)).isNull()
@@ -131,7 +131,7 @@ internal class SpotifyImageCacheTest {
             .isNotNull()
             .isEqualTo(requireNotNull(image1.asSkiaBitmap().readPixels()))
         assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.state.inMemoryCount).isEqualTo(1)
+        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
     }
 
     private fun getImage(url: String = DEFAULT_IMAGE_URL): ImageBitmap? {

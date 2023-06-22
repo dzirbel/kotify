@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -29,15 +30,17 @@ private val imageCacheSettings = mutableStateOf(ImageCacheSettings())
 @Composable
 fun ImageCacheTab(scrollState: ScrollState) {
     Column(Modifier.fillMaxWidth().padding(Dimens.space3)) {
-        val inMemoryCount = SpotifyImageCache.state.inMemoryCount
-        val diskCount = SpotifyImageCache.state.diskCount
-        val totalDiskSize = SpotifyImageCache.state.totalDiskSize
-        val totalSizeFormatted = remember(totalDiskSize) { formatByteSize(totalDiskSize.toLong()) }
+        val metrics = SpotifyImageCache.metricsFlow.collectAsState().value
+        if (metrics != null) {
+            val totalSizeFormatted = remember(metrics.totalDiskSize) { formatByteSize(metrics.totalDiskSize) }
 
-        Text(
-            "$inMemoryCount images cached in memory; " +
-                "$diskCount cached on disk for a total of $totalSizeFormatted on disk",
-        )
+            Text(
+                "${metrics.inMemoryCount} images cached in memory; " +
+                    "${metrics.diskCount} cached on disk for a total of $totalSizeFormatted on disk",
+            )
+        } else {
+            Text("Image cache metrics loading...")
+        }
 
         VerticalSpacer(Dimens.space2)
 

@@ -1,8 +1,5 @@
 package com.dzirbel.kotify.cache
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.dzirbel.kotify.Application
@@ -17,6 +14,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -45,18 +45,26 @@ object SpotifyImageCache {
     private val IMAGES_DIR by lazy {
         Application.cacheDir.resolve("images")
             .also { it.mkdirs() }
-            .also { require(it.isDirectory) { "could not create image cache directory $it" } }
+            .also { check(it.isDirectory) { "could not create image cache directory $it" } }
     }
 
     private val imageJobs: ConcurrentMap<String, Deferred<ImageBitmap?>> = ConcurrentHashMap()
 
     private val totalCompleted = AtomicInteger()
 
+    private val _metricsFlow = MutableStateFlow<Metrics?>(null)
+
     /**
-     * The current [State] of the cache.
+     * The current [Metrics] of the cache.
      */
-    var state by mutableStateOf(State())
-        private set
+    val metricsFlow: StateFlow<Metrics?>
+        get() = _metricsFlow.asStateFlow()
+
+    init {
+        GlobalScope.launch(Dispatchers.IO) {
+            _metricsFlow.value = Metrics.load()
+        }
+    }
 
     /**
      * Clears the in-memory and disk cache.
@@ -68,7 +76,7 @@ object SpotifyImageCache {
             if (deleteFileCache) {
                 IMAGES_DIR.deleteRecursively()
             }
-            state = State()
+            _metricsFlow.value = Metrics(inMemoryCount = 0, diskCount = 0, totalDiskSize = 0)
         }
     }
 
@@ -95,9 +103,9 @@ object SpotifyImageCache {
                         assertNotOnUIThread()
                         val (_, image) = fromFileCache(url)
 
-                        // only add to imageJobs if the image was in the file cache
-                        if (image != null && !imageJobs.containsKey(url)) {
-                            imageJobs[url] = CompletableDeferred(image)
+                        if (image != null) {
+                            @Suppress("DeferredResultUnused") // ignore previous job which was not replaced
+                            imageJobs.putIfAbsent(url, CompletableDeferred(image))
                         }
                     },
                 )
@@ -125,7 +133,7 @@ object SpotifyImageCache {
             }.also { deferred ->
                 deferred.invokeOnCompletion { error ->
                     if (error == null) {
-                        state = State()
+                        _metricsFlow.value = Metrics.load()
                     }
                 }
             }
@@ -188,16 +196,26 @@ object SpotifyImageCache {
     }
 
     /**
-     * Represents the current state of the image cache.
-     *
-     * Creating a new object with the default values reflects the current state.
-     *
-     * We use a single object for this rather than many [androidx.compose.runtime.MutableState] instances so that
-     * updates only trigger a single recomposition.
+     * Holds metrics about the current state of the image cache.
      */
-    data class State(
-        val inMemoryCount: Int = totalCompleted.get(),
-        val diskCount: Int = IMAGES_DIR.list()?.size ?: 0,
-        val totalDiskSize: Int = IMAGES_DIR.listFiles()?.sumOf { it.length().toInt() } ?: 0,
-    )
+    data class Metrics(
+        val inMemoryCount: Int,
+        val diskCount: Int,
+        val totalDiskSize: Long,
+    ) {
+        companion object {
+            /**
+             * Loads the [Metrics] from the file system. This is a fairly expensive operation but avoids concurrency
+             * issues when loading multiple images in parallel.
+             */
+            fun load(): Metrics {
+                val files = IMAGES_DIR.listFiles()?.filter { it.isFile }
+                return Metrics(
+                    inMemoryCount = totalCompleted.get(),
+                    diskCount = files?.size ?: 0,
+                    totalDiskSize = files?.sumOf { it.length() } ?: 0,
+                )
+            }
+        }
+    }
 }
