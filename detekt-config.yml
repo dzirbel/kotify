@@ -992,7 +992,7 @@ TwitterCompose:
   RememberMissing:
     active: true
   UnstableCollections:
-    active: false # TODO enable after immutable collections migration is complete
+    active: true
   ViewModelForwarding:
     active: true
   ViewModelInjection:
