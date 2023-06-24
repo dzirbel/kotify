@@ -24,6 +24,7 @@ import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.mutate
@@ -42,7 +43,9 @@ fun <T> SortSelector(
 ) {
     LocalColors.current.WithSurface {
         Row(
-            modifier = Modifier.surfaceBackground(RoundedCornerShape(size = Dimens.cornerSize)),
+            modifier = Modifier
+                .instrument()
+                .surfaceBackground(RoundedCornerShape(size = Dimens.cornerSize)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (sorts.isEmpty()) {

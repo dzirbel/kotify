@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Theme
 import com.dzirbel.kotify.ui.theme.surfaceBackground
@@ -35,6 +36,8 @@ fun Any.screenshotTest(
     colorsSet: Set<Colors> = Colors.values().toSet(),
     content: @Composable () -> Unit,
 ) {
+    Settings.instrumentationHighlightCompositions = false
+    Settings.instrumentationMetricsPanels = false
     IconCache.loadBlocking = true
 
     val multipleColorSets = colorsSet.size > 1

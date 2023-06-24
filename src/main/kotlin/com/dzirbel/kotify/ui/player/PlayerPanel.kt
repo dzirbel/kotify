@@ -54,6 +54,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
 import kotlinx.collections.immutable.ImmutableMap
@@ -84,7 +85,7 @@ fun PlayerPanel() {
 
     val state = presenter.state().safeState
 
-    Column(Modifier.fillMaxWidth().wrapContentHeight()) {
+    Column(Modifier.instrument().fillMaxWidth().wrapContentHeight()) {
         Box(Modifier.fillMaxWidth().height(Dimens.divider).background(LocalColors.current.dividerColor))
 
         LocalColors.current.WithSurface {
@@ -208,7 +209,10 @@ private fun CurrentTrack(
     albumIsSaved: Boolean?,
     presenter: PlayerPanelPresenter,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space4)) {
+    Row(
+        modifier = Modifier.instrument(),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
+    ) {
         val album = (track as? FullSpotifyTrack)?.album ?: (track as? SimplifiedSpotifyTrack)?.album
 
         LoadedImage(
@@ -327,7 +331,11 @@ private fun PlayerControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
     val shuffling = state.playbackShuffleState == true
     val repeatState = state.playbackRepeatState
 
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+    Row(
+        modifier = Modifier.instrument(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+    ) {
         IconButton(
             enabled = controlsEnabled && !state.togglingShuffle,
             onClick = {

@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
@@ -22,6 +25,7 @@ import com.dzirbel.kotify.ui.panel.debug.DebugPanel
 import com.dzirbel.kotify.ui.panel.library.LibraryPanel
 import com.dzirbel.kotify.ui.panel.navigation.NavigationPanel
 import com.dzirbel.kotify.ui.player.PlayerPanel
+import com.dzirbel.kotify.ui.theme.Theme
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.unauthenticated.Unauthenticated
 import com.dzirbel.kotify.util.immutable.mapIndexedToImmutableList
@@ -34,6 +38,12 @@ import kotlinx.collections.immutable.ImmutableList
  */
 val pageStack: MutableState<PageStack> = mutableStateOf(PageStack(ArtistsPage))
 
+private val invalidationCounter = mutableStateOf(0)
+
+fun invalidateRootComposable() {
+    invalidationCounter.value++
+}
+
 private val libraryPanelSize = PanelSize(
     initialSize = FixedOrPercent.Fixed(300.dp),
     minPanelSizeDp = 150.dp,
@@ -42,22 +52,41 @@ private val libraryPanelSize = PanelSize(
 
 @Composable
 fun Root() {
-    if (AccessToken.Cache.hasToken) {
-        DebugPanel {
-            Column {
-                SidePanel(
-                    modifier = Modifier.fillMaxHeight().weight(1f),
-                    direction = PanelDirection.LEFT,
-                    panelSize = libraryPanelSize,
-                    panelContent = { LibraryPanel() },
-                    mainContent = { PageStackContent() },
-                )
+    InvalidatingRootContent {
+        Theme.Apply {
+            if (AccessToken.Cache.hasToken) {
+                DebugPanel {
+                    Column {
+                        SidePanel(
+                            modifier = Modifier.fillMaxHeight().weight(1f),
+                            direction = PanelDirection.LEFT,
+                            panelSize = libraryPanelSize,
+                            panelContent = { LibraryPanel() },
+                            mainContent = { PageStackContent() },
+                        )
 
-                PlayerPanel()
+                        PlayerPanel()
+                    }
+                }
+            } else {
+                Unauthenticated()
             }
         }
+    }
+}
+
+/**
+ * Toggles [content] in and out of the composition when [invalidateRootComposable] is called (i.e .[invalidationCounter]
+ * is changed), triggering a full recomposition.
+ */
+@Composable
+private fun InvalidatingRootContent(content: @Composable () -> Unit) {
+    var currentInvalidation by remember { mutableStateOf(0) }
+    if (currentInvalidation != invalidationCounter.value) {
+        currentInvalidation = invalidationCounter.value
+        // remove content from the composition then immediately recompose with the counters matching each other
     } else {
-        Unauthenticated()
+        content()
     }
 }
 

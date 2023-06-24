@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlin.math.roundToInt
 
 val DEFAULT_SLIDER_HEIGHT = 4.dp
@@ -84,7 +85,10 @@ fun SeekableSlider(
         }
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier.instrument(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         if (leftContent != null) {
             HorizontalSpacer(Dimens.space2)
             leftContent()

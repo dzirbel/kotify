@@ -28,6 +28,7 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.collections.immutable.ImmutableList
 
@@ -41,6 +42,7 @@ fun AlbumCell(
 ) {
     Column(
         modifier = Modifier
+            .instrument()
             .clip(RoundedCornerShape(Dimens.cornerSize))
             .clickable { pageStack.mutate { to(AlbumPage(albumId = album.id.value)) } }
             .padding(Dimens.space3),

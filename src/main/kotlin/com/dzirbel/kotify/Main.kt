@@ -11,7 +11,6 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.KeyboardShortcuts
 import com.dzirbel.kotify.ui.Root
-import com.dzirbel.kotify.ui.theme.Theme
 import okhttp3.OkHttpClient
 
 fun main(args: Array<String>) {
@@ -43,8 +42,7 @@ fun main(args: Array<String>) {
             title = "${Application.name} ${Application.version}",
             state = rememberWindowState(placement = WindowPlacement.Maximized, size = DpSize.Unspecified),
             onKeyEvent = KeyboardShortcuts::handle,
-        ) {
-            Theme.Apply { Root() }
-        }
+            content = { Root() },
+        )
     }
 }

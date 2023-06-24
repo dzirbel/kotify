@@ -9,6 +9,7 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 @Composable
 fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
@@ -16,7 +17,7 @@ fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
     val playing = matchesContext && Player.isPlaying.value
     IconButton(
         enabled = Player.playable && context != null,
-        modifier = Modifier.size(size),
+        modifier = Modifier.instrument().size(size),
         onClick = {
             if (playing) Player.pause() else Player.play(context = context)
         },

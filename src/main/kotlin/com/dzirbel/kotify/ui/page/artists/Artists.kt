@@ -43,6 +43,7 @@ import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.immutable.mapToImmutableList
 import com.dzirbel.kotify.util.immutable.orEmpty
@@ -139,6 +140,7 @@ private fun ArtistCell(
 ) {
     Column(
         Modifier
+            .instrument()
             .onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
                 pageStack.mutate { to(ArtistPage(artistId = artist.id.value)) }
             }

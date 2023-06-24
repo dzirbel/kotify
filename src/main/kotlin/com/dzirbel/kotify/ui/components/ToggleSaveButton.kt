@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 /**
  * A generic button to toggle to the saved status of a artist/album/track/etc.
@@ -22,7 +23,7 @@ fun ToggleSaveButton(
 ) {
     val expectedState = remember(isSaved) { mutableStateOf(isSaved) }
     IconButton(
-        modifier = modifier.size(size),
+        modifier = modifier.instrument().size(size),
         enabled = isSaved != null && expectedState.value == isSaved,
         onClick = {
             if (isSaved != null) {

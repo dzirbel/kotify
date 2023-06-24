@@ -4,6 +4,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
@@ -11,8 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.Logger
+import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
+import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.invalidateRootComposable
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.mutate
@@ -29,6 +33,31 @@ private val uiSettings = mutableStateOf(UISettings())
 @Composable
 fun UITab(scrollState: ScrollState) {
     Column(Modifier.fillMaxWidth().padding(Dimens.space3)) {
+        Text("Instrumentation")
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = Settings.instrumentationHighlightCompositions,
+            onCheckedChange = { Settings.instrumentationHighlightCompositions = it },
+            label = { Text("Highlight compositions") },
+        )
+
+        CheckboxWithLabel(
+            modifier = Modifier.fillMaxWidth(),
+            checked = Settings.instrumentationMetricsPanels,
+            onCheckedChange = { Settings.instrumentationMetricsPanels = it },
+            label = { Text("Show composition metrics panels") },
+        )
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { invalidateRootComposable() },
+        ) {
+            Text("Recompose window")
+        }
+
+        HorizontalDivider()
+
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth().consumeKeyEvents(),
             value = uiSettings.value.presenterRegex,

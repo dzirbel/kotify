@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -99,7 +100,7 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
         scrollState: ScrollState = ScrollState(0),
         onHeaderVisibilityChanged: (visible: Boolean) -> Unit = {},
     ) {
-        Box {
+        Box(Modifier.instrument()) {
             Column(modifier = Modifier.verticalScroll(scrollState)) {
                 val headerVisible = remember { mutableStateOf<Boolean?>(null) }
                 Box(
@@ -127,7 +128,7 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
     @Composable
     private fun <T> ErrorState(throwable: Throwable, presenter: Presenter<T, *>) {
         if (throwable is Presenter.NotFound) {
-            Box(Modifier.fillMaxSize().padding(Dimens.space5)) {
+            Box(Modifier.instrument().fillMaxSize().padding(Dimens.space5)) {
                 Text(
                     modifier = Modifier.align(Alignment.Center),
                     style = MaterialTheme.typography.h6,
@@ -135,7 +136,7 @@ abstract class PresenterPage<VM, P : Presenter<VM, *>>(private val key: Any? = n
                 )
             }
         } else {
-            VerticalScroll(columnModifier = Modifier.padding(Dimens.space5)) {
+            VerticalScroll(columnModifier = Modifier.instrument().padding(Dimens.space5)) {
                 Icon(
                     imageVector = Icons.Default.Warning,
                     contentDescription = "Error",

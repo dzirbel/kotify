@@ -26,6 +26,7 @@ import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.hoverState
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -50,7 +51,7 @@ fun RatingHistogram(
         }
     }
 
-    Row {
+    Row(Modifier.instrument()) {
         repeat(maxRating) { rating ->
             val columnHover = remember { mutableStateOf(false) }
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.hoverState(columnHover)) {

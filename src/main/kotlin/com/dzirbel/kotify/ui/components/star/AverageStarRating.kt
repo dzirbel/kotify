@@ -6,11 +6,13 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.util.averageAndCountOrNull
 import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.floor
@@ -26,7 +28,7 @@ fun AverageStarRating(
             ?: Pair(null, 0)
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.instrument()) {
         if (averageRating == null) {
             repeat(maxRating) {
                 StarIcon(starSize = starSize, filled = false)

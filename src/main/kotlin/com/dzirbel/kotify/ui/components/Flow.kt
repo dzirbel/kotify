@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlin.math.max
 import kotlin.math.min
 
@@ -25,7 +26,7 @@ fun Flow(
 ) {
     Layout(
         content = content,
-        modifier = modifier,
+        modifier = modifier.instrument(),
         measurePolicy = { measurables, constraints ->
             val horizontalSpacingPx = horizontalSpacing.roundToPx()
             val verticalSpacingPx = verticalSpacing.roundToPx()

@@ -14,6 +14,7 @@ import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.util.coerceAtLeastNullable
 import com.dzirbel.kotify.util.sumOfNullable
 import kotlinx.collections.immutable.ImmutableList
@@ -46,7 +47,7 @@ fun <E> Table(
     val divisions = items.divisions
 
     Layout(
-        modifier = modifier,
+        modifier = modifier.instrument(),
         content = {
             if (includeHeader) {
                 columns.forEach { column: Column<E> ->

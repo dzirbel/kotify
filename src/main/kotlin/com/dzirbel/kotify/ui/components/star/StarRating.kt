@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.applyIf
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 /**
  * A generic star rating component, represented as a row of clickable stars.
@@ -37,13 +39,13 @@ fun StarRating(
     val dropdownVisible = remember { mutableStateOf(false) }
 
     Row(
-        modifier = if (rating != null) {
-            modifier.onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary)) {
-                dropdownVisible.value = true
-            }
-        } else {
-            modifier
-        },
+        modifier = modifier
+            .instrument()
+            .applyIf(rating != null) {
+                onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary)) {
+                    dropdownVisible.value = true
+                }
+            },
     ) {
         if (rating != null) {
             DropdownMenu(

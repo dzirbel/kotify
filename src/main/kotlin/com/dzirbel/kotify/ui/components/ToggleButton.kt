@@ -14,6 +14,7 @@ import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.util.immutable.plusOrMinus
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentSet
@@ -51,7 +52,10 @@ fun <T> ToggleButtonGroup(
     onSelectElements: (PersistentSet<T>) -> Unit,
     content: @Composable (T) -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(-Dimens.divider)) {
+    Row(
+        modifier = Modifier.instrument(),
+        horizontalArrangement = Arrangement.spacedBy(-Dimens.divider),
+    ) {
         for ((index, element) in elements.withIndex()) {
             val isFirst = index == 0
             val isLast = index == elements.lastIndex

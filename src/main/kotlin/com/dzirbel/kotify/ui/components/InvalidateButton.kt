@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 /**
  * Either an indefinite progress indicator when [refreshing] is true, otherwise a refresh icon.
@@ -45,7 +46,7 @@ fun InvalidateButton(
     onClick: () -> Unit,
 ) {
     SimpleTextButton(
-        modifier = modifier,
+        modifier = modifier.instrument(),
         enabled = !refreshing,
         contentPadding = contentPadding,
         onClick = onClick,

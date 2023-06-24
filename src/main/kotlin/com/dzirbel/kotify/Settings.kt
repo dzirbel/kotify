@@ -27,6 +27,8 @@ object Settings {
         val colors: Colors = Colors.DARK,
         val debugPanelOpen: Boolean = false,
         val debugPanelDetached: Boolean = false,
+        val instrumentationHighlightCompositions: Boolean = false,
+        val instrumentationMetricsPanels: Boolean = false,
     )
 
     private var nullableSettings: SettingsData? = null
@@ -43,6 +45,14 @@ object Settings {
     var colors: Colors by setting(init = { colors }, mutateSettings = { copy(colors = it) })
     var debugPanelOpen: Boolean by setting(init = { debugPanelOpen }, mutateSettings = { copy(debugPanelOpen = it) })
     var debugPanelDetached by setting(init = { debugPanelDetached }, mutateSettings = { copy(debugPanelDetached = it) })
+    var instrumentationHighlightCompositions: Boolean by setting(
+        init = { instrumentationHighlightCompositions },
+        mutateSettings = { copy(instrumentationHighlightCompositions = it) },
+    )
+    var instrumentationMetricsPanels: Boolean by setting(
+        init = { instrumentationMetricsPanels },
+        mutateSettings = { copy(instrumentationMetricsPanels = it) },
+    )
 
     private val ioCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val settingsFile by lazy { Application.settingsDir.resolve("settings.json") }

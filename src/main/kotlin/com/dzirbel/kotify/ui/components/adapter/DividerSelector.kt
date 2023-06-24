@@ -25,6 +25,7 @@ import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlinx.collections.immutable.ImmutableList
 
 /**
@@ -39,7 +40,9 @@ fun <E> DividerSelector(
 ) {
     LocalColors.current.WithSurface {
         Row(
-            modifier = Modifier.surfaceBackground(RoundedCornerShape(size = Dimens.cornerSize)),
+            modifier = Modifier
+                .instrument()
+                .surfaceBackground(RoundedCornerShape(size = Dimens.cornerSize)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val dropdownExpanded = remember { mutableStateOf(false) }

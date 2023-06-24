@@ -41,6 +41,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.applyIf
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -214,7 +215,7 @@ fun <E> Grid(
                 }
             }
         },
-        modifier = modifier,
+        modifier = modifier.instrument(),
         measurePolicy = { measurables, constraints ->
             val cellMeasurables = measurables.subList(fromIndex = 0, toIndex = elements.size)
 

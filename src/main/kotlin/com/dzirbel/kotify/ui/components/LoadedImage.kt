@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.callbackAsState
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
@@ -38,6 +39,7 @@ fun LoadedImage(
     }
 
     val imageModifier = modifier
+        .instrument()
         .size(size)
         .clip(RoundedCornerShape(Dimens.cornerSize))
 
