@@ -34,6 +34,7 @@ fun Any.screenshotTest(
     windowHeight: Int = 768,
     record: Boolean = false,
     colorsSet: Set<Colors> = Colors.values().toSet(),
+    setUpComposeScene: ImageComposeScene.() -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     Settings.instrumentationHighlightCompositions = false
@@ -53,6 +54,8 @@ fun Any.screenshotTest(
                     }
                 }
             }
+
+            window.setUpComposeScene()
 
             window.render().encodeToData()
         }

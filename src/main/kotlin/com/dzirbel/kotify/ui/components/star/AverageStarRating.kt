@@ -15,7 +15,6 @@ import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.util.averageAndCountOrNull
 import kotlinx.collections.immutable.ImmutableList
-import kotlin.math.floor
 
 @Composable
 fun AverageStarRating(
@@ -29,25 +28,14 @@ fun AverageStarRating(
     }
 
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.instrument()) {
-        if (averageRating == null) {
-            repeat(maxRating) {
-                StarIcon(starSize = starSize, filled = false)
-            }
-        } else {
-            repeat(maxRating) { star ->
-                val fullyRated = floor(averageRating) > star
-                val partiallyRated = !fullyRated && averageRating > star
+        StarRow(
+            getStarRating = { averageRating },
+            stars = maxRating,
+            starSize = starSize,
+            enabled = false,
+        )
 
-                when {
-                    fullyRated -> StarIcon(starSize = starSize, filled = true)
-
-                    partiallyRated ->
-                        StarIcon(starSize = starSize, filledPercent = averageRating - floor(averageRating))
-
-                    else -> StarIcon(starSize = starSize, filled = false)
-                }
-            }
-
+        if (averageRating != null) {
             HorizontalSpacer(width = Dimens.space1)
 
             Text(

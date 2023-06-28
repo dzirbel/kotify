@@ -1,11 +1,10 @@
 package com.dzirbel.kotify.ui.components.star
 
 import androidx.compose.foundation.PointerMatcher
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.onClick
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -37,8 +36,9 @@ fun StarRating(
     onRate: (Rating?) -> Unit,
 ) {
     val dropdownVisible = remember { mutableStateOf(false) }
+    val maxRating = rating?.maxRating ?: Rating.DEFAULT_MAX_RATING
 
-    Row(
+    Box(
         modifier = modifier
             .instrument()
             .applyIf(rating != null) {
@@ -47,6 +47,14 @@ fun StarRating(
                 }
             },
     ) {
+        StarRow(
+            getStarRating = { rating?.rating },
+            stars = maxRating,
+            enabled = enabled,
+            starSize = starSize,
+            onClickStar = { star -> onRate(Rating(rating = star, maxRating = maxRating)) },
+        )
+
         if (rating != null) {
             DropdownMenu(
                 expanded = dropdownVisible.value,
@@ -64,23 +72,6 @@ fun StarRating(
                 ) {
                     Text("Clear rating")
                 }
-            }
-        }
-
-        val maxRating = rating?.maxRating ?: Rating.DEFAULT_MAX_RATING
-
-        repeat(maxRating) { star ->
-            val rated = rating != null && rating.rating > star
-
-            IconButton(
-                enabled = enabled,
-                onClick = { onRate(Rating(rating = star + 1, maxRating = maxRating)) },
-            ) {
-                StarIcon(
-                    filled = rated,
-                    starSize = starSize,
-                    contentDescription = "Rate ${star + 1} stars",
-                )
             }
         }
     }
