@@ -1,5 +1,9 @@
 rootProject.name = "kotify"
 
+include(
+    "network",
+)
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
