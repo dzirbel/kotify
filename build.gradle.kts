@@ -7,8 +7,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
 
 plugins {
-    kotlin("jvm") version libs.versions.kotlin.get()
-    kotlin("plugin.serialization") version libs.versions.kotlin.get()
+    kotlin("jvm") version libs.versions.kotlin
+    kotlin("plugin.serialization") version libs.versions.kotlin
 
     alias(libs.plugins.detekt)
     alias(libs.plugins.compose)
