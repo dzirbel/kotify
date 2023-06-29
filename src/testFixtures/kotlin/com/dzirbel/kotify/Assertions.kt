@@ -7,8 +7,6 @@ import assertk.assertions.containsExactly
 import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import assertk.assertions.support.expected
-import assertk.assertions.support.show
 import java.util.SortedMap
 
 /**
@@ -23,32 +21,6 @@ fun <T> T.assertThat(assertion: Assert<T>.() -> Unit) {
  */
 fun <T : Any> Assert<T?>.isNullIf(shouldBeNull: Boolean) {
     if (shouldBeNull) isNull() else isNotNull()
-}
-
-/**
- * Asserts that the value is the same instance as [other].
- */
-fun <T> Assert<T>.isSameInstanceAs(other: T) {
-    given { actual ->
-        if (actual === other) return
-
-        if (actual == other) {
-            expected("to be the same instance as equal-valued object:${show(other)}")
-        } else {
-            expected("to be the same instance as:${show(other)} but was not equal:${show(actual)}")
-        }
-    }
-}
-
-/**
- * Asserts that the value is not the same instance as [other].
- */
-fun <T> Assert<T>.isNotSameInstanceAs(other: T) {
-    given { actual ->
-        if (actual !== other) return
-
-        expected("not to be the same instance as:${show(other)}")
-    }
 }
 
 /**

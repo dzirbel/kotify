@@ -9,11 +9,11 @@ import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isNotEqualTo
 import assertk.assertions.isNotNull
+import assertk.assertions.isNotSameAs
 import assertk.assertions.isNull
+import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
 import com.dzirbel.kotify.MockRequestInterceptor
-import com.dzirbel.kotify.isNotSameInstanceAs
-import com.dzirbel.kotify.isSameInstanceAs
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.withSpotifyConfiguration
 import kotlinx.coroutines.async
@@ -92,15 +92,15 @@ internal class AccessTokenTest {
         AccessToken.Cache.put(token1)
 
         assertThat(AccessToken.Cache.hasToken).isTrue()
-        assertThat(runBlocking { AccessToken.Cache.get() }).isSameInstanceAs(token1)
-        assertThat(runBlocking { AccessToken.Cache.getOrThrow() }).isSameInstanceAs(token1)
+        assertThat(runBlocking { AccessToken.Cache.get() }).isSameAs(token1)
+        assertThat(runBlocking { AccessToken.Cache.getOrThrow() }).isSameAs(token1)
 
         val token2 = AccessToken(accessToken = "token2", tokenType = "", expiresIn = 0)
         AccessToken.Cache.put(token2)
 
         assertThat(AccessToken.Cache.hasToken).isTrue()
-        assertThat(runBlocking { AccessToken.Cache.get() }).isSameInstanceAs(token2)
-        assertThat(runBlocking { AccessToken.Cache.getOrThrow() }).isSameInstanceAs(token2)
+        assertThat(runBlocking { AccessToken.Cache.get() }).isSameAs(token2)
+        assertThat(runBlocking { AccessToken.Cache.getOrThrow() }).isSameAs(token2)
 
         AccessToken.Cache.clear()
         assertNoToken()
@@ -117,7 +117,7 @@ internal class AccessTokenTest {
 
         val loadedToken = runBlocking { AccessToken.Cache.get() }
         assertThat(loadedToken).isEqualTo(token1)
-        assertThat(loadedToken).isNotSameInstanceAs(token1)
+        assertThat(loadedToken).isNotSameAs(token1)
     }
 
     @Test
@@ -263,7 +263,7 @@ internal class AccessTokenTest {
                 val token1 = request1.await()
                 val token2 = request2.await()
 
-                assertThat(token1).isSameInstanceAs(token2)
+                assertThat(token1).isSameAs(token2)
                 assertThat(interceptor.requests).hasSize(1)
             }
         }

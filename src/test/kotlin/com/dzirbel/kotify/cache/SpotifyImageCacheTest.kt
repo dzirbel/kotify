@@ -6,10 +6,10 @@ import assertk.assertThat
 import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
+import assertk.assertions.isNotSameAs
 import assertk.assertions.isNull
+import assertk.assertions.isSameAs
 import com.dzirbel.kotify.MockRequestInterceptor
-import com.dzirbel.kotify.isNotSameInstanceAs
-import com.dzirbel.kotify.isSameInstanceAs
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -63,7 +63,7 @@ internal class SpotifyImageCacheTest {
 
         assertThat(image1).isNotNull()
         assertThat(image2).isNotNull()
-        assertThat(image1).isSameInstanceAs(image2)
+        assertThat(image1).isSameAs(image2)
         assertThat(interceptor.requests).hasSize(1)
         assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
     }
@@ -104,7 +104,7 @@ internal class SpotifyImageCacheTest {
         val image2 = getImage()
 
         assertThat(image2).isNotNull()
-        assertThat(image2).isSameInstanceAs(image1)
+        assertThat(image2).isSameAs(image1)
         assertThat(interceptor.requests).hasSize(1)
         assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
     }
@@ -126,7 +126,7 @@ internal class SpotifyImageCacheTest {
 
         val image2 = requireNotNull(getImage(url = url))
 
-        assertThat(image2).isNotSameInstanceAs(image1)
+        assertThat(image2).isNotSameAs(image1)
         assertThat(image2.asSkiaBitmap().readPixels())
             .isNotNull()
             .isEqualTo(requireNotNull(image1.asSkiaBitmap().readPixels()))

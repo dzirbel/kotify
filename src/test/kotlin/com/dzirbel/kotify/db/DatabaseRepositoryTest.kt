@@ -12,8 +12,8 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import assertk.assertions.isSameAs
 import com.dzirbel.kotify.containsExactlyElementsOf
-import com.dzirbel.kotify.isSameInstanceAs
 import com.dzirbel.kotify.network.model.SpotifyObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -307,7 +307,7 @@ internal class DatabaseRepositoryTest {
                 assertThat(TestRepository.fetchedIds).containsExactly("id1")
 
                 val stateB = TestRepository.stateOf(id = "id1")
-                assertThat(stateB).isSameInstanceAs(state)
+                assertThat(stateB).isSameAs(state)
                 assertThat(TestRepository.fetchedIds).containsExactly("id1")
             }
         }
@@ -367,7 +367,7 @@ internal class DatabaseRepositoryTest {
                 assertThat(state.value).isNull()
 
                 val state2 = TestRepository.stateOf(id = "id1", scope = this, allowRemote = true)
-                assertThat(state2).isSameInstanceAs(state)
+                assertThat(state2).isSameAs(state)
 
                 advanceUntilIdle()
 

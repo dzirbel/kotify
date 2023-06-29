@@ -7,10 +7,10 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
 import com.dzirbel.kotify.containsExactlyElementsOfInAnyOrder
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
-import com.dzirbel.kotify.isSameInstanceAs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -291,7 +291,7 @@ internal class SavedDatabaseRepositoryTest {
                     .isNotNull()
                     .containsExactlyElementsOfInAnyOrder(cachedLibrary.plus("saved-4").minus("saved-2"))
 
-                assertThat(TestSavedRepository.libraryState()).isSameInstanceAs(state)
+                assertThat(TestSavedRepository.libraryState()).isSameAs(state)
             }
         }
     }
