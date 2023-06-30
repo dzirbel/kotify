@@ -1,12 +1,12 @@
-package com.dzirbel.kotify
+package com.dzirbel.kotify.network
 
 import com.dzirbel.kotify.network.model.SpotifyAlbum
-import com.dzirbel.kotify.properties.AlbumProperties
-import com.dzirbel.kotify.properties.ArtistProperties
-import com.dzirbel.kotify.properties.EpisodeProperties
-import com.dzirbel.kotify.properties.PlaylistProperties
-import com.dzirbel.kotify.properties.ShowProperties
-import com.dzirbel.kotify.properties.TrackProperties
+import com.dzirbel.kotify.network.properties.AlbumProperties
+import com.dzirbel.kotify.network.properties.ArtistProperties
+import com.dzirbel.kotify.network.properties.EpisodeProperties
+import com.dzirbel.kotify.network.properties.PlaylistProperties
+import com.dzirbel.kotify.network.properties.ShowProperties
+import com.dzirbel.kotify.network.properties.TrackProperties
 
 @Suppress("LargeClass", "TooManyFunctions")
 object Fixtures {

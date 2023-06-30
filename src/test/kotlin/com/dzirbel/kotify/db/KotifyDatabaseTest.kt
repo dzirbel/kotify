@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.db
 
 import assertk.assertThat
-import com.dzirbel.kotify.containsExactlyElementsOfInAnyOrder
+import com.dzirbel.kotify.util.containsExactlyElementsOfInAnyOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

@@ -4,9 +4,7 @@ import assertk.assertThat
 import assertk.assertions.hasSameSizeAs
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
-import com.dzirbel.kotify.Fixtures
-import com.dzirbel.kotify.TAG_NETWORK
-import com.dzirbel.kotify.properties.TrackProperties
+import com.dzirbel.kotify.network.properties.TrackProperties
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test

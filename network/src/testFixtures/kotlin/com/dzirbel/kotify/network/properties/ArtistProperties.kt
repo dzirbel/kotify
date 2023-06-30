@@ -1,13 +1,13 @@
-package com.dzirbel.kotify.properties
+package com.dzirbel.kotify.network.properties
 
 import assertk.assertThat
 import assertk.assertions.isBetween
 import assertk.assertions.isGreaterThanOrEqualTo
 import assertk.assertions.isNotEmpty
-import com.dzirbel.kotify.Fixtures
-import com.dzirbel.kotify.containsAllElementsOf
+import com.dzirbel.kotify.network.Fixtures
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyArtist
+import com.dzirbel.kotify.util.containsAllElementsOf
 
 data class ArtistProperties(
     override val id: String,

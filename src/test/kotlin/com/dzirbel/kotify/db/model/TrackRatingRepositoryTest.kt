@@ -7,9 +7,9 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import com.dzirbel.kotify.assertThat
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.util.assertThat
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach

@@ -1,4 +1,4 @@
-package com.dzirbel.kotify
+package com.dzirbel.kotify.util
 
 import assertk.Assert
 import assertk.assertThat

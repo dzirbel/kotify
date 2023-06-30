@@ -1,8 +1,8 @@
-package com.dzirbel.kotify.properties
+package com.dzirbel.kotify.network.properties
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import com.dzirbel.kotify.Fixtures
+import com.dzirbel.kotify.network.Fixtures
 import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.asFlow

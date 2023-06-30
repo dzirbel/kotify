@@ -13,8 +13,8 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isSameAs
-import com.dzirbel.kotify.containsExactlyElementsOf
 import com.dzirbel.kotify.network.model.SpotifyObject
+import com.dzirbel.kotify.util.containsExactlyElementsOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.advanceUntilIdle

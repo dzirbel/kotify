@@ -28,6 +28,7 @@ dependencies {
     testImplementation(libs.assertk)
     testImplementation(libs.ktor.client)
 
+    testFixturesImplementation(libs.assertk)
     testFixturesImplementation(libs.okhttp)
     testFixturesImplementation(libs.coroutines.core)
     testFixturesImplementation(libs.kotlinx.serialization.json)

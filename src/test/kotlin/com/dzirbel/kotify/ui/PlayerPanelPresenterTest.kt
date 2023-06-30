@@ -3,13 +3,13 @@ package com.dzirbel.kotify.ui
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.FixtureModels
-import com.dzirbel.kotify.TestSpotifyInterceptor
 import com.dzirbel.kotify.assertStateEquals
 import com.dzirbel.kotify.db.model.SavedAlbumRepository
 import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.emitAndIdle
 import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.network.TestSpotifyInterceptor
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice

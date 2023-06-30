@@ -1,9 +1,9 @@
-package com.dzirbel.kotify
+package com.dzirbel.kotify.network
 
 import assertk.assertThat
 import assertk.assertions.isEmpty
-import com.dzirbel.kotify.TestSpotifyInterceptor.intercepts
-import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.network.TestSpotifyInterceptor.intercepts
+import com.dzirbel.kotify.util.containsExactlyElementsOfInAnyOrder
 
 /**
  * A [Spotify.RequestInterceptor] which intercepts all requests and returns the values provided by [intercepts].

@@ -4,10 +4,8 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
-import com.dzirbel.kotify.Fixtures
-import com.dzirbel.kotify.TAG_NETWORK
-import com.dzirbel.kotify.containsExactlyElementsOf
 import com.dzirbel.kotify.network.model.asFlow
+import com.dzirbel.kotify.util.containsExactlyElementsOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag

@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.properties
+package com.dzirbel.kotify.network.properties
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo

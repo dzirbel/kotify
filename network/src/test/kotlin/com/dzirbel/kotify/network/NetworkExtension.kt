@@ -1,8 +1,5 @@
-package com.dzirbel.kotify
+package com.dzirbel.kotify.network
 
-import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.TAG_NETWORK
-import com.dzirbel.kotify.network.TestSpotifyInterceptor
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -12,8 +9,6 @@ import org.junit.jupiter.api.extension.ExtensionContext
  *
  * This extension is applied automatically to all tests which are run without the [TAG_NETWORK] tag via a service
  * loader.
- *
- * TODO duplicate in :network
  */
 class NetworkExtension : BeforeEachCallback, AfterEachCallback {
     override fun beforeEach(context: ExtensionContext) {

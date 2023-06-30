@@ -1,13 +1,13 @@
-package com.dzirbel.kotify.properties
+package com.dzirbel.kotify.network.properties
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isGreaterThanOrEqualTo
 import assertk.assertions.isNotNull
-import com.dzirbel.kotify.containsExactlyElementsOfInAnyOrder
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.SpotifySavedTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
+import com.dzirbel.kotify.util.containsExactlyElementsOfInAnyOrder
 
 data class TrackProperties(
     override val id: String?,

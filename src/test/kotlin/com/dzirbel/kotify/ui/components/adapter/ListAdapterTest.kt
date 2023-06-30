@@ -2,7 +2,7 @@ package com.dzirbel.kotify.ui.components.adapter
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import com.dzirbel.kotify.containsExactly
+import com.dzirbel.kotify.util.containsExactly
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.jupiter.api.Test
 

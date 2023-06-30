@@ -6,11 +6,9 @@ import assertk.assertions.each
 import assertk.assertions.hasSameSizeAs
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
-import com.dzirbel.kotify.Fixtures
-import com.dzirbel.kotify.TAG_NETWORK
-import com.dzirbel.kotify.containsExactlyElementsOf
 import com.dzirbel.kotify.network.model.asFlow
-import com.dzirbel.kotify.zipWithBy
+import com.dzirbel.kotify.util.containsExactlyElementsOf
+import com.dzirbel.kotify.util.zipWithBy
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag

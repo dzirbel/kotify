@@ -59,6 +59,7 @@ dependencies {
     testImplementation(libs.coroutines.swing) // Swing dispatcher for screenshot tests
 
     testFixturesImplementation(project(":network"))
+    testFixturesImplementation(testFixtures(project(":network")))
     testFixturesImplementation(libs.assertk)
     testFixturesImplementation(libs.bundles.exposed)
     testFixturesImplementation(compose.desktop.currentOs)

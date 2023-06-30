@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.properties
+package com.dzirbel.kotify.network.properties
 
 import assertk.assertThat
 import assertk.assertions.hasSize
@@ -7,12 +7,12 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import com.dzirbel.kotify.Fixtures
-import com.dzirbel.kotify.containsAllElementsOf
+import com.dzirbel.kotify.network.Fixtures
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
 import com.dzirbel.kotify.network.model.asFlow
+import com.dzirbel.kotify.util.containsAllElementsOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 

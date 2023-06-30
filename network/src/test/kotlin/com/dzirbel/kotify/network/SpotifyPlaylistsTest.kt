@@ -7,10 +7,8 @@ import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
-import com.dzirbel.kotify.Fixtures
-import com.dzirbel.kotify.TAG_NETWORK
 import com.dzirbel.kotify.network.model.asFlow
-import com.dzirbel.kotify.properties.PlaylistProperties
+import com.dzirbel.kotify.network.properties.PlaylistProperties
 import com.dzirbel.kotify.util.retryForResult
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
