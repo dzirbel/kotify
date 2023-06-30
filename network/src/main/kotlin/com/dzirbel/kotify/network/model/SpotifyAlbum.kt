@@ -68,7 +68,8 @@ interface SpotifyAlbum : SpotifyObject {
         ALBUM(displayName = "Album", iconName = "album"),
         SINGLE(displayName = "Single", iconName = "audiotrack"),
         COMPILATION(displayName = "Compilation", iconName = "library-music"),
-        APPEARS_ON(displayName = "Appears On", iconName = "audio-file");
+        APPEARS_ON(displayName = "Appears On", iconName = "audio-file"),
+        ;
 
         internal object Serializer : CaseInsensitiveEnumSerializer<Type>(Type::class)
     }
