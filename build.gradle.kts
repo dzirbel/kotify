@@ -239,8 +239,8 @@ fun Project.configureJacoco() {
 
     tasks.withType<JacocoReport> {
         reports {
-            xml.required.set(true)
-            csv.required.set(false)
+            xml.required = true
+            csv.required = false
         }
     }
 }
