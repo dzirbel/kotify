@@ -304,33 +304,22 @@ internal class AccessTokenTest {
 
     companion object {
         private val tempFile = File("temp_access_token.json")
+        private var originalCacheFile: File? = null
 
         @BeforeAll
         @JvmStatic
         @Suppress("unused")
         fun before() {
+            originalCacheFile = AccessToken.Cache.cacheFile
             AccessToken.Cache.cacheFile = tempFile
-
-            /*if (AccessToken.Cache.cacheFile.exists()) {
-                println("Moving ${AccessToken.Cache.cacheFile} to temp file $tempFile")
-                AccessToken.Cache.cacheFile.renameTo(tempFile)
-            } else {
-                println("${AccessToken.Cache.cacheFile} does not exist; skipping move to temp file")
-            }*/
         }
 
         @AfterAll
         @JvmStatic
         @Suppress("unused")
         fun after() {
-            AccessToken.Cache.cacheFile = null
-
-            /*if (tempFile.exists()) {
-                println("Restoring ${AccessToken.Cache.cacheFile} from temp file $tempFile")
-                tempFile.renameTo(AccessToken.Cache.cacheFile)
-            } else {
-                println("Temp file $tempFile does not exist; skipping restore to cache file")
-            }*/
+            AccessToken.Cache.cacheFile = originalCacheFile
+            originalCacheFile = null
         }
 
         /**

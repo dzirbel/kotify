@@ -57,7 +57,7 @@ fun Root() {
     InvalidatingRootContent {
         Theme.Apply {
             val tokenState = AccessToken.Cache.tokenFlow.collectAsState()
-            val hasToken = remember { derivedStateOf { tokenState.value != null }.value }
+            val hasToken = remember { derivedStateOf { tokenState.value != null } }.value
             if (hasToken) {
                 DebugPanel {
                     Column {

@@ -106,7 +106,7 @@ data class AccessToken(
         val logEvents: Flow<LogEvent>
             get() = _logEvents.asSharedFlow()
 
-        private val _tokenFlow = MutableStateFlow(load())
+        private val _tokenFlow = MutableStateFlow<AccessToken?>(null)
 
         /**
          * A [StateFlow] reflecting the current [AccessToken] held in the cache, or null if there is none.
@@ -119,7 +119,8 @@ data class AccessToken(
          * authorization code flow. If there is a non-refreshable access token, it is [clear]ed.
          */
         fun requireRefreshable() {
-            if (_tokenFlow.value?.refreshToken == null) {
+            val token = _tokenFlow.value ?: load()
+            if (token != null && token.refreshToken == null) {
                 warn("Current access token is not refreshable, clearing")
                 clear()
             }
@@ -142,9 +143,7 @@ data class AccessToken(
          * [AccessToken] is fetched based on the old [AccessToken.refreshToken]) and the new token is returned.
          */
         suspend fun get(clientId: String = OAuth.DEFAULT_CLIENT_ID): AccessToken? {
-            val token = _tokenFlow.value
-                ?: load().also { _tokenFlow.value = it }
-                ?: return null
+            val token = _tokenFlow.value ?: load() ?: return null
 
             if (token.isExpired) {
                 refresh(clientId)
@@ -207,6 +206,7 @@ data class AccessToken(
             return try {
                 file.inputStream()
                     .use { json.decodeFromStream<AccessToken>(it) }
+                    .also { _tokenFlow.value = it }
                     .also { info("Loaded access token from $cacheFile") }
             } catch (_: FileNotFoundException) {
                 null.also { info("No saved access token at $cacheFile") }
