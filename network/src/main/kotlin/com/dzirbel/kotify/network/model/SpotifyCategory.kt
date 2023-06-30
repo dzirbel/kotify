@@ -2,9 +2,6 @@ package com.dzirbel.kotify.network.model
 
 import kotlinx.serialization.Serializable
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-categoryobject
- */
 @Serializable
 data class SpotifyCategory(
     /** A link to the Web API endpoint returning full details of the category. */

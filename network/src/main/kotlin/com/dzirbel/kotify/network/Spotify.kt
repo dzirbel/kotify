@@ -108,9 +108,6 @@ object Spotify {
         }
     }
 
-    @Serializable
-    private data class SnaphshotId(@SerialName("snapshot_id") val snapshotId: String)
-
     suspend inline fun <reified T : Any?> get(path: String, queryParams: Map<String, String?>? = null): T {
         return request(method = "GET", path = path, queryParams = queryParams, body = null)
     }
@@ -1239,6 +1236,9 @@ object Spotify {
      * Endpoints for retrieving information about a user’s playlists and for managing a user’s playlists.
      */
     object Playlists {
+        @Serializable
+        private data class SnaphshotId(@SerialName("snapshot_id") val snapshotId: String)
+
         /**
          * Get a list of the playlists owned or followed by the current Spotify user.
          *

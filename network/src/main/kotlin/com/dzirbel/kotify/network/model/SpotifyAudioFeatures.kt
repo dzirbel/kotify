@@ -3,9 +3,6 @@ package com.dzirbel.kotify.network.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-audiofeaturesobject
- */
 @Serializable
 data class SpotifyAudioFeatures(
     /**

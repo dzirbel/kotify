@@ -68,16 +68,12 @@ interface SpotifyAlbum : SpotifyObject {
         ALBUM(displayName = "Album", iconName = "album"),
         SINGLE(displayName = "Single", iconName = "audiotrack"),
         COMPILATION(displayName = "Compilation", iconName = "library-music"),
-        APPEARS_ON(displayName = "Appears On", iconName = "audio-file"),
-        ;
+        APPEARS_ON(displayName = "Appears On", iconName = "audio-file");
 
         internal object Serializer : CaseInsensitiveEnumSerializer<Type>(Type::class)
     }
 }
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-simplifiedalbumobject
- */
 @Serializable
 data class SimplifiedSpotifyAlbum(
     @SerialName("album_type") override val albumType: SpotifyAlbum.Type? = null,
@@ -104,9 +100,6 @@ data class SimplifiedSpotifyAlbum(
     val albumGroup: SpotifyAlbum.Type? = null,
 ) : SpotifyAlbum
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-albumobject
- */
 @Serializable
 data class FullSpotifyAlbum(
     @SerialName("album_type") override val albumType: SpotifyAlbum.Type? = null,
@@ -151,9 +144,6 @@ data class FullSpotifyAlbum(
     val tracks: Paging<SimplifiedSpotifyTrack>,
 ) : SpotifyAlbum
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-savedalbumobject
- */
 @Serializable
 data class SpotifySavedAlbum(
     /**

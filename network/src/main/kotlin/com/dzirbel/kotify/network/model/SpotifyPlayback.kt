@@ -4,9 +4,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
-/**
- * Undocumented object.
- */
 @Serializable
 data class SpotifyPlayback(
     val timestamp: Long,
@@ -21,9 +18,6 @@ data class SpotifyPlayback(
     val actions: JsonObject? = null,
 )
 
-/**
- * Undocumented object.
- */
 @Serializable
 data class SpotifyTrackPlayback(
     val timestamp: Long,
@@ -35,9 +29,6 @@ data class SpotifyTrackPlayback(
     val actions: JsonObject? = null,
 )
 
-/**
- * Undocumented object.
- */
 @Serializable
 data class SpotifyPlaybackDevice(
     val id: String,
@@ -49,9 +40,6 @@ data class SpotifyPlaybackDevice(
     @SerialName("volume_percent") val volumePercent: Int,
 )
 
-/**
- * Undocumented object.
- */
 @Serializable
 data class SpotifyPlaybackContext(
     val uri: String,
@@ -60,12 +48,12 @@ data class SpotifyPlaybackContext(
     val type: String,
 )
 
-/**
- * Undocumented object.
- */
 @Serializable
 data class SpotifyPlayHistoryObject(
     val track: FullSpotifyTrack,
     @SerialName("played_at") val playedAt: String,
     val context: SpotifyPlaybackContext,
 )
+
+@Serializable
+data class SpotifyPlaybackOffset(val position: Int? = null)

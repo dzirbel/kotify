@@ -58,9 +58,6 @@ interface SpotifyShow : SpotifyObject {
     val totalEpisodes: Int?
 }
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-simplifiedshowobject
- */
 @Serializable
 data class SimplifiedSpotifyShow(
     @SerialName("available_markets") override val availableMarkets: List<String>,
@@ -82,9 +79,6 @@ data class SimplifiedSpotifyShow(
     override val uri: String,
 ) : SpotifyShow
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-showobject
- */
 @Serializable
 data class FullSpotifyShow(
     @SerialName("available_markets") override val availableMarkets: List<String>,
@@ -108,9 +102,6 @@ data class FullSpotifyShow(
     val episodes: Paging<SimplifiedSpotifyEpisode>,
 ) : SpotifyShow
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-savedshowobject
- */
 @Serializable
 data class SpotifySavedShow(
     /**

@@ -2,9 +2,6 @@ package com.dzirbel.kotify.network.model
 
 import kotlinx.serialization.Serializable
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-copyrightobject
- */
 @Serializable
 data class SpotifyCopyright(
     /** The copyright text for this album. */

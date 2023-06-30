@@ -76,9 +76,6 @@ interface SpotifyTrack : SpotifyObject {
     val album: SpotifyAlbum?
 }
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-simplifiedtrackobject
- */
 @Serializable
 data class SimplifiedSpotifyTrack(
     override val artists: List<SimplifiedSpotifyArtist>,
@@ -116,9 +113,6 @@ data class SimplifiedSpotifyTrack(
     val popularity: Int? = null,
 ) : SpotifyTrack
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-trackobject
- */
 @Serializable
 data class FullSpotifyTrack(
     override val artists: List<SimplifiedSpotifyArtist>,
@@ -161,9 +155,6 @@ data class FullSpotifyTrack(
     val popularity: Int,
 ) : SpotifyTrack
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-savedtrackobject
- */
 @Serializable
 data class SpotifySavedTrack(
     /**

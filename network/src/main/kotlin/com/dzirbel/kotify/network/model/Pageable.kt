@@ -6,6 +6,14 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 
 /**
+ * An abstract wrapper around [Paging] and [CursorPaging] for convenience to provide common paging functions.
+ */
+abstract class Pageable<T> {
+    abstract val items: List<T>
+    abstract val next: String?
+}
+
+/**
  * Creates a cold [Flow] that produces values from this [Pageable], first iterating through [Pageable.items] and then
  * continuing recursively though [Pageable]s provided by [fetchNext] with the current [Pageable.next] URL.
  *
@@ -26,17 +34,6 @@ inline fun <T, reified P : Pageable<T>> P.asFlow(
     }
 }
 
-/**
- * An abstract wrapper around [Paging] and [CursorPaging] for convenience to provide common paging functions.
- */
-abstract class Pageable<T> {
-    abstract val items: List<T>
-    abstract val next: String?
-}
-
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-pagingobject
- */
 @Serializable
 data class Paging<T>(
     /** The requested data. */
@@ -61,9 +58,6 @@ data class Paging<T>(
     val total: Int,
 ) : Pageable<T>()
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-cursorpagingobject
- */
 @Serializable
 data class CursorPaging<T>(
     /** The requested data. */
@@ -85,9 +79,6 @@ data class CursorPaging<T>(
     val total: Int,
 ) : Pageable<T>()
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-cursorobject
- */
 @Serializable
 data class Cursor(
     /** The cursor to use as key to find the next page of items. */

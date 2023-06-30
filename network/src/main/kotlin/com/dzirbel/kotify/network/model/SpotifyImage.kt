@@ -2,9 +2,6 @@ package com.dzirbel.kotify.network.model
 
 import kotlinx.serialization.Serializable
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-imageobject
- */
 @Serializable
 data class SpotifyImage(
     /** The image height in pixels. If unknown: null or not returned. */

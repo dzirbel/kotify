@@ -7,9 +7,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.decodeFromJsonElement
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-playlisttrackobject
- */
 @Serializable
 data class SpotifyPlaylistTrack(
     /**

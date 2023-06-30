@@ -32,9 +32,6 @@ interface SpotifyUser : SpotifyObject {
         get() = displayName.orEmpty()
 }
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-publicuserobject
- */
 @Serializable
 data class PublicSpotifyUser(
     @SerialName("display_name") override val displayName: String? = null,
@@ -47,9 +44,6 @@ data class PublicSpotifyUser(
     override val uri: String,
 ) : SpotifyUser
 
-/**
- * https://developer.spotify.com/documentation/web-api/reference/#object-privateuserobject
- */
 @Serializable
 data class PrivateSpotifyUser(
     @SerialName("display_name") override val displayName: String? = null,
