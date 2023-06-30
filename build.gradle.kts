@@ -7,15 +7,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
 
 plugins {
+    alias(libs.plugins.compose)
+    alias(libs.plugins.detekt)
+    id("jacoco")
+    id("java-test-fixtures")
     kotlin("jvm") version libs.versions.kotlin
     kotlin("plugin.serialization") version libs.versions.kotlin
-
-    alias(libs.plugins.detekt)
-    alias(libs.plugins.compose)
-
-    `java-test-fixtures`
-
-    jacoco
 }
 
 val appProperties = file("src/main/resources/app.properties").inputStream().use { Properties().apply { load(it) } }
@@ -24,27 +21,29 @@ version = appProperties["version"] as String
 
 repositories {
     mavenCentral()
-    google()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
 dependencies {
     implementation(project(":network"))
 
+    testImplementation(testFixtures(project(":network")))
+
+    testFixturesImplementation(project(":network"))
+    testFixturesImplementation(testFixtures(project(":network")))
+
     implementation(compose.desktop.currentOs)
 
-    implementation(libs.okhttp)
-    implementation(libs.ktor.netty)
-    implementation(libs.coroutines.core)
-    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.dao)
+    implementation(libs.exposed.javatime)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.immutable.collections)
-    implementation(libs.slf4j.nop)
-
-    testImplementation(testFixtures(project(":network")))
-    implementation(libs.bundles.exposed)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.okhttp)
     implementation(libs.sqlite.jdbc)
 
-    testImplementation(libs.coroutines.test)
     testImplementation(libs.junit5.api)
     testImplementation(libs.junit5.params)
     testRuntimeOnly(libs.junit5.engine)
@@ -55,17 +54,18 @@ dependencies {
     testImplementation(libs.compose.junit4)
 
     testImplementation(libs.assertk)
-    testImplementation(libs.ktor.client)
-    testImplementation(libs.coroutines.swing) // Swing dispatcher for screenshot tests
+    testImplementation(libs.kotlinx.coroutines.swing) // Swing dispatcher for screenshot tests
+    testImplementation(libs.kotlinx.coroutines.test)
 
-    testFixturesImplementation(project(":network"))
-    testFixturesImplementation(testFixtures(project(":network")))
-    testFixturesImplementation(libs.assertk)
-    testFixturesImplementation(libs.bundles.exposed)
     testFixturesImplementation(compose.desktop.currentOs)
+    testFixturesImplementation(libs.assertk)
+    testFixturesImplementation(libs.exposed.core)
+    testFixturesImplementation(libs.exposed.dao)
+    testFixturesImplementation(libs.exposed.javatime)
+    testFixturesImplementation(libs.exposed.jdbc)
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
     testFixturesImplementation(libs.kotlinx.serialization.json)
     testFixturesImplementation(libs.okhttp)
-    testFixturesImplementation(libs.coroutines.core)
 }
 
 // TODO change to subprojects when no code remains in the root project and/or move common configuration to buildSrc

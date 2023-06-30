@@ -1,7 +1,6 @@
 [versions]
 assertk = "0.26.1" # https://github.com/willowtreeapps/assertk
 compose = "1.4.1" # https://github.com/jetbrains/compose-jb
-coroutines = "1.7.2" # https://github.com/Kotlin/kotlinx.coroutines
 detekt = "1.23.0" # https://github.com/detekt/detekt
 exposed = "0.41.1" # https://github.com/JetBrains/Exposed
 jacoco = "0.8.10" # https://github.com/jacoco/jacoco
@@ -9,6 +8,7 @@ junit4 = "4.13.2" # https://junit.org/junit4/
 junit5 = "5.9.3" # https://junit.org/junit5/
 jvm = "18" # https://www.java.com/releases/; also update versions in CI workflows
 kotlin = "1.8.20" # https://kotlinlang.org/releases.html
+kotlinx-coroutines = "1.7.2" # https://github.com/Kotlin/kotlinx.coroutines
 kotlinx-serialization = "1.5.1" # https://github.com/Kotlin/kotlinx.serialization
 kotlinx-immutable-collections = "0.3.5" # https://github.com/Kotlin/kotlinx.collections.immutable
 ktor = "2.3.1" # https://ktor.io/changelog/
@@ -21,10 +21,6 @@ twitter-compose-rules = "0.0.26"
 assertk = { module = "com.willowtreeapps.assertk:assertk-jvm", version.ref = "assertk" }
 
 compose-junit4 = { module = "org.jetbrains.compose.ui:ui-test-junit4", version.ref = "compose" }
-
-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 
@@ -40,6 +36,9 @@ junit5-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref
 junit5-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit5" }
 junit5-engine-vintage = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "junit5" }
 
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-immutable-collections = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-immutable-collections" }
 
@@ -53,9 +52,6 @@ slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite-jdbc" }
 
 twitter-compose-rules = { module = "com.twitter.compose.rules:detekt", version.ref = "twitter-compose-rules" }
-
-[bundles]
-exposed = ["exposed-core", "exposed-dao", "exposed-jdbc", "exposed-javatime"]
 
 [plugins]
 compose = { id = "org.jetbrains.compose", version.ref = "compose" }
