@@ -9,38 +9,41 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.network.oauth.LocalOAuthServer
-import com.dzirbel.kotify.network.oauth.OAuth
 import com.dzirbel.kotify.ui.components.CopyButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.getClipboard
-import kotlinx.coroutines.launch
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 @Composable
-fun FlowInProgress(state: AuthenticationState, oauth: OAuth, onSetState: (AuthenticationState) -> Unit) {
+fun FlowInProgress(
+    oauthErrorState: State<Throwable?>,
+    oauthResultState: State<LocalOAuthServer.Result?>,
+    authorizationUrl: String,
+    manualRedirectUrl: String,
+    manualRedirectLoading: Boolean,
+    setManualRedirectUrl: (String) -> Unit,
+    onCancel: () -> Unit,
+    onManualRedirect: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3, Alignment.Top)) {
-        val error = oauth.errorFlow.collectAsState().value
-        if (error == null) {
+        val oauthError = oauthErrorState.value
+        if (oauthError == null) {
             Text("Authentication in progress. Accept the OAuth request from Spotify in your browser to continue.")
         } else {
             Text("Error during authentication!", color = LocalColors.current.error, style = MaterialTheme.typography.h5)
 
             Text(
-                text = error.stackTraceToString(),
+                text = oauthError.stackTraceToString(),
                 color = LocalColors.current.error,
                 fontFamily = FontFamily.Monospace,
             )
@@ -48,12 +51,7 @@ fun FlowInProgress(state: AuthenticationState, oauth: OAuth, onSetState: (Authen
 
         VerticalSpacer(Dimens.space3)
 
-        Button(
-            onClick = {
-                runCatching { oauth.cancel() }
-                onSetState(state.copy(oauth = null))
-            },
-        ) {
+        Button(onClick = onCancel) {
             Text("Cancel flow")
         }
 
@@ -63,7 +61,7 @@ fun FlowInProgress(state: AuthenticationState, oauth: OAuth, onSetState: (Authen
 
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
             TextField(
-                value = oauth.authorizationUrl.toString(),
+                value = authorizationUrl,
                 modifier = Modifier.weight(1f).consumeKeyEvents(),
                 singleLine = true,
                 readOnly = true,
@@ -75,7 +73,7 @@ fun FlowInProgress(state: AuthenticationState, oauth: OAuth, onSetState: (Authen
                     CopyButton(
                         // override text pointer from TextField
                         modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
-                        contents = oauth.authorizationUrl.toString(),
+                        contents = authorizationUrl,
                     )
                 },
             )
@@ -92,45 +90,38 @@ fun FlowInProgress(state: AuthenticationState, oauth: OAuth, onSetState: (Authen
 
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
             TextField(
-                value = state.manualRedirectUrl,
+                value = manualRedirectUrl,
                 modifier = Modifier.weight(1f).consumeKeyEvents(),
                 singleLine = true,
-                onValueChange = { onSetState(state.copy(manualRedirectUrl = it)) },
+                onValueChange = setManualRedirectUrl,
                 label = {
                     Text("Redirect URL")
                 },
             )
 
-            Button(onClick = { onSetState(state.copy(manualRedirectUrl = getClipboard())) }) {
+            Button(onClick = { setManualRedirectUrl(getClipboard()) }) {
                 Text("Paste")
             }
         }
 
-        val submitting = remember { mutableStateOf(false) }
-        val scope = rememberCoroutineScope()
         Button(
-            enabled = state.manualRedirectUrl.toHttpUrlOrNull() != null && !submitting.value,
-            onClick = {
-                submitting.value = true
-                val url = state.manualRedirectUrl.toHttpUrl()
-                scope.launch {
-                    oauth.onManualRedirect(url = url)
-                    submitting.value = false
-                }
-            },
+            enabled = !manualRedirectLoading && manualRedirectUrl.toHttpUrlOrNull() != null,
+            onClick = onManualRedirect,
         ) {
-            if (submitting.value) {
+            if (manualRedirectLoading) {
                 CircularProgressIndicator()
             } else {
                 Text("Submit")
             }
         }
 
-        oauth.resultFlow.collectAsState().value?.let { result ->
-            val message = when (result) {
-                is LocalOAuthServer.Result.Error -> "Error: ${result.error}"
+        val oauthResult = oauthResultState.value
+        if (oauthResult != null) {
+            val message = when (oauthResult) {
+                is LocalOAuthServer.Result.Error -> "Error: ${oauthResult.error}"
                 is LocalOAuthServer.Result.MismatchedState ->
-                    "Mismatched state: expected `${result.expectedState}` but was `${result.actualState}`"
+                    "Mismatched state: expected `${oauthResult.expectedState}` but was `${oauthResult.actualState}`"
+
                 is LocalOAuthServer.Result.Success -> null
             }
 

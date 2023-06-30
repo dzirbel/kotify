@@ -30,12 +30,15 @@ import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.ui.util.openInBrowser
 import com.dzirbel.kotify.util.immutable.plusOrMinus
 import kotlinx.collections.immutable.toPersistentSet
 
 @Composable
-fun ColumnScope.LandingPage(state: AuthenticationState, onSetState: (AuthenticationState) -> Unit) {
+fun ColumnScope.LandingPage(
+    params: AuthenticationParams,
+    onSetParams: (AuthenticationParams) -> Unit,
+    onStartOAuth: () -> Unit,
+) {
     Text("Welcome to ${Application.name}!", style = MaterialTheme.typography.h5)
 
     VerticalSpacer(Dimens.space3)
@@ -47,18 +50,7 @@ fun ColumnScope.LandingPage(state: AuthenticationState, onSetState: (Authenticat
 
     Button(
         modifier = Modifier.align(Alignment.CenterHorizontally).padding(Dimens.space3),
-        onClick = {
-            onSetState(
-                state.copy(
-                    oauth = OAuth.start(
-                        clientId = state.clientId,
-                        port = state.port,
-                        scopes = state.scopes,
-                        openAuthorizationUrl = ::openInBrowser,
-                    ),
-                ),
-            )
-        },
+        onClick = onStartOAuth,
     ) {
         Text("Authenticate")
     }
@@ -84,16 +76,16 @@ fun ColumnScope.LandingPage(state: AuthenticationState, onSetState: (Authenticat
     if (detailsExpanded.value) {
         TextField(
             modifier = Modifier.consumeKeyEvents(),
-            value = state.clientId,
+            value = params.clientId,
             singleLine = true,
-            onValueChange = { onSetState(state.copy(clientId = it)) },
+            onValueChange = { onSetParams(params.copy(clientId = it)) },
             label = {
                 Text("Client ID")
             },
             trailingIcon = {
                 IconButton(
-                    enabled = state.clientId != OAuth.DEFAULT_CLIENT_ID,
-                    onClick = { onSetState(state.copy(clientId = OAuth.DEFAULT_CLIENT_ID)) },
+                    enabled = params.clientId != OAuth.DEFAULT_CLIENT_ID,
+                    onClick = { onSetParams(params.copy(clientId = OAuth.DEFAULT_CLIENT_ID)) },
                 ) {
                     Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
                 }
@@ -112,11 +104,11 @@ fun ColumnScope.LandingPage(state: AuthenticationState, onSetState: (Authenticat
 
         TextField(
             modifier = Modifier.consumeKeyEvents(),
-            value = state.port.toString(),
+            value = params.port.toString(),
             singleLine = true,
             onValueChange = { value ->
                 value.toIntOrNull()?.let {
-                    onSetState(state.copy(port = it))
+                    onSetParams(params.copy(port = it))
                 }
             },
             label = {
@@ -124,8 +116,8 @@ fun ColumnScope.LandingPage(state: AuthenticationState, onSetState: (Authenticat
             },
             trailingIcon = {
                 IconButton(
-                    enabled = state.port != LocalOAuthServer.DEFAULT_PORT,
-                    onClick = { onSetState(state.copy(port = LocalOAuthServer.DEFAULT_PORT)) },
+                    enabled = params.port != LocalOAuthServer.DEFAULT_PORT,
+                    onClick = { onSetParams(params.copy(port = LocalOAuthServer.DEFAULT_PORT)) },
                 ) {
                     Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
                 }
@@ -144,8 +136,8 @@ fun ColumnScope.LandingPage(state: AuthenticationState, onSetState: (Authenticat
             Text("Scopes", style = MaterialTheme.typography.h5)
 
             IconButton(
-                enabled = state.scopes != OAuth.DEFAULT_SCOPES,
-                onClick = { onSetState(state.copy(scopes = OAuth.DEFAULT_SCOPES.toPersistentSet())) },
+                enabled = params.scopes != OAuth.DEFAULT_SCOPES,
+                onClick = { onSetParams(params.copy(scopes = OAuth.DEFAULT_SCOPES.toPersistentSet())) },
             ) {
                 Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
             }
@@ -161,10 +153,10 @@ fun ColumnScope.LandingPage(state: AuthenticationState, onSetState: (Authenticat
         }
 
         for (scope in OAuth.ALL_SCOPES) {
-            val checked = scope in state.scopes
+            val checked = scope in params.scopes
             CheckboxWithLabel(
                 checked = checked,
-                onCheckedChange = { onSetState(state.copy(scopes = state.scopes.plusOrMinus(scope, !checked))) },
+                onCheckedChange = { onSetParams(params.copy(scopes = params.scopes.plusOrMinus(scope, !checked))) },
                 label = {
                     Text(scope)
                 },

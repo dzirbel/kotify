@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * See https://developer.spotify.com/documentation/general/guides/authorization-guide/
  */
-// TODO extract direct usages in Composables since OAuth is no longer Stable
 class OAuth private constructor(
     state: String,
     private val clientId: String,

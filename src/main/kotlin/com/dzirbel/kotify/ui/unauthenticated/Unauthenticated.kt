@@ -15,16 +15,24 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.dzirbel.kotify.network.oauth.OAuth
 import com.dzirbel.kotify.ui.components.ProjectGithubIcon
 import com.dzirbel.kotify.ui.components.ThemeSwitcher
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.util.openInBrowser
+import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrl
 
 private val MIN_WIDTH = 500.dp
 private const val WIDTH_FRACTION = 0.5f
@@ -34,11 +42,9 @@ private const val WIDTH_FRACTION = 0.5f
  */
 @Composable
 fun Unauthenticated() {
-    val state = remember { mutableStateOf(AuthenticationState()) }
-    val scrollState: ScrollState = rememberScrollState(0)
-
     LocalColors.current.WithSurface {
         Box(Modifier.fillMaxSize().surfaceBackground()) {
+            val scrollState: ScrollState = rememberScrollState(0)
             Box(Modifier.verticalScroll(scrollState).fillMaxSize()) {
                 Column(
                     modifier = Modifier
@@ -54,14 +60,45 @@ fun Unauthenticated() {
                         ProjectGithubIcon()
                     }
 
-                    val oauth = state.value.oauth
+                    var authenticationParams by remember { mutableStateOf(AuthenticationParams()) }
+                    val oauthState = remember { mutableStateOf<OAuth?>(null) }
+                    val oauth = oauthState.value
                     if (oauth == null) {
-                        LandingPage(state = state.value, onSetState = { state.value = it })
+                        LandingPage(
+                            params = authenticationParams,
+                            onSetParams = { authenticationParams = it },
+                            onStartOAuth = {
+                                oauthState.value = OAuth.start(
+                                    clientId = authenticationParams.clientId,
+                                    port = authenticationParams.port,
+                                    scopes = authenticationParams.scopes,
+                                    openAuthorizationUrl = ::openInBrowser,
+                                )
+                            },
+                        )
                     } else {
+                        var manualRedirectLoading by remember { mutableStateOf(false) }
+                        val scope = rememberCoroutineScope()
                         FlowInProgress(
-                            state = state.value,
-                            oauth = oauth,
-                            onSetState = { state.value = it },
+                            oauthErrorState = oauth.errorFlow.collectAsState(),
+                            oauthResultState = oauth.resultFlow.collectAsState(),
+                            authorizationUrl = oauth.authorizationUrl.toString(),
+                            manualRedirectUrl = authenticationParams.manualRedirectUrl,
+                            manualRedirectLoading = manualRedirectLoading,
+                            setManualRedirectUrl = {
+                                authenticationParams = authenticationParams.copy(manualRedirectUrl = it)
+                            },
+                            onCancel = {
+                                oauth.cancel()
+                                oauthState.value = null
+                            },
+                            onManualRedirect = {
+                                manualRedirectLoading = true
+                                scope.launch {
+                                    oauth.onManualRedirect(authenticationParams.manualRedirectUrl.toHttpUrl())
+                                    manualRedirectLoading = false
+                                }
+                            },
                         )
                     }
                 }
