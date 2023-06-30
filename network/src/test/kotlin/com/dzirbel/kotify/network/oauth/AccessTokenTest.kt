@@ -13,9 +13,8 @@ import assertk.assertions.isNotSameAs
 import assertk.assertions.isNull
 import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
-import com.dzirbel.kotify.MockRequestInterceptor
+import com.dzirbel.kotify.network.MockRequestInterceptor
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.withSpotifyConfiguration
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -91,14 +90,14 @@ internal class AccessTokenTest {
         val token1 = AccessToken(accessToken = "token1", tokenType = "", expiresIn = 0)
         AccessToken.Cache.put(token1)
 
-        assertThat(AccessToken.Cache.hasToken).isTrue()
+        assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
         assertThat(runBlocking { AccessToken.Cache.get() }).isSameAs(token1)
         assertThat(runBlocking { AccessToken.Cache.getOrThrow() }).isSameAs(token1)
 
         val token2 = AccessToken(accessToken = "token2", tokenType = "", expiresIn = 0)
         AccessToken.Cache.put(token2)
 
-        assertThat(AccessToken.Cache.hasToken).isTrue()
+        assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
         assertThat(runBlocking { AccessToken.Cache.get() }).isSameAs(token2)
         assertThat(runBlocking { AccessToken.Cache.getOrThrow() }).isSameAs(token2)
 
@@ -275,7 +274,7 @@ internal class AccessTokenTest {
         assertThat(notRefreshable.refreshToken).isNull()
 
         AccessToken.Cache.put(notRefreshable)
-        assertThat(AccessToken.Cache.hasToken).isTrue()
+        assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
 
         AccessToken.Cache.requireRefreshable()
 
@@ -290,15 +289,15 @@ internal class AccessTokenTest {
         assertThat(refreshable.refreshToken).isNotNull()
 
         AccessToken.Cache.put(refreshable)
-        assertThat(AccessToken.Cache.hasToken).isTrue()
+        assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
 
         AccessToken.Cache.requireRefreshable()
 
-        assertThat(AccessToken.Cache.hasToken).isTrue()
+        assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
     }
 
     private fun assertNoToken() {
-        assertThat(AccessToken.Cache.hasToken).isFalse()
+        assertThat(AccessToken.Cache.tokenFlow.value).isNull()
         assertThat(runBlocking { AccessToken.Cache.get() }).isNull()
         assertThrows<AccessToken.Cache.NoAccessTokenError> { runBlocking { AccessToken.Cache.getOrThrow() } }
     }
@@ -308,27 +307,44 @@ internal class AccessTokenTest {
 
         @BeforeAll
         @JvmStatic
-        @Suppress("unused", "ForbiddenMethodCall")
+        @Suppress("unused")
         fun before() {
-            if (AccessToken.Cache.file.exists()) {
-                println("Moving ${AccessToken.Cache.file} to temp file $tempFile")
-                AccessToken.Cache.file.renameTo(tempFile)
-                AccessToken.Cache.log = false
+            AccessToken.Cache.cacheFile = tempFile
+
+            /*if (AccessToken.Cache.cacheFile.exists()) {
+                println("Moving ${AccessToken.Cache.cacheFile} to temp file $tempFile")
+                AccessToken.Cache.cacheFile.renameTo(tempFile)
             } else {
-                println("${AccessToken.Cache.file} does not exist; skipping move to temp file")
-            }
+                println("${AccessToken.Cache.cacheFile} does not exist; skipping move to temp file")
+            }*/
         }
 
         @AfterAll
         @JvmStatic
-        @Suppress("unused", "ForbiddenMethodCall")
+        @Suppress("unused")
         fun after() {
-            if (tempFile.exists()) {
-                println("Restoring ${AccessToken.Cache.file} from temp file $tempFile")
-                tempFile.renameTo(AccessToken.Cache.file)
-                AccessToken.Cache.log = true
+            AccessToken.Cache.cacheFile = null
+
+            /*if (tempFile.exists()) {
+                println("Restoring ${AccessToken.Cache.cacheFile} from temp file $tempFile")
+                tempFile.renameTo(AccessToken.Cache.cacheFile)
             } else {
                 println("Temp file $tempFile does not exist; skipping restore to cache file")
+            }*/
+        }
+
+        /**
+         * Temporarily sets the [Spotify.configuration] to [configuration], runs [block], and then resets the
+         * [Spotify.configuration] to its previous value.
+         */
+        private fun withSpotifyConfiguration(configuration: Spotify.Configuration, block: () -> Unit) {
+            val oldConfig = Spotify.configuration
+            Spotify.configuration = configuration
+
+            try {
+                block()
+            } finally {
+                Spotify.configuration = oldConfig
             }
         }
     }

@@ -1,7 +1,7 @@
-
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.internal.os.OperatingSystem
+import org.jetbrains.compose.ComposeExtension
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
@@ -40,6 +40,7 @@ dependencies {
     implementation(libs.kotlinx.immutable.collections)
     implementation(libs.slf4j.nop)
 
+    testImplementation(testFixtures(project(":network")))
     implementation(libs.bundles.exposed)
     implementation(libs.sqlite.jdbc)
 
@@ -57,6 +58,7 @@ dependencies {
     testImplementation(libs.ktor.client)
     testImplementation(libs.coroutines.swing) // Swing dispatcher for screenshot tests
 
+    testFixturesImplementation(project(":network"))
     testFixturesImplementation(libs.assertk)
     testFixturesImplementation(libs.bundles.exposed)
     testFixturesImplementation(compose.desktop.currentOs)
@@ -65,9 +67,8 @@ dependencies {
     testFixturesImplementation(libs.coroutines.core)
 }
 
-// TODO change to subprojects when no code remains in the root project
+// TODO change to subprojects when no code remains in the root project and/or move common configuration to buildSrc
 allprojects {
-    // TODO move common configuration to buildSrc plugin
     afterEvaluate {
         configureKotlin()
         configureDetekt()
@@ -121,8 +122,8 @@ project.afterEvaluate {
 
 fun Project.configureDetekt() {
     detekt {
-        source.from(files("src"))
-        config.from(files("detekt-config.yml"))
+        source.from(project.files("src"))
+        config.from(rootProject.files("detekt-config.yml"))
     }
 
     dependencies {
@@ -161,25 +162,28 @@ fun Project.configureKotlin() {
             freeCompilerArgs += "-opt-in=kotlin.contracts.ExperimentalContracts"
             freeCompilerArgs += "-opt-in=kotlinx.coroutines.DelicateCoroutinesApi" // allow use of GlobalScope
             freeCompilerArgs += "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
-            freeCompilerArgs += "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi"
-            freeCompilerArgs += "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi"
-            freeCompilerArgs += "-opt-in=androidx.compose.material.ExperimentalMaterialApi"
 
             // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
             freeCompilerArgs += "-Xcontext-receivers"
 
-            // enable Compose compiler metrics and reports:
-            // https://github.com/androidx/androidx/blob/androidx-main/compose/compiler/design/compiler-metrics.md
-            val composeCompilerReportsDir = project.buildDir.resolve("compose")
-            freeCompilerArgs += listOf(
-                "-P",
-                "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$composeCompilerReportsDir"
-            )
+            if (project.extensions.findByType<ComposeExtension>() != null) {
+                freeCompilerArgs += "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi"
+                freeCompilerArgs += "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi"
+                freeCompilerArgs += "-opt-in=androidx.compose.material.ExperimentalMaterialApi"
 
-            freeCompilerArgs += listOf(
-                "-P",
-                "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$composeCompilerReportsDir"
-            )
+                // enable Compose compiler metrics and reports:
+                // https://github.com/androidx/androidx/blob/androidx-main/compose/compiler/design/compiler-metrics.md
+                val composeCompilerReportsDir = project.buildDir.resolve("compose")
+                freeCompilerArgs += listOf(
+                    "-P",
+                    "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$composeCompilerReportsDir"
+                )
+
+                freeCompilerArgs += listOf(
+                    "-P",
+                    "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$composeCompilerReportsDir"
+                )
+            }
         }
     }
 
@@ -193,15 +197,6 @@ fun Project.configureTests() {
         useJUnitPlatform()
     }
 
-    tasks.withType<Test>().configureEach {
-        systemProperty("junit.jupiter.extensions.autodetection.enabled", true)
-        testLogging {
-            events = setOf(TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR, TestLogEvent.STANDARD_OUT)
-            showStackTraces = true
-            exceptionFormat = TestExceptionFormat.FULL
-        }
-    }
-
     tasks.create<Test>("testLocal") {
         useJUnitPlatform {
             excludeTags("network")
@@ -211,6 +206,15 @@ fun Project.configureTests() {
     tasks.create<Test>("testIntegration") {
         useJUnitPlatform {
             includeTags("network")
+        }
+    }
+
+    tasks.withType<Test>().configureEach {
+        systemProperty("junit.jupiter.extensions.autodetection.enabled", true)
+        testLogging {
+            events = setOf(TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR, TestLogEvent.STANDARD_OUT)
+            showStackTraces = true
+            exceptionFormat = TestExceptionFormat.FULL
         }
     }
 }

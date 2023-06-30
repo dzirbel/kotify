@@ -16,7 +16,7 @@ import java.util.Base64
  * The [challenge] is then generated deterministically from the [verifier] as the SHA-256 hash of the [verifier]'s ASCII
  * representation, then itself encoded in base64url.
  */
-class CodeChallenge private constructor(val verifier: String, val challenge: String) {
+internal class CodeChallenge private constructor(val verifier: String, val challenge: String) {
     companion object {
         private val encoder = Base64.getUrlEncoder().withoutPadding()
 

@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.network.model
 
-import com.dzirbel.kotify.util.CaseInsensitiveEnumSerializer
+import com.dzirbel.kotify.network.util.CaseInsensitiveEnumSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -71,7 +71,7 @@ interface SpotifyAlbum : SpotifyObject {
         APPEARS_ON(displayName = "Appears On", iconName = "audio-file"),
         ;
 
-        object Serializer : CaseInsensitiveEnumSerializer<Type>(Type::class)
+        internal object Serializer : CaseInsensitiveEnumSerializer<Type>(Type::class)
     }
 }
 

@@ -32,7 +32,9 @@ import com.dzirbel.kotify.network.model.SpotifySavedShow
 import com.dzirbel.kotify.network.model.SpotifySavedTrack
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.ui.util.assertNotOnUIThread
+import com.dzirbel.kotify.network.util.await
+import com.dzirbel.kotify.network.util.bodyFromJson
+import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -46,6 +48,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.util.Base64
 import java.util.Locale
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.coroutineContext
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/
@@ -156,7 +160,8 @@ object Spotify {
         queryParams: Map<String, String?>? = null,
         body: RequestBody? = null,
     ): T {
-        assertNotOnUIThread()
+        // check that the request is not being done on the main dispatcher
+        require(coroutineContext[ContinuationInterceptor] !is MainCoroutineDispatcher)
 
         configuration.requestInterceptor?.let {
             return it.interceptFor(method = method, path = path) as T

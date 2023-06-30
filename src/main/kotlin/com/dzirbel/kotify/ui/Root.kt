@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,7 +56,9 @@ private val libraryPanelSize = PanelSize(
 fun Root() {
     InvalidatingRootContent {
         Theme.Apply {
-            if (AccessToken.Cache.hasToken) {
+            val tokenState = AccessToken.Cache.tokenFlow.collectAsState()
+            val hasToken = remember { derivedStateOf { tokenState.value != null }.value }
+            if (hasToken) {
                 DebugPanel {
                     Column {
                         SidePanel(

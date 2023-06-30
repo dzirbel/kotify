@@ -9,7 +9,7 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isNotSameAs
 import assertk.assertions.isNull
 import assertk.assertions.isSameAs
-import com.dzirbel.kotify.MockRequestInterceptor
+import com.dzirbel.kotify.network.MockRequestInterceptor
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking

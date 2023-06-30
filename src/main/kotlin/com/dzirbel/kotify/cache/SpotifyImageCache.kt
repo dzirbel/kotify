@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.await
+import com.dzirbel.kotify.network.util.await
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope

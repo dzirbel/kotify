@@ -30,7 +30,9 @@ import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.ui.util.openInBrowser
 import com.dzirbel.kotify.util.immutable.plusOrMinus
+import kotlinx.collections.immutable.toPersistentSet
 
 @Composable
 fun ColumnScope.LandingPage(state: AuthenticationState, onSetState: (AuthenticationState) -> Unit) {
@@ -47,7 +49,14 @@ fun ColumnScope.LandingPage(state: AuthenticationState, onSetState: (Authenticat
         modifier = Modifier.align(Alignment.CenterHorizontally).padding(Dimens.space3),
         onClick = {
             onSetState(
-                state.copy(oauth = OAuth.start(clientId = state.clientId, port = state.port, scopes = state.scopes)),
+                state.copy(
+                    oauth = OAuth.start(
+                        clientId = state.clientId,
+                        port = state.port,
+                        scopes = state.scopes,
+                        openAuthorizationUrl = ::openInBrowser,
+                    ),
+                ),
             )
         },
     ) {
@@ -136,7 +145,7 @@ fun ColumnScope.LandingPage(state: AuthenticationState, onSetState: (Authenticat
 
             IconButton(
                 enabled = state.scopes != OAuth.DEFAULT_SCOPES,
-                onClick = { onSetState(state.copy(scopes = OAuth.DEFAULT_SCOPES)) },
+                onClick = { onSetState(state.copy(scopes = OAuth.DEFAULT_SCOPES.toPersistentSet())) },
             ) {
                 Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
             }

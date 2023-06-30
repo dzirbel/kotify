@@ -1,14 +1,12 @@
 package com.dzirbel.kotify.network.oauth
 
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.await
-import com.dzirbel.kotify.network.bodyFromJson
-import com.dzirbel.kotify.ui.util.openInBrowser
-import kotlinx.collections.immutable.PersistentSet
-import kotlinx.collections.immutable.persistentSetOf
+import com.dzirbel.kotify.network.util.await
+import com.dzirbel.kotify.network.util.bodyFromJson
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import okhttp3.FormBody
 import okhttp3.HttpUrl
@@ -24,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * See https://developer.spotify.com/documentation/general/guides/authorization-guide/
  */
-@Stable // necessary due to use of HttpUrl
+// TODO extract direct usages in Composables since OAuth is no longer Stable
 class OAuth private constructor(
     state: String,
     private val clientId: String,
@@ -32,20 +30,26 @@ class OAuth private constructor(
     private val redirectUri: String,
     val authorizationUrl: HttpUrl,
 ) {
-    val error = mutableStateOf<Throwable?>(null)
-    val result = mutableStateOf<LocalOAuthServer.Result?>(null)
+    private val _errorFlow = MutableStateFlow<Throwable?>(null)
+    val errorFlow: StateFlow<Throwable?>
+        get() = _errorFlow.asStateFlow()
+
+    private val _resultFlow = MutableStateFlow<LocalOAuthServer.Result?>(null)
+    val resultFlow: StateFlow<LocalOAuthServer.Result?>
+        get() = _resultFlow.asStateFlow()
+
     private val stopped = AtomicBoolean(false)
 
     private val server: LocalOAuthServer = LocalOAuthServer(
         state = state,
         callback = { result ->
-            this.result.value = result
+            _resultFlow.value = result
             if (result is LocalOAuthServer.Result.Success) {
                 try {
                     onSuccess(code = result.code)
                     finish()
                 } catch (ex: Throwable) {
-                    error.value = ex
+                    _errorFlow.value = ex
                 }
             }
         },
@@ -109,7 +113,7 @@ class OAuth private constructor(
          *
          * See https://developer.spotify.com/documentation/general/guides/scopes/
          */
-        val ALL_SCOPES: PersistentSet<String> = persistentSetOf(
+        val ALL_SCOPES: Set<String> = setOf(
             "app-remote-control", // only for Android/iOS
             "playlist-modify-private",
             "playlist-modify-public",
@@ -136,7 +140,7 @@ class OAuth private constructor(
          *
          * See https://developer.spotify.com/documentation/general/guides/scopes/
          */
-        val DEFAULT_SCOPES: PersistentSet<String> = ALL_SCOPES.remove("app-remote-control").remove("streaming")
+        val DEFAULT_SCOPES: Set<String> = ALL_SCOPES.minus("app-remote-control").minus("streaming")
 
         // number of bytes in the state buffer; 16 bytes -> 22 characters
         private const val STATE_BUFFER_SIZE = 16
@@ -154,6 +158,7 @@ class OAuth private constructor(
             clientId: String = DEFAULT_CLIENT_ID,
             scopes: Set<String> = DEFAULT_SCOPES,
             port: Int = LocalOAuthServer.DEFAULT_PORT,
+            openAuthorizationUrl: (HttpUrl) -> Unit,
         ): OAuth {
             val state = generateState()
             val codeChallenge = CodeChallenge.generate()
@@ -168,7 +173,7 @@ class OAuth private constructor(
                 state = state,
             )
 
-            openInBrowser(authorizationUrl)
+            openAuthorizationUrl(authorizationUrl)
 
             return OAuth(
                 state = state,

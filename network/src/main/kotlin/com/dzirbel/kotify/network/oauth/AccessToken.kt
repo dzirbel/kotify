@@ -1,14 +1,18 @@
 package com.dzirbel.kotify.network.oauth
 
-import androidx.compose.runtime.mutableStateOf
-import com.dzirbel.kotify.Application
-import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.await
-import com.dzirbel.kotify.network.bodyFromJson
+import com.dzirbel.kotify.network.util.await
+import com.dzirbel.kotify.network.util.bodyFromJson
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -16,6 +20,7 @@ import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import okhttp3.FormBody
 import okhttp3.Request
+import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.time.Instant
@@ -77,13 +82,11 @@ data class AccessToken(
     object Cache {
         /**
          * The file at which the access token is saved, relative to the current working directory.
+         *
+         * Expected to be provided at application start, if null then the access token is not saved to or loaded from
+         * disk but only cached in-memory.
          */
-        internal val file = Application.cacheDir.resolve("access_token.json")
-
-        /**
-         * Whether to log access token updates to the console; used to disable logging when testing the cache directly.
-         */
-        internal var log: Boolean = true
+        var cacheFile: File? = null
 
         /**
          * Encode defaults in order to include [AccessToken.received].
@@ -93,36 +96,31 @@ data class AccessToken(
             prettyPrint = true
         }
 
-        private val tokenState = mutableStateOf(load())
-
         private var refreshJob: Job? = null
 
-        /**
-         * The currently cached token, loading it from disk if there is not one in memory.
-         *
-         * This token is backed by a [androidx.compose.runtime.MutableState], so reads and writes to it will trigger
-         * recompositions.
-         */
-        var token: AccessToken?
-            get() = tokenState.value ?: load().also { tokenState.value = it }
-            private set(value) {
-                tokenState.value = value
-            }
+        private val _logEvents = MutableSharedFlow<LogEvent>(replay = 16, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
         /**
-         * Determines if the cache currently has a token (either in memory or on disk, loading it if there is one on
-         * disk but not in memory).
+         * A [Flow] of [LogEvent]s recorded whenever a notable change happens in the [Cache].
          */
-        val hasToken: Boolean
-            get() = token != null
+        val logEvents: Flow<LogEvent>
+            get() = _logEvents.asSharedFlow()
+
+        private val _tokenFlow = MutableStateFlow(load())
+
+        /**
+         * A [StateFlow] reflecting the current [AccessToken] held in the cache, or null if there is none.
+         */
+        val tokenFlow: StateFlow<AccessToken?>
+            get() = _tokenFlow.asStateFlow()
 
         /**
          * Requires that the currently cached token has a [AccessToken.refreshToken], i.e. that it came from an
          * authorization code flow. If there is a non-refreshable access token, it is [clear]ed.
          */
         fun requireRefreshable() {
-            if (token?.refreshToken == null) {
-                Logger.Events.warn("Current token is not refreshable, clearing")
+            if (_tokenFlow.value?.refreshToken == null) {
+                warn("Current access token is not refreshable, clearing")
                 clear()
             }
         }
@@ -144,21 +142,23 @@ data class AccessToken(
          * [AccessToken] is fetched based on the old [AccessToken.refreshToken]) and the new token is returned.
          */
         suspend fun get(clientId: String = OAuth.DEFAULT_CLIENT_ID): AccessToken? {
-            val token = token ?: return null
+            val token = _tokenFlow.value
+                ?: load().also { _tokenFlow.value = it }
+                ?: return null
 
             if (token.isExpired) {
                 refresh(clientId)
             }
 
-            return this.token
+            return _tokenFlow.value
         }
 
         /**
          * Puts the given [AccessToken] in the cache, immediately writing it to disk.
          */
-        fun put(accessToken: AccessToken) {
-            Logger.Events.info("Putting new access token")
-            token = accessToken
+        internal fun put(accessToken: AccessToken) {
+            info("Putting new access token in cache")
+            _tokenFlow.value = accessToken
             save(accessToken)
         }
 
@@ -166,9 +166,9 @@ data class AccessToken(
          * Clears the [AccessToken] cache, removing the currently cached token and deleting it on disk.
          */
         fun clear() {
-            token = null
-            Files.deleteIfExists(file.toPath())
-            Logger.Events.info("Cleared access token")
+            _tokenFlow.value = null
+            cacheFile?.let { Files.deleteIfExists(it.toPath()) }
+            info("Cleared access token from cache")
         }
 
         /**
@@ -176,29 +176,40 @@ data class AccessToken(
          * tests.
          */
         internal fun reset() {
-            token = null
+            _tokenFlow.value = null
         }
 
         /**
          * Writes [token] to disk.
          */
         private fun save(token: AccessToken) {
-            file.outputStream().use { outputStream ->
-                json.encodeToStream(token, outputStream)
+            val file = cacheFile
+            if (file != null) {
+                file.outputStream().use { outputStream ->
+                    json.encodeToStream(token, outputStream)
+                }
+                info("Saved access token to $file")
+            } else {
+                warn("No cache file provided; did not save access token to disk")
             }
-            Logger.Events.info("Saved access token to $file")
         }
 
         /**
          * Reads the token from disk and returns it, or null if there is no token file.
          */
         private fun load(): AccessToken? {
+            val file = cacheFile
+            if (file == null) {
+                warn("No cache file provided; cannot load access token from disk")
+                return null
+            }
+
             return try {
                 file.inputStream()
                     .use { json.decodeFromStream<AccessToken>(it) }
-                    .also { Logger.Events.info("Loaded access token from $file") }
+                    .also { info("Loaded access token from $cacheFile") }
             } catch (_: FileNotFoundException) {
-                null.also { Logger.Events.info("No saved access token at $file") }
+                null.also { info("No saved access token at $cacheFile") }
             }
         }
 
@@ -230,16 +241,16 @@ data class AccessToken(
                 }
 
                 if (token != null) {
-                    Logger.Events.info("Got refreshed access token")
-                    this.token = token
+                    info("Got refreshed access token")
+                    _tokenFlow.value = token
                     save(token)
                 }
             }
 
-            token?.refreshToken?.let { refreshToken ->
+            _tokenFlow.value?.refreshToken?.let { refreshToken ->
                 val job = synchronized(this) {
                     refreshJob ?: GlobalScope.async {
-                        Logger.Events.info("Current access token is expired; refreshing")
+                        info("Current access token is expired; refreshing")
                         fetchRefresh(refreshToken = refreshToken, clientId = clientId)
                         refreshJob = null
                     }.also { refreshJob = it }
@@ -249,6 +260,24 @@ data class AccessToken(
             }
         }
 
+        private fun info(message: String) {
+            check(_logEvents.tryEmit(LogEvent.Info(message)))
+        }
+
+        private fun warn(message: String) {
+            check(_logEvents.tryEmit(LogEvent.Warning(message)))
+        }
+
         class NoAccessTokenError : Throwable()
+
+        /**
+         * A simple wrapper on events logged by the [Cache] which may be either at info or warning levels.
+         */
+        sealed interface LogEvent {
+            val message: String
+
+            data class Info(override val message: String) : LogEvent
+            data class Warning(override val message: String) : LogEvent
+        }
     }
 }

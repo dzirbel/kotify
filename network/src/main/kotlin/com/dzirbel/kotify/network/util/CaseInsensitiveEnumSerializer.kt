@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.util
+package com.dzirbel.kotify.network.util
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -14,7 +14,7 @@ import kotlin.reflect.KClass
  * The default serializer requires that the decoded value matches the enum value's name (or its SerialName) exactly, and
  * so it cannot handle cases where the JSON value may be sometimes uppercase and sometimes lowercase.
  */
-abstract class CaseInsensitiveEnumSerializer<E : Enum<E>>(private val enumClass: KClass<E>) : KSerializer<E> {
+internal abstract class CaseInsensitiveEnumSerializer<E : Enum<E>>(private val enumClass: KClass<E>) : KSerializer<E> {
     override val descriptor = PrimitiveSerialDescriptor(enumClass.simpleName.orEmpty(), PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: E) {

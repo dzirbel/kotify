@@ -33,8 +33,8 @@ fun main(args: Array<String>) {
         oauthOkHttpClient = okHttpClient,
     )
 
-    // clear non-refreshable tokens from tests
-    AccessToken.Cache.requireRefreshable()
+    AccessToken.Cache.cacheFile = Application.cacheDir.resolve("access_token.json")
+    AccessToken.Cache.requireRefreshable() // clear non-refreshable tokens from tests
 
     application {
         Window(

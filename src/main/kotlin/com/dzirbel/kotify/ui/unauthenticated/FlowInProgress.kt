@@ -9,6 +9,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,7 +33,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 @Composable
 fun FlowInProgress(state: AuthenticationState, oauth: OAuth, onSetState: (AuthenticationState) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3, Alignment.Top)) {
-        val error = oauth.error.value
+        val error = oauth.errorFlow.collectAsState().value
         if (error == null) {
             Text("Authentication in progress. Accept the OAuth request from Spotify in your browser to continue.")
         } else {
@@ -125,7 +126,7 @@ fun FlowInProgress(state: AuthenticationState, oauth: OAuth, onSetState: (Authen
             }
         }
 
-        oauth.result.value?.let { result ->
+        oauth.resultFlow.collectAsState().value?.let { result ->
             val message = when (result) {
                 is LocalOAuthServer.Result.Error -> "Error: ${result.error}"
                 is LocalOAuthServer.Result.MismatchedState ->

@@ -13,6 +13,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -122,7 +123,8 @@ private fun CurrentUserDropdownContent(presenter: CurrentUserPresenter, user: Us
             Text("Authenticated as ${user.name} [${user.id}]")
         }
 
-        AccessToken.Cache.token?.let { token ->
+        val token = AccessToken.Cache.tokenFlow.collectAsState().value
+        if (token != null) {
             Text("Access token: ${token.accessToken}")
 
             Text("Refreshable: ${token.refreshToken != null}")

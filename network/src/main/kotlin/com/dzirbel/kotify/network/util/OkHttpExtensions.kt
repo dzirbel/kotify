@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.network
+package com.dzirbel.kotify.network.util
 
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.SerializationException

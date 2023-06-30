@@ -1,4 +1,4 @@
-package com.dzirbel.kotify
+package com.dzirbel.kotify.network
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking

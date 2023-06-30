@@ -303,7 +303,7 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
                         }
 
                     else -> {
-                        val track = trackPlayback.item
+                        val track = checkNotNull(trackPlayback.item)
 
                         val trackSavedState = SavedTrackRepository.stateOf(id = track.id)
                         val trackRatingState = TrackRatingRepository.ratingState(id = track.id)
@@ -331,7 +331,7 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
 
                         // refresh after the current track is expected to end
                         if (trackPlayback.isPlaying) {
-                            val millisLeft = trackPlayback.item.durationMs - trackPlayback.progressMs
+                            val millisLeft = track.durationMs - trackPlayback.progressMs
 
                             delay(millisLeft + REFRESH_BUFFER_MS)
 
