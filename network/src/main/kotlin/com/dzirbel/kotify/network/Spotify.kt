@@ -642,6 +642,9 @@ object Spotify {
      * Endpoints for managing the artists, users, and playlists that a Spotify user follows.
      */
     object Follow {
+        @Serializable
+        data class ArtistsCursorPagingModel(val artists: CursorPaging<FullSpotifyArtist>)
+
         /**
          * Check to see if the current user is following one or more artists or other Spotify users.
          *
@@ -680,9 +683,6 @@ object Spotify {
          * @param after Optional. The last artist ID retrieved from the previous request.
          */
         suspend fun getFollowedArtists(limit: Int? = null, after: String? = null): CursorPaging<FullSpotifyArtist> {
-            @Serializable
-            data class ArtistsCursorPagingModel(val artists: CursorPaging<FullSpotifyArtist>)
-
             return get<ArtistsCursorPagingModel>(
                 "me/following",
                 mapOf("type" to "artist", "limit" to limit?.toString(), "after" to after),

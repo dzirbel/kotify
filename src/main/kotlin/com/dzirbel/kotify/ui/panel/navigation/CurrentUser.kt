@@ -22,8 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.User
-import com.dzirbel.kotify.db.model.UserRepository
 import com.dzirbel.kotify.network.oauth.AccessToken
+import com.dzirbel.kotify.repository.savedRepositories
+import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.SimpleTextButton
@@ -59,7 +60,7 @@ private class CurrentUserPresenter(scope: CoroutineScope) : Presenter<User?, Cur
             }
 
             is Event.SignOut -> {
-                KotifyDatabase.clearSaved()
+                savedRepositories.forEach { it.invalidateAll() }
                 AccessToken.Cache.clear()
             }
         }

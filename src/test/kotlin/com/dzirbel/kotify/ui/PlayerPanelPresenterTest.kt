@@ -4,9 +4,6 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.FixtureModels
 import com.dzirbel.kotify.assertStateEquals
-import com.dzirbel.kotify.db.model.SavedAlbumRepository
-import com.dzirbel.kotify.db.model.SavedTrackRepository
-import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.emitAndIdle
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.TestSpotifyInterceptor
@@ -14,6 +11,9 @@ import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
+import com.dzirbel.kotify.repository.album.SavedAlbumRepository
+import com.dzirbel.kotify.repository.track.SavedTrackRepository
+import com.dzirbel.kotify.repository.track.TrackRatingRepository
 import com.dzirbel.kotify.testPresenter
 import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.player.PlayerPanelPresenter

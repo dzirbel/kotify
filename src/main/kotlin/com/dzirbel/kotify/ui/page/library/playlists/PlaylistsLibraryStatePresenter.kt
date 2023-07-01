@@ -2,9 +2,9 @@ package com.dzirbel.kotify.ui.page.library.playlists
 
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Playlist
-import com.dzirbel.kotify.db.model.PlaylistRepository
 import com.dzirbel.kotify.db.model.PlaylistTrackTable
-import com.dzirbel.kotify.db.model.SavedPlaylistRepository
+import com.dzirbel.kotify.repository.playlist.PlaylistRepository
+import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter

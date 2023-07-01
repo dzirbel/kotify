@@ -9,6 +9,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.oauth.AccessToken
+import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.ui.KeyboardShortcuts
 import com.dzirbel.kotify.ui.Root
 import okhttp3.OkHttpClient
@@ -21,7 +22,13 @@ fun main(args: Array<String>) {
 
     Settings.ensureLoaded()
 
-    KotifyDatabase.db // initialize database connection and create schema
+    KotifyDatabase.init(
+        dbFile = Application.cacheDir.resolve("cache.db"),
+        sqlLogger = Logger.Database,
+        onConnect = { UserRepository.currentUserId.loadToCache() },
+    )
+
+    KotifyDatabase.addTransactionListener(Logger.Database)
 
     val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(Logger.Network::intercept)

@@ -2,8 +2,8 @@ package com.dzirbel.kotify.ui.page.library.albums
 
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
-import com.dzirbel.kotify.db.model.AlbumRepository
-import com.dzirbel.kotify.db.model.SavedAlbumRepository
+import com.dzirbel.kotify.repository.album.AlbumRepository
+import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter

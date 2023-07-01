@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -181,6 +182,7 @@ data class AccessToken(
         /**
          * Writes [token] to disk.
          */
+        @OptIn(ExperimentalSerializationApi::class)
         private fun save(token: AccessToken) {
             val file = cacheFile
             if (file != null) {
@@ -196,6 +198,7 @@ data class AccessToken(
         /**
          * Reads the token from disk and returns it, or null if there is no token file.
          */
+        @OptIn(ExperimentalSerializationApi::class)
         private fun load(): AccessToken? {
             val file = cacheFile
             if (file == null) {

@@ -1,7 +1,9 @@
 rootProject.name = "kotify"
 
 include(
+    "db",
     "network",
+    "repository",
 )
 
 pluginManagement {

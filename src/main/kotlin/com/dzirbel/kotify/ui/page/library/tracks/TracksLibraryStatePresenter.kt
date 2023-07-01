@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.ui.page.library.tracks
 
-import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.Track
-import com.dzirbel.kotify.db.model.TrackRepository
+import com.dzirbel.kotify.repository.track.SavedTrackRepository
+import com.dzirbel.kotify.repository.track.TrackRepository
 import com.dzirbel.kotify.ui.framework.Presenter
 import kotlinx.coroutines.CoroutineScope
 

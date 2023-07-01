@@ -8,6 +8,7 @@ import com.dzirbel.kotify.ui.util.assertNotOnUIThread
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -93,6 +94,7 @@ object Settings {
         settings
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     private fun load(): SettingsData? {
         assertNotOnUIThread()
         return try {
@@ -110,6 +112,7 @@ object Settings {
         }
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     private fun save(data: SettingsData) {
         GlobalScope.launch(context = ioCoroutineContext) {
             assertNotOnUIThread()

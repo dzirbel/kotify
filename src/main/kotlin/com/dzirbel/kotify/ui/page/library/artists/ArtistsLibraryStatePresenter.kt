@@ -3,9 +3,9 @@ package com.dzirbel.kotify.ui.page.library.artists
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbumTable
-import com.dzirbel.kotify.db.model.ArtistRepository
 import com.dzirbel.kotify.db.model.ArtistTable
-import com.dzirbel.kotify.db.model.SavedArtistRepository
+import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.artist.SavedArtistRepository
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter

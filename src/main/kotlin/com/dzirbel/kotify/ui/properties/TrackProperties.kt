@@ -15,10 +15,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.PlaylistTrack
-import com.dzirbel.kotify.db.model.SavedTrackRepository
 import com.dzirbel.kotify.db.model.Track
-import com.dzirbel.kotify.db.model.TrackRatingRepository
 import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.repository.track.SavedTrackRepository
+import com.dzirbel.kotify.repository.track.TrackRatingRepository
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder

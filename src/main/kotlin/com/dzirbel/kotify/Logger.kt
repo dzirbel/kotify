@@ -4,6 +4,7 @@ import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.Logger.Event
 import com.dzirbel.kotify.Logger.Network.intercept
 import com.dzirbel.kotify.cache.ImageCacheEvent
+import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.framework.Presenter
 import kotlinx.coroutines.GlobalScope
@@ -159,7 +160,12 @@ sealed class Logger<T> {
         }
     }
 
-    object Database : Logger<Database.EventType>(), SqlLogger, StatementInterceptor {
+    object Database :
+        Logger<Database.EventType>(),
+        KotifyDatabase.TransactionListener,
+        SqlLogger,
+        StatementInterceptor {
+
         enum class EventType {
             STATEMENT, TRANSACTION
         }
@@ -169,7 +175,7 @@ sealed class Logger<T> {
         private val closedTransactions = mutableSetOf<String>()
         private var transactionCount: Int = 0
 
-        fun registerTransaction(transaction: Transaction, name: String?) {
+        override fun onTransactionStart(transaction: Transaction, name: String?) {
             transaction.registerInterceptor(this)
             transactionMap[transaction.id] = Pair(name, mutableListOf())
         }
@@ -216,6 +222,7 @@ sealed class Logger<T> {
                 is ImageCacheEvent.OnDisk ->
                     "ON-DISK ${imageCacheEvent.url} as ${imageCacheEvent.cacheFile} " +
                         "(loaded file in ${imageCacheEvent.duration})"
+
                 is ImageCacheEvent.Fetch ->
                     "MISS ${imageCacheEvent.url} in ${imageCacheEvent.duration}" +
                         imageCacheEvent.cacheFile?.let { " (saved to $it)" }

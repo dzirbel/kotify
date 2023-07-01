@@ -25,10 +25,13 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":db"))
     implementation(project(":network"))
+    implementation(project(":repository"))
 
     testImplementation(testFixtures(project(":network")))
 
+    testFixturesImplementation(project(":db"))
     testFixturesImplementation(project(":network"))
     testFixturesImplementation(testFixtures(project(":network")))
 
@@ -165,7 +168,6 @@ fun Project.configureKotlin() {
             freeCompilerArgs += "-opt-in=kotlinx.coroutines.FlowPreview"
             freeCompilerArgs += "-opt-in=kotlin.contracts.ExperimentalContracts"
             freeCompilerArgs += "-opt-in=kotlinx.coroutines.DelicateCoroutinesApi" // allow use of GlobalScope
-            freeCompilerArgs += "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
 
             // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
             freeCompilerArgs += "-Xcontext-receivers"

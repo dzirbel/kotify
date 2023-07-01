@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.ui.panel.library
 
 import com.dzirbel.kotify.db.model.Playlist
-import com.dzirbel.kotify.db.model.PlaylistRepository
-import com.dzirbel.kotify.db.model.SavedPlaylistRepository
+import com.dzirbel.kotify.repository.playlist.PlaylistRepository
+import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.ui.framework.Presenter
 import kotlinx.coroutines.CoroutineScope
 

@@ -2,9 +2,9 @@ package com.dzirbel.kotify.ui.page.library.ratings
 
 import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.model.Track
-import com.dzirbel.kotify.db.model.TrackRatingRepository
-import com.dzirbel.kotify.db.model.TrackRepository
 import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.repository.track.TrackRatingRepository
+import com.dzirbel.kotify.repository.track.TrackRepository
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
