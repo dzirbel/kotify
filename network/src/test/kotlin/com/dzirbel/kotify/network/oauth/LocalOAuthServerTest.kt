@@ -9,7 +9,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
@@ -21,17 +21,16 @@ internal class LocalOAuthServerTest {
         val inputState = "wrong"
         lateinit var callbackResult: LocalOAuthServer.Result
         LocalOAuthServer(state = expectedState, port = port, callback = { callbackResult = it }).running {
-            val response = runBlocking {
-                HttpClient().get("http://localhost:$port?state=$inputState")
-            }
+            runTest {
+                val response = HttpClient().get("http://localhost:$port?state=$inputState")
+                val content = response.body<String>()
 
-            val content = runBlocking { response.body<String>() }
-
-            assertThat(response.status).isEqualTo(HttpStatusCode.OK)
-            assertThat(content).isEqualTo("Mismatched state! Expected $expectedState; got $inputState")
-            assertThat(callbackResult).isInstanceOf(LocalOAuthServer.Result.MismatchedState::class).all {
-                prop(LocalOAuthServer.Result.MismatchedState::expectedState).isEqualTo(expectedState)
-                prop(LocalOAuthServer.Result.MismatchedState::actualState).isEqualTo(inputState)
+                assertThat(response.status).isEqualTo(HttpStatusCode.OK)
+                assertThat(content).isEqualTo("Mismatched state! Expected $expectedState; got $inputState")
+                assertThat(callbackResult).isInstanceOf(LocalOAuthServer.Result.MismatchedState::class).all {
+                    prop(LocalOAuthServer.Result.MismatchedState::expectedState).isEqualTo(expectedState)
+                    prop(LocalOAuthServer.Result.MismatchedState::actualState).isEqualTo(inputState)
+                }
             }
         }
     }
@@ -43,16 +42,16 @@ internal class LocalOAuthServerTest {
         val code = "code"
         lateinit var callbackResult: LocalOAuthServer.Result
         LocalOAuthServer(state = state, port = port, callback = { callbackResult = it }).running {
-            val response = runBlocking {
-                HttpClient().get("http://localhost:$port?state=$state&code=$code")
-            }
+            runTest {
+                val response = HttpClient().get("http://localhost:$port?state=$state&code=$code")
+                val content = response.body<String>()
 
-            val content = runBlocking { response.body<String>() }
-
-            assertThat(response.status).isEqualTo(HttpStatusCode.OK)
-            assertThat(content).isEqualTo("Success! You can now close this tab.\n\nCode: $code")
-            assertThat(callbackResult).isInstanceOf(LocalOAuthServer.Result.Success::class).all {
-                prop(LocalOAuthServer.Result.Success::code).isEqualTo(code)
+                assertThat(response.status).isEqualTo(HttpStatusCode.OK)
+                assertThat(content).isEqualTo("Success! You can now close this tab.\n\nCode: $code")
+                assertThat(callbackResult)
+                    .isInstanceOf(LocalOAuthServer.Result.Success::class)
+                    .prop(LocalOAuthServer.Result.Success::code)
+                    .isEqualTo(code)
             }
         }
     }
