@@ -42,7 +42,7 @@ jobs:
         run: |
           curl -Os https://uploader.codecov.io/latest/linux/codecov
           chmod +x codecov
-          ./codecov -t ${CODECOV_TOKEN} -F integration
+          ./codecov -t ${CODECOV_TOKEN} -F integration -f "./build/reports/jacoco/jacocoTestReportIntegration/jacocoTestReportIntegration.xml"
         if: ${{ always() }} # upload even if the build failed, in case it was just test failures
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

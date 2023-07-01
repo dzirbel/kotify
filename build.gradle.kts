@@ -68,6 +68,9 @@ dependencies {
     testFixturesImplementation(libs.okhttp)
 }
 
+val jacocoTestReportLocal = project.tasks.create<JacocoReport>("jacocoTestReportLocal")
+val jacocoTestReportIntegration = project.tasks.create<JacocoReport>("jacocoTestReportIntegration")
+
 // TODO change to subprojects when no code remains in the root project and/or move common configuration to buildSrc
 allprojects {
     afterEvaluate {
@@ -225,22 +228,21 @@ fun Project.configureJacoco() {
         toolVersion = libs.versions.jacoco.get()
     }
 
-    tasks.create<JacocoReport>("jacocoTestReportLocal") {
-        dependsOn("testLocal")
-        executionData("testLocal")
-        sourceSets(sourceSets.main.get())
-    }
+    val testLocal = tasks.getByName("testLocal")
+    jacocoTestReportLocal.dependsOn(testLocal)
+    jacocoTestReportLocal.sourceSets(sourceSets.main.get())
+    jacocoTestReportLocal.executionData(testLocal)
 
-    tasks.create<JacocoReport>("jacocoTestReportIntegration") {
-        dependsOn("testIntegration")
-        executionData("testIntegration")
-        sourceSets(sourceSets.main.get())
-    }
+    val testIntegration = tasks.getByName("testIntegration")
+    jacocoTestReportIntegration.dependsOn(testIntegration)
+    jacocoTestReportIntegration.sourceSets(sourceSets.main.get())
+    jacocoTestReportIntegration.executionData(testIntegration)
 
     tasks.withType<JacocoReport> {
         reports {
             xml.required = true
             csv.required = false
+            html.required = false
         }
     }
 }
