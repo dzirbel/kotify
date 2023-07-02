@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.network
 
 import com.dzirbel.kotify.network.oauth.AccessToken
+import com.dzirbel.kotify.util.TAG_NETWORK
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext

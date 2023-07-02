@@ -8,6 +8,7 @@ import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
+import com.dzirbel.kotify.db.util.largest
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyArtist
 import org.jetbrains.exposed.dao.id.EntityID

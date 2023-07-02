@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.dzirbel.kotify.util.TAG_NETWORK
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test

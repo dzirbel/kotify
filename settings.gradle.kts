@@ -4,6 +4,7 @@ include(
     "db",
     "network",
     "repository",
+    "util",
 )
 
 pluginManagement {

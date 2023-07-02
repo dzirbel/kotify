@@ -28,8 +28,10 @@ dependencies {
     implementation(project(":db"))
     implementation(project(":network"))
     implementation(project(":repository"))
+    implementation(project(":util"))
 
     testImplementation(testFixtures(project(":network")))
+    testImplementation(testFixtures(project(":util")))
 
     testFixturesImplementation(project(":db"))
     testFixturesImplementation(project(":network"))

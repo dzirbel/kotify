@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.repository
 
-import assertk.Assert
 import assertk.all
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -19,6 +18,7 @@ import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.network.model.SpotifyObject
+import com.dzirbel.kotify.util.containsExactlyElementsOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -46,7 +46,7 @@ data class TestNetworkModel(
     val booleanField: Boolean,
 ) : SpotifyObject
 
-object TestEntityTable : SpotifyEntityTable() {
+private object TestEntityTable : SpotifyEntityTable() {
     val string: Column<String> = text("string")
     val int: Column<Int> = integer("int")
     val boolean: Column<Boolean> = bool("boolean")
@@ -480,11 +480,5 @@ internal class DatabaseRepositoryTest {
             assertThat(int).isEqualTo(networkModel.intField)
             assertThat(boolean).isEqualTo(networkModel.booleanField)
         }
-    }
-
-    // TODO unify in utils module
-    private inline fun <reified T> Assert<List<T>>.containsExactlyElementsOf(elements: List<T>) {
-        @Suppress("SpreadOperator")
-        containsExactly(*elements.toTypedArray())
     }
 }

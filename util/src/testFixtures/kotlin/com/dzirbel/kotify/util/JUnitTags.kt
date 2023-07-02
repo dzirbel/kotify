@@ -1,3 +1,3 @@
-package com.dzirbel.kotify.network
+package com.dzirbel.kotify.util
 
 const val TAG_NETWORK = "network"

@@ -11,6 +11,10 @@ plugins {
 }
 
 dependencies {
+    testImplementation(testFixtures(project(":util")))
+
+    testFixturesImplementation(testFixtures(project(":util")))
+
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.netty)

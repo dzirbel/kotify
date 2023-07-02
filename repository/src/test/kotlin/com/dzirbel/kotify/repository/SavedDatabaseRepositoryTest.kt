@@ -1,9 +1,7 @@
 package com.dzirbel.kotify.repository
 
-import assertk.Assert
 import assertk.assertThat
 import assertk.assertions.containsExactly
-import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.isBetween
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
@@ -14,6 +12,7 @@ import assertk.assertions.isTrue
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
+import com.dzirbel.kotify.util.containsExactlyElementsOfInAnyOrder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -30,11 +29,11 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 
-data class TestSavedNetworkModel(val id: String)
+private data class TestSavedNetworkModel(val id: String)
 
-object TestSavedEntityTable : SavedEntityTable()
+private object TestSavedEntityTable : SavedEntityTable()
 
-object TestSavedRepository : SavedDatabaseRepository<TestSavedNetworkModel>(
+private object TestSavedRepository : SavedDatabaseRepository<TestSavedNetworkModel>(
     entityName = "test",
     savedEntityTable = TestSavedEntityTable,
 ) {
@@ -324,11 +323,5 @@ internal class SavedDatabaseRepositoryTest {
 
             assertThat(state1.refersTo(null)).isTrue()
         }
-    }
-
-    // TODO unify in utils module
-    private inline fun <reified T> Assert<Iterable<T>>.containsExactlyElementsOfInAnyOrder(elements: Iterable<T>) {
-        @Suppress("SpreadOperator")
-        containsExactlyInAnyOrder(*elements.toList().toTypedArray())
     }
 }

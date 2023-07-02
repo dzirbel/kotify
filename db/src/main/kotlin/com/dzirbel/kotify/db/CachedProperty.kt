@@ -123,7 +123,7 @@ class ReadWriteCachedProperty<V>(
 /**
  * Wraps this [ReadWriteProperty] in a [ReadWriteCachedProperty] of the same type.
  */
-fun <T, V> ReadWriteProperty<T, V>.cached(
+internal fun <T, V> ReadWriteProperty<T, V>.cached(
     requireGetInTransaction: Boolean = true,
     requireSetInTransaction: Boolean = true,
 ): ReadOnlyProperty<T, ReadWriteCachedProperty<V>> {
@@ -141,7 +141,7 @@ fun <T, V> ReadWriteProperty<T, V>.cached(
  * This is almost always desired, since the elements of a [SizedIterable] cannot be accessed outside of a database
  * transaction so typically the fully-resolved [List] should be cached.
  */
-fun <T, V> ReadWriteProperty<T, SizedIterable<V>>.cachedAsList(
+internal fun <T, V> ReadWriteProperty<T, SizedIterable<V>>.cachedAsList(
     requireGetInTransaction: Boolean = true,
     requireSetInTransaction: Boolean = true,
 ): ReadOnlyProperty<T, ReadWriteCachedProperty<List<V>>> {
@@ -160,7 +160,7 @@ fun <T, V> ReadWriteProperty<T, SizedIterable<V>>.cachedAsList(
  * particular the converted values of the [Derived] type will be cached so conversion only happens once and can be done
  * within the same transaction as accessing the underlying [ReadWriteProperty].
  */
-fun <T, Base, Derived> ReadWriteProperty<T, Base>.cached(
+internal fun <T, Base, Derived> ReadWriteProperty<T, Base>.cached(
     requireGetInTransaction: Boolean = true,
     requireSetInTransaction: Boolean = true,
     baseToDerived: (Base) -> Derived,
@@ -180,7 +180,7 @@ fun <T, Base, Derived> ReadWriteProperty<T, Base>.cached(
 /**
  * Wraps this [ReadOnlyProperty] in a [ReadOnlyCachedProperty] of the same type.
  */
-fun <T, V> ReadOnlyProperty<T, V>.cachedReadOnly(
+internal fun <T, V> ReadOnlyProperty<T, V>.cachedReadOnly(
     requireGetInTransaction: Boolean = true,
 ): ReadOnlyProperty<T, ReadOnlyCachedProperty<V>> {
     return cachedReadOnly(requireGetInTransaction = requireGetInTransaction, baseToDerived = { it })
@@ -193,7 +193,7 @@ fun <T, V> ReadOnlyProperty<T, V>.cachedReadOnly(
  * values of the [Derived] type will be cached so conversion only happens once and can be done within the same
  * transaction as accessing the underlying [ReadOnlyProperty].
  */
-fun <T, Base, Derived> ReadOnlyProperty<T, Base>.cachedReadOnly(
+internal fun <T, Base, Derived> ReadOnlyProperty<T, Base>.cachedReadOnly(
     requireGetInTransaction: Boolean = true,
     baseToDerived: (Base) -> Derived,
 ): ReadOnlyProperty<T, ReadOnlyCachedProperty<Derived>> {
@@ -209,7 +209,7 @@ fun <T, Base, Derived> ReadOnlyProperty<T, Base>.cachedReadOnly(
 /**
  * Wraps this [Reference] from a [Base] entity to a [Target] entity in a [ReadWriteCachedProperty].
  */
-fun <
+internal fun <
     REF : Comparable<REF>,
     BaseID : Comparable<BaseID>,
     Base : Entity<BaseID>,
@@ -237,7 +237,7 @@ fun <
 /**
  * Wraps this [OptionalReference] from a [Base] entity to a [Target] entity in a [ReadWriteCachedProperty].
  */
-fun <
+internal fun <
     REF : Comparable<REF>,
     BaseID : Comparable<BaseID>,
     Base : Entity<BaseID>,

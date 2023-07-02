@@ -1,9 +1,9 @@
 package com.dzirbel.kotify
 
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.TAG_NETWORK
 import com.dzirbel.kotify.network.TestSpotifyInterceptor
 import com.dzirbel.kotify.network.oauth.AccessToken
+import com.dzirbel.kotify.util.TAG_NETWORK
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext

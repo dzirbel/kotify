@@ -13,6 +13,9 @@ plugins {
 dependencies {
     implementation(project(":db"))
     implementation(project(":network"))
+    implementation(project(":util"))
+
+    testImplementation(testFixtures(project(":util")))
 
     implementation(compose.desktop.currentOs)
 

@@ -1,8 +1,7 @@
 package com.dzirbel.kotify.db
 
-import assertk.Assert
 import assertk.assertThat
-import assertk.assertions.containsExactlyInAnyOrder
+import com.dzirbel.kotify.util.containsExactlyElementsOfInAnyOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -64,11 +63,5 @@ internal class KotifyDatabaseTest {
                 List(numJobs) { Pair("row $it", it) },
             )
         }
-    }
-
-    // TODO unify in utils module
-    private inline fun <reified T> Assert<Iterable<T>>.containsExactlyElementsOfInAnyOrder(elements: Iterable<T>) {
-        @Suppress("SpreadOperator")
-        containsExactlyInAnyOrder(*elements.toList().toTypedArray())
     }
 }

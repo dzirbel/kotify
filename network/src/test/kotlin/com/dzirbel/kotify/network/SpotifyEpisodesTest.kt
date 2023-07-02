@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.network
 
 import com.dzirbel.kotify.network.properties.EpisodeProperties
+import com.dzirbel.kotify.util.TAG_NETWORK
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test

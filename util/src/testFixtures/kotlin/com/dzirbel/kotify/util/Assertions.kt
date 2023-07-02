@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.util
 
 import assertk.Assert
-import assertk.assertThat
 import assertk.assertions.containsAll
 import assertk.assertions.containsExactly
 import assertk.assertions.containsExactlyInAnyOrder
@@ -13,7 +12,7 @@ import java.util.SortedMap
  * Wraps this value with in an [Assert] and invokes [assertion] on it, as a convenience to avoid calls to let{}.
  */
 fun <T> T.assertThat(assertion: Assert<T>.() -> Unit) {
-    assertThat(this).assertion()
+    assertk.assertThat(this).assertion()
 }
 
 /**

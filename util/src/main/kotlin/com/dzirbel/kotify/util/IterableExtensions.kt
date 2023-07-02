@@ -1,7 +1,9 @@
 package com.dzirbel.kotify.util
 
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -89,4 +91,15 @@ suspend fun <T, R> Iterable<T>.mapParallel(transform: suspend (T) -> R): List<R>
  */
 suspend fun <T, R> Iterable<T>.flatMapParallel(transform: suspend (T) -> List<R>): List<R> {
     return mapParallel(transform).flatten()
+}
+
+/**
+ * Returns an [ImmutableMap] from the results of [map] to the number of times they occur.
+ */
+fun <T, K> Iterable<T>.countsBy(map: (T) -> K): ImmutableMap<K, Int> {
+    val counts = mutableMapOf<K, Int>()
+    for (element in this) {
+        counts.compute(map(element)) { _, count -> if (count == null) 1 else count + 1 }
+    }
+    return counts.toImmutableMap()
 }

@@ -5,6 +5,7 @@ import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.network.properties.AlbumProperties
+import com.dzirbel.kotify.util.TAG_NETWORK
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag

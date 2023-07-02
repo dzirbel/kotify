@@ -1,8 +1,6 @@
 package com.dzirbel.kotify.repository.artist
 
-import assertk.Assert
 import assertk.assertThat
-import assertk.assertions.containsExactly
 import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.hasSameSizeAs
 import assertk.assertions.isEmpty
@@ -17,6 +15,7 @@ import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyExternalUrl
 import com.dzirbel.kotify.network.model.SpotifyFollowers
 import com.dzirbel.kotify.network.model.SpotifyImage
+import com.dzirbel.kotify.util.containsExactlyElementsOf
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
@@ -171,11 +170,5 @@ internal class ArtistTest {
                 albumGroup = SpotifyAlbum.Type.ALBUM,
             ),
         )
-    }
-
-    // TODO unify in utils module
-    private inline fun <reified T> Assert<List<T>>.containsExactlyElementsOf(elements: List<T>) {
-        @Suppress("SpreadOperator")
-        containsExactly(*elements.toTypedArray())
     }
 }

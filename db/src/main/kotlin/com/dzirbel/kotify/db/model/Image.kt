@@ -6,32 +6,7 @@ import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.SizedIterable
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.times
 import java.util.UUID
-
-/**
- * Returns the [Image] with the largest width x height in this [SizedIterable], or null if it is empty.
- */
-fun SizedIterable<Image>.largest(): Image? {
-    return this
-        .copy() // copy to ensure SizedIterable has not already been loaded
-        .orderBy(ImageTable.width.times(ImageTable.height) to SortOrder.DESC)
-        .limit(1)
-        .firstOrNull()
-}
-
-/**
- * Returns the [Image] with the smallest width x height in this [SizedIterable], or null if it is empty.
- */
-fun SizedIterable<Image>.smallest(): Image? {
-    return this
-        .copy() // copy to ensure SizedIterable has not already been loaded
-        .orderBy(ImageTable.width.times(ImageTable.height) to SortOrder.ASC)
-        .limit(1)
-        .firstOrNull()
-}
 
 object ImageTable : UUIDTable(name = "images") {
     val url: Column<String> = text("url").uniqueIndex()

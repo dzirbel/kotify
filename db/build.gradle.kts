@@ -11,6 +11,8 @@ plugins {
 dependencies {
     implementation(project(":network")) // TODO required for translation from network models, move that to repos?
 
+    testImplementation(testFixtures(project(":util")))
+
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.javatime)

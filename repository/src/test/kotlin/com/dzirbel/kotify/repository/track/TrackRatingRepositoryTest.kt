@@ -9,6 +9,7 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.util.assertThat
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
@@ -92,10 +93,5 @@ internal class TrackRatingRepositoryTest {
             assertThat(actual).hasSameSizeAs(others)
             actual.zipEach(others) { e1, e2 -> assertk.assertThat(e1).matches(e2) }
         }
-    }
-
-    // TODO unify in utils module
-    private fun <T> T.assertThat(assertion: Assert<T>.() -> Unit) {
-        assertThat(this).assertion()
     }
 }
