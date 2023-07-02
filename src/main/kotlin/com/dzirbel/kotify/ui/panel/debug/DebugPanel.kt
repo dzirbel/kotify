@@ -22,6 +22,7 @@ import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.Theme
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
@@ -30,7 +31,6 @@ import com.dzirbel.kotify.ui.components.panel.PanelSize
 import com.dzirbel.kotify.ui.components.panel.SidePanel
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.Theme
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 
 enum class DebugTab(val tabName: String, val log: Logger<*>) {

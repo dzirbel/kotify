@@ -67,10 +67,13 @@ object IconCache {
     private val jobs: ConcurrentMap<IconHash, Deferred<Painter>> = ConcurrentHashMap()
 
     /**
-     * Toggles the [IconCache]'s blocking mode, in which calls to [load] are always done synchronously. This is used in
-     * screenshot tests to ensure icons are available for the test image.
+     * Toggles the [IconCache]'s blocking mode, in which calls to [load] are always done synchronously.
+     *
+     * This is used in screenshot tests to ensure icons are available for the test image. Defaulting to true (and having
+     * the main function set this to false) is a bit of hack, but easier than making sure that tests enable blocking
+     * mode.
      */
-    var loadBlocking = false
+    var loadBlocking = true
 
     /**
      * Loads the icon with the given [name] from the application resources, using an in-memory cache to avoid reloading

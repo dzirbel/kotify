@@ -4,6 +4,8 @@ import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
+import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByNumber
+import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByString
 
 object ArtistNameProperty : PropertyByString<Artist>(title = "Name") {
     override fun toString(item: Artist) = item.name

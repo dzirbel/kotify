@@ -27,7 +27,6 @@ import com.dzirbel.kotify.ui.panel.debug.DebugPanel
 import com.dzirbel.kotify.ui.panel.library.LibraryPanel
 import com.dzirbel.kotify.ui.panel.navigation.NavigationPanel
 import com.dzirbel.kotify.ui.player.PlayerPanel
-import com.dzirbel.kotify.ui.theme.Theme
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.unauthenticated.Unauthenticated
 import com.dzirbel.kotify.util.immutable.mapIndexedToImmutableList

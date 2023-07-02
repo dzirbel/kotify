@@ -3,7 +3,7 @@ package com.dzirbel.kotify.ui.page.playlist
 import com.dzirbel.kotify.FixtureModels
 import com.dzirbel.kotify.testTransaction
 import com.dzirbel.kotify.ui.screenshotTest
-import com.dzirbel.kotify.util.RelativeTimeInfo
+import com.dzirbel.kotify.ui.util.RelativeTimeInfo
 import org.junit.jupiter.api.Test
 import java.time.Instant
 

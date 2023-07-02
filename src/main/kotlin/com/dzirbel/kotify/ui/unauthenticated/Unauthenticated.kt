@@ -72,7 +72,7 @@ fun Unauthenticated() {
                                     clientId = authenticationParams.clientId,
                                     port = authenticationParams.port,
                                     scopes = authenticationParams.scopes,
-                                    openAuthorizationUrl = ::openInBrowser,
+                                    openAuthorizationUrl = { openInBrowser(it.toUri()) },
                                 )
                             },
                         )

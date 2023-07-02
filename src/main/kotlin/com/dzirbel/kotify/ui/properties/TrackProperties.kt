@@ -24,6 +24,9 @@ import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.adapter.compareNullable
+import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByLinkedText
+import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByNumber
+import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByString
 import com.dzirbel.kotify.ui.components.star.StarRating
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnByLinkedText

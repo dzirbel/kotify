@@ -959,8 +959,8 @@ style:
 
 TwitterCompose:
   CompositionLocalAllowlist:
-    active: true
-    allowedCompositionLocals: LocalColors,LocalSurfaceHeight,LocalSurfaceBackground
+    active: false
+    allowedCompositionLocals:
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:

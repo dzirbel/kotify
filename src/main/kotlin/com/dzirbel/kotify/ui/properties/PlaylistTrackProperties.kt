@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui.properties
 
 import com.dzirbel.kotify.db.model.PlaylistTrack
+import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByNumber
 import com.dzirbel.kotify.util.formatDateTime
 import java.util.concurrent.TimeUnit
 
