@@ -100,6 +100,7 @@ object KotifyDatabase {
         )
 
         transaction(db) {
+            // TODO create tables and columns via migrations (with tests verifying schema)
             @Suppress("SpreadOperator")
             SchemaUtils.createMissingTablesAndColumns(*tables)
 

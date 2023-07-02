@@ -51,6 +51,8 @@ fun <ViewModel, P : Presenter<ViewModel, *>> rememberPresenter(
  *
  * The presenter continually listens for [emit]ted events and processes them via [reactTo], which calls [mutateState] to
  * update the view [state].
+ *
+ * TODO rework or replace presenter
  */
 @Stable
 abstract class Presenter<ViewModel, Event : Any>(

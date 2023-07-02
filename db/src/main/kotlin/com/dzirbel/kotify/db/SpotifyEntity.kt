@@ -22,6 +22,8 @@ abstract class SpotifyEntityTable(name: String = "") : StringIdTable(name = name
 
 /**
  * Base class for entity objects in a [SpotifyEntityTable].
+ *
+ * TODO refactor UI to avoid direct use of (unstable) database entities
  */
 abstract class SpotifyEntity(id: EntityID<String>, table: SpotifyEntityTable) : Entity<String>(id) {
     var name: String by table.name

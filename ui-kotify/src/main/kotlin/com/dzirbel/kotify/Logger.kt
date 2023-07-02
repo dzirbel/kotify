@@ -28,6 +28,8 @@ import kotlin.time.measureTimedValue
 /**
  * A simple in-memory log of [Event]s storing arbitrary data of type [T], which can be [log]ed variously throughout the
  * application and retrieved to be exposed in the UI by [eventsFlow].
+ *
+ * TODO rework logging
  */
 @Stable
 sealed class Logger<T> {
