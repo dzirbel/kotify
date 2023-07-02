@@ -20,12 +20,6 @@ dependencies {
     testImplementation(libs.junit5.params)
     testRuntimeOnly(libs.junit5.engine)
 
-    // JUnit 4 is required to run Compose tests
-    // TODO only used for GridTest, just switch entirely to screenshot tests?
-    testCompileOnly(libs.junit4)
-    testRuntimeOnly(libs.junit5.engine.vintage)
-    testImplementation(libs.compose.junit4)
-
     testImplementation(libs.assertk)
 
     testFixturesImplementation(compose.desktop.currentOs)

@@ -4,7 +4,6 @@ compose = "1.4.1" # https://github.com/jetbrains/compose-jb
 detekt = "1.23.0" # https://github.com/detekt/detekt
 exposed = "0.41.1" # https://github.com/JetBrains/Exposed
 jacoco = "0.8.10" # https://github.com/jacoco/jacoco
-junit4 = "4.13.2" # https://junit.org/junit4/
 junit5 = "5.9.3" # https://junit.org/junit5/
 jvm = "18" # https://www.java.com/releases/; also update versions in CI workflows
 kotlin = "1.8.20" # https://kotlinlang.org/releases.html
@@ -20,8 +19,6 @@ twitter-compose-rules = "0.0.26"
 [libraries]
 assertk = { module = "com.willowtreeapps.assertk:assertk-jvm", version.ref = "assertk" }
 
-compose-junit4 = { module = "org.jetbrains.compose.ui:ui-test-junit4", version.ref = "compose" }
-
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
@@ -29,12 +26,9 @@ exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exp
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
 exposed-javatime = { module = "org.jetbrains.exposed:exposed-java-time", version.ref = "exposed" }
 
-junit4 = { module = "junit:junit", version.ref = "junit4" }
-
 junit5-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit5" }
 junit5-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit5" }
 junit5-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit5" }
-junit5-engine-vintage = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "junit5" }
 
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
