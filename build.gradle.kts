@@ -12,6 +12,11 @@ plugins {
     kotlin("jvm") version libs.versions.kotlin
 }
 
+// provide a repository for the root project to resolve jacoco
+repositories {
+    mavenCentral()
+}
+
 // TODO move common configuration to buildSrc
 subprojects {
     repositories {
