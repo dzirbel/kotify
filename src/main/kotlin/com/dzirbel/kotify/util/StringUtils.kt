@@ -26,7 +26,7 @@ fun String.capitalize(locale: Locale = Locale.getDefault()): String {
  *
  * From https://stackoverflow.com/a/3758880
  */
-@Suppress("ImplicitDefaultLocale", "MagicNumber", "UnderscoresInNumericLiterals")
+@Suppress("ImplicitDefaultLocale", "MagicNumber")
 fun formatByteSize(bytes: Long): String {
     if (bytes < 1024) {
         return "$bytes B"

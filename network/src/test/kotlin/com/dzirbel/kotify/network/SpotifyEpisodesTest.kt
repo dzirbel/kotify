@@ -29,7 +29,6 @@ class SpotifyEpisodesTest {
 
     companion object {
         @JvmStatic
-        @Suppress("unused")
         fun episodes(): List<EpisodeProperties> = Fixtures.episodes
     }
 }

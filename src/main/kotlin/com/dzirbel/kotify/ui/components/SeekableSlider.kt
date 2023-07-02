@@ -51,7 +51,6 @@ val DEFAULT_SEEK_TARGET_SIZE = 12.dp
  *  of the maximum slider width, between 0 and 1
  */
 @Composable
-@Suppress("UnnecessaryParentheses")
 fun SeekableSlider(
     progress: Float?,
     sliderWidth: Dp? = null,

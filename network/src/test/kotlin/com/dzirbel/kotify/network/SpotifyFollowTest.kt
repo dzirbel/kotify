@@ -95,7 +95,6 @@ class SpotifyFollowTest {
 
     companion object {
         @JvmStatic
-        @Suppress("unused")
         fun playlistFollows() = Fixtures.followingPlaylists
     }
 }

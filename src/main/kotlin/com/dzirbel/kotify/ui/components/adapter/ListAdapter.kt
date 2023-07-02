@@ -171,7 +171,6 @@ class ListAdapter<E> private constructor(
         return object : Iterator<E> {
             private var index: Int = 0
 
-            @Suppress("UnnecessaryParentheses")
             override fun hasNext(): Boolean = index < (elements?.size ?: 0)
 
             override fun next(): E {

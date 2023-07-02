@@ -480,7 +480,6 @@ internal class PlayerPanelPresenterTest {
         }
 
         @JvmStatic
-        @Suppress("unused")
         fun playbacks(): List<SpotifyPlayback?> {
             return listOf(
                 null,

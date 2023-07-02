@@ -54,13 +54,11 @@ internal class StringUtilsTest {
     companion object {
         @BeforeAll
         @JvmStatic
-        @Suppress("unused")
         fun setup() {
             TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"))
         }
 
         @JvmStatic
-        @Suppress("unused")
         fun formatByteSize(): List<ByteSizeCase> {
             return listOf(
                 ByteSizeCase(bytes = 0, formatted = "0 B"),
@@ -87,7 +85,6 @@ internal class StringUtilsTest {
         }
 
         @JvmStatic
-        @Suppress("unused")
         fun formatDateTime(): List<FormatDateTimeCase> {
             return listOf(
                 FormatDateTimeCase(
@@ -129,7 +126,6 @@ internal class StringUtilsTest {
         }
 
         @JvmStatic
-        @Suppress("unused")
         fun formatDuration(): List<FormatDurationCase> {
             return listOf(
                 FormatDurationCase(duration = 0.toDuration(DurationUnit.SECONDS), formatted = "0:00"),

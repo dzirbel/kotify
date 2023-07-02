@@ -25,10 +25,7 @@ class ArtistAlbum(id: EntityID<Int>) : IntEntity(id) {
 
     companion object : IntEntityClass<ArtistAlbum>(ArtistAlbumTable) {
         private fun recordFor(artistId: String, albumId: String): ArtistAlbum {
-            return find {
-                @Suppress("UnnecessaryParentheses")
-                (ArtistAlbumTable.album eq albumId) and (ArtistAlbumTable.artist eq artistId)
-            }
+            return find { (ArtistAlbumTable.album eq albumId) and (ArtistAlbumTable.artist eq artistId) }
                 .firstOrNull()
                 ?: ArtistAlbum.new {
                     this.albumId = EntityID(id = albumId, table = AlbumTable)

@@ -125,7 +125,7 @@ fun PlayerPanel() {
                         DeviceControls(state = state, presenter = presenter)
                     }
                 },
-                measurePolicy = @Suppress("UnnecessaryParentheses") { measurables, constraints ->
+                measurePolicy = { measurables, constraints ->
                     @Suppress("MagicNumber")
                     check(measurables.size == 3)
 

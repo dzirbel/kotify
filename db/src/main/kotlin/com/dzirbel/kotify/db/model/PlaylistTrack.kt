@@ -45,10 +45,7 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
 
     companion object : IntEntityClass<PlaylistTrack>(PlaylistTrackTable) {
         private fun recordFor(trackId: String, playlistId: String): PlaylistTrack {
-            return find {
-                @Suppress("UnnecessaryParentheses")
-                (PlaylistTrackTable.track eq trackId) and (PlaylistTrackTable.playlist eq playlistId)
-            }
+            return find { (PlaylistTrackTable.track eq trackId) and (PlaylistTrackTable.playlist eq playlistId) }
                 .firstOrNull()
                 ?: new {
                     this.trackId = EntityID(id = trackId, table = TrackTable)

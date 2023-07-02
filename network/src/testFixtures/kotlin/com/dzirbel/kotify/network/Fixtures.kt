@@ -12,7 +12,6 @@ import com.dzirbel.kotify.network.properties.TrackProperties
 object Fixtures {
     const val MAX_POPULARITY = 100
 
-    @Suppress("MagicNumber")
     val notFoundId = "a".repeat(22)
 
     const val userId = "34m1o83qloqkyzdt4z3qbveoy"

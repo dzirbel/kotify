@@ -106,7 +106,7 @@ private class FlaredBottomRoundedRect(val cornerSize: Dp, val bottomPadding: Dp 
  * canonical order of [elements].
  */
 @Composable
-@Suppress("UnnecessaryParentheses", "UnsafeCallOnNullableType")
+@Suppress("UnsafeCallOnNullableType")
 fun <E> Grid(
     elements: ListAdapter<E>,
     modifier: Modifier = Modifier,

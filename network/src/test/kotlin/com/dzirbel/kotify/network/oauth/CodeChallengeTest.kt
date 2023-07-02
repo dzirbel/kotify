@@ -35,7 +35,6 @@ internal class CodeChallengeTest {
         private const val VERIFIER_MAX_LENGTH = 128
 
         @JvmStatic
-        @Suppress("unused")
         fun seeds() = listOf("", "seed", "abc", "123")
     }
 }

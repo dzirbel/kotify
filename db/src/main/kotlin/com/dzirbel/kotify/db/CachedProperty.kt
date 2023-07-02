@@ -37,7 +37,7 @@ open class ReadOnlyCachedProperty<V>(private val requireGetInTransaction: Boolea
      * been called).
      */
     val cached: V
-        @Suppress("unchecked_cast")
+        @Suppress("UNCHECKED_CAST")
         get() = if (hasCachedValue) cachedValue as V else error("no cached value")
 
     /**

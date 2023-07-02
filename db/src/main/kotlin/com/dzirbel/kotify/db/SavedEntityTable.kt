@@ -26,9 +26,9 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
      * The last time the saved status was individually checked.
      *
      * For most object types, saved status is often checked globally (i.e. getting the set of all currently saved
-     * objects); that time is stored in [com.dzirbel.kotify.db.model.GlobalUpdateTimesRepository]. The individual saved
-     * status of an entity may also be checked, which is stored here. The global update time may be more recent than
-     * this one, in which case the global one should be used.
+     * objects); that time is stored in [com.dzirbel.kotify.repository.global.GlobalUpdateTimesRepository]. The
+     * individual saved status of an entity may also be checked, which is stored here. The global update time may be
+     * more recent than this one, in which case the global one should be used.
      */
     private val savedCheckTime: Column<Instant?> = timestamp("saved_check_time").nullable()
 
@@ -64,7 +64,7 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
      *
      * Must be called from within a transaction.
      */
-    @Suppress("CanBeNonNullable") // detekt false positive
+    @Suppress("CanBeNonNullable")
     fun setSaved(entityId: String, saved: Boolean, savedTime: Instant?, savedCheckTime: Instant = Instant.now()) {
         if (select { id eq entityId }.any()) {
             update(where = { id eq entityId }) { statement ->

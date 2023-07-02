@@ -28,7 +28,6 @@ internal class RelativeTimeInfoTest {
 
     companion object {
         @JvmStatic
-        @Suppress("unused")
         fun testRelative(): List<RelativeTestCase> {
             val base = 1_600_000_000_000
             return listOf(
@@ -102,7 +101,6 @@ internal class RelativeTimeInfoTest {
         }
 
         @JvmStatic
-        @Suppress("unused")
         fun testFormat(): List<FormatTestCase> {
             return listOf(
                 FormatTestCase(

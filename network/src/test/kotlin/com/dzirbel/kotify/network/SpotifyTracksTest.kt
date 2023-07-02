@@ -70,7 +70,6 @@ internal class SpotifyTracksTest {
 
     companion object {
         @JvmStatic
-        @Suppress("unused")
         fun tracks() = Fixtures.tracks
     }
 }

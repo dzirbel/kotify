@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit
 
 internal class AccessTokenTest {
     @BeforeEach
-    @Suppress("unused")
     fun beforeEach() {
         AccessToken.Cache.clear()
     }
@@ -308,7 +307,6 @@ internal class AccessTokenTest {
 
         @BeforeAll
         @JvmStatic
-        @Suppress("unused")
         fun before() {
             originalCacheFile = AccessToken.Cache.cacheFile
             AccessToken.Cache.cacheFile = tempFile
@@ -316,7 +314,6 @@ internal class AccessTokenTest {
 
         @AfterAll
         @JvmStatic
-        @Suppress("unused")
         fun after() {
             AccessToken.Cache.cacheFile = originalCacheFile
             originalCacheFile = null

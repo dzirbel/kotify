@@ -52,7 +52,6 @@ internal class SpotifyAlbumsTest {
 
     companion object {
         @JvmStatic
-        @Suppress("unused")
         fun albums() = Fixtures.albums.keys
     }
 }

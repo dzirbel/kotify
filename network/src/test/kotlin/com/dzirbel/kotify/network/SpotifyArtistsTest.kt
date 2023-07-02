@@ -96,7 +96,6 @@ internal class SpotifyArtistsTest {
 
     companion object {
         @JvmStatic
-        @Suppress("unused")
         fun artists() = Fixtures.artists
     }
 }

@@ -207,7 +207,6 @@ class SpotifyPlaylistsTest {
 
     companion object {
         @JvmStatic
-        @Suppress("unused")
         fun playlists() = Fixtures.playlists
     }
 }

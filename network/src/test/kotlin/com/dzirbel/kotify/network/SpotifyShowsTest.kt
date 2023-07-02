@@ -47,7 +47,6 @@ class SpotifyShowsTest {
 
     companion object {
         @JvmStatic
-        @Suppress("unused")
         fun shows() = Fixtures.shows
     }
 }

@@ -101,7 +101,7 @@ object KotifyDatabase {
 
         transaction(db) {
             @Suppress("SpreadOperator")
-            (SchemaUtils.createMissingTablesAndColumns(*tables))
+            SchemaUtils.createMissingTablesAndColumns(*tables)
 
             onConnect()
         }

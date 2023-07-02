@@ -186,9 +186,7 @@ abstract class Presenter<ViewModel, Event : Any>(
      * This must be its own function to allow restarting the event flow on error by making a recursive call to
      * [eventFlow].
      */
-    @Suppress("CanBeNonNullable") // detekt false positive
     private fun eventFlow(startingEvents: List<Event>? = this.startingEvents): Flow<Event> {
-        @Suppress("UnnecessaryLet")
         return (externalEvents()?.let { merge(it, events) } ?: events)
             .onStart { startingEvents?.forEach { emit(it) } }
             .onEach { event ->
