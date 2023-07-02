@@ -72,6 +72,7 @@ fun HyperlinkSpanStyle() = SpanStyle(color = LocalColors.current.primary, textDe
  * link and handling link clicks.
  *
  * TODO right click to open menu with copying the url as an option
+ * TODO consider optimizing when the entire text is a link
  */
 @Composable
 fun LinkedText(

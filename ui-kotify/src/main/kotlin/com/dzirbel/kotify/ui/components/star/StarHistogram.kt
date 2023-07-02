@@ -1,6 +1,9 @@
 package com.dzirbel.kotify.ui.components.star
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +17,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +25,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.HorizontalDivider
-import com.dzirbel.kotify.ui.components.hoverState
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
@@ -53,8 +54,11 @@ fun RatingHistogram(
 
     Row(Modifier.instrument()) {
         repeat(maxRating) { rating ->
-            val columnHover = remember { mutableStateOf(false) }
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.hoverState(columnHover)) {
+            val hoverInteractionSource = remember(rating) { MutableInteractionSource() }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.hoverable(hoverInteractionSource),
+            ) {
                 val numRatings = ratingCounts[rating + 1]
                 Column(
                     modifier = Modifier.height(barHeight).width(barWidth),
@@ -68,7 +72,8 @@ fun RatingHistogram(
                             .fillMaxWidth(BAR_WIDTH_PERCENT)
                             .background(LocalColors.current.star),
                     ) {
-                        if (columnHover.value && numRatings > 0) {
+                        val hovering = hoverInteractionSource.collectIsHoveredAsState().value
+                        if (hovering && numRatings > 0) {
                             Text(
                                 text = numRatings.toString(),
                                 style = MaterialTheme.typography.overline,

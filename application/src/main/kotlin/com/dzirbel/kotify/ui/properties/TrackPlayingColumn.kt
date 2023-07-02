@@ -1,11 +1,13 @@
 package com.dzirbel.kotify.ui.properties
 
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,7 +16,6 @@ import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository.Player
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
-import com.dzirbel.kotify.ui.components.hoverState
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnWidth
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -42,8 +43,8 @@ class TrackPlayingColumn<T>(
 
     @Composable
     override fun Item(item: T) {
-        val hoverState = remember { mutableStateOf(false) }
-        Box(Modifier.hoverState(hoverState).padding(Dimens.space2).size(Dimens.fontBodyDp)) {
+        val hoverInteractionSource = remember { MutableInteractionSource() }
+        Box(Modifier.padding(Dimens.space2).size(Dimens.fontBodyDp).hoverable(hoverInteractionSource)) {
             if (Player.currentTrackId.value == trackIdOf(item)) {
                 CachedIcon(
                     name = "volume-up",
@@ -52,7 +53,7 @@ class TrackPlayingColumn<T>(
                     tint = LocalColors.current.primary,
                 )
             } else {
-                if (hoverState.value) {
+                if (hoverInteractionSource.collectIsHoveredAsState().value) {
                     val context = playContextFromTrack(item)
                     IconButton(
                         onClick = { Player.play(context = context) },

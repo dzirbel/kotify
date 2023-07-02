@@ -5,7 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -62,8 +64,7 @@ fun SeekableSlider(
 ) {
     progress?.let { require(it in 0f..1f) }
 
-    // whether the user is hovering over the slider
-    val hoverState = remember { mutableStateOf(false) }
+    val hoverInteractionSource = remember { MutableInteractionSource() }
 
     // the current x coordinate of the user's pointer, relative to the slider bar, in pixels
     val hoverLocation = remember { mutableStateOf(0f) }
@@ -98,7 +99,7 @@ fun SeekableSlider(
         val paddingPx = with(LocalDensity.current) { padding.toPx() }
         Box(
             Modifier
-                .hoverState(hoverState)
+                .hoverable(hoverInteractionSource)
                 // use onPointerEvent to get raw pointer data; pointerMoveFilter does not register moves when the cursor
                 // is being dragged
                 .onPointerEvent(PointerEventType.Move) { event ->
@@ -126,15 +127,17 @@ fun SeekableSlider(
             if (progress != null) {
                 Layout(
                     content = {
+                        val hovering = hoverInteractionSource.collectIsHoveredAsState().value
+
                         // the foreground of the slider bar, representing the current progress
                         Box(
                             Modifier
                                 .fillMaxWidth(fraction = progress)
                                 .clip(roundedCornerShape)
-                                .background(LocalColors.current.highlighted(highlight = hoverState.value)),
+                                .background(LocalColors.current.highlighted(highlight = hovering)),
                         )
 
-                        if (hoverState.value) {
+                        if (hovering) {
                             // a draggable circle for seeking
                             Box(
                                 Modifier
