@@ -1,8 +1,7 @@
-package com.dzirbel.kotify.cache
+package com.dzirbel.kotify.ui
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
-import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.util.await
@@ -42,11 +41,7 @@ sealed class ImageCacheEvent {
  */
 object SpotifyImageCache {
     private const val SPOTIFY_IMAGE_URL_PREFIX = "https://i.scdn.co/image/"
-    private val IMAGES_DIR by lazy {
-        Application.cacheDir.resolve("images")
-            .also { it.mkdirs() }
-            .also { check(it.isDirectory) { "could not create image cache directory $it" } }
-    }
+    private var imagesDir: File? = null
 
     private val imageJobs: ConcurrentMap<String, Deferred<ImageBitmap?>> = ConcurrentHashMap()
 
@@ -66,6 +61,19 @@ object SpotifyImageCache {
         }
     }
 
+    fun init(imagesDir: File) {
+        this.imagesDir = imagesDir
+            .also { it.mkdirs() }
+            .also { check(it.isDirectory) { "could not create image cache directory $it" } }
+    }
+
+    internal fun withImagesDir(imagesDir: File, block: () -> Unit) {
+        val previousImagesDir = this.imagesDir
+        init(imagesDir)
+        block()
+        this.imagesDir = previousImagesDir
+    }
+
     /**
      * Clears the in-memory and disk cache.
      */
@@ -74,7 +82,7 @@ object SpotifyImageCache {
             imageJobs.clear()
             totalCompleted.set(0)
             if (deleteFileCache) {
-                IMAGES_DIR.deleteRecursively()
+                imagesDir?.deleteRecursively()
             }
             _metricsFlow.value = Metrics(inMemoryCount = 0, diskCount = 0, totalDiskSize = 0)
         }
@@ -152,9 +160,9 @@ object SpotifyImageCache {
         var cacheFile: File? = null
         if (url.startsWith(SPOTIFY_IMAGE_URL_PREFIX)) {
             val imageHash = url.substring(SPOTIFY_IMAGE_URL_PREFIX.length)
-            cacheFile = IMAGES_DIR.resolve(imageHash)
+            cacheFile = imagesDir?.resolve(imageHash)
 
-            if (cacheFile.isFile) {
+            if (cacheFile?.isFile == true) {
                 val image = Image.makeFromEncoded(cacheFile.readBytes()).toComposeImageBitmap()
 
                 totalCompleted.incrementAndGet()
@@ -182,7 +190,7 @@ object SpotifyImageCache {
                 val image = Image.makeFromEncoded(bytes).toComposeImageBitmap()
 
                 if (cacheFile != null) {
-                    IMAGES_DIR.mkdirs()
+                    imagesDir?.mkdirs()
                     cacheFile.writeBytes(bytes)
                 }
 
@@ -209,7 +217,7 @@ object SpotifyImageCache {
              * issues when loading multiple images in parallel.
              */
             fun load(): Metrics {
-                val files = IMAGES_DIR.listFiles()?.filter { it.isFile }
+                val files = imagesDir?.listFiles()?.filter { it.isFile }
                 return Metrics(
                     inMemoryCount = totalCompleted.get(),
                     diskCount = files?.size ?: 0,

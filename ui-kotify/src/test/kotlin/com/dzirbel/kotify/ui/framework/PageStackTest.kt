@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui
+package com.dzirbel.kotify.ui.framework
 
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
@@ -9,8 +9,6 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
-import com.dzirbel.kotify.ui.framework.Page
-import com.dzirbel.kotify.ui.framework.PageStack
 import org.junit.jupiter.api.Test
 
 internal class PageStackTest {

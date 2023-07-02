@@ -24,7 +24,10 @@ import com.dzirbel.kotify.ui.components.SortSelector
 import com.dzirbel.kotify.ui.components.adapter.dividableProperties
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
+import com.dzirbel.kotify.ui.page.album.AlbumPage
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.countsBy
 import com.dzirbel.kotify.util.immutable.mapToImmutableList
 import com.dzirbel.kotify.util.immutable.orEmpty
@@ -123,6 +126,7 @@ fun ArtistPageContent(presenter: ArtistPresenter, state: ArtistPresenter.ViewMod
                         ArtistPresenter.Event.ToggleSave(albumId = artistAlbum.albumId.value, save = save),
                     )
                 },
+                onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.albumId.value)) } },
             )
         }
     } else {

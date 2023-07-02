@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Dp
-import com.dzirbel.kotify.cache.SpotifyImageCache
+import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlinx.coroutines.Dispatchers

@@ -6,6 +6,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.repository.Player
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.playlist.PlaylistRepository
 import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
@@ -15,7 +16,6 @@ import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.components.adapter.asComparator
 import com.dzirbel.kotify.ui.framework.Presenter
-import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.properties.PlaylistTrackAddedAtProperty
 import com.dzirbel.kotify.ui.properties.PlaylistTrackIndexProperty
 import com.dzirbel.kotify.ui.properties.TrackAlbumProperty

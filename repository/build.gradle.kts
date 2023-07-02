@@ -11,8 +11,8 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":db"))
-    implementation(project(":network"))
+    api(project(":db"))
+    api(project(":network"))
     implementation(project(":util"))
 
     testImplementation(testFixtures(project(":util")))

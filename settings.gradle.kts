@@ -5,6 +5,7 @@ include(
     "network",
     "repository",
     "ui-common",
+    "ui-kotify",
     "util",
 )
 

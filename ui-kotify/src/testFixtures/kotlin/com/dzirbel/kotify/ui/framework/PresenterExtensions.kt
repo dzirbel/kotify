@@ -1,11 +1,11 @@
-package com.dzirbel.kotify
+package com.dzirbel.kotify.ui.framework
 
+import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.repository.Player
 import com.dzirbel.kotify.repository.Repository
-import com.dzirbel.kotify.ui.framework.Presenter
-import com.dzirbel.kotify.ui.player.Player
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -56,6 +56,6 @@ suspend fun <E : Any> Presenter<*, E>.emitAndIdle(event: E) {
  * [Presenter.errors].
  */
 fun <S> Presenter<S, *>.assertStateEquals(state: S) {
-    assertk.assertThat(errors).isEmpty()
-    assertk.assertThat(testState.stateOrThrow).isEqualTo(state)
+    assertThat(errors).isEmpty()
+    assertThat(testState.stateOrThrow).isEqualTo(state)
 }

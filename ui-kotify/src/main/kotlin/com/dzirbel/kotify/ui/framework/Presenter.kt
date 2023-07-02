@@ -160,7 +160,7 @@ abstract class Presenter<ViewModel, Event : Any>(
     /**
      * Exposes the current state for tests, where the composable [state] cannot be called.
      */
-    internal val testState: StateOrError<ViewModel>
+    val testState: StateOrError<ViewModel>
         get() = synchronized(this) { stateFlow.value }
 
     private val stateCount = AtomicInteger(0)
@@ -208,7 +208,7 @@ abstract class Presenter<ViewModel, Event : Any>(
      * Typically only used from tests, most usages should call [state] instead, which opens the presenter and collects
      * its state as a composition-aware state.
      */
-    internal suspend fun open() {
+    suspend fun open() {
         eventFlow().collect()
     }
 

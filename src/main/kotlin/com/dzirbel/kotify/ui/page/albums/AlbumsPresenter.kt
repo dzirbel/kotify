@@ -1,11 +1,11 @@
 package com.dzirbel.kotify.ui.page.albums
 
-import com.dzirbel.kotify.cache.SpotifyImageCache
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
+import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.properties.AlbumNameProperty

@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.db.model.Playlist
+import com.dzirbel.kotify.repository.Player
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
@@ -38,7 +39,6 @@ import com.dzirbel.kotify.ui.page.library.LibraryStatePage
 import com.dzirbel.kotify.ui.page.playlist.PlaylistPage
 import com.dzirbel.kotify.ui.page.tracks.TracksPage
 import com.dzirbel.kotify.ui.pageStack
-import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground

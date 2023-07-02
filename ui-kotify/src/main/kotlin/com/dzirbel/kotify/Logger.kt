@@ -3,9 +3,9 @@ package com.dzirbel.kotify
 import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.Logger.Event
 import com.dzirbel.kotify.Logger.Network.intercept
-import com.dzirbel.kotify.cache.ImageCacheEvent
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.network.oauth.AccessToken
+import com.dzirbel.kotify.ui.ImageCacheEvent
 import com.dzirbel.kotify.ui.framework.Presenter
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow

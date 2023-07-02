@@ -23,6 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.Application
+import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.ui.components.ProjectGithubIcon
 import com.dzirbel.kotify.ui.components.ThemeSwitcher
 import com.dzirbel.kotify.ui.pageStack
@@ -50,9 +52,12 @@ fun NavigationPanel(headerVisibleState: MutableTransitionState<Boolean>, titles:
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-                ThemeSwitcher(modifier = Modifier.align(Alignment.CenterVertically))
+                ThemeSwitcher(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    onSetColors = { Settings.colors = it },
+                )
 
-                ProjectGithubIcon(modifier = Modifier.align(Alignment.CenterVertically))
+                ProjectGithubIcon(githubUrl = Application.github, modifier = Modifier.align(Alignment.CenterVertically))
 
                 CurrentUser()
             }

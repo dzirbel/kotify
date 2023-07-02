@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.player
+package com.dzirbel.kotify.repository
 
 import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.db.model.Album
@@ -10,8 +10,6 @@ import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaybackOffset
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,7 +28,7 @@ object Player {
      */
     data class PlayContext(
         val contextUri: String?,
-        val trackUris: ImmutableList<String>? = null,
+        val trackUris: List<String>? = null,
         val offset: SpotifyPlaybackOffset? = null,
         val positionMs: Int? = null,
     ) {
@@ -75,7 +73,7 @@ object Player {
              */
             fun track(track: Track): PlayContext? {
                 return track.uri?.let {
-                    PlayContext(contextUri = null, trackUris = persistentListOf(it))
+                    PlayContext(contextUri = null, trackUris = listOf(it))
                 }
             }
         }

@@ -13,7 +13,10 @@ import com.dzirbel.kotify.ui.components.AlbumCell
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner
 import com.dzirbel.kotify.ui.components.grid.Grid
+import com.dzirbel.kotify.ui.page.album.AlbumPage
+import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.mutate
 
 @Composable
 fun AlbumsPageHeader(presenter: AlbumsPresenter, state: AlbumsPresenter.ViewModel) {
@@ -43,6 +46,7 @@ fun AlbumsPageContent(presenter: AlbumsPresenter, state: AlbumsPresenter.ViewMod
                 onToggleSave = { save ->
                     presenter.emitAsync(AlbumsPresenter.Event.ToggleSave(albumId = album.id.value, save = save))
                 },
+                onClick = { pageStack.mutate { to(AlbumPage(albumId = album.id.value)) } },
             )
         }
     } else {

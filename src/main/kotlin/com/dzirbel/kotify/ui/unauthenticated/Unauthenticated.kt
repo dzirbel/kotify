@@ -24,6 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.dzirbel.kotify.Application
+import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.network.oauth.OAuth
 import com.dzirbel.kotify.ui.components.ProjectGithubIcon
 import com.dzirbel.kotify.ui.components.ThemeSwitcher
@@ -56,8 +58,8 @@ fun Unauthenticated() {
                     verticalArrangement = Arrangement.spacedBy(Dimens.space3, Alignment.Top),
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        ThemeSwitcher()
-                        ProjectGithubIcon()
+                        ThemeSwitcher(onSetColors = { Settings.colors = it })
+                        ProjectGithubIcon(githubUrl = Application.github)
                     }
 
                     var authenticationParams by remember { mutableStateOf(AuthenticationParams()) }

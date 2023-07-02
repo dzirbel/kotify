@@ -13,8 +13,9 @@ dependencies {
 
     testImplementation(testFixtures(project(":util")))
 
+    api(libs.exposed.dao) // expose DAO classes in the API for access to Entity from dependencies
+
     implementation(libs.exposed.core)
-    implementation(libs.exposed.dao)
     implementation(libs.exposed.javatime)
     implementation(libs.exposed.jdbc)
     implementation(libs.kotlinx.coroutines.core)

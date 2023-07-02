@@ -25,14 +25,14 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":db"))
-    implementation(project(":network"))
     implementation(project(":repository"))
     implementation(project(":ui-common"))
+    implementation(project(":ui-kotify"))
     implementation(project(":util"))
 
     testImplementation(testFixtures(project(":network")))
     testImplementation(testFixtures(project(":ui-common")))
+    testImplementation(testFixtures(project(":ui-kotify")))
     testImplementation(testFixtures(project(":util")))
 
     testFixturesImplementation(project(":db"))

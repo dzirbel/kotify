@@ -13,6 +13,7 @@ import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.ui.IconCache
 import com.dzirbel.kotify.ui.KeyboardShortcuts
 import com.dzirbel.kotify.ui.Root
+import com.dzirbel.kotify.ui.SpotifyImageCache
 import okhttp3.OkHttpClient
 
 fun main(args: Array<String>) {
@@ -43,6 +44,8 @@ fun main(args: Array<String>) {
 
     AccessToken.Cache.cacheFile = Application.cacheDir.resolve("access_token.json")
     AccessToken.Cache.requireRefreshable() // clear non-refreshable tokens from tests
+
+    SpotifyImageCache.init(imagesDir = Application.cacheDir.resolve("images"))
 
     IconCache.loadBlocking = false
 

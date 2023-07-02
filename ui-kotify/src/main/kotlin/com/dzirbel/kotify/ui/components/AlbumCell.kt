@@ -20,31 +20,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.repository.Player
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
-import com.dzirbel.kotify.ui.page.album.AlbumPage
-import com.dzirbel.kotify.ui.pageStack
-import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
-import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun AlbumCell(
     album: Album,
     isSaved: Boolean?,
+    onToggleSave: (Boolean) -> Unit,
     showRating: Boolean = false,
     ratings: ImmutableList<Rating?>? = null,
-    onToggleSave: (Boolean) -> Unit,
+    onClick: () -> Unit,
 ) {
     Column(
         modifier = Modifier
             .instrument()
             .clip(RoundedCornerShape(Dimens.cornerSize))
-            .clickable { pageStack.mutate { to(AlbumPage(albumId = album.id.value)) } }
+            .clickable(onClick = onClick)
             .padding(Dimens.space3),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {
@@ -99,11 +97,11 @@ fun AlbumCell(
 }
 
 @Composable
-fun SmallAlbumCell(album: Album, isSaved: Boolean?, onToggleSave: (Boolean) -> Unit) {
+fun SmallAlbumCell(album: Album, isSaved: Boolean?, onToggleSave: (Boolean) -> Unit, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(Dimens.cornerSize))
-            .clickable { pageStack.mutate { to(AlbumPage(albumId = album.id.value)) } }
+            .clickable(onClick = onClick)
             .padding(Dimens.space2),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {

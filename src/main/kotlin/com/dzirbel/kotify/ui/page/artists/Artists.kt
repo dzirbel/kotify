@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerButton
 import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.repository.Player
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.DividerSelector
 import com.dzirbel.kotify.ui.components.Flow
@@ -39,9 +40,9 @@ import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.components.star.RatingHistogram
+import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
-import com.dzirbel.kotify.ui.player.Player
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
@@ -220,6 +221,7 @@ private fun ArtistDetailInsert(artist: Artist, presenter: ArtistsPresenter, stat
                             ArtistsPresenter.Event.ToggleAlbumSaved(albumId = artistAlbum.albumId.value, save = save),
                         )
                     },
+                    onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.albumId.value)) } },
                 )
             }
         }

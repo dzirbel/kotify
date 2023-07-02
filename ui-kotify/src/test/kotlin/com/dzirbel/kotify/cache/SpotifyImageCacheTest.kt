@@ -10,6 +10,7 @@ import assertk.assertions.isNotSameAs
 import assertk.assertions.isNull
 import assertk.assertions.isSameAs
 import com.dzirbel.kotify.network.MockRequestInterceptor
+import com.dzirbel.kotify.ui.SpotifyImageCache
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -18,6 +19,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -28,6 +30,7 @@ internal class SpotifyImageCacheTest {
     @AfterEach
     fun cleanup() {
         runBlocking { SpotifyImageCache.clear(scope = this) }
+        testImageDir.deleteRecursively()
         interceptor.requests.clear()
     }
 
@@ -111,27 +114,29 @@ internal class SpotifyImageCacheTest {
 
     @Test
     fun testDiskCache() {
-        // only spotify images are cached on disk
-        val url = "https://i.scdn.co/image/0ef1abc88dcd2f7131ba4d21c6dc56fcc027ef24"
+        SpotifyImageCache.withImagesDir(testImageDir) {
+            // only spotify images are cached on disk
+            val url = "https://i.scdn.co/image/0ef1abc88dcd2f7131ba4d21c6dc56fcc027ef24"
 
-        interceptor.responseBody = testImageBytes.toResponseBody(contentType = "image/jpeg".toMediaType())
+            interceptor.responseBody = testImageBytes.toResponseBody(contentType = "image/jpeg".toMediaType())
 
-        val image1 = requireNotNull(getImage(url = url))
+            val image1 = requireNotNull(getImage(url = url))
 
-        assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+            assertThat(interceptor.requests).hasSize(1)
+            assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
 
-        runBlocking { SpotifyImageCache.clear(scope = this, deleteFileCache = false) }
-        assertThat(SpotifyImageCache.getInMemory(url)).isNull()
+            runBlocking { SpotifyImageCache.clear(scope = this, deleteFileCache = false) }
+            assertThat(SpotifyImageCache.getInMemory(url)).isNull()
 
-        val image2 = requireNotNull(getImage(url = url))
+            val image2 = requireNotNull(getImage(url = url))
 
-        assertThat(image2).isNotSameAs(image1)
-        assertThat(image2.asSkiaBitmap().readPixels())
-            .isNotNull()
-            .isEqualTo(requireNotNull(image1.asSkiaBitmap().readPixels()))
-        assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+            assertThat(image2).isNotSameAs(image1)
+            assertThat(image2.asSkiaBitmap().readPixels())
+                .isNotNull()
+                .isEqualTo(requireNotNull(image1.asSkiaBitmap().readPixels()))
+            assertThat(interceptor.requests).hasSize(1)
+            assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+        }
     }
 
     private fun getImage(url: String = DEFAULT_IMAGE_URL): ImageBitmap? {
@@ -142,6 +147,8 @@ internal class SpotifyImageCacheTest {
 
     companion object {
         private const val DEFAULT_IMAGE_URL = "https://example.com/image"
+
+        private val testImageDir = File(".kotify/test-cache")
 
         private val testImageBytes by lazy { Files.readAllBytes(Path.of("src/test/resources/test-image.jpg")) }
     }
