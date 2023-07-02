@@ -14,6 +14,7 @@ dependencies {
     testRuntimeOnly(libs.junit5.engine)
 
     testImplementation(libs.assertk)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     testFixturesImplementation(libs.assertk)
     testFixturesImplementation(libs.kotlinx.coroutines.core)

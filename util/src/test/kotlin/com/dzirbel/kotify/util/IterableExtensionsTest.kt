@@ -3,15 +3,12 @@ package com.dzirbel.kotify.util
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
-import assertk.assertions.isBetween
 import assertk.assertions.isEqualTo
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import kotlin.math.max
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.TimeSource
 
 class IterableExtensionsTest {
     @Test
@@ -47,25 +44,23 @@ class IterableExtensionsTest {
         val baseList = listOf(1, 3, 4, 10)
         fun transform(n: Int) = List(n) { x -> n * (x + 1) }
 
-        var maxDelayMs = 0
-        val result = runBlocking {
-            val start = TimeSource.Monotonic.markNow()
+        var maxDelayMs = 0L
+        runTest {
+            val start = testScheduler.currentTime
+
             val result = baseList
                 .flatMapParallel { n ->
-                    val delay = 100 - n * 10
+                    val delay = (100 - n * 10).toLong()
                     maxDelayMs = max(maxDelayMs, delay)
 
-                    delay(delay.toLong())
+                    delay(delay)
 
                     transform(n)
                 }
 
-            val duration = start.elapsedNow()
-            assertThat(duration).isBetween(maxDelayMs.milliseconds, (maxDelayMs * 2).milliseconds)
-
-            result
+            val duration = testScheduler.currentTime - start
+            assertThat(duration).isEqualTo(maxDelayMs)
+            assertThat(result).isEqualTo(baseList.flatMap(::transform))
         }
-
-        assertThat(result).isEqualTo(baseList.flatMap { transform(it) })
     }
 }
