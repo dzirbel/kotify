@@ -1,7 +1,8 @@
 package com.dzirbel.kotify.ui.page.playlist
 
-import com.dzirbel.kotify.FixtureModels
-import com.dzirbel.kotify.testTransaction
+import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.blockingTransaction
+import com.dzirbel.kotify.repository.Playlist
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.util.RelativeTimeInfo
 import org.junit.jupiter.api.Test
@@ -20,9 +21,9 @@ internal class PlaylistPageScreenshotTest {
     @Test
     fun full() {
         val now = Instant.now()
-        val playlist = FixtureModels.playlist(fullUpdateTime = now)
+        val playlist = Playlist(fullUpdateTime = now)
 
-        testTransaction {
+        KotifyDatabase.blockingTransaction {
             playlist.largestImage.loadToCache()
             playlist.playlistTracksInOrder.loadToCache()
             playlist.playlistTracksInOrder.cached.forEach { playlistTrack ->

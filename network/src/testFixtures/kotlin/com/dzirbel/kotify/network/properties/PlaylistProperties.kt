@@ -2,7 +2,7 @@ package com.dzirbel.kotify.network.properties
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import com.dzirbel.kotify.network.Fixtures
+import com.dzirbel.kotify.network.NetworkFixtures
 import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.asFlow
@@ -15,7 +15,7 @@ data class PlaylistProperties(
     val description: String,
     val tracks: List<TrackProperties>? = null,
     val public: Boolean? = false,
-    val owner: String = Fixtures.userDisplayName,
+    val owner: String = NetworkFixtures.userDisplayName,
 ) : ObjectProperties(type = "playlist") {
     fun check(playlist: SpotifyPlaylist) {
         super.check(playlist)

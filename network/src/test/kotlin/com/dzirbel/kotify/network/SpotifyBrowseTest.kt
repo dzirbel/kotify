@@ -54,7 +54,7 @@ internal class SpotifyBrowseTest {
     fun getRecommendations() {
         val recommendations = runBlocking {
             Spotify.Browse.getRecommendations(
-                seedArtists = Fixtures.artists.map { it.id }.take(5),
+                seedArtists = NetworkFixtures.artists.map { it.id }.take(5),
                 seedGenres = emptyList(),
                 seedTracks = emptyList(),
             )
@@ -69,6 +69,6 @@ internal class SpotifyBrowseTest {
         val recommendations = runBlocking { Spotify.Browse.getRecommendationGenres() }
 
         assertThat(recommendations).isNotEmpty()
-        assertThat(recommendations).containsAllElementsOf(Fixtures.recommendationGenres)
+        assertThat(recommendations).containsAllElementsOf(NetworkFixtures.recommendationGenres)
     }
 }

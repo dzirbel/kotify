@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.compose) // TODO temporary for use of State in RatingRepository
     alias(libs.plugins.detekt)
     id("jacoco")
+    id("java-test-fixtures")
     kotlin("jvm") version libs.versions.kotlin
 }
 
@@ -11,6 +12,9 @@ dependencies {
     implementation(project(":util"))
 
     testImplementation(testFixtures(project(":util")))
+
+    testFixturesImplementation(testFixtures(project(":db")))
+    testFixturesImplementation(testFixtures(project(":network")))
 
     implementation(compose.desktop.currentOs)
 
@@ -25,4 +29,6 @@ dependencies {
 
     testImplementation(libs.assertk)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    testFixturesImplementation(compose.desktop.currentOs)
 }

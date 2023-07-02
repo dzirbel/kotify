@@ -119,10 +119,11 @@ object KotifyDatabase {
      * scheduler to proceed as soon as a suspended transaction is begun. Running synchronously avoids the test scheduler
      * advancing until the transaction is complete.
      */
-    fun withSynchronousTransactions(block: () -> Unit) {
+    fun <T> withSynchronousTransactions(block: () -> T): T {
         synchronousTransactions = true
-        block()
+        val result = block()
         synchronousTransactions = false
+        return result
     }
 
     /**

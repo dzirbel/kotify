@@ -8,16 +8,35 @@ import com.dzirbel.kotify.network.properties.PlaylistProperties
 import com.dzirbel.kotify.network.properties.ShowProperties
 import com.dzirbel.kotify.network.properties.TrackProperties
 
+/**
+ * Contains hardcoded data against which to test API calls.
+ */
 @Suppress("LargeClass", "TooManyFunctions")
-object Fixtures {
-    const val MAX_POPULARITY = 100
-
+object NetworkFixtures {
+    /**
+     * A valid Spotify ID which does not correspond to any object.
+     */
     val notFoundId = "a".repeat(22)
 
+    /**
+     * The maximum expected value for a popularity field.
+     */
+    const val MAX_POPULARITY = 100
+
+    /**
+     * ID of the test user.
+     */
     const val userId = "34m1o83qloqkyzdt4z3qbveoy"
+
+    /**
+     * Display name of the test user.
+     */
     const val userDisplayName = "Test"
 
-    // map from artist ID to whether or not the test users is following the artist
+    /**
+     * A map from artist ID to whether or not the test user is following that artist. Exhaustive among the artists the
+     * test user is following.
+     */
     val followingArtists = listOf(
         "5HA5aLY3jJV7eimXWkRBBp" to true, // Epica
         "6pRi6EIPXz4QJEOEsBaA0m" to false, // Chris Tomlin
@@ -26,30 +45,46 @@ object Fixtures {
         "2KaW48xlLnXC2v8tvyhWsa" to true, // Amaranthe
     )
 
-    // artists not being followed, but will be followed-and-unfollowed in tests
+    /**
+     * A list of artist IDs which the test user is not following, but may be followed and subsequently unfollowed in
+     * tests.
+     */
     val testFollowingArtists = listOf(
         "4kRllkt5ryNVBqFinVjBQZ", // Edenbridge
         "01DQQFGEOzbFugH5FcVAgI", // Amberian Dawn
     )
 
-    // map from user ID to whether or not the test user is following the user
+    /**
+     * A map from user ID to whether or not the test user is following that user. Exhaustive among users the test user
+     * is following.
+     */
     val followingUsers = listOf(
         "djynth" to true,
         "bobbytonelli" to false,
     )
 
-    // map from playlist ID to a map from user ID to whether the user is following that playlist
+    /**
+     * A list of pairs of playlist IDs to a map from user ID to whether that user is following that playlist, used to
+     * test general queries of user playlist follows.
+     */
     val followingPlaylists = listOf(
         "5apAth0JL9APnjo62F93RN" to mapOf("djynth" to true, "luckyeights" to false),
         "6urDFlFQIDXPwXbfpdGUc0" to mapOf("djynth" to true, "1267916582" to true),
     )
 
-    // a playlist not being followed, but will be followed-and-unfollowed in tests
+    /**
+     * A playlist ID which is not being followed, but may be followed and subsequently unfollowed in tests.
+     */
     const val testFollowingPlaylist = "5apAth0JL9APnjo62F93RN"
 
-    // sublist of recommended genres for the test user
+    /**
+     * A sublist of the recommended genres for the test users.
+     */
     val recommendationGenres = listOf("metal")
 
+    /**
+     * A generic set of known album properties, not necessarily saved or associated with the test user.
+     */
     val albums = mapOf(
         AlbumProperties("1Z5Aw68hjd9e17izcGbLSQ", "Kikelet") to listOf(
             TrackProperties(
@@ -184,6 +219,9 @@ object Fixtures {
         ),
     )
 
+    /**
+     * An exhaustive list of [AlbumProperties] which correspond to albums saved by the test user.
+     */
     val savedAlbums = listOf(
         AlbumProperties(
             id = "7sDOBekGFHH2KfwW0vn6Me",
@@ -205,12 +243,17 @@ object Fixtures {
         ),
     )
 
-    // list of IDs of albums which are not in the user's saved albums
+    /**
+     * A (partial) list of album IDs which are not saved by the test user.
+     */
     val unsavedAlbums = listOf(
         "2SD5sTAWvPIXESCBah1kiu", // We Are the Catalyst - Elevation
         "3hW1TEeZRJ01XycQFABjj9", // Chopin - Piano Works
     )
 
+    /**
+     * A generic set of known artist properties, not necessarily saved or associated with the test user.
+     */
     val artists = listOf(
         ArtistProperties(
             id = "7IxOJnsT8vXhTTzb6nlPOO",
@@ -331,6 +374,9 @@ object Fixtures {
         ),
     )
 
+    /**
+     * A generic set of known podcast episode properties, not necessarily saved or associated with the test user.
+     */
     val episodes = listOf(
         EpisodeProperties(
             id = "6XpUvPS3Y3iGIyguYrXUck",
@@ -361,6 +407,9 @@ object Fixtures {
         ),
     )
 
+    /**
+     * A non-exhaustive list of playlists created by the test user.
+     */
     val playlists = listOf(
         PlaylistProperties(
             id = "7aTpaSVlycAJyeU2SocEfA",
@@ -394,6 +443,9 @@ object Fixtures {
         ),
     )
 
+    /**
+     * A generic set of known podcast shows, not necessarily saved or associated with the test user.
+     */
     val shows = listOf(
         ShowProperties(
             id = "1mNsuXfG95Lf76YQeVMuo1",
@@ -425,6 +477,9 @@ object Fixtures {
         ),
     )
 
+    /**
+     * A generic set of known track properties, not necessarily saved or associated with the test user.
+     */
     val tracks = listOf(
         TrackProperties(
             id = "1rBhSseb3q55BJdTdxuSf4",
@@ -464,6 +519,9 @@ object Fixtures {
         ),
     )
 
+    /**
+     * A non-exhaustive list of track properties for tracks saved by the test user.
+     */
     val savedTracks = listOf(
         TrackProperties(
             id = "6mgsDKeO6A8vZs128vg98R",
@@ -488,6 +546,9 @@ object Fixtures {
         ),
     )
 
+    /**
+     * A non-exhaustive list of track IDs not saved by the test user.
+     */
     val unsavedTracks = listOf(
         "1T8IRUJBga0JXioJZvxjBR", // DEUTSCHLAND by Rammstein
         "2MSgFefjK0T7Iwjvr3OKqV", // Chopin: Nocturne No. 20 in C-Sharp Minor, Op. Posth.

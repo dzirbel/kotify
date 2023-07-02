@@ -25,7 +25,7 @@ class SpotifyShowsTest {
     @Test
     fun getShowNotFound() {
         val error = runBlocking {
-            assertThrows<Spotify.SpotifyError> { Spotify.Shows.getShow(Fixtures.notFoundId) }
+            assertThrows<Spotify.SpotifyError> { Spotify.Shows.getShow(NetworkFixtures.notFoundId) }
         }
 
         assertThat(error.code).isEqualTo(404)
@@ -33,9 +33,9 @@ class SpotifyShowsTest {
 
     @Test
     fun getShows() {
-        val shows = runBlocking { Spotify.Shows.getShows(ids = Fixtures.shows.map { it.id }) }
+        val shows = runBlocking { Spotify.Shows.getShows(ids = NetworkFixtures.shows.map { it.id }) }
 
-        shows.zip(Fixtures.shows).forEach { (show, showProperties) -> showProperties.check(show) }
+        shows.zip(NetworkFixtures.shows).forEach { (show, showProperties) -> showProperties.check(show) }
     }
 
     @ParameterizedTest
@@ -48,6 +48,6 @@ class SpotifyShowsTest {
 
     companion object {
         @JvmStatic
-        fun shows() = Fixtures.shows
+        fun shows() = NetworkFixtures.shows
     }
 }

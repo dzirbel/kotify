@@ -27,7 +27,7 @@ internal class SpotifyAlbumsTest {
     @Test
     fun getAlbumNotFound() {
         val error = runBlocking {
-            assertThrows<Spotify.SpotifyError> { Spotify.Albums.getAlbum(Fixtures.notFoundId) }
+            assertThrows<Spotify.SpotifyError> { Spotify.Albums.getAlbum(NetworkFixtures.notFoundId) }
         }
 
         assertThat(error.code).isEqualTo(404)
@@ -35,17 +35,17 @@ internal class SpotifyAlbumsTest {
 
     @Test
     fun getAlbums() {
-        val albums = runBlocking { Spotify.Albums.getAlbums(Fixtures.albums.keys.map { it.id }) }
+        val albums = runBlocking { Spotify.Albums.getAlbums(NetworkFixtures.albums.keys.map { it.id }) }
 
-        assertThat(albums.size).isEqualTo(Fixtures.albums.size)
-        albums.zip(Fixtures.albums.keys).forEach { (album, albumProperties) -> albumProperties.check(album) }
+        assertThat(albums.size).isEqualTo(NetworkFixtures.albums.size)
+        albums.zip(NetworkFixtures.albums.keys).forEach { (album, albumProperties) -> albumProperties.check(album) }
     }
 
     @ParameterizedTest
     @MethodSource("albums")
     fun getAlbumTracks(albumProperties: AlbumProperties) {
         val tracks = runBlocking { Spotify.Albums.getAlbumTracks(albumProperties.id).asFlow().toList() }
-        val trackProperties = Fixtures.albums.getValue(albumProperties)
+        val trackProperties = NetworkFixtures.albums.getValue(albumProperties)
 
         assertThat(tracks).hasSize(trackProperties.size)
         tracks.zip(trackProperties).forEach { (track, trackProperties) -> trackProperties.check(track) }
@@ -53,6 +53,6 @@ internal class SpotifyAlbumsTest {
 
     companion object {
         @JvmStatic
-        fun albums() = Fixtures.albums.keys
+        fun albums() = NetworkFixtures.albums.keys
     }
 }

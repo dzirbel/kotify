@@ -2,7 +2,7 @@ package com.dzirbel.kotify.ui
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import com.dzirbel.kotify.FixtureModels
+import com.dzirbel.kotify.network.FullSpotifyTrack
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.TestSpotifyInterceptor
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
@@ -425,9 +425,9 @@ internal class PlayerPanelPresenterTest {
 
         private const val deviceId = "device"
         private val device: SpotifyPlaybackDevice = device()
-        private val track: FullSpotifyTrack = FixtureModels.networkFullTrack()
-        private val trackA: FullSpotifyTrack = FixtureModels.networkFullTrack(id = "track-a", name = "Track A")
-        private val trackB: FullSpotifyTrack = FixtureModels.networkFullTrack(id = "track-b", name = "Track B")
+        private val track: FullSpotifyTrack = FullSpotifyTrack()
+        private val trackA: FullSpotifyTrack = FullSpotifyTrack(id = "track-a", name = "Track A")
+        private val trackB: FullSpotifyTrack = FullSpotifyTrack(id = "track-b", name = "Track B")
 
         private val playbackNotPlaying = playback(isPlaying = false, track = null)
         private val playbackPlaying = playback(isPlaying = true)

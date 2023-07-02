@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.compose)
     alias(libs.plugins.detekt)
     id("jacoco")
-    id("java-test-fixtures") // TODO test fixtures are unnecessary for this module; remove
     kotlin("jvm") version libs.versions.kotlin
     kotlin("plugin.serialization") version libs.versions.kotlin
 }
@@ -21,14 +20,12 @@ dependencies {
     implementation(project(":ui-kotify"))
     implementation(project(":util"))
 
+    testImplementation(testFixtures(project(":db")))
     testImplementation(testFixtures(project(":network")))
+    testImplementation(testFixtures(project(":repository")))
     testImplementation(testFixtures(project(":ui-common")))
     testImplementation(testFixtures(project(":ui-kotify")))
     testImplementation(testFixtures(project(":util")))
-
-    testFixturesImplementation(project(":db"))
-    testFixturesImplementation(project(":network"))
-    testFixturesImplementation(testFixtures(project(":network")))
 
     implementation(compose.desktop.currentOs)
 
@@ -42,10 +39,6 @@ dependencies {
     testRuntimeOnly(libs.junit5.engine)
 
     testImplementation(libs.assertk)
-
-    testFixturesImplementation(compose.desktop.currentOs)
-    testFixturesImplementation(libs.exposed.core)
-    testFixturesImplementation(libs.kotlinx.serialization.json)
 }
 
 compose.desktop {

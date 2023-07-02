@@ -28,7 +28,7 @@ internal class SpotifyArtistsTest {
     @Test
     fun getArtistNotFound() {
         val error = runBlocking {
-            assertThrows<Spotify.SpotifyError> { Spotify.Artists.getArtist(Fixtures.notFoundId) }
+            assertThrows<Spotify.SpotifyError> { Spotify.Artists.getArtist(NetworkFixtures.notFoundId) }
         }
 
         assertThat(error.code).isEqualTo(404)
@@ -36,10 +36,10 @@ internal class SpotifyArtistsTest {
 
     @Test
     fun getArtists() {
-        val artists = runBlocking { Spotify.Artists.getArtists(Fixtures.artists.map { it.id }) }
+        val artists = runBlocking { Spotify.Artists.getArtists(NetworkFixtures.artists.map { it.id }) }
 
-        assertThat(artists.size).isEqualTo(Fixtures.artists.size)
-        artists.zip(Fixtures.artists).forEach { (artist, artistProperties) -> artistProperties.check(artist) }
+        assertThat(artists.size).isEqualTo(NetworkFixtures.artists.size)
+        artists.zip(NetworkFixtures.artists).forEach { (artist, artistProperties) -> artistProperties.check(artist) }
     }
 
     @ParameterizedTest
@@ -97,6 +97,6 @@ internal class SpotifyArtistsTest {
 
     companion object {
         @JvmStatic
-        fun artists() = Fixtures.artists
+        fun artists() = NetworkFixtures.artists
     }
 }

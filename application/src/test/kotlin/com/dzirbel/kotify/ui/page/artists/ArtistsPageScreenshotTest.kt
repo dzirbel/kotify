@@ -1,7 +1,8 @@
 package com.dzirbel.kotify.ui.page.artists
 
-import com.dzirbel.kotify.FixtureModels
-import com.dzirbel.kotify.testTransaction
+import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.blockingTransaction
+import com.dzirbel.kotify.repository.ArtistList
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.screenshotTest
 import org.junit.jupiter.api.Test
@@ -18,9 +19,9 @@ internal class ArtistsPageScreenshotTest {
 
     @Test
     fun full() {
-        val artists = FixtureModels.artists(count = 10)
+        val artists = ArtistList(count = 10)
 
-        testTransaction {
+        KotifyDatabase.blockingTransaction {
             artists.forEach { it.largestImage.loadToCache() }
         }
 

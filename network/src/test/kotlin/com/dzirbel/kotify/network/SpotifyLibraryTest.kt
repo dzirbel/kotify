@@ -21,7 +21,7 @@ class SpotifyLibraryTest {
     fun getSavedAlbums() {
         val albums = runBlocking { Spotify.Library.getSavedAlbums().asFlow().toList() }
 
-        albums.zipWithBy(Fixtures.savedAlbums) { savedAlbum, albumProperties ->
+        albums.zipWithBy(NetworkFixtures.savedAlbums) { savedAlbum, albumProperties ->
             savedAlbum.album.id == albumProperties.id
         }.forEach { (savedAlbum, albumProperties) -> albumProperties.check(savedAlbum) }
     }
@@ -29,10 +29,10 @@ class SpotifyLibraryTest {
     @Test
     fun checkAlbums() {
         // map from album ID to whether it is saved
-        val ids: List<Pair<String, Boolean>> = Fixtures.savedAlbums.map { it.id to true }
+        val ids: List<Pair<String, Boolean>> = NetworkFixtures.savedAlbums.map { it.id to true }
             .plus(
-                Fixtures.albums.keys.map {
-                    it.id to Fixtures.savedAlbums.any { savedAlbum -> it.id == savedAlbum.id }
+                NetworkFixtures.albums.keys.map {
+                    it.id to NetworkFixtures.savedAlbums.any { savedAlbum -> it.id == savedAlbum.id }
                 },
             )
 
@@ -43,20 +43,20 @@ class SpotifyLibraryTest {
 
     @Test
     fun saveAndRemoveAlbums() {
-        assertThat(runBlocking { Spotify.Library.checkAlbums(Fixtures.unsavedAlbums) })
-            .containsExactlyElementsOf(Fixtures.unsavedAlbums.map { false })
+        assertThat(runBlocking { Spotify.Library.checkAlbums(NetworkFixtures.unsavedAlbums) })
+            .containsExactlyElementsOf(NetworkFixtures.unsavedAlbums.map { false })
 
         try {
-            runBlocking { Spotify.Library.saveAlbums(Fixtures.unsavedAlbums) }
+            runBlocking { Spotify.Library.saveAlbums(NetworkFixtures.unsavedAlbums) }
 
-            assertThat(runBlocking { Spotify.Library.checkAlbums(Fixtures.unsavedAlbums) })
-                .containsExactlyElementsOf(Fixtures.unsavedAlbums.map { true })
+            assertThat(runBlocking { Spotify.Library.checkAlbums(NetworkFixtures.unsavedAlbums) })
+                .containsExactlyElementsOf(NetworkFixtures.unsavedAlbums.map { true })
         } finally {
-            runBlocking { Spotify.Library.removeAlbums(Fixtures.unsavedAlbums) }
+            runBlocking { Spotify.Library.removeAlbums(NetworkFixtures.unsavedAlbums) }
         }
 
-        assertThat(runBlocking { Spotify.Library.checkAlbums(Fixtures.unsavedAlbums) })
-            .containsExactlyElementsOf(Fixtures.unsavedAlbums.map { false })
+        assertThat(runBlocking { Spotify.Library.checkAlbums(NetworkFixtures.unsavedAlbums) })
+            .containsExactlyElementsOf(NetworkFixtures.unsavedAlbums.map { false })
     }
 
     @Test
@@ -64,7 +64,7 @@ class SpotifyLibraryTest {
         val tracksPaging = runBlocking { Spotify.Library.getSavedTracks() }
         val tracks = runBlocking { tracksPaging.asFlow().toList() }
 
-        tracks.zipWithBy(Fixtures.savedTracks) { savedTrack, trackProperties ->
+        tracks.zipWithBy(NetworkFixtures.savedTracks) { savedTrack, trackProperties ->
             savedTrack.track.id == trackProperties.id
         }.forEach { (savedTrack, trackProperties) -> trackProperties.check(savedTrack) }
     }
@@ -72,10 +72,10 @@ class SpotifyLibraryTest {
     @Test
     fun checkTracks() {
         // map from track ID to whether it is saved
-        val ids: List<Pair<String?, Boolean>> = Fixtures.savedTracks.map { it.id to true }
+        val ids: List<Pair<String?, Boolean>> = NetworkFixtures.savedTracks.map { it.id to true }
             .plus(
-                Fixtures.tracks.map {
-                    it.id to Fixtures.savedTracks.any { savedTrack -> it.id == savedTrack.id }
+                NetworkFixtures.tracks.map {
+                    it.id to NetworkFixtures.savedTracks.any { savedTrack -> it.id == savedTrack.id }
                 },
             )
 
@@ -86,20 +86,20 @@ class SpotifyLibraryTest {
 
     @Test
     fun saveAndRemoveTracks() {
-        assertThat(runBlocking { Spotify.Library.checkTracks(Fixtures.unsavedTracks) })
-            .containsExactlyElementsOf(Fixtures.unsavedTracks.map { false })
+        assertThat(runBlocking { Spotify.Library.checkTracks(NetworkFixtures.unsavedTracks) })
+            .containsExactlyElementsOf(NetworkFixtures.unsavedTracks.map { false })
 
         try {
-            runBlocking { Spotify.Library.saveTracks(Fixtures.unsavedTracks) }
+            runBlocking { Spotify.Library.saveTracks(NetworkFixtures.unsavedTracks) }
 
-            assertThat(runBlocking { Spotify.Library.checkTracks(Fixtures.unsavedTracks) })
-                .containsExactlyElementsOf(Fixtures.unsavedTracks.map { true })
+            assertThat(runBlocking { Spotify.Library.checkTracks(NetworkFixtures.unsavedTracks) })
+                .containsExactlyElementsOf(NetworkFixtures.unsavedTracks.map { true })
         } finally {
-            runBlocking { Spotify.Library.removeTracks(Fixtures.unsavedTracks) }
+            runBlocking { Spotify.Library.removeTracks(NetworkFixtures.unsavedTracks) }
         }
 
-        assertThat(runBlocking { Spotify.Library.checkTracks(Fixtures.unsavedTracks) })
-            .containsExactlyElementsOf(Fixtures.unsavedTracks.map { false })
+        assertThat(runBlocking { Spotify.Library.checkTracks(NetworkFixtures.unsavedTracks) })
+            .containsExactlyElementsOf(NetworkFixtures.unsavedTracks.map { false })
     }
 
     @Test
@@ -107,7 +107,7 @@ class SpotifyLibraryTest {
         val showsPaging = runBlocking { Spotify.Library.getSavedShows() }
         val shows = runBlocking { showsPaging.asFlow().toList() }
 
-        val expected = Fixtures.shows.filter { it.saved }
+        val expected = NetworkFixtures.shows.filter { it.saved }
 
         shows.zipWithBy(expected) { savedShow, showProperties -> savedShow.show.id == showProperties.id }
             .forEach { (savedShow, showProperties) -> showProperties.check(savedShow) }
@@ -115,13 +115,13 @@ class SpotifyLibraryTest {
 
     @Test
     fun checkShows() {
-        val saved = runBlocking { Spotify.Library.checkShows(Fixtures.shows.map { it.id }) }
-        assertThat(saved).containsExactlyElementsOf(Fixtures.shows.map { it.saved })
+        val saved = runBlocking { Spotify.Library.checkShows(NetworkFixtures.shows.map { it.id }) }
+        assertThat(saved).containsExactlyElementsOf(NetworkFixtures.shows.map { it.saved })
     }
 
     @Test
     fun saveAndRemoveShows() {
-        val unsaved = listOf(Fixtures.shows.first { !it.saved }).map { it.id }
+        val unsaved = listOf(NetworkFixtures.shows.first { !it.saved }).map { it.id }
 
         assertThat(runBlocking { Spotify.Library.checkShows(unsaved) }).all {
             hasSameSizeAs(unsaved)

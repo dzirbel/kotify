@@ -27,10 +27,10 @@ internal class SpotifyTracksTest {
     @Test
     fun getAudioFeatures() {
         val audioFeatures = runBlocking {
-            Spotify.Tracks.getAudioFeatures(Fixtures.tracks.map { requireNotNull(it.id) })
+            Spotify.Tracks.getAudioFeatures(NetworkFixtures.tracks.map { requireNotNull(it.id) })
         }
 
-        assertThat(audioFeatures).hasSameSizeAs(Fixtures.tracks)
+        assertThat(audioFeatures).hasSameSizeAs(NetworkFixtures.tracks)
     }
 
     @ParameterizedTest
@@ -54,7 +54,7 @@ internal class SpotifyTracksTest {
     @Test
     fun getTrackNotFound() {
         val error = runBlocking {
-            assertThrows<Spotify.SpotifyError> { Spotify.Tracks.getTrack(Fixtures.notFoundId) }
+            assertThrows<Spotify.SpotifyError> { Spotify.Tracks.getTrack(NetworkFixtures.notFoundId) }
         }
 
         assertThat(error.code).isEqualTo(404)
@@ -63,14 +63,14 @@ internal class SpotifyTracksTest {
     @Test
     fun getTracks() {
         val tracks = runBlocking {
-            Spotify.Tracks.getTracks(Fixtures.tracks.map { requireNotNull(it.id) })
+            Spotify.Tracks.getTracks(NetworkFixtures.tracks.map { requireNotNull(it.id) })
         }
 
-        tracks.zip(Fixtures.tracks).forEach { (track, trackProperties) -> trackProperties.check(track) }
+        tracks.zip(NetworkFixtures.tracks).forEach { (track, trackProperties) -> trackProperties.check(track) }
     }
 
     companion object {
         @JvmStatic
-        fun tracks() = Fixtures.tracks
+        fun tracks() = NetworkFixtures.tracks
     }
 }

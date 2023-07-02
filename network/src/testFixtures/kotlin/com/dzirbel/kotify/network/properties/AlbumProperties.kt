@@ -7,7 +7,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import com.dzirbel.kotify.network.Fixtures
+import com.dzirbel.kotify.network.NetworkFixtures
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
@@ -38,7 +38,7 @@ data class AlbumProperties(
 
         if (album is FullSpotifyAlbum) {
             assertThat(album.genres).containsAllElementsOf(genres)
-            assertThat(album.popularity).isBetween(0, Fixtures.MAX_POPULARITY)
+            assertThat(album.popularity).isBetween(0, NetworkFixtures.MAX_POPULARITY)
             assertThat(album.tracks.items).isNotEmpty()
             if (totalTracks != null) {
                 assertThat(album.tracks.total).isEqualTo(totalTracks)

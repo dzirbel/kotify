@@ -1,7 +1,9 @@
 package com.dzirbel.kotify.ui.page.artist
 
-import com.dzirbel.kotify.FixtureModels
-import com.dzirbel.kotify.testTransaction
+import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.blockingTransaction
+import com.dzirbel.kotify.repository.Artist
+import com.dzirbel.kotify.repository.ArtistAlbumList
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.util.RelativeTimeInfo
 import org.junit.jupiter.api.Test
@@ -20,10 +22,10 @@ internal class ArtistPageScreenshotTest {
     @Test
     fun full() {
         val now = Instant.now()
-        val artist = FixtureModels.artist(fullUpdateTime = now, albumsFetched = now)
-        val artistAlbums = FixtureModels.artistAlbums(artistId = artist.id.value, count = 20)
+        val artist = Artist(fullUpdateTime = now, albumsFetched = now)
+        val artistAlbums = ArtistAlbumList(artistId = artist.id.value, count = 20)
 
-        testTransaction {
+        KotifyDatabase.blockingTransaction {
             artistAlbums.forEach { artistAlbum ->
                 artistAlbum.album.loadToCache()
                 artistAlbum.album.cached.largestImage.loadToCache()

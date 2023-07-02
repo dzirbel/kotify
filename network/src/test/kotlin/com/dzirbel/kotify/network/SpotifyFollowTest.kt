@@ -19,19 +19,19 @@ class SpotifyFollowTest {
     @Test
     fun isFollowingArtists() {
         val followedArtists = runBlocking {
-            Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.followingArtists.map { it.first })
+            Spotify.Follow.isFollowing(type = "artist", ids = NetworkFixtures.followingArtists.map { it.first })
         }
 
-        assertThat(followedArtists).containsExactlyElementsOf(Fixtures.followingArtists.map { it.second })
+        assertThat(followedArtists).containsExactlyElementsOf(NetworkFixtures.followingArtists.map { it.second })
     }
 
     @Test
     fun isFollowingUsers() {
         val followedUsers = runBlocking {
-            Spotify.Follow.isFollowing(type = "user", ids = Fixtures.followingUsers.map { it.first })
+            Spotify.Follow.isFollowing(type = "user", ids = NetworkFixtures.followingUsers.map { it.first })
         }
 
-        assertThat(followedUsers).containsExactlyElementsOf(Fixtures.followingUsers.map { it.second })
+        assertThat(followedUsers).containsExactlyElementsOf(NetworkFixtures.followingUsers.map { it.second })
     }
 
     @ParameterizedTest
@@ -52,50 +52,52 @@ class SpotifyFollowTest {
 
         assertThat(artists).isNotEmpty()
 
-        Fixtures.followingArtists.forEach { (artistId, following) ->
+        NetworkFixtures.followingArtists.forEach { (artistId, following) ->
             assertThat(artists.any { it.id == artistId }).isEqualTo(following)
         }
     }
 
     @Test
     fun followAndUnfollowArtist() {
-        assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
-            .containsExactlyElementsOf(Fixtures.testFollowingArtists.map { false })
+        runBlocking {
+            assertThat(Spotify.Follow.isFollowing(type = "artist", ids = NetworkFixtures.testFollowingArtists))
+                .containsExactlyElementsOf(NetworkFixtures.testFollowingArtists.map { false })
 
-        runBlocking { Spotify.Follow.follow(type = "artist", ids = Fixtures.testFollowingArtists) }
+            Spotify.Follow.follow(type = "artist", ids = NetworkFixtures.testFollowingArtists)
 
-        assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
-            .containsExactlyElementsOf(Fixtures.testFollowingArtists.map { true })
+            assertThat(Spotify.Follow.isFollowing(type = "artist", ids = NetworkFixtures.testFollowingArtists))
+                .containsExactlyElementsOf(NetworkFixtures.testFollowingArtists.map { true })
 
-        runBlocking { Spotify.Follow.unfollow(type = "artist", ids = Fixtures.testFollowingArtists) }
+            Spotify.Follow.unfollow(type = "artist", ids = NetworkFixtures.testFollowingArtists)
 
-        assertThat(runBlocking { Spotify.Follow.isFollowing(type = "artist", ids = Fixtures.testFollowingArtists) })
-            .containsExactlyElementsOf(Fixtures.testFollowingArtists.map { false })
+            assertThat(Spotify.Follow.isFollowing(type = "artist", ids = NetworkFixtures.testFollowingArtists))
+                .containsExactlyElementsOf(NetworkFixtures.testFollowingArtists.map { false })
+        }
     }
 
     @Test
     fun followAndUnfollowPlaylist() {
-        assertCurrentUserIsFollowingPlaylist(playlistId = Fixtures.testFollowingPlaylist, following = false)
+        assertCurrentUserIsFollowingPlaylist(playlistId = NetworkFixtures.testFollowingPlaylist, following = false)
 
-        runBlocking { Spotify.Follow.followPlaylist(Fixtures.testFollowingPlaylist) }
+        runBlocking { Spotify.Follow.followPlaylist(NetworkFixtures.testFollowingPlaylist) }
 
-        assertCurrentUserIsFollowingPlaylist(playlistId = Fixtures.testFollowingPlaylist, following = true)
+        assertCurrentUserIsFollowingPlaylist(playlistId = NetworkFixtures.testFollowingPlaylist, following = true)
 
-        runBlocking { Spotify.Follow.unfollowPlaylist(Fixtures.testFollowingPlaylist) }
+        runBlocking { Spotify.Follow.unfollowPlaylist(NetworkFixtures.testFollowingPlaylist) }
 
-        assertCurrentUserIsFollowingPlaylist(playlistId = Fixtures.testFollowingPlaylist, following = false)
+        assertCurrentUserIsFollowingPlaylist(playlistId = NetworkFixtures.testFollowingPlaylist, following = false)
     }
 
     private fun assertCurrentUserIsFollowingPlaylist(playlistId: String, following: Boolean) {
         assertThat(
             runBlocking {
-                Spotify.Follow.isFollowingPlaylist(playlistId = playlistId, userIds = listOf(Fixtures.userId))
+                Spotify.Follow.isFollowingPlaylist(playlistId = playlistId, userIds = listOf(NetworkFixtures.userId))
             },
         ).containsExactly(following)
     }
 
     companion object {
         @JvmStatic
-        fun playlistFollows() = Fixtures.followingPlaylists
+        fun playlistFollows() = NetworkFixtures.followingPlaylists
     }
 }

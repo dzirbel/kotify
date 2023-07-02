@@ -30,7 +30,7 @@ class SpotifyPlaylistsTest {
         val playlists = runBlocking { Spotify.Playlists.getPlaylists().asFlow().toList() }
 
         // don't zip since there are playlists that aren't in Fixtures
-        Fixtures.playlists.forEach { playlistProperties ->
+        NetworkFixtures.playlists.forEach { playlistProperties ->
             val playlist = playlists.first { it.id == playlistProperties.id }
             playlistProperties.check(playlist)
         }
@@ -38,10 +38,12 @@ class SpotifyPlaylistsTest {
 
     @Test
     fun getPlaylistsByUser() {
-        val playlists = runBlocking { Spotify.Playlists.getPlaylists(userId = Fixtures.userId).asFlow().toList() }
+        val playlists = runBlocking {
+            Spotify.Playlists.getPlaylists(userId = NetworkFixtures.userId).asFlow().toList()
+        }
 
         // don't zip since there are playlists that aren't in Fixtures
-        Fixtures.playlists.forEach { playlistProperties ->
+        NetworkFixtures.playlists.forEach { playlistProperties ->
             val playlist = playlists.first { it.id == playlistProperties.id }
             playlistProperties.check(playlist)
         }
@@ -51,13 +53,13 @@ class SpotifyPlaylistsTest {
     fun createAndEditPlaylist() {
         val name = "Test Playlist ${System.currentTimeMillis()}"
         val playlist = runBlocking {
-            Spotify.Playlists.createPlaylist(userId = Fixtures.userId, name = name, public = false)
+            Spotify.Playlists.createPlaylist(userId = NetworkFixtures.userId, name = name, public = false)
         }
 
         assertThat(playlist.id).isNotEmpty()
         assertThat(playlist.name).isEqualTo(name)
         assertThat(playlist.public).isNotNull().isFalse()
-        assertThat(playlist.owner.id).isEqualTo(Fixtures.userId)
+        assertThat(playlist.owner.id).isEqualTo(NetworkFixtures.userId)
 
         val updatedName = "Test Playlist v2 ${System.currentTimeMillis()}"
         val updatedDescription = "test description"
@@ -77,15 +79,15 @@ class SpotifyPlaylistsTest {
         runBlocking {
             Spotify.Playlists.addItemsToPlaylist(
                 playlistId = playlist.id,
-                uris = Fixtures.tracks.map { "spotify:track:${it.id}" },
+                uris = NetworkFixtures.tracks.map { "spotify:track:${it.id}" },
             )
         }
 
         val playlistWithTracks = runBlocking { Spotify.Playlists.getPlaylist(playlistId = playlist.id) }
         assertThat(playlistWithTracks.id).isEqualTo(playlist.id)
-        assertThat(playlistWithTracks.tracks.total).isEqualTo(Fixtures.tracks.size)
-        assertThat(playlistWithTracks.tracks.items.size).isEqualTo(Fixtures.tracks.size)
-        playlistWithTracks.tracks.items.zip(Fixtures.tracks).forEach { (track, trackProperties) ->
+        assertThat(playlistWithTracks.tracks.total).isEqualTo(NetworkFixtures.tracks.size)
+        assertThat(playlistWithTracks.tracks.items.size).isEqualTo(NetworkFixtures.tracks.size)
+        playlistWithTracks.tracks.items.zip(NetworkFixtures.tracks).forEach { (track, trackProperties) ->
             trackProperties.check(track)
         }
 
@@ -101,9 +103,9 @@ class SpotifyPlaylistsTest {
 
         val reorderedPlaylist = runBlocking { Spotify.Playlists.getPlaylist(playlistId = playlist.id) }
         assertThat(reorderedPlaylist.id).isEqualTo(playlist.id)
-        assertThat(reorderedPlaylist.tracks.total).isEqualTo(Fixtures.tracks.size)
-        assertThat(reorderedPlaylist.tracks.items.size).isEqualTo(Fixtures.tracks.size)
-        val reorderedTracks = Fixtures.tracks.toMutableList()
+        assertThat(reorderedPlaylist.tracks.total).isEqualTo(NetworkFixtures.tracks.size)
+        assertThat(reorderedPlaylist.tracks.items.size).isEqualTo(NetworkFixtures.tracks.size)
+        val reorderedTracks = NetworkFixtures.tracks.toMutableList()
         // B
         val track1 = reorderedTracks.removeAt(1)
         // C
@@ -114,7 +116,7 @@ class SpotifyPlaylistsTest {
             trackProperties.check(track)
         }
 
-        val replaceTracks = Fixtures.albums.values.first().take(3)
+        val replaceTracks = NetworkFixtures.albums.values.first().take(3)
         runBlocking {
             Spotify.Playlists.replacePlaylistItems(
                 playlistId = playlist.id,
@@ -148,7 +150,7 @@ class SpotifyPlaylistsTest {
 
     @Test
     fun getPlaylistCoverImages() {
-        Fixtures.playlists.forEach { playlist ->
+        NetworkFixtures.playlists.forEach { playlist ->
             val images = runBlocking { Spotify.Playlists.getPlaylistCoverImages(playlistId = playlist.id) }
 
             assertThat(images).isNotEmpty()
@@ -164,7 +166,7 @@ class SpotifyPlaylistsTest {
     fun uploadPlaylistCoverImage() {
         val name = "Custom Image Playlist ${System.currentTimeMillis()}"
         val playlist = runBlocking {
-            Spotify.Playlists.createPlaylist(userId = Fixtures.userId, name = name, public = false)
+            Spotify.Playlists.createPlaylist(userId = NetworkFixtures.userId, name = name, public = false)
         }
 
         val bytes = Files.readAllBytes(Path.of("src/test/resources/test-image.jpg"))
@@ -208,6 +210,6 @@ class SpotifyPlaylistsTest {
 
     companion object {
         @JvmStatic
-        fun playlists() = Fixtures.playlists
+        fun playlists() = NetworkFixtures.playlists
     }
 }
