@@ -1,7 +1,3 @@
-repositories {
-    mavenCentral()
-}
-
 plugins {
     alias(libs.plugins.compose)
     alias(libs.plugins.detekt)
@@ -32,12 +28,8 @@ dependencies {
     testImplementation(libs.junit5.params)
     testRuntimeOnly(libs.junit5.engine)
 
-    // JUnit 4 is required to run Compose tests
-    testCompileOnly(libs.junit4)
-    testRuntimeOnly(libs.junit5.engine.vintage)
-    testImplementation(libs.compose.junit4)
-
     testImplementation(libs.assertk)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     testFixturesImplementation(compose.desktop.currentOs)
     testFixturesImplementation(libs.assertk)

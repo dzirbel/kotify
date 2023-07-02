@@ -1,7 +1,3 @@
-repositories {
-    mavenCentral()
-}
-
 plugins {
     alias(libs.plugins.compose)
     alias(libs.plugins.detekt)
@@ -25,6 +21,7 @@ dependencies {
     testRuntimeOnly(libs.junit5.engine)
 
     // JUnit 4 is required to run Compose tests
+    // TODO only used for GridTest, just switch entirely to screenshot tests?
     testCompileOnly(libs.junit4)
     testRuntimeOnly(libs.junit5.engine.vintage)
     testImplementation(libs.compose.junit4)

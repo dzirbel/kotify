@@ -6,6 +6,8 @@ import org.jetbrains.exposed.sql.Transaction
 
 /**
  * Simple blocking wrapper around [KotifyDatabase.transaction] for use in tests.
+ *
+ * TODO remove / move to :db?
  */
 fun <T> testTransaction(statement: suspend Transaction.() -> T): T {
     return runBlocking {

@@ -33,7 +33,7 @@ object Application {
      * The directory under which cache files should be stored.
      */
     val cacheDir: File by lazy {
-        _cacheDir ?: File(".kotify/test-cache")
+        _cacheDir ?: File("../.kotify/test-cache")
             .also { it.mkdirs() }
             .also { Logger.Events.info("Using test cache directory ${it.absolutePath}") }
     }
@@ -42,7 +42,7 @@ object Application {
      * The directory under which settings files should be stored.
      */
     val settingsDir: File by lazy {
-        _settingsDir ?: File(".kotify/test-settings")
+        _settingsDir ?: File("../.kotify/test-settings")
             .also { it.mkdirs() }
             .also { Logger.Events.info("Using test settings directory ${it.absolutePath}") }
     }

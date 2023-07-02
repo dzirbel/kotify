@@ -1,6 +1,7 @@
 rootProject.name = "kotify"
 
 include(
+    "application",
     "db",
     "network",
     "repository",

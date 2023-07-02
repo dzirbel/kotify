@@ -1,8 +1,3 @@
-repositories {
-    mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-}
-
 plugins {
     alias(libs.plugins.compose) // TODO temporary for use of State in RatingRepository
     alias(libs.plugins.detekt)

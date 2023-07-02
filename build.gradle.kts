@@ -1,85 +1,24 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.compose.ComposeExtension
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.util.Properties
 
+// apply plugins to the root project so that we can access their classes in the shared configuration
 plugins {
     alias(libs.plugins.compose)
     alias(libs.plugins.detekt)
     id("jacoco")
     id("java-test-fixtures")
     kotlin("jvm") version libs.versions.kotlin
-    kotlin("plugin.serialization") version libs.versions.kotlin
 }
 
-val appProperties = file("src/main/resources/app.properties").inputStream().use { Properties().apply { load(it) } }
+// TODO move common configuration to buildSrc
+subprojects {
+    repositories {
+        mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    }
 
-version = appProperties["version"] as String
-
-repositories {
-    mavenCentral()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-}
-
-dependencies {
-    implementation(project(":repository"))
-    implementation(project(":ui-common"))
-    implementation(project(":ui-kotify"))
-    implementation(project(":util"))
-
-    testImplementation(testFixtures(project(":network")))
-    testImplementation(testFixtures(project(":ui-common")))
-    testImplementation(testFixtures(project(":ui-kotify")))
-    testImplementation(testFixtures(project(":util")))
-
-    testFixturesImplementation(project(":db"))
-    testFixturesImplementation(project(":network"))
-    testFixturesImplementation(testFixtures(project(":network")))
-
-    implementation(compose.desktop.currentOs)
-
-    implementation(libs.exposed.core)
-    implementation(libs.exposed.dao)
-    implementation(libs.exposed.javatime)
-    implementation(libs.exposed.jdbc)
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.immutable.collections)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.okhttp)
-    implementation(libs.sqlite.jdbc)
-
-    testImplementation(libs.junit5.api)
-    testImplementation(libs.junit5.params)
-    testRuntimeOnly(libs.junit5.engine)
-
-    // JUnit 4 is required to run Compose tests
-    testCompileOnly(libs.junit4)
-    testRuntimeOnly(libs.junit5.engine.vintage)
-    testImplementation(libs.compose.junit4)
-
-    testImplementation(libs.assertk)
-    testImplementation(libs.kotlinx.coroutines.swing) // Swing dispatcher for screenshot tests
-    testImplementation(libs.kotlinx.coroutines.test)
-
-    testFixturesImplementation(compose.desktop.currentOs)
-    testFixturesImplementation(libs.assertk)
-    testFixturesImplementation(libs.exposed.core)
-    testFixturesImplementation(libs.exposed.dao)
-    testFixturesImplementation(libs.exposed.javatime)
-    testFixturesImplementation(libs.exposed.jdbc)
-    testFixturesImplementation(libs.kotlinx.coroutines.core)
-    testFixturesImplementation(libs.kotlinx.serialization.json)
-    testFixturesImplementation(libs.okhttp)
-}
-
-val jacocoTestReportLocal = project.tasks.create<JacocoReport>("jacocoTestReportLocal")
-val jacocoTestReportIntegration = project.tasks.create<JacocoReport>("jacocoTestReportIntegration")
-
-// TODO change to subprojects when no code remains in the root project and/or move common configuration to buildSrc
-allprojects {
     afterEvaluate {
         configureKotlin()
         configureDetekt()
@@ -96,38 +35,6 @@ allprojects {
             dependsOn("detektWithTypeResolution")
             dependsOn("testLocal")
         }
-    }
-}
-
-compose.desktop {
-    application {
-        // workaround for https://github.com/JetBrains/compose-jb/issues/188
-        if (OperatingSystem.current().isLinux) {
-            jvmArgs("-Dsun.java2d.uiScale=2.0")
-        }
-
-        mainClass = "com.dzirbel.kotify.MainKt"
-
-        buildTypes.release.proguard {
-            configurationFiles.from(project.file("proguard-rules.pro"))
-        }
-
-        nativeDistributions {
-            modules("java.sql")
-            modules("jdk.crypto.ec") // required for SSL, see https://github.com/JetBrains/compose-jb/issues/429
-
-            targetFormats(TargetFormat.Deb, TargetFormat.Exe)
-            packageName = appProperties["name"] as String
-            packageVersion = project.version.toString()
-        }
-    }
-}
-
-// override compose configuration of arguments so that they're only applied to :run and not when packaging the
-// application
-project.afterEvaluate {
-    tasks.withType<JavaExec> {
-        args = listOf(".kotify/cache", ".kotify/settings")
     }
 }
 
@@ -228,6 +135,9 @@ fun Project.configureTests() {
         }
     }
 }
+
+val jacocoTestReportLocal = project.tasks.create<JacocoReport>("jacocoTestReportLocal")
+val jacocoTestReportIntegration = project.tasks.create<JacocoReport>("jacocoTestReportIntegration")
 
 fun Project.configureJacoco() {
     jacoco {

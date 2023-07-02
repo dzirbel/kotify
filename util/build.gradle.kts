@@ -1,7 +1,3 @@
-repositories {
-    mavenCentral()
-}
-
 plugins {
     alias(libs.plugins.detekt)
     id("jacoco")
