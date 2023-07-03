@@ -2,8 +2,8 @@ package com.dzirbel.kotify.util
 
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableMap
+import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -34,12 +34,7 @@ fun <A, B> Iterable<A>.zipToMap(other: Iterable<B>): Map<A, B> {
 }
 
 fun <A, B> Iterable<A>.zipToPersistentMap(other: Iterable<B>): PersistentMap<A, B> {
-    val map = persistentMapOf<A, B>()
-    zipEach(other) { a, b ->
-        @Suppress("ExplicitCollectionElementAccessMethod") // detekt false positive; put is not an operator fun
-        map.put(a, b)
-    }
-    return map
+    return zipToMap(other).toPersistentMap()
 }
 
 fun <T> Iterable<T>.sumOfNullable(map: (T) -> Float?): Float {
