@@ -22,8 +22,8 @@ fun <A, B> Iterable<A>.zipEach(other: Iterable<B>, onEach: (A, B) -> Unit) {
 }
 
 /**
- * Returns a map of the pair of this [Iterable] and [other], associating keys in this [Iterable] with values in [other].
- * The returned map only has values from up to the minimum of the two collection sizes.
+ * Returns a [Map] of the pair of this [Iterable] and [other], associating keys in this [Iterable] with values in
+ * [other]. The returned map only has values from up to the minimum of the two collection sizes.
  */
 fun <A, B> Iterable<A>.zipToMap(other: Iterable<B>): Map<A, B> {
     val map = mutableMapOf<A, B>()
@@ -33,10 +33,18 @@ fun <A, B> Iterable<A>.zipToMap(other: Iterable<B>): Map<A, B> {
     return map
 }
 
+/**
+ * Returns a [PersistentMap] of the pair of this [Iterable] and [other], associating keys in this [Iterable] with values
+ * in [other]. The returned map only has values from up to the minimum of the two collection sizes.
+ */
 fun <A, B> Iterable<A>.zipToPersistentMap(other: Iterable<B>): PersistentMap<A, B> {
     return zipToMap(other).toPersistentMap()
 }
 
+/**
+ * Sums the result of applying [map] to all the elements of this [Iterable], ignoring those for which [map] returns
+ * null.
+ */
 fun <T> Iterable<T>.sumOfNullable(map: (T) -> Float?): Float {
     var total = 0f
     for (element in this) {
@@ -49,13 +57,7 @@ fun <T> Iterable<T>.sumOfNullable(map: (T) -> Float?): Float {
  * Calculates the mean value of the numeric values provided by [toDouble] among non-null values in this [Iterable], or
  * null if there are no such values.
  */
-fun <T : Any> Iterable<T?>.averageOrNull(toDouble: (T) -> Double?): Double? = averageAndCountOrNull(toDouble).first
-
-/**
- * Calculates the mean value of the numeric values provided by [toDouble] among non-null values in this [Iterable], or
- * null if there are no such values; along with the total number of such values.
- */
-fun <T : Any> Iterable<T?>.averageAndCountOrNull(toDouble: (T) -> Double?): Pair<Double?, Int> {
+fun <T : Any> Iterable<T?>.averageOrNull(toDouble: (T) -> Double?): Double? {
     var total = 0.0
     var count = 0
 
@@ -66,7 +68,7 @@ fun <T : Any> Iterable<T?>.averageAndCountOrNull(toDouble: (T) -> Double?): Pair
         }
     }
 
-    return Pair(if (count == 0) null else total / count, count)
+    return if (count == 0) null else total / count
 }
 
 /**
@@ -85,7 +87,12 @@ suspend fun <T, R> Iterable<T>.mapParallel(transform: suspend (T) -> R): List<R>
  * Flat maps values in this [Iterable] via [transform], computing each transformation in parallel.
  */
 suspend fun <T, R> Iterable<T>.flatMapParallel(transform: suspend (T) -> List<R>): List<R> {
-    return mapParallel(transform).flatten()
+    return coroutineScope {
+        map { element ->
+            async { transform(element) }
+        }
+    }
+        .flatMap { it.await() }
 }
 
 /**

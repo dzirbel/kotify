@@ -5,7 +5,7 @@ import kotlinx.collections.immutable.ImmutableList
 /**
  * A simple implementation of [ImmutableList] backed by an [Array], which requires it to have a known size.
  */
-class ImmutableArray<E>(private val array: Array<E>) : ImmutableList<E> {
+internal class ImmutableArray<E>(private val array: Array<E>) : ImmutableList<E> {
     override val size = array.size
 
     override fun get(index: Int): E = array[index]

@@ -18,23 +18,25 @@ fun <T> PersistentSet<T>.plusOrMinus(value: T, condition: Boolean): PersistentSe
 inline fun <E, reified F> Collection<E>.mapToImmutableList(mapper: (E) -> F): ImmutableList<F> {
     val array = arrayOfNulls<F>(size)
 
-    for ((index, element) in this.withIndex()) {
-        array[index] = mapper(element)
+    var index = 0
+    for (element in this) {
+        array[index++] = mapper(element)
     }
 
     @Suppress("UNCHECKED_CAST")
-    return ImmutableArray(array as Array<F>)
+    return (array as Array<F>).toImmutableList()
 }
 
 inline fun <E, reified F> Collection<E>.mapIndexedToImmutableList(mapper: (Int, E) -> F): ImmutableList<F> {
     val array = arrayOfNulls<F>(size)
 
-    for ((index, element) in this.withIndex()) {
-        array[index] = mapper(index, element)
+    var index = 0
+    for (element in this) {
+        array[index++] = mapper(index, element)
     }
 
     @Suppress("UNCHECKED_CAST")
-    return ImmutableArray(array as Array<F>)
+    return (array as Array<F>).toImmutableList()
 }
 
 /**
