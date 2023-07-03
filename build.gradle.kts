@@ -143,21 +143,24 @@ fun Project.configureTests() {
 
 val jacocoTestReportLocal = project.tasks.create<JacocoReport>("jacocoTestReportLocal")
 val jacocoTestReportIntegration = project.tasks.create<JacocoReport>("jacocoTestReportIntegration")
+configureJacoco() // configure jacoco for the root project to use correct version and report settings
 
 fun Project.configureJacoco() {
     jacoco {
         toolVersion = libs.versions.jacoco.get()
     }
 
-    val testLocal = tasks.getByName("testLocal")
-    jacocoTestReportLocal.dependsOn(testLocal)
-    jacocoTestReportLocal.sourceSets(sourceSets.main.get())
-    jacocoTestReportLocal.executionData(testLocal)
+    tasks.findByName("testLocal")?.let { testLocal ->
+        jacocoTestReportLocal.dependsOn(testLocal)
+        jacocoTestReportLocal.sourceSets(sourceSets.main.get())
+        jacocoTestReportLocal.executionData(testLocal)
+    }
 
-    val testIntegration = tasks.getByName("testIntegration")
-    jacocoTestReportIntegration.dependsOn(testIntegration)
-    jacocoTestReportIntegration.sourceSets(sourceSets.main.get())
-    jacocoTestReportIntegration.executionData(testIntegration)
+    tasks.findByName("testIntegration")?.let { testIntegration ->
+        jacocoTestReportIntegration.dependsOn(testIntegration)
+        jacocoTestReportIntegration.sourceSets(sourceSets.main.get())
+        jacocoTestReportIntegration.executionData(testIntegration)
+    }
 
     tasks.withType<JacocoReport> {
         reports {
