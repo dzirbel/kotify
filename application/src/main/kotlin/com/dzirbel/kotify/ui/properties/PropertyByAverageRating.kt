@@ -1,7 +1,8 @@
 package com.dzirbel.kotify.ui.properties
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
+import com.dzirbel.kotify.repository.AverageRating
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
@@ -9,8 +10,7 @@ import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.components.table.Column
-import com.dzirbel.kotify.util.averageOrNull
-import com.dzirbel.kotify.util.immutable.mapToImmutableList
+import kotlinx.coroutines.flow.StateFlow
 import java.util.Locale
 import kotlin.math.floor
 
@@ -43,7 +43,7 @@ interface RatingDividableProperty<E> : DividableProperty<E> {
 }
 
 abstract class PropertyByAverageRating<E>(
-    private val ratings: Map<String, List<State<Rating?>>?>,
+    private val ratings: Map<String, StateFlow<AverageRating>>,
     private val maxRating: Int = Rating.DEFAULT_MAX_AVERAGE_RATING,
     override val title: String = "Rating",
 ) : SortableProperty<E>, RatingDividableProperty<E>, Column<E> {
@@ -59,13 +59,11 @@ abstract class PropertyByAverageRating<E>(
 
     @Composable
     override fun Item(item: E) {
-        AverageStarRating(
-            ratings = ratings[idOf(item)]?.mapToImmutableList { it.value },
-            maxRating = maxRating,
-        )
+        val averageRating = ratings[idOf(item)]?.collectAsState()?.value
+        AverageStarRating(averageRating = averageRating, maxRating = maxRating)
     }
 
     override fun ratingOf(element: E): Double? {
-        return ratings[idOf(element)]?.averageOrNull { it.value?.ratingPercent }?.let { it * maxRating }
+        return ratings[idOf(element)]?.value?.averagePercent?.let { it * maxRating }
     }
 }

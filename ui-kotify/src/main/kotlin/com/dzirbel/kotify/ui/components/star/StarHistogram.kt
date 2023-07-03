@@ -16,19 +16,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dzirbel.kotify.repository.AverageRating
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
-import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -38,14 +37,14 @@ private val BAR_HEIGHT_DEFAULT = 150.dp
 
 @Composable
 fun RatingHistogram(
-    ratings: ImmutableList<State<Rating?>>,
+    ratings: AverageRating?,
     maxRating: Int = Rating.DEFAULT_MAX_RATING,
     barWidth: Dp = BAR_WIDTH_DEFAULT,
     barHeight: Dp = BAR_HEIGHT_DEFAULT,
 ) {
     val ratingCounts = MutableList(maxRating + 1) { 0 }
     var maxRatingCount = 0
-    ratings.forEach { ratingState ->
+    ratings?.ratings?.forEach { ratingState ->
         ratingState.value?.let { rating ->
             val ratingRelative = rating.ratingRelativeToMax(maxRating = maxRating).roundToInt()
             maxRatingCount = max(maxRatingCount, ++ratingCounts[ratingRelative])

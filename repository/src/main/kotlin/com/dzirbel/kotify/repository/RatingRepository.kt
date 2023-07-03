@@ -1,7 +1,9 @@
 package com.dzirbel.kotify.repository
 
-import androidx.compose.runtime.State
 import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.util.averageOrNull
+import com.dzirbel.kotify.util.combineState
+import kotlinx.coroutines.flow.StateFlow
 import java.time.Instant
 
 /**
@@ -36,6 +38,30 @@ data class Rating(
          * Default max value (number of stars) for ratings shown as averages.
          */
         const val DEFAULT_MAX_AVERAGE_RATING = 5
+    }
+}
+
+/**
+ * Represents a set of associated [ratings] (by their ID) which can be queried for the [averagePercent] rating of the
+ * collection.
+ */
+data class AverageRating(val ratings: Map<String, Rating?>) {
+    val averagePercent by lazy {
+        ratings.values.averageOrNull { it.ratingPercent }
+    }
+
+    val numRatings by lazy {
+        ratings.count { it.value != null }
+    }
+
+    constructor(ids: List<String>, ratings: Array<Rating?>) : this(
+        ratings = ratings
+            .withIndex()
+            .associate { (index, rating) -> ids[index] to rating },
+    )
+
+    companion object {
+        val empty = AverageRating(emptyMap())
     }
 }
 
@@ -79,21 +105,30 @@ interface RatingRepository {
     suspend fun ratedEntities(userId: String = requireUserId()): Set<String>
 
     /**
-     * Returns a [State] reflecting the live rating state of the entity with the given [id] for the user with the given
-     * [userId].
+     * Returns a [StateFlow] reflecting the live rating state of the entity with the given [id] for the user with the
+     * given [userId].
      *
-     * The returned [State] must be the same object between calls for as long as it stays in context (i.e. is not
+     * The returned [StateFlow] must be the same object between calls for as long as it stays in context (i.e. is not
      * garbage-collected).
-     *
-     * TODO update to return a StateFlow instead
      */
-    suspend fun ratingState(id: String, userId: String = requireUserId()): State<Rating?>
+    @Suppress("SuspendFunWithFlowReturnType")
+    suspend fun ratingState(id: String, userId: String = requireUserId()): StateFlow<Rating?>
 
     /**
-     * Returns [State]s reflecting the live rating states of the entities with the given [ids] for the user with the
+     * Returns [StateFlow]s reflecting the live rating states of the entities with the given [ids] for the user with the
      * given [userId].
      */
-    suspend fun ratingStates(ids: List<String>, userId: String = requireUserId()): List<State<Rating?>>
+    suspend fun ratingStates(ids: List<String>, userId: String = requireUserId()): List<StateFlow<Rating?>>
+
+    /**
+     * Returns a [StateFlow] reflecting the combined live [AverageRating] of the entities with the given [ids] for the
+     * user with the given [userId].
+     */
+    @Suppress("SuspendFunWithFlowReturnType")
+    suspend fun averageRating(ids: List<String>, userId: String = requireUserId()): StateFlow<AverageRating> {
+        return ratingStates(ids = ids, userId = userId)
+            .combineState { ratingArray -> AverageRating(ids = ids, ratings = ratingArray) }
+    }
 
     /**
      * Removes all ratings for all entities.

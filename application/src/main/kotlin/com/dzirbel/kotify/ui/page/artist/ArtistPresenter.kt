@@ -1,12 +1,11 @@
 package com.dzirbel.kotify.ui.page.artist
 
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.network.model.SpotifyAlbum
-import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.repository.AverageRating
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.track.TrackRatingRepository
@@ -52,7 +51,7 @@ class ArtistPresenter(
             defaultSort = AlbumReleaseDateProperty.ForArtistAlbum,
             defaultFilter = filterFor(displayedAlbumTypes),
         ),
-        val albumRatings: PersistentMap<String, List<State<Rating?>>?> = persistentMapOf(),
+        val albumRatings: PersistentMap<String, StateFlow<AverageRating>> = persistentMapOf(),
         val savedAlbumsStates: PersistentMap<String, StateFlow<Boolean?>>? = null,
         val refreshingArtistAlbums: Boolean = false,
     ) {
@@ -121,7 +120,7 @@ class ArtistPresenter(
                 val albumRatings = artistAlbums
                     .associate { artistAlbum ->
                         val album = artistAlbum.album.cached
-                        album.id.value to TrackRatingRepository.ratingStates(ids = album.trackIds.cached)
+                        album.id.value to TrackRatingRepository.averageRating(ids = album.trackIds.cached)
                     }
                     .toPersistentMap()
 

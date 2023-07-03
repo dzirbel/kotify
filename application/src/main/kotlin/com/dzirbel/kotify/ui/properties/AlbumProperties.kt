@@ -2,17 +2,17 @@ package com.dzirbel.kotify.ui.properties
 
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.network.model.SpotifyAlbum
-import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.repository.AverageRating
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.compareNullable
 import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByString
 import com.dzirbel.kotify.ui.theme.Dimens
+import kotlinx.coroutines.flow.StateFlow
 
 open class AlbumNameProperty<A>(private val toAlbum: (A) -> Album) : PropertyByString<A>(title = "Name") {
     override fun toString(item: A) = toAlbum(item).name
@@ -54,10 +54,11 @@ open class AlbumTypeDividableProperty<A>(private val toAlbumType: (A) -> Spotify
     object ForArtistAlbum : AlbumTypeDividableProperty<ArtistAlbum>(toAlbumType = { it.albumGroup })
 }
 
-class AlbumRatingProperty(ratings: Map<String, List<State<Rating?>>?>) : PropertyByAverageRating<Album>(ratings) {
+class AlbumRatingProperty(ratings: Map<String, StateFlow<AverageRating>>) : PropertyByAverageRating<Album>(ratings) {
     override fun idOf(element: Album) = element.id.value
 
-    class ForArtistAlbum(ratings: Map<String, List<State<Rating?>>?>) : PropertyByAverageRating<ArtistAlbum>(ratings) {
+    class ForArtistAlbum(ratings: Map<String, StateFlow<AverageRating>>) :
+        PropertyByAverageRating<ArtistAlbum>(ratings) {
         override fun idOf(element: ArtistAlbum) = element.albumId.value
     }
 }

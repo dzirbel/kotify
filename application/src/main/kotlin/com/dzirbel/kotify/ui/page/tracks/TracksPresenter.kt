@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui.page.tracks
 
-import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.repository.Player
@@ -35,6 +34,7 @@ import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -50,7 +50,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
         val tracks: ListAdapter<Track> = ListAdapter.empty(),
         val tracksById: PersistentMap<String, Track> = persistentMapOf(),
         val savedTrackIds: PersistentSet<String> = persistentSetOf(),
-        val trackRatings: ImmutableMap<String, State<Rating?>> = persistentMapOf(),
+        val trackRatings: ImmutableMap<String, StateFlow<Rating?>> = persistentMapOf(),
         val tracksUpdated: Long? = null,
     ) {
         val trackProperties = persistentListOf(

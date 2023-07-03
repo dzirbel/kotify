@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.repository.Player
@@ -23,7 +24,6 @@ import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.immutable.mapToImmutableList
 import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
 import java.util.concurrent.TimeUnit
 
@@ -71,7 +71,7 @@ fun AlbumPageHeader(presenter: AlbumPresenter, state: AlbumPresenter.ViewModel) 
                         PlayButton(context = Player.PlayContext.album(state.album))
                     }
 
-                    AverageStarRating(ratings = state.trackRatings.values.mapToImmutableList { it.value })
+                    AverageStarRating(averageRating = state.averageRating.collectAsState().value)
                 }
             }
         }

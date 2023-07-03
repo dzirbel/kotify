@@ -20,14 +20,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.repository.AverageRating
 import com.dzirbel.kotify.repository.Player
-import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
-import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun AlbumCell(
@@ -35,7 +34,7 @@ fun AlbumCell(
     isSaved: Boolean?,
     onToggleSave: (Boolean) -> Unit,
     showRating: Boolean = false,
-    ratings: ImmutableList<Rating?>? = null,
+    averageRating: AverageRating? = null,
     onClick: () -> Unit,
 ) {
     Column(
@@ -91,7 +90,7 @@ fun AlbumCell(
         }
 
         if (showRating) {
-            AverageStarRating(ratings = ratings)
+            AverageStarRating(averageRating = averageRating)
         }
     }
 }

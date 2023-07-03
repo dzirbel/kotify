@@ -100,7 +100,7 @@ fun PlayerPanel() {
                             trackIsSaved = state.trackSavedState
                                 ?.collectAsStateSwitchable(key = state.playbackTrack?.id)
                                 ?.value,
-                            trackRating = state.trackRatingState?.value,
+                            trackRating = state.trackRatingState?.collectAsState()?.value,
                             artistsAreSaved = state.artistSavedStates
                                 ?.mapValues { entry ->
                                     entry.value.collectAsStateSwitchable(key = entry.key).value

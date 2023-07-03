@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui.page.library.ratings
 
-import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.track.TrackRatingRepository
@@ -12,6 +11,7 @@ import com.dzirbel.kotify.util.filterNotNullValues
 import com.dzirbel.kotify.util.zipToMap
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 
 class RatingsLibraryStatePresenter(scope: CoroutineScope) :
     Presenter<RatingsLibraryStatePresenter.ViewModel, RatingsLibraryStatePresenter.Event>(
@@ -29,7 +29,7 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
         val tracks: Map<String, Track> = emptyMap(),
 
         // map from track id to state of its rating
-        val trackRatings: Map<String, State<Rating?>> = emptyMap(),
+        val trackRatings: Map<String, StateFlow<Rating?>> = emptyMap(),
     )
 
     sealed class Event {

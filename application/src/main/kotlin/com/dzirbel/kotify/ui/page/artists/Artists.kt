@@ -15,13 +15,13 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerButton
 import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.repository.AverageRating
 import com.dzirbel.kotify.repository.Player
-import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.ui.components.DividerSelector
 import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Interpunct
@@ -46,9 +46,7 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.immutable.mapToImmutableList
 import com.dzirbel.kotify.util.immutable.orEmpty
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
 
 @Composable
@@ -115,7 +113,7 @@ fun ArtistsPageContent(presenter: ArtistsPresenter, state: ArtistsPresenter.View
             ArtistCell(
                 artist = artist,
                 savedArtists = state.savedArtistIds,
-                artistRatings = state.artistRatings[artist.id.value],
+                artistAverageRating = state.artistRatings[artist.id.value]?.collectAsState()?.value,
                 presenter = presenter,
                 onRightClick = {
                     presenter.emitAsync(
@@ -135,7 +133,7 @@ fun ArtistsPageContent(presenter: ArtistsPresenter, state: ArtistsPresenter.View
 private fun ArtistCell(
     artist: Artist,
     savedArtists: ImmutableSet<String>?,
-    artistRatings: ImmutableList<State<Rating?>>?,
+    artistAverageRating: AverageRating?,
     presenter: ArtistsPresenter,
     onRightClick: () -> Unit,
 ) {
@@ -171,7 +169,7 @@ private fun ArtistCell(
             PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
         }
 
-        AverageStarRating(ratings = artistRatings?.mapToImmutableList { it.value })
+        AverageStarRating(averageRating = artistAverageRating)
     }
 }
 
@@ -203,9 +201,10 @@ private fun ArtistDetailInsert(artist: Artist, presenter: ArtistsPresenter, stat
                 }
             }
 
-            state.artistRatings[artist.id.value]?.let { ratings ->
-                RatingHistogram(ratings = ratings)
-            }
+            state.artistRatings[artist.id.value]
+                ?.collectAsState()
+                ?.value
+                ?.let { ratings -> RatingHistogram(ratings = ratings) }
         }
 
         artistDetails?.albums?.let { albums ->

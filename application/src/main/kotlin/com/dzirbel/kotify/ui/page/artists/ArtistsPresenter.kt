@@ -1,10 +1,10 @@
 package com.dzirbel.kotify.ui.page.artists
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
+import com.dzirbel.kotify.repository.AverageRating
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
@@ -27,10 +27,10 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
@@ -62,7 +62,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
         /**
          * Map from artist ID to the live [Rating]s for all of their tracks.
          */
-        val artistRatings: PersistentMap<String, ImmutableList<State<Rating?>>?> = persistentMapOf(),
+        val artistRatings: PersistentMap<String, StateFlow<AverageRating>> = persistentMapOf(),
 
         /**
          * Map from artist ID to [ArtistDetails] which are loaded individually for each artist on demand (i.e. when the
@@ -152,8 +152,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                         mutateState { it.withArtists(it.artists.plusElements(missingArtists)) }
 
                         val missingArtistRatings = missingArtists.associate { artist ->
-                            artist.id.value to TrackRatingRepository.ratingStates(ids = artist.trackIds.cached)
-                                .toImmutableList()
+                            artist.id.value to TrackRatingRepository.averageRating(ids = artist.trackIds.cached)
                         }
 
                         mutateState { it.copy(artistRatings = it.artistRatings.putAll(missingArtistRatings)) }

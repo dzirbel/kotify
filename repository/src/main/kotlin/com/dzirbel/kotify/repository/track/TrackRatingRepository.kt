@@ -1,13 +1,12 @@
 package com.dzirbel.kotify.repository.track
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.TrackRatingTable
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.RatingRepository
 import com.dzirbel.kotify.util.zipEach
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.exposed.sql.Max
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
@@ -23,7 +22,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 object TrackRatingRepository : RatingRepository {
     // userId -> [trackId -> reference to state of the rating]
-    private val states = ConcurrentHashMap<String, ConcurrentHashMap<String, WeakReference<MutableState<Rating?>>>>()
+    private val states =
+        ConcurrentHashMap<String, ConcurrentHashMap<String, WeakReference<MutableStateFlow<Rating?>>>>()
 
     private fun ResultRow.asRating(): Rating {
         return Rating(
@@ -110,13 +110,14 @@ object TrackRatingRepository : RatingRepository {
         }
     }
 
-    override suspend fun ratingState(id: String, userId: String): State<Rating?> {
+    @Suppress("SuspendFunWithFlowReturnType")
+    override suspend fun ratingState(id: String, userId: String): StateFlow<Rating?> {
         states[userId]?.get(id)?.get()?.let { return it }
 
         val rating = KotifyDatabase.transaction("load last rating of track id $id for state") {
             lastRatingOf(id = id, userId = userId)
         }
-        val state = mutableStateOf(rating)
+        val state = MutableStateFlow(rating)
 
         val userStates = states.getOrPut(userId) { ConcurrentHashMap() }
         userStates[id] = WeakReference(state)
@@ -124,7 +125,7 @@ object TrackRatingRepository : RatingRepository {
         return state
     }
 
-    override suspend fun ratingStates(ids: List<String>, userId: String): List<State<Rating?>> {
+    override suspend fun ratingStates(ids: List<String>, userId: String): List<StateFlow<Rating?>> {
         val missingIndices = ArrayList<IndexedValue<String>>()
 
         val existingStates = ids.mapIndexedTo(ArrayList(ids.size)) { index, id ->
@@ -138,7 +139,7 @@ object TrackRatingRepository : RatingRepository {
 
         if (missingIndices.isEmpty()) {
             @Suppress("UNCHECKED_CAST")
-            return existingStates as List<State<Rating?>>
+            return existingStates as List<StateFlow<Rating?>>
         }
 
         val missingRatings = KotifyDatabase.transaction("load last ratings of ${ids.size} tracks for states") {
@@ -147,13 +148,13 @@ object TrackRatingRepository : RatingRepository {
 
         val userStates = states.getOrPut(userId) { ConcurrentHashMap() }
         missingIndices.zipEach(missingRatings) { indexedValue, rating ->
-            val state = mutableStateOf(rating)
+            val state = MutableStateFlow(rating)
             userStates[indexedValue.value] = WeakReference(state)
             existingStates[indexedValue.index] = state
         }
 
         @Suppress("UNCHECKED_CAST")
-        return existingStates as List<State<Rating?>>
+        return existingStates as List<StateFlow<Rating?>>
     }
 
     override suspend fun clearAllRatings(userId: String?) {

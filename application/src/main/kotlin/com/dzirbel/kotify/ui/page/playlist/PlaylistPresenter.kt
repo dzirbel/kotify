@@ -55,7 +55,7 @@ class PlaylistPresenter(
         val reordering: Boolean = false,
         val playlist: Playlist? = null,
         val tracks: ListAdapter<PlaylistTrack> = ListAdapter.empty(defaultSort = PlaylistTrackIndexProperty),
-        val trackRatings: ImmutableMap<String, State<Rating?>> = persistentMapOf(),
+        val trackRatings: ImmutableMap<String, StateFlow<Rating?>> = persistentMapOf(),
         val savedTracksStates: ImmutableMap<String, StateFlow<Boolean?>>? = null,
         val isSavedState: State<Boolean?>? = null,
     ) {

@@ -1,10 +1,10 @@
 package com.dzirbel.kotify.ui.page.album
 
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Track
+import com.dzirbel.kotify.repository.AverageRating
 import com.dzirbel.kotify.repository.Player
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.album.AlbumRepository
@@ -31,6 +31,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onEach
 import java.time.Instant
@@ -52,7 +53,8 @@ class AlbumPresenter(
         val tracks: ListAdapter<Track> = ListAdapter.empty(defaultSort = TrackAlbumIndexProperty),
         val totalDurationMs: Long? = null,
         val savedTracksStates: ImmutableMap<String, StateFlow<Boolean?>>? = null,
-        val trackRatings: ImmutableMap<String, State<Rating?>> = persistentMapOf(),
+        val trackRatings: ImmutableMap<String, StateFlow<Rating?>> = persistentMapOf(),
+        val averageRating: StateFlow<AverageRating> = MutableStateFlow(AverageRating.empty),
         val isSaved: Boolean? = null,
         val albumUpdatedMs: Instant? = null,
     ) {
@@ -115,6 +117,7 @@ class AlbumPresenter(
                 val savedTracksState = trackIds.zipToPersistentMap(SavedTrackRepository.statesOf(ids = trackIds))
 
                 val trackRatings = trackIds.zipToPersistentMap(TrackRatingRepository.ratingStates(ids = trackIds))
+                val averageRating = TrackRatingRepository.averageRating(ids = trackIds)
 
                 mutateState { state ->
                     state.copy(
@@ -124,6 +127,7 @@ class AlbumPresenter(
                         totalDurationMs = tracks.sumOf { track -> track.durationMs },
                         savedTracksStates = savedTracksState,
                         trackRatings = trackRatings,
+                        averageRating = averageRating,
                         albumUpdatedMs = album.updatedTime,
                     )
                 }

@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.compose) // TODO temporary for use of State in RatingRepository
+    alias(libs.plugins.compose) // TODO temporary for use of State in Player
     alias(libs.plugins.detekt)
     id("jacoco")
     id("java-test-fixtures")

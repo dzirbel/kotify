@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.player
 
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.Spotify
@@ -47,7 +46,7 @@ class PlayerPanelPresenter(scope: CoroutineScope) :
         val artistSavedStates: Map<String, StateFlow<Boolean?>>? = null,
         val albumSavedState: StateFlow<Boolean?>? = null,
 
-        val trackRatingState: State<Rating?>? = null,
+        val trackRatingState: StateFlow<Rating?>? = null,
 
         val loadingPlayback: Boolean = true,
         val loadingTrackPlayback: Boolean = true,

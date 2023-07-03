@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -183,7 +183,7 @@ class TrackSavedProperty<T>(
 
 class TrackRatingProperty<T>(
     private val trackIdOf: (T) -> String,
-    private val trackRatings: Map<String, State<Rating?>>?,
+    private val trackRatings: Map<String, StateFlow<Rating?>>?,
 ) : SortableProperty<T>, RatingDividableProperty<T>, Column<T> {
     override val title = "Rating"
 
@@ -206,8 +206,9 @@ class TrackRatingProperty<T>(
         val trackId = trackIdOf(item)
 
         val scope = rememberCoroutineScope { Dispatchers.IO }
+        val ratingState = remember(trackId) { trackRatings?.get(trackId) }
         StarRating(
-            rating = trackRatings?.get(trackId)?.value,
+            rating = ratingState?.collectAsState()?.value,
             onRate = { rating ->
                 scope.launch { TrackRatingRepository.rate(id = trackId, rating = rating) }
             },

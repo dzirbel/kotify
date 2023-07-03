@@ -12,6 +12,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.components.AlbumCell
@@ -29,7 +30,6 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.countsBy
-import com.dzirbel.kotify.util.immutable.mapToImmutableList
 import com.dzirbel.kotify.util.immutable.orEmpty
 
 @Composable
@@ -120,7 +120,7 @@ fun ArtistPageContent(presenter: ArtistPresenter, state: ArtistPresenter.ViewMod
                 album = artistAlbum.album.cached,
                 isSaved = state.savedAlbumsStates?.get(artistAlbum.albumId.value)?.value,
                 showRating = true,
-                ratings = state.albumRatings[artistAlbum.albumId.value]?.mapToImmutableList { it.value },
+                averageRating = state.albumRatings[artistAlbum.albumId.value]?.collectAsState()?.value,
                 onToggleSave = { save ->
                     presenter.emitAsync(
                         ArtistPresenter.Event.ToggleSave(albumId = artistAlbum.albumId.value, save = save),
