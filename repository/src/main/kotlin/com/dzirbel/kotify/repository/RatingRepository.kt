@@ -111,18 +111,21 @@ interface RatingRepository {
      * The returned [StateFlow] must be the same object between calls for as long as it stays in context (i.e. is not
      * garbage-collected).
      */
-    @Suppress("SuspendFunWithFlowReturnType")
-    suspend fun ratingState(id: String, userId: String = requireUserId()): StateFlow<Rating?>
+    fun ratingState(id: String, userId: String = requireUserId()): StateFlow<Rating?>
 
     /**
      * Returns [StateFlow]s reflecting the live rating states of the entities with the given [ids] for the user with the
      * given [userId].
+     *
+     * TODO avoid suspending
      */
     suspend fun ratingStates(ids: List<String>, userId: String = requireUserId()): List<StateFlow<Rating?>>
 
     /**
      * Returns a [StateFlow] reflecting the combined live [AverageRating] of the entities with the given [ids] for the
      * user with the given [userId].
+     *
+     * TODO avoid suspending
      */
     @Suppress("SuspendFunWithFlowReturnType")
     suspend fun averageRating(ids: List<String>, userId: String = requireUserId()): StateFlow<AverageRating> {

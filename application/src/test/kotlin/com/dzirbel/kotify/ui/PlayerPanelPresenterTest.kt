@@ -381,7 +381,7 @@ internal class PlayerPanelPresenterTest {
         Player.verifyState(playback, trackPlayback, deviceId)
     }
 
-    private suspend fun PlayerPanelPresenter.ViewModel.withPlayback(
+    private fun PlayerPanelPresenter.ViewModel.withPlayback(
         playback: SpotifyPlayback?,
     ): PlayerPanelPresenter.ViewModel {
         return copy(
@@ -399,7 +399,7 @@ internal class PlayerPanelPresenterTest {
         )
     }
 
-    private suspend fun PlayerPanelPresenter.ViewModel.withTrackPlayback(
+    private fun PlayerPanelPresenter.ViewModel.withTrackPlayback(
         trackPlayback: SpotifyTrackPlayback?,
     ): PlayerPanelPresenter.ViewModel {
         return copy(

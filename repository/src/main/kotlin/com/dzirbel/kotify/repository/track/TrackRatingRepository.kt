@@ -5,8 +5,10 @@ import com.dzirbel.kotify.db.model.TrackRatingTable
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.RatingRepository
 import com.dzirbel.kotify.util.zipEach
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.Max
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
@@ -110,17 +112,21 @@ object TrackRatingRepository : RatingRepository {
         }
     }
 
-    @Suppress("SuspendFunWithFlowReturnType")
-    override suspend fun ratingState(id: String, userId: String): StateFlow<Rating?> {
+    override fun ratingState(id: String, userId: String): StateFlow<Rating?> {
         states[userId]?.get(id)?.get()?.let { return it }
 
-        val rating = KotifyDatabase.transaction("load last rating of track id $id for state") {
-            lastRatingOf(id = id, userId = userId)
-        }
-        val state = MutableStateFlow(rating)
+        val state = MutableStateFlow<Rating?>(null)
 
         val userStates = states.getOrPut(userId) { ConcurrentHashMap() }
         userStates[id] = WeakReference(state)
+
+        GlobalScope.launch {
+            val rating = KotifyDatabase.transaction("load last rating of track id $id for state") {
+                lastRatingOf(id = id, userId = userId)
+            }
+
+            state.value = rating
+        }
 
         return state
     }
