@@ -3,9 +3,13 @@ package com.dzirbel.kotify.ui.components
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import com.dzirbel.kotify.repository.Player
+import com.dzirbel.kotify.repository.player.Player
+import com.dzirbel.kotify.repository.player.PlayerRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
@@ -13,20 +17,29 @@ import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 @Composable
 fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
-    val matchesContext = Player.playbackContext.value?.uri == context?.contextUri
-    val playing = matchesContext && Player.isPlaying.value
+    val currentContextState = PlayerRepository.playbackContextUri.collectAsState()
+    val playingState = PlayerRepository.playing.collectAsState()
+    val playable = PlayerRepository.playable.collectAsState().value == true
+
+    val matchesContext = remember(context?.contextUri) {
+        derivedStateOf { currentContextState.value == context?.contextUri }
+    }
+    val playing = remember {
+        derivedStateOf { playingState.value?.value == true && matchesContext.value }
+    }
+
     IconButton(
-        enabled = Player.playable && context != null,
+        enabled = playable && context != null,
         modifier = Modifier.instrument().size(size),
         onClick = {
-            if (playing) Player.pause() else Player.play(context = context)
+            if (playing.value) PlayerRepository.pause() else PlayerRepository.play(context = context)
         },
     ) {
         CachedIcon(
-            name = if (playing) "pause-circle-outline" else "play-circle-outline",
+            name = if (playing.value) "pause-circle-outline" else "play-circle-outline",
             size = size,
             contentDescription = "Play",
-            tint = LocalColors.current.highlighted(highlight = matchesContext),
+            tint = LocalColors.current.highlighted(highlight = matchesContext.value),
         )
     }
 }

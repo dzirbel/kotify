@@ -5,10 +5,10 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.repository.AverageRating
-import com.dzirbel.kotify.repository.Player
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
+import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.track.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.TrackRepository

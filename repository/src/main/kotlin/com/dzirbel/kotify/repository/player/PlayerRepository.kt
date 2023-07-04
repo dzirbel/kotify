@@ -6,7 +6,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
-import com.dzirbel.kotify.repository.Player.PlayContext
+import com.dzirbel.kotify.repository.player.Player.PlayContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow

@@ -19,6 +19,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,7 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.db.model.Playlist
-import com.dzirbel.kotify.repository.Player
+import com.dzirbel.kotify.repository.player.PlayerRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
@@ -170,7 +172,12 @@ private fun PlaylistItem(playlist: Playlist) {
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
         )
 
-        if (Player.playbackContext.value?.uri == playlist.uri) {
+        val playbackUriState = PlayerRepository.playbackContextUri.collectAsState()
+        val playingPlaylist = remember(playlist.uri) {
+            derivedStateOf { playbackUriState.value == playlist.uri }
+        }
+
+        if (playingPlaylist.value) {
             CachedIcon(
                 name = "volume-up",
                 size = Dimens.fontBodyDp,

@@ -6,7 +6,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import com.dzirbel.kotify.Settings
-import com.dzirbel.kotify.repository.Player
+import com.dzirbel.kotify.repository.player.PlayerRepository
 
 /**
  * Handler for global keyboard shortcuts.
@@ -17,7 +17,10 @@ object KeyboardShortcuts {
 
         when (event.key) {
             Key.F12 -> Settings.debugPanelOpen = !Settings.debugPanelOpen
-            Key.Spacebar -> Player.togglePlayback()
+            Key.Spacebar ->
+                PlayerRepository.playing.value?.let { playing ->
+                    if (playing.value) PlayerRepository.pause() else PlayerRepository.play()
+                }
             else -> return false
         }
 

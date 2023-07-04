@@ -8,12 +8,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.SpotifyTrack
-import com.dzirbel.kotify.repository.Player
+import com.dzirbel.kotify.repository.player.Player
+import com.dzirbel.kotify.repository.player.PlayerRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.table.Column
@@ -44,8 +47,16 @@ class TrackPlayingColumn<T>(
     @Composable
     override fun Item(item: T) {
         val hoverInteractionSource = remember { MutableInteractionSource() }
+        val hovering = hoverInteractionSource.collectIsHoveredAsState()
+
+        val trackId = trackIdOf(item)
+        val currentTrackState = PlayerRepository.currentTrack.collectAsState()
+        val playing = remember(trackId) {
+            derivedStateOf { currentTrackState.value?.id == trackId }
+        }
+
         Box(Modifier.padding(Dimens.space2).size(Dimens.fontBodyDp).hoverable(hoverInteractionSource)) {
-            if (Player.currentTrackId.value == trackIdOf(item)) {
+            if (playing.value) {
                 CachedIcon(
                     name = "volume-up",
                     size = Dimens.fontBodyDp,
@@ -53,10 +64,10 @@ class TrackPlayingColumn<T>(
                     tint = LocalColors.current.primary,
                 )
             } else {
-                if (hoverInteractionSource.collectIsHoveredAsState().value) {
+                if (hovering.value) {
                     val context = playContextFromTrack(item)
                     IconButton(
-                        onClick = { Player.play(context = context) },
+                        onClick = { PlayerRepository.play(context = context) },
                         enabled = context != null,
                     ) {
                         CachedIcon(

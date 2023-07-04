@@ -6,8 +6,8 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.repository.Player
 import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.playlist.PlaylistRepository
 import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository

@@ -1,14 +1,75 @@
 package com.dzirbel.kotify.repository.player
 
+import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.db.model.Playlist
+import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
+import com.dzirbel.kotify.network.model.SpotifyPlaybackOffset
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
-import com.dzirbel.kotify.repository.Player
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 // TODO document
 interface Player {
+    /**
+     * Encapsulates options to start playback.
+     */
+    data class PlayContext(
+        val contextUri: String?,
+        val trackUris: List<String>? = null,
+        val offset: SpotifyPlaybackOffset? = null,
+        val positionMs: Int? = null,
+    ) {
+        companion object {
+            /**
+             * Returns a [PlayContext] which plays the given [album].
+             */
+            fun album(album: SpotifyAlbum) = album.uri?.let { PlayContext(contextUri = it) }
+
+            /**
+             * Returns a [PlayContext] which plays the given [album].
+             */
+            fun album(album: Album) = album.uri?.let { PlayContext(contextUri = it) }
+
+            /**
+             * Returns a [PlayContext] which plays the track at the given [index] on the given [album].
+             */
+            fun albumTrack(album: Album, index: Int): PlayContext? {
+                return album.uri?.let { uri ->
+                    PlayContext(contextUri = uri, offset = SpotifyPlaybackOffset(position = index))
+                }
+            }
+
+            fun artist(artist: Artist) = artist.uri?.let { PlayContext(contextUri = it) }
+
+            /**
+             * Returns a [PlayContext] which plays the given [playlist].
+             */
+            fun playlist(playlist: Playlist) = playlist.uri?.let { PlayContext(contextUri = it) }
+
+            /**
+             * Returns a [PlayContext] which plays the track at the given [index] on the given [playlist].
+             */
+            fun playlistTrack(playlist: Playlist, index: Int): PlayContext? {
+                return playlist.uri?.let {
+                    PlayContext(contextUri = it, offset = SpotifyPlaybackOffset(position = index))
+                }
+            }
+
+            /**
+             * Returns a [PlayContext] which plays the given [track] with no context, i.e. plays only the track.
+             */
+            fun track(track: Track): PlayContext? {
+                return track.uri?.let {
+                    PlayContext(contextUri = null, trackUris = listOf(it))
+                }
+            }
+        }
+    }
+
     val refreshingPlayback: StateFlow<Boolean>
     val refreshingTrack: StateFlow<Boolean>
     val refreshingDevices: StateFlow<Boolean>
@@ -37,8 +98,7 @@ interface Player {
     fun refreshDevices()
 
     // resume or play from new context
-    // TODO move PlayContext here
-    fun play(context: Player.PlayContext? = null)
+    fun play(context: PlayContext? = null)
     fun pause()
 
     fun skipToNext()
