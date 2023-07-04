@@ -27,6 +27,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlaybackOffset
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.SpotifyQueue
 import com.dzirbel.kotify.network.model.SpotifyRecommendations
+import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
 import com.dzirbel.kotify.network.model.SpotifySavedShow
 import com.dzirbel.kotify.network.model.SpotifySavedTrack
@@ -1137,11 +1138,11 @@ object Spotify {
          * @param deviceId The id of the device this command is targeting. If not supplied, the user’s currently active
          *  device is the target.
          */
-        suspend fun setRepeatMode(state: String, deviceId: String? = null) {
+        suspend fun setRepeatMode(state: SpotifyRepeatMode, deviceId: String? = null) {
             put<Unit?, Unit>(
                 SET_REPEAT_MODE_PATH,
                 jsonBody = null,
-                queryParams = mapOf("state" to state, "device_id" to deviceId),
+                queryParams = mapOf("state" to state.name.lowercase(Locale.US), "device_id" to deviceId),
             )
         }
 

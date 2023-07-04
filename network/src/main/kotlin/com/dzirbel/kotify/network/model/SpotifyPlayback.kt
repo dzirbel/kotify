@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.network.model
 
+import com.dzirbel.kotify.network.util.CaseInsensitiveEnumSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -45,7 +46,7 @@ data class SpotifyPlayback(
     /**
      * off, track, context
      */
-    @SerialName("repeat_state") val repeatState: String,
+    @SerialName("repeat_state") val repeatState: SpotifyRepeatMode,
 
     /**
      * A Context Object. Can be null.
@@ -126,6 +127,24 @@ data class SpotifyPlayHistoryObject(
 
 @Serializable
 data class SpotifyPlaybackOffset(val position: Int? = null)
+
+@Serializable(with = SpotifyRepeatMode.Serializer::class)
+enum class SpotifyRepeatMode {
+    OFF, TRACK, CONTEXT;
+
+    /**
+     * The next repeat mode when cycling through the options.
+     */
+    fun next(): SpotifyRepeatMode {
+        return when (this) {
+            OFF -> CONTEXT
+            TRACK -> OFF
+            CONTEXT -> TRACK
+        }
+    }
+
+    internal object Serializer : CaseInsensitiveEnumSerializer<SpotifyRepeatMode>(SpotifyRepeatMode::class)
+}
 
 @Serializable
 data class SpotifyPlaybackActions(

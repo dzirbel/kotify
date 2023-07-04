@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
+import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
@@ -332,7 +333,7 @@ private fun PlayerControls() {
     val playing: ToggleableState<Boolean>? = PlayerRepository.playing.collectAsState().value
     val shuffling: ToggleableState<Boolean>? = PlayerRepository.shuffling.collectAsState().value
     val skipping: SkippingState? = PlayerRepository.skipping.collectAsState().value
-    val repeatState: ToggleableState<String>? = PlayerRepository.repeatMode.collectAsState().value
+    val repeatMode: ToggleableState<SpotifyRepeatMode>? = PlayerRepository.repeatMode.collectAsState().value
 
     Row(
         modifier = Modifier.instrument(),
@@ -341,7 +342,11 @@ private fun PlayerControls() {
     ) {
         IconButton(
             enabled = playable && shuffling is ToggleableState.Set,
-            onClick = { PlayerRepository.toggleShuffle() },
+            onClick = {
+                if (shuffling is ToggleableState.Set) {
+                    PlayerRepository.setShuffle(!shuffling.value)
+                }
+            },
         ) {
             CachedIcon(
                 name = "shuffle",
@@ -360,7 +365,11 @@ private fun PlayerControls() {
 
         IconButton(
             enabled = playable && playing is ToggleableState.Set,
-            onClick = { PlayerRepository.togglePlayback() },
+            onClick = {
+                if (playing is ToggleableState.Set) {
+                    if (playing.value) PlayerRepository.pause() else PlayerRepository.play()
+                }
+            },
         ) {
             CachedIcon(
                 name = if (playing?.value == true) "pause-circle-outline" else "play-circle-outline",
@@ -376,16 +385,19 @@ private fun PlayerControls() {
         }
 
         IconButton(
-            enabled = playable && repeatState is ToggleableState.Set,
-            onClick = { PlayerRepository.cycleRepeatMode() },
+            enabled = playable && repeatMode is ToggleableState.Set,
+            onClick = {
+                if (repeatMode is ToggleableState.Set) {
+                    PlayerRepository.setRepeatMode(repeatMode.value.next())
+                }
+            },
         ) {
-            // TODO abstract away string constants for repeat state here
             CachedIcon(
-                name = if (repeatState?.value == "track") "repeat-one" else "repeat",
+                name = if (repeatMode?.value == SpotifyRepeatMode.TRACK) "repeat-one" else "repeat",
                 size = Dimens.iconSmall,
                 contentDescription = "Repeat",
                 tint = LocalColors.current.highlighted(
-                    highlight = repeatState?.value == "track" || repeatState?.value == "context",
+                    highlight = repeatMode?.value?.let { it != SpotifyRepeatMode.OFF } == true,
                 ),
             )
         }

@@ -4,6 +4,7 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
+import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
 import com.dzirbel.kotify.repository.Player.PlayContext
 import kotlinx.coroutines.CancellationException
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 // TODO document
+// TODO fetch next song when current one ends
 object PlayerRepository : Player {
     private val _refreshingPlayback = MutableStateFlow(false)
     override val refreshingPlayback: StateFlow<Boolean>
@@ -47,8 +49,8 @@ object PlayerRepository : Player {
     override val skipping: StateFlow<SkippingState?>
         get() = _skipping
 
-    private val _repeatMode = MutableStateFlow<ToggleableState<String>?>(null)
-    override val repeatMode: StateFlow<ToggleableState<String>?>
+    private val _repeatMode = MutableStateFlow<ToggleableState<SpotifyRepeatMode>?>(null)
+    override val repeatMode: StateFlow<ToggleableState<SpotifyRepeatMode>?>
         get() = _repeatMode
 
     private val _shuffling = MutableStateFlow<ToggleableState<Boolean>?>(null)
@@ -279,7 +281,7 @@ object PlayerRepository : Player {
         }
     }
 
-    override fun setRepeatMode(mode: String) {
+    override fun setRepeatMode(mode: SpotifyRepeatMode) {
         setRepeatModeLock.launch(scope = GlobalScope) {
             _repeatMode.toggleTo(mode) {
                 Spotify.Player.setRepeatMode(mode)
