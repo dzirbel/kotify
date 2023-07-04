@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -76,7 +76,6 @@ fun SeekableSlider(
     // max width
     val barWidth = remember { mutableStateOf(0) }
 
-    // the
     val hoverSeekPercent = remember {
         derivedStateOf {
             val maxWidth = barWidth.value
@@ -108,8 +107,8 @@ fun SeekableSlider(
                         hoverLocation.value = it.position.x - paddingPx
                     }
                 }
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {
-                    onSeek(hoverSeekPercent.value)
+                .onClick {
+                    hoverSeekPercent.value.takeIf { it.isFinite() }?.let(onSeek)
                 }
                 .padding(padding)
                 .size(width = sliderWidth ?: Dp.Unspecified, height = sliderHeight)
@@ -148,9 +147,9 @@ fun SeekableSlider(
                                         state = rememberDraggableState { drag.value += it },
                                         orientation = Orientation.Horizontal,
                                         startDragImmediately = true,
-                                        onDragStopped = {
+                                        onDragStopped = { _ ->
                                             drag.value = 0f
-                                            onSeek(hoverSeekPercent.value)
+                                            hoverSeekPercent.value.takeIf { it.isFinite() }?.let(onSeek)
                                         },
                                     ),
                             )

@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.node.Ref
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,6 +38,14 @@ import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.repository.album.SavedAlbumRepository
+import com.dzirbel.kotify.repository.artist.SavedArtistRepository
+import com.dzirbel.kotify.repository.player.PlayerRepository
+import com.dzirbel.kotify.repository.player.SkippingState
+import com.dzirbel.kotify.repository.player.ToggleableState
+import com.dzirbel.kotify.repository.player.TrackPosition
+import com.dzirbel.kotify.repository.track.SavedTrackRepository
+import com.dzirbel.kotify.repository.track.TrackRatingRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LinkedText
@@ -56,13 +65,14 @@ import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.combineState
 import com.dzirbel.kotify.util.formatDuration
-import kotlinx.collections.immutable.ImmutableMap
-import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -80,10 +90,16 @@ private const val PROGRESS_SLIDER_UPDATE_DELAY_MS = 50L
 
 @Composable
 fun PlayerPanel() {
-    val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember { PlayerPanelPresenter(scope) }
+    val track = PlayerRepository.currentTrack.collectAsState().value
+    val trackId = track?.id
 
-    val state = presenter.state().safeState
+    val trackSaved = remember(trackId) { trackId?.let { SavedTrackRepository.stateOf(id = it) } }
+        ?.collectAsStateSwitchable(key = trackId)
+        ?.value
+
+    val trackRating = remember(trackId) { trackId?.let { TrackRatingRepository.ratingState(id = it) } }
+        ?.collectAsStateSwitchable(key = trackId)
+        ?.value
 
     Column(Modifier.instrument().fillMaxWidth().wrapContentHeight()) {
         Box(Modifier.fillMaxWidth().height(Dimens.divider).background(LocalColors.current.dividerColor))
@@ -96,33 +112,20 @@ fun PlayerPanel() {
                 content = {
                     Column {
                         CurrentTrack(
-                            track = state.playbackTrack,
-                            trackIsSaved = state.trackSavedState
-                                ?.collectAsStateSwitchable(key = state.playbackTrack?.id)
-                                ?.value,
-                            trackRating = state.trackRatingState?.collectAsState()?.value,
-                            artistsAreSaved = state.artistSavedStates
-                                ?.mapValues { entry ->
-                                    entry.value.collectAsStateSwitchable(key = entry.key).value
-                                }
-                                ?.toPersistentMap(),
-                            albumIsSaved = state.albumSavedState
-                                ?.collectAsStateSwitchable(key = state.playbackTrack?.album?.id)
-                                ?.value,
-                            presenter = presenter,
+                            track = track,
+                            trackIsSaved = trackSaved,
+                            trackRating = trackRating,
                         )
                     }
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        PlayerControls(state = state, presenter = presenter)
-
-                        TrackProgress(state = state, presenter = presenter)
+                        PlayerControls()
+                        TrackProgress()
                     }
 
                     Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.End) {
-                        VolumeControls(state = state, presenter = presenter)
-
-                        DeviceControls(state = state, presenter = presenter)
+                        VolumeControls()
+                        DeviceControls()
                     }
                 },
                 measurePolicy = { measurables, constraints ->
@@ -201,14 +204,7 @@ fun PlayerPanel() {
 }
 
 @Composable
-private fun CurrentTrack(
-    track: SpotifyTrack?,
-    trackIsSaved: Boolean?,
-    trackRating: Rating?,
-    artistsAreSaved: ImmutableMap<String, Boolean?>?,
-    albumIsSaved: Boolean?,
-    presenter: PlayerPanelPresenter,
-) {
+private fun CurrentTrack(track: SpotifyTrack?, trackIsSaved: Boolean?, trackRating: Rating?) {
     Row(
         modifier = Modifier.instrument(),
         horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
@@ -232,21 +228,23 @@ private fun CurrentTrack(
                     Text(track.name)
 
                     track.id?.let { trackId ->
-                        ToggleSaveButton(isSaved = trackIsSaved) {
-                            presenter.emitAsync(
-                                PlayerPanelPresenter.Event.ToggleTrackSaved(trackId = trackId, save = it),
-                            )
+                        val scope = rememberCoroutineScope { Dispatchers.IO }
+                        ToggleSaveButton(isSaved = trackIsSaved) { save ->
+                            scope.launch {
+                                SavedTrackRepository.setSaved(id = trackId, saved = save)
+                            }
                         }
                     }
 
+                    val scope = rememberCoroutineScope { Dispatchers.IO }
                     StarRating(
                         rating = trackRating,
                         enabled = track.id != null,
                         onRate = { rating ->
                             track.id?.let { trackId ->
-                                presenter.emitAsync(
-                                    PlayerPanelPresenter.Event.RateTrack(trackId = trackId, rating = rating),
-                                )
+                                scope.launch {
+                                    TrackRatingRepository.rate(id = trackId, rating = rating)
+                                }
                             }
                         },
                     )
@@ -274,16 +272,15 @@ private fun CurrentTrack(
                                 }
 
                                 artist.id?.let { artistId ->
-                                    ToggleSaveButton(
-                                        isSaved = artistsAreSaved?.get(artist.id),
-                                        size = Dimens.iconTiny,
-                                    ) {
-                                        presenter.emitAsync(
-                                            PlayerPanelPresenter.Event.ToggleArtistSaved(
-                                                artistId = artistId,
-                                                save = it,
-                                            ),
-                                        )
+                                    val saved = remember(artistId) { SavedArtistRepository.stateOf(id = artistId) }
+                                        .collectAsStateSwitchable(key = artistId)
+                                        .value
+                                    val scope = rememberCoroutineScope { Dispatchers.IO }
+
+                                    ToggleSaveButton(isSaved = saved, size = Dimens.iconTiny) { save ->
+                                        scope.launch {
+                                            SavedArtistRepository.setSaved(id = artistId, saved = save)
+                                        }
                                     }
                                 }
                             }
@@ -310,10 +307,15 @@ private fun CurrentTrack(
                         }
 
                         album.id?.let { albumId ->
-                            ToggleSaveButton(isSaved = albumIsSaved, size = Dimens.iconTiny) {
-                                presenter.emitAsync(
-                                    PlayerPanelPresenter.Event.ToggleAlbumSaved(albumId = albumId, save = it),
-                                )
+                            val saved = remember(albumId) { SavedAlbumRepository.stateOf(id = albumId) }
+                                .collectAsStateSwitchable(key = albumId)
+                                .value
+                            val scope = rememberCoroutineScope { Dispatchers.IO }
+
+                            ToggleSaveButton(isSaved = saved, size = Dimens.iconTiny) { save ->
+                                scope.launch {
+                                    SavedAlbumRepository.setSaved(id = albumId, saved = save)
+                                }
                             }
                         }
                     }
@@ -324,12 +326,13 @@ private fun CurrentTrack(
 }
 
 @Composable
-private fun PlayerControls(state: PlayerPanelPresenter.ViewModel, presenter: PlayerPanelPresenter) {
-    val controlsEnabled = !state.loadingPlayback
+private fun PlayerControls() {
+    val playable = PlayerRepository.playable.collectAsState().value == true
 
-    val playing = state.playbackIsPlaying == true
-    val shuffling = state.playbackShuffleState == true
-    val repeatState = state.playbackRepeatState
+    val playing: ToggleableState<Boolean>? = PlayerRepository.playing.collectAsState().value
+    val shuffling: ToggleableState<Boolean>? = PlayerRepository.shuffling.collectAsState().value
+    val skipping: SkippingState? = PlayerRepository.skipping.collectAsState().value
+    val repeatState: ToggleableState<String>? = PlayerRepository.repeatMode.collectAsState().value
 
     Row(
         modifier = Modifier.instrument(),
@@ -337,114 +340,95 @@ private fun PlayerControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
         horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
     ) {
         IconButton(
-            enabled = controlsEnabled && !state.togglingShuffle,
-            onClick = {
-                presenter.emitAsync(PlayerPanelPresenter.Event.ToggleShuffle(shuffle = !shuffling))
-            },
+            enabled = playable && shuffling is ToggleableState.Set,
+            onClick = { PlayerRepository.toggleShuffle() },
         ) {
             CachedIcon(
                 name = "shuffle",
                 size = Dimens.iconSmall,
                 contentDescription = "Shuffle",
-                tint = LocalColors.current.highlighted(highlight = shuffling),
+                tint = LocalColors.current.highlighted(highlight = shuffling?.value == true),
             )
         }
 
         IconButton(
-            enabled = controlsEnabled && !state.skippingPrevious,
-            onClick = {
-                presenter.emitAsync(PlayerPanelPresenter.Event.SkipPrevious)
-            },
+            enabled = playable && skipping != null && skipping != SkippingState.SKIPPING_TO_PREVIOUS,
+            onClick = { PlayerRepository.skipToPrevious() },
         ) {
             CachedIcon(name = "skip-previous", size = Dimens.iconSmall, contentDescription = "Previous")
         }
 
         IconButton(
-            enabled = controlsEnabled && !state.togglingPlayback,
-            onClick = {
-                presenter.emitAsync(
-                    if (playing) {
-                        PlayerPanelPresenter.Event.Pause
-                    } else {
-                        PlayerPanelPresenter.Event.Play
-                    },
-                )
-            },
+            enabled = playable && playing is ToggleableState.Set,
+            onClick = { PlayerRepository.togglePlayback() },
         ) {
             CachedIcon(
-                name = if (playing) "pause-circle-outline" else "play-circle-outline",
-                contentDescription = if (playing) "Pause" else "Play",
+                name = if (playing?.value == true) "pause-circle-outline" else "play-circle-outline",
+                contentDescription = if (playing?.value == true) "Pause" else "Play",
             )
         }
 
         IconButton(
-            enabled = controlsEnabled && !state.skippingNext,
-            onClick = {
-                presenter.emitAsync(PlayerPanelPresenter.Event.SkipNext)
-            },
+            enabled = playable && skipping != null && skipping != SkippingState.SKIPPING_TO_NEXT,
+            onClick = { PlayerRepository.skipToNext() },
         ) {
             CachedIcon(name = "skip-next", size = Dimens.iconSmall, contentDescription = "Next")
         }
 
         IconButton(
-            enabled = controlsEnabled && !state.togglingRepeat,
-            onClick = {
-                val newRepeatState = when (repeatState) {
-                    "track" -> "off"
-                    "context" -> "track"
-                    else -> "context"
-                }
-
-                presenter.emitAsync(PlayerPanelPresenter.Event.SetRepeat(repeatState = newRepeatState))
-            },
+            enabled = playable && repeatState is ToggleableState.Set,
+            onClick = { PlayerRepository.cycleRepeatMode() },
         ) {
+            // TODO abstract away string constants for repeat state here
             CachedIcon(
-                name = if (repeatState == "track") "repeat-one" else "repeat",
+                name = if (repeatState?.value == "track") "repeat-one" else "repeat",
                 size = Dimens.iconSmall,
                 contentDescription = "Repeat",
-                tint = LocalColors.current.highlighted(highlight = repeatState == "track" || repeatState == "context"),
+                tint = LocalColors.current.highlighted(
+                    highlight = repeatState?.value == "track" || repeatState?.value == "context",
+                ),
             )
         }
     }
 }
 
 @Composable
-private fun TrackProgress(state: PlayerPanelPresenter.ViewModel, presenter: PlayerPanelPresenter) {
-    if (state.playbackIsPlaying == null || state.playbackProgressMs == null || state.playbackTrack == null) {
+private fun TrackProgress() {
+    val track = PlayerRepository.currentTrack.collectAsState().value
+    val position = PlayerRepository.trackPosition.collectAsState().value
+
+    if (track == null || position == null) {
         SeekableSlider(progress = null)
     } else {
-        val track = state.playbackTrack
-
-        // save the last manual seek position, which is used when playback is loading to avoid jumps
-        val seekProgress = remember(state.playbackProgressMs, state.playbackIsPlaying) { mutableStateOf<Int?>(null) }
-
-        val currentSeekProgress = seekProgress.value
-        val progress = if ((state.loadingPlayback || state.togglingPlayback) && currentSeekProgress != null) {
-            currentSeekProgress.toLong()
-        } else {
-            remember(state.playbackProgressMs, state.playbackIsPlaying) {
-                if (state.playbackIsPlaying) {
-                    flow {
-                        val start = System.nanoTime()
-                        while (true) {
-                            val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toInt()
-                            emit(state.playbackProgressMs + elapsedMs)
-                            delay(PROGRESS_SLIDER_UPDATE_DELAY_MS)
-                        }
+        val progressFlow = remember(position) {
+            if (position is TrackPosition.Fetched && position.playing) {
+                flow {
+                    val start = System.nanoTime()
+                    while (true) {
+                        val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toInt()
+                        emit(position.fetchedPositionMs + elapsedMs)
+                        delay(PROGRESS_SLIDER_UPDATE_DELAY_MS)
                     }
-                } else {
-                    flowOf(state.playbackProgressMs)
                 }
+            } else {
+                flowOf(position.currentPositionMs)
             }
-                .collectAsState(initial = state.playbackProgressMs, context = Dispatchers.Default)
-                .value
-                .coerceAtMost(track.durationMs)
         }
 
+        val positionMs: Int = progressFlow.collectAsStateSwitchable(
+            initial = { position.currentPositionMs },
+            key = position,
+        )
+            .value
+            .coerceAtMost(track.durationMs.toInt())
+
         SeekableSlider(
-            progress = progress.toFloat() / track.durationMs,
+            progress = positionMs.toFloat() / track.durationMs,
             leftContent = {
-                Text(text = remember(progress) { formatDuration(progress) }, style = MaterialTheme.typography.overline)
+                Text(
+                    text = remember(positionMs) { formatDuration(positionMs.toLong()) },
+                    style = MaterialTheme.typography.overline,
+                )
             },
             rightContent = {
                 Text(
@@ -453,24 +437,20 @@ private fun TrackProgress(state: PlayerPanelPresenter.ViewModel, presenter: Play
                 )
             },
             onSeek = { seekPercent ->
-                val positionMs = (seekPercent * track.durationMs).roundToInt()
-                seekProgress.value = positionMs
-                presenter.emitAsync(PlayerPanelPresenter.Event.SeekTo(positionMs = positionMs))
+                val seekPositionMs = (seekPercent * track.durationMs).roundToInt()
+                PlayerRepository.seekToPosition(seekPositionMs)
             },
         )
     }
 }
 
 @Composable
-private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: PlayerPanelPresenter) {
+private fun VolumeControls() {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        val currentDevice = state.devices?.firstOrNull()
+        val volume: Int? = PlayerRepository.volume.collectAsState().value?.value
 
-        val volumeState = remember(currentDevice?.id, currentDevice?.volumePercent) {
-            mutableStateOf(currentDevice?.volumePercent)
-        }
-        val volume = volumeState.value
-        val muted = volume == 0
+        // stores the last volume before clicking the mute button, or null if not muted
+        val unmutedVolume = remember { Ref<Int>() }
 
         SeekableSlider(
             progress = volume?.let { it.toFloat() / 100 },
@@ -480,42 +460,65 @@ private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
                     modifier = Modifier.size(Dimens.iconSmall),
                     enabled = volume != null,
                     onClick = {
-                        if (volume != null) {
-                            presenter.emitAsync(
-                                PlayerPanelPresenter.Event.ToggleMuteVolume(mute = !muted, previousVolume = volume),
-                            )
+                        val previousVolume = unmutedVolume.value
+                        if (previousVolume == null) {
+                            unmutedVolume.value = volume
+                            PlayerRepository.setVolume(volumePercent = 0)
+                        } else {
+                            unmutedVolume.value = null
+                            PlayerRepository.setVolume(volumePercent = previousVolume)
                         }
                     },
                 ) {
                     CachedIcon(
-                        name = if (muted) "volume-off" else "volume-up",
+                        name = if (volume == 0) "volume-off" else "volume-up",
                         contentDescription = "Volume",
                         size = Dimens.iconSmall,
                     )
                 }
             },
             onSeek = { seekPercent ->
-                val volumeInt = (seekPercent * 100).roundToInt()
-                volumeState.value = volumeInt
-                presenter.emitAsync(PlayerPanelPresenter.Event.SetVolume(volumeInt))
+                unmutedVolume.value = null
+                val volumePercent = (seekPercent * 100).roundToInt()
+
+                // TODO maybe queue new volume requests rather than ignoring them if setting another volume
+                PlayerRepository.setVolume(volumePercent)
             },
         )
 
-        val refreshing = state.loadingDevices || state.loadingPlayback || state.loadingTrackPlayback
+        val refreshing = remember {
+            listOf(
+                PlayerRepository.refreshingPlayback,
+                PlayerRepository.refreshingTrack,
+                PlayerRepository.refreshingTrack,
+            )
+                .combineState { refreshingStates ->
+                    // refreshing button spins when any aspect is being refreshed
+                    refreshingStates.any { it }
+                }
+        }
+            .collectAsState()
+            .value
+
         IconButton(
             enabled = !refreshing,
             onClick = {
-                presenter.emitAsync(
-                    PlayerPanelPresenter.Event.LoadDevices(),
-                    PlayerPanelPresenter.Event.LoadPlayback(),
-                    PlayerPanelPresenter.Event.LoadTrackPlayback(),
-                )
+                PlayerRepository.refreshPlayback()
+                PlayerRepository.refreshTrack()
+                PlayerRepository.refreshDevices()
             },
         ) {
             RefreshIcon(refreshing = refreshing)
         }
 
-        val errors = presenter.errors
+        val errorResetCounter = remember { mutableStateOf(0) }
+        val errorFlow = remember(errorResetCounter.value) {
+            PlayerRepository.errors
+                .runningFold(emptyList<Throwable>()) { list, throwable -> list.plus(throwable) }
+        }
+
+        val errors = errorFlow.collectAsState(initial = emptyList()).value
+
         if (errors.isNotEmpty()) {
             val errorsExpanded = remember { mutableStateOf(false) }
             IconButton(
@@ -548,7 +551,7 @@ private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
 
                     SimpleTextButton(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { presenter.errors = emptyList() },
+                        onClick = { errorResetCounter.value++ },
                     ) {
                         Text("Clear")
                     }
@@ -559,9 +562,11 @@ private fun VolumeControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
 }
 
 @Composable
-private fun DeviceControls(state: PlayerPanelPresenter.ViewModel, presenter: PlayerPanelPresenter) {
-    val devices = state.devices
-    val currentDevice = state.currentDevice
+private fun DeviceControls() {
+    val devices: List<SpotifyPlaybackDevice>? = PlayerRepository.availableDevices.collectAsState().value
+    val loadingDevices = PlayerRepository.refreshingDevices.collectAsState().value
+    val currentDevice = PlayerRepository.currentDevice.collectAsState().value
+        ?: devices?.firstOrNull()
     val dropdownEnabled = devices != null && devices.size > 1
     val dropdownExpanded = remember { mutableStateOf(false) }
 
@@ -569,12 +574,12 @@ private fun DeviceControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
         enabled = dropdownEnabled,
         onClick = { dropdownExpanded.value = !dropdownExpanded.value },
     ) {
-        CachedIcon(name = state.currentDevice.iconName, size = Dimens.iconSmall)
+        CachedIcon(name = currentDevice.iconName, size = Dimens.iconSmall)
 
         HorizontalSpacer(Dimens.space3)
 
         val text = when {
-            devices == null && state.loadingDevices -> "Loading devices..."
+            devices == null && loadingDevices -> "Loading devices..."
             devices == null -> "Error loading devices"
             devices.isEmpty() -> "No devices"
             currentDevice != null -> currentDevice.name
@@ -623,7 +628,7 @@ private fun DeviceControls(state: PlayerPanelPresenter.ViewModel, presenter: Pla
                 devices.forEach { device ->
                     DropdownMenuItem(
                         onClick = {
-                            presenter.emitAsync(PlayerPanelPresenter.Event.SelectDevice(device = device))
+                            PlayerRepository.transferPlayback(deviceId = device.id)
                             dropdownExpanded.value = false
                         },
                     ) {
