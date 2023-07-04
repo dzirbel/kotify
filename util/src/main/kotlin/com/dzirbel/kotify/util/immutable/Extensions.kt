@@ -30,9 +30,8 @@ inline fun <E, reified F> Collection<E>.mapToImmutableList(mapper: (E) -> F): Im
 inline fun <E, reified F> Collection<E>.mapIndexedToImmutableList(mapper: (Int, E) -> F): ImmutableList<F> {
     val array = arrayOfNulls<F>(size)
 
-    var index = 0
-    for (element in this) {
-        array[index++] = mapper(index, element)
+    for ((index, element) in this.withIndex()) {
+        array[index] = mapper(index, element)
     }
 
     @Suppress("UNCHECKED_CAST")
