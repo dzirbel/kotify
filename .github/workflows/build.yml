@@ -24,7 +24,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: mismatching-screenshots
-          path: src/test/resources/screenshots/**/*-MISMATCH.png
+          path: '**/src/test/resources/screenshots/**/*-MISMATCH.png'
           if-no-files-found: ignore
           retention-days: 7
 
