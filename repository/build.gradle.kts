@@ -1,5 +1,4 @@
 plugins {
-    alias(libs.plugins.compose) // TODO temporary for use of State in Player
     alias(libs.plugins.detekt)
     id("jacoco")
     id("java-test-fixtures")
@@ -16,8 +15,6 @@ dependencies {
     testFixturesImplementation(testFixtures(project(":db")))
     testFixturesImplementation(testFixtures(project(":network")))
 
-    implementation(compose.desktop.currentOs)
-
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.javatime)
@@ -29,6 +26,4 @@ dependencies {
 
     testImplementation(libs.assertk)
     testImplementation(libs.kotlinx.coroutines.test)
-
-    testFixturesImplementation(compose.desktop.currentOs)
 }
