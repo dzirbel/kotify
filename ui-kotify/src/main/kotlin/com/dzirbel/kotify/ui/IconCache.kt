@@ -38,10 +38,10 @@ fun CachedIcon(
     contentDescription: String? = null,
     tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
 ) {
+    val params = IconCache.IconParams(name = name, density = LocalDensity.current, size = size)
     Icon(
-        painter = IconCache
-            .load(name, density = LocalDensity.current, size = size)
-            .collectAsState(initial = EmptyPainter, context = Dispatchers.IO)
+        painter = IconCache.load(params)
+            .collectAsState(initial = EmptyPainter, key = params, context = Dispatchers.IO)
             .value,
         modifier = modifier.size(size),
         contentDescription = contentDescription,
@@ -61,10 +61,10 @@ private object EmptyPainter : Painter() {
  * A global in-memory cache of loaded icon resources.
  */
 object IconCache {
-    private data class IconHash(val name: String, val density: Density, val size: Dp)
+    data class IconParams(val name: String, val density: Density, val size: Dp)
 
     private val classLoader = Thread.currentThread().contextClassLoader
-    private val jobs: ConcurrentMap<IconHash, Deferred<Painter>> = ConcurrentHashMap()
+    private val jobs: ConcurrentMap<IconParams, Deferred<Painter>> = ConcurrentHashMap()
 
     /**
      * Toggles the [IconCache]'s blocking mode, in which calls to [load] are always done synchronously.
@@ -83,25 +83,23 @@ object IconCache {
      * This [Painter] behaves incorrectly when drawing the same icon at different sizes, so we simply use a different
      * key in the cache for each icon-size combination.
      */
-    fun load(name: String, density: Density, size: Dp = Dimens.iconMedium): Deferred<Painter> {
-        val key = IconHash(name = name, density = density, size = size)
-
+    fun load(params: IconParams): Deferred<Painter> {
         // happy path: icon is already loaded
-        jobs[key]
+        jobs[params]
             ?.takeIf { it.isCompleted }
             ?.getCompleted()
             ?.let { return CompletableDeferred(it) }
 
         return if (loadBlocking) {
-            readIcon(name, density)
-                .also { jobs[key] = CompletableDeferred(it) }
+            readIcon(params.name, params.density)
+                .also { jobs[params] = CompletableDeferred(it) }
                 .let { CompletableDeferred(it) }
         } else {
-            jobs.computeIfAbsent(key) {
+            jobs.computeIfAbsent(params) {
                 // cannot use scope local to the composition in case it is removed from the composition before
                 // finishing, but then the same icon is requested again
                 GlobalScope.async(Dispatchers.IO) {
-                    readIcon(name, density)
+                    readIcon(params.name, params.density)
                 }
             }
         }

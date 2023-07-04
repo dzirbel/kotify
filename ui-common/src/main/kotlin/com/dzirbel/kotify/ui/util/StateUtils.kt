@@ -114,11 +114,15 @@ fun <T> iterativeState(key: Any? = null, generate: () -> Pair<T, Long>): T {
  * providing [initial] until the [Deferred] completes (awaiting on the given [context]).
  */
 @Composable
-fun <T> Deferred<T>.collectAsState(initial: T, context: CoroutineContext = EmptyCoroutineContext): State<T> {
+fun <T> Deferred<T>.collectAsState(
+    initial: T,
+    key: Any? = Unit,
+    context: CoroutineContext = EmptyCoroutineContext,
+): State<T> {
     return if (isCompleted) {
-        remember { mutableStateOf(getCompleted()) }
+        remember(key) { mutableStateOf(getCompleted()) }
     } else {
         flow { emit(await()) }
-            .collectAsState(initial = initial, context = context)
+            .collectAsStateSwitchable(initial = { initial }, key = key, context = context)
     }
 }
