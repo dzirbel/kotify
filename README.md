@@ -39,7 +39,7 @@ Kotify isn't ready for general use yet. It can be built from source by running
 ./gradlew run
 ```
 
-in the root directory. JDK 11+ is required.
+in the root directory. JDK 18 is required.
 
 ### Why "Kotify"?
 
