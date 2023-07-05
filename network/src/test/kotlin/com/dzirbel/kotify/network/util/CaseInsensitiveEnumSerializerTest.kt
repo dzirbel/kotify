@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 internal class CaseInsensitiveEnumSerializerTest {
     @Serializable(with = Enum.Serializer::class)
@@ -18,6 +19,18 @@ internal class CaseInsensitiveEnumSerializerTest {
         object Serializer : CaseInsensitiveEnumSerializer<Enum>(Enum::class)
     }
 
+    @Serializable(with = EnumWithFallback.Serializer::class)
+    private enum class EnumWithFallback {
+        A_VALUE,
+        FALLBACK_VALUE,
+        ;
+
+        object Serializer : CaseInsensitiveEnumSerializer<EnumWithFallback>(
+            enumClass = EnumWithFallback::class,
+            fallbackValue = FALLBACK_VALUE,
+        )
+    }
+
     @Serializable
     private data class SimpleWrapper(
         val v1: Enum = Enum.FIRST_VALUE,
@@ -27,6 +40,7 @@ internal class CaseInsensitiveEnumSerializerTest {
         companion object {
             const val defaultJsonString = """{"v1":"FIRST_VALUE","v2":"VALUE_2","n1":123}"""
             const val defaultJsonStringLower = """{"v1":"first_value","v2":"value_2","n1":123}"""
+            const val invalidString = """{"v1":"invalid","v2":"VALUE_2","n1":123}"""
         }
     }
 
@@ -48,6 +62,16 @@ internal class CaseInsensitiveEnumSerializerTest {
         assertThat(json.decodeFromString<SimpleWrapper>(SimpleWrapper.defaultJsonString)).isEqualTo(SimpleWrapper())
         assertThat(json.decodeFromString<SimpleWrapper>(SimpleWrapper.defaultJsonStringLower))
             .isEqualTo(SimpleWrapper())
+    }
+
+    @Test
+    fun testDeserializeInvalid() {
+        assertThrows<IllegalArgumentException> { json.decodeFromString<Enum>("\"invalid\"") }
+        assertThrows<IllegalArgumentException> { json.decodeFromString<SimpleWrapper>(SimpleWrapper.invalidString) }
+
+        assertThat(json.decodeFromString<EnumWithFallback>("\"A_VALUE\"")).isEqualTo(EnumWithFallback.A_VALUE)
+        assertThat(json.decodeFromString<EnumWithFallback>("\"\"")).isEqualTo(EnumWithFallback.FALLBACK_VALUE)
+        assertThat(json.decodeFromString<EnumWithFallback>("\"invalid\"")).isEqualTo(EnumWithFallback.FALLBACK_VALUE)
     }
 
     companion object {

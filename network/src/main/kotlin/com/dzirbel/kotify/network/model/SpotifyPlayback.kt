@@ -29,7 +29,8 @@ data class SpotifyPlayback(
     /**
      * The object type of the currently playing item. Can be one of track, episode, ad or unknown.
      */
-    @SerialName("currently_playing_type") val currentlyPlayingType: String,
+    // TODO nullable when not playing?
+    @SerialName("currently_playing_type") val currentlyPlayingType: SpotifyPlayingType,
 
     /**
      * The currently playing track or episode. Can be null.
@@ -64,7 +65,8 @@ data class SpotifyTrackPlayback(
     val timestamp: Long,
     @SerialName("progress_ms") val progressMs: Long,
     @SerialName("is_playing") val isPlaying: Boolean,
-    @SerialName("currently_playing_type") val currentlyPlayingType: String,
+    // TODO nullable when not playing?
+    @SerialName("currently_playing_type") val currentlyPlayingType: SpotifyPlayingType,
     val item: FullSpotifyTrack?,
     val context: SpotifyPlaybackContext?,
     val actions: SpotifyPlaybackActions? = null,
@@ -143,7 +145,20 @@ enum class SpotifyRepeatMode {
         }
     }
 
-    internal object Serializer : CaseInsensitiveEnumSerializer<SpotifyRepeatMode>(SpotifyRepeatMode::class)
+    internal object Serializer : CaseInsensitiveEnumSerializer<SpotifyRepeatMode>(
+        enumClass = SpotifyRepeatMode::class,
+        fallbackValue = OFF,
+    )
+}
+
+@Serializable(with = SpotifyPlayingType.Serializer::class)
+enum class SpotifyPlayingType {
+    TRACK, EPISODE, AD, UNKNOWN;
+
+    internal object Serializer : CaseInsensitiveEnumSerializer<SpotifyPlayingType>(
+        enumClass = SpotifyPlayingType::class,
+        fallbackValue = UNKNOWN,
+    )
 }
 
 @Serializable

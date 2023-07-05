@@ -983,11 +983,11 @@ object Spotify {
          * @param play true: ensure playback happens on new device. false or not provided: keep the current playback
          *  state.
          */
-        suspend fun transferPlayback(deviceIds: List<String>, play: String? = null) {
+        suspend fun transferPlayback(deviceIds: List<String>, play: Boolean? = null) {
             @Serializable
             data class Body(
                 @SerialName("device_ids") val deviceIds: List<String>,
-                val play: String? = null,
+                val play: Boolean? = null,
             )
 
             put<_, Unit>(TRANSFER_PLAYBACK_PATH, jsonBody = Body(deviceIds = deviceIds, play = play))

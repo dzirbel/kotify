@@ -4,6 +4,7 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
+import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
 import com.dzirbel.kotify.repository.player.Player.PlayContext
@@ -41,12 +42,12 @@ object PlayerRepository : Player {
     override val playbackContextUri: StateFlow<String?>
         get() = _playbackContextUri
 
-    private val _currentlyPlayingType = MutableStateFlow<String?>(null)
-    override val currentlyPlayingType: StateFlow<String?>
+    private val _currentlyPlayingType = MutableStateFlow<SpotifyPlayingType?>(null)
+    override val currentlyPlayingType: StateFlow<SpotifyPlayingType?>
         get() = _currentlyPlayingType
 
-    private val _skipping = MutableStateFlow<SkippingState?>(SkippingState.NOT_SKIPPING)
-    override val skipping: StateFlow<SkippingState?>
+    private val _skipping = MutableStateFlow(SkippingState.NOT_SKIPPING)
+    override val skipping: StateFlow<SkippingState>
         get() = _skipping
 
     private val _repeatMode = MutableStateFlow<ToggleableState<SpotifyRepeatMode>?>(null)
@@ -77,7 +78,7 @@ object PlayerRepository : Player {
     override val volume: StateFlow<ToggleableState<Int>?>
         get() = _volume
 
-    private val _errors = MutableSharedFlow<Throwable>()
+    private val _errors = MutableSharedFlow<Throwable>(replay = 8)
     override val errors: SharedFlow<Throwable>
         get() = _errors
 
@@ -314,7 +315,7 @@ object PlayerRepository : Player {
     override fun transferPlayback(deviceId: String, play: Boolean?) {
         transferPlaybackLock.launch(scope = GlobalScope) {
             val success = try {
-                Spotify.Player.transferPlayback(deviceIds = listOf(deviceId))
+                Spotify.Player.transferPlayback(deviceIds = listOf(deviceId), play = play)
                 true
             } catch (ex: CancellationException) {
                 throw ex
