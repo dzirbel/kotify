@@ -12,7 +12,6 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
@@ -25,14 +24,14 @@ internal class KotifyDatabaseTest {
 
     @BeforeEach
     fun setup() {
-        transaction(KotifyDatabase.db) {
+        KotifyDatabase.blockingTransaction {
             SchemaUtils.createMissingTablesAndColumns(TestTable)
         }
     }
 
     @AfterEach
     fun cleanup() {
-        transaction(KotifyDatabase.db) {
+        KotifyDatabase.blockingTransaction {
             TestTable.deleteAll()
         }
     }

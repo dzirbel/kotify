@@ -11,6 +11,7 @@ import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.SavedEntityTable
+import com.dzirbel.kotify.db.blockingTransaction
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
 import com.dzirbel.kotify.util.containsExactlyElementsOfInAnyOrder
 import kotlinx.coroutines.delay
@@ -19,7 +20,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -93,14 +93,14 @@ private val remoteLibrary = listOf("saved-1", "saved-2", "saved-3")
 internal class SavedDatabaseRepositoryTest {
     @BeforeEach
     fun setup() {
-        transaction(KotifyDatabase.db) {
+        KotifyDatabase.blockingTransaction {
             SchemaUtils.create(TestSavedEntityTable)
         }
     }
 
     @AfterEach
     fun cleanup() {
-        transaction(KotifyDatabase.db) {
+        KotifyDatabase.blockingTransaction {
             TestSavedEntityTable.deleteAll()
             GlobalUpdateTimesTable.deleteAll()
         }

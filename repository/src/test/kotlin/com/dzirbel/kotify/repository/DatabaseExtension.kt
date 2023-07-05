@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.repository
 
 import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.blockingTransaction
 import com.dzirbel.kotify.repository.user.UserRepository
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -23,7 +23,7 @@ class DatabaseExtension : BeforeAllCallback, AfterEachCallback {
             KotifyDatabase.init(dbFile = File("test.db").also(File::deleteOnExit))
         }
 
-        transaction(KotifyDatabase.db) {
+        KotifyDatabase.blockingTransaction {
             UserRepository.currentUserId.set("abc") // use mock user ID for tests
         }
     }

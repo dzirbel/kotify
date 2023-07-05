@@ -17,6 +17,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
+import com.dzirbel.kotify.db.blockingTransaction
 import com.dzirbel.kotify.network.model.SpotifyObject
 import com.dzirbel.kotify.util.containsExactlyElementsOf
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +28,6 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
@@ -114,14 +114,14 @@ private val remoteModels = mapOf(
 internal class DatabaseRepositoryTest {
     @BeforeEach
     fun setup() {
-        transaction(KotifyDatabase.db) {
+        KotifyDatabase.blockingTransaction {
             SchemaUtils.create(TestEntityTable)
         }
     }
 
     @AfterEach
     fun cleanup() {
-        transaction(KotifyDatabase.db) { TestEntityTable.deleteAll() }
+        KotifyDatabase.blockingTransaction { TestEntityTable.deleteAll() }
         TestRepository.fetchedIds.clear()
         TestRepository.batchFetchedIds.clear()
         TestRepository.clearStates()
@@ -215,7 +215,7 @@ internal class DatabaseRepositoryTest {
     fun testGetBatched() {
         runTest {
             val cachedValue = remoteModels.entries.first()
-            transaction(KotifyDatabase.db) { TestEntity.from(cachedValue.value) }
+            KotifyDatabase.blockingTransaction { TestEntity.from(cachedValue.value) }
 
             val result = TestRepository.get(ids = remoteModels.keys.toList())
             assertThat(result).hasSize(remoteModels.size)
@@ -463,22 +463,19 @@ internal class DatabaseRepositoryTest {
         updateStart: Instant? = createStart,
         updateEnd: Instant? = createEnd,
     ) {
-        val id = id.value
-        transaction(KotifyDatabase.db) {
-            assertThat(id).isEqualTo(networkModel.id)
-            assertThat(name).isEqualTo(networkModel.name)
+        assertThat(id.value).isEqualTo(networkModel.id)
+        assertThat(name).isEqualTo(networkModel.name)
 
-            if (createStart != null && createEnd != null) {
-                assertThat(createdTime).isBetween(createStart, createEnd)
-            }
-
-            if (updateStart != null && updateEnd != null) {
-                assertThat(updatedTime).isBetween(updateStart, updateEnd)
-            }
-
-            assertThat(string).isEqualTo(networkModel.stringField)
-            assertThat(int).isEqualTo(networkModel.intField)
-            assertThat(boolean).isEqualTo(networkModel.booleanField)
+        if (createStart != null && createEnd != null) {
+            assertThat(createdTime).isBetween(createStart, createEnd)
         }
+
+        if (updateStart != null && updateEnd != null) {
+            assertThat(updatedTime).isBetween(updateStart, updateEnd)
+        }
+
+        assertThat(string).isEqualTo(networkModel.stringField)
+        assertThat(int).isEqualTo(networkModel.intField)
+        assertThat(boolean).isEqualTo(networkModel.booleanField)
     }
 }

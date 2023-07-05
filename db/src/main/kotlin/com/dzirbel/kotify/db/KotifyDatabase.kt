@@ -65,9 +65,7 @@ object KotifyDatabase {
         fun onTransactionStart(transaction: Transaction, name: String?)
     }
 
-    // TODO make private? (only used in tests)
-    lateinit var db: Database
-        private set
+    private lateinit var db: Database
 
     /**
      * A [CoroutineDispatcher] which is used to execute database transactions, in particular limiting them to run
@@ -133,9 +131,7 @@ object KotifyDatabase {
     suspend fun <T> transaction(name: String?, statement: suspend Transaction.() -> T): T {
         check(db.transactionManager.currentOrNull() == null) { "transaction already in progress" }
 
-        if (transactionDelayMs > 0) {
-            delay(transactionDelayMs)
-        }
+        delay(transactionDelayMs)
 
         return if (synchronousTransactions) {
             synchronized(this) {

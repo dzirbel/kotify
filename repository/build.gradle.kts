@@ -10,6 +10,7 @@ dependencies {
     api(project(":network"))
     implementation(project(":util"))
 
+    testImplementation(testFixtures(project(":db")))
     testImplementation(testFixtures(project(":util")))
 
     testFixturesImplementation(testFixtures(project(":db")))
