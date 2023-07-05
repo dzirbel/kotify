@@ -54,6 +54,8 @@ import kotlin.coroutines.coroutineContext
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/
+ *
+ * TODO allow more lenient JSON parsing in release builds
  */
 object Spotify {
     data class Configuration(
@@ -70,7 +72,7 @@ object Spotify {
      * i.e. all-or-nothing. This could be generalized in the future, but works for the current use case of intercepting
      * network requests in unit tests.
      *
-     * TODO consider using OkHttp interceptors instead
+     * TODO consider using OkHttp interceptors or mocking instead
      */
     fun interface RequestInterceptor {
         /**

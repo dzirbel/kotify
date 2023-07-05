@@ -17,6 +17,8 @@ import com.dzirbel.kotify.ui.SpotifyImageCache
 import okhttp3.OkHttpClient
 
 fun main(args: Array<String>) {
+    // TODO log startup time
+
     Application.setup(
         cachePath = args.getOrNull(0),
         settingsPath = args.getOrNull(1),
