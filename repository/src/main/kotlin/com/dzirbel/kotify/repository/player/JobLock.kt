@@ -27,4 +27,11 @@ internal class JobLock {
             }
         }
     }
+
+    /**
+     * Throws an [IllegalStateException] if there is currently a job running from [launch].
+     */
+    fun checkNotRunning() {
+        check(!running.get())
+    }
 }

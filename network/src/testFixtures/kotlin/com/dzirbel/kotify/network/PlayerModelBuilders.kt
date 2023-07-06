@@ -5,12 +5,13 @@ import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
+import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
 
-fun SpotifyPlayback(track: FullSpotifyTrack? = null): SpotifyPlayback {
+fun SpotifyPlayback(track: FullSpotifyTrack? = null, progressMs: Long? = null): SpotifyPlayback {
     return SpotifyPlayback(
         item = track,
         device = SpotifyPlaybackDevice(),
-        progressMs = null,
+        progressMs = progressMs,
         isPlaying = false,
         shuffleState = false,
         repeatState = SpotifyRepeatMode.OFF,
@@ -21,7 +22,19 @@ fun SpotifyPlayback(track: FullSpotifyTrack? = null): SpotifyPlayback {
     )
 }
 
-fun SpotifyPlaybackDevice(id: String = "device1", name: String = "Device 1"): SpotifyPlaybackDevice {
+fun SpotifyTrackPlayback(track: FullSpotifyTrack? = null, progressMs: Long = 0): SpotifyTrackPlayback {
+    return SpotifyTrackPlayback(
+        item = track,
+        progressMs = progressMs,
+        isPlaying = false,
+        context = null,
+        currentlyPlayingType = SpotifyPlayingType.UNKNOWN,
+        actions = null,
+        timestamp = 0,
+    )
+}
+
+fun SpotifyPlaybackDevice(id: String = "1", name: String = "Device $id"): SpotifyPlaybackDevice {
     return SpotifyPlaybackDevice(
         id = id,
         isActive = false,

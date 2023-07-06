@@ -439,6 +439,38 @@ object PlayerRepository : Player {
         }
     }
 
+    /**
+     * Resets the state of the [PlayerRepository], for use between tests.
+     */
+    fun clear() {
+        _refreshingPlayback.value = false
+        _refreshingTrack.value = false
+        _refreshingDevices.value = false
+        _playable.value = null
+        _playing.value = null
+        _playbackContextUri.value = null
+        _currentlyPlayingType.value = null
+        _skipping.value = SkippingState.NOT_SKIPPING
+        _repeatMode.value = null
+        _shuffling.value = null
+        _currentTrack.value = null
+        _trackPosition.value = null
+        _currentDevice.value = null
+        _availableDevices.value = null
+        _volume.value = null
+        _errors.resetReplayCache()
+        fetchPlaybackLock.checkNotRunning()
+        fetchTrackPlaybackLock.checkNotRunning()
+        fetchAvailableDevicesLock.checkNotRunning()
+        playLock.checkNotRunning()
+        skipLock.checkNotRunning()
+        seekLock.checkNotRunning()
+        setRepeatModeLock.checkNotRunning()
+        toggleShuffleLock.checkNotRunning()
+        setVolumeLock.checkNotRunning()
+        transferPlaybackLock.checkNotRunning()
+    }
+
     // TODO document
     private fun Long.midpoint(): Long = System.currentTimeMillis() / 2 + this / 2
 

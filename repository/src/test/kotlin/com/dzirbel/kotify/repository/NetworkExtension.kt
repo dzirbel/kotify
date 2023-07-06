@@ -2,6 +2,7 @@ package com.dzirbel.kotify.repository
 
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.util.TAG_NETWORK
+import io.mockk.clearAllMocks
 import io.mockk.confirmVerified
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
@@ -21,6 +22,7 @@ class NetworkExtension : BeforeAllCallback, AfterEachCallback, AfterAllCallback 
     override fun afterEach(context: ExtensionContext) {
         if (!context.tags.contains(TAG_NETWORK)) {
             confirmVerified(*spotifyObjects)
+            resetObjectMocks()
         }
     }
 
@@ -36,5 +38,18 @@ class NetworkExtension : BeforeAllCallback, AfterEachCallback, AfterAllCallback 
             Spotify,
             Spotify.Player,
         )
+
+        // TODO extract
+        private fun resetObjectMocks() {
+            clearAllMocks(
+                answers = false,
+                recordedCalls = true,
+                childMocks = false,
+                regularMocks = false,
+                objectMocks = true,
+                staticMocks = false,
+                constructorMocks = false,
+            )
+        }
     }
 }
