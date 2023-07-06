@@ -10,10 +10,12 @@ import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
 import com.dzirbel.kotify.repository.player.Player.PlayContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 // TODO document
 // TODO fetch next song when current one ends
@@ -107,6 +109,7 @@ object PlayerRepository : Player {
             val playback = try {
                 Spotify.Player.getCurrentPlayback()
             } catch (ex: CancellationException) {
+                _refreshingPlayback.value = false
                 throw ex
             } catch (throwable: Throwable) {
                 _errors.emit(throwable)
@@ -122,12 +125,32 @@ object PlayerRepository : Player {
     }
 
     override fun refreshTrack() {
+        refreshTrackWithRetries(condition = null)
+    }
+
+    private suspend fun refreshTrackUntilChanged(previousTrack: FullSpotifyTrack?) {
+        if (previousTrack == null) {
+            _errors.emit(IllegalStateException("Missing previous track"))
+        } else {
+            refreshTrackWithRetries { newTrackPlayback ->
+                // stop refreshing when there is a new track
+                newTrackPlayback.item?.id != previousTrack.id
+            }
+        }
+    }
+
+    private fun refreshTrackWithRetries(
+        attempt: Int = 0,
+        backoffStrategy: BackoffStrategy = BackoffStrategy.default,
+        condition: ((SpotifyTrackPlayback) -> Boolean)?,
+    ) {
         fetchTrackPlaybackLock.launch(scope = GlobalScope) {
             _refreshingTrack.value = true
 
             val trackPlayback = try {
                 Spotify.Player.getCurrentlyPlayingTrack()
             } catch (ex: CancellationException) {
+                _refreshingTrack.value = false
                 throw ex
             } catch (throwable: Throwable) {
                 _errors.emit(throwable)
@@ -135,7 +158,29 @@ object PlayerRepository : Player {
             }
 
             if (trackPlayback != null) {
-                updateWithTrackPlayback(trackPlayback)
+                if (condition?.invoke(trackPlayback) == false) {
+                    val delay = backoffStrategy.delayFor(attempt = attempt)
+                    if (delay != null) {
+                        // TODO consider multiple concurrent retry conditions
+                        launch {
+                            delay(delay)
+                            refreshTrackWithRetries(
+                                condition = condition,
+                                attempt = attempt + 1,
+                                backoffStrategy = backoffStrategy,
+                            )
+                        }
+                    } else {
+                        // retries have failed to meet the condition, now use the provided playback
+                        updateWithTrackPlayback(trackPlayback)
+                    }
+                } else {
+                    // condition is null or has been met, apply the new playback
+                    updateWithTrackPlayback(trackPlayback)
+                }
+            } else {
+                // if there is no playback, stop retries regardless
+                updateWithTrackPlayback(null)
             }
 
             _refreshingTrack.value = false
@@ -149,6 +194,7 @@ object PlayerRepository : Player {
             val devices = try {
                 Spotify.Player.getAvailableDevices()
             } catch (ex: CancellationException) {
+                _refreshingDevices.value = false
                 throw ex
             } catch (throwable: Throwable) {
                 _errors.emit(throwable)
@@ -208,10 +254,13 @@ object PlayerRepository : Player {
         skipLock.launch(scope = GlobalScope) {
             _skipping.value = SkippingState.SKIPPING_TO_NEXT
 
+            val previousTrack = _currentTrack.value
+
             val success = try {
                 Spotify.Player.skipToNext()
                 true
             } catch (ex: CancellationException) {
+                _skipping.value = SkippingState.NOT_SKIPPING
                 throw ex
             } catch (throwable: Throwable) {
                 _errors.emit(throwable)
@@ -219,8 +268,7 @@ object PlayerRepository : Player {
             }
 
             if (success) {
-                // TODO refreshes too fast before the change is applied
-                refreshTrack()
+                refreshTrackUntilChanged(previousTrack = previousTrack)
             }
 
             _skipping.value = SkippingState.NOT_SKIPPING
@@ -231,10 +279,13 @@ object PlayerRepository : Player {
         skipLock.launch(scope = GlobalScope) {
             _skipping.value = SkippingState.SKIPPING_TO_PREVIOUS
 
+            val previousTrack = _currentTrack.value
+
             val success = try {
                 Spotify.Player.skipToPrevious()
                 true
             } catch (ex: CancellationException) {
+                _skipping.value = SkippingState.NOT_SKIPPING
                 throw ex
             } catch (throwable: Throwable) {
                 _errors.emit(throwable)
@@ -242,8 +293,7 @@ object PlayerRepository : Player {
             }
 
             if (success) {
-                // TODO refreshes too fast before the change is applied
-                refreshTrack()
+                refreshTrackUntilChanged(previousTrack = previousTrack)
             }
 
             _skipping.value = SkippingState.NOT_SKIPPING
@@ -261,6 +311,7 @@ object PlayerRepository : Player {
                 Spotify.Player.seekToPosition(positionMs = positionMs)
                 true
             } catch (ex: CancellationException) {
+                _trackPosition.value = previousProgress
                 throw ex
             } catch (throwable: Throwable) {
                 _errors.emit(throwable)
@@ -368,19 +419,21 @@ object PlayerRepository : Player {
         }
     }
 
-    private fun updateWithTrackPlayback(trackPlayback: SpotifyTrackPlayback) {
-        _currentTrack.value = trackPlayback.item
+    private fun updateWithTrackPlayback(trackPlayback: SpotifyTrackPlayback?) {
+        _currentTrack.value = trackPlayback?.item
 
-        _trackPosition.value = TrackPosition.Fetched(
-            fetchedTimestamp = trackPlayback.timestamp,
-            fetchedPositionMs = trackPlayback.progressMs.toInt(),
-            playing = trackPlayback.isPlaying,
-        )
+        _trackPosition.value = trackPlayback?.let {
+            TrackPosition.Fetched(
+                fetchedTimestamp = trackPlayback.timestamp,
+                fetchedPositionMs = trackPlayback.progressMs.toInt(),
+                playing = trackPlayback.isPlaying,
+            )
+        }
 
-        _playing.value = ToggleableState.Set(trackPlayback.isPlaying)
+        _playing.value = trackPlayback?.let { ToggleableState.Set(trackPlayback.isPlaying) }
 
-        _playbackContextUri.value = trackPlayback.context?.uri
-        _currentlyPlayingType.value = trackPlayback.currentlyPlayingType
+        _playbackContextUri.value = trackPlayback?.context?.uri
+        _currentlyPlayingType.value = trackPlayback?.currentlyPlayingType
     }
 
     private fun updateWithDevices(devices: List<SpotifyPlaybackDevice>) {
@@ -404,6 +457,7 @@ object PlayerRepository : Player {
             block()
             true
         } catch (ex: CancellationException) {
+            this.value = previousValue
             throw ex
         } catch (throwable: Throwable) {
             _errors.emit(throwable)
