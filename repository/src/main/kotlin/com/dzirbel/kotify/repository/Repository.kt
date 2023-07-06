@@ -270,7 +270,8 @@ abstract class Repository<E> {
     companion object {
         // TODO replace with scope which is tied to either the application or test lifecycle and use this more generally
         //  instead of GlobalScope
-        private var repositoryScope: CoroutineScope = GlobalScope
+        internal var repositoryScope: CoroutineScope = GlobalScope
+            private set
 
         /**
          * Runs [block] with [scope] used as the [CoroutineScope] in which [states] are fetched. By default this is the

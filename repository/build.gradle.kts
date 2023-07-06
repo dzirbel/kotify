@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":util"))
 
     testImplementation(testFixtures(project(":db")))
+    testImplementation(testFixtures(project(":network")))
     testImplementation(testFixtures(project(":util")))
 
     testFixturesImplementation(testFixtures(project(":db")))
@@ -27,4 +28,5 @@ dependencies {
 
     testImplementation(libs.assertk)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
 }

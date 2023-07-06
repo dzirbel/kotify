@@ -9,6 +9,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.oauth.AccessToken
+import com.dzirbel.kotify.repository.player.PlayerRepository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.ui.IconCache
 import com.dzirbel.kotify.ui.KeyboardShortcuts
@@ -43,6 +44,11 @@ fun main(args: Array<String>) {
         okHttpClient = okHttpClient,
         oauthOkHttpClient = okHttpClient,
     )
+
+    // load initial player state
+    PlayerRepository.refreshPlayback()
+    PlayerRepository.refreshTrack()
+    PlayerRepository.refreshDevices()
 
     AccessToken.Cache.cacheFile = Application.cacheDir.resolve("access_token.json")
     AccessToken.Cache.requireRefreshable() // clear non-refreshable tokens from tests

@@ -162,6 +162,7 @@ object Spotify {
     ): T {
         // check that the request is not being done on the main dispatcher
         require(coroutineContext[ContinuationInterceptor] !is MainCoroutineDispatcher)
+        // TODO verify not in unit test
 
         configuration.requestInterceptor?.let {
             return it.interceptFor(method = method, path = path) as T

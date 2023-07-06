@@ -7,9 +7,9 @@ import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
+import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.player.Player.PlayContext
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,14 +96,8 @@ object PlayerRepository : Player {
     private val setVolumeLock = JobLock()
     private val transferPlaybackLock = JobLock()
 
-    init {
-        refreshPlayback()
-        refreshTrack()
-        refreshDevices()
-    }
-
     override fun refreshPlayback() {
-        fetchPlaybackLock.launch(scope = GlobalScope) {
+        fetchPlaybackLock.launch(scope = Repository.repositoryScope) {
             _refreshingPlayback.value = true
 
             val playback = try {
@@ -144,7 +138,7 @@ object PlayerRepository : Player {
         backoffStrategy: BackoffStrategy = BackoffStrategy.default,
         condition: ((SpotifyTrackPlayback) -> Boolean)?,
     ) {
-        fetchTrackPlaybackLock.launch(scope = GlobalScope) {
+        fetchTrackPlaybackLock.launch(scope = Repository.repositoryScope) {
             _refreshingTrack.value = true
 
             val trackPlayback = try {
@@ -188,7 +182,7 @@ object PlayerRepository : Player {
     }
 
     override fun refreshDevices() {
-        fetchAvailableDevicesLock.launch(scope = GlobalScope) {
+        fetchAvailableDevicesLock.launch(scope = Repository.repositoryScope) {
             _refreshingDevices.value = true
 
             val devices = try {
@@ -210,7 +204,7 @@ object PlayerRepository : Player {
     }
 
     override fun play(context: PlayContext?) {
-        playLock.launch(scope = GlobalScope) {
+        playLock.launch(scope = Repository.repositoryScope) {
             _playing.toggleTo(true) {
                 val start = System.currentTimeMillis()
 
@@ -235,7 +229,7 @@ object PlayerRepository : Player {
     }
 
     override fun pause() {
-        playLock.launch(scope = GlobalScope) {
+        playLock.launch(scope = Repository.repositoryScope) {
             _playing.toggleTo(false) {
                 val start = System.currentTimeMillis()
 
@@ -251,7 +245,7 @@ object PlayerRepository : Player {
     }
 
     override fun skipToNext() {
-        skipLock.launch(scope = GlobalScope) {
+        skipLock.launch(scope = Repository.repositoryScope) {
             _skipping.value = SkippingState.SKIPPING_TO_NEXT
 
             val previousTrack = _currentTrack.value
@@ -276,7 +270,7 @@ object PlayerRepository : Player {
     }
 
     override fun skipToPrevious() {
-        skipLock.launch(scope = GlobalScope) {
+        skipLock.launch(scope = Repository.repositoryScope) {
             _skipping.value = SkippingState.SKIPPING_TO_PREVIOUS
 
             val previousTrack = _currentTrack.value
@@ -301,7 +295,7 @@ object PlayerRepository : Player {
     }
 
     override fun seekToPosition(positionMs: Int) {
-        seekLock.launch(scope = GlobalScope) {
+        seekLock.launch(scope = Repository.repositoryScope) {
             val previousProgress = _trackPosition.value
             _trackPosition.value = TrackPosition.Seeking(positionMs = positionMs)
 
@@ -334,7 +328,7 @@ object PlayerRepository : Player {
     }
 
     override fun setRepeatMode(mode: SpotifyRepeatMode) {
-        setRepeatModeLock.launch(scope = GlobalScope) {
+        setRepeatModeLock.launch(scope = Repository.repositoryScope) {
             _repeatMode.toggleTo(mode) {
                 Spotify.Player.setRepeatMode(mode)
 
@@ -344,7 +338,7 @@ object PlayerRepository : Player {
     }
 
     override fun setShuffle(shuffle: Boolean) {
-        toggleShuffleLock.launch(scope = GlobalScope) {
+        toggleShuffleLock.launch(scope = Repository.repositoryScope) {
             _shuffling.toggleTo(shuffle) {
                 Spotify.Player.toggleShuffle(state = shuffle)
 
@@ -354,7 +348,7 @@ object PlayerRepository : Player {
     }
 
     override fun setVolume(volumePercent: Int) {
-        setVolumeLock.launch(scope = GlobalScope) {
+        setVolumeLock.launch(scope = Repository.repositoryScope) {
             _volume.toggleTo(volumePercent) {
                 Spotify.Player.setVolume(volumePercent = volumePercent)
 
@@ -364,7 +358,7 @@ object PlayerRepository : Player {
     }
 
     override fun transferPlayback(deviceId: String, play: Boolean?) {
-        transferPlaybackLock.launch(scope = GlobalScope) {
+        transferPlaybackLock.launch(scope = Repository.repositoryScope) {
             val success = try {
                 Spotify.Player.transferPlayback(deviceIds = listOf(deviceId), play = play)
                 true
