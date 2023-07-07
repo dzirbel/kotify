@@ -14,13 +14,11 @@ import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
 import com.dzirbel.kotify.repository.Repository
-import io.mockk.MockKStubScope
+import com.dzirbel.kotify.util.collectingToList
+import com.dzirbel.kotify.util.delayed
 import io.mockk.coEvery
 import io.mockk.coVerify
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -373,41 +371,5 @@ class PlayerRepositoryTest {
     private fun assertDevices(refreshing: Boolean, devices: List<SpotifyPlaybackDevice>?) {
         assertThat(PlayerRepository.refreshingDevices.value).isEqualTo(refreshing)
         assertThat(PlayerRepository.availableDevices.value).isEqualTo(devices)
-    }
-
-    // TODO extract
-    private class DelayedMockKStubScope<T, B>(
-        private val baseStub: MockKStubScope<T, B>,
-        private val delayMs: Long,
-    ) {
-        infix fun returns(value: T) {
-            baseStub.coAnswers {
-                delay(delayMs)
-                value
-            }
-        }
-
-        infix fun throws(throwable: Throwable) {
-            baseStub.coAnswers {
-                delay(delayMs)
-                throw throwable
-            }
-        }
-    }
-
-    private infix fun <T, B> MockKStubScope<T, B>.delayed(delayMs: Long): DelayedMockKStubScope<T, B> {
-        return DelayedMockKStubScope(this, delayMs)
-    }
-
-    // TODO extract
-    private fun <T> TestScope.collectingToList(flow: Flow<T>, block: (List<T>) -> Unit) {
-        val list = mutableListOf<T>()
-        val job = launch {
-            flow.collect { list.add(it) }
-        }
-
-        block(list)
-
-        job.cancel()
     }
 }

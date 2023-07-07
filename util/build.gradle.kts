@@ -18,4 +18,6 @@ dependencies {
 
     testFixturesImplementation(libs.assertk)
     testFixturesImplementation(libs.kotlinx.coroutines.core)
+    testFixturesImplementation(libs.kotlinx.coroutines.test)
+    testFixturesImplementation(libs.mockk)
 }
