@@ -20,7 +20,7 @@ import java.util.Collections
  *
  * TODO unit test
  */
-internal class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
+class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
     // TODO tends to accumulate empty WeakReference: this could be improved by creating a standalone WeakValueHashMap
     //  with logic to sweep GC'd references from the map, but while some reference Java implementations exist, this is
     //  non-trivial

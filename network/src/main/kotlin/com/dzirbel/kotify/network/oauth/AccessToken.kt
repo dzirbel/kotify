@@ -23,6 +23,7 @@ import okhttp3.FormBody
 import okhttp3.Request
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 import java.nio.file.Files
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -167,7 +168,13 @@ data class AccessToken(
          */
         fun clear() {
             _tokenFlow.value = null
-            cacheFile?.let { Files.deleteIfExists(it.toPath()) }
+            cacheFile?.let { cacheFile ->
+                try {
+                    Files.deleteIfExists(cacheFile.toPath())
+                } catch (ioException: IOException) {
+                    warn("Error deleting access token cache file: ${ioException.message}")
+                }
+            }
             info("Cleared access token from cache")
         }
 

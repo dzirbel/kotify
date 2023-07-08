@@ -6,13 +6,10 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository2.DatabaseSavedRepository
-import com.dzirbel.kotify.repository2.SavedRepository
 import com.dzirbel.kotify.util.flatMapParallel
 import kotlinx.coroutines.flow.toList
 
-object SavedAlbumRepository : SavedRepository by object : DatabaseSavedRepository<SpotifySavedAlbum>(
-    savedEntityTable = AlbumTable.SavedAlbumsTable,
-) {
+object SavedAlbumRepository : DatabaseSavedRepository<SpotifySavedAlbum>(AlbumTable.SavedAlbumsTable) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
         return ids.chunked(size = Spotify.MAX_LIMIT).flatMapParallel { chunk ->
             Spotify.Library.checkAlbums(ids = chunk)

@@ -30,7 +30,10 @@ fun main(args: Array<String>) {
     KotifyDatabase.init(
         dbFile = Application.cacheDir.resolve("cache.db"),
         sqlLogger = Logger.Database,
-        onConnect = { UserRepository.currentUserId.loadToCache() },
+        onConnect = {
+            UserRepository.currentUserId.loadToCache()
+            com.dzirbel.kotify.repository2.user.UserRepository.onConnectToDatabase()
+        },
     )
 
     KotifyDatabase.addTransactionListener(Logger.Database)

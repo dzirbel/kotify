@@ -7,17 +7,15 @@ import com.dzirbel.kotify.db.model.UserTable
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifyUser
 import com.dzirbel.kotify.repository.DatabaseRepository
-import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
 
 object UserRepository : DatabaseRepository<User, SpotifyUser>(User) {
     val currentUserId: ReadWriteCachedProperty<String?> = ReadWriteCachedProperty(
-        getter = { UserTable.CurrentUserTable.selectAll().firstOrNull()?.get(UserTable.CurrentUserTable.userId) },
+        getter = { UserTable.CurrentUserTable.get() },
         setter = { id ->
-            UserTable.CurrentUserTable.deleteAll()
-            UserTable.CurrentUserTable.insert {
-                it[userId] = id
+            if (id == null) {
+                UserTable.CurrentUserTable.clear()
+            } else {
+                UserTable.CurrentUserTable.set(id)
             }
         },
     )

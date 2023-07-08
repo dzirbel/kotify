@@ -7,13 +7,10 @@ import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository2.DatabaseSavedRepository
-import com.dzirbel.kotify.repository2.SavedRepository
 import com.dzirbel.kotify.util.mapParallel
 import kotlinx.coroutines.flow.toList
 
-object SavedPlaylistRepository : SavedRepository by object : DatabaseSavedRepository<SpotifyPlaylist>(
-    savedEntityTable = PlaylistTable.SavedPlaylistsTable,
-) {
+object SavedPlaylistRepository : DatabaseSavedRepository<SpotifyPlaylist>(PlaylistTable.SavedPlaylistsTable) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
         val userId = requireNotNull(UserRepository.currentUserId.cached) { "no logged-in user" }
 

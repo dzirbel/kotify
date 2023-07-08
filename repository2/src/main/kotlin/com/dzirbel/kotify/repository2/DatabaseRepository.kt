@@ -10,7 +10,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-internal abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : SpotifyObject>(
+abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkType : SpotifyObject>(
     private val entityClass: SpotifyEntityClass<EntityType, NetworkType>,
 
     /**

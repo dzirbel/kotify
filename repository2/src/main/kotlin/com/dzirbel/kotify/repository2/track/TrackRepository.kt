@@ -5,10 +5,9 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository2.DatabaseRepository
-import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.util.flatMapParallel
 
-object TrackRepository : Repository<Track> by object : DatabaseRepository<Track, SpotifyTrack>(Track) {
+object TrackRepository : DatabaseRepository<Track, SpotifyTrack>(Track) {
     override suspend fun fetch(id: String) = Spotify.Tracks.getTrack(id = id)
     override suspend fun fetch(ids: List<String>): List<FullSpotifyTrack> {
         return ids.chunked(size = Spotify.MAX_LIMIT)

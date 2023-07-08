@@ -10,12 +10,11 @@ import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository2.CacheState
 import com.dzirbel.kotify.repository2.DatabaseRepository
-import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.util.flatMapParallel
 import kotlinx.coroutines.flow.toList
 import java.time.Instant
 
-object ArtistRepository : Repository<Artist> by object : DatabaseRepository<Artist, SpotifyArtist>(Artist) {
+object ArtistRepository : DatabaseRepository<Artist, SpotifyArtist>(Artist) {
     override suspend fun fetch(id: String) = Spotify.Artists.getArtist(id = id)
     override suspend fun fetch(ids: List<String>): List<SpotifyArtist?> {
         return ids.chunked(size = Spotify.MAX_LIMIT)

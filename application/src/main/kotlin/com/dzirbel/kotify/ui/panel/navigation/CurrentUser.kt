@@ -13,82 +13,61 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.repository.savedRepositories
-import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.repository2.CacheState
+import com.dzirbel.kotify.repository2.user.UserRepository
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
-import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.theme.Dimens
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 
 private val CURRENT_USER_DROPDOWN_MAX_WIDTH = 500.dp
 
-private class CurrentUserPresenter(scope: CoroutineScope) : Presenter<User?, CurrentUserPresenter.Event>(
-    scope = scope,
-    startingEvents = listOf(Event.Load),
-    initialState = null,
-) {
-
-    sealed class Event {
-        object Load : Event()
-        object SignOut : Event()
-    }
-
-    override suspend fun reactTo(event: Event) {
-        when (event) {
-            is Event.Load -> {
-                val user = UserRepository.getCurrentUser()
-                if (user != null) {
-                    KotifyDatabase.transaction("load user image") { user.thumbnailImage.loadToCache() }
-                }
-
-                mutateState { user }
-            }
-
-            is Event.SignOut -> {
-                savedRepositories.forEach { it.invalidateAll() }
-                AccessToken.Cache.clear()
-            }
-        }
+// TODO extract and reuse
+@Composable
+fun <E : SpotifyEntity, T : Any> E.produceTransactionState(
+    transactionName: String,
+    statement: suspend E.() -> T?,
+): State<T?> {
+    return produceState<T?>(initialValue = null, key1 = this.id.value) {
+        value = KotifyDatabase.transaction(name = transactionName) { statement() }
     }
 }
 
 @Composable
 fun CurrentUser() {
-    val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember { CurrentUserPresenter(scope = scope) }
+    val currentUserCacheState = UserRepository.currentUser.collectAsState().value
 
-    val currentUser = presenter.state().safeState
-    val userError = presenter.state() is Presenter.StateOrError.Error
-
-    val username = if (userError) "<ERROR>" else currentUser?.name ?: "<loading>"
     val expandedState = remember { mutableStateOf(false) }
+    SimpleTextButton(onClick = { expandedState.value = !expandedState.value }) {
+        val currentUser = currentUserCacheState?.cachedValue
 
-    SimpleTextButton(
-        enabled = currentUser != null || userError,
-        onClick = { expandedState.value = !expandedState.value },
-    ) {
-        LoadedImage(
-            url = currentUser?.thumbnailImage?.cached?.url,
-            modifier = Modifier.size(Dimens.iconMedium),
-        )
+        val thumbnail = currentUser
+            ?.produceTransactionState("load current user image thumbnail") { thumbnailImage.live }
+            ?.value
+
+        LoadedImage(url = thumbnail?.url, modifier = Modifier.size(Dimens.iconMedium))
 
         HorizontalSpacer(Dimens.space2)
 
+        val username = when (currentUserCacheState) {
+            is CacheState.Refreshing, null -> "<loading>"
+            is CacheState.Loaded -> currentUserCacheState.cachedValue.name
+            else -> "<ERROR>" // TODO expose error information
+        }
         Text(
             text = username,
             maxLines = 1,
@@ -107,13 +86,13 @@ fun CurrentUser() {
             expanded = expandedState.value,
             onDismissRequest = { expandedState.value = false },
         ) {
-            CurrentUserDropdownContent(presenter = presenter, user = currentUser)
+            CurrentUserDropdownContent(user = currentUser)
         }
     }
 }
 
 @Composable
-private fun CurrentUserDropdownContent(presenter: CurrentUserPresenter, user: User?) {
+private fun CurrentUserDropdownContent(user: User?) {
     Column(
         modifier = Modifier.padding(Dimens.space3).widthIn(max = CURRENT_USER_DROPDOWN_MAX_WIDTH),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2),
@@ -144,7 +123,7 @@ private fun CurrentUserDropdownContent(presenter: CurrentUserPresenter, user: Us
 
         Button(
             modifier = Modifier.align(Alignment.CenterHorizontally),
-            onClick = { presenter.emitAsync(CurrentUserPresenter.Event.SignOut) },
+            onClick = UserRepository::signOut,
         ) {
             Text("Sign out")
         }

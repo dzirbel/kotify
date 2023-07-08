@@ -4,10 +4,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.network.oauth.AccessToken
+import com.dzirbel.kotify.repository2.user.UserRepository
 import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
 import com.dzirbel.kotify.ui.components.panel.PanelSize
@@ -56,8 +58,18 @@ fun Root() {
     InvalidatingRootContent {
         Theme.Apply {
             val tokenState = AccessToken.Cache.tokenFlow.collectAsState()
-            val hasToken = remember { derivedStateOf { tokenState.value != null } }.value
+            val hasToken = tokenState.value != null
+            val hasCurrentUserId = UserRepository.currentUserId.collectAsState().value != null
+
             if (hasToken) {
+                LaunchedEffect(tokenState.value?.accessToken) {
+                    UserRepository.ensureCurrentUserLoaded()
+                }
+            }
+
+            // only show authenticated content when the current user ID has been fetched to avoid race conditions
+            // fetching it
+            if (hasToken && hasCurrentUserId) {
                 DebugPanel {
                     Column {
                         SidePanel(
@@ -71,6 +83,10 @@ fun Root() {
                         PlayerPanel()
                     }
                 }
+            } else if (hasToken) {
+                // TODO add loading screen / overlay if token is available but user ID is not
+                // TODO expose errors when loading current user ID
+                Text("Loading current user...")
             } else {
                 Unauthenticated()
             }

@@ -13,6 +13,9 @@ import com.dzirbel.kotify.network.model.SpotifyUser
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
 import java.time.Instant
 
 object UserTable : SpotifyEntityTable(name = "users") {
@@ -21,6 +24,17 @@ object UserTable : SpotifyEntityTable(name = "users") {
 
     object CurrentUserTable : Table(name = "current_user") {
         val userId: Column<String?> = varchar("user_id", STRING_ID_LENGTH).nullable().uniqueIndex()
+
+        fun get(): String? = selectAll().firstOrNull()?.get(userId)
+
+        fun set(userId: String) {
+            deleteAll()
+            insert { it[CurrentUserTable.userId] = userId }
+        }
+
+        fun clear() {
+            deleteAll()
+        }
     }
 
     object UserImageTable : Table() {

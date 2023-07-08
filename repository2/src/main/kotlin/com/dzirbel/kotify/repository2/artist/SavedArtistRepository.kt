@@ -6,13 +6,10 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository2.DatabaseSavedRepository
-import com.dzirbel.kotify.repository2.SavedRepository
 import com.dzirbel.kotify.util.flatMapParallel
 import kotlinx.coroutines.flow.toList
 
-object SavedArtistRepository : SavedRepository by object : DatabaseSavedRepository<FullSpotifyArtist>(
-    savedEntityTable = ArtistTable.SavedArtistsTable,
-) {
+object SavedArtistRepository : DatabaseSavedRepository<FullSpotifyArtist>(ArtistTable.SavedArtistsTable) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
         return ids.chunked(size = Spotify.MAX_LIMIT).flatMapParallel { chunk ->
             Spotify.Follow.isFollowing(type = "artist", ids = chunk)

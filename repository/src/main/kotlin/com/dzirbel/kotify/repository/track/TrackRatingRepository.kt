@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 object TrackRatingRepository : RatingRepository {
     // userId -> [trackId -> reference to state of the rating]
+    // TODO almost certainly doesn't need to be indexed on user ID, just clear the states on log-out
     private val states =
         ConcurrentHashMap<String, ConcurrentHashMap<String, WeakReference<MutableStateFlow<Rating?>>>>()
 

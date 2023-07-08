@@ -7,6 +7,7 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifyUser
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.repository.savedRepositories
+import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository2.CacheState
 import com.dzirbel.kotify.repository2.DatabaseRepository
 import com.dzirbel.kotify.repository2.Repository
@@ -14,10 +15,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.exposed.sql.deleteAll
-import org.jetbrains.exposed.sql.selectAll
 
-object UserRepository : Repository<User> by object : DatabaseRepository<User, SpotifyUser>(User) {
+object UserRepository : DatabaseRepository<User, SpotifyUser>(User) {
     private val _currentUserId = MutableStateFlow<String?>(null)
     val currentUserId: StateFlow<String?>
         get() = _currentUserId
@@ -29,35 +28,43 @@ object UserRepository : Repository<User> by object : DatabaseRepository<User, Sp
     val requireCurrentUserId: String
         get() = requireNotNull(_currentUserId.value) { "missing current user ID" }
 
+    override suspend fun fetch(id: String) = Spotify.UsersProfile.getUser(userId = id)
+
+    fun onConnectToDatabase() {
+        _currentUserId.value = UserTable.CurrentUserTable.get()
+    }
+
     fun ensureCurrentUserLoaded() {
+        if (currentUser.value?.cachedValue != null) return
+
         Repository.scope.launch {
-            val userId = getCachedCurrentUserId()
-            if (userId != null) {
-                val cachedUser = getCached(id = userId)
-                val cachedUpdateTime = cachedUser?.fullUpdatedTime
-                if (cachedUpdateTime != null) {
-                    _currentUser.value = CacheState.Loaded(cachedValue = cachedUser, cacheTime = cachedUpdateTime)
+            val cachedUser = currentUserId.value?.let { getCached(it) }
+            val cachedUpdateTime = cachedUser?.fullUpdatedTime
+            if (cachedUpdateTime != null) {
+                _currentUser.value = CacheState.Loaded(cachedValue = cachedUser, cacheTime = cachedUpdateTime)
+            } else {
+                _currentUser.value = CacheState.Refreshing()
+
+                val remoteUser = try {
+                    getCurrentUserRemote()
+                } catch (cancellationException: CancellationException) {
+                    _currentUser.value = CacheState.Error(cancellationException)
+                    throw cancellationException
+                } catch (throwable: Throwable) {
+                    _currentUser.value = CacheState.Error(throwable)
+                    @Suppress("LabeledExpression")
+                    return@launch
+                }
+
+                _currentUser.value = if (remoteUser == null) {
+                    CacheState.NotFound()
                 } else {
-                    _currentUser.value = CacheState.Refreshing()
+                    _currentUserId.value = remoteUser.id.value
 
-                    val cacheState = try {
-                        val remoteUser = getCurrentUserRemote()
-                        if (remoteUser == null) {
-                            CacheState.NotFound()
-                        } else {
-                            CacheState.Loaded(
-                                cachedValue = remoteUser,
-                                cacheTime = remoteUser.updatedTime,
-                            )
-                        }
-                    } catch (cancellationException: CancellationException) {
-                        _currentUser.value = CacheState.Error(cancellationException)
-                        throw cancellationException
-                    } catch (throwable: Throwable) {
-                        CacheState.Error(throwable)
-                    }
-
-                    _currentUser.value = cacheState
+                    CacheState.Loaded(
+                        cachedValue = remoteUser,
+                        cacheTime = remoteUser.updatedTime,
+                    )
                 }
             }
         }
@@ -65,29 +72,29 @@ object UserRepository : Repository<User> by object : DatabaseRepository<User, Sp
 
     fun signOut() {
         Repository.scope.launch {
-            // TODO ordering?
-            KotifyDatabase.transaction("clear current user id") {
-                UserTable.CurrentUserTable.deleteAll()
-            }
+            // clear access token first to immediately show unauthenticated screen
+            AccessToken.Cache.clear()
+
             _currentUserId.value = null
             _currentUser.value = null
-            savedRepositories.forEach { it.invalidateAll() }
-            AccessToken.Cache.clear()
-        }
-    }
 
-    private suspend fun getCachedCurrentUserId(): String? {
-        return _currentUserId.value
-            ?: KotifyDatabase.transaction(name = "load current user id") {
-                UserTable.CurrentUserTable.selectAll().firstOrNull()?.get(UserTable.CurrentUserTable.userId)
+            savedRepositories.forEach { it.invalidateAll() }
+
+            KotifyDatabase.transaction("clear current user id") {
+                UserTable.CurrentUserTable.clear()
             }
-                .also { _currentUserId.value = it }
+        }
     }
 
     private suspend fun getCurrentUserRemote(): User? {
         val user = Spotify.UsersProfile.getCurrentUser()
-        return KotifyDatabase.transaction("set current user") { User.from(user) }
-    }
+        return KotifyDatabase.transaction("set current user") {
+            UserTable.CurrentUserTable.set(user.id)
 
-    override suspend fun fetch(id: String) = Spotify.UsersProfile.getUser(userId = id)
+            // ensure legacy repository has updated value
+            UserRepository.currentUserId.loadToCache()
+
+            User.from(user)
+        }
+    }
 }
