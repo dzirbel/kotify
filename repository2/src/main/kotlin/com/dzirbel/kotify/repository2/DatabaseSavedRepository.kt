@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 
 // TODO invalidate on sign-out
-abstract class DatabaseSavedRepository<SavedNetworkType>(
+internal abstract class DatabaseSavedRepository<SavedNetworkType>(
     /**
      * The singular name of an entity, used in transaction names; e.g. "artist".
      */

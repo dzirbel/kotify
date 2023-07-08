@@ -14,6 +14,8 @@ import java.time.Instant
  * For example, sometimes we fetch the set of all saved artists from the Spotify API. We want to save the last time this
  * was done, but it doesn't fit cleanly into any other table. For lack of a better approach, we instead store it in this
  * key-value based table with a specific key.
+ *
+ * TODO make internal when :repository and :repository2 are merged
  */
 object GlobalUpdateTimesRepository {
     /**

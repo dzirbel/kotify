@@ -24,7 +24,10 @@ sealed interface CacheState<T> {
      * Optionally includes a [cachedValue] and [cacheTime] to be displayed while refreshing, i.e. when refreshing but
      * the previous value is still valid.
      */
-    data class Refreshing<T>(override val cachedValue: T?, override val cacheTime: Instant?) : CacheState<T>
+    data class Refreshing<T>(
+        override val cachedValue: T? = null,
+        override val cacheTime: Instant? = null,
+    ) : CacheState<T>
 
     /**
      * Indicates that the [cachedValue] is loaded and ready to be displayed.

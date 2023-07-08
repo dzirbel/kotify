@@ -19,7 +19,7 @@ internal abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkTy
     private val entityName: String = entityClass.table.tableName.removeSuffix("s"),
 ) : Repository<EntityType> {
 
-    private val states = SynchronizedWeakStateFlowMap<String, CacheState<EntityType>>()
+    protected val states = SynchronizedWeakStateFlowMap<String, CacheState<EntityType>>()
 
     /**
      * Fetches a single network model of [NetworkType] via a remote call to the network.
@@ -110,7 +110,7 @@ internal abstract class DatabaseRepository<EntityType : SpotifyEntity, NetworkTy
         }
     }
 
-    private suspend fun getCached(id: String): EntityType? {
+    protected suspend fun getCached(id: String): EntityType? {
         return KotifyDatabase.transaction("load cached $entityName $id") { entityClass.findById(id) }
     }
 
