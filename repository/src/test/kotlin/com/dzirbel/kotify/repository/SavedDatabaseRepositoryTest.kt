@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
 
 private data class TestSavedNetworkModel(val id: String)
 
-private object TestSavedEntityTable : SavedEntityTable()
+private object TestSavedEntityTable : SavedEntityTable(name = "saved_test")
 
 private object TestSavedRepository : SavedDatabaseRepository<TestSavedNetworkModel>(
     entityName = "test",

@@ -9,8 +9,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * This can be used for e.g. fetching some remote state where it's unnecessary to start another fetch when one is
  * already in progress.
+ *
+ * TODO public for use in :repository2
  */
-internal class JobLock {
+class JobLock {
     private val running = AtomicBoolean(false)
 
     /**

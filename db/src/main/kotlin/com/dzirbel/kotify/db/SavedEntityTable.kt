@@ -13,7 +13,7 @@ import java.time.Instant
  * This way, when we fetch the entire set of saved objects we can retain them all, even if they are not each already
  * present in the database.
  */
-abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) {
+abstract class SavedEntityTable(name: String) : StringIdTable(name = name) {
     private val saved: Column<Boolean> = bool("saved").default(true)
 
     /**
@@ -56,6 +56,18 @@ abstract class SavedEntityTable(name: String = "") : StringIdTable(name = name) 
      */
     fun savedCheckTime(entityId: String): Instant? {
         return select { id eq entityId }.firstOrNull()?.get(savedCheckTime)
+    }
+
+    /**
+     * Updates the saved state for all entities with IDs among the given [entityIds].
+     *
+     * Must be called from within a transaction.
+     */
+    fun setSaved(entityIds: Iterable<String>, saved: Boolean, savedCheckTime: Instant = Instant.now()) {
+        update(where = { id.inList(entityIds) }) { statement ->
+            statement[this.saved] = saved
+            statement[this.savedCheckTime] = savedCheckTime
+        }
     }
 
     /**

@@ -1,40 +1,39 @@
 package com.dzirbel.kotify.ui.panel.library
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.repository.player.PlayerRepository
+import com.dzirbel.kotify.repository2.CacheState
+import com.dzirbel.kotify.repository2.Repository
+import com.dzirbel.kotify.repository2.playlist.PlaylistRepository
+import com.dzirbel.kotify.repository2.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.components.VerticalSpacer
-import com.dzirbel.kotify.ui.framework.Presenter
 import com.dzirbel.kotify.ui.page.albums.AlbumsPage
 import com.dzirbel.kotify.ui.page.artists.ArtistsPage
 import com.dzirbel.kotify.ui.page.library.LibraryStatePage
@@ -45,13 +44,9 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.mutate
-import kotlinx.coroutines.Dispatchers
 
 @Composable
 fun LibraryPanel() {
-    val scope = rememberCoroutineScope { Dispatchers.IO }
-    val presenter = remember { LibraryPanelPresenter(scope = scope) }
-
     LocalColors.current.WithSurface {
         VerticalScroll(Modifier.surfaceBackground()) {
             Row(
@@ -88,9 +83,7 @@ fun LibraryPanel() {
                 }
             }
 
-            Box(Modifier.height(Dimens.divider).fillMaxWidth().background(LocalColors.current.dividerColor))
-
-            VerticalSpacer(Dimens.space3)
+            HorizontalDivider(Modifier.padding(bottom = Dimens.space3))
 
             MaxWidthButton(
                 text = "Artists",
@@ -118,43 +111,43 @@ fun LibraryPanel() {
                 text = "Playlists",
             )
 
-            val stateOrError = presenter.state()
-            val refreshing = stateOrError.safeState?.refreshing == true
+            val libraryCacheState = SavedPlaylistRepository.library.collectAsState().value
+
             InvalidateButton(
-                refreshing = refreshing,
-                updated = stateOrError.safeState?.playlistsUpdated,
+                refreshing = libraryCacheState is CacheState.Refreshing,
+                updated = libraryCacheState?.cacheTime?.toEpochMilli(),
                 contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
-                onClick = {
-                    presenter.emitAsync(LibraryPanelPresenter.Event.LoadPlaylists(invalidate = true))
-                },
+                onClick = SavedPlaylistRepository::refreshLibrary,
             )
 
-            Box(Modifier.height(Dimens.divider).fillMaxWidth().background(LocalColors.current.dividerColor))
+            HorizontalDivider(Modifier.padding(bottom = Dimens.space3))
 
-            VerticalSpacer(Dimens.space3)
+            val savedPlaylistIds = libraryCacheState?.cachedValue
+            if (savedPlaylistIds != null) {
+                LaunchedEffect(savedPlaylistIds) { PlaylistRepository.ensureLoaded(ids = savedPlaylistIds) }
 
-            when (stateOrError) {
-                is Presenter.StateOrError.Error ->
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = null,
-                        modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally),
-                        tint = LocalColors.current.error,
-                    )
-
-                is Presenter.StateOrError.State -> {
-                    val state = stateOrError.state
-                    if (state != null) {
-                        state.playlists.forEach { playlist -> PlaylistItem(playlist) }
-                    } else {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally),
-                        )
+                for (playlistId in savedPlaylistIds) {
+                    key(playlistId) {
+                        val playlist = PlaylistRepository.collectViaState(id = playlistId)?.cachedValue
+                        // TODO ideally handle other cache states: shimmer when loading, show errors, etc
+                        if (playlist != null) {
+                            PlaylistItem(playlist = playlist)
+                        }
                     }
                 }
+            } else {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterHorizontally),
+                )
             }
         }
     }
+}
+
+// TODO extract and reuse
+@Composable
+fun <T> Repository<T>.collectViaState(id: String): CacheState<T>? {
+    return remember(id) { stateOf(id = id) }.collectAsState().value
 }
 
 @Composable

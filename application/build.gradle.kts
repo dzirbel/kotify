@@ -16,6 +16,7 @@ version = appProperties["version"] as String
 
 dependencies {
     implementation(project(":repository"))
+    implementation(project(":repository2"))
     implementation(project(":ui-common"))
     implementation(project(":ui-kotify"))
     implementation(project(":util"))
