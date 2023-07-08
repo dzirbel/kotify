@@ -41,12 +41,12 @@ import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.SavedArtistRepository
-import com.dzirbel.kotify.repository.player.PlayerRepository
-import com.dzirbel.kotify.repository.player.SkippingState
-import com.dzirbel.kotify.repository.player.ToggleableState
-import com.dzirbel.kotify.repository.player.TrackPosition
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.track.TrackRatingRepository
+import com.dzirbel.kotify.repository2.player.PlayerRepository
+import com.dzirbel.kotify.repository2.player.SkippingState
+import com.dzirbel.kotify.repository2.player.TrackPosition
+import com.dzirbel.kotify.repository2.util.ToggleableState
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LinkedText

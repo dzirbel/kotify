@@ -6,7 +6,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import com.dzirbel.kotify.Settings
-import com.dzirbel.kotify.repository.player.PlayerRepository
+import com.dzirbel.kotify.repository2.player.PlayerRepository
 
 /**
  * Handler for global keyboard shortcuts.

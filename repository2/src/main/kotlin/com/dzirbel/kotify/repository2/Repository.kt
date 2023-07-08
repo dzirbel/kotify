@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository2
 
+import com.dzirbel.kotify.repository.Repository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.StateFlow
@@ -59,6 +60,13 @@ interface Repository<T> {
          *
          * TODO restrict scope to test execution in unit tests
          */
-        internal val scope: CoroutineScope = GlobalScope
+        internal var scope: CoroutineScope = GlobalScope
+            private set
+
+        suspend fun withRepositoryScope(scope: CoroutineScope, block: suspend () -> Unit) {
+            this.scope = scope
+            block()
+            this.scope = GlobalScope
+        }
     }
 }

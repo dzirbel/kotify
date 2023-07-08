@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.repository
+package com.dzirbel.kotify.repository2
 
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.util.TAG_NETWORK

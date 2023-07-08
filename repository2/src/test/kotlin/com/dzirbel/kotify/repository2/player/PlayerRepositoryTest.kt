@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.repository.player
+package com.dzirbel.kotify.repository2.player
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -13,7 +13,7 @@ import com.dzirbel.kotify.network.SpotifyTrackPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
-import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.util.collectingToList
 import com.dzirbel.kotify.util.delayed
 import io.mockk.coEvery

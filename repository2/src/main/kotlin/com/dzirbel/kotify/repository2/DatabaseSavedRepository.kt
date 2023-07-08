@@ -3,9 +3,9 @@ package com.dzirbel.kotify.repository2
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.repository.global.GlobalUpdateTimesRepository
-import com.dzirbel.kotify.repository.player.JobLock
-import com.dzirbel.kotify.repository.player.ToggleableState
+import com.dzirbel.kotify.repository2.util.JobLock
 import com.dzirbel.kotify.repository2.util.SynchronizedWeakStateFlowMap
+import com.dzirbel.kotify.repository2.util.ToggleableState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.repository.player
+package com.dzirbel.kotify.repository2.util
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -9,10 +9,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * This can be used for e.g. fetching some remote state where it's unnecessary to start another fetch when one is
  * already in progress.
- *
- * TODO public for use in :repository2
  */
-class JobLock {
+internal class JobLock {
     private val running = AtomicBoolean(false)
 
     /**

@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.repository.player
+package com.dzirbel.kotify.repository2.util
 
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds

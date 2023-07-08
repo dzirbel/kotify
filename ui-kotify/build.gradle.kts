@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
     implementation(project(":repository"))
+    implementation(project(":repository2"))
     implementation(project(":util"))
     implementation(project(":ui-common"))
 

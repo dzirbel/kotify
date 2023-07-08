@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.repository.player
+package com.dzirbel.kotify.repository2.player
 
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Artist
@@ -12,6 +12,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlaybackOffset
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
+import com.dzirbel.kotify.repository2.util.ToggleableState
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 

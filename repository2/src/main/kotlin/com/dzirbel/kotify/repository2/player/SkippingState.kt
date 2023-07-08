@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.repository.player
+package com.dzirbel.kotify.repository2.player
 
 /**
  * Represents the state of the track skip controls.

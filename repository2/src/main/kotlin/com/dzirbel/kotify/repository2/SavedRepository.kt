@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.repository2
 
-import com.dzirbel.kotify.repository.player.ToggleableState
+import com.dzirbel.kotify.repository2.util.ToggleableState
 import kotlinx.coroutines.flow.StateFlow
 
 // TODO document

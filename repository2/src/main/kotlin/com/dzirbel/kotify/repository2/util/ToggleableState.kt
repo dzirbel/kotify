@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.repository.player
+package com.dzirbel.kotify.repository2.util
 
 /**
  * Represents the state of a player element that can be toggled between states, such as the play button toggling between
