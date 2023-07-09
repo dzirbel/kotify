@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.db
 
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.batchReplace
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
@@ -64,9 +65,10 @@ abstract class SavedEntityTable(name: String) : StringIdTable(name = name) {
      * Must be called from within a transaction.
      */
     fun setSaved(entityIds: Iterable<String>, saved: Boolean, savedCheckTime: Instant = Instant.now()) {
-        update(where = { id.inList(entityIds) }) { statement ->
-            statement[this.saved] = saved
-            statement[this.savedCheckTime] = savedCheckTime
+        batchReplace(entityIds, shouldReturnGeneratedValues = false) { id ->
+            this[this@SavedEntityTable.id] = id
+            this[this@SavedEntityTable.saved] = saved
+            this[this@SavedEntityTable.savedCheckTime] = savedCheckTime
         }
     }
 

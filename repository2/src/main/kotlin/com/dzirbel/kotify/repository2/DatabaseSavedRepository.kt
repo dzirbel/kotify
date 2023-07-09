@@ -108,17 +108,15 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     }
 
     private suspend fun getLibraryCached(): Set<String>? {
-        var updatedTime: Instant? = null
         return KotifyDatabase.transaction("load $entityName saved library") {
-            updatedTime = GlobalUpdateTimesRepository.updated(libraryUpdateKey)
-            updatedTime?.let { savedEntityTable.savedEntityIds() }
+            GlobalUpdateTimesRepository.updated(libraryUpdateKey)?.let { updatedTime ->
+                updatedTime to savedEntityTable.savedEntityIds()
+            }
         }
-            ?.also { ids ->
+            ?.let { (updatedTime, ids) ->
                 savedStates.computeAll { id -> ToggleableState.Set(id in ids) }
-
-                updatedTime?.let {
-                    _library.value = CacheState.Loaded(cachedValue = ids, cacheTime = it)
-                }
+                _library.value = CacheState.Loaded(cachedValue = ids, cacheTime = updatedTime)
+                ids
             }
     }
 
@@ -129,19 +127,19 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             GlobalUpdateTimesRepository.setUpdated(libraryUpdateKey, updateTime = updateTime)
 
             // TODO use existing cache in library flow if available?
-            val cachedLibrary = savedEntityTable.savedEntityIds()
-            val remoteLibrary = savedNetworkModels.mapNotNullTo(mutableSetOf()) { from(it) }
+            val cachedLibrary: Set<String> = savedEntityTable.savedEntityIds()
+            val remoteLibrary: Set<String> = savedNetworkModels.mapNotNullTo(mutableSetOf()) { from(it) }
 
             // remove saved records for entities which are no longer saved
-            val newSaves = cachedLibrary.minus(remoteLibrary)
-            if (newSaves.isNotEmpty()) {
-                savedEntityTable.setSaved(entityIds = newSaves, saved = true, savedCheckTime = updateTime)
+            val removedSaves = cachedLibrary.minus(remoteLibrary)
+            if (removedSaves.isNotEmpty()) {
+                savedEntityTable.setSaved(entityIds = removedSaves, saved = false, savedCheckTime = updateTime)
             }
 
             // add saved records for entities which are now saved
-            val removedSaves = remoteLibrary.minus(cachedLibrary)
-            if (removedSaves.isNotEmpty()) {
-                savedEntityTable.setSaved(entityIds = removedSaves, saved = true, savedCheckTime = updateTime)
+            val newSaves = remoteLibrary.minus(cachedLibrary)
+            if (newSaves.isNotEmpty()) {
+                savedEntityTable.setSaved(entityIds = newSaves, saved = true, savedCheckTime = updateTime)
             }
 
             remoteLibrary
