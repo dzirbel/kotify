@@ -39,18 +39,48 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
     /**
      * Gets the [StateFlow] tracking the value associated with the given [key], creating one with a null value if it is
      * not present in the map (or has been garbage collected).
+     *
+     * If a new [StateFlow] was created, [onCreate] is invoked.
      */
-    fun getOrCreateStateFlow(key: K): StateFlow<V?> {
-        synchronized(stateFlowMap) {
-            // cannot use compute() et al since we need to re-create the flow if it has been GC'd (but still present
-            // in the map)
-            var flow = stateFlowMap[key]?.get()
-            if (flow == null) {
-                flow = MutableStateFlow(null)
-                stateFlowMap[key] = WeakReference(flow)
-            }
-            return flow
+    fun getOrCreateStateFlow(key: K, onCreate: () -> Unit = {}): StateFlow<V?> {
+        var created = false
+        return synchronized(stateFlowMap) {
+            stateFlowMap[key]?.get()
+                ?: MutableStateFlow<V?>(null)
+                    .also { stateFlowMap[key] = WeakReference(it) }
+                    .also { created = true }
         }
+            .also {
+                if (created) {
+                    onCreate()
+                }
+            }
+    }
+
+    /**
+     * Gets a batch of [StateFlow]s tracking the values associated with the given [keys] in a single atomic operation,
+     * creating them with null values if not present in the map.
+     *
+     * The returned list has the same size and is in the same order as [keys].
+     *
+     * If any new [StateFlow]s are created, [onCreate] is called with the subset of keys for which they have been
+     * created.
+     */
+    fun getOrCreateStateFlows(keys: Iterable<K>, onCreate: (List<K>) -> Unit = {}): List<StateFlow<V?>> {
+        val created = mutableListOf<K>()
+        return synchronized(stateFlowMap) {
+            keys.map { key ->
+                stateFlowMap[key]?.get()
+                    ?: MutableStateFlow<V?>(null)
+                        .also { stateFlowMap[key] = WeakReference(it) }
+                        .also { created.add(key) }
+            }
+        }
+            .also {
+                if (created.isNotEmpty()) {
+                    onCreate(created)
+                }
+            }
     }
 
     /**
@@ -59,7 +89,7 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
      *
      * If the [StateFlow] is not present in the map or has been garbage collected, this is a no-op.
      */
-    fun updateValue(key: K, value: V) {
+    fun updateValue(key: K, value: V?) {
         stateFlowMap[key]?.get()?.value = value
     }
 
@@ -69,7 +99,7 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
      *
      * If the [StateFlow] is not present in the map or has been garbage collected, this is a no-op.
      */
-    fun updateValue(key: K, valueMapper: (V?) -> V) {
+    fun updateValue(key: K, valueMapper: (V?) -> V?) {
         val flow = stateFlowMap[key]?.get()
         if (flow != null) {
             flow.value = valueMapper(flow.value)
@@ -80,7 +110,7 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
      * Invokes [computation] on all the keys of the map which have active [StateFlow] values and updates their values to
      * the result.
      */
-    fun computeAll(computation: (K) -> V) {
+    fun computeAll(computation: (K) -> V?) {
         synchronized(stateFlowMap) {
             for ((id, weakReference) in stateFlowMap) {
                 val flow = weakReference.get()
@@ -89,5 +119,12 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
                 }
             }
         }
+    }
+
+    /**
+     * Clears all [StateFlow]s held in the map.
+     */
+    fun clear() {
+        stateFlowMap.clear()
     }
 }

@@ -1,9 +1,9 @@
 package com.dzirbel.kotify.ui.page.library.ratings
 
 import com.dzirbel.kotify.db.model.Track
-import com.dzirbel.kotify.repository.Rating
-import com.dzirbel.kotify.repository.track.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.TrackRepository
+import com.dzirbel.kotify.repository2.rating.Rating
+import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
@@ -50,7 +50,7 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
                     .filterNotNullValues()
 
                 val trackRatings = ratedTrackIds
-                    .zipToMap(TrackRatingRepository.ratingStates(ids = ratedTrackIds))
+                    .zipToMap(TrackRatingRepository.ratingStatesOf(ids = ratedTrackIds))
 
                 mutateState {
                     ViewModel(
@@ -62,7 +62,7 @@ class RatingsLibraryStatePresenter(scope: CoroutineScope) :
             }
 
             Event.ClearAllRatings -> {
-                TrackRatingRepository.clearAllRatings(userId = null)
+                TrackRatingRepository.clearAllRatings()
 
                 mutateState {
                     ViewModel(

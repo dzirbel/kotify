@@ -38,14 +38,14 @@ import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrack
-import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.SavedArtistRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
-import com.dzirbel.kotify.repository.track.TrackRatingRepository
 import com.dzirbel.kotify.repository2.player.PlayerRepository
 import com.dzirbel.kotify.repository2.player.SkippingState
 import com.dzirbel.kotify.repository2.player.TrackPosition
+import com.dzirbel.kotify.repository2.rating.Rating
+import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository2.util.ToggleableState
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
@@ -98,7 +98,7 @@ fun PlayerPanel() {
         ?.collectAsStateSwitchable(key = trackId)
         ?.value
 
-    val trackRating = remember(trackId) { trackId?.let { TrackRatingRepository.ratingState(id = it) } }
+    val trackRating = remember(trackId) { trackId?.let { TrackRatingRepository.ratingStateOf(id = it) } }
         ?.collectAsStateSwitchable(key = trackId)
         ?.value
 

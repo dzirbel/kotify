@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant
 
+// TODO consider moving to a separate database file (since it is not just a cache)
 object TrackRatingTable : IntIdTable() {
     val track: Column<EntityID<String>> = reference("track", TrackTable)
     val rating: Column<Int> = integer("rating")

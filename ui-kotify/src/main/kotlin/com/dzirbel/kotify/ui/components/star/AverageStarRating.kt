@@ -7,8 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import com.dzirbel.kotify.repository.AverageRating
-import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.repository2.rating.AverageRating
+import com.dzirbel.kotify.repository2.rating.Rating
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors

@@ -4,14 +4,14 @@ import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Track
-import com.dzirbel.kotify.repository.AverageRating
-import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
-import com.dzirbel.kotify.repository.track.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.TrackRepository
 import com.dzirbel.kotify.repository2.player.Player
+import com.dzirbel.kotify.repository2.rating.AverageRating
+import com.dzirbel.kotify.repository2.rating.Rating
+import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.framework.Presenter
@@ -116,8 +116,8 @@ class AlbumPresenter(
 
                 val savedTracksState = trackIds.zipToPersistentMap(SavedTrackRepository.statesOf(ids = trackIds))
 
-                val trackRatings = trackIds.zipToPersistentMap(TrackRatingRepository.ratingStates(ids = trackIds))
-                val averageRating = TrackRatingRepository.averageRating(ids = trackIds)
+                val trackRatings = trackIds.zipToPersistentMap(TrackRatingRepository.ratingStatesOf(ids = trackIds))
+                val averageRating = TrackRatingRepository.averageRatingStateOf(ids = trackIds)
 
                 mutateState { state ->
                     state.copy(

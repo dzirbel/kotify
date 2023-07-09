@@ -4,12 +4,12 @@ import androidx.compose.runtime.Immutable
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
-import com.dzirbel.kotify.repository.AverageRating
-import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.SavedArtistRepository
-import com.dzirbel.kotify.repository.track.TrackRatingRepository
+import com.dzirbel.kotify.repository2.rating.AverageRating
+import com.dzirbel.kotify.repository2.rating.Rating
+import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
 import com.dzirbel.kotify.ui.components.adapter.Divider
@@ -152,7 +152,7 @@ class ArtistsPresenter(scope: CoroutineScope) : Presenter<ArtistsPresenter.ViewM
                         mutateState { it.withArtists(it.artists.plusElements(missingArtists)) }
 
                         val missingArtistRatings = missingArtists.associate { artist ->
-                            artist.id.value to TrackRatingRepository.averageRating(ids = artist.trackIds.cached)
+                            artist.id.value to TrackRatingRepository.averageRatingStateOf(ids = artist.trackIds.cached)
                         }
 
                         mutateState { it.copy(artistRatings = it.artistRatings.putAll(missingArtistRatings)) }

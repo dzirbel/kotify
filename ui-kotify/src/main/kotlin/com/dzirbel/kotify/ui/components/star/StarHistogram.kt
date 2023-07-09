@@ -22,8 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.dzirbel.kotify.repository.AverageRating
-import com.dzirbel.kotify.repository.Rating
+import com.dzirbel.kotify.repository2.rating.AverageRating
+import com.dzirbel.kotify.repository2.rating.Rating
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors

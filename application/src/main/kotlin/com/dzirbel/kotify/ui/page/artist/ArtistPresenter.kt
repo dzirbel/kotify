@@ -5,10 +5,10 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.network.model.SpotifyAlbum
-import com.dzirbel.kotify.repository.AverageRating
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
-import com.dzirbel.kotify.repository.track.TrackRatingRepository
+import com.dzirbel.kotify.repository2.rating.AverageRating
+import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
 import com.dzirbel.kotify.ui.components.adapter.Divider
@@ -120,7 +120,7 @@ class ArtistPresenter(
                 val albumRatings = artistAlbums
                     .associate { artistAlbum ->
                         val album = artistAlbum.album.cached
-                        album.id.value to TrackRatingRepository.averageRating(ids = album.trackIds.cached)
+                        album.id.value to TrackRatingRepository.averageRatingStateOf(ids = album.trackIds.cached)
                     }
                     .toPersistentMap()
 

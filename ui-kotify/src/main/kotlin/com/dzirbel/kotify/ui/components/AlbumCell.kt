@@ -20,8 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import com.dzirbel.kotify.db.model.Album
-import com.dzirbel.kotify.repository.AverageRating
 import com.dzirbel.kotify.repository2.player.Player
+import com.dzirbel.kotify.repository2.rating.AverageRating
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.theme.Dimens

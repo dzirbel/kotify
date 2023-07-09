@@ -16,9 +16,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.db.model.Track
-import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
-import com.dzirbel.kotify.repository.track.TrackRatingRepository
+import com.dzirbel.kotify.repository2.rating.Rating
+import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
@@ -205,13 +205,10 @@ class TrackRatingProperty<T>(
     override fun Item(item: T) {
         val trackId = trackIdOf(item)
 
-        val scope = rememberCoroutineScope { Dispatchers.IO }
         val ratingState = remember(trackId) { trackRatings?.get(trackId) }
         StarRating(
             rating = ratingState?.collectAsState()?.value,
-            onRate = { rating ->
-                scope.launch { TrackRatingRepository.rate(id = trackId, rating = rating) }
-            },
+            onRate = { rating -> TrackRatingRepository.rate(id = trackId, rating = rating) },
         )
     }
 }

@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.network.model.SpotifyAlbum
-import com.dzirbel.kotify.repository.AverageRating
+import com.dzirbel.kotify.repository2.rating.AverageRating
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder

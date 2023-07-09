@@ -6,12 +6,12 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.playlist.PlaylistRepository
 import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
-import com.dzirbel.kotify.repository.track.TrackRatingRepository
 import com.dzirbel.kotify.repository2.player.Player
+import com.dzirbel.kotify.repository2.rating.Rating
+import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.components.adapter.asComparator
@@ -134,7 +134,7 @@ class PlaylistPresenter(
                 loadTracksToCache(playlist, tracks)
 
                 val trackIds = tracks.map { it.track.cached.id.value }
-                val trackRatings = trackIds.zipToPersistentMap(TrackRatingRepository.ratingStates(ids = trackIds))
+                val trackRatings = trackIds.zipToPersistentMap(TrackRatingRepository.ratingStatesOf(ids = trackIds))
                 val savedTracksState = trackIds.zipToPersistentMap(SavedTrackRepository.statesOf(ids = trackIds))
 
                 mutateState {

@@ -2,12 +2,12 @@ package com.dzirbel.kotify.ui.page.tracks
 
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Track
-import com.dzirbel.kotify.repository.Rating
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
-import com.dzirbel.kotify.repository.track.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.TrackRepository
 import com.dzirbel.kotify.repository2.player.Player
+import com.dzirbel.kotify.repository2.rating.Rating
+import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
@@ -104,7 +104,7 @@ class TracksPresenter(scope: CoroutineScope) : Presenter<TracksPresenter.ViewMod
                 val tracks = fetchTracks(trackIds = trackIds)
                 val tracksById = tracks.associateBy { it.id.value }.toPersistentMap()
                 val tracksUpdated = SavedTrackRepository.libraryUpdated()
-                val trackRatings = trackIds.zipToPersistentMap(TrackRatingRepository.ratingStates(ids = trackIds))
+                val trackRatings = trackIds.zipToPersistentMap(TrackRatingRepository.ratingStatesOf(ids = trackIds))
 
                 mutateState {
                     ViewModel(
