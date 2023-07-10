@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository2
 
+import com.dzirbel.kotify.db.SpotifyEntity
 import java.time.Instant
 
 /**
@@ -27,12 +28,38 @@ sealed interface CacheState<T> {
     data class Refreshing<T>(
         override val cachedValue: T? = null,
         override val cacheTime: Instant? = null,
-    ) : CacheState<T>
+    ) : CacheState<T> {
+        companion object {
+            /**
+             * Creates a [Refreshing] state from the given [cacheState] which preserves its values, e.g. to indicate
+             * that a value is being refreshed while still displaying the current state.
+             */
+            fun <T> of(cacheState: CacheState<T>?): Refreshing<T> {
+                return Refreshing(cachedValue = cacheState?.cachedValue, cacheTime = cacheState?.cacheTime)
+            }
+        }
+    }
 
     /**
      * Indicates that the [cachedValue] is loaded and ready to be displayed.
      */
-    data class Loaded<T>(override val cachedValue: T, override val cacheTime: Instant) : CacheState<T>
+    data class Loaded<T>(override val cachedValue: T, override val cacheTime: Instant) : CacheState<T> {
+        companion object {
+            /**
+             * Creates a [Loaded] state from the given [SpotifyEntity], using its [SpotifyEntity.updatedTime].
+             */
+            fun <T : SpotifyEntity> of(value: T): Loaded<T> {
+                return Loaded(cachedValue = value, cacheTime = value.updatedTime)
+            }
+
+            /**
+             * Creates a [Loaded] state from the given [SpotifyEntity] if not null, otherwise a [NotFound].
+             */
+            fun <T : SpotifyEntity> orNotFound(value: T?): CacheState<T> {
+                return value?.let(::of) ?: NotFound()
+            }
+        }
+    }
 
     /**
      * Indicates that the value could not be found in either the local cache or remote data source.

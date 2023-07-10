@@ -13,7 +13,7 @@ import kotlinx.coroutines.coroutineScope
  *
  * Like [Iterable.zip] but doesn't construct a list of the resulting zipped values.
  */
-fun <A, B> Iterable<A>.zipEach(other: Iterable<B>, onEach: (A, B) -> Unit) {
+inline fun <A, B> Iterable<A>.zipEach(other: Iterable<B>, onEach: (A, B) -> Unit) {
     val first = iterator()
     val second = other.iterator()
     while (first.hasNext() && second.hasNext()) {

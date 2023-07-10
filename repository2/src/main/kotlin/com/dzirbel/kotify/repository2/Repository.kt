@@ -10,12 +10,10 @@ import kotlinx.coroutines.flow.StateFlow
  *
  * This is the entrypoint for most UI elements to access data. In particular, the state of an entity is exposed via
  * [stateOf] which returns a [StateFlow] to which the UI can bind for a live view of the data.
- *
- * TODO polish documentation
  */
 interface Repository<T> {
     /**
-     * The [CacheStrategy] applied by default when loading remote data.
+     * The [CacheStrategy] applied by default determine the validity of locally cached data.
      */
     val defaultCacheStrategy: CacheStrategy<T>
         get() = CacheStrategy.AlwaysValid()
@@ -23,31 +21,36 @@ interface Repository<T> {
     /**
      * Retrieves a [StateFlow] which reflects the live [CacheState] of the entity with the given [id].
      *
-     * This is a cheap call which returns the same [StateFlow] instance when possible. In particular, it does not
-     * synchronously or asynchronously fetch cached or remote data for [id]; to ensure that the [StateFlow] is populated
-     * asynchronously this is often paired with [ensureLoaded].
+     * The returned [StateFlow] is generally the same instance across calls with the same [id], but if there are no
+     * active external references to the [StateFlow] then it may be garbage collected and subsequent calls will return
+     * a new instance. When a new [StateFlow] is created it will be asynchronously populated with data fetched first
+     * from the local cache if present and valid according to [cacheStrategy] or from the remote data source.
      *
-     * The returned [StateFlow] has a null value initially, which is populated with the various [CacheState] states as
-     * it is loaded.
+     * The returned [StateFlow] may have an initial null value, which is populated with the various [CacheState] states
+     * as it is loaded.
+     *
+     * TODO initialize to refreshing state?
      */
-    fun stateOf(id: String): StateFlow<CacheState<T>?>
+    fun stateOf(id: String, cacheStrategy: CacheStrategy<T> = defaultCacheStrategy): StateFlow<CacheState<T>?>
 
     /**
-     * Asynchronously fetches data from the local and/or remote data sources for the given [id] if it has not yet been
-     * loaded into the cache.
+     * Retrieves a batch of [StateFlow]s which reflect the respective live [CacheState] of the entities with the given
+     * [ids].
+     *
+     * This is preferred for retrieving multiple states of the same type (e.g. the tracks on an album) since calls to
+     * the local cache and/or the remote data source can be batched.
+     *
+     * @see stateOf
      */
-    fun ensureLoaded(id: String, cacheStrategy: CacheStrategy<T> = defaultCacheStrategy)
-
-    /**
-     * Asynchronously fetches data from the local and/or remote data sources for each of the given [ids] if it has not
-     * yet been loaded into the cache.
-     */
-    fun ensureLoaded(ids: Iterable<String>, cacheStrategy: CacheStrategy<T> = defaultCacheStrategy)
+    fun statesOf(
+        ids: Iterable<String>,
+        cacheStrategy: CacheStrategy<T> = defaultCacheStrategy,
+    ): List<StateFlow<CacheState<T>?>>
 
     /**
      * Forces the entity associated with the given [id] to be fetched from the remote data source.
      */
-    fun refreshFromRemote(id: String) = ensureLoaded(id = id, cacheStrategy = CacheStrategy.NeverValid())
+    fun refreshFromRemote(id: String)
 
     companion object {
         /**
@@ -58,7 +61,7 @@ interface Repository<T> {
          * content is still loading, this should not cancel the loading operation in case it can be used later (e.g. if
          * the user navigates to that page again).
          *
-         * TODO restrict scope to test execution in unit tests
+         * TODO automatically restrict scope to test execution in unit tests instead of [withRepositoryScope]
          */
         internal var scope: CoroutineScope = GlobalScope
             private set

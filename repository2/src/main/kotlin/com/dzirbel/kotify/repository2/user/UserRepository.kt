@@ -34,6 +34,7 @@ object UserRepository : DatabaseRepository<User, SpotifyUser>(User) {
         _currentUserId.value = UserTable.CurrentUserTable.get()
     }
 
+    // TODO revisit
     fun ensureCurrentUserLoaded() {
         if (currentUser.value?.cachedValue != null) return
 

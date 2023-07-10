@@ -13,7 +13,6 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.key
@@ -24,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.repository2.CacheState
-import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.repository2.player.PlayerRepository
 import com.dzirbel.kotify.repository2.playlist.PlaylistRepository
 import com.dzirbel.kotify.repository2.playlist.SavedPlaylistRepository
@@ -44,6 +42,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.zipEach
 
 @Composable
 fun LibraryPanel() {
@@ -124,11 +123,14 @@ fun LibraryPanel() {
 
             val savedPlaylistIds = libraryCacheState?.cachedValue
             if (savedPlaylistIds != null) {
-                LaunchedEffect(savedPlaylistIds) { PlaylistRepository.ensureLoaded(ids = savedPlaylistIds) }
+                val playlistStates = remember(savedPlaylistIds) {
+                    PlaylistRepository.statesOf(ids = savedPlaylistIds)
+                }
 
-                for (playlistId in savedPlaylistIds) {
+                savedPlaylistIds.zipEach(playlistStates) { playlistId, playlistState ->
                     key(playlistId) {
-                        val playlist = PlaylistRepository.collectViaState(id = playlistId)?.cachedValue
+                        val playlist = playlistState.collectAsState().value?.cachedValue
+
                         // TODO ideally handle other cache states: shimmer when loading, show errors, etc
                         if (playlist != null) {
                             PlaylistItem(playlist = playlist)
@@ -142,12 +144,6 @@ fun LibraryPanel() {
             }
         }
     }
-}
-
-// TODO extract and reuse
-@Composable
-fun <T> Repository<T>.collectViaState(id: String): CacheState<T>? {
-    return remember(id) { stateOf(id = id) }.collectAsState().value
 }
 
 @Composable
