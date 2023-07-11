@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.repository2.track
 
-import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.db.model.TrackTable
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifySavedTrack
@@ -24,7 +23,9 @@ object SavedTrackRepository : DatabaseSavedRepository<SpotifySavedTrack>(TrackTa
         return Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
-    override fun from(savedNetworkType: SpotifySavedTrack): String? {
-        return Track.from(savedNetworkType.track)?.id?.value
+    override fun from(savedNetworkType: SpotifySavedTrack): String {
+        val track = savedNetworkType.track
+        TrackRepository.convert(id = track.id, networkModel = track)
+        return track.id
     }
 }

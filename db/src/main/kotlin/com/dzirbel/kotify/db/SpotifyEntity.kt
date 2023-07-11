@@ -58,19 +58,27 @@ abstract class SpotifyEntityClass<EntityType : SpotifyEntity, NetworkType : Spot
      * Must be called from within a transaction.
      */
     fun from(networkModel: NetworkType): EntityType? {
-        val id = networkModel.id ?: return null
+        return updateOrInsert(networkModel) { update(networkModel) }
+    }
 
+    fun updateOrInsert(networkModel: NetworkType, update: EntityType.() -> Unit): EntityType? {
+        return networkModel.id?.let { id ->
+            updateOrInsert(id = id, networkModel = networkModel, update = update)
+        }
+    }
+
+    fun updateOrInsert(id: String, networkModel: NetworkType, update: EntityType.() -> Unit): EntityType {
         return findById(id)
             ?.apply {
                 updatedTime = Instant.now()
                 name = networkModel.name
                 uri = networkModel.uri
-                update(networkModel)
+                update()
             }
             ?: new(id = id) {
                 name = networkModel.name
                 uri = networkModel.uri
-                update(networkModel)
+                update()
             }
     }
 

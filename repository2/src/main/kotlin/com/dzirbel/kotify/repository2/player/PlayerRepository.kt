@@ -475,7 +475,7 @@ object PlayerRepository : Player {
     }
 
     // TODO document
-    private fun Long.midpoint(): Long = System.currentTimeMillis() / 2 + this / 2
+    fun Long.midpoint(): Long = System.currentTimeMillis() / 2 + this / 2
 
     // TODO document
     private suspend fun <T> MutableStateFlow<ToggleableState<T>?>.toggleTo(value: T, block: suspend () -> Unit) {

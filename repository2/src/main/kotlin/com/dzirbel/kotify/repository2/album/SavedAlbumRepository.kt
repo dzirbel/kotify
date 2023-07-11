@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.repository2.album
 
-import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumTable
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
@@ -24,7 +23,9 @@ object SavedAlbumRepository : DatabaseSavedRepository<SpotifySavedAlbum>(AlbumTa
         return Spotify.Library.getSavedAlbums(limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
-    override fun from(savedNetworkType: SpotifySavedAlbum): String? {
-        return Album.from(savedNetworkType.album)?.id?.value
+    override fun from(savedNetworkType: SpotifySavedAlbum): String {
+        val album = savedNetworkType.album
+        AlbumRepository.convert(id = album.id, networkModel = album)
+        return album.id
     }
 }

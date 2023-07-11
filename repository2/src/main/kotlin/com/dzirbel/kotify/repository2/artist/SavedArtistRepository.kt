@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.repository2.artist
 
-import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistTable
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
@@ -30,7 +29,8 @@ object SavedArtistRepository : DatabaseSavedRepository<FullSpotifyArtist>(Artist
             .toList()
     }
 
-    override fun from(savedNetworkType: FullSpotifyArtist): String? {
-        return Artist.from(savedNetworkType)?.id?.value
+    override fun from(savedNetworkType: FullSpotifyArtist): String {
+        ArtistRepository.convert(id = savedNetworkType.id, networkModel = savedNetworkType)
+        return savedNetworkType.id
     }
 }

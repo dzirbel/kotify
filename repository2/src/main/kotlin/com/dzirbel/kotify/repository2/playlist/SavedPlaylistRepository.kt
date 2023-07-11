@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.repository2.playlist
 
-import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.PlaylistTable
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
@@ -32,7 +31,8 @@ object SavedPlaylistRepository : DatabaseSavedRepository<SpotifyPlaylist>(Playli
         return Spotify.Playlists.getPlaylists(limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
-    override fun from(savedNetworkType: SpotifyPlaylist): String? {
-        return Playlist.from(savedNetworkType)?.id?.value
+    override fun from(savedNetworkType: SpotifyPlaylist): String {
+        PlaylistRepository.convert(id = savedNetworkType.id, networkModel = savedNetworkType)
+        return savedNetworkType.id
     }
 }

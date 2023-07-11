@@ -61,7 +61,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
      * the database. E.g. for saved artists, the attached artist model should be inserted into/used to update the
      * database and its ID returned. Always called from within a transaction.
      */
-    protected abstract fun from(savedNetworkType: SavedNetworkType): String?
+    protected abstract fun from(savedNetworkType: SavedNetworkType): String
 
     override fun savedStateOf(id: String): StateFlow<ToggleableState<Boolean>?> {
         return savedStates.getOrCreateStateFlow(id)
@@ -128,7 +128,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
             // TODO use existing cache in library flow if available?
             val cachedLibrary: Set<String> = savedEntityTable.savedEntityIds()
-            val remoteLibrary: Set<String> = savedNetworkModels.mapNotNullTo(mutableSetOf()) { from(it) }
+            val remoteLibrary: Set<String> = savedNetworkModels.mapTo(mutableSetOf()) { from(it) }
 
             // remove saved records for entities which are no longer saved
             val removedSaves = cachedLibrary.minus(remoteLibrary)

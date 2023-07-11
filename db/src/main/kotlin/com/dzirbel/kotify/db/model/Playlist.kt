@@ -22,6 +22,7 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
+import org.jetbrains.exposed.sql.select
 import java.time.Instant
 
 object PlaylistTable : SpotifyEntityTable(name = "playlists") {
@@ -73,6 +74,23 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
         get() = tracksFetched != null
 
     companion object : SpotifyEntityClass<Playlist, SpotifyPlaylist>(PlaylistTable) {
+        fun trackFetchTime(playlistId: String): Instant? {
+            // TODO also compare totalTracks to number of tracks in DB?
+            return PlaylistTable
+                .slice(PlaylistTable.tracksFetched)
+                .select { PlaylistTable.id eq playlistId }
+                .limit(1)
+                .firstOrNull()
+                ?.get(PlaylistTable.tracksFetched)
+        }
+
+        fun tracksInOrder(playlistId: String): List<PlaylistTrack> {
+            return PlaylistTrack
+                .find { PlaylistTrackTable.playlist eq playlistId }
+                .orderBy(PlaylistTrackTable.indexOnPlaylist to SortOrder.ASC)
+                .toList()
+        }
+
         override fun Playlist.update(networkModel: SpotifyPlaylist) {
             collaborative = networkModel.collaborative
             networkModel.description?.let { description = it }
