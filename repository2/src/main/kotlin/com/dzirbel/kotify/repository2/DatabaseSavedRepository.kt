@@ -72,7 +72,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         // TODO no-op if the entire library has been loaded?
         Repository.scope.launch {
             if (savedStates.getValue(id) == null) {
-                val cached = savedEntityTable.isSaved(id)
+                val cached = KotifyDatabase.transaction("load save start of $id") { savedEntityTable.isSaved(id) }
                 if (cached != null) {
                     savedStates.updateValue(id, ToggleableState.Set(cached))
                 } else {

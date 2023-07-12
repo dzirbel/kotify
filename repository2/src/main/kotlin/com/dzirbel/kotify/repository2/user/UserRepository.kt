@@ -59,7 +59,10 @@ object UserRepository : DatabaseEntityRepository<User, SpotifyUser>(User) {
         if (currentUser.value?.cachedValue != null) return
 
         Repository.scope.launch {
-            val cachedUser = currentUserId.value?.let { fetchFromDatabase(it) }?.first
+            val cachedUser = currentUserId.value?.let { userId ->
+                KotifyDatabase.transaction("load current user") { fetchFromDatabase(userId)?.first }
+            }
+
             val cachedUpdateTime = cachedUser?.fullUpdatedTime
             if (cachedUpdateTime != null) {
                 _currentUser.value = CacheState.Loaded(cachedValue = cachedUser, cacheTime = cachedUpdateTime)
