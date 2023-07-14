@@ -78,7 +78,6 @@ abstract class SavedEntityTable(name: String) : StringIdTable(name = name) {
      *
      * Must be called from within a transaction.
      */
-    @Suppress("CanBeNonNullable")
     fun setSaved(entityId: String, saved: Boolean, savedTime: Instant?, savedCheckTime: Instant = Instant.now()) {
         if (select { id eq entityId }.any()) {
             update(where = { id eq entityId }) { statement ->

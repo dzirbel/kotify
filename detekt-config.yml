@@ -722,7 +722,7 @@ style:
     singleLine: 'necessary'
     multiLine: 'consistent'
   CanBeNonNullable:
-    active: true
+    active: false # appears to have many dubious warnings and/or false positives
   CascadingCallWrapping:
     active: true
   ClassOrdering:
