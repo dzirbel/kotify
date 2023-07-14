@@ -80,16 +80,12 @@ object UserRepository : DatabaseEntityRepository<User, SpotifyUser>(User) {
                     return@launch
                 }
 
-                _currentUser.value = if (remoteUser == null) {
-                    CacheState.NotFound()
-                } else {
-                    _currentUserId.value = remoteUser.id.value
+                _currentUserId.value = remoteUser.id.value
 
-                    CacheState.Loaded(
-                        cachedValue = remoteUser,
-                        cacheTime = remoteUser.updatedTime,
-                    )
-                }
+                _currentUser.value = CacheState.Loaded(
+                    cachedValue = remoteUser,
+                    cacheTime = remoteUser.updatedTime,
+                )
             }
         }
     }
@@ -110,7 +106,7 @@ object UserRepository : DatabaseEntityRepository<User, SpotifyUser>(User) {
         }
     }
 
-    private suspend fun getCurrentUserRemote(): User? {
+    private suspend fun getCurrentUserRemote(): User {
         val user = Spotify.UsersProfile.getCurrentUser()
         return KotifyDatabase.transaction("set current user") {
             UserTable.CurrentUserTable.set(user.id)
@@ -118,7 +114,7 @@ object UserRepository : DatabaseEntityRepository<User, SpotifyUser>(User) {
             // ensure legacy repository has updated value
             UserRepository.currentUserId.loadToCache()
 
-            User.from(user)
+            convert(id = user.id, networkModel = user)
         }
     }
 }

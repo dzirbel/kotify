@@ -13,7 +13,7 @@ interface SpotifyObject {
     val href: String?
 
     /** The name of the object. In case of a takedown, the value may be an empty string. */
-    val name: String
+    val name: String?
 
     /** The object type. */
     val type: String

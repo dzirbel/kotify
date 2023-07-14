@@ -2,12 +2,12 @@ package com.dzirbel.kotify.repository2.playlist
 
 import com.dzirbel.kotify.db.model.Image
 import com.dzirbel.kotify.db.model.Playlist
-import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.repository2.DatabaseEntityRepository
+import com.dzirbel.kotify.repository2.user.UserRepository
 import java.time.Instant
 
 object PlaylistRepository : DatabaseEntityRepository<Playlist, SpotifyPlaylist>(Playlist) {
@@ -20,7 +20,7 @@ object PlaylistRepository : DatabaseEntityRepository<Playlist, SpotifyPlaylist>(
             networkModel.public?.let { public = it }
             snapshotId = networkModel.snapshotId
 
-            User.from(networkModel.owner)?.let { owner.set(it) }
+            owner.set(UserRepository.convert(networkModel.owner.id, networkModel.owner))
 
             images.set(networkModel.images.map { Image.from(it) })
 

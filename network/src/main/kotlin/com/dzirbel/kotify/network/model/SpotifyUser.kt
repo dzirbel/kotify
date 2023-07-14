@@ -28,8 +28,8 @@ interface SpotifyUser : SpotifyObject {
     /** The user’s profile image. */
     val images: List<SpotifyImage>?
 
-    override val name: String
-        get() = displayName.orEmpty()
+    override val name: String?
+        get() = displayName?.takeIf { it.isNotEmpty() }
 }
 
 @Serializable

@@ -36,7 +36,7 @@ data class TrackProperties(
         check(requireNotNull(playlistTrack.track))
 
         assertThat(playlistTrack.isLocal).isEqualTo(isLocal)
-        addedBy?.let { assertThat(playlistTrack.addedBy.id).isEqualTo(it) }
+        addedBy?.let { assertThat(playlistTrack.addedBy?.id).isEqualTo(it) }
         addedAt?.let { assertThat(playlistTrack.addedAt).isEqualTo(it) }
     }
 

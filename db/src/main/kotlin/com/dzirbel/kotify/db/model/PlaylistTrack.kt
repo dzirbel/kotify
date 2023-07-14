@@ -67,7 +67,7 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
                 ?.let { Track.from(it) }
                 ?.let { track ->
                     recordFor(trackId = track.id.value, playlistId = playlistId).apply {
-                        User.from(spotifyPlaylistTrack.addedBy)?.let { addedBy.set(it) }
+                        spotifyPlaylistTrack.addedBy?.let { User.from(it) }?.let { addedBy.set(it) }
                         spotifyPlaylistTrack.addedAt?.let { addedAt = it }
                         isLocal = spotifyPlaylistTrack.isLocal
                         indexOnPlaylist = index

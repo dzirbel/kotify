@@ -19,7 +19,7 @@ data class SpotifyPlaylistTrack(
      * The Spotify user who added the track or episode.
      * Note that some very old playlists may return null in this field.
      */
-    @SerialName("added_by") val addedBy: PublicSpotifyUser,
+    @SerialName("added_by") val addedBy: PublicSpotifyUser?,
 
     /** Whether this track or episode is a local file or not. */
     @SerialName("is_local") val isLocal: Boolean,

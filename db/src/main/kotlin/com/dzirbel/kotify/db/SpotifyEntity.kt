@@ -71,12 +71,12 @@ abstract class SpotifyEntityClass<EntityType : SpotifyEntity, NetworkType : Spot
         return findById(id)
             ?.apply {
                 updatedTime = Instant.now()
-                name = networkModel.name
+                networkModel.name?.let { name = it }
                 uri = networkModel.uri
                 update()
             }
             ?: new(id = id) {
-                name = networkModel.name
+                networkModel.name?.let { name = it }
                 uri = networkModel.uri
                 update()
             }
