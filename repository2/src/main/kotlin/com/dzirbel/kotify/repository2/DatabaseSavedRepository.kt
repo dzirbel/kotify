@@ -6,6 +6,7 @@ import com.dzirbel.kotify.repository.global.GlobalUpdateTimesRepository
 import com.dzirbel.kotify.repository2.util.JobLock
 import com.dzirbel.kotify.repository2.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.repository2.util.ToggleableState
+import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -28,7 +29,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     private val savedStates = SynchronizedWeakStateFlowMap<String, ToggleableState<Boolean>>()
 
-    // TODO do not run in tests?
+    // TODO do not run in tests (causes warning on STANDARD_ERROR)
     init {
         Repository.scope.launch {
             getLibraryCached()
@@ -64,7 +65,35 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     protected abstract fun from(savedNetworkType: SavedNetworkType): String
 
     override fun savedStateOf(id: String): StateFlow<ToggleableState<Boolean>?> {
-        return savedStates.getOrCreateStateFlow(id)
+        return savedStates.getOrCreateStateFlow(id) {
+            ensureSavedStateLoaded(id)
+        }
+    }
+
+    override fun savedStatesOf(ids: Iterable<String>): List<StateFlow<ToggleableState<Boolean>?>> {
+        return savedStates.getOrCreateStateFlows(ids) { createdIds ->
+            Repository.scope.launch {
+                val cached = KotifyDatabase.transaction("load save states of ${createdIds.size} ${entityName}s") {
+                    createdIds.map { id -> savedEntityTable.isSaved(id) }
+                }
+
+                val missingIds = mutableListOf<String>()
+                ids.zipEach(cached) { id, saved ->
+                    if (saved == null) {
+                        missingIds.add(id)
+                    } else {
+                        savedStates.updateValue(id, ToggleableState.Set(saved))
+                    }
+                }
+
+                if (missingIds.isNotEmpty()) {
+                    val remote = fetchIsSaved(ids = missingIds)
+                    missingIds.zipEach(remote) { id, saved ->
+                        savedStates.updateValue(id, ToggleableState.Set(saved))
+                    }
+                }
+            }
+        }
     }
 
     // TODO error handling
@@ -72,7 +101,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         // TODO no-op if the entire library has been loaded?
         Repository.scope.launch {
             if (savedStates.getValue(id) == null) {
-                val cached = KotifyDatabase.transaction("load save start of $id") { savedEntityTable.isSaved(id) }
+                val cached = KotifyDatabase.transaction("load save state of $id") { savedEntityTable.isSaved(id) }
                 if (cached != null) {
                     savedStates.updateValue(id, ToggleableState.Set(cached))
                 } else {
@@ -100,6 +129,8 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             savedStates.updateValue(id, ToggleableState.TogglingTo(saved))
 
             pushSaved(ids = listOf(id), saved = saved)
+
+            // TODO update state in database
 
             savedStates.updateValue(id, ToggleableState.Set(saved))
 

@@ -24,6 +24,7 @@ dependencies {
     testImplementation(testFixtures(project(":db")))
     testImplementation(testFixtures(project(":network")))
     testImplementation(testFixtures(project(":repository")))
+    testImplementation(testFixtures(project(":repository2")))
     testImplementation(testFixtures(project(":ui-common")))
     testImplementation(testFixtures(project(":ui-kotify")))
     testImplementation(testFixtures(project(":util")))
@@ -40,6 +41,7 @@ dependencies {
     testRuntimeOnly(libs.junit5.engine)
 
     testImplementation(libs.assertk)
+    testImplementation(libs.mockk)
 }
 
 compose.desktop {

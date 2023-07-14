@@ -603,6 +603,7 @@ performance:
     active: true
   SpreadOperator:
     active: true
+    excludes: ['**/test/**', '**/testFixtures/**']
   UnnecessaryPartOfBinaryExpression:
     active: true
   UnnecessaryTemporaryInstantiation:

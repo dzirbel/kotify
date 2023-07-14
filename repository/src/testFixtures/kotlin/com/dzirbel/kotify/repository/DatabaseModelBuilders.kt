@@ -5,12 +5,9 @@ import com.dzirbel.kotify.db.blockingTransaction
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
-import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.network.FullSpotifyAlbum
 import com.dzirbel.kotify.network.FullSpotifyArtist
 import com.dzirbel.kotify.network.FullSpotifyArtistList
-import com.dzirbel.kotify.network.FullSpotifyPlaylist
-import com.dzirbel.kotify.network.SimplifiedSpotifyTrackList
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import java.time.Instant
 
@@ -56,26 +53,5 @@ fun AlbumList(count: Int, fullUpdateTime: Instant? = null): List<Album> {
 
             album
         }
-    }
-}
-
-fun Playlist(
-    id: String = "id",
-    name: String = "Playlist",
-    trackCount: Int = 25,
-    followers: Int = 10,
-    fullUpdateTime: Instant? = null,
-): Playlist {
-    val networkPlaylist = FullSpotifyPlaylist(
-        id = id,
-        name = name,
-        tracks = SimplifiedSpotifyTrackList(count = trackCount),
-        followers = followers,
-    )
-    return KotifyDatabase.blockingTransaction {
-        val playlist = requireNotNull(Playlist.from(networkPlaylist))
-        fullUpdateTime?.let { playlist.fullUpdatedTime = it }
-
-        playlist
     }
 }

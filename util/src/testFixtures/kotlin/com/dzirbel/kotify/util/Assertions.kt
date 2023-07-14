@@ -29,7 +29,6 @@ fun <T : Any> Assert<T?>.isNullIf(shouldBeNull: Boolean) {
  * @see [containsExactly]
  */
 inline fun <reified T> Assert<List<T>>.containsExactlyElementsOf(elements: List<T>) {
-    @Suppress("SpreadOperator")
     containsExactly(*elements.toTypedArray())
 }
 
@@ -40,7 +39,6 @@ inline fun <reified T> Assert<List<T>>.containsExactlyElementsOf(elements: List<
  * @see [containsExactlyInAnyOrder]
  */
 inline fun <reified T> Assert<Iterable<T>>.containsExactlyElementsOfInAnyOrder(elements: Iterable<T>) {
-    @Suppress("SpreadOperator")
     containsExactlyInAnyOrder(*elements.toList().toTypedArray())
 }
 
@@ -51,7 +49,6 @@ inline fun <reified T> Assert<Iterable<T>>.containsExactlyElementsOfInAnyOrder(e
  * @see [containsAll]
  */
 inline fun <reified T> Assert<Iterable<T>>.containsAllElementsOf(elements: Iterable<T>) {
-    @Suppress("SpreadOperator")
     containsAll(*elements.toList().toTypedArray())
 }
 
@@ -59,7 +56,6 @@ inline fun <reified T> Assert<Iterable<T>>.containsAllElementsOf(elements: Itera
  * Asserts the [SortedMap] contains exactly the expected [elements]. They must be in the same order as the [SortedMap]'s
  * iteration order and there must not be any extra elements.
  */
-@Suppress("SpreadOperator")
 fun <K, V> Assert<SortedMap<out K, out V>>.containsExactly(vararg elements: Pair<K, V>) {
     given { actual ->
         assertThat(actual.toList()).containsExactly(*elements)

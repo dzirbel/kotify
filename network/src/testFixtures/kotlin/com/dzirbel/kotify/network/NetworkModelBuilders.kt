@@ -7,6 +7,7 @@ import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.Paging
 import com.dzirbel.kotify.network.model.PublicSpotifyUser
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyArtist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyExternalId
 import com.dzirbel.kotify.network.model.SpotifyExternalUrl
@@ -14,6 +15,7 @@ import com.dzirbel.kotify.network.model.SpotifyFollowers
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlin.time.Duration.Companion.minutes
 
 @Suppress("FunctionNaming")
 fun FullSpotifyArtistList(count: Int): List<FullSpotifyArtist> {
@@ -39,6 +41,17 @@ fun FullSpotifyArtist(
         genres = listOf("genre"),
         images = emptyList(),
         popularity = popularity,
+    )
+}
+
+fun SimplifiedSpotifyArtist(id: String = "artist", name: String = "Artist"): SimplifiedSpotifyArtist {
+    return SimplifiedSpotifyArtist(
+        id = id,
+        name = name,
+        externalUrls = SpotifyExternalUrl(),
+        href = "href",
+        type = "artist",
+        uri = "uri",
     )
 }
 
@@ -101,15 +114,19 @@ fun SimplifiedSpotifyTrack(
     name: String = "Track",
     popularity: Int = 50,
     trackNumber: Int = 1,
+    durationMs: Long = 1.minutes.inWholeMilliseconds,
+    album: SimplifiedSpotifyAlbum? = null,
+    artists: List<SimplifiedSpotifyArtist> = emptyList(),
 ): SimplifiedSpotifyTrack {
     return SimplifiedSpotifyTrack(
         id = id,
         name = name,
         popularity = popularity,
         trackNumber = trackNumber,
-        artists = emptyList(),
+        album = album,
+        artists = artists,
         discNumber = 1,
-        durationMs = 60_000,
+        durationMs = durationMs,
         explicit = false,
         externalUrls = SpotifyExternalUrl(),
         href = "href",
@@ -149,6 +166,7 @@ fun FullSpotifyPlaylist(
     id: String,
     name: String,
     tracks: List<SimplifiedSpotifyTrack>,
+    trackAddedAt: List<String?>? = null,
     followers: Int,
 ): FullSpotifyPlaylist {
     val user = PublicSpotifyUser(
@@ -164,9 +182,9 @@ fun FullSpotifyPlaylist(
         id = id,
         name = name,
         tracks = Paging(
-            items = tracks.map { track ->
+            items = tracks.mapIndexed { index, track ->
                 SpotifyPlaylistTrack(
-                    addedAt = null,
+                    addedAt = trackAddedAt?.getOrNull(index),
                     addedBy = user,
                     isLocal = false,
                     trackOrEpisode = Json.encodeToJsonElement(track),

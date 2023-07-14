@@ -3,6 +3,7 @@ package com.dzirbel.kotify.repository2
 import com.dzirbel.kotify.repository.Repository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -50,7 +51,7 @@ interface Repository<T> {
     /**
      * Forces the entity associated with the given [id] to be fetched from the remote data source.
      */
-    fun refreshFromRemote(id: String)
+    fun refreshFromRemote(id: String): Job
 
     companion object {
         /**
@@ -63,10 +64,10 @@ interface Repository<T> {
          *
          * TODO automatically restrict scope to test execution in unit tests instead of [withRepositoryScope]
          */
-        internal var scope: CoroutineScope = GlobalScope
+        var scope: CoroutineScope = GlobalScope
             private set
 
-        suspend fun withRepositoryScope(scope: CoroutineScope, block: suspend () -> Unit) {
+        internal suspend fun withRepositoryScope(scope: CoroutineScope, block: suspend () -> Unit) {
             this.scope = scope
             block()
             this.scope = GlobalScope

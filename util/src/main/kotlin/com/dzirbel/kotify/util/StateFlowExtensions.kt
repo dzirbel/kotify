@@ -1,9 +1,13 @@
 package com.dzirbel.kotify.util
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -34,4 +38,18 @@ inline fun <reified T, R> List<StateFlow<T>>.combineState(crossinline transform:
             throw CancellationException("finished collection of combined StateFlows")
         }
     }
+}
+
+/**
+ * Maps this [StateFlow] to another hot [StateFlow] with the given [mapper] with collection of the mapped flow being
+ * done in the given [scope].
+ *
+ * See https://github.com/Kotlin/kotlinx.coroutines/issues/2514 (among others)
+ *
+ * TODO unit test
+ */
+fun <T, R> StateFlow<T>.mapIn(scope: CoroutineScope, mapper: (T) -> R): StateFlow<R> {
+    return this
+        .map(mapper)
+        .stateIn(scope, SharingStarted.Eagerly, mapper(value))
 }

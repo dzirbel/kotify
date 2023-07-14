@@ -93,8 +93,9 @@ open class TrackAlbumProperty<T>(private val toTrack: (T) -> Track) : PropertyBy
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun links(item: T): List<ColumnByLinkedText.Link> {
-        val track = toTrack(item)
-        return listOf(ColumnByLinkedText.Link(text = track.name, link = track.id.value))
+        return toTrack(item).album.cachedOrNull
+            ?.let { album -> listOf(ColumnByLinkedText.Link(text = album.name, link = album.id.value)) }
+            .orEmpty()
     }
 
     override fun onClickLink(link: String) {
@@ -181,6 +182,49 @@ class TrackSavedProperty<T>(
     }
 }
 
+// TODO replace TrackSavedProperty when unused (and clean up imports)
+class TrackSavedProperty2<T>(
+    private val trackIdOf: (T) -> String,
+) : SortableProperty<T>, DividableProperty<T>, Column<T> {
+    override val title = "Saved"
+    override val width = ColumnWidth.Fill()
+
+    override fun compare(sortOrder: SortOrder, first: T, second: T): Int {
+        // TODO state here is awkward
+        val firstId = trackIdOf(first)
+        val secondId = trackIdOf(second)
+        val firstSaved = com.dzirbel.kotify.repository2.track.SavedTrackRepository.savedStateOf(firstId).value?.value
+        val secondSaved = com.dzirbel.kotify.repository2.track.SavedTrackRepository.savedStateOf(secondId).value?.value
+        return sortOrder.compareNullable(firstSaved, secondSaved)
+    }
+
+    override fun divisionFor(element: T): Boolean? {
+        // TODO state here is awkward
+        return com.dzirbel.kotify.repository2.track.SavedTrackRepository.savedStateOf(trackIdOf(element)).value?.value
+    }
+
+    override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
+        return sortOrder.compareNullable(first as? Boolean, second as? Boolean)
+    }
+
+    override fun divisionTitle(division: Any?): String {
+        return when (division as? Boolean) {
+            true -> "Saved"
+            false -> "Unsaved"
+            null -> "Unknown"
+        }
+    }
+
+    @Composable
+    override fun Item(item: T) {
+        ToggleSaveButton(
+            repository = com.dzirbel.kotify.repository2.track.SavedTrackRepository,
+            id = trackIdOf(item),
+            modifier = Modifier.padding(Dimens.space2),
+        )
+    }
+}
+
 class TrackRatingProperty<T>(
     private val trackIdOf: (T) -> String,
     private val trackRatings: Map<String, StateFlow<Rating?>>?,
@@ -208,6 +252,38 @@ class TrackRatingProperty<T>(
         val ratingState = remember(trackId) { trackRatings?.get(trackId) }
         StarRating(
             rating = ratingState?.collectAsState()?.value,
+            onRate = { rating -> TrackRatingRepository.rate(id = trackId, rating = rating) },
+        )
+    }
+}
+
+// TODO replace TrackRatingProperty when unused
+class TrackRatingProperty2<T>(
+    private val trackIdOf: (T) -> String,
+) : SortableProperty<T>, RatingDividableProperty<T>, Column<T> {
+    override val title = "Rating"
+
+    override val defaultSortOrder = SortOrder.DESCENDING
+    override val defaultDivisionSortOrder = SortOrder.DESCENDING
+
+    override val width: ColumnWidth = ColumnWidth.Fill()
+    override val cellAlignment = Alignment.Center
+
+    override fun compare(sortOrder: SortOrder, first: T, second: T): Int {
+        return sortOrder.compareNullable(ratingOf(first), ratingOf(second))
+    }
+
+    override fun ratingOf(element: T): Double? {
+        // TODO state here is awkward
+        return TrackRatingRepository.ratingStateOf(id = trackIdOf(element)).value?.ratingPercent
+    }
+
+    @Composable
+    override fun Item(item: T) {
+        val trackId = trackIdOf(item)
+
+        StarRating(
+            rating = TrackRatingRepository.ratingStateOf(id = trackIdOf(item)).collectAsState().value,
             onRate = { rating -> TrackRatingRepository.rate(id = trackId, rating = rating) },
         )
     }

@@ -49,6 +49,7 @@ object PlaylistTable : SpotifyEntityTable(name = "playlists") {
 class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTable) {
     var collaborative: Boolean by PlaylistTable.collaborative
     var description: String? by PlaylistTable.description
+    var ownerId: EntityID<String> by PlaylistTable.owner
     var public: Boolean? by PlaylistTable.public
     var snapshotId: String by PlaylistTable.snapshotId
     var followersTotal: Int? by PlaylistTable.followersTotal

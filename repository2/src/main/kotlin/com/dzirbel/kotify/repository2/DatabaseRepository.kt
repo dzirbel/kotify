@@ -6,6 +6,7 @@ import com.dzirbel.kotify.repository2.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.util.mapParallel
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -77,8 +78,8 @@ abstract class DatabaseRepository<DatabaseType, NetworkType>(protected val entit
         }
     }
 
-    final override fun refreshFromRemote(id: String) {
-        Repository.scope.launch { load(id = id, cacheStrategy = CacheStrategy.NeverValid()) }
+    final override fun refreshFromRemote(id: String): Job {
+        return Repository.scope.launch { load(id = id, cacheStrategy = CacheStrategy.NeverValid()) }
     }
 
     /**
@@ -240,7 +241,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType>(protected val entit
      */
     private fun <T> CacheState<T>?.needsLoad(cacheStrategy: CacheStrategy<T>): Boolean {
         return when (this) {
-            is CacheState.Loaded -> cacheStrategy.isValid(cachedValue)
+            is CacheState.Loaded -> !cacheStrategy.isValid(cachedValue)
             is CacheState.Refreshing -> false
             is CacheState.NotFound -> false // do not retry on 404s
             is CacheState.Error -> true // always retry on errors

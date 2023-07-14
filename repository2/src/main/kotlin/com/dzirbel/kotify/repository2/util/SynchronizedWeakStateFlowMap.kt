@@ -42,11 +42,11 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
      *
      * If a new [StateFlow] was created, [onCreate] is invoked.
      */
-    fun getOrCreateStateFlow(key: K, onCreate: () -> Unit = {}): StateFlow<V?> {
+    fun getOrCreateStateFlow(key: K, defaultValue: V? = null, onCreate: () -> Unit = {}): StateFlow<V?> {
         var created = false
         return synchronized(stateFlowMap) {
             stateFlowMap[key]?.get()
-                ?: MutableStateFlow<V?>(null)
+                ?: MutableStateFlow(defaultValue)
                     .also { stateFlowMap[key] = WeakReference(it) }
                     .also { created = true }
         }

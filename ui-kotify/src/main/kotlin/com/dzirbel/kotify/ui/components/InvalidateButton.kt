@@ -9,9 +9,12 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
+import com.dzirbel.kotify.repository2.CacheState
+import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
@@ -62,4 +65,22 @@ fun InvalidateButton(
 
         RefreshIcon(refreshing = refreshing, size = Dimens.iconSizeFor(fontSize))
     }
+}
+
+/**
+ * A wrapper around [InvalidateButton] which reflects the [CacheState] of the entity with the given [id] in the given
+ * [repository]
+ *
+ * TODO stability with Repository param
+ */
+@Composable
+fun InvalidateButton(repository: Repository<*>, id: String, entityName: String) {
+    val cacheState = repository.stateOf(id = id).collectAsState().value
+    InvalidateButton(
+        refreshing = cacheState is CacheState.Refreshing,
+        updated = cacheState?.cacheTime?.toEpochMilli(),
+        updatedFormat = { "$entityName synced $it" },
+        updatedFallback = "$entityName never synced",
+        onClick = { repository.refreshFromRemote(id = id) },
+    )
 }

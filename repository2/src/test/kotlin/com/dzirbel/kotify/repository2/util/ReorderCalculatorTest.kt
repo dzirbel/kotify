@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.util
+package com.dzirbel.kotify.repository2.util
 
 import assertk.assertThat
 import assertk.assertions.hasSize

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
-@Suppress("SpreadOperator")
 class NetworkExtension : BeforeAllCallback, AfterEachCallback, AfterAllCallback {
     override fun beforeAll(context: ExtensionContext) {
         if (!context.tags.contains(TAG_NETWORK)) {

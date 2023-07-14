@@ -8,9 +8,10 @@ interface SavedRepository {
     val library: StateFlow<CacheState<Set<String>>?>
 
     fun savedStateOf(id: String): StateFlow<ToggleableState<Boolean>?>
+    fun savedStatesOf(ids: Iterable<String>): List<StateFlow<ToggleableState<Boolean>?>>
 
+    // TODO remove a la Repository (and rework implementations somewhat)
     fun ensureSavedStateLoaded(id: String)
-    // TODO fun ensureSavedStatesLoaded(ids: Iterable<String>)
 
     fun refreshLibrary()
 

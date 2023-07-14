@@ -334,28 +334,25 @@ class ListAdapter<E> private constructor(
             defaultSort: SortableProperty<E>? = null,
             defaultFilter: ((E) -> Boolean)? = null,
         ): ListAdapter<E> {
-            return ListAdapter(
-                elements = null,
-                sortIndexes = null,
-                sorts = defaultSort?.let { persistentListOf(Sort(it)) },
-                divider = null,
-                filter = defaultFilter,
-                filterString = null,
-            )
+            return of(elements = null, defaultSort = defaultSort, defaultFilter = defaultFilter)
         }
 
         /**
          * Creates a new [ListAdapter] from the given [elements].
          */
-        fun <E> of(elements: List<E>?): ListAdapter<E> {
+        fun <E> of(
+            elements: List<E>?,
+            defaultSort: SortableProperty<E>? = null,
+            defaultFilter: ((E) -> Boolean)? = null,
+        ): ListAdapter<E> {
             return ListAdapter(
                 elements = elements?.map { element ->
                     ElementData(element = element, filtered = true, division = null)
                 },
                 sortIndexes = null,
-                sorts = null,
+                sorts = defaultSort?.let { persistentListOf(Sort(it)) },
                 divider = null,
-                filter = null,
+                filter = defaultFilter,
                 filterString = null,
             )
         }

@@ -2,45 +2,110 @@ package com.dzirbel.kotify.ui.page.playlist
 
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.blockingTransaction
-import com.dzirbel.kotify.repository.Playlist
+import com.dzirbel.kotify.network.FullSpotifyPlaylist
+import com.dzirbel.kotify.network.SimplifiedSpotifyAlbum
+import com.dzirbel.kotify.network.SimplifiedSpotifyArtist
+import com.dzirbel.kotify.network.SimplifiedSpotifyTrack
+import com.dzirbel.kotify.repository2.mockRatings
+import com.dzirbel.kotify.repository2.mockSaveState
+import com.dzirbel.kotify.repository2.mockSaveStates
+import com.dzirbel.kotify.repository2.mockStateCached
+import com.dzirbel.kotify.repository2.mockStateNull
+import com.dzirbel.kotify.repository2.playlist.PlaylistRepository
+import com.dzirbel.kotify.repository2.playlist.PlaylistTracksRepository
+import com.dzirbel.kotify.repository2.playlist.SavedPlaylistRepository
+import com.dzirbel.kotify.repository2.rating.Rating
+import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
+import com.dzirbel.kotify.repository2.track.SavedTrackRepository
+import com.dzirbel.kotify.ui.framework.render
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.util.RelativeTimeInfo
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.minutes
 
 internal class PlaylistPageScreenshotTest {
     @Test
     fun empty() {
-        val state = PlaylistPresenter.ViewModel()
+        val playlistId = "playlistId"
+
+        PlaylistRepository.mockStateNull(playlistId)
+        PlaylistTracksRepository.mockStateNull(playlistId)
+        SavedPlaylistRepository.mockSaveState(playlistId, saved = null)
 
         screenshotTest(filename = "empty") {
-            PlaylistPage(playlistId = "id").RenderState(state)
+            PlaylistPage(playlistId = playlistId).render()
         }
     }
 
     @Test
     fun full() {
         val now = Instant.now()
-        val playlist = Playlist(fullUpdateTime = now)
+        val random = Random(0)
 
-        KotifyDatabase.blockingTransaction {
-            playlist.largestImage.loadToCache()
-            playlist.playlistTracksInOrder.loadToCache()
-            playlist.playlistTracksInOrder.cached.forEach { playlistTrack ->
-                playlistTrack.track.loadToCache()
-                playlistTrack.track.cached.artists.loadToCache()
-            }
+        val playlistId = "playlistId"
+
+        val networkPlaylist = FullSpotifyPlaylist(
+            id = playlistId,
+            name = "Playlist",
+            tracks = List(25) { index ->
+                val artistId = index % 3
+                val albumId = index % 5
+                SimplifiedSpotifyTrack(
+                    id = "track-$index",
+                    name = "Track ${index + 1}",
+                    popularity = random.nextInt(100),
+                    durationMs = random.nextLong(5.minutes.inWholeMilliseconds),
+                    artists = listOf(
+                        SimplifiedSpotifyArtist(id = artistId.toString(), name = "Artist ${artistId + 1}"),
+                    ),
+                    album = SimplifiedSpotifyAlbum(id = albumId.toString(), name = "Album ${albumId + 1}"),
+                )
+            },
+            trackAddedAt = List(25) { index ->
+                LocalDate.of(2000, 1, index + 1).atStartOfDay().toInstant(ZoneOffset.UTC).toString()
+            },
+            followers = 10,
+        )
+
+        val playlist = KotifyDatabase.blockingTransaction {
+            PlaylistRepository.convert(playlistId, networkPlaylist)
         }
 
-        val baseState = PlaylistPresenter.ViewModel()
-        val state = baseState.copy(
-            playlist = playlist,
-            tracks = baseState.tracks.withElements(playlist.playlistTracksInOrder.cached),
+        val tracks = KotifyDatabase.blockingTransaction {
+            playlist.playlistTracksInOrder.live
+                .onEach { playlistTrack ->
+                    playlistTrack.track.loadToCache()
+                    playlistTrack.track.cached.album.loadToCache()
+                    playlistTrack.track.cached.artists.loadToCache()
+                }
+        }
+
+        PlaylistRepository.mockStateCached(playlistId, playlist, now)
+        PlaylistTracksRepository.mockStateCached(playlistId, tracks, now)
+        SavedPlaylistRepository.mockSaveState(playlistId, saved = true)
+
+        val trackIds = tracks.map { it.trackId.value }
+        val ratings = tracks.map { track ->
+            track.indexOnPlaylist.takeIf { it % 2 != 0 }?.let { it % 10 }
+        }
+
+        TrackRatingRepository.mockRatings(
+            ids = trackIds,
+            ratings = ratings.map { rating -> rating?.let { Rating(rating, maxRating = 10) } },
+        )
+
+        SavedTrackRepository.mockSaveStates(
+            ids = trackIds,
+            saved = ratings.map { rating -> rating?.let { it > 5 } },
         )
 
         RelativeTimeInfo.withMockedTime(now) {
             screenshotTest(filename = "full", windowWidth = 1500) {
-                PlaylistPage(playlistId = playlist.id.value).RenderState(state)
+                PlaylistPage(playlistId = playlistId).render()
             }
         }
     }
