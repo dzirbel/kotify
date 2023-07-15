@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.repository2
 
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.repository2.player.PlayerRepository.midpoint
 import com.dzirbel.kotify.repository2.util.SynchronizedWeakStateFlowMap
+import com.dzirbel.kotify.repository2.util.midpointInstantToNow
 import com.dzirbel.kotify.util.mapParallel
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.CancellationException
@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
+import kotlin.time.TimeSource
 
 // TODO expose a different type than the DB model?
 abstract class DatabaseRepository<DatabaseType, NetworkType>(protected val entityName: String) :
@@ -183,7 +184,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType>(protected val entit
     private suspend fun loadFromRemote(id: String) {
         states.updateValue(id) { CacheState.Refreshing.of(it) }
 
-        val start = System.currentTimeMillis()
+        val start = TimeSource.Monotonic.markNow()
         val remoteEntity = try {
             fetchFromRemote(id)?.let { networkModel ->
                 KotifyDatabase.transaction("save $entityName $id") { convert(id, networkModel) }
@@ -195,7 +196,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType>(protected val entit
             return
         }
 
-        val fetchTime = Instant.ofEpochMilli(start.midpoint())
+        val fetchTime = start.midpointInstantToNow()
 
         states.updateValue(id, remoteEntity?.let { CacheState.Loaded(it, fetchTime) } ?: CacheState.NotFound())
     }
@@ -208,7 +209,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType>(protected val entit
             states.updateValue(id) { CacheState.Refreshing.of(it) }
         }
 
-        val start = System.currentTimeMillis()
+        val start = TimeSource.Monotonic.markNow()
         val remoteEntities = try {
             val networkModels = fetchFromRemote(ids)
             val notNullNetworkModels = networkModels.count { it != null }
@@ -229,7 +230,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType>(protected val entit
         }
 
         // TODO may not be the most accurate for batch loads
-        val fetchTime = Instant.ofEpochMilli(start.midpoint())
+        val fetchTime = start.midpointInstantToNow()
 
         ids.zipEach(remoteEntities) { id, remoteEntity ->
             states.updateValue(id, remoteEntity?.let { CacheState.Loaded(it, fetchTime) } ?: CacheState.NotFound())

@@ -12,6 +12,7 @@ import com.dzirbel.kotify.repository2.player.Player.PlayContext
 import com.dzirbel.kotify.repository2.util.BackoffStrategy
 import com.dzirbel.kotify.repository2.util.JobLock
 import com.dzirbel.kotify.repository2.util.ToggleableState
+import com.dzirbel.kotify.repository2.util.midpointTimestampToNow
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlin.time.TimeSource
 
 // TODO document
 // TODO fetch next song when current one ends
@@ -209,7 +211,7 @@ object PlayerRepository : Player {
     override fun play(context: PlayContext?) {
         playLock.launch(scope = Repository.scope) {
             _playing.toggleTo(true) {
-                val start = System.currentTimeMillis()
+                val start = TimeSource.Monotonic.markNow()
 
                 Spotify.Player.startPlayback(
                     contextUri = context?.contextUri?.takeIf { contextUri ->
@@ -221,7 +223,7 @@ object PlayerRepository : Player {
                 )
 
                 (_trackPosition.value as? TrackPosition.Fetched)?.let { position ->
-                    _trackPosition.value = position.play(playTimestamp = start.midpoint())
+                    _trackPosition.value = position.play(playTimestamp = start.midpointTimestampToNow())
                 }
 
                 context?.contextUri?.let { _playbackContextUri.value = it }
@@ -234,12 +236,12 @@ object PlayerRepository : Player {
     override fun pause() {
         playLock.launch(scope = Repository.scope) {
             _playing.toggleTo(false) {
-                val start = System.currentTimeMillis()
+                val start = TimeSource.Monotonic.markNow()
 
                 Spotify.Player.pausePlayback()
 
                 (_trackPosition.value as? TrackPosition.Fetched)?.let { position ->
-                    _trackPosition.value = position.pause(pauseTimestamp = start.midpoint())
+                    _trackPosition.value = position.pause(pauseTimestamp = start.midpointTimestampToNow())
                 }
 
                 // TODO verify applied?
@@ -302,7 +304,7 @@ object PlayerRepository : Player {
             val previousProgress = _trackPosition.value
             _trackPosition.value = TrackPosition.Seeking(positionMs = positionMs)
 
-            val start = System.currentTimeMillis()
+            val start = TimeSource.Monotonic.markNow()
 
             val success = try {
                 Spotify.Player.seekToPosition(positionMs = positionMs)
@@ -318,7 +320,7 @@ object PlayerRepository : Player {
 
             if (success) {
                 _trackPosition.value = TrackPosition.Fetched(
-                    fetchedTimestamp = start.midpoint(),
+                    fetchedTimestamp = start.midpointTimestampToNow(),
                     fetchedPositionMs = positionMs,
                     playing = _playing.value?.value == true, // TODO ?
                 )
@@ -473,9 +475,6 @@ object PlayerRepository : Player {
         setVolumeLock.checkNotRunning()
         transferPlaybackLock.checkNotRunning()
     }
-
-    // TODO document
-    fun Long.midpoint(): Long = System.currentTimeMillis() / 2 + this / 2
 
     // TODO document
     private suspend fun <T> MutableStateFlow<ToggleableState<T>?>.toggleTo(value: T, block: suspend () -> Unit) {
