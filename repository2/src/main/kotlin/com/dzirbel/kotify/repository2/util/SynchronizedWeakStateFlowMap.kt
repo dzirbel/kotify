@@ -17,8 +17,6 @@ import java.util.Collections
  * This class exposes a minimal and convenient API for repository operations rather than directly implementing [Map].
  * In particular, it hides the implementation details of wrapping values in [WeakReference] and [MutableStateFlow] and
  * exposes an API that interacts with the values [V] directly when possible.
- *
- * TODO unit test
  */
 class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
     // TODO tends to accumulate empty WeakReference: this could be improved by creating a standalone WeakValueHashMap
@@ -66,8 +64,8 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
      * If any new [StateFlow]s are created, [onCreate] is called with the subset of keys for which they have been
      * created.
      */
-    fun getOrCreateStateFlows(keys: Iterable<K>, onCreate: (List<K>) -> Unit = {}): List<StateFlow<V?>> {
-        val created = mutableListOf<K>()
+    fun getOrCreateStateFlows(keys: Iterable<K>, onCreate: (Set<K>) -> Unit = {}): List<StateFlow<V?>> {
+        val created = mutableSetOf<K>()
         return synchronized(stateFlowMap) {
             keys.map { key ->
                 stateFlowMap[key]?.get()
