@@ -15,7 +15,7 @@ import java.time.Instant
  * present in the database.
  */
 abstract class SavedEntityTable(name: String) : StringIdTable(name = name) {
-    private val saved: Column<Boolean> = bool("saved").default(true)
+    private val saved: Column<Boolean> = bool("saved")
 
     /**
      * The time at which the entity was saved, as provided by the Spotify API, or null if it was not saved or its save
@@ -39,7 +39,7 @@ abstract class SavedEntityTable(name: String) : StringIdTable(name = name) {
      * Must be called from within a transaction.
      */
     fun isSaved(entityId: String): Boolean? {
-        return select { id eq entityId }.firstOrNull()?.get(saved)
+        return slice(saved).select { id eq entityId }.firstOrNull()?.get(saved)
     }
 
     /**
@@ -47,7 +47,7 @@ abstract class SavedEntityTable(name: String) : StringIdTable(name = name) {
      * its save time is unknown.
      */
     fun savedTime(entityId: String): Instant? {
-        return select { id eq entityId }.firstOrNull()?.get(savedTime)
+        return slice(savedTime).select { id eq entityId }.firstOrNull()?.get(savedTime)
     }
 
     /**
@@ -56,7 +56,7 @@ abstract class SavedEntityTable(name: String) : StringIdTable(name = name) {
      * Must be called from within a transaction.
      */
     fun savedCheckTime(entityId: String): Instant? {
-        return select { id eq entityId }.firstOrNull()?.get(savedCheckTime)
+        return slice(savedCheckTime).select { id eq entityId }.firstOrNull()?.get(savedCheckTime)
     }
 
     /**
@@ -79,24 +79,21 @@ abstract class SavedEntityTable(name: String) : StringIdTable(name = name) {
      * Must be called from within a transaction.
      */
     fun setSaved(entityId: String, saved: Boolean, savedTime: Instant?, savedCheckTime: Instant = Instant.now()) {
-        if (select { id eq entityId }.any()) {
-            update(where = { id eq entityId }) { statement ->
-                statement[this.saved] = saved
-                if (saved) {
-                    // only update savedTime if we have a fresh value
-                    if (savedTime != null) {
-                        statement[this.savedTime] = savedTime
-                    }
-                } else {
-                    statement[this.savedTime] = null
-                }
-                statement[this.savedCheckTime] = savedCheckTime
-            }
-        } else {
+        // TODO use upsert when available, i.e. release including https://github.com/JetBrains/Exposed/pull/1743
+
+        val updated = update(where = { id eq entityId }) { statement ->
+            statement[this.saved] = saved
+            statement[this.savedTime] = savedTime?.takeIf { saved }
+            statement[this.savedCheckTime] = savedCheckTime
+        }
+
+        if (updated == 0) {
             insert { statement ->
                 statement[id] = entityId
                 statement[this.saved] = saved
-                statement[this.savedTime] = savedTime
+                if (saved && savedTime != null) {
+                    statement[this.savedTime] = savedTime
+                }
                 statement[this.savedCheckTime] = savedCheckTime
             }
         }
@@ -106,6 +103,6 @@ abstract class SavedEntityTable(name: String) : StringIdTable(name = name) {
      * Gets the set of entity IDs which are marked as having been saved.
      */
     fun savedEntityIds(): Set<String> {
-        return select { saved eq true }.mapTo(mutableSetOf()) { it[id].value }
+        return slice(id).select { saved eq true }.mapTo(mutableSetOf()) { it[id].value }
     }
 }
