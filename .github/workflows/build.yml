@@ -17,7 +17,7 @@ jobs:
           distribution: 'adopt'
           java-version: '18'
 
-      - run: ./gradlew --stacktrace checkLocal jacocoTestReportLocal
+      - run: ./gradlew --stacktrace --continue checkLocal jacocoTestReportLocal
 
       - name: Upload mismatching screenshots
         if: failure()

@@ -29,4 +29,5 @@ dependencies {
     testImplementation(libs.assertk)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
+    testImplementation(libs.slf4j.nop) // suppress warnings from mockk: https://github.com/mockk/mockk/issues/243
 }

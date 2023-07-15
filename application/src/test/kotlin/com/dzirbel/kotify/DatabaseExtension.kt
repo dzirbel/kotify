@@ -4,6 +4,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.blockingTransaction
 import com.dzirbel.kotify.repository.savedRepositories
 import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.repository2.savedRepositories2
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -34,5 +35,6 @@ class DatabaseExtension : BeforeAllCallback, AfterEachCallback {
     override fun afterEach(context: ExtensionContext) {
         KotifyDatabase.deleteAll()
         savedRepositories.forEach { it.clearStates() }
+        savedRepositories2.forEach { it.clearStates() }
     }
 }

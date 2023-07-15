@@ -13,6 +13,7 @@ import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository2.CacheState
 import com.dzirbel.kotify.repository2.DatabaseEntityRepository
 import com.dzirbel.kotify.repository2.Repository
+import com.dzirbel.kotify.repository2.savedRepositories2
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -99,6 +100,7 @@ object UserRepository : DatabaseEntityRepository<User, SpotifyUser>(User) {
             _currentUser.value = null
 
             savedRepositories.forEach { it.invalidateAll() }
+            savedRepositories2.forEach { it.invalidate() }
 
             KotifyDatabase.transaction("clear current user id") {
                 UserTable.CurrentUserTable.clear()

@@ -10,9 +10,9 @@ import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.exposed.sql.deleteAll
 import java.time.Instant
 
-// TODO invalidate on sign-out
 abstract class DatabaseSavedRepository<SavedNetworkType>(
     /**
      * The singular name of an entity, used in transaction names; e.g. "artist".
@@ -29,9 +29,8 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     private val savedStates = SynchronizedWeakStateFlowMap<String, ToggleableState<Boolean>>()
 
-    // TODO do not run in tests (causes warning on STANDARD_ERROR)
-    init {
-        Repository.scope.launch {
+    override fun init() {
+        refreshLibraryLock.launch(Repository.scope) {
             getLibraryCached()
         }
     }
@@ -136,6 +135,24 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
             // TODO verify?
         }
+    }
+
+    override suspend fun invalidate() {
+        KotifyDatabase.transaction("invalidate $entityName saved library and entities") {
+            GlobalUpdateTimesRepository.invalidate(libraryUpdateKey)
+            savedEntityTable.deleteAll()
+        }
+
+        clearStates()
+        // TODO cancel any refreshes on refreshLibraryLock?
+    }
+
+    /**
+     * Clears the in-memory states of the repository.
+     */
+    fun clearStates() {
+        _library.value = null
+        savedStates.clear()
     }
 
     private suspend fun getLibraryCached(): Set<String>? {

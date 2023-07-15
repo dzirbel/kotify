@@ -11,6 +11,7 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository2.player.PlayerRepository
+import com.dzirbel.kotify.repository2.savedRepositories2
 import com.dzirbel.kotify.ui.IconCache
 import com.dzirbel.kotify.ui.KeyboardShortcuts
 import com.dzirbel.kotify.ui.Root
@@ -61,6 +62,10 @@ fun main(args: Array<String>) {
                 okHttpClient = okHttpClient,
                 oauthOkHttpClient = okHttpClient,
             )
+        }
+
+        measureInitTime("saved repositories") {
+            savedRepositories2.forEach { it.init() }
         }
 
         measureInitTime("player init") {

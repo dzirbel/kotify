@@ -36,7 +36,7 @@ jobs:
           B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
 
       - name: Run tests
-        run: ./gradlew --stacktrace testIntegration jacocoTestReportIntegration
+        run: ./gradlew --stacktrace --continue testIntegration jacocoTestReportIntegration
 
       - name: Upload test results to codecov
         run: |

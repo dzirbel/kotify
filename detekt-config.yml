@@ -8,16 +8,21 @@ config:
   warningsAsErrors: true
   excludes: ''
 
-processors:
-  active: true
-  exclude:
-    - 'DetektProgressListener'
-
 console-reports:
   active: true
+  exclude:
+    - 'ProjectStatisticsReport'
+    - 'ComplexityReport'
+    - 'NotificationReport'
+    - 'FindingsReport'
+    - 'FileBasedFindingsReport'
+    # - 'LiteFindingsReport'
 
 output-reports:
   active: false
+
+processors:
+  active: false # no need for processors when not generating output reports
 
 comments:
   active: true

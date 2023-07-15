@@ -1,3 +1,4 @@
+
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.compose.ComposeExtension
@@ -138,6 +139,14 @@ fun Project.configureTests() {
             showStackTraces = true
             exceptionFormat = TestExceptionFormat.FULL
         }
+
+        // hacky, but causes gradle builds to fail if tests write or std_err (which often indicates exceptions handled
+        // by the Thread.uncaughtExceptionHandler)
+        addTestOutputListener { _, outputEvent ->
+            if (outputEvent.destination == TestOutputEvent.Destination.StdErr) {
+                throw AssertionError("Failing due to test output to STANDARD_ERROR")
+            }
+        }
     }
 }
 
@@ -164,9 +173,9 @@ fun Project.configureJacoco() {
 
     tasks.withType<JacocoReport> {
         reports {
-            xml.required = true
-            csv.required = false
-            html.required = false
+            xml.required.set(true)
+            csv.required.set(false)
+            html.required.set(false)
         }
     }
 }
