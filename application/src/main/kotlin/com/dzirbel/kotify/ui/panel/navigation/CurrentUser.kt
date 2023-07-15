@@ -38,10 +38,7 @@ private val CURRENT_USER_DROPDOWN_MAX_WIDTH = 500.dp
 
 // TODO extract and reuse
 @Composable
-fun <E : SpotifyEntity, T : Any> E.produceTransactionState(
-    transactionName: String,
-    statement: suspend E.() -> T?,
-): State<T?> {
+fun <E : SpotifyEntity, T : Any> E.produceTransactionState(transactionName: String, statement: E.() -> T?): State<T?> {
     return produceState<T?>(initialValue = null, key1 = this.id.value) {
         value = KotifyDatabase.transaction(name = transactionName) { statement() }
     }

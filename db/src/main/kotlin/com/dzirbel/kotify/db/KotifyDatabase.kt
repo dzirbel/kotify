@@ -127,10 +127,8 @@ object KotifyDatabase {
     /**
      * Creates a transaction on this [db] with appropriate logic; in particular, using the [dbDispatcher] which operates
      * on a single thread to avoid database locking.
-     *
-     * TODO statement should not suspend?
      */
-    suspend fun <T> transaction(name: String?, statement: suspend Transaction.() -> T): T {
+    suspend fun <T> transaction(name: String?, statement: Transaction.() -> T): T {
         check(db.transactionManager.currentOrNull() == null) { "transaction already in progress" }
 
         delay(transactionDelayMs)
