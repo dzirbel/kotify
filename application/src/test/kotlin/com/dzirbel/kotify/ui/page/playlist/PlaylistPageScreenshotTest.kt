@@ -22,8 +22,7 @@ import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.util.RelativeTimeInfo
 import org.junit.jupiter.api.Test
 import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
+import java.util.GregorianCalendar
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.minutes
 
@@ -66,7 +65,7 @@ internal class PlaylistPageScreenshotTest {
                 )
             },
             trackAddedAt = List(25) { index ->
-                LocalDate.of(2000, 1, index + 1).atStartOfDay().toInstant(ZoneOffset.UTC).toString()
+                GregorianCalendar(2000, 0, index + 1).toInstant().toString()
             },
             followers = 10,
         )
