@@ -469,7 +469,7 @@ object NetworkFixtures {
                 reporting and analysis from NPR News — in 10 minutes. Available weekdays by 6 a.m. ET, with hosts Leila
                 Fadel, Steve Inskeep, Michel Martin and A Martinez. Also available on Saturdays by 8 a.m. ET, with
                 Ayesha Rascoe and Scott Simon. On Sundays, hear a longer exploration behind the headlines with Ayesha
-                Rascoe on "The Sunday Story,", available by 8 a.m. ET. Subscribe and listen, then support your local NPR
+                Rascoe on "The Sunday Story," available by 8 a.m. ET. Subscribe and listen, then support your local NPR
                 station at donate.npr.org.Support NPR's reporting by subscribing to Up First+ and unlock sponsor-free
                 listening. Learn more at plus.npr.org/upfirst
                 """
