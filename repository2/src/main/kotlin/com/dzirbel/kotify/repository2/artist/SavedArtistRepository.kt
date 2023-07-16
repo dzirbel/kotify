@@ -7,6 +7,7 @@ import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository2.DatabaseSavedRepository
 import com.dzirbel.kotify.util.flatMapParallel
 import kotlinx.coroutines.flow.toList
+import java.time.Instant
 
 object SavedArtistRepository : DatabaseSavedRepository<FullSpotifyArtist>(ArtistTable.SavedArtistsTable) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
@@ -29,8 +30,8 @@ object SavedArtistRepository : DatabaseSavedRepository<FullSpotifyArtist>(Artist
             .toList()
     }
 
-    override fun from(savedNetworkType: FullSpotifyArtist): String {
+    override fun convert(savedNetworkType: FullSpotifyArtist): Pair<String, Instant?> {
         ArtistRepository.convert(id = savedNetworkType.id, networkModel = savedNetworkType)
-        return savedNetworkType.id
+        return savedNetworkType.id to null
     }
 }

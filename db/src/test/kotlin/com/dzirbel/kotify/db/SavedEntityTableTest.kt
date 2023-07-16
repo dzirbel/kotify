@@ -176,46 +176,4 @@ internal class SavedEntityTableTest {
             assertThat(TestSavedEntityTable.savedEntityIds(userId)).containsExactlyInAnyOrder(entityId)
         }
     }
-
-    @Test
-    fun `batch set and update saved states`() {
-        val entityIds = listOf("id1", "id2", "id3")
-        val userId = "user"
-        val savedTime = Instant.ofEpochMilli(1)
-        val savedCheckTime1 = Instant.ofEpochMilli(2)
-        val savedCheckTime2 = Instant.ofEpochMilli(3)
-
-        KotifyDatabase.blockingTransaction {
-            TestSavedEntityTable.setSaved(
-                entityId = entityIds.first(),
-                userId = userId,
-                saved = false,
-                savedTime = null,
-                savedCheckTime = savedCheckTime1,
-            )
-        }
-
-        KotifyDatabase.blockingTransaction {
-            assertThat(TestSavedEntityTable.isSaved(entityIds.first(), userId)).isNotNull().isFalse()
-        }
-
-        KotifyDatabase.blockingTransaction {
-            TestSavedEntityTable.setSaved(
-                entityIds = entityIds,
-                userId = userId,
-                saved = true,
-                savedTime = savedTime,
-                savedCheckTime = savedCheckTime2,
-            )
-        }
-
-        KotifyDatabase.blockingTransaction {
-            for (id in entityIds) {
-                assertThat(TestSavedEntityTable.isSaved(id, userId)).isNotNull().isTrue()
-                assertThat(TestSavedEntityTable.savedTime(id, userId)).isNotNull().isEqualTo(savedTime)
-                assertThat(TestSavedEntityTable.savedCheckTime(id, userId)).isNotNull().isEqualTo(savedCheckTime2)
-            }
-            assertThat(TestSavedEntityTable.savedEntityIds(userId)).containsExactlyElementsOfInAnyOrder(entityIds)
-        }
-    }
 }

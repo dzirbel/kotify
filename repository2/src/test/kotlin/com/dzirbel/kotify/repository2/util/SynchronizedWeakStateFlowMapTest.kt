@@ -26,7 +26,7 @@ class SynchronizedWeakStateFlowMapTest {
         val map = SynchronizedWeakStateFlowMap<String, Int>()
         var onCreateCalls = 0
 
-        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = null, onCreate = { onCreateCalls++ })
+        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = { null }, onCreate = { onCreateCalls++ })
 
         assertThat(stateFlow.value).isNull()
         assertThat(onCreateCalls).isEqualTo(1)
@@ -39,7 +39,7 @@ class SynchronizedWeakStateFlowMapTest {
         val map = SynchronizedWeakStateFlowMap<String, Int>()
         var onCreateCalls = 0
 
-        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = default, onCreate = { onCreateCalls++ })
+        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = { default }, onCreate = { onCreateCalls++ })
 
         assertThat(stateFlow.value).isEqualTo(default)
         assertThat(onCreateCalls).isEqualTo(1)
@@ -51,13 +51,13 @@ class SynchronizedWeakStateFlowMapTest {
         val map = SynchronizedWeakStateFlowMap<String, Int>()
         var onCreateCalls = 0
 
-        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = null, onCreate = { onCreateCalls++ })
+        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = { null }, onCreate = { onCreateCalls++ })
 
         assertThat(stateFlow.value).isNull()
         assertThat(onCreateCalls).isEqualTo(1)
         assertThat(map.getValue("key")).isNull()
 
-        val stateFlow2 = map.getOrCreateStateFlow("key", defaultValue = 123, onCreate = { onCreateCalls++ })
+        val stateFlow2 = map.getOrCreateStateFlow("key", defaultValue = { 123 }, onCreate = { onCreateCalls++ })
 
         assertThat(stateFlow2).isSameAs(stateFlow)
         assertThat(onCreateCalls).isEqualTo(1)
@@ -76,7 +76,11 @@ class SynchronizedWeakStateFlowMapTest {
             val jobs = List(concurrency) { i ->
                 launch {
                     val launchesInit = sequentialLaunches
-                    val stateFlow = map.getOrCreateStateFlow("key", defaultValue = i, onCreate = { onCreateCalls++ })
+                    val stateFlow = map.getOrCreateStateFlow(
+                        key = "key",
+                        defaultValue = { i },
+                        onCreate = { onCreateCalls++ },
+                    )
 
                     delay(1) // delay to ensure calls are made concurrently
 
@@ -101,7 +105,7 @@ class SynchronizedWeakStateFlowMapTest {
         val keys1 = listOf("a", "b", "c")
         val createdKeys1 = mutableSetOf<String>()
 
-        val flows1 = map.getOrCreateStateFlows(keys1, onCreate = { createdKeys1.addAll(it) })
+        val flows1 = map.getOrCreateStateFlows(keys1, onCreate = { createdKeys1.addAll(it.keys) })
 
         assertThat(flows1).hasSameSizeAs(keys1)
         assertThat(createdKeys1).containsExactlyElementsOfInAnyOrder(keys1)
@@ -109,7 +113,7 @@ class SynchronizedWeakStateFlowMapTest {
         val keys2 = listOf("b", "d", "e", "c", "e")
         val createdKeys2 = mutableSetOf<String>()
 
-        val flows2 = map.getOrCreateStateFlows(keys2, onCreate = { createdKeys2.addAll(it) })
+        val flows2 = map.getOrCreateStateFlows(keys2, onCreate = { createdKeys2.addAll(it.keys) })
 
         assertThat(flows2).hasSameSizeAs(keys2)
         assertThat(createdKeys2).containsExactlyElementsOfInAnyOrder(keys2.minus(keys1).toSet())
@@ -171,7 +175,7 @@ class SynchronizedWeakStateFlowMapTest {
 
         assertThat(map.getValue("key")).isNull()
 
-        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = 456)
+        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = { 456 })
 
         assertThat(stateFlow.value).isEqualTo(456)
         assertThat(map.getValue("key")).isEqualTo(456)
@@ -189,7 +193,7 @@ class SynchronizedWeakStateFlowMapTest {
 
         assertThat(computationCalls).isEqualTo(0)
 
-        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = 0)
+        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = { 0 })
 
         map.updateValue("key") { value ->
             computationCalls++
@@ -251,7 +255,7 @@ class SynchronizedWeakStateFlowMapTest {
         var onCreateCalls = 0
 
         var stateFlow: StateFlow<Int?>? =
-            map.getOrCreateStateFlow("key", defaultValue = 123, onCreate = { onCreateCalls++ })
+            map.getOrCreateStateFlow("key", defaultValue = { 123 }, onCreate = { onCreateCalls++ })
         assertThat(onCreateCalls).isEqualTo(1)
 
         val flowReference = WeakReference(stateFlow)
@@ -264,7 +268,7 @@ class SynchronizedWeakStateFlowMapTest {
         assertThat(map.getValue("key")).isEqualTo(123) // map can still access the value
 
         // a new flow is not created for the same key
-        assertThat(map.getOrCreateStateFlow("key", defaultValue = 0, onCreate = { onCreateCalls++ }))
+        assertThat(map.getOrCreateStateFlow("key", defaultValue = { 0 }, onCreate = { onCreateCalls++ }))
             .isSameAs(stateFlow)
         assertThat(onCreateCalls).isEqualTo(1)
 
@@ -282,7 +286,7 @@ class SynchronizedWeakStateFlowMapTest {
 
         // a new flow is now created for the same key (keep a reference to it to avoid it being GC'd)
         @Suppress("UNUSED_VALUE")
-        stateFlow = map.getOrCreateStateFlow("key", defaultValue = 456, onCreate = { onCreateCalls++ })
+        stateFlow = map.getOrCreateStateFlow("key", defaultValue = { 456 }, onCreate = { onCreateCalls++ })
         assertThat(map.getValue("key")).isEqualTo(456)
         assertThat(onCreateCalls).isEqualTo(2)
     }

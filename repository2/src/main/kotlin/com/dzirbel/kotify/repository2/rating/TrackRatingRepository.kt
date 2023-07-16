@@ -34,9 +34,9 @@ object TrackRatingRepository : RatingRepository {
     }
 
     override fun ratingStatesOf(ids: Iterable<String>): List<StateFlow<Rating?>> {
-        return states.getOrCreateStateFlows(keys = ids) { createdIds ->
+        return states.getOrCreateStateFlows(keys = ids) { creations ->
             Repository.scope.launch {
-                val createdIdsList = createdIds.toList()
+                val createdIdsList = creations.keys.toList()
                 val ratings = lastRatingsOf(ids = createdIdsList)
                 createdIdsList.zipEach(ratings) { id, rating ->
                     states.updateValue(id, rating)

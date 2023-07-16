@@ -7,11 +7,16 @@ import com.dzirbel.kotify.repository2.user.UserRepository
 import com.dzirbel.kotify.repository2.util.JobLock
 import com.dzirbel.kotify.repository2.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.repository2.util.ToggleableState
+import com.dzirbel.kotify.repository2.util.midpointInstantToNow
+import com.dzirbel.kotify.util.filterNotNullValues
+import com.dzirbel.kotify.util.plusOrMinus
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.TimeSource
 
 abstract class DatabaseSavedRepository<SavedNetworkType>(
     /**
@@ -25,7 +30,8 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     private val entityName: String = savedEntityTable.tableName.removePrefix("saved_").removeSuffix("s"),
 
     /**
-     * The key used in the [GlobalUpdateTimesRepository] to mark when the library as a whole was last updated.
+     * The base key used in the [GlobalUpdateTimesRepository] to mark when the library as a whole was last updated;
+     * augmented with the current user ID to form the full key [currentUserLibraryUpdateKey].
      */
     private val baseLibraryUpdateKey: String = savedEntityTable.tableName,
 ) : SavedRepository {
@@ -40,16 +46,10 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     private val savedStates = SynchronizedWeakStateFlowMap<String, ToggleableState<Boolean>>()
 
-    override fun init() {
-        refreshLibraryLock.launch(Repository.scope) {
-            getLibraryCached()
-        }
-    }
-
     /**
      * Fetches the saved state of each of the given [ids] via a remote call to the network.
      *
-     * This is the remote primitive and simply fetches the network state but does not cache it, unlike [getRemote].
+     * This is the remote primitive and simply fetches the network state but does not cache it.
      */
     protected abstract suspend fun fetchIsSaved(ids: List<String>): List<Boolean>
 
@@ -63,71 +63,133 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     /**
      * Fetches the current state of the library of saved entities, i.e. all the entities which the user has saved.
      *
-     * This is the remote primitive and simply fetches the network state but does not cache it, unlike [getLibrary].
+     * This is the remote primitive and simply fetches the network state but does not cache it.
      */
     protected abstract suspend fun fetchLibrary(): Iterable<SavedNetworkType>
 
     /**
      * Converts the given [savedNetworkType] model into the ID of the saved entity, and adds any corresponding model to
-     * the database. E.g. for saved artists, the attached artist model should be inserted into/used to update the
-     * database and its ID returned. Always called from within a transaction.
+     * the database.
+     *
+     * E.g. for saved artists, the attached artist model should be inserted into/used to update the database (typically
+     * via its repository) and its ID returned. Always called from within a transaction.
+     * TODO also update live states when converting
+     *
+     * @return the extracted entity ID and an [Instant] specifying the time the entity was saved, if provided by the
+     *  [SavedNetworkType]
      */
-    protected abstract fun from(savedNetworkType: SavedNetworkType): String
+    protected abstract fun convert(savedNetworkType: SavedNetworkType): Pair<String, Instant?>
 
-    override fun savedStateOf(id: String): StateFlow<ToggleableState<Boolean>?> {
-        return savedStates.getOrCreateStateFlow(id) {
-            ensureSavedStateLoaded(id)
+    final override fun init() {
+        refreshLibraryLock.launch(Repository.scope) {
+            getLibraryCached()
         }
     }
 
-    override fun savedStatesOf(ids: Iterable<String>): List<StateFlow<ToggleableState<Boolean>?>> {
-        return savedStates.getOrCreateStateFlows(ids) { createdIds ->
-            Repository.scope.launch {
-                val cached = KotifyDatabase.transaction("load save states of ${createdIds.size} ${entityName}s") {
-                    createdIds.map { id ->
-                        savedEntityTable.isSaved(entityId = id, userId = UserRepository.requireCurrentUserId)
+    final override fun savedStateOf(id: String): StateFlow<ToggleableState<Boolean>?> {
+        return savedStates.getOrCreateStateFlow(
+            key = id,
+            defaultValue = {
+                _library.value?.cachedValue?.contains(id)?.let { ToggleableState.Set(it) }
+            },
+            onCreate = { default ->
+                if (default == null) {
+                    Repository.scope.launch {
+                        val cached = try {
+                            KotifyDatabase.transaction("load save state of $id") {
+                                savedEntityTable.isSaved(entityId = id, userId = UserRepository.requireCurrentUserId)
+                            }
+                        } catch (cancellationException: CancellationException) {
+                            throw cancellationException
+                        } catch (_: Throwable) {
+                            // TODO log exception?
+                            null
+                        }
+
+                        if (cached != null) {
+                            savedStates.updateValue(id, ToggleableState.Set(cached))
+                        } else {
+                            val remote = try {
+                                fetchIsSaved(ids = listOf(id)).first()
+                            } catch (cancellationException: CancellationException) {
+                                throw cancellationException
+                            } catch (_: Throwable) {
+                                // TODO log exception?
+                                null
+                            }
+
+                            // TODO expose error state instead of null?
+                            savedStates.updateValue(id, remote?.let { ToggleableState.Set(remote) })
+                        }
                     }
                 }
+            },
+        )
+    }
 
-                val missingIds = mutableListOf<String>()
-                ids.zipEach(cached) { id, saved ->
-                    if (saved == null) {
-                        missingIds.add(id)
-                    } else {
-                        savedStates.updateValue(id, ToggleableState.Set(saved))
-                    }
-                }
-
+    final override fun savedStatesOf(ids: Iterable<String>): List<StateFlow<ToggleableState<Boolean>?>> {
+        return savedStates.getOrCreateStateFlows(
+            keys = ids,
+            defaultValue = { id ->
+                _library.value?.cachedValue?.contains(id)?.let { ToggleableState.Set(it) }
+            },
+            onCreate = { creations ->
+                val missingIds = creations.filterNotNullValues().keys
                 if (missingIds.isNotEmpty()) {
-                    val remote = fetchIsSaved(ids = missingIds)
-                    missingIds.zipEach(remote) { id, saved ->
-                        savedStates.updateValue(id, ToggleableState.Set(saved))
+                    Repository.scope.launch {
+                        val cached = try {
+                            KotifyDatabase.transaction("load save states of ${missingIds.size} ${entityName}s") {
+                                missingIds.map { id ->
+                                    savedEntityTable.isSaved(
+                                        entityId = id,
+                                        userId = UserRepository.requireCurrentUserId,
+                                    )
+                                }
+                            }
+                        } catch (cancellationException: CancellationException) {
+                            throw cancellationException
+                        } catch (_: Throwable) {
+                            // TODO log exception?
+                            null
+                        }
+
+                        val idsToLoadFromRemote = mutableListOf<String>()
+                        if (cached == null) {
+                            idsToLoadFromRemote.addAll(missingIds)
+                        } else {
+                            missingIds.zipEach(cached) { id, saved ->
+                                if (saved == null) {
+                                    idsToLoadFromRemote.add(id)
+                                } else {
+                                    savedStates.updateValue(id, ToggleableState.Set(saved))
+                                }
+                            }
+                        }
+
+                        if (idsToLoadFromRemote.isNotEmpty()) {
+                            val remote = try {
+                                fetchIsSaved(ids = idsToLoadFromRemote)
+                            } catch (cancellationException: CancellationException) {
+                                throw cancellationException
+                            } catch (_: Throwable) {
+                                // TODO log exception?
+                                null
+                            }
+
+                            // TODO expose error state instead of null?
+                            if (remote != null) {
+                                idsToLoadFromRemote.zipEach(remote) { id, saved ->
+                                    savedStates.updateValue(id, ToggleableState.Set(saved))
+                                }
+                            }
+                        }
                     }
                 }
-            }
-        }
+            },
+        )
     }
 
-    // TODO error handling
-    private fun ensureSavedStateLoaded(id: String) {
-        // TODO no-op if the entire library has been loaded?
-        Repository.scope.launch {
-            if (savedStates.getValue(id) == null) {
-                val cached = KotifyDatabase.transaction("load save state of $id") {
-                    savedEntityTable.isSaved(entityId = id, userId = UserRepository.requireCurrentUserId)
-                }
-                if (cached != null) {
-                    savedStates.updateValue(id, ToggleableState.Set(cached))
-                } else {
-                    // TODO set state to refreshing? or just use the null value
-                    val remote = fetchIsSaved(ids = listOf(id)).first()
-                    savedStates.updateValue(id, ToggleableState.Set(remote))
-                }
-            }
-        }
-    }
-
-    override fun refreshLibrary() {
+    final override fun refreshLibrary() {
         refreshLibraryLock.launch(Repository.scope) {
             _library.value = CacheState.Refreshing(
                 cachedValue = _library.value?.cachedValue,
@@ -137,29 +199,50 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         }
     }
 
-    override fun setSaved(id: String, saved: Boolean) {
-        // TODO synchronization
+    final override fun setSaved(id: String, saved: Boolean) {
+        val saveTime = Instant.now()
+
+        // TODO prevent concurrent updates to saved state for the same id
         Repository.scope.launch {
             savedStates.updateValue(id, ToggleableState.TogglingTo(saved))
 
-            pushSaved(ids = listOf(id), saved = saved)
+            try {
+                pushSaved(ids = listOf(id), saved = saved)
+            } catch (throwable: Throwable) {
+                // TODO log exception?
+                savedStates.updateValue(id, null) // TODO expose error state?
+                throw throwable
+            }
 
-            // TODO update state in database
+            KotifyDatabase.transaction("set saved state for $entityName $id") {
+                savedEntityTable.setSaved(
+                    entityId = id,
+                    userId = UserRepository.requireCurrentUserId,
+                    saved = saved,
+                    savedTime = saveTime,
+                    savedCheckTime = saveTime,
+                )
+            }
 
             savedStates.updateValue(id, ToggleableState.Set(saved))
-
-            // TODO verify?
+            val libraryCacheState = _library.value
+            if (libraryCacheState is CacheState.Loaded) {
+                _library.value = libraryCacheState.copy(
+                    cachedValue = libraryCacheState.cachedValue.plusOrMinus(value = id, condition = saved),
+                )
+            }
         }
     }
 
-    override fun invalidateUser() {
+    final override fun invalidateUser() {
         _library.value = null
         savedStates.clear()
-        // TODO cancel any refreshes on refreshLibraryLock?
+        // TODO cancel any refreshes on refreshLibraryLock
     }
 
-    private suspend fun getLibraryCached(): Set<String>? {
-        return KotifyDatabase.transaction("load $entityName saved library") {
+    // TODO catch and log exceptions
+    private suspend fun getLibraryCached() {
+        KotifyDatabase.transaction("load $entityName saved library") {
             GlobalUpdateTimesRepository.updated(currentUserLibraryUpdateKey)?.let { updatedTime ->
                 updatedTime to savedEntityTable.savedEntityIds(userId = UserRepository.requireCurrentUserId)
             }
@@ -167,53 +250,56 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             ?.let { (updatedTime, ids) ->
                 savedStates.computeAll { id -> ToggleableState.Set(id in ids) }
                 _library.value = CacheState.Loaded(cachedValue = ids, cacheTime = updatedTime)
-                ids
             }
     }
 
-    private suspend fun getLibraryRemote(): Set<String> {
-        val savedNetworkModels = fetchLibrary()
-        val updateTime = Instant.now()
+    // TODO catch and log exceptions
+    private suspend fun getLibraryRemote() {
         val userId = UserRepository.requireCurrentUserId
-        return KotifyDatabase.transaction("save $entityName saved library") {
-            GlobalUpdateTimesRepository.setUpdated(currentUserLibraryUpdateKey, updateTime = updateTime)
 
-            // TODO use existing cache in library flow if available?
-            val cachedLibrary: Set<String> = savedEntityTable.savedEntityIds(userId = userId)
-            val remoteLibrary: Set<String> = savedNetworkModels.mapTo(mutableSetOf()) { from(it) }
+        val start = TimeSource.Monotonic.markNow()
+        val savedNetworkModels = fetchLibrary()
+        val updateTime = start.midpointInstantToNow()
+
+        val remoteLibrary = KotifyDatabase.transaction("save $entityName saved library") {
+            GlobalUpdateTimesRepository.setUpdated(key = currentUserLibraryUpdateKey, updateTime = updateTime)
+
+            val cachedLibrary: Set<String> = _library.value?.cachedValue
+                ?: savedEntityTable.savedEntityIds(userId = userId)
+
+            val remoteLibrary: Set<Pair<String, Instant?>> = savedNetworkModels.mapTo(mutableSetOf(), ::convert)
+            val remoteLibraryIds: Set<String> = remoteLibrary.mapTo(mutableSetOf()) { it.first }
 
             // remove saved records for entities which are no longer saved
-            val removedSaves = cachedLibrary.minus(remoteLibrary)
-            if (removedSaves.isNotEmpty()) {
-                savedEntityTable.setSaved(
-                    entityIds = removedSaves,
-                    userId = userId,
-                    saved = false,
-                    savedTime = null,
-                    savedCheckTime = updateTime,
-                )
+            for (id in cachedLibrary) {
+                if (id !in remoteLibraryIds) {
+                    savedEntityTable.setSaved(
+                        entityId = id,
+                        userId = userId,
+                        saved = false,
+                        savedTime = null,
+                        savedCheckTime = updateTime,
+                    )
+                }
             }
 
             // add saved records for entities which are now saved
-            val newSaves = remoteLibrary.minus(cachedLibrary)
-            if (newSaves.isNotEmpty()) {
-                savedEntityTable.setSaved(
-                    entityIds = newSaves,
-                    userId = userId,
-                    saved = true,
-                    savedTime = null,
-                    savedCheckTime = updateTime,
-                )
+            for ((id, saveTime) in remoteLibrary) {
+                if (id !in cachedLibrary) {
+                    savedEntityTable.setSaved(
+                        entityId = id,
+                        userId = userId,
+                        saved = true,
+                        savedTime = saveTime,
+                        savedCheckTime = updateTime,
+                    )
+                }
             }
 
-            remoteLibrary
+            remoteLibraryIds
         }
-            .also { ids ->
-                savedStates.computeAll { id -> ToggleableState.Set(id in ids) }
 
-                _library.value = CacheState.Loaded(cachedValue = ids, cacheTime = updateTime)
-
-                savedStates
-            }
+        savedStates.computeAll { id -> ToggleableState.Set(id in remoteLibrary) }
+        _library.value = CacheState.Loaded(cachedValue = remoteLibrary, cacheTime = updateTime)
     }
 }

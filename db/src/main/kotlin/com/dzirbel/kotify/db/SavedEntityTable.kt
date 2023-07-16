@@ -75,30 +75,6 @@ abstract class SavedEntityTable(name: String) : Table(name = name) {
     }
 
     /**
-     * Updates the saved state for all entities with IDs among the given [entityIds].
-     *
-     * Must be called from within a transaction.
-     */
-    fun setSaved(
-        entityIds: Iterable<String>,
-        userId: String,
-        saved: Boolean,
-        savedTime: Instant?,
-        savedCheckTime: Instant,
-    ) {
-        // TODO batchReplace does not support multiple keys
-        for (entityId in entityIds) {
-            setSaved(
-                entityId = entityId,
-                userId = userId,
-                saved = saved,
-                savedTime = savedTime,
-                savedCheckTime = savedCheckTime,
-            )
-        }
-    }
-
-    /**
      * Stores the entity with the given [entityId] as the given [saved] state, having been saved at the given
      * [savedTime].
      *

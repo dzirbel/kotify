@@ -74,8 +74,8 @@ abstract class DatabaseRepository<DatabaseType, NetworkType>(protected val entit
         ids: Iterable<String>,
         cacheStrategy: CacheStrategy<DatabaseType>,
     ): List<StateFlow<CacheState<DatabaseType>?>> {
-        return states.getOrCreateStateFlows(keys = ids) { createdIds ->
-            Repository.scope.launch { load(ids = createdIds, cacheStrategy = cacheStrategy) }
+        return states.getOrCreateStateFlows(keys = ids) { creations ->
+            Repository.scope.launch { load(ids = creations.keys, cacheStrategy = cacheStrategy) }
         }
     }
 

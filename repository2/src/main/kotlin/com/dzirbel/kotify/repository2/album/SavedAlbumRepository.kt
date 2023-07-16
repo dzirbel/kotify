@@ -6,7 +6,9 @@ import com.dzirbel.kotify.network.model.SpotifySavedAlbum
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository2.DatabaseSavedRepository
 import com.dzirbel.kotify.util.flatMapParallel
+import com.dzirbel.kotify.util.parseInstantOrNull
 import kotlinx.coroutines.flow.toList
+import java.time.Instant
 
 object SavedAlbumRepository : DatabaseSavedRepository<SpotifySavedAlbum>(AlbumTable.SavedAlbumsTable) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
@@ -23,9 +25,9 @@ object SavedAlbumRepository : DatabaseSavedRepository<SpotifySavedAlbum>(AlbumTa
         return Spotify.Library.getSavedAlbums(limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
-    override fun from(savedNetworkType: SpotifySavedAlbum): String {
+    override fun convert(savedNetworkType: SpotifySavedAlbum): Pair<String, Instant?> {
         val album = savedNetworkType.album
         AlbumRepository.convert(id = album.id, networkModel = album)
-        return album.id
+        return album.id to parseInstantOrNull(savedNetworkType.addedAt)
     }
 }

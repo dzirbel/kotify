@@ -7,6 +7,7 @@ import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository2.DatabaseSavedRepository
 import com.dzirbel.kotify.util.flatMapParallel
 import kotlinx.coroutines.flow.toList
+import java.time.Instant
 
 object SavedTrackRepository : DatabaseSavedRepository<SpotifySavedTrack>(TrackTable.SavedTracksTable) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
@@ -23,9 +24,9 @@ object SavedTrackRepository : DatabaseSavedRepository<SpotifySavedTrack>(TrackTa
         return Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
-    override fun from(savedNetworkType: SpotifySavedTrack): String {
+    override fun convert(savedNetworkType: SpotifySavedTrack): Pair<String, Instant?> {
         val track = savedNetworkType.track
         TrackRepository.convert(id = track.id, networkModel = track)
-        return track.id
+        return track.id to null
     }
 }

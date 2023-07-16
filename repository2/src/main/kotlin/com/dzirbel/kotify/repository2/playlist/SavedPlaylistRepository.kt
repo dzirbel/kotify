@@ -8,6 +8,7 @@ import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository2.DatabaseSavedRepository
 import com.dzirbel.kotify.util.mapParallel
 import kotlinx.coroutines.flow.toList
+import java.time.Instant
 
 object SavedPlaylistRepository : DatabaseSavedRepository<SpotifyPlaylist>(PlaylistTable.SavedPlaylistsTable) {
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
@@ -31,8 +32,8 @@ object SavedPlaylistRepository : DatabaseSavedRepository<SpotifyPlaylist>(Playli
         return Spotify.Playlists.getPlaylists(limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
-    override fun from(savedNetworkType: SpotifyPlaylist): String {
+    override fun convert(savedNetworkType: SpotifyPlaylist): Pair<String, Instant?> {
         PlaylistRepository.convert(id = savedNetworkType.id, networkModel = savedNetworkType)
-        return savedNetworkType.id
+        return savedNetworkType.id to null
     }
 }

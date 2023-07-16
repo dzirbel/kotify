@@ -35,43 +35,55 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
     }
 
     /**
-     * Gets the [StateFlow] tracking the value associated with the given [key], creating one with a null value if it is
-     * not present in the map (or has been garbage collected).
+     * Gets the [StateFlow] tracking the value associated with the given [key], creating one with a default from
+     * [defaultValue] if it is not present in the map (or has been garbage collected).
      *
-     * If a new [StateFlow] was created, [onCreate] is invoked.
+     * If a new [StateFlow] was created, [onCreate] is invoked with the default value used.
      */
-    fun getOrCreateStateFlow(key: K, defaultValue: V? = null, onCreate: () -> Unit = {}): StateFlow<V?> {
+    fun getOrCreateStateFlow(key: K, defaultValue: () -> V? = { null }, onCreate: (V?) -> Unit = {}): StateFlow<V?> {
         var created = false
+        var default: V? = null
         return synchronized(stateFlowMap) {
             stateFlowMap[key]?.get()
-                ?: MutableStateFlow(defaultValue)
-                    .also { stateFlowMap[key] = WeakReference(it) }
-                    .also { created = true }
+                ?: run {
+                    default = defaultValue()
+                    MutableStateFlow(default)
+                        .also { stateFlowMap[key] = WeakReference(it) }
+                        .also { created = true }
+                }
         }
             .also {
                 if (created) {
-                    onCreate()
+                    onCreate(default)
                 }
             }
     }
 
     /**
      * Gets a batch of [StateFlow]s tracking the values associated with the given [keys] in a single atomic operation,
-     * creating them with null values if not present in the map.
+     * creating them with the defaults from [defaultValue] if not present in the map (or if they have been garbage
+     * collected).
      *
      * The returned list has the same size and is in the same order as [keys].
      *
-     * If any new [StateFlow]s are created, [onCreate] is called with the subset of keys for which they have been
-     * created.
+     * If any new [StateFlow]s are created, [onCreate] is called with a map from the subset of keys for which they have
+     * been created to the default values used for each.
      */
-    fun getOrCreateStateFlows(keys: Iterable<K>, onCreate: (Set<K>) -> Unit = {}): List<StateFlow<V?>> {
-        val created = mutableSetOf<K>()
+    fun getOrCreateStateFlows(
+        keys: Iterable<K>,
+        defaultValue: (K) -> V? = { null },
+        onCreate: (Map<K, V?>) -> Unit = {},
+    ): List<StateFlow<V?>> {
+        val created = mutableMapOf<K, V?>()
         return synchronized(stateFlowMap) {
             keys.map { key ->
                 stateFlowMap[key]?.get()
-                    ?: MutableStateFlow<V?>(null)
-                        .also { stateFlowMap[key] = WeakReference(it) }
-                        .also { created.add(key) }
+                    ?: run {
+                        val default = defaultValue(key)
+                        MutableStateFlow(default)
+                            .also { stateFlowMap[key] = WeakReference(it) }
+                            .also { created[key] = default }
+                    }
             }
         }
             .also {
