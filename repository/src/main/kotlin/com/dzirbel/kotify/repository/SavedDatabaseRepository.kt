@@ -3,6 +3,7 @@ package com.dzirbel.kotify.repository
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.repository.global.GlobalUpdateTimesRepository
+import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.util.plusOrMinus
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.CoroutineScope
@@ -12,13 +13,12 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.exposed.sql.deleteAll
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * A [SavedRepository] which uses a database table [savedEntityTable] as its local cache for individual saved states an
- * the [GlobalUpdateTimesRepository] via [libraryUpdateKey] for the library update time.
+ * the [GlobalUpdateTimesRepository] via [baseLibraryUpdateKey] for the library update time.
  */
 abstract class SavedDatabaseRepository<SavedNetworkType>(
     /**
@@ -26,12 +26,15 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
      */
     private val entityName: String,
     private val savedEntityTable: SavedEntityTable,
-    private val libraryUpdateKey: String = savedEntityTable.tableName,
+    private val baseLibraryUpdateKey: String = savedEntityTable.tableName,
 ) : SavedRepository() {
     private val libraryStateInitialized = AtomicBoolean(false)
 
     private val libraryFlow: MutableStateFlow<Set<String>?> = MutableStateFlow(null)
     private val libraryUpdatedFlow: MutableStateFlow<Instant?> = MutableStateFlow(null)
+
+    private val currentUserLibraryUpdateKey: String
+        get() = "$baseLibraryUpdateKey-${requireNotNull(UserRepository.currentUserId.cached)}"
 
     private val events = MutableSharedFlow<Event>()
 
@@ -92,17 +95,20 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
     override suspend fun savedTimeCached(id: String): Instant? {
         return KotifyDatabase.transaction("check saved time for $entityName $id") {
-            savedEntityTable.savedTime(entityId = id)
+            savedEntityTable.savedTime(entityId = id, userId = requireNotNull(UserRepository.currentUserId.cached))
         }
     }
 
     final override suspend fun getCached(ids: Iterable<String>): List<Boolean?> {
         return KotifyDatabase.transaction("check saved state for ${ids.count()} ${entityName}s") {
-            val hasFetchedLibrary = GlobalUpdateTimesRepository.hasBeenUpdated(libraryUpdateKey)
+            val hasFetchedLibrary = GlobalUpdateTimesRepository.hasBeenUpdated(currentUserLibraryUpdateKey)
             // if we've fetched the entire library, then any saved entity not present in the table is unsaved (or was
             // when the library was fetched)
             val default = if (hasFetchedLibrary) false else null
-            ids.map { id -> savedEntityTable.isSaved(entityId = id) ?: default }
+            ids.map { id ->
+                savedEntityTable.isSaved(entityId = id, userId = requireNotNull(UserRepository.currentUserId.cached))
+                    ?: default
+            }
         }
             .also { results ->
                 val queryEvents = ids.zip(results) { id, result ->
@@ -116,7 +122,13 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         val saved = fetchIsSaved(ids = listOf(id)).first()
 
         KotifyDatabase.transaction("set saved state for $entityName $id") {
-            savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = null)
+            savedEntityTable.setSaved(
+                entityId = id,
+                userId = requireNotNull(UserRepository.currentUserId.cached),
+                saved = saved,
+                savedTime = null,
+                savedCheckTime = Instant.now(),
+            )
         }
 
         updateLiveState(id = id, value = saved)
@@ -134,7 +146,13 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
         KotifyDatabase.transaction("set saved state for ${ids.size} ${entityName}s") {
             ids.zipEach(saveds) { id, saved ->
-                savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = null)
+                savedEntityTable.setSaved(
+                    entityId = id,
+                    userId = requireNotNull(UserRepository.currentUserId.cached),
+                    saved = saved,
+                    savedTime = null,
+                    savedCheckTime = Instant.now(),
+                )
             }
         }
 
@@ -164,7 +182,15 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
         pushSaved(ids = ids, saved = saved)
 
         KotifyDatabase.transaction("set saved state for ${ids.size} ${entityName}s") {
-            ids.forEach { id -> savedEntityTable.setSaved(entityId = id, saved = saved, savedTime = Instant.now()) }
+            ids.forEach { id ->
+                savedEntityTable.setSaved(
+                    entityId = id,
+                    userId = requireNotNull(UserRepository.currentUserId.cached),
+                    saved = saved,
+                    savedTime = Instant.now(),
+                    savedCheckTime = Instant.now(),
+                )
+            }
         }
 
         ids.forEach { id ->
@@ -178,7 +204,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
     final override suspend fun libraryUpdated(): Instant? {
         return KotifyDatabase.transaction("check $entityName saved library updated time") {
-            GlobalUpdateTimesRepository.updated(libraryUpdateKey)
+            GlobalUpdateTimesRepository.updated(currentUserLibraryUpdateKey)
         }
             .also { libraryUpdatedFlow.value = it }
     }
@@ -190,7 +216,7 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
     final override suspend fun invalidateLibrary() {
         KotifyDatabase.transaction("invalidate $entityName saved library") {
-            GlobalUpdateTimesRepository.invalidate(libraryUpdateKey)
+            GlobalUpdateTimesRepository.invalidate(currentUserLibraryUpdateKey)
         }
         libraryUpdatedFlow.value = null
 
@@ -200,8 +226,10 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     final override suspend fun getLibraryCached(): Set<String>? {
         var updatedTime: Instant? = null
         return KotifyDatabase.transaction("load $entityName saved library") {
-            updatedTime = GlobalUpdateTimesRepository.updated(libraryUpdateKey)
-            updatedTime?.let { savedEntityTable.savedEntityIds() }
+            updatedTime = GlobalUpdateTimesRepository.updated(currentUserLibraryUpdateKey)
+            updatedTime?.let {
+                savedEntityTable.savedEntityIds(userId = requireNotNull(UserRepository.currentUserId.cached))
+            }
         }
             .also { library ->
                 libraryStateInitialized.set(true)
@@ -216,20 +244,33 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
     final override suspend fun getLibraryRemote(): Set<String> {
         val savedNetworkModels = fetchLibrary()
         val updateTime = Instant.now()
+        val userId = requireNotNull(UserRepository.currentUserId.cached)
         return KotifyDatabase.transaction("save $entityName saved library") {
-            GlobalUpdateTimesRepository.setUpdated(libraryUpdateKey, updateTime = updateTime)
+            GlobalUpdateTimesRepository.setUpdated(currentUserLibraryUpdateKey, updateTime = updateTime)
 
-            val cachedLibrary = savedEntityTable.savedEntityIds()
+            val cachedLibrary = savedEntityTable.savedEntityIds(userId = userId)
             val remoteLibrary = savedNetworkModels.mapNotNullTo(mutableSetOf()) { from(it) }
 
             // remove saved records for entities which are no longer saved
             cachedLibrary.minus(remoteLibrary).forEach { id ->
-                savedEntityTable.setSaved(entityId = id, savedTime = null, saved = false)
+                savedEntityTable.setSaved(
+                    entityId = id,
+                    userId = userId,
+                    saved = false,
+                    savedTime = null,
+                    savedCheckTime = Instant.now(),
+                )
             }
 
             // add saved records for entities which are now saved
             remoteLibrary.minus(cachedLibrary).forEach { id ->
-                savedEntityTable.setSaved(entityId = id, savedTime = null, saved = true)
+                savedEntityTable.setSaved(
+                    entityId = id,
+                    userId = userId,
+                    saved = true,
+                    savedTime = null,
+                    savedCheckTime = Instant.now(),
+                )
             }
 
             remoteLibrary
@@ -243,16 +284,6 @@ abstract class SavedDatabaseRepository<SavedNetworkType>(
 
                 events.emit(Event.QueryLibraryRemote(library = library))
             }
-    }
-
-    final override suspend fun invalidateAll() {
-        KotifyDatabase.transaction("invalidate $entityName saved library and entities") {
-            GlobalUpdateTimesRepository.invalidate(libraryUpdateKey)
-            savedEntityTable.deleteAll()
-        }
-        libraryFlow.value = null
-        libraryUpdatedFlow.value = null
-        clearStates()
     }
 
     override fun clearStates() {

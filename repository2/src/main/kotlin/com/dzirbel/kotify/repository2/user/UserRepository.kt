@@ -99,8 +99,8 @@ object UserRepository : DatabaseEntityRepository<User, SpotifyUser>(User) {
             _currentUserId.value = null
             _currentUser.value = null
 
-            savedRepositories.forEach { it.invalidateAll() }
-            savedRepositories2.forEach { it.invalidate() }
+            savedRepositories.forEach { it.clearStates() }
+            savedRepositories2.forEach { it.invalidateUser() }
 
             KotifyDatabase.transaction("clear current user id") {
                 UserTable.CurrentUserTable.clear()

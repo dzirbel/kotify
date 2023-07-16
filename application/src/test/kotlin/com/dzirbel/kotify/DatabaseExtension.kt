@@ -35,6 +35,6 @@ class DatabaseExtension : BeforeAllCallback, AfterEachCallback {
     override fun afterEach(context: ExtensionContext) {
         KotifyDatabase.deleteAll()
         savedRepositories.forEach { it.clearStates() }
-        savedRepositories2.forEach { it.clearStates() }
+        savedRepositories2.forEach { it.invalidateUser() }
     }
 }

@@ -17,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.time.Instant
 
+// TODO test multiple users
 internal class SavedEntityTableTest {
     private object TestSavedEntityTable : SavedEntityTable(name = "test_saved_entities")
 
@@ -33,23 +34,25 @@ internal class SavedEntityTableTest {
     @Test
     fun `empty table`() {
         KotifyDatabase.blockingTransaction {
-            assertThat(TestSavedEntityTable.isSaved("id")).isNull()
-            assertThat(TestSavedEntityTable.savedTime("id")).isNull()
-            assertThat(TestSavedEntityTable.savedCheckTime("id")).isNull()
-            assertThat(TestSavedEntityTable.savedEntityIds()).isEmpty()
+            assertThat(TestSavedEntityTable.isSaved("id", "user")).isNull()
+            assertThat(TestSavedEntityTable.savedTime("id", "user")).isNull()
+            assertThat(TestSavedEntityTable.savedCheckTime("id", "user")).isNull()
+            assertThat(TestSavedEntityTable.savedEntityIds("user")).isEmpty()
         }
     }
 
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
     fun `set and get saved state with known savedTime`(saved: Boolean) {
-        val id = "id"
+        val entityId = "id"
+        val userId = "user"
         val savedTime = Instant.ofEpochMilli(1)
         val savedCheckTime = Instant.ofEpochMilli(2)
 
         KotifyDatabase.blockingTransaction {
             TestSavedEntityTable.setSaved(
-                entityId = id,
+                entityId = entityId,
+                userId = userId,
                 saved = saved,
                 savedTime = savedTime,
                 savedCheckTime = savedCheckTime,
@@ -57,24 +60,26 @@ internal class SavedEntityTableTest {
         }
 
         KotifyDatabase.blockingTransaction {
-            assertThat(TestSavedEntityTable.isSaved(id)).isNotNull().isEqualTo(saved)
+            assertThat(TestSavedEntityTable.isSaved(entityId, userId)).isNotNull().isEqualTo(saved)
             // savedTime is null if not saved
-            assertThat(TestSavedEntityTable.savedTime(id)).isEqualTo(savedTime.takeIf { saved })
-            assertThat(TestSavedEntityTable.savedCheckTime(id)).isNotNull().isEqualTo(savedCheckTime)
-            assertThat(TestSavedEntityTable.savedEntityIds())
-                .containsExactlyElementsOfInAnyOrder(if (saved) setOf(id) else emptySet())
+            assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isEqualTo(savedTime.takeIf { saved })
+            assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime)
+            assertThat(TestSavedEntityTable.savedEntityIds(userId))
+                .containsExactlyElementsOfInAnyOrder(if (saved) setOf(entityId) else emptySet())
         }
     }
 
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
     fun `set and get saved state with unknown savedTime`(saved: Boolean) {
-        val id = "id"
+        val entityId = "id"
+        val userId = "user"
         val savedCheckTime = Instant.ofEpochMilli(1)
 
         KotifyDatabase.blockingTransaction {
             TestSavedEntityTable.setSaved(
-                entityId = id,
+                entityId = entityId,
+                userId = userId,
                 saved = saved,
                 savedTime = null,
                 savedCheckTime = savedCheckTime,
@@ -82,24 +87,26 @@ internal class SavedEntityTableTest {
         }
 
         KotifyDatabase.blockingTransaction {
-            assertThat(TestSavedEntityTable.isSaved(id)).isNotNull().isEqualTo(saved)
-            assertThat(TestSavedEntityTable.savedTime(id)).isNull()
-            assertThat(TestSavedEntityTable.savedCheckTime(id)).isNotNull().isEqualTo(savedCheckTime)
-            assertThat(TestSavedEntityTable.savedEntityIds())
-                .containsExactlyElementsOfInAnyOrder(if (saved) setOf(id) else emptySet())
+            assertThat(TestSavedEntityTable.isSaved(entityId, userId)).isNotNull().isEqualTo(saved)
+            assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isNull()
+            assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime)
+            assertThat(TestSavedEntityTable.savedEntityIds(userId))
+                .containsExactlyElementsOfInAnyOrder(if (saved) setOf(entityId) else emptySet())
         }
     }
 
     @Test
     fun `update saved state with known savedTime`() {
-        val id = "id"
+        val entityId = "id"
+        val userId = "user"
         val savedTime = Instant.ofEpochMilli(1)
         val savedCheckTime1 = Instant.ofEpochMilli(2)
         val savedCheckTime2 = Instant.ofEpochMilli(3)
 
         KotifyDatabase.blockingTransaction {
             TestSavedEntityTable.setSaved(
-                entityId = id,
+                entityId = entityId,
+                userId = userId,
                 saved = false,
                 savedTime = null,
                 savedCheckTime = savedCheckTime1,
@@ -107,12 +114,13 @@ internal class SavedEntityTableTest {
         }
 
         KotifyDatabase.blockingTransaction {
-            assertThat(TestSavedEntityTable.isSaved(id)).isNotNull().isFalse()
+            assertThat(TestSavedEntityTable.isSaved(entityId, userId)).isNotNull().isFalse()
         }
 
         KotifyDatabase.blockingTransaction {
             TestSavedEntityTable.setSaved(
-                entityId = id,
+                entityId = entityId,
+                userId = userId,
                 saved = true,
                 savedTime = savedTime,
                 savedCheckTime = savedCheckTime2,
@@ -120,24 +128,26 @@ internal class SavedEntityTableTest {
         }
 
         KotifyDatabase.blockingTransaction {
-            assertThat(TestSavedEntityTable.isSaved(id)).isNotNull().isTrue()
+            assertThat(TestSavedEntityTable.isSaved(entityId, userId)).isNotNull().isTrue()
             // savedTime is null if not saved
-            assertThat(TestSavedEntityTable.savedTime(id)).isEqualTo(savedTime)
-            assertThat(TestSavedEntityTable.savedCheckTime(id)).isNotNull().isEqualTo(savedCheckTime2)
-            assertThat(TestSavedEntityTable.savedEntityIds()).containsExactlyInAnyOrder(id)
+            assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isEqualTo(savedTime)
+            assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime2)
+            assertThat(TestSavedEntityTable.savedEntityIds(userId)).containsExactlyInAnyOrder(entityId)
         }
     }
 
     @Test
     fun `update saved state with unknown savedTime`() {
-        val id = "id"
+        val entityId = "id"
+        val userId = "user"
         val savedTime = Instant.ofEpochMilli(1)
-        val savedCheckTime1 = Instant.ofEpochMilli(1)
-        val savedCheckTime2 = Instant.ofEpochMilli(2)
+        val savedCheckTime1 = Instant.ofEpochMilli(2)
+        val savedCheckTime2 = Instant.ofEpochMilli(3)
 
         KotifyDatabase.blockingTransaction {
             TestSavedEntityTable.setSaved(
-                entityId = id,
+                entityId = entityId,
+                userId = userId,
                 saved = false,
                 savedTime = savedTime,
                 savedCheckTime = savedCheckTime1,
@@ -145,12 +155,13 @@ internal class SavedEntityTableTest {
         }
 
         KotifyDatabase.blockingTransaction {
-            assertThat(TestSavedEntityTable.isSaved(id)).isNotNull().isFalse()
+            assertThat(TestSavedEntityTable.isSaved(entityId, userId)).isNotNull().isFalse()
         }
 
         KotifyDatabase.blockingTransaction {
             TestSavedEntityTable.setSaved(
-                entityId = id,
+                entityId = entityId,
+                userId = userId,
                 saved = true,
                 savedTime = null,
                 savedCheckTime = savedCheckTime2,
@@ -158,23 +169,26 @@ internal class SavedEntityTableTest {
         }
 
         KotifyDatabase.blockingTransaction {
-            assertThat(TestSavedEntityTable.isSaved(id)).isNotNull().isTrue()
+            assertThat(TestSavedEntityTable.isSaved(entityId, userId)).isNotNull().isTrue()
             // savedTime is null if not saved
-            assertThat(TestSavedEntityTable.savedTime(id)).isNull()
-            assertThat(TestSavedEntityTable.savedCheckTime(id)).isNotNull().isEqualTo(savedCheckTime2)
-            assertThat(TestSavedEntityTable.savedEntityIds()).containsExactlyInAnyOrder(id)
+            assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isNull()
+            assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime2)
+            assertThat(TestSavedEntityTable.savedEntityIds(userId)).containsExactlyInAnyOrder(entityId)
         }
     }
 
     @Test
     fun `batch set and update saved states`() {
-        val ids = listOf("id1", "id2", "id3")
-        val savedCheckTime1 = Instant.ofEpochMilli(1)
-        val savedCheckTime2 = Instant.ofEpochMilli(2)
+        val entityIds = listOf("id1", "id2", "id3")
+        val userId = "user"
+        val savedTime = Instant.ofEpochMilli(1)
+        val savedCheckTime1 = Instant.ofEpochMilli(2)
+        val savedCheckTime2 = Instant.ofEpochMilli(3)
 
         KotifyDatabase.blockingTransaction {
             TestSavedEntityTable.setSaved(
-                entityId = ids.first(),
+                entityId = entityIds.first(),
+                userId = userId,
                 saved = false,
                 savedTime = null,
                 savedCheckTime = savedCheckTime1,
@@ -182,20 +196,26 @@ internal class SavedEntityTableTest {
         }
 
         KotifyDatabase.blockingTransaction {
-            assertThat(TestSavedEntityTable.isSaved(ids.first())).isNotNull().isFalse()
+            assertThat(TestSavedEntityTable.isSaved(entityIds.first(), userId)).isNotNull().isFalse()
         }
 
         KotifyDatabase.blockingTransaction {
-            TestSavedEntityTable.setSaved(entityIds = ids, saved = true, savedCheckTime = savedCheckTime2)
+            TestSavedEntityTable.setSaved(
+                entityIds = entityIds,
+                userId = userId,
+                saved = true,
+                savedTime = savedTime,
+                savedCheckTime = savedCheckTime2,
+            )
         }
 
         KotifyDatabase.blockingTransaction {
-            for (id in ids) {
-                assertThat(TestSavedEntityTable.isSaved(id)).isNotNull().isTrue()
-                assertThat(TestSavedEntityTable.savedTime(id)).isNull()
-                assertThat(TestSavedEntityTable.savedCheckTime(id)).isNotNull().isEqualTo(savedCheckTime2)
+            for (id in entityIds) {
+                assertThat(TestSavedEntityTable.isSaved(id, userId)).isNotNull().isTrue()
+                assertThat(TestSavedEntityTable.savedTime(id, userId)).isNotNull().isEqualTo(savedTime)
+                assertThat(TestSavedEntityTable.savedCheckTime(id, userId)).isNotNull().isEqualTo(savedCheckTime2)
             }
-            assertThat(TestSavedEntityTable.savedEntityIds()).containsExactlyElementsOfInAnyOrder(ids)
+            assertThat(TestSavedEntityTable.savedEntityIds(userId)).containsExactlyElementsOfInAnyOrder(entityIds)
         }
     }
 }
