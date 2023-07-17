@@ -9,18 +9,23 @@ import com.dzirbel.kotify.network.model.PrivateSpotifyUser
 import com.dzirbel.kotify.network.model.SpotifyUser
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.repository.savedRepositories
-import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository2.CacheState
 import com.dzirbel.kotify.repository2.DatabaseEntityRepository
 import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.repository2.savedRepositories2
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
 
-object UserRepository : DatabaseEntityRepository<User, SpotifyUser>(User) {
+open class UserRepository internal constructor(
+    private val applicationScope: CoroutineScope,
+    private val userSessionScope: CoroutineScope,
+) : DatabaseEntityRepository<User, SpotifyUser>(entityClass = User, scope = applicationScope) {
+
     private val _currentUserId = MutableStateFlow<String?>(null)
     val currentUserId: StateFlow<String?>
         get() = _currentUserId
@@ -59,7 +64,7 @@ object UserRepository : DatabaseEntityRepository<User, SpotifyUser>(User) {
     fun ensureCurrentUserLoaded() {
         if (currentUser.value?.cachedValue != null) return
 
-        Repository.scope.launch {
+        userSessionScope.launch {
             val cachedUser = currentUserId.value?.let { userId ->
                 KotifyDatabase.transaction("load current user") { fetchFromDatabase(userId)?.first }
             }
@@ -92,7 +97,9 @@ object UserRepository : DatabaseEntityRepository<User, SpotifyUser>(User) {
     }
 
     fun signOut() {
-        Repository.scope.launch {
+        applicationScope.launch {
+            Repository.userSessionScope.coroutineContext.cancelChildren()
+
             // clear access token first to immediately show unauthenticated screen
             AccessToken.Cache.clear()
 
@@ -101,6 +108,8 @@ object UserRepository : DatabaseEntityRepository<User, SpotifyUser>(User) {
 
             savedRepositories.forEach { it.clearStates() }
             savedRepositories2.forEach { it.invalidateUser() }
+
+            // TODO also reset Player state
 
             KotifyDatabase.transaction("clear current user id") {
                 UserTable.CurrentUserTable.clear()
@@ -114,9 +123,14 @@ object UserRepository : DatabaseEntityRepository<User, SpotifyUser>(User) {
             UserTable.CurrentUserTable.set(user.id)
 
             // ensure legacy repository has updated value
-            UserRepository.currentUserId.loadToCache()
+            com.dzirbel.kotify.repository.user.UserRepository.currentUserId.loadToCache()
 
             convert(id = user.id, networkModel = user)
         }
     }
+
+    companion object : UserRepository(
+        applicationScope = Repository.applicationScope,
+        userSessionScope = Repository.userSessionScope,
+    )
 }

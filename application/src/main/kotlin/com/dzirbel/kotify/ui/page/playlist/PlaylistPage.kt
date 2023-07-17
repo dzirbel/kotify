@@ -220,7 +220,7 @@ private fun PlaylistReorderButton(
         enabled = enabled && reorderState.value == null,
         onClick = {
             // TODO prevent sort changes while reordering?
-            Repository.scope.launch {
+            Repository.applicationScope.launch {
                 reorder()
                     .onCompletion {
                         reorderState.value = null

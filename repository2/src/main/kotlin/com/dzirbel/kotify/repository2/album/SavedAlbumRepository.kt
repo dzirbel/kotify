@@ -5,12 +5,16 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository2.DatabaseSavedRepository
+import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.util.flatMapParallel
 import com.dzirbel.kotify.util.parseInstantOrNull
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import java.time.Instant
 
-object SavedAlbumRepository : DatabaseSavedRepository<SpotifySavedAlbum>(AlbumTable.SavedAlbumsTable) {
+open class SavedAlbumRepository internal constructor(scope: CoroutineScope) :
+    DatabaseSavedRepository<SpotifySavedAlbum>(savedEntityTable = AlbumTable.SavedAlbumsTable, scope = scope) {
+
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
         return ids.chunked(size = Spotify.MAX_LIMIT).flatMapParallel { chunk ->
             Spotify.Library.checkAlbums(ids = chunk)
@@ -30,4 +34,6 @@ object SavedAlbumRepository : DatabaseSavedRepository<SpotifySavedAlbum>(AlbumTa
         AlbumRepository.convert(id = album.id, networkModel = album)
         return album.id to parseInstantOrNull(savedNetworkType.addedAt)
     }
+
+    companion object : SavedAlbumRepository(scope = Repository.userSessionScope)
 }

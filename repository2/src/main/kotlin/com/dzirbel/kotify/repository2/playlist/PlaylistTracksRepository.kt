@@ -7,17 +7,19 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository2.DatabaseRepository
+import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.repository2.track.TrackRepository
 import com.dzirbel.kotify.repository2.user.UserRepository
 import com.dzirbel.kotify.repository2.util.ReorderCalculator
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.sql.update
 import java.time.Instant
 
-object PlaylistTracksRepository :
-    DatabaseRepository<List<PlaylistTrack>, List<SpotifyPlaylistTrack>>(entityName = "playlist tracks") {
+open class PlaylistTracksRepository internal constructor(scope: CoroutineScope) :
+    DatabaseRepository<List<PlaylistTrack>, List<SpotifyPlaylistTrack>>(entityName = "playlist tracks", scope = scope) {
 
     sealed interface PlaylistReorderState {
         /**
@@ -120,4 +122,6 @@ object PlaylistTracksRepository :
                 }
             }
     }
+
+    companion object : PlaylistTracksRepository(scope = Repository.applicationScope)
 }

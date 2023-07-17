@@ -6,11 +6,15 @@ import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository2.DatabaseSavedRepository
+import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.util.mapParallel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import java.time.Instant
 
-object SavedPlaylistRepository : DatabaseSavedRepository<SpotifyPlaylist>(PlaylistTable.SavedPlaylistsTable) {
+open class SavedPlaylistRepository internal constructor(scope: CoroutineScope) :
+    DatabaseSavedRepository<SpotifyPlaylist>(savedEntityTable = PlaylistTable.SavedPlaylistsTable, scope = scope) {
+
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
         val userId = requireNotNull(UserRepository.currentUserId.cached) { "no logged-in user" }
 
@@ -36,4 +40,6 @@ object SavedPlaylistRepository : DatabaseSavedRepository<SpotifyPlaylist>(Playli
         PlaylistRepository.convert(id = savedNetworkType.id, networkModel = savedNetworkType)
         return savedNetworkType.id to null
     }
+
+    companion object : SavedPlaylistRepository(scope = Repository.userSessionScope)
 }

@@ -1,9 +1,11 @@
 package com.dzirbel.kotify.network.model
 
 import com.dzirbel.kotify.network.Spotify
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
+import kotlin.coroutines.coroutineContext
 
 /**
  * An abstract wrapper around [Paging] and [CursorPaging] for convenience to provide common paging functions.
@@ -28,6 +30,7 @@ inline fun <T, reified P : Pageable<T>> P.asFlow(
         var paging: Pageable<T>? = this@asFlow
 
         while (paging != null) {
+            coroutineContext.ensureActive()
             paging.items.forEach { emit(it) }
             paging = paging.next?.let { fetchNext(it) }
         }

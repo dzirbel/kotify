@@ -7,6 +7,7 @@ import com.dzirbel.kotify.repository2.user.UserRepository
 import com.dzirbel.kotify.repository2.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.util.combineState
 import com.dzirbel.kotify.util.zipEach
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.Max
@@ -21,12 +22,16 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 
 // TODO unit test
-object TrackRatingRepository : RatingRepository {
+open class TrackRatingRepository internal constructor(
+    private val applicationScope: CoroutineScope,
+    private val userSessionScope: CoroutineScope,
+) : RatingRepository {
+
     private val states = SynchronizedWeakStateFlowMap<String, Rating>()
 
     override fun ratingStateOf(id: String): StateFlow<Rating?> {
         return states.getOrCreateStateFlow(key = id) {
-            Repository.scope.launch {
+            userSessionScope.launch {
                 val rating = lastRatingOf(id = id)
                 states.updateValue(id, rating)
             }
@@ -35,7 +40,7 @@ object TrackRatingRepository : RatingRepository {
 
     override fun ratingStatesOf(ids: Iterable<String>): List<StateFlow<Rating?>> {
         return states.getOrCreateStateFlows(keys = ids) { creations ->
-            Repository.scope.launch {
+            userSessionScope.launch {
                 val createdIdsList = creations.keys.toList()
                 val ratings = lastRatingsOf(ids = createdIdsList)
                 createdIdsList.zipEach(ratings) { id, rating ->
@@ -52,11 +57,11 @@ object TrackRatingRepository : RatingRepository {
     }
 
     override fun rate(id: String, rating: Rating?) {
-        Repository.scope.launch {
+        val userId = UserRepository.requireCurrentUserId
+        applicationScope.launch {
             // assumes the new rating is always newer than the most recent one in the DB (unlike old implementation)
             states.updateValue(id, rating)
 
-            val userId = UserRepository.requireCurrentUserId
             if (rating == null) {
                 // TODO just add a null rating on top rather than clearing history?
                 KotifyDatabase.transaction("clear rating for track id $id") {
@@ -87,8 +92,8 @@ object TrackRatingRepository : RatingRepository {
     }
 
     override fun clearAllRatings(userId: String?) {
-        Repository.scope.launch {
-            KotifyDatabase.transaction("clear ratings for user $userId") {
+        applicationScope.launch {
+            KotifyDatabase.transaction(userId?.let { "clear ratings for user $userId" } ?: "clear all ratings") {
                 if (userId == null) {
                     TrackRatingTable.deleteAll()
                 } else {
@@ -97,8 +102,12 @@ object TrackRatingRepository : RatingRepository {
             }
 
             if (userId == null || userId == UserRepository.requireCurrentUserId) {
-                states.computeAll { null } // clear values from StateFlows
-                states.clear() // not strictly necessary, but might as well clear the map
+                // clear values from StateFlows (necessary even with the clear() to update external references to the
+                // StateFlows)
+                states.computeAll { null }
+
+                // not strictly necessary, but might as well clear the map
+                states.clear()
             }
         }
     }
@@ -141,4 +150,9 @@ object TrackRatingRepository : RatingRepository {
             rateTime = this[TrackRatingTable.rateTime],
         )
     }
+
+    companion object : TrackRatingRepository(
+        applicationScope = Repository.applicationScope,
+        userSessionScope = Repository.userSessionScope,
+    )
 }

@@ -6,6 +6,7 @@ import com.dzirbel.kotify.repository2.util.midpointInstantToNow
 import com.dzirbel.kotify.util.mapParallel
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -13,8 +14,10 @@ import java.time.Instant
 import kotlin.time.TimeSource
 
 // TODO expose a different type than the DB model?
-abstract class DatabaseRepository<DatabaseType, NetworkType>(protected val entityName: String) :
-    Repository<DatabaseType> {
+abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructor(
+    protected val entityName: String,
+    protected val scope: CoroutineScope,
+) : Repository<DatabaseType> {
 
     private val states = SynchronizedWeakStateFlowMap<String, CacheState<DatabaseType>>()
 
@@ -66,7 +69,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType>(protected val entit
         cacheStrategy: CacheStrategy<DatabaseType>,
     ): StateFlow<CacheState<DatabaseType>?> {
         return states.getOrCreateStateFlow(id) {
-            Repository.scope.launch { load(id = id, cacheStrategy = cacheStrategy) }
+            scope.launch { load(id = id, cacheStrategy = cacheStrategy) }
         }
     }
 
@@ -75,12 +78,12 @@ abstract class DatabaseRepository<DatabaseType, NetworkType>(protected val entit
         cacheStrategy: CacheStrategy<DatabaseType>,
     ): List<StateFlow<CacheState<DatabaseType>?>> {
         return states.getOrCreateStateFlows(keys = ids) { creations ->
-            Repository.scope.launch { load(ids = creations.keys, cacheStrategy = cacheStrategy) }
+            scope.launch { load(ids = creations.keys, cacheStrategy = cacheStrategy) }
         }
     }
 
     final override fun refreshFromRemote(id: String): Job {
-        return Repository.scope.launch { load(id = id, cacheStrategy = CacheStrategy.NeverValid()) }
+        return scope.launch { load(id = id, cacheStrategy = CacheStrategy.NeverValid()) }
     }
 
     /**

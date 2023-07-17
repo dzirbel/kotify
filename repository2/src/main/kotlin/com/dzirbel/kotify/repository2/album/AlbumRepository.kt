@@ -10,13 +10,17 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.repository2.DatabaseEntityRepository
+import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.util.flatMapParallel
+import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
 // most batched calls have a maximum of 50; for albums the maximum is 20
 private const val MAX_ALBUM_IDS_LOOKUP = 20
 
-object AlbumRepository : DatabaseEntityRepository<Album, SpotifyAlbum>(Album) {
+open class AlbumRepository internal constructor(scope: CoroutineScope) :
+    DatabaseEntityRepository<Album, SpotifyAlbum>(entityClass = Album, scope = scope) {
+
     override suspend fun fetchFromRemote(id: String) = Spotify.Albums.getAlbum(id = id)
     override suspend fun fetchFromRemote(ids: List<String>): List<SpotifyAlbum?> {
         return ids.chunked(size = MAX_ALBUM_IDS_LOOKUP)
@@ -54,4 +58,6 @@ object AlbumRepository : DatabaseEntityRepository<Album, SpotifyAlbum>(Album) {
             }
         }
     }
+
+    companion object : AlbumRepository(scope = Repository.applicationScope)
 }

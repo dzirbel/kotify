@@ -11,6 +11,8 @@ import com.dzirbel.kotify.repository2.util.midpointInstantToNow
 import com.dzirbel.kotify.util.filterNotNullValues
 import com.dzirbel.kotify.util.plusOrMinus
 import com.dzirbel.kotify.util.zipEach
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -34,6 +36,8 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
      * augmented with the current user ID to form the full key [currentUserLibraryUpdateKey].
      */
     private val baseLibraryUpdateKey: String = savedEntityTable.tableName,
+
+    private val scope: CoroutineScope,
 ) : SavedRepository {
     private val _library = MutableStateFlow<CacheState<Set<String>>?>(null)
     override val library: StateFlow<CacheState<Set<String>>?>
@@ -81,7 +85,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     protected abstract fun convert(savedNetworkType: SavedNetworkType): Pair<String, Instant?>
 
     final override fun init() {
-        refreshLibraryLock.launch(Repository.scope) {
+        refreshLibraryLock.launch(scope) {
             getLibraryCached()
         }
     }
@@ -94,7 +98,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             },
             onCreate = { default ->
                 if (default == null) {
-                    Repository.scope.launch {
+                    scope.launch {
                         val cached = try {
                             KotifyDatabase.transaction("load save state of $id") {
                                 savedEntityTable.isSaved(entityId = id, userId = UserRepository.requireCurrentUserId)
@@ -136,7 +140,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             onCreate = { creations ->
                 val missingIds = creations.filterNotNullValues().keys
                 if (missingIds.isNotEmpty()) {
-                    Repository.scope.launch {
+                    scope.launch {
                         val cached = try {
                             KotifyDatabase.transaction("load save states of ${missingIds.size} ${entityName}s") {
                                 missingIds.map { id ->
@@ -190,7 +194,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     }
 
     final override fun refreshLibrary() {
-        refreshLibraryLock.launch(Repository.scope) {
+        refreshLibraryLock.launch(scope) {
             _library.value = CacheState.Refreshing(
                 cachedValue = _library.value?.cachedValue,
                 cacheTime = _library.value?.cacheTime,
@@ -203,7 +207,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         val saveTime = Instant.now()
 
         // TODO prevent concurrent updates to saved state for the same id
-        Repository.scope.launch {
+        scope.launch {
             savedStates.updateValue(id, ToggleableState.TogglingTo(saved))
 
             try {
@@ -224,6 +228,8 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                 )
             }
 
+            ensureActive()
+
             savedStates.updateValue(id, ToggleableState.Set(saved))
             val libraryCacheState = _library.value
             if (libraryCacheState is CacheState.Loaded) {
@@ -237,7 +243,6 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     final override fun invalidateUser() {
         _library.value = null
         savedStates.clear()
-        // TODO cancel any refreshes on refreshLibraryLock
     }
 
     // TODO catch and log exceptions

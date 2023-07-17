@@ -1,8 +1,7 @@
 package com.dzirbel.kotify.repository2
 
-import com.dzirbel.kotify.repository.Repository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 
@@ -55,22 +54,17 @@ interface Repository<T> {
 
     companion object {
         /**
-         * The [CoroutineScope] under which [Repository] (and [SavedRepository], etc) operations are run.
-         *
-         * Since repositories exist outside the scope of any particular UI element and their operations should not be
-         * tied to them, this is typically the [GlobalScope]. For example, if navigating away from a page while its
-         * content is still loading, this should not cancel the loading operation in case it can be used later (e.g. if
-         * the user navigates to that page again).
-         *
-         * TODO automatically restrict scope to test execution in unit tests instead of [withRepositoryScope]
+         * The default [CoroutineScope] used for repository actions which should persist as long as the application,
+         * e.g. fetching a resource which could be used on multiple screens.
          */
-        var scope: CoroutineScope = GlobalScope
-            private set
+        val applicationScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
-        internal suspend fun withRepositoryScope(scope: CoroutineScope, block: suspend () -> Unit) {
-            this.scope = scope
-            block()
-            this.scope = GlobalScope
-        }
+        /**
+         * The default [CoroutineScope] used for repository actions which should be cancelled when the current user is
+         * signed out.
+         *
+         * Should not be used when unauthenticated (i.e. the scope is not cancelled on sign in).
+         */
+        val userSessionScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
     }
 }

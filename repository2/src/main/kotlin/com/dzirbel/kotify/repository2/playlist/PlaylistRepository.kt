@@ -7,10 +7,14 @@ import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.repository2.DatabaseEntityRepository
+import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.repository2.user.UserRepository
+import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
-object PlaylistRepository : DatabaseEntityRepository<Playlist, SpotifyPlaylist>(Playlist) {
+open class PlaylistRepository internal constructor(scope: CoroutineScope) :
+    DatabaseEntityRepository<Playlist, SpotifyPlaylist>(entityClass = Playlist, scope = scope) {
+
     override suspend fun fetchFromRemote(id: String) = Spotify.Playlists.getPlaylist(playlistId = id)
 
     override fun convert(id: String, networkModel: SpotifyPlaylist): Playlist {
@@ -46,4 +50,6 @@ object PlaylistRepository : DatabaseEntityRepository<Playlist, SpotifyPlaylist>(
             }
         }
     }
+
+    companion object : PlaylistRepository(scope = Repository.applicationScope)
 }

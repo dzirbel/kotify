@@ -13,7 +13,6 @@ import com.dzirbel.kotify.network.SpotifyTrackPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
-import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.util.collectingToList
 import com.dzirbel.kotify.util.delayed
 import io.mockk.coEvery
@@ -22,41 +21,34 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
 // TODO finish test
 class PlayerRepositoryTest {
-    @AfterEach
-    fun cleanup() {
-        PlayerRepository.clear()
-    }
-
     @Test
     fun refreshPlayback() {
         val playback = SpotifyPlayback(track = FullSpotifyTrack(), progressMs = 10)
         coEvery { Spotify.Player.getCurrentPlayback() } delayed 1000 returns playback
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    assertPlayback(refreshing = false, playback = null)
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                repository.assertPlayback(refreshing = false, playback = null)
 
-                    PlayerRepository.refreshPlayback()
+                repository.refreshPlayback()
 
-                    assertPlayback(refreshing = false, playback = null)
+                repository.assertPlayback(refreshing = false, playback = null)
 
-                    runCurrent()
+                runCurrent()
 
-                    assertPlayback(refreshing = true, playback = null)
+                repository.assertPlayback(refreshing = true, playback = null)
 
-                    advanceUntilIdle()
+                advanceUntilIdle()
 
-                    assertPlayback(refreshing = false, playback = playback)
-                    assertThat(errors).isEmpty()
-                }
+                repository.assertPlayback(refreshing = false, playback = playback)
+                assertThat(errors).isEmpty()
             }
         }
 
@@ -68,15 +60,14 @@ class PlayerRepositoryTest {
         coEvery { Spotify.Player.getCurrentPlayback() } delayed 1000 throws CancellationException()
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    PlayerRepository.refreshPlayback()
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                repository.refreshPlayback()
 
-                    advanceUntilIdle()
+                advanceUntilIdle()
 
-                    assertPlayback(refreshing = false, playback = null)
-                    assertThat(errors).isEmpty()
-                }
+                repository.assertPlayback(refreshing = false, playback = null)
+                assertThat(errors).isEmpty()
             }
         }
 
@@ -89,15 +80,14 @@ class PlayerRepositoryTest {
         coEvery { Spotify.Player.getCurrentPlayback() } delayed 1000 throws error
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    PlayerRepository.refreshPlayback()
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                repository.refreshPlayback()
 
-                    advanceUntilIdle()
+                advanceUntilIdle()
 
-                    assertPlayback(refreshing = false, playback = null)
-                    assertThat(errors).containsExactly(error)
-                }
+                repository.assertPlayback(refreshing = false, playback = null)
+                assertThat(errors).containsExactly(error)
             }
         }
 
@@ -110,21 +100,15 @@ class PlayerRepositoryTest {
         coEvery { Spotify.Player.getCurrentPlayback() } delayed 1000 returns playback
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    launch {
-                        PlayerRepository.refreshPlayback()
-                    }
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                launch { repository.refreshPlayback() }
+                launch { repository.refreshPlayback() }
 
-                    launch {
-                        PlayerRepository.refreshPlayback()
-                    }
+                advanceUntilIdle()
 
-                    advanceUntilIdle()
-
-                    assertPlayback(refreshing = false, playback = playback)
-                    assertThat(errors).isEmpty()
-                }
+                repository.assertPlayback(refreshing = false, playback = playback)
+                assertThat(errors).isEmpty()
             }
         }
 
@@ -137,23 +121,22 @@ class PlayerRepositoryTest {
         coEvery { Spotify.Player.getCurrentlyPlayingTrack() } delayed 1000 returns trackPlayback
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    assertTrackPlayback(refreshing = false, playback = null)
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                repository.assertTrackPlayback(refreshing = false, playback = null)
 
-                    PlayerRepository.refreshTrack()
+                repository.refreshTrack()
 
-                    assertTrackPlayback(refreshing = false, playback = null)
+                repository.assertTrackPlayback(refreshing = false, playback = null)
 
-                    runCurrent()
+                runCurrent()
 
-                    assertTrackPlayback(refreshing = true, playback = null)
+                repository.assertTrackPlayback(refreshing = true, playback = null)
 
-                    advanceUntilIdle()
+                advanceUntilIdle()
 
-                    assertTrackPlayback(refreshing = false, playback = trackPlayback)
-                    assertThat(errors).isEmpty()
-                }
+                repository.assertTrackPlayback(refreshing = false, playback = trackPlayback)
+                assertThat(errors).isEmpty()
             }
         }
 
@@ -165,15 +148,14 @@ class PlayerRepositoryTest {
         coEvery { Spotify.Player.getCurrentlyPlayingTrack() } delayed 1000 throws CancellationException()
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    PlayerRepository.refreshTrack()
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                repository.refreshTrack()
 
-                    advanceUntilIdle()
+                advanceUntilIdle()
 
-                    assertTrackPlayback(refreshing = false, playback = null)
-                    assertThat(errors).isEmpty()
-                }
+                repository.assertTrackPlayback(refreshing = false, playback = null)
+                assertThat(errors).isEmpty()
             }
         }
 
@@ -186,15 +168,14 @@ class PlayerRepositoryTest {
         coEvery { Spotify.Player.getCurrentlyPlayingTrack() } delayed 1000 throws error
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    PlayerRepository.refreshTrack()
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                repository.refreshTrack()
 
-                    advanceUntilIdle()
+                advanceUntilIdle()
 
-                    assertTrackPlayback(refreshing = false, playback = null)
-                    assertThat(errors).containsExactly(error)
-                }
+                repository.assertTrackPlayback(refreshing = false, playback = null)
+                assertThat(errors).containsExactly(error)
             }
         }
 
@@ -207,21 +188,15 @@ class PlayerRepositoryTest {
         coEvery { Spotify.Player.getCurrentlyPlayingTrack() } delayed 1000 returns trackPlayback
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    launch {
-                        PlayerRepository.refreshTrack()
-                    }
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                launch { repository.refreshTrack() }
+                launch { repository.refreshTrack() }
 
-                    launch {
-                        PlayerRepository.refreshTrack()
-                    }
+                advanceUntilIdle()
 
-                    advanceUntilIdle()
-
-                    assertTrackPlayback(refreshing = false, playback = trackPlayback)
-                    assertThat(errors).isEmpty()
-                }
+                repository.assertTrackPlayback(refreshing = false, playback = trackPlayback)
+                assertThat(errors).isEmpty()
             }
         }
 
@@ -234,23 +209,22 @@ class PlayerRepositoryTest {
         coEvery { Spotify.Player.getAvailableDevices() } delayed 1000 returns devices
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    assertDevices(refreshing = false, devices = null)
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                repository.assertDevices(refreshing = false, devices = null)
 
-                    PlayerRepository.refreshDevices()
+                repository.refreshDevices()
 
-                    assertDevices(refreshing = false, devices = null)
+                repository.assertDevices(refreshing = false, devices = null)
 
-                    runCurrent()
+                runCurrent()
 
-                    assertDevices(refreshing = true, devices = null)
+                repository.assertDevices(refreshing = true, devices = null)
 
-                    advanceUntilIdle()
+                advanceUntilIdle()
 
-                    assertDevices(refreshing = false, devices = devices)
-                    assertThat(errors).isEmpty()
-                }
+                repository.assertDevices(refreshing = false, devices = devices)
+                assertThat(errors).isEmpty()
             }
         }
 
@@ -262,15 +236,14 @@ class PlayerRepositoryTest {
         coEvery { Spotify.Player.getAvailableDevices() } delayed 1000 throws CancellationException()
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    PlayerRepository.refreshDevices()
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                repository.refreshDevices()
 
-                    advanceUntilIdle()
+                advanceUntilIdle()
 
-                    assertDevices(refreshing = false, devices = null)
-                    assertThat(errors).isEmpty()
-                }
+                repository.assertDevices(refreshing = false, devices = null)
+                assertThat(errors).isEmpty()
             }
         }
 
@@ -283,15 +256,14 @@ class PlayerRepositoryTest {
         coEvery { Spotify.Player.getAvailableDevices() } delayed 1000 throws error
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    PlayerRepository.refreshDevices()
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                repository.refreshDevices()
 
-                    advanceUntilIdle()
+                advanceUntilIdle()
 
-                    assertDevices(refreshing = false, devices = null)
-                    assertThat(errors).containsExactly(error)
-                }
+                repository.assertDevices(refreshing = false, devices = null)
+                assertThat(errors).containsExactly(error)
             }
         }
 
@@ -304,46 +276,40 @@ class PlayerRepositoryTest {
         coEvery { Spotify.Player.getAvailableDevices() } delayed 1000 returns devices
 
         runTest {
-            Repository.withRepositoryScope(scope = this) {
-                collectingToList(PlayerRepository.errors) { errors ->
-                    launch {
-                        PlayerRepository.refreshDevices()
-                    }
+            val repository = PlayerRepository(scope = this)
+            collectingToList(repository.errors) { errors ->
+                launch { repository.refreshDevices() }
+                launch { repository.refreshDevices() }
 
-                    launch {
-                        PlayerRepository.refreshDevices()
-                    }
+                advanceUntilIdle()
 
-                    advanceUntilIdle()
-
-                    assertDevices(refreshing = false, devices = devices)
-                    assertThat(errors).isEmpty()
-                }
+                repository.assertDevices(refreshing = false, devices = devices)
+                assertThat(errors).isEmpty()
             }
         }
 
         coVerify(exactly = 1) { Spotify.Player.getAvailableDevices() }
     }
 
-    private fun assertPlayback(refreshing: Boolean, playback: SpotifyPlayback?) {
-        assertThat(PlayerRepository.refreshingPlayback.value).isEqualTo(refreshing)
-        assertThat(PlayerRepository.currentTrack.value).isEqualTo(playback?.item)
-        assertThat(PlayerRepository.currentDevice.value).isEqualTo(playback?.device)
+    private fun PlayerRepository.assertPlayback(refreshing: Boolean, playback: SpotifyPlayback?) {
+        assertThat(refreshingPlayback.value).isEqualTo(refreshing)
+        assertThat(currentTrack.value).isEqualTo(playback?.item)
+        assertThat(currentDevice.value).isEqualTo(playback?.device)
 
         if (playback?.progressMs != null) {
-            val trackPosition = requireNotNull(PlayerRepository.trackPosition.value) as TrackPosition.Fetched
+            val trackPosition = requireNotNull(trackPosition.value) as TrackPosition.Fetched
             assertThat(trackPosition.fetchedPositionMs.toLong()).isEqualTo(playback.progressMs)
         } else {
-            assertThat(PlayerRepository.trackPosition.value).isNull()
+            assertThat(trackPosition.value).isNull()
         }
 
-        assertThat(PlayerRepository.playing.value?.value).isEqualTo(playback?.isPlaying)
-        assertThat(PlayerRepository.shuffling.value?.value).isEqualTo(playback?.shuffleState)
-        assertThat(PlayerRepository.repeatMode.value?.value).isEqualTo(playback?.repeatState)
-        assertThat(PlayerRepository.playbackContextUri.value).isEqualTo(playback?.context?.uri)
-        assertThat(PlayerRepository.currentlyPlayingType.value).isEqualTo(playback?.currentlyPlayingType)
+        assertThat(playing.value?.value).isEqualTo(playback?.isPlaying)
+        assertThat(shuffling.value?.value).isEqualTo(playback?.shuffleState)
+        assertThat(repeatMode.value?.value).isEqualTo(playback?.repeatState)
+        assertThat(playbackContextUri.value).isEqualTo(playback?.context?.uri)
+        assertThat(currentlyPlayingType.value).isEqualTo(playback?.currentlyPlayingType)
 
-        assertThat(PlayerRepository.skipping.value).isEqualTo(
+        assertThat(skipping.value).isEqualTo(
             when {
                 playback?.actions?.skippingNext == true -> SkippingState.SKIPPING_TO_NEXT
                 playback?.actions?.skippingPrev == true -> SkippingState.SKIPPING_TO_PREVIOUS
@@ -352,24 +318,24 @@ class PlayerRepositoryTest {
         )
     }
 
-    private fun assertTrackPlayback(refreshing: Boolean, playback: SpotifyTrackPlayback?) {
-        assertThat(PlayerRepository.refreshingTrack.value).isEqualTo(refreshing)
-        assertThat(PlayerRepository.currentTrack.value).isEqualTo(playback?.item)
+    private fun PlayerRepository.assertTrackPlayback(refreshing: Boolean, playback: SpotifyTrackPlayback?) {
+        assertThat(refreshingTrack.value).isEqualTo(refreshing)
+        assertThat(currentTrack.value).isEqualTo(playback?.item)
 
         if (playback?.progressMs != null) {
-            val trackPosition = requireNotNull(PlayerRepository.trackPosition.value) as TrackPosition.Fetched
+            val trackPosition = requireNotNull(trackPosition.value) as TrackPosition.Fetched
             assertThat(trackPosition.fetchedPositionMs.toLong()).isEqualTo(playback.progressMs)
         } else {
-            assertThat(PlayerRepository.trackPosition.value).isNull()
+            assertThat(trackPosition.value).isNull()
         }
 
-        assertThat(PlayerRepository.playing.value?.value).isEqualTo(playback?.isPlaying)
-        assertThat(PlayerRepository.playbackContextUri.value).isEqualTo(playback?.context?.uri)
-        assertThat(PlayerRepository.currentlyPlayingType.value).isEqualTo(playback?.currentlyPlayingType)
+        assertThat(playing.value?.value).isEqualTo(playback?.isPlaying)
+        assertThat(playbackContextUri.value).isEqualTo(playback?.context?.uri)
+        assertThat(currentlyPlayingType.value).isEqualTo(playback?.currentlyPlayingType)
     }
 
-    private fun assertDevices(refreshing: Boolean, devices: List<SpotifyPlaybackDevice>?) {
-        assertThat(PlayerRepository.refreshingDevices.value).isEqualTo(refreshing)
-        assertThat(PlayerRepository.availableDevices.value).isEqualTo(devices)
+    private fun PlayerRepository.assertDevices(refreshing: Boolean, devices: List<SpotifyPlaybackDevice>?) {
+        assertThat(refreshingDevices.value).isEqualTo(refreshing)
+        assertThat(availableDevices.value).isEqualTo(devices)
     }
 }

@@ -8,10 +8,14 @@ import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository2.DatabaseEntityRepository
+import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.util.flatMapParallel
+import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
-object TrackRepository : DatabaseEntityRepository<Track, SpotifyTrack>(Track) {
+open class TrackRepository internal constructor(scope: CoroutineScope) :
+    DatabaseEntityRepository<Track, SpotifyTrack>(entityClass = Track, scope = scope) {
+
     override suspend fun fetchFromRemote(id: String) = Spotify.Tracks.getTrack(id = id)
     override suspend fun fetchFromRemote(ids: List<String>): List<FullSpotifyTrack> {
         return ids.chunked(size = Spotify.MAX_LIMIT)
@@ -44,4 +48,6 @@ object TrackRepository : DatabaseEntityRepository<Track, SpotifyTrack>(Track) {
             }
         }
     }
+
+    companion object : TrackRepository(scope = Repository.applicationScope)
 }
