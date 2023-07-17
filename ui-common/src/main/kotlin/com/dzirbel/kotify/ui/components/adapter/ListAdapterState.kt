@@ -8,7 +8,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -74,6 +73,6 @@ class ListAdapterState<E>(
     }
 
     fun mutate(block: ListAdapter<E>.() -> ListAdapter<E>) {
-        scope.launch(Dispatchers.Main) { state.mutate(block) }
+        scope.launch { state.mutate(block) }
     }
 }
