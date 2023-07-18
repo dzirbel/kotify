@@ -53,6 +53,7 @@ import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
 import com.dzirbel.kotify.ui.properties.TrackRatingProperty2
 import com.dzirbel.kotify.ui.properties.TrackSavedProperty2
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.util.formatMediumDuration
 import com.dzirbel.kotify.util.immutable.orEmpty
 import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
 import com.dzirbel.kotify.util.mapIn
@@ -155,14 +156,13 @@ private fun PlaylistHeader(
                     val owner = UserRepository.stateOf(id = playlist.ownerId.value).collectAsState().value?.cachedValue
                     Text("Created by ${owner?.name ?: "..."}; ${playlist.followersTotal} followers")
 
-                    // TODO format total duration (maybe as x minutes, y seconds)
-                    val totalDurationMins = takingIf(adapter.hasElements) {
+                    val totalDuration = takingIf(adapter.hasElements) {
                         remember(adapter) {
-                            adapter.sumOf { it.track.cached.durationMs }.milliseconds.inWholeMinutes
+                            adapter.sumOf { it.track.cached.durationMs }.milliseconds.formatMediumDuration()
                         }
                     }
 
-                    Text("${playlist.totalTracks} songs, ${totalDurationMins ?: "..."} mins")
+                    Text("${playlist.totalTracks} songs" + totalDuration?.let { ", $it" })
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
