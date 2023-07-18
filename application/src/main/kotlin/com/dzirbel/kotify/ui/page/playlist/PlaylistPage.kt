@@ -53,6 +53,8 @@ import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
 import com.dzirbel.kotify.ui.properties.TrackRatingProperty2
 import com.dzirbel.kotify.ui.properties.TrackSavedProperty2
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.rememberRatingStates
+import com.dzirbel.kotify.ui.util.rememberSavedStates
 import com.dzirbel.kotify.util.formatMediumDuration
 import com.dzirbel.kotify.util.immutable.orEmpty
 import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
@@ -81,15 +83,8 @@ data class PlaylistPage(private val playlistId: String) : Page<String?>() {
 
         val columns = remember(playlist) { playlistTrackColumns(playlist) }
 
-        // hack: batch saved state calls and remember to avoid them being GC'd
-        remember(playlistTracksAdapter) {
-            SavedTrackRepository.savedStatesOf(playlistTracksAdapter.value.map { it.trackId.value })
-        }
-
-        // hack: batch rating state calls and remember to avoid them being GC'd
-        remember(playlistTracksAdapter) {
-            TrackRatingRepository.ratingStatesOf(playlistTracksAdapter.value.map { it.trackId.value })
-        }
+        SavedTrackRepository.rememberSavedStates(playlistTracksAdapter.value) { it.trackId.value }
+        TrackRatingRepository.rememberRatingStates(playlistTracksAdapter.value) { it.trackId.value }
 
         VerticalScrollPage(
             visible = visible,
