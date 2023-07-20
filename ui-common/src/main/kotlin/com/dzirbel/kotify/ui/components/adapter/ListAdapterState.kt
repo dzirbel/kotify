@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui.components.adapter
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -18,20 +19,30 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun <E> rememberListAdapterState(
-    source: (CoroutineScope) -> StateFlow<List<E>?>,
     key: Any? = null,
     defaultSort: SortableProperty<E>? = null,
     defaultFilter: ((E) -> Boolean)? = null,
+    source: (CoroutineScope) -> StateFlow<List<E>?>,
 ): ListAdapterState<E> {
     val scope = rememberCoroutineScope()
+    val sourceFlow = remember(key) { source(scope) }
     return remember(key) {
         ListAdapterState(
-            source = source(scope),
+            source = sourceFlow,
             scope = scope,
             defaultSort = defaultSort,
             defaultFilter = defaultFilter,
         )
     }
+        .also { listAdapterState ->
+            // collect in a LaunchedEffect to ensure the collected value does not attempt to mutate before the snapshot
+            // is applied
+            LaunchedEffect(key) {
+                sourceFlow.collect { elements ->
+                    listAdapterState.mutate { withElements(elements) }
+                }
+            }
+        }
 }
 
 /**
@@ -63,14 +74,6 @@ class ListAdapterState<E>(
 
     override val value: ListAdapter<E>
         get() = state.value
-
-    init {
-        scope.launch {
-            source.collect { elements ->
-                mutate { withElements(elements) }
-            }
-        }
-    }
 
     fun mutate(block: ListAdapter<E>.() -> ListAdapter<E>) {
         scope.launch { state.mutate(block) }

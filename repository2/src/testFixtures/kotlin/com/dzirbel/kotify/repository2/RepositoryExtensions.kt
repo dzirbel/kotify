@@ -12,14 +12,20 @@ import java.time.Instant
  * [cacheTime].
  */
 fun <T> Repository<T>.mockStateCached(id: String, value: T, cacheTime: Instant) {
-    every { stateOf(id = id) } returns MutableStateFlow(CacheState.Loaded(value, cacheTime))
+    every { stateOf(id = id, cacheStrategy = any()) } returns
+        MutableStateFlow(CacheState.Loaded(value, cacheTime))
+}
+
+fun <T> Repository<T>.mockStates(ids: List<String>, values: List<T>, cacheTime: Instant) {
+    every { statesOf(ids = ids, cacheStrategy = any()) } returns
+        values.map { MutableStateFlow(CacheState.Loaded(it, cacheTime)) }
 }
 
 /**
  * Mocks calls to [Repository.stateOf] for the given [id] to return null.
  */
 fun <T> Repository<T>.mockStateNull(id: String) {
-    every { stateOf(id = id) } returns MutableStateFlow(null)
+    every { stateOf(id = id, cacheStrategy = any()) } returns MutableStateFlow(null)
 }
 
 /**
@@ -43,6 +49,25 @@ fun SavedRepository.mockSaveStates(ids: List<String>, saved: List<Boolean?>) {
         val id = firstArg<String>()
         val index = ids.indexOf(id).takeIf { it != -1 }
         requireNotNull(index?.let { flows.getOrNull(it) })
+    }
+}
+
+fun SavedRepository.mockLibrary(ids: Set<String>?, cacheTime: Instant = Instant.now()) {
+    val flows = mutableMapOf<String, MutableStateFlow<ToggleableState<Boolean>?>>()
+    val libraryFlow = MutableStateFlow(ids?.let { CacheState.Loaded(ids, cacheTime) })
+
+    every { library } returns libraryFlow
+
+    every { savedStatesOf(ids = any()) } answers {
+        val argIds = firstArg<Iterable<String>>()
+        argIds.map { id ->
+            flows.getOrPut(id) { MutableStateFlow(ids?.let { ToggleableState.Set(id in ids) }) }
+        }
+    }
+
+    every { savedStateOf(id = any()) } answers {
+        val id = firstArg<String>()
+        flows.getOrPut(id) { MutableStateFlow(ids?.let { ToggleableState.Set(id in ids) }) }
     }
 }
 

@@ -69,6 +69,8 @@ open class ReadOnlyCachedProperty<V>(private val requireGetInTransaction: Boolea
     /**
      * Loads the [live] value into the cache. Equivalent to calling [live], but exists to be explicit that the cached
      * value is being prepared but not returned.
+     *
+     * TODO do not reload if cached value is present?
      */
     fun loadToCache() {
         live

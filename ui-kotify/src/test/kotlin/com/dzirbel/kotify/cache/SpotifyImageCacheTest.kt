@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.cache
 
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asSkiaBitmap
 import assertk.assertThat
 import assertk.assertions.hasSize
@@ -14,6 +13,8 @@ import com.dzirbel.kotify.ui.SpotifyImageCache
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.AfterEach
@@ -34,52 +35,66 @@ internal class SpotifyImageCacheTest {
         interceptor.requests.clear()
     }
 
-    @RepeatedTest(5)
+    @Test
     fun testRemoteSuccess() {
         interceptor.responseBody = testImageBytes.toResponseBody(contentType = "image/jpeg".toMediaType())
 
-        val image = getImage()
+        runTest {
+            val imageCache = SpotifyImageCache(scope = this, synchronousCalls = true)
 
-        assertThat(image).isNotNull()
-        assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+            val imageFlow = imageCache.get(url = DEFAULT_IMAGE_URL, client = interceptor.client)
+            assertThat(imageFlow.value).isNull()
+
+            runCurrent()
+
+            assertThat(imageFlow.value).isNotNull()
+            assertThat(interceptor.requests).hasSize(1)
+            assertThat(imageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+        }
     }
 
     @RepeatedTest(5)
     fun testRemoteConcurrent() {
         interceptor.responseBody = testImageBytes.toResponseBody(contentType = "image/jpeg".toMediaType())
-        interceptor.delayMs = 100
 
-        val image1: ImageBitmap?
-        val image2: ImageBitmap?
+        runTest {
+            val imageCache = SpotifyImageCache(scope = this, synchronousCalls = true)
 
-        runBlocking {
-            val image1Deferred = async { getImage() }
-            val image2Deferred = async {
+            val imageFlow1Deferred = async { imageCache.get(url = DEFAULT_IMAGE_URL, client = interceptor.client) }
+            val imageFlow2Deferred = async {
                 delay(50)
-                getImage()
+                imageCache.get(url = DEFAULT_IMAGE_URL, client = interceptor.client)
             }
 
-            image1 = image1Deferred.await()
-            image2 = image2Deferred.await()
-        }
+            val imageFlow1 = imageFlow1Deferred.await()
+            val imageFlow2 = imageFlow2Deferred.await()
 
-        assertThat(image1).isNotNull()
-        assertThat(image2).isNotNull()
-        assertThat(image1).isSameAs(image2)
-        assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+            assertThat(imageFlow1).isNotNull()
+            assertThat(imageFlow1).isNotNull()
+            assertThat(imageFlow1).isSameAs(imageFlow2)
+
+            runCurrent()
+
+            assertThat(interceptor.requests).hasSize(1)
+            assertThat(imageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+        }
     }
 
     @Test
     fun testRemoteEmptyResponse() {
         interceptor.responseBody = "".toResponseBody("text/plain".toMediaType())
 
-        val image = getImage()
+        runTest {
+            val imageCache = SpotifyImageCache(scope = this, synchronousCalls = true)
 
-        assertThat(image).isNull()
-        assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(0)
+            val imageFlow = imageCache.get(url = DEFAULT_IMAGE_URL, client = interceptor.client)
+
+            runCurrent()
+
+            assertThat(imageFlow.value).isNull()
+            assertThat(interceptor.requests).hasSize(1)
+            assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(0)
+        }
     }
 
     @Test
@@ -87,61 +102,75 @@ internal class SpotifyImageCacheTest {
         interceptor.responseCode = 404
         interceptor.responseMessage = "Not Found"
 
-        val image = getImage()
+        runTest {
+            val imageCache = SpotifyImageCache(scope = this, synchronousCalls = true)
 
-        assertThat(image).isNull()
-        assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(0)
+            val imageFlow = imageCache.get(url = DEFAULT_IMAGE_URL, client = interceptor.client)
+
+            runCurrent()
+
+            assertThat(imageFlow.value).isNull()
+            assertThat(interceptor.requests).hasSize(1)
+            assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(0)
+        }
     }
 
     @Test
     fun testInMemoryCache() {
         interceptor.responseBody = testImageBytes.toResponseBody(contentType = "image/jpeg".toMediaType())
 
-        val image1 = getImage()
+        runTest {
+            val imageCache = SpotifyImageCache(scope = this, synchronousCalls = true)
 
-        assertThat(image1).isNotNull()
-        assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+            val imageFlow1 = imageCache.get(url = DEFAULT_IMAGE_URL, client = interceptor.client)
 
-        val image2 = getImage()
+            runCurrent()
 
-        assertThat(image2).isNotNull()
-        assertThat(image2).isSameAs(image1)
-        assertThat(interceptor.requests).hasSize(1)
-        assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+            assertThat(imageFlow1.value).isNotNull()
+            assertThat(interceptor.requests).hasSize(1)
+            assertThat(imageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+
+            val imageFlow2 = imageCache.get(url = DEFAULT_IMAGE_URL, client = interceptor.client)
+
+            runCurrent()
+
+            assertThat(imageFlow2).isNotNull()
+            assertThat(imageFlow2).isSameAs(imageFlow1)
+            assertThat(interceptor.requests).hasSize(1)
+            assertThat(imageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+        }
     }
 
     @Test
     fun testDiskCache() {
-        SpotifyImageCache.withImagesDir(testImageDir) {
-            // only spotify images are cached on disk
-            val url = "https://i.scdn.co/image/0ef1abc88dcd2f7131ba4d21c6dc56fcc027ef24"
+        // only spotify images are cached on disk
+        val url = "https://i.scdn.co/image/0ef1abc88dcd2f7131ba4d21c6dc56fcc027ef24"
 
-            interceptor.responseBody = testImageBytes.toResponseBody(contentType = "image/jpeg".toMediaType())
+        interceptor.responseBody = testImageBytes.toResponseBody(contentType = "image/jpeg".toMediaType())
 
-            val image1 = requireNotNull(getImage(url = url))
+        runTest {
+            val imageCache = SpotifyImageCache(scope = this, synchronousCalls = true)
 
-            assertThat(interceptor.requests).hasSize(1)
-            assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+            imageCache.withImagesDir(testImageDir) {
+                val imageFlow1 = imageCache.get(url = url, client = interceptor.client)
+                runCurrent()
 
-            runBlocking { SpotifyImageCache.clear(scope = this, deleteFileCache = false) }
-            assertThat(SpotifyImageCache.getInMemory(url)).isNull()
+                assertThat(interceptor.requests).hasSize(1)
+                assertThat(imageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
 
-            val image2 = requireNotNull(getImage(url = url))
+                imageCache.clear(scope = this, deleteFileCache = false)
+                runCurrent()
 
-            assertThat(image2).isNotSameAs(image1)
-            assertThat(image2.asSkiaBitmap().readPixels())
-                .isNotNull()
-                .isEqualTo(requireNotNull(image1.asSkiaBitmap().readPixels()))
-            assertThat(interceptor.requests).hasSize(1)
-            assertThat(SpotifyImageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
-        }
-    }
+                val imageFlow2 = imageCache.get(url = url, client = interceptor.client)
+                runCurrent()
 
-    private fun getImage(url: String = DEFAULT_IMAGE_URL): ImageBitmap? {
-        return runBlocking {
-            SpotifyImageCache.get(url = url, scope = this, client = client)
+                assertThat(imageFlow2).isNotSameAs(imageFlow1)
+                assertThat(requireNotNull(imageFlow2.value).asSkiaBitmap().readPixels())
+                    .isNotNull()
+                    .isEqualTo(requireNotNull(requireNotNull(imageFlow1.value).asSkiaBitmap().readPixels()))
+                assertThat(interceptor.requests).hasSize(1)
+                assertThat(imageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
+            }
         }
     }
 

@@ -75,10 +75,10 @@ data class PlaylistPage(private val playlistId: String) : Page<String?>() {
 
         val playlistTracksAdapter = rememberListAdapterState(
             key = playlistId,
+            defaultSort = PlaylistTrackIndexProperty,
             source = { scope ->
                 PlaylistTracksRepository.stateOf(id = playlistId).mapIn(scope) { it?.cachedValue }
             },
-            defaultSort = PlaylistTrackIndexProperty,
         )
 
         val columns = remember(playlist) { playlistTrackColumns(playlist) }

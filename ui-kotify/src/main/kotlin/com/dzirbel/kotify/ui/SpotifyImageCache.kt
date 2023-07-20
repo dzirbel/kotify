@@ -5,28 +5,26 @@ import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.util.await
-import com.dzirbel.kotify.ui.util.assertNotOnUIThread
-import kotlinx.coroutines.CompletableDeferred
+import com.dzirbel.kotify.repository2.Repository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
+import kotlinx.coroutines.yield
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jetbrains.skia.Image
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 
@@ -36,14 +34,27 @@ sealed class ImageCacheEvent {
     data class Fetch(val url: String, val duration: Duration, val cacheFile: File?) : ImageCacheEvent()
 }
 
+private const val SPOTIFY_IMAGE_URL_PREFIX = "https://i.scdn.co/image/"
+
 /**
  * A simple disk cache for images loaded from Spotify's image CDN.
  */
-object SpotifyImageCache {
-    private const val SPOTIFY_IMAGE_URL_PREFIX = "https://i.scdn.co/image/"
+open class SpotifyImageCache internal constructor(
+    /**
+     * The [CoroutineScope] (and its context) used to load images both from disk and remotely.
+     */
+    private val scope: CoroutineScope,
+
+    /**
+     * Whether to execute remote calls synchronously; this is disabled in tests since OkHTTP does not natively use
+     * coroutines, so providing a TestDispatcher will not advance an asynchronous call as expected.
+     */
+    private val synchronousCalls: Boolean,
+) {
     private var imagesDir: File? = null
 
-    private val imageJobs: ConcurrentMap<String, Deferred<ImageBitmap?>> = ConcurrentHashMap()
+    // TODO use a LRU or similar cache to avoid keeping all loaded images in memory indefinitely
+    private val images: ConcurrentMap<String, StateFlow<ImageBitmap?>> = ConcurrentHashMap()
 
     private val totalCompleted = AtomicInteger()
 
@@ -55,16 +66,14 @@ object SpotifyImageCache {
     val metricsFlow: StateFlow<Metrics?>
         get() = _metricsFlow.asStateFlow()
 
-    init {
-        GlobalScope.launch(Dispatchers.IO) {
-            _metricsFlow.value = Metrics.load()
-        }
-    }
-
     fun init(imagesDir: File) {
         this.imagesDir = imagesDir
             .also { it.mkdirs() }
             .also { check(it.isDirectory) { "could not create image cache directory $it" } }
+
+        GlobalScope.launch(scope.coroutineContext) {
+            _metricsFlow.value = loadMetrics()
+        }
     }
 
     internal fun withImagesDir(imagesDir: File, block: () -> Unit) {
@@ -78,8 +87,8 @@ object SpotifyImageCache {
      * Clears the in-memory and disk cache.
      */
     fun clear(scope: CoroutineScope = GlobalScope, deleteFileCache: Boolean = true) {
-        scope.launch(Dispatchers.IO) {
-            imageJobs.clear()
+        scope.launch {
+            images.clear()
             totalCompleted.set(0)
             if (deleteFileCache) {
                 imagesDir?.deleteRecursively()
@@ -89,31 +98,22 @@ object SpotifyImageCache {
     }
 
     /**
-     * Immediately returns the in-memory cached [ImageBitmap] for [url], if there is one.
-     */
-    fun getInMemory(url: String): ImageBitmap? {
-        val job = imageJobs[url]
-        val bitmap = runCatching { job?.getCompleted() }.getOrNull()
-        Logger.ImageCache.handleImageCacheEvent(ImageCacheEvent.InMemory(url = url))
-        return bitmap
-    }
-
-    /**
      * Synchronously loads all the given [urls] from the file cache, if they are not currently in the in-memory cache or
      * already being loaded. This is useful for batch loading a set of images all at once.
      */
-    suspend fun loadFromFileCache(urls: List<String>, scope: CoroutineScope) {
+    suspend fun loadFromFileCache(urls: Iterable<String>) {
         val jobs = mutableSetOf<Job>()
         for (url in urls) {
-            if (!imageJobs.containsKey(url)) {
+            if (!images.containsKey(url)) {
                 jobs.add(
-                    scope.launch(Dispatchers.IO) {
-                        assertNotOnUIThread()
+                    scope.launch {
                         val (_, image) = fromFileCache(url)
 
                         if (image != null) {
-                            @Suppress("DeferredResultUnused") // ignore previous job which was not replaced
-                            imageJobs.putIfAbsent(url, CompletableDeferred(image))
+                            // only add to map if an image was loaded successfully to avoid adding an empty flow which
+                            // will prevent loading remotely
+                            @Suppress("IgnoredReturnValue") // ignore previous association
+                            images.putIfAbsent(url, MutableStateFlow(image))
                         }
                     },
                 )
@@ -124,38 +124,33 @@ object SpotifyImageCache {
     }
 
     /**
-     * Fetches the [ImageBitmap] from the given [url] or cache.
+     * Returns a [StateFlow] reflecting the live state of the image fetched from the given [url].
      */
-    suspend fun get(
-        url: String,
-        scope: CoroutineScope,
-        context: CoroutineContext = EmptyCoroutineContext,
-        client: OkHttpClient = Spotify.configuration.okHttpClient,
-    ): ImageBitmap? {
-        val deferred = imageJobs.computeIfAbsent(url) {
-            scope.async(context = context) {
-                assertNotOnUIThread()
+    fun get(url: String, client: OkHttpClient = Spotify.configuration.okHttpClient): StateFlow<ImageBitmap?> {
+        return images.compute(url) { _, existingFlow ->
+            if (existingFlow == null) {
+                val flow = MutableStateFlow<ImageBitmap?>(null)
 
-                val (cacheFile, image) = fromFileCache(url)
-                image ?: fromRemote(url = url, cacheFile = cacheFile, client = client)
-            }.also { deferred ->
-                deferred.invokeOnCompletion { error ->
-                    if (error == null) {
-                        _metricsFlow.value = Metrics.load()
+                scope.launch {
+                    val (cacheFile, image) = fromFileCache(url)
+                    if (image != null) {
+                        flow.value = image
+                    } else {
+                        flow.value = fromRemote(url = url, cacheFile = cacheFile, client = client)
                     }
+                    _metricsFlow.value = loadMetrics()
                 }
+
+                flow
+            } else {
+                Logger.ImageCache.handleImageCacheEvent(ImageCacheEvent.InMemory(url = url))
+                existingFlow
             }
         }
-
-        if (deferred.isCompleted) {
-            Logger.ImageCache.handleImageCacheEvent(ImageCacheEvent.InMemory(url = url))
-            return deferred.getCompleted()
-        }
-
-        return deferred.await()
+            .let { requireNotNull(it) }
     }
 
-    private fun fromFileCache(url: String): Pair<File?, ImageBitmap?> {
+    private suspend fun fromFileCache(url: String): Pair<File?, ImageBitmap?> {
         val start = TimeSource.Monotonic.markNow()
         var cacheFile: File? = null
         if (url.startsWith(SPOTIFY_IMAGE_URL_PREFIX)) {
@@ -163,14 +158,19 @@ object SpotifyImageCache {
             cacheFile = imagesDir?.resolve(imageHash)
 
             if (cacheFile?.isFile == true) {
-                val image = Image.makeFromEncoded(cacheFile.readBytes()).toComposeImageBitmap()
+                val bytes = cacheFile.readBytes()
+                yield()
+                val image = Image.makeFromEncoded(bytes)
+                yield()
+                val imageBitmap = image.toComposeImageBitmap()
+                yield()
 
                 totalCompleted.incrementAndGet()
                 Logger.ImageCache.handleImageCacheEvent(
                     ImageCacheEvent.OnDisk(url = url, duration = start.elapsedNow(), cacheFile = cacheFile),
                 )
 
-                return Pair(cacheFile, image)
+                return Pair(cacheFile, imageBitmap)
             }
         }
 
@@ -181,13 +181,16 @@ object SpotifyImageCache {
         val start = TimeSource.Monotonic.markNow()
         val request = Request.Builder().url(url).build()
 
-        return client.newCall(request).await()
+        return client.newCall(request)
+            .run { if (synchronousCalls) execute() else await() }
             .use { response ->
                 response.body?.bytes()
             }
             ?.takeIf { bytes -> bytes.isNotEmpty() }
             ?.let { bytes ->
+                yield()
                 val image = Image.makeFromEncoded(bytes).toComposeImageBitmap()
+                yield()
 
                 if (cacheFile != null) {
                     imagesDir?.mkdirs()
@@ -204,26 +207,31 @@ object SpotifyImageCache {
     }
 
     /**
+     * Loads the [Metrics] from the file system. This is a fairly expensive operation but avoids concurrency
+     * issues when loading multiple images in parallel.
+     */
+    private fun loadMetrics(): Metrics {
+        val files = imagesDir?.listFiles()?.filter { it.isFile }
+        return Metrics(
+            inMemoryCount = totalCompleted.get(),
+            diskCount = files?.size ?: 0,
+            totalDiskSize = files?.sumOf { it.length() } ?: 0,
+        )
+    }
+
+    /**
      * Holds metrics about the current state of the image cache.
      */
     data class Metrics(
         val inMemoryCount: Int,
         val diskCount: Int,
         val totalDiskSize: Long,
-    ) {
-        companion object {
-            /**
-             * Loads the [Metrics] from the file system. This is a fairly expensive operation but avoids concurrency
-             * issues when loading multiple images in parallel.
-             */
-            fun load(): Metrics {
-                val files = imagesDir?.listFiles()?.filter { it.isFile }
-                return Metrics(
-                    inMemoryCount = totalCompleted.get(),
-                    diskCount = files?.size ?: 0,
-                    totalDiskSize = files?.sumOf { it.length() } ?: 0,
-                )
-            }
-        }
-    }
+    )
+
+    companion object : SpotifyImageCache(
+        // use a custom dispatcher rather than the default IO dispatcher as it ca easily be exhausted, which appears to
+        // cause blocking UI interference, perhaps due to internal Compose usage
+        scope = Repository.applicationScope.plus(Executors.newCachedThreadPool().asCoroutineDispatcher()),
+        synchronousCalls = false,
+    )
 }

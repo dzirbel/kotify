@@ -112,7 +112,7 @@ class ArtistPresenter(
                         artistAlbum.album.cached.largestImage.live?.url
                     }
                 }
-                SpotifyImageCache.loadFromFileCache(urls = albumUrls, scope = scope)
+                SpotifyImageCache.loadFromFileCache(urls = albumUrls)
 
                 val albumIds = artistAlbums.map { it.albumId.value }
                 val savedAlbumsStates = albumIds.zipToPersistentMap(SavedAlbumRepository.statesOf(ids = albumIds))

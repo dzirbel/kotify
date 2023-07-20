@@ -1,5 +1,7 @@
 package com.dzirbel.kotify
 
+import com.dzirbel.kotify.repository2.artist.ArtistRepository
+import com.dzirbel.kotify.repository2.artist.SavedArtistRepository
 import com.dzirbel.kotify.repository2.playlist.PlaylistRepository
 import com.dzirbel.kotify.repository2.playlist.PlaylistTracksRepository
 import com.dzirbel.kotify.repository2.playlist.SavedPlaylistRepository
@@ -15,11 +17,13 @@ class MockedRepositoryExtension : BeforeEachCallback, AfterEachCallback {
     // TODO finish
     // TODO extract?
     private val repositories = arrayOf(
+        ArtistRepository,
         PlaylistRepository,
         PlaylistTracksRepository,
+        SavedArtistRepository,
         SavedPlaylistRepository,
-        TrackRatingRepository,
         SavedTrackRepository,
+        TrackRatingRepository,
     )
 
     override fun beforeEach(context: ExtensionContext?) {

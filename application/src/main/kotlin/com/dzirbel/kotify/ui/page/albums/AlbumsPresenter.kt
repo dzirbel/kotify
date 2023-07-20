@@ -112,7 +112,7 @@ class AlbumsPresenter(scope: CoroutineScope) : Presenter<AlbumsPresenter.ViewMod
         val imageUrls = KotifyDatabase.transaction("load albums images") {
             albums.mapNotNull { it.largestImage.live?.url }
         }
-        SpotifyImageCache.loadFromFileCache(urls = imageUrls, scope = scope)
+        SpotifyImageCache.loadFromFileCache(urls = imageUrls)
 
         return albums
     }
