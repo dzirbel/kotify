@@ -55,7 +55,7 @@ compose.desktop {
         mainClass = "com.dzirbel.kotify.MainKt"
 
         buildTypes.release.proguard {
-            configurationFiles.from(project.file("proguard-rules.pro"))
+            configurationFiles.from(rootProject.file("proguard-rules.pro"))
         }
 
         nativeDistributions {
