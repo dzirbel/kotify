@@ -12,6 +12,7 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import kotlin.time.Duration.Companion.seconds
 
 internal class LocalOAuthServerTest {
     @ParameterizedTest
@@ -21,7 +22,7 @@ internal class LocalOAuthServerTest {
         val inputState = "wrong"
         lateinit var callbackResult: LocalOAuthServer.Result
         LocalOAuthServer(state = expectedState, port = port, callback = { callbackResult = it }).running {
-            runTest {
+            runTest(timeout = 60.seconds) {
                 val response = HttpClient().get("http://localhost:$port?state=$inputState")
                 val content = response.body<String>()
 
@@ -42,7 +43,7 @@ internal class LocalOAuthServerTest {
         val code = "code"
         lateinit var callbackResult: LocalOAuthServer.Result
         LocalOAuthServer(state = state, port = port, callback = { callbackResult = it }).running {
-            runTest {
+            runTest(timeout = 60.seconds) {
                 val response = HttpClient().get("http://localhost:$port?state=$state&code=$code")
                 val content = response.body<String>()
 
