@@ -124,6 +124,13 @@ open class SpotifyImageCache internal constructor(
     }
 
     /**
+     * Returns the [ImageBitmap] from the given [url] if it is immediately available in memory.
+     */
+    fun getFromMemory(url: String): ImageBitmap? {
+        return images[url]?.value
+    }
+
+    /**
      * Returns a [StateFlow] reflecting the live state of the image fetched from the given [url].
      */
     fun get(url: String, client: OkHttpClient = Spotify.configuration.okHttpClient): StateFlow<ImageBitmap?> {

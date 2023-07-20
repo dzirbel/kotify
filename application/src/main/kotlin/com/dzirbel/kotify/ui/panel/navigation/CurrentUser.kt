@@ -13,16 +13,12 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.repository2.CacheState
@@ -33,16 +29,9 @@ import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.util.produceTransactionState
 
 private val CURRENT_USER_DROPDOWN_MAX_WIDTH = 500.dp
-
-// TODO extract and reuse
-@Composable
-fun <E : SpotifyEntity, T : Any> E.produceTransactionState(transactionName: String, statement: E.() -> T?): State<T?> {
-    return produceState<T?>(initialValue = null, key1 = this.id.value) {
-        value = KotifyDatabase.transaction(name = transactionName) { statement() }
-    }
-}
 
 @Composable
 fun CurrentUser() {

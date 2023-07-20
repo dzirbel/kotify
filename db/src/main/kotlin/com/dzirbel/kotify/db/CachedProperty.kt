@@ -22,6 +22,8 @@ import kotlin.reflect.KProperty
  *
  * For convenience, this class has a built-in check [requireGetInTransaction] which asserts that calls to [getter] are
  * done from a transaction. This avoids hard-to-interpret NPEs in many cases.
+ *
+ * TODO ensure concurrent reads only spawn one call to get the live value
  */
 open class ReadOnlyCachedProperty<V>(private val requireGetInTransaction: Boolean = true, private val getter: () -> V) {
     /**
@@ -84,6 +86,15 @@ open class ReadOnlyCachedProperty<V>(private val requireGetInTransaction: Boolea
         cachedValue = null
     }
 }
+
+/**
+ * A simple extension of [ReadOnlyCachedProperty] which also includes a [transactionName] which can be reused when
+ * fetching the [live] value.
+ *
+ * TODO rework/expand TransactionReadOnlyCachedProperty
+ */
+open class TransactionReadOnlyCachedProperty<V>(val transactionName: String, getter: () -> V) :
+    ReadOnlyCachedProperty<V>(requireGetInTransaction = true, getter = getter)
 
 /**
  * A wrapper around a property which allows access via either a [live] or [cached] version, and to [set] the value.
@@ -203,6 +214,26 @@ internal fun <T, Base, Derived> ReadOnlyProperty<T, Base>.cachedReadOnly(
     return lazyReadOnlyProperty { thisRef, property ->
         ReadOnlyCachedProperty(
             requireGetInTransaction = requireGetInTransaction,
+            getter = { baseToDerived(delegate.getValue(thisRef, property)) },
+        )
+    }
+}
+
+/**
+ * Wraps this [ReadOnlyProperty] of [Base] type in a [TransactionReadOnlyCachedProperty] of [Derived] type.
+ *
+ * This allows converting values from [Base] to [Derived] and via [baseToDerived], and in particular the converted
+ * values of the [Derived] type will be cached so conversion only happens once and can be done within the same
+ * transaction as accessing the underlying [ReadOnlyProperty].
+ */
+internal fun <T, Base, Derived> ReadOnlyProperty<T, Base>.cachedReadOnly(
+    transactionName: String,
+    baseToDerived: (Base) -> Derived,
+): ReadOnlyProperty<T, TransactionReadOnlyCachedProperty<Derived>> {
+    val delegate = this
+    return lazyReadOnlyProperty { thisRef, property ->
+        TransactionReadOnlyCachedProperty(
+            transactionName = transactionName,
             getter = { baseToDerived(delegate.getValue(thisRef, property)) },
         )
     }

@@ -41,7 +41,6 @@ import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.framework.Page
 import com.dzirbel.kotify.ui.framework.VerticalScrollPage
-import com.dzirbel.kotify.ui.panel.navigation.produceTransactionState
 import com.dzirbel.kotify.ui.properties.PlaylistTrackAddedAtProperty
 import com.dzirbel.kotify.ui.properties.PlaylistTrackIndexProperty
 import com.dzirbel.kotify.ui.properties.TrackAlbumProperty
@@ -59,6 +58,7 @@ import com.dzirbel.kotify.util.formatMediumDuration
 import com.dzirbel.kotify.util.immutable.orEmpty
 import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
 import com.dzirbel.kotify.util.mapIn
+import com.dzirbel.kotify.util.produceTransactionState
 import com.dzirbel.kotify.util.takingIf
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentList

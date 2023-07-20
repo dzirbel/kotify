@@ -26,7 +26,6 @@ import java.nio.file.Path
 
 internal class SpotifyImageCacheTest {
     private val interceptor = MockRequestInterceptor()
-    private val client = interceptor.client
 
     @AfterEach
     fun cleanup() {
@@ -44,10 +43,12 @@ internal class SpotifyImageCacheTest {
 
             val imageFlow = imageCache.get(url = DEFAULT_IMAGE_URL, client = interceptor.client)
             assertThat(imageFlow.value).isNull()
+            assertThat(imageCache.getFromMemory(DEFAULT_IMAGE_URL)).isNull()
 
             runCurrent()
 
             assertThat(imageFlow.value).isNotNull()
+            assertThat(imageCache.getFromMemory(DEFAULT_IMAGE_URL)).isNotNull()
             assertThat(interceptor.requests).hasSize(1)
             assertThat(imageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
         }
@@ -155,15 +156,19 @@ internal class SpotifyImageCacheTest {
                 val imageFlow1 = imageCache.get(url = url, client = interceptor.client)
                 runCurrent()
 
+                assertThat(imageCache.getFromMemory(url)).isNotNull()
                 assertThat(interceptor.requests).hasSize(1)
                 assertThat(imageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
 
                 imageCache.clear(scope = this, deleteFileCache = false)
                 runCurrent()
 
+                assertThat(imageCache.getFromMemory(url)).isNull()
+
                 val imageFlow2 = imageCache.get(url = url, client = interceptor.client)
                 runCurrent()
 
+                assertThat(imageCache.getFromMemory(url)).isNotNull()
                 assertThat(imageFlow2).isNotSameAs(imageFlow1)
                 assertThat(requireNotNull(imageFlow2.value).asSkiaBitmap().readPixels())
                     .isNotNull()

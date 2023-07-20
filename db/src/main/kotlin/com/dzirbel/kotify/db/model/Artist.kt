@@ -6,6 +6,7 @@ import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
+import com.dzirbel.kotify.db.TransactionReadOnlyCachedProperty
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.db.util.largest
@@ -47,10 +48,10 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
     val genres: ReadWriteCachedProperty<List<Genre>> by (Genre via ArtistTable.ArtistGenreTable).cachedAsList()
 
     val artistAlbums: ReadOnlyCachedProperty<List<ArtistAlbum>> by (ArtistAlbum referrersOn ArtistAlbumTable.artist)
-        .cachedReadOnly(baseToDerived = { it.toList() })
+        .cachedReadOnly { it.toList() }
 
-    val largestImage: ReadOnlyCachedProperty<Image?> by (Image via ArtistTable.ArtistImageTable)
-        .cachedReadOnly { it.largest() }
+    val largestImage: TransactionReadOnlyCachedProperty<Image?> by (Image via ArtistTable.ArtistImageTable)
+        .cachedReadOnly(transactionName = "load artist ${id.value} largest image") { it.largest() }
 
     /**
      * IDs of the tracks by this artist; not guaranteed to contain all the tracks, just the ones in

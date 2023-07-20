@@ -57,7 +57,6 @@ import com.dzirbel.kotify.ui.framework.VerticalScrollPage
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
-import com.dzirbel.kotify.ui.panel.navigation.produceTransactionState
 import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistPopularityProperty
@@ -67,6 +66,7 @@ import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.combinedStateWhenAllNotNull
 import com.dzirbel.kotify.util.flatMapLatestIn
 import com.dzirbel.kotify.util.immutable.orEmpty
+import com.dzirbel.kotify.util.produceTransactionState
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -191,12 +191,8 @@ private fun ArtistCell(artist: Artist, onRightClick: () -> Unit) {
             .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = onRightClick)
             .padding(Dimens.space3),
     ) {
-        // TODO batch?
-        val artistImage = artist.largestImage.cachedOrNull
-            ?: artist.produceTransactionState("load artist image") { largestImage.live }.value
-
         LoadedImage(
-            url = artistImage?.url,
+            imageProperty = artist.largestImage,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
 
