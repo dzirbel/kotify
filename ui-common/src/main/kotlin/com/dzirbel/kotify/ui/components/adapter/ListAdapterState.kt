@@ -11,6 +11,7 @@ import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.launch
 
 /**
@@ -26,9 +27,10 @@ fun <E> rememberListAdapterState(
 ): ListAdapterState<E> {
     val scope = rememberCoroutineScope()
     val sourceFlow = remember(key) { source(scope) }
+    val initialValue = remember(key) { sourceFlow.value }
     return remember(key) {
         ListAdapterState(
-            source = sourceFlow,
+            initialValue = initialValue,
             scope = scope,
             defaultSort = defaultSort,
             defaultFilter = defaultFilter,
@@ -38,9 +40,12 @@ fun <E> rememberListAdapterState(
             // collect in a LaunchedEffect to ensure the collected value does not attempt to mutate before the snapshot
             // is applied
             LaunchedEffect(key) {
-                sourceFlow.collect { elements ->
-                    listAdapterState.mutate { withElements(elements) }
-                }
+                sourceFlow
+                    // skip initial value to avoid immediate mutation
+                    .dropWhile { it == initialValue }
+                    .collect { elements ->
+                        listAdapterState.mutate { withElements(elements) }
+                    }
             }
         }
 }
@@ -60,13 +65,13 @@ fun <E> rememberListAdapterState(
 @Stable
 class ListAdapterState<E>(
     private val scope: CoroutineScope,
-    source: StateFlow<List<E>?>,
+    initialValue: List<E>?,
     defaultSort: SortableProperty<E>? = null,
     defaultFilter: ((E) -> Boolean)? = null,
 ) : State<ListAdapter<E>> {
     private val state = mutableStateOf(
         ListAdapter.of(
-            elements = source.value,
+            elements = initialValue,
             defaultSort = defaultSort,
             defaultFilter = defaultFilter,
         ),
