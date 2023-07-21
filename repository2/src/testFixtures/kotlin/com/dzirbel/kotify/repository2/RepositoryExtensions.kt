@@ -17,7 +17,7 @@ fun <T> Repository<T>.mockStateCached(id: String, value: T, cacheTime: Instant) 
 }
 
 fun <T> Repository<T>.mockStates(ids: List<String>, values: List<T>, cacheTime: Instant) {
-    every { statesOf(ids = ids, cacheStrategy = any()) } returns
+    every { statesOf(ids = match { it.toList() == ids }, cacheStrategy = any()) } returns
         values.map { MutableStateFlow(CacheState.Loaded(it, cacheTime)) }
 }
 
@@ -57,6 +57,7 @@ fun SavedRepository.mockLibrary(ids: Set<String>?, cacheTime: Instant = Instant.
     val libraryFlow = MutableStateFlow(ids?.let { SavedRepository.Library(ids, cacheTime) })
 
     every { library } returns libraryFlow
+    every { libraryRefreshing } returns MutableStateFlow(false)
 
     every { savedStatesOf(ids = any()) } answers {
         val argIds = firstArg<Iterable<String>>()
