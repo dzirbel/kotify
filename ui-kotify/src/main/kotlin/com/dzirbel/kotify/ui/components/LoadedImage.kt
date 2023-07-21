@@ -91,7 +91,7 @@ fun LoadedImage(
     size: Dp = Dimens.contentImage,
     shape: Shape = RoundedCornerShape(Dimens.cornerSize),
 ) {
-    val imageState = remember {
+    val imageState = remember(imageProperty) {
         mutableStateOf(imageProperty.cachedOrNull?.url?.let { SpotifyImageCache.getFromMemory(url = it) })
     }
 

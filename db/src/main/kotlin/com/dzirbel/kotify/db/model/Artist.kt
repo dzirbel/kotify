@@ -47,8 +47,8 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
     val images: ReadWriteCachedProperty<List<Image>> by (Image via ArtistTable.ArtistImageTable).cachedAsList()
     val genres: ReadWriteCachedProperty<List<Genre>> by (Genre via ArtistTable.ArtistGenreTable).cachedAsList()
 
-    val artistAlbums: ReadOnlyCachedProperty<List<ArtistAlbum>> by (ArtistAlbum referrersOn ArtistAlbumTable.artist)
-        .cachedReadOnly { it.toList() }
+    val artistAlbums by (ArtistAlbum referrersOn ArtistAlbumTable.artist)
+        .cachedReadOnly(transactionName = "load artist ${id.value} albums") { it.toList() }
 
     val largestImage: TransactionReadOnlyCachedProperty<Image?> by (Image via ArtistTable.ArtistImageTable)
         .cachedReadOnly(transactionName = "load artist ${id.value} largest image") { it.largest() }

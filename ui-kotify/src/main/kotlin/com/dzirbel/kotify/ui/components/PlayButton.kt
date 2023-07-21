@@ -13,18 +13,19 @@ import com.dzirbel.kotify.repository2.player.PlayerRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 @Composable
 fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
     val currentContextState = PlayerRepository.playbackContextUri.collectAsState()
     val playingState = PlayerRepository.playing.collectAsState()
-    val playable = PlayerRepository.playable.collectAsState().value == true
+    val playable = PlayerRepository.playable.collectAsState().derived { it == true }.value
 
     val matchesContext = remember(context?.contextUri) {
         derivedStateOf { currentContextState.value == context?.contextUri }
     }
-    val playing = remember {
+    val playing = remember(context?.contextUri) {
         derivedStateOf { playingState.value?.value == true && matchesContext.value }
     }
 

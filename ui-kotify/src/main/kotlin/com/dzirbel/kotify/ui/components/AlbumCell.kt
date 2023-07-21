@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.repository2.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository2.player.Player
 import com.dzirbel.kotify.repository2.rating.AverageRating
 import com.dzirbel.kotify.ui.CachedIcon
@@ -96,7 +97,7 @@ fun AlbumCell(
 }
 
 @Composable
-fun SmallAlbumCell(album: Album, isSaved: Boolean?, onToggleSave: (Boolean) -> Unit, onClick: () -> Unit) {
+fun SmallAlbumCell(album: Album, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(Dimens.cornerSize))
@@ -106,7 +107,7 @@ fun SmallAlbumCell(album: Album, isSaved: Boolean?, onToggleSave: (Boolean) -> U
     ) {
         Box {
             LoadedImage(
-                url = album.largestImage.cached?.url,
+                imageProperty = album.largestImage,
                 size = Dimens.contentImageSmall,
                 modifier = Modifier.align(Alignment.Center),
             )
@@ -121,7 +122,7 @@ fun SmallAlbumCell(album: Album, isSaved: Boolean?, onToggleSave: (Boolean) -> U
                     .padding(Dimens.space1),
                 horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
             ) {
-                ToggleSaveButton(isSaved = isSaved) { onToggleSave(it) }
+                ToggleSaveButton(repository = SavedAlbumRepository, id = album.id.value)
 
                 PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)
             }

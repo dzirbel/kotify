@@ -17,14 +17,12 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerButton
 import com.dzirbel.kotify.db.model.Artist
-import com.dzirbel.kotify.repository2.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository2.artist.ArtistRepository
 import com.dzirbel.kotify.repository2.artist.SavedArtistRepository
 import com.dzirbel.kotify.repository2.player.Player
@@ -60,6 +58,7 @@ import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistPopularityProperty
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.combinedStateWhenAllNotNull
@@ -98,7 +97,7 @@ object ArtistsPage : Page<Unit>() {
                 ArtistsPageHeader(artistsAdapter = artistsAdapter)
             },
             content = {
-                if (artistsAdapter.value.hasElements) {
+                if (artistsAdapter.derived { it.hasElements }.value) {
                     Grid(
                         elements = artistsAdapter.value,
                         edgePadding = PaddingValues(
@@ -137,13 +136,12 @@ private fun ArtistsPageHeader(artistsAdapter: ListAdapterState<Artist>) {
         Column {
             Text("Artists", style = MaterialTheme.typography.h4)
 
-            val hasElements = remember { derivedStateOf { artistsAdapter.value.hasElements } }
-            if (hasElements.value) {
+            if (artistsAdapter.derived { it.hasElements }.value) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                        val size = remember { derivedStateOf { artistsAdapter.value.size } }
+                        val size = artistsAdapter.derived { it.size }.value
                         Text(
-                            text = "${size.value} saved artists",
+                            text = "$size saved artists",
                             modifier = Modifier.padding(end = Dimens.space2),
                         )
 
@@ -159,18 +157,16 @@ private fun ArtistsPageHeader(artistsAdapter: ListAdapterState<Artist>) {
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-            val divider = remember { derivedStateOf { artistsAdapter.value.divider } }
             DividerSelector(
                 dividableProperties = properties.dividableProperties(),
-                currentDivider = divider.value,
-                onSelectDivider = { artistsAdapter.mutate { withDivider(it) } },
+                currentDivider = artistsAdapter.derived { it.divider }.value,
+                onSelectDivider = artistsAdapter::withDivider,
             )
 
-            val sorts = remember { derivedStateOf { artistsAdapter.value.sorts } }
             SortSelector(
                 sortableProperties = properties.sortableProperties(),
-                sorts = sorts.value.orEmpty(),
-                onSetSort = { artistsAdapter.mutate { withSort(it) } },
+                sorts = artistsAdapter.derived { it.sorts.orEmpty() }.value,
+                onSetSort = artistsAdapter::withSort,
             )
         }
     }
@@ -187,10 +183,7 @@ private fun ArtistCell(artist: Artist, onRightClick: () -> Unit) {
             .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = onRightClick)
             .padding(Dimens.space3),
     ) {
-        LoadedImage(
-            imageProperty = artist.largestImage,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        )
+        LoadedImage(imageProperty = artist.largestImage, modifier = Modifier.align(Alignment.CenterHorizontally))
 
         VerticalSpacer(Dimens.space3)
 
@@ -222,20 +215,21 @@ private const val DETAILS_ALBUMS_WEIGHT = 0.7f
 @Composable
 private fun ArtistDetailInsert(artist: Artist) {
     Row(modifier = Modifier.padding(Dimens.space4), horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-        val artistImage = artist.largestImage.cachedOrNull
-            ?: artist.produceTransactionState("load artist image") { largestImage.live }.value
-
-        LoadedImage(url = artistImage?.url)
+        LoadedImage(imageProperty = artist.largestImage)
 
         Column(
             modifier = Modifier.weight(weight = DETAILS_COLUMN_WEIGHT),
             verticalArrangement = Arrangement.spacedBy(Dimens.space2),
         ) {
-            Text(artist.name, style = MaterialTheme.typography.h5)
+            Text(text = artist.name, style = MaterialTheme.typography.h5)
 
-            ArtistRepository.stateOf(id = artist.id.value).collectAsState().value?.cacheTime?.let { saveTime ->
-                Text(liveRelativeDateText(timestamp = saveTime.toEpochMilli()) { "Saved $it" })
-            }
+            ArtistRepository.stateOf(id = artist.id.value)
+                .collectAsState()
+                .derived { it?.cacheTime?.toEpochMilli() }
+                .value
+                ?.let { timestamp ->
+                    Text(liveRelativeDateText(timestamp = timestamp) { "Saved $it" })
+                }
 
             artist.produceTransactionState("load artist genres") { genres.live }.value?.let { genres ->
                 Flow {
@@ -245,6 +239,7 @@ private fun ArtistDetailInsert(artist: Artist) {
                 }
             }
 
+            // TODO have the TrackRatingRepository provide a state by artist directly
             val artistTrackIds = artist.produceTransactionState("load artist tracks") { trackIds.live }.value
             val averageRating = artistTrackIds?.let { TrackRatingRepository.averageRatingStateOf(ids = it) }?.value
             if (averageRating != null) {
@@ -252,23 +247,21 @@ private fun ArtistDetailInsert(artist: Artist) {
             }
         }
 
-        artist.produceTransactionState("load artist albums") {
-            artistAlbums.live.onEach { artistAlbum ->
-                artistAlbum.album.loadToCache()
-                artistAlbum.album.cached.largestImage.loadToCache()
-            }
-        }.value?.let { albums ->
-            val adapter = remember { ListAdapter.empty(AlbumNameProperty.ForArtistAlbum).withElements(albums) }
+        artist.artistAlbums.produceTransactionState(
+            onLive = { artistsAlbums ->
+                artistsAlbums.onEach { artistAlbum ->
+                    artistAlbum.album.loadToCache()
+                    artistAlbum.album.live.largestImage.loadToCache()
+                }
+            },
+        ).value?.let { albums ->
+            val adapter = remember { ListAdapter.of(elements = albums, defaultSort = AlbumNameProperty.ForArtistAlbum) }
             Grid(
                 modifier = Modifier.weight(DETAILS_ALBUMS_WEIGHT),
                 elements = adapter,
             ) { _, artistAlbum ->
                 SmallAlbumCell(
                     album = artistAlbum.album.cached,
-                    isSaved = SavedAlbumRepository.savedStateOf(id = artistAlbum.albumId.value).value?.value,
-                    onToggleSave = { save ->
-                        SavedAlbumRepository.setSaved(id = artistAlbum.albumId.value, saved = save)
-                    },
                     onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.albumId.value)) } },
                 )
             }

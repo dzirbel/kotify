@@ -7,6 +7,7 @@ import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
+import com.dzirbel.kotify.db.TransactionReadOnlyCachedProperty
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.db.util.largest
@@ -81,8 +82,8 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
             .map { it[AlbumTable.AlbumTrackTable.track].value }
     }
 
-    val largestImage: ReadOnlyCachedProperty<Image?> by (Image via AlbumTable.AlbumImageTable)
-        .cachedReadOnly { it.largest() }
+    val largestImage: TransactionReadOnlyCachedProperty<Image?> by (Image via AlbumTable.AlbumImageTable)
+        .cachedReadOnly(transactionName = "load album ${id.value} largest image") { it.largest() }
 
     /**
      * Whether all the tracks on this album (or the expected number of tracks) are in the database. Must be called from

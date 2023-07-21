@@ -10,8 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -19,6 +17,7 @@ import com.dzirbel.kotify.repository2.CacheState
 import com.dzirbel.kotify.repository2.Repository
 import com.dzirbel.kotify.repository2.SavedRepository
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 /**
@@ -108,14 +107,9 @@ fun LibraryInvalidateButton(
     contentPadding: PaddingValues = PaddingValues(Dimens.space3),
     fontSize: TextUnit = LocalTextStyle.current.fontSize,
 ) {
-    val libraryState = savedRepository.library.collectAsState()
-    val cacheTimeState = remember {
-        derivedStateOf { libraryState.value?.cacheTime }
-    }
-
     InvalidateButton(
         refreshing = savedRepository.libraryRefreshing.collectAsState().value,
-        updated = cacheTimeState.value?.toEpochMilli(),
+        updated = savedRepository.library.collectAsState().derived { it?.cacheTime?.toEpochMilli() }.value,
         onClick = savedRepository::refreshLibrary,
         modifier = modifier,
         contentPadding = contentPadding,

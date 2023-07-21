@@ -6,6 +6,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.ProduceStateScope
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -19,6 +20,14 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+
+/**
+ * Convenience function to produce a derived [State] by applying [transform] to the value of [State].
+ */
+@Composable
+fun <T, R> State<T>.derived(transform: (T) -> R): State<R> {
+    return remember(this) { derivedStateOf { transform(this.value) } }
+}
 
 /**
  * Collects the [callback] value as a [State], initially null, which is assigned a value when [callback] returns.

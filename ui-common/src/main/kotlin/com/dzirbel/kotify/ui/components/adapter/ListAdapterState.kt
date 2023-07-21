@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.dzirbel.kotify.ui.util.mutate
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -80,7 +81,24 @@ class ListAdapterState<E>(
     override val value: ListAdapter<E>
         get() = state.value
 
+    /**
+     * Asynchronously updates the [ListAdapter] to the result of [block] on the current [value].
+     */
     fun mutate(block: ListAdapter<E>.() -> ListAdapter<E>) {
         scope.launch { state.mutate(block) }
+    }
+
+    /**
+     * Convenience wrapper around [mutate] which applied [ListAdapter.withSort].
+     */
+    fun withSort(sorts: PersistentList<Sort<E>>?) {
+        mutate { withSort(sorts) }
+    }
+
+    /**
+     * Convenience wrapper around [mutate] which applied [ListAdapter.withDivider].
+     */
+    fun withDivider(divider: Divider<E>?) {
+        mutate { withDivider(divider) }
     }
 }
