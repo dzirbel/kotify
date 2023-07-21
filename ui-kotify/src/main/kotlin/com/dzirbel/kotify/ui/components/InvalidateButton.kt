@@ -10,11 +10,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import com.dzirbel.kotify.repository2.CacheState
 import com.dzirbel.kotify.repository2.Repository
+import com.dzirbel.kotify.repository2.SavedRepository
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
@@ -42,10 +45,10 @@ fun InvalidateButton(
     refreshing: Boolean,
     updated: Long?,
     modifier: Modifier = Modifier,
-    updatedFormat: (String) -> String = { "Synced $it" },
-    updatedFallback: String = "Never synced",
     contentPadding: PaddingValues = PaddingValues(Dimens.space3),
     fontSize: TextUnit = LocalTextStyle.current.fontSize,
+    updatedFormat: (String) -> String = { "Synced $it" },
+    updatedFallback: String = "Never synced",
     onClick: () -> Unit,
 ) {
     SimpleTextButton(
@@ -74,7 +77,14 @@ fun InvalidateButton(
  * TODO stability with Repository param
  */
 @Composable
-fun InvalidateButton(repository: Repository<*>, id: String, entityName: String) {
+fun InvalidateButton(
+    repository: Repository<*>,
+    id: String,
+    entityName: String,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
+    fontSize: TextUnit = LocalTextStyle.current.fontSize,
+) {
     val cacheState = repository.stateOf(id = id).collectAsState().value
     InvalidateButton(
         refreshing = cacheState is CacheState.Refreshing,
@@ -82,5 +92,33 @@ fun InvalidateButton(repository: Repository<*>, id: String, entityName: String) 
         updatedFormat = { "$entityName synced $it" },
         updatedFallback = "$entityName never synced",
         onClick = { repository.refreshFromRemote(id = id) },
+        modifier = modifier,
+        contentPadding = contentPadding,
+        fontSize = fontSize,
+    )
+}
+
+/**
+ * A wrapper around [InvalidateButton] which reflects the state of the library for the given [savedRepository].
+ */
+@Composable
+fun LibraryInvalidateButton(
+    savedRepository: SavedRepository,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
+    fontSize: TextUnit = LocalTextStyle.current.fontSize,
+) {
+    val libraryState = savedRepository.library.collectAsState()
+    val cacheTimeState = remember {
+        derivedStateOf { libraryState.value?.cacheTime }
+    }
+
+    InvalidateButton(
+        refreshing = savedRepository.libraryRefreshing.collectAsState().value,
+        updated = cacheTimeState.value?.toEpochMilli(),
+        onClick = savedRepository::refreshLibrary,
+        modifier = modifier,
+        contentPadding = contentPadding,
+        fontSize = fontSize,
     )
 }

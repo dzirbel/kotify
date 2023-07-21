@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.network.oauth.AccessToken
+import com.dzirbel.kotify.repository2.player.PlayerRepository
+import com.dzirbel.kotify.repository2.savedRepositories2
 import com.dzirbel.kotify.repository2.user.UserRepository
 import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
@@ -53,6 +55,25 @@ private val libraryPanelSize = PanelSize(
     minContentSizePercent = 0.7f,
 )
 
+/**
+ * Holds initialization logic which should only be run when there is a signed-in user. Should only be called once per
+ * user session, in particular:
+ * - on or near after application start if there is already is signed-in user
+ * - NOT on application start if there is no signed-in user
+ * - on user sign in after application start without a signed-in user
+ * - again on any subsequent sign ins (after sign-outs)
+ */
+fun onSignedIn() {
+    check(UserRepository.hasCurrentUserId)
+
+    // load initial player state
+    PlayerRepository.refreshPlayback()
+    PlayerRepository.refreshTrack()
+    PlayerRepository.refreshDevices()
+
+    savedRepositories2.forEach { it.init() }
+}
+
 @Composable
 fun Root() {
     InvalidatingRootContent {
@@ -64,6 +85,12 @@ fun Root() {
             if (hasToken) {
                 LaunchedEffect(tokenState.value?.accessToken) {
                     UserRepository.ensureCurrentUserLoaded()
+                }
+            }
+
+            if (hasCurrentUserId) {
+                LaunchedEffect(Unit) {
+                    onSignedIn()
                 }
             }
 

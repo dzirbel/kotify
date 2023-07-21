@@ -4,7 +4,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.repository.global.GlobalUpdateTimesRepository
 import com.dzirbel.kotify.repository2.user.UserRepository
-import com.dzirbel.kotify.repository2.util.JobLock
+import com.dzirbel.kotify.repository2.util.CachedResource
 import com.dzirbel.kotify.repository2.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.repository2.util.ToggleableState
 import com.dzirbel.kotify.repository2.util.midpointInstantToNow
@@ -13,7 +13,6 @@ import com.dzirbel.kotify.util.plusOrMinus
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -39,11 +38,17 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     private val scope: CoroutineScope,
 ) : SavedRepository {
-    private val _library = MutableStateFlow<CacheState<Set<String>>?>(null)
-    override val library: StateFlow<CacheState<Set<String>>?>
-        get() = _library
+    private val libraryResource: CachedResource<SavedRepository.Library> = CachedResource(
+        scope = scope,
+        getFromCache = { getLibraryCached() },
+        getFromRemote = { getLibraryRemote() },
+    )
 
-    private val refreshLibraryLock = JobLock()
+    override val library: StateFlow<SavedRepository.Library?>
+        get() = libraryResource.flow.also { libraryResource.ensureLoaded() }
+
+    override val libraryRefreshing: StateFlow<Boolean>
+        get() = libraryResource.refreshingFlow
 
     private val currentUserLibraryUpdateKey: String
         get() = "$baseLibraryUpdateKey-${UserRepository.requireCurrentUserId}"
@@ -85,16 +90,18 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     protected abstract fun convert(savedNetworkType: SavedNetworkType): Pair<String, Instant?>
 
     final override fun init() {
-        refreshLibraryLock.launch(scope) {
-            getLibraryCached()
-        }
+        libraryResource.initFromCache()
+    }
+
+    final override fun refreshLibrary() {
+        libraryResource.refreshFromRemote()
     }
 
     final override fun savedStateOf(id: String): StateFlow<ToggleableState<Boolean>?> {
         return savedStates.getOrCreateStateFlow(
             key = id,
             defaultValue = {
-                _library.value?.cachedValue?.contains(id)?.let { ToggleableState.Set(it) }
+                libraryResource.flow.value?.ids?.contains(id)?.let { ToggleableState.Set(it) }
             },
             onCreate = { default ->
                 if (default == null) {
@@ -135,7 +142,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         return savedStates.getOrCreateStateFlows(
             keys = ids,
             defaultValue = { id ->
-                _library.value?.cachedValue?.contains(id)?.let { ToggleableState.Set(it) }
+                libraryResource.flow.value?.ids?.contains(id)?.let { ToggleableState.Set(it) }
             },
             onCreate = { creations ->
                 val missingIds = creations.filterNotNullValues().keys
@@ -193,16 +200,6 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         )
     }
 
-    final override fun refreshLibrary() {
-        refreshLibraryLock.launch(scope) {
-            _library.value = CacheState.Refreshing(
-                cachedValue = _library.value?.cachedValue,
-                cacheTime = _library.value?.cacheTime,
-            )
-            getLibraryRemote()
-        }
-    }
-
     final override fun setSaved(id: String, saved: Boolean) {
         val saveTime = Instant.now()
 
@@ -231,35 +228,35 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             ensureActive()
 
             savedStates.updateValue(id, ToggleableState.Set(saved))
-            val libraryCacheState = _library.value
-            if (libraryCacheState is CacheState.Loaded) {
-                _library.value = libraryCacheState.copy(
-                    cachedValue = libraryCacheState.cachedValue.plusOrMinus(value = id, condition = saved),
-                )
+
+            libraryResource.update { library ->
+                library.copy(ids = library.ids.plusOrMinus(value = id, condition = saved))
             }
         }
     }
 
     final override fun invalidateUser() {
-        _library.value = null
+        libraryResource.invalidate()
         savedStates.clear()
     }
 
     // TODO catch and log exceptions
-    private suspend fun getLibraryCached() {
-        KotifyDatabase.transaction("load $entityName saved library") {
+    private suspend fun getLibraryCached(): SavedRepository.Library? {
+        if (!UserRepository.hasCurrentUserId) return null
+
+        return KotifyDatabase.transaction("load $entityName saved library") {
             GlobalUpdateTimesRepository.updated(currentUserLibraryUpdateKey)?.let { updatedTime ->
                 updatedTime to savedEntityTable.savedEntityIds(userId = UserRepository.requireCurrentUserId)
             }
         }
             ?.let { (updatedTime, ids) ->
                 savedStates.computeAll { id -> ToggleableState.Set(id in ids) }
-                _library.value = CacheState.Loaded(cachedValue = ids, cacheTime = updatedTime)
+                SavedRepository.Library(ids, updatedTime)
             }
     }
 
     // TODO catch and log exceptions
-    private suspend fun getLibraryRemote() {
+    private suspend fun getLibraryRemote(): SavedRepository.Library {
         val userId = UserRepository.requireCurrentUserId
 
         val start = TimeSource.Monotonic.markNow()
@@ -269,7 +266,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         val remoteLibrary = KotifyDatabase.transaction("save $entityName saved library") {
             GlobalUpdateTimesRepository.setUpdated(key = currentUserLibraryUpdateKey, updateTime = updateTime)
 
-            val cachedLibrary: Set<String> = _library.value?.cachedValue
+            val cachedLibrary: Set<String> = libraryResource.flow.value?.ids
                 ?: savedEntityTable.savedEntityIds(userId = userId)
 
             val remoteLibrary: Set<Pair<String, Instant?>> = savedNetworkModels.mapTo(mutableSetOf(), ::convert)
@@ -305,6 +302,6 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         }
 
         savedStates.computeAll { id -> ToggleableState.Set(id in remoteLibrary) }
-        _library.value = CacheState.Loaded(cachedValue = remoteLibrary, cacheTime = updateTime)
+        return SavedRepository.Library(remoteLibrary, updateTime)
     }
 }

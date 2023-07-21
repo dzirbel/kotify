@@ -2,6 +2,7 @@ package com.dzirbel.kotify.repository2
 
 import com.dzirbel.kotify.repository2.util.ToggleableState
 import kotlinx.coroutines.flow.StateFlow
+import java.time.Instant
 
 /**
  * Handles logic to manage the save states for a set of entities with String (ID) keys.
@@ -10,19 +11,40 @@ import kotlinx.coroutines.flow.StateFlow
  */
 interface SavedRepository {
     /**
+     * Wraps the state of a saved library; a set of [ids] and an [Instant] at the last time it was fetched from the
+     * remote data source.
+     */
+    data class Library(
+        val ids: Set<String>,
+        val cacheTime: Instant,
+    )
+
+    /**
      * Reflects the current state of the entity library of saved entities, if it is available.
      *
      * Only provided when the entire library has been fetched (e.g. the entire set of a user's followed artists) rather
      * than just individual states.
      */
-    val library: StateFlow<CacheState<Set<String>>?>
+    val library: StateFlow<Library?>
+
+    /**
+     * Reflects whether the [library] is currently being refreshed, either as a first load or a subsequently via
+     * [refreshLibrary].
+     */
+    val libraryRefreshing: StateFlow<Boolean>
 
     /**
      * Initializes the [SavedRepository], typically loading the library from a local source.
      *
-     * Invoked on application start but not in tests.
+     * Should be invoked on application start and when a user is first signed in, but not in tests.
      */
     fun init()
+
+    /**
+     * Asynchronously refreshes the state of the [library] (and all individual saved states) from the remote data
+     * source.
+     */
+    fun refreshLibrary()
 
     /**
      * Retrieves a [StateFlow] which reflects the live [ToggleableState] of the save state for the entity with the given
@@ -37,12 +59,6 @@ interface SavedRepository {
      * entities with the given [ids].
      */
     fun savedStatesOf(ids: Iterable<String>): List<StateFlow<ToggleableState<Boolean>?>>
-
-    /**
-     * Asynchronously refreshes the state of the [library] (and all individual saved states) from the remote data
-     * source.
-     */
-    fun refreshLibrary()
 
     /**
      * Sets the saved state of the entity with the given [id] to [saved].

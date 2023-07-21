@@ -54,7 +54,7 @@ fun SavedRepository.mockSaveStates(ids: List<String>, saved: List<Boolean?>) {
 
 fun SavedRepository.mockLibrary(ids: Set<String>?, cacheTime: Instant = Instant.now()) {
     val flows = mutableMapOf<String, MutableStateFlow<ToggleableState<Boolean>?>>()
-    val libraryFlow = MutableStateFlow(ids?.let { CacheState.Loaded(ids, cacheTime) })
+    val libraryFlow = MutableStateFlow(ids?.let { SavedRepository.Library(ids, cacheTime) })
 
     every { library } returns libraryFlow
 

@@ -34,6 +34,9 @@ open class UserRepository internal constructor(
     val currentUser: StateFlow<CacheState<User>?>
         get() = _currentUser
 
+    val hasCurrentUserId: Boolean
+        get() = _currentUserId.value != null
+
     val requireCurrentUserId: String
         get() = requireNotNull(_currentUserId.value) { "missing current user ID" }
 

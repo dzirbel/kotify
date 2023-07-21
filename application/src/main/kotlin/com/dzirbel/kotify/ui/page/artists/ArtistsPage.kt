@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerButton
 import com.dzirbel.kotify.db.model.Artist
-import com.dzirbel.kotify.repository2.CacheState
 import com.dzirbel.kotify.repository2.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository2.artist.ArtistRepository
 import com.dzirbel.kotify.repository2.artist.SavedArtistRepository
@@ -33,7 +32,7 @@ import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.components.DividerSelector
 import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Interpunct
-import com.dzirbel.kotify.ui.components.InvalidateButton
+import com.dzirbel.kotify.ui.components.LibraryInvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner
 import com.dzirbel.kotify.ui.components.Pill
@@ -82,7 +81,7 @@ object ArtistsPage : Page<Unit>() {
     override fun BoxScope.bind(visible: Boolean) {
         val artistsAdapter = rememberListAdapterState(defaultSort = ArtistNameProperty) { scope ->
             SavedArtistRepository.library.flatMapLatestIn(scope) { library ->
-                library?.cachedValue
+                library?.ids
                     ?.let { artistIds ->
                         ArtistRepository.statesOf(artistIds).combinedStateWhenAllNotNull { it?.cachedValue }
                     }
@@ -150,12 +149,9 @@ private fun ArtistsPageHeader(artistsAdapter: ListAdapterState<Artist>) {
 
                         Interpunct()
 
-                        val libraryCacheState = SavedArtistRepository.library.collectAsState().value
-                        InvalidateButton(
-                            refreshing = libraryCacheState is CacheState.Refreshing,
-                            updated = libraryCacheState?.cacheTime?.toEpochMilli(),
+                        LibraryInvalidateButton(
+                            savedRepository = SavedArtistRepository,
                             contentPadding = PaddingValues(all = Dimens.space2),
-                            onClick = { SavedArtistRepository.refreshLibrary() },
                         )
                     }
                 }

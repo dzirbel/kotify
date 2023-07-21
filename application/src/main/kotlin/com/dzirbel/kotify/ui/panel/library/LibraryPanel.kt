@@ -22,13 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.db.model.Playlist
-import com.dzirbel.kotify.repository2.CacheState
 import com.dzirbel.kotify.repository2.player.PlayerRepository
 import com.dzirbel.kotify.repository2.playlist.PlaylistRepository
 import com.dzirbel.kotify.repository2.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalDivider
-import com.dzirbel.kotify.ui.components.InvalidateButton
+import com.dzirbel.kotify.ui.components.LibraryInvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.components.VerticalSpacer
@@ -110,18 +109,11 @@ fun LibraryPanel() {
                 text = "Playlists",
             )
 
-            val libraryCacheState = SavedPlaylistRepository.library.collectAsState().value
-
-            InvalidateButton(
-                refreshing = libraryCacheState is CacheState.Refreshing,
-                updated = libraryCacheState?.cacheTime?.toEpochMilli(),
-                contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
-                onClick = SavedPlaylistRepository::refreshLibrary,
-            )
+            LibraryInvalidateButton(SavedPlaylistRepository)
 
             HorizontalDivider(Modifier.padding(bottom = Dimens.space3))
 
-            val savedPlaylistIds = libraryCacheState?.cachedValue
+            val savedPlaylistIds = SavedPlaylistRepository.library.collectAsState().value?.ids
             if (savedPlaylistIds != null) {
                 val playlistStates = remember(savedPlaylistIds) {
                     PlaylistRepository.statesOf(ids = savedPlaylistIds)
