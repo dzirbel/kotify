@@ -86,16 +86,16 @@ fun LoadedImage(
  */
 @Composable
 fun LoadedImage(
-    imageProperty: TransactionReadOnlyCachedProperty<Image?>,
+    imageProperty: TransactionReadOnlyCachedProperty<Image?>?,
     modifier: Modifier = Modifier,
     size: Dp = Dimens.contentImage,
     shape: Shape = RoundedCornerShape(Dimens.cornerSize),
 ) {
     val imageState = remember(imageProperty) {
-        mutableStateOf(imageProperty.cachedOrNull?.url?.let { SpotifyImageCache.getFromMemory(url = it) })
+        mutableStateOf(imageProperty?.cachedOrNull?.url?.let { SpotifyImageCache.getFromMemory(url = it) })
     }
 
-    if (imageState.value == null) {
+    if (imageState.value == null && imageProperty != null) {
         LaunchedEffect(imageProperty) {
             withContext(Dispatchers.Default) {
                 val image = imageProperty.cachedOrNull

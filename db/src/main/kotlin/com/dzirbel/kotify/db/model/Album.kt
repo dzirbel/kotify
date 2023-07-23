@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
 import java.time.Instant
 
@@ -28,6 +29,7 @@ object AlbumTable : SpotifyEntityTable(name = "albums") {
     val releaseDate: Column<String?> = text("release_date").nullable()
     val releaseDatePrecision: Column<String?> = text("release_date_precision").nullable()
     val totalTracks: Column<Int?> = integer("total_tracks").nullable()
+    val tracksFetched: Column<Instant?> = timestamp("tracks_fetched").nullable()
     val label: Column<String?> = text("label").nullable()
     val popularity: Column<Int?> = integer("popularity").nullable()
 
@@ -57,6 +59,7 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
     var releaseDate: String? by AlbumTable.releaseDate
     var releaseDatePrecision: String? by AlbumTable.releaseDatePrecision
     var totalTracks: Int? by AlbumTable.totalTracks
+    var tracksFetched: Instant? by AlbumTable.tracksFetched
     var label: String? by AlbumTable.label
     var popularity: Int? by AlbumTable.popularity
 

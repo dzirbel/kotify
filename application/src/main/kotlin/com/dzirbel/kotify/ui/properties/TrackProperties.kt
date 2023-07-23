@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
@@ -37,6 +38,7 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.util.applyIf
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
 import kotlinx.coroutines.Dispatchers
@@ -118,7 +120,7 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> Track) :
 
     @Composable
     override fun Item(item: T) {
-        val popularity = toNumber(item) ?: 0
+        val popularity = toNumber(item)
         val color = LocalColors.current.text.copy(alpha = ContentAlpha.disabled)
 
         LocalColors.current.WithSurface {
@@ -128,15 +130,18 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> Track) :
                     .surfaceBackground()
                     .height(Dimens.fontBodyDp)
                     .fillMaxWidth()
-                    .border(width = Dimens.divider, color = color),
+                    .border(width = Dimens.divider, color = color)
+                    .applyIf(popularity == null) { alpha(ContentAlpha.disabled) },
             ) {
-                Box(
-                    @Suppress("MagicNumber")
-                    Modifier
-                        .background(color)
-                        .fillMaxHeight()
-                        .fillMaxWidth(fraction = popularity / 100f),
-                )
+                if (popularity != null) {
+                    Box(
+                        @Suppress("MagicNumber")
+                        Modifier
+                            .background(color)
+                            .fillMaxHeight()
+                            .fillMaxWidth(fraction = popularity / 100f),
+                    )
+                }
             }
         }
     }
