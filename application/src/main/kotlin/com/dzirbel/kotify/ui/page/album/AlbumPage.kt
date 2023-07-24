@@ -38,8 +38,8 @@ import com.dzirbel.kotify.ui.properties.TrackDurationProperty
 import com.dzirbel.kotify.ui.properties.TrackNameProperty
 import com.dzirbel.kotify.ui.properties.TrackPlayingColumn
 import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
-import com.dzirbel.kotify.ui.properties.TrackRatingProperty2
-import com.dzirbel.kotify.ui.properties.TrackSavedProperty2
+import com.dzirbel.kotify.ui.properties.TrackRatingProperty
+import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.mutate
@@ -80,10 +80,10 @@ data class AlbumPage(val albumId: String) : Page<String?>() {
                     },
                 ),
                 TrackAlbumIndexProperty,
-                TrackSavedProperty2(trackIdOf = { track -> track.id.value }),
+                TrackSavedProperty(trackIdOf = { track -> track.id.value }),
                 TrackNameProperty,
                 // TrackArtistsProperty, TODO re-add
-                TrackRatingProperty2(trackIdOf = { track -> track.id.value }),
+                TrackRatingProperty(trackIdOf = { track -> track.id.value }),
                 TrackDurationProperty,
                 TrackPopularityProperty,
             )

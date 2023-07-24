@@ -1,9 +1,6 @@
 package com.dzirbel.kotify
 
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.db.blockingTransaction
-import com.dzirbel.kotify.repository.savedRepositories
-import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository2.savedRepositories2
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -26,15 +23,10 @@ class DatabaseExtension : BeforeAllCallback, AfterEachCallback {
             // use database file relative to this module to avoid interference with parallel test suites
             KotifyDatabase.init(dbFile = Application.cacheDir.resolve("cache.db").also(File::deleteOnExit))
         }
-
-        KotifyDatabase.blockingTransaction {
-            UserRepository.currentUserId.set("abc") // use mock user ID for tests
-        }
     }
 
     override fun afterEach(context: ExtensionContext) {
         KotifyDatabase.deleteAll()
-        savedRepositories.forEach { it.clearStates() }
         savedRepositories2.forEach { it.invalidateUser() }
     }
 }

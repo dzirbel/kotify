@@ -38,14 +38,14 @@ import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrack
-import com.dzirbel.kotify.repository.album.SavedAlbumRepository
-import com.dzirbel.kotify.repository.artist.SavedArtistRepository
-import com.dzirbel.kotify.repository.track.SavedTrackRepository
+import com.dzirbel.kotify.repository2.album.SavedAlbumRepository
+import com.dzirbel.kotify.repository2.artist.SavedArtistRepository
 import com.dzirbel.kotify.repository2.player.PlayerRepository
 import com.dzirbel.kotify.repository2.player.SkippingState
 import com.dzirbel.kotify.repository2.player.TrackPosition
 import com.dzirbel.kotify.repository2.rating.Rating
 import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
+import com.dzirbel.kotify.repository2.track.SavedTrackRepository
 import com.dzirbel.kotify.repository2.util.ToggleableState
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
@@ -94,10 +94,6 @@ fun PlayerPanel() {
     val track = PlayerRepository.currentTrack.collectAsState().value
     val trackId = track?.id
 
-    val trackSaved = remember(trackId) { trackId?.let { SavedTrackRepository.stateOf(id = it) } }
-        ?.collectAsStateSwitchable(key = trackId)
-        ?.value
-
     val trackRating = remember(trackId) { trackId?.let { TrackRatingRepository.ratingStateOf(id = it) } }
         ?.collectAsStateSwitchable(key = trackId)
         ?.value
@@ -114,7 +110,6 @@ fun PlayerPanel() {
                     Column {
                         CurrentTrack(
                             track = track,
-                            trackIsSaved = trackSaved,
                             trackRating = trackRating,
                         )
                     }
@@ -205,7 +200,7 @@ fun PlayerPanel() {
 }
 
 @Composable
-private fun CurrentTrack(track: SpotifyTrack?, trackIsSaved: Boolean?, trackRating: Rating?) {
+private fun CurrentTrack(track: SpotifyTrack?, trackRating: Rating?) {
     Row(
         modifier = Modifier.instrument(),
         horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
@@ -229,12 +224,7 @@ private fun CurrentTrack(track: SpotifyTrack?, trackIsSaved: Boolean?, trackRati
                     Text(track.name)
 
                     track.id?.let { trackId ->
-                        val scope = rememberCoroutineScope { Dispatchers.IO }
-                        ToggleSaveButton(isSaved = trackIsSaved) { save ->
-                            scope.launch {
-                                SavedTrackRepository.setSaved(id = trackId, saved = save)
-                            }
-                        }
+                        ToggleSaveButton(repository = SavedTrackRepository, id = trackId)
                     }
 
                     val scope = rememberCoroutineScope { Dispatchers.IO }
@@ -273,16 +263,7 @@ private fun CurrentTrack(track: SpotifyTrack?, trackIsSaved: Boolean?, trackRati
                                 }
 
                                 artist.id?.let { artistId ->
-                                    val saved = remember(artistId) { SavedArtistRepository.stateOf(id = artistId) }
-                                        .collectAsStateSwitchable(key = artistId)
-                                        .value
-                                    val scope = rememberCoroutineScope { Dispatchers.IO }
-
-                                    ToggleSaveButton(isSaved = saved, size = Dimens.iconTiny) { save ->
-                                        scope.launch {
-                                            SavedArtistRepository.setSaved(id = artistId, saved = save)
-                                        }
-                                    }
+                                    ToggleSaveButton(repository = SavedArtistRepository, id = artistId)
                                 }
                             }
                         }
@@ -308,16 +289,7 @@ private fun CurrentTrack(track: SpotifyTrack?, trackIsSaved: Boolean?, trackRati
                         }
 
                         album.id?.let { albumId ->
-                            val saved = remember(albumId) { SavedAlbumRepository.stateOf(id = albumId) }
-                                .collectAsStateSwitchable(key = albumId)
-                                .value
-                            val scope = rememberCoroutineScope { Dispatchers.IO }
-
-                            ToggleSaveButton(isSaved = saved, size = Dimens.iconTiny) { save ->
-                                scope.launch {
-                                    SavedAlbumRepository.setSaved(id = albumId, saved = save)
-                                }
-                            }
+                            ToggleSaveButton(repository = SavedAlbumRepository, id = albumId)
                         }
                     }
                 }
@@ -332,7 +304,7 @@ private fun PlayerControls() {
 
     val playing: ToggleableState<Boolean>? = PlayerRepository.playing.collectAsState().value
     val shuffling: ToggleableState<Boolean>? = PlayerRepository.shuffling.collectAsState().value
-    val skipping: SkippingState? = PlayerRepository.skipping.collectAsState().value
+    val skipping: SkippingState = PlayerRepository.skipping.collectAsState().value
     val repeatMode: ToggleableState<SpotifyRepeatMode>? = PlayerRepository.repeatMode.collectAsState().value
 
     Row(
@@ -357,7 +329,7 @@ private fun PlayerControls() {
         }
 
         IconButton(
-            enabled = playable && skipping != null && skipping != SkippingState.SKIPPING_TO_PREVIOUS,
+            enabled = playable && skipping != SkippingState.SKIPPING_TO_PREVIOUS,
             onClick = { PlayerRepository.skipToPrevious() },
         ) {
             CachedIcon(name = "skip-previous", size = Dimens.iconSmall, contentDescription = "Previous")
@@ -378,7 +350,7 @@ private fun PlayerControls() {
         }
 
         IconButton(
-            enabled = playable && skipping != null && skipping != SkippingState.SKIPPING_TO_NEXT,
+            enabled = playable && skipping != SkippingState.SKIPPING_TO_NEXT,
             onClick = { PlayerRepository.skipToNext() },
         ) {
             CachedIcon(name = "skip-next", size = Dimens.iconSmall, contentDescription = "Next")

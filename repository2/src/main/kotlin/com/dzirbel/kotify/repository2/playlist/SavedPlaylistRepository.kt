@@ -4,9 +4,9 @@ import com.dzirbel.kotify.db.model.PlaylistTable
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.asFlow
-import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository2.DatabaseSavedRepository
 import com.dzirbel.kotify.repository2.Repository
+import com.dzirbel.kotify.repository2.user.UserRepository
 import com.dzirbel.kotify.util.mapParallel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
@@ -16,7 +16,7 @@ open class SavedPlaylistRepository internal constructor(scope: CoroutineScope) :
     DatabaseSavedRepository<SpotifyPlaylist>(savedEntityTable = PlaylistTable.SavedPlaylistsTable, scope = scope) {
 
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
-        val userId = requireNotNull(UserRepository.currentUserId.cached) { "no logged-in user" }
+        val userId = UserRepository.requireCurrentUserId
 
         return ids.mapParallel { id ->
             Spotify.Follow.isFollowingPlaylist(playlistId = id, userIds = listOf(userId))

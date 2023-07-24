@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.repository.global
+package com.dzirbel.kotify.repository2.global
 
 import assertk.assertThat
 import assertk.assertions.isBetween

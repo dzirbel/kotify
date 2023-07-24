@@ -49,8 +49,8 @@ import com.dzirbel.kotify.ui.properties.TrackDurationProperty
 import com.dzirbel.kotify.ui.properties.TrackNameProperty
 import com.dzirbel.kotify.ui.properties.TrackPlayingColumn
 import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
-import com.dzirbel.kotify.ui.properties.TrackRatingProperty2
-import com.dzirbel.kotify.ui.properties.TrackSavedProperty2
+import com.dzirbel.kotify.ui.properties.TrackRatingProperty
+import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.rememberRatingStates
 import com.dzirbel.kotify.ui.util.rememberSavedStates
@@ -252,11 +252,11 @@ private fun playlistTrackColumns(playlist: Playlist?): PersistentList<Column<Pla
             },
         ),
         PlaylistTrackIndexProperty,
-        TrackSavedProperty2(trackIdOf = { playlistTrack -> playlistTrack.trackId.value }),
+        TrackSavedProperty(trackIdOf = { playlistTrack -> playlistTrack.trackId.value }),
         TrackNameProperty.ForPlaylistTrack,
         TrackArtistsProperty.ForPlaylistTrack,
         TrackAlbumProperty.ForPlaylistTrack,
-        TrackRatingProperty2(trackIdOf = { playlistTrack -> playlistTrack.trackId.value }),
+        TrackRatingProperty(trackIdOf = { playlistTrack -> playlistTrack.trackId.value }),
         PlaylistTrackAddedAtProperty,
         TrackDurationProperty.ForPlaylistTrack,
         TrackPopularityProperty.ForPlaylistTrack,

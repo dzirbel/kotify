@@ -4,7 +4,6 @@ include(
     "application",
     "db",
     "network",
-    "repository",
     "repository2",
     "ui-common",
     "ui-kotify",

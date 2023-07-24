@@ -8,7 +8,6 @@ plugins {
 dependencies {
     api(project(":db"))
     api(project(":network"))
-    implementation(project(":repository"))
     implementation(project(":util"))
 
     testImplementation(testFixtures(project(":db")))

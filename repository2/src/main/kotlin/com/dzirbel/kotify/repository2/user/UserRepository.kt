@@ -8,7 +8,6 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.PrivateSpotifyUser
 import com.dzirbel.kotify.network.model.SpotifyUser
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.repository.savedRepositories
 import com.dzirbel.kotify.repository2.CacheState
 import com.dzirbel.kotify.repository2.DatabaseEntityRepository
 import com.dzirbel.kotify.repository2.Repository
@@ -109,7 +108,6 @@ open class UserRepository internal constructor(
             _currentUserId.value = null
             _currentUser.value = null
 
-            savedRepositories.forEach { it.clearStates() }
             savedRepositories2.forEach { it.invalidateUser() }
 
             // TODO also reset Player state
@@ -124,9 +122,6 @@ open class UserRepository internal constructor(
         val user = Spotify.UsersProfile.getCurrentUser()
         return KotifyDatabase.transaction("set current user") {
             UserTable.CurrentUserTable.set(user.id)
-
-            // ensure legacy repository has updated value
-            com.dzirbel.kotify.repository.user.UserRepository.currentUserId.loadToCache()
 
             convert(id = user.id, networkModel = user)
         }

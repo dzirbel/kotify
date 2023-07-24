@@ -2,7 +2,7 @@ package com.dzirbel.kotify.repository2
 
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.SavedEntityTable
-import com.dzirbel.kotify.repository.global.GlobalUpdateTimesRepository
+import com.dzirbel.kotify.repository2.global.GlobalUpdateTimesRepository
 import com.dzirbel.kotify.repository2.user.UserRepository
 import com.dzirbel.kotify.repository2.util.CachedResource
 import com.dzirbel.kotify.repository2.util.SynchronizedWeakStateFlowMap

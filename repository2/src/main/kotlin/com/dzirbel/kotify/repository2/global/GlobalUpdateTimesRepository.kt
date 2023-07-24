@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.repository.global
+package com.dzirbel.kotify.repository2.global
 
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
