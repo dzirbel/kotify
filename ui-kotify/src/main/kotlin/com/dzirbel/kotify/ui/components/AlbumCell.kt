@@ -15,19 +15,25 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.repository2.album.AlbumTracksRepository
 import com.dzirbel.kotify.repository2.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository2.player.Player
 import com.dzirbel.kotify.repository2.rating.AverageRating
+import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.mapNotNull
 
 @Composable
 fun AlbumCell(
@@ -46,10 +52,7 @@ fun AlbumCell(
             .padding(Dimens.space3),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {
-        LoadedImage(
-            url = album.largestImage.cached?.url,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        )
+        LoadedImage(imageProperty = album.largestImage, modifier = Modifier.align(Alignment.CenterHorizontally))
 
         Row(
             modifier = Modifier.widthIn(max = Dimens.contentImage),
@@ -91,6 +94,71 @@ fun AlbumCell(
         }
 
         if (showRating) {
+            AverageStarRating(averageRating = averageRating)
+        }
+    }
+}
+
+@Composable
+fun AlbumCell(album: Album, showRating: Boolean = true, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .instrument()
+            .clip(RoundedCornerShape(Dimens.cornerSize))
+            .clickable(onClick = onClick)
+            .padding(Dimens.space3),
+        verticalArrangement = Arrangement.spacedBy(Dimens.space2),
+    ) {
+        LoadedImage(imageProperty = album.largestImage, modifier = Modifier.align(Alignment.CenterHorizontally))
+
+        Row(
+            modifier = Modifier.widthIn(max = Dimens.contentImage),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+        ) {
+            Text(text = album.name, modifier = Modifier.weight(1f))
+
+            ToggleSaveButton(repository = SavedAlbumRepository, id = album.id.value)
+
+            PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)
+        }
+
+        Row(
+            modifier = Modifier.widthIn(max = Dimens.contentImage),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                album.albumType?.let { albumType ->
+                    CachedIcon(
+                        name = albumType.iconName,
+                        size = Dimens.iconSmall,
+                        contentDescription = albumType.displayName,
+                    )
+                }
+
+                album.parsedReleaseDate?.let { releaseDate ->
+                    Text(text = releaseDate.year.toString())
+                }
+
+                if (album.parsedReleaseDate != null && album.totalTracks != null) {
+                    Interpunct()
+                }
+
+                album.totalTracks?.let { totalTracks ->
+                    Text("$totalTracks tracks")
+                }
+            }
+        }
+
+        if (showRating) {
+            val averageRating = remember(album.id.value) {
+                AlbumTracksRepository.stateOf(id = album.id.value)
+                    .mapNotNull { it?.cachedValue?.map { track -> track.id.value } }
+                    .flatMapLatest { tracks -> TrackRatingRepository.averageRatingStateOf(ids = tracks) }
+            }
+                .collectAsState(initial = null)
+                .value
+
             AverageStarRating(averageRating = averageRating)
         }
     }

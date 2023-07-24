@@ -89,16 +89,23 @@ class ListAdapterState<E>(
     }
 
     /**
-     * Convenience wrapper around [mutate] which applied [ListAdapter.withSort].
+     * Convenience wrapper around [mutate] which applies [ListAdapter.withSort].
      */
     fun withSort(sorts: PersistentList<Sort<E>>?) {
         mutate { withSort(sorts) }
     }
 
     /**
-     * Convenience wrapper around [mutate] which applied [ListAdapter.withDivider].
+     * Convenience wrapper around [mutate] which applies [ListAdapter.withDivider].
      */
     fun withDivider(divider: Divider<E>?) {
         mutate { withDivider(divider) }
+    }
+
+    /**
+     * Convenience wrapper around [mutate] which applies [ListAdapter.withFilter].
+     */
+    fun withFilter(filter: ((E) -> Boolean)?) {
+        mutate { withFilter(filter = filter) }
     }
 }

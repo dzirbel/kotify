@@ -91,6 +91,7 @@ data class AlbumPage(val albumId: String) : Page<String?>() {
 
         VerticalScrollPage(
             visible = visible,
+            onHeaderVisibilityChanged = { headerVisible -> navigationTitleState.targetState = !headerVisible },
             header = {
                 AlbumHeader(albumId = albumId, adapter = tracksAdapterState)
             },
