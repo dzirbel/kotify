@@ -10,8 +10,8 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.repository2.album.AlbumRepository
-import com.dzirbel.kotify.repository2.album.SavedAlbumRepository
+import com.dzirbel.kotify.repository.album.AlbumRepository
+import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.ui.components.AlbumCell
 import com.dzirbel.kotify.ui.components.LibraryInvalidateButton
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner

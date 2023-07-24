@@ -15,14 +15,14 @@ val appProperties = file("src/main/resources/app.properties").inputStream().use 
 version = appProperties["version"] as String
 
 dependencies {
-    implementation(project(":repository2"))
+    implementation(project(":repository"))
     implementation(project(":ui-common"))
     implementation(project(":ui-kotify"))
     implementation(project(":util"))
 
     testImplementation(testFixtures(project(":db")))
     testImplementation(testFixtures(project(":network")))
-    testImplementation(testFixtures(project(":repository2")))
+    testImplementation(testFixtures(project(":repository")))
     testImplementation(testFixtures(project(":ui-common")))
     testImplementation(testFixtures(project(":ui-kotify")))
     testImplementation(testFixtures(project(":util")))

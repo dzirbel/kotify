@@ -16,9 +16,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.db.model.Playlist
-import com.dzirbel.kotify.repository2.player.PlayerRepository
-import com.dzirbel.kotify.repository2.playlist.PlaylistRepository
-import com.dzirbel.kotify.repository2.playlist.SavedPlaylistRepository
+import com.dzirbel.kotify.repository.player.PlayerRepository
+import com.dzirbel.kotify.repository.playlist.PlaylistRepository
+import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.LibraryInvalidateButton

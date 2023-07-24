@@ -8,8 +8,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import com.dzirbel.kotify.repository2.player.Player
-import com.dzirbel.kotify.repository2.player.PlayerRepository
+import com.dzirbel.kotify.repository.player.Player
+import com.dzirbel.kotify.repository.player.PlayerRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors

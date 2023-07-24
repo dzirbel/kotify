@@ -1,10 +1,10 @@
 package com.dzirbel.kotify.ui.page.artists
 
 import com.dzirbel.kotify.repository.ArtistList
-import com.dzirbel.kotify.repository2.artist.ArtistRepository
-import com.dzirbel.kotify.repository2.artist.SavedArtistRepository
-import com.dzirbel.kotify.repository2.mockLibrary
-import com.dzirbel.kotify.repository2.mockStates
+import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.artist.SavedArtistRepository
+import com.dzirbel.kotify.repository.mockLibrary
+import com.dzirbel.kotify.repository.mockStates
 import com.dzirbel.kotify.ui.framework.render
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.util.RelativeTimeInfo

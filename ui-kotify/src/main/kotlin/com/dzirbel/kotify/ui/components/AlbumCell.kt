@@ -22,11 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import com.dzirbel.kotify.db.model.Album
-import com.dzirbel.kotify.repository2.album.AlbumTracksRepository
-import com.dzirbel.kotify.repository2.album.SavedAlbumRepository
-import com.dzirbel.kotify.repository2.player.Player
-import com.dzirbel.kotify.repository2.rating.AverageRating
-import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
+import com.dzirbel.kotify.repository.album.AlbumTracksRepository
+import com.dzirbel.kotify.repository.album.SavedAlbumRepository
+import com.dzirbel.kotify.repository.player.Player
+import com.dzirbel.kotify.repository.rating.AverageRating
+import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.theme.Dimens

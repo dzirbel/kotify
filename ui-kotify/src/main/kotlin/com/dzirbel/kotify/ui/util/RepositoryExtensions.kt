@@ -2,8 +2,8 @@ package com.dzirbel.kotify.ui.util
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import com.dzirbel.kotify.repository2.SavedRepository
-import com.dzirbel.kotify.repository2.rating.RatingRepository
+import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.repository.rating.RatingRepository
 
 /**
  * Remembers the [SavedRepository.savedStatesOf] for the given [entities] with the given ID extractor function [toId] at

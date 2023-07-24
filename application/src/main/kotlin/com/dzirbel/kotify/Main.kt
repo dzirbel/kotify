@@ -9,7 +9,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.repository2.user.UserRepository
+import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.ui.IconCache
 import com.dzirbel.kotify.ui.KeyboardShortcuts
 import com.dzirbel.kotify.ui.Root

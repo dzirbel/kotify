@@ -13,9 +13,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
-import com.dzirbel.kotify.repository2.CacheState
-import com.dzirbel.kotify.repository2.Repository
-import com.dzirbel.kotify.repository2.SavedRepository
+import com.dzirbel.kotify.repository.CacheState
+import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument

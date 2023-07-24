@@ -2,8 +2,8 @@ package com.dzirbel.kotify.ui.properties
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import com.dzirbel.kotify.repository2.rating.AverageRating
-import com.dzirbel.kotify.repository2.rating.Rating
+import com.dzirbel.kotify.repository.rating.AverageRating
+import com.dzirbel.kotify.repository.rating.Rating
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty

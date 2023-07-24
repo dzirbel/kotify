@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.ui.properties
 
 import com.dzirbel.kotify.db.model.Artist
-import com.dzirbel.kotify.repository2.rating.AverageRating
+import com.dzirbel.kotify.repository.rating.AverageRating
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByNumber
 import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByString

@@ -1,7 +1,7 @@
 package com.dzirbel.kotify
 
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.repository2.savedRepositories2
+import com.dzirbel.kotify.repository.savedRepositories
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -27,6 +27,6 @@ class DatabaseExtension : BeforeAllCallback, AfterEachCallback {
 
     override fun afterEach(context: ExtensionContext) {
         KotifyDatabase.deleteAll()
-        savedRepositories2.forEach { it.invalidateUser() }
+        savedRepositories.forEach { it.invalidateUser() }
     }
 }

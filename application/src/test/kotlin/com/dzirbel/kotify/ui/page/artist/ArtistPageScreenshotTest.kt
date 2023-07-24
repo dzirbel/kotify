@@ -4,10 +4,10 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.blockingTransaction
 import com.dzirbel.kotify.repository.Artist
 import com.dzirbel.kotify.repository.ArtistAlbumList
-import com.dzirbel.kotify.repository2.artist.ArtistAlbumsRepository
-import com.dzirbel.kotify.repository2.artist.ArtistRepository
-import com.dzirbel.kotify.repository2.mockStateCached
-import com.dzirbel.kotify.repository2.mockStateNull
+import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
+import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.mockStateCached
+import com.dzirbel.kotify.repository.mockStateNull
 import com.dzirbel.kotify.ui.framework.render
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.util.RelativeTimeInfo

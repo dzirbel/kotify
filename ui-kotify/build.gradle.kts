@@ -7,7 +7,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":repository2"))
+    implementation(project(":repository"))
     implementation(project(":util"))
     implementation(project(":ui-common"))
 

@@ -21,8 +21,8 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.network.model.SpotifyAlbum
-import com.dzirbel.kotify.repository2.artist.ArtistAlbumsRepository
-import com.dzirbel.kotify.repository2.artist.ArtistRepository
+import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
+import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.ui.components.AlbumCell
 import com.dzirbel.kotify.ui.components.AlbumTypePicker
 import com.dzirbel.kotify.ui.components.DividerSelector

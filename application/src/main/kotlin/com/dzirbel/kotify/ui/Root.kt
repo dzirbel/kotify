@@ -17,9 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.repository2.player.PlayerRepository
-import com.dzirbel.kotify.repository2.savedRepositories2
-import com.dzirbel.kotify.repository2.user.UserRepository
+import com.dzirbel.kotify.repository.player.PlayerRepository
+import com.dzirbel.kotify.repository.savedRepositories
+import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
 import com.dzirbel.kotify.ui.components.panel.PanelSize
@@ -71,7 +71,7 @@ fun onSignedIn() {
     PlayerRepository.refreshTrack()
     PlayerRepository.refreshDevices()
 
-    savedRepositories2.forEach { it.init() }
+    savedRepositories.forEach { it.init() }
 }
 
 @Composable

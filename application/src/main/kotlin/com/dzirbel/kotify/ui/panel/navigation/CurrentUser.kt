@@ -21,8 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.repository2.CacheState
-import com.dzirbel.kotify.repository2.user.UserRepository
+import com.dzirbel.kotify.repository.CacheState
+import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.SimpleTextButton

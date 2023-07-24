@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.db.model.Track
-import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
-import com.dzirbel.kotify.repository2.track.SavedTrackRepository
+import com.dzirbel.kotify.repository.rating.TrackRatingRepository
+import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder

@@ -14,11 +14,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.Track
-import com.dzirbel.kotify.repository2.album.AlbumRepository
-import com.dzirbel.kotify.repository2.album.AlbumTracksRepository
-import com.dzirbel.kotify.repository2.album.SavedAlbumRepository
-import com.dzirbel.kotify.repository2.player.Player
-import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
+import com.dzirbel.kotify.repository.album.AlbumRepository
+import com.dzirbel.kotify.repository.album.AlbumTracksRepository
+import com.dzirbel.kotify.repository.album.SavedAlbumRepository
+import com.dzirbel.kotify.repository.player.Player
+import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage

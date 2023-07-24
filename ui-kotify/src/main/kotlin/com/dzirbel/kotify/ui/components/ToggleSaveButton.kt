@@ -8,8 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import com.dzirbel.kotify.repository2.SavedRepository
-import com.dzirbel.kotify.repository2.util.ToggleableState
+import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.repository.util.ToggleableState
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.instrument

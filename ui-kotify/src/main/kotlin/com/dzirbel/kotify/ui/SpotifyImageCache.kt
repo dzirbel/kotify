@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.util.await
-import com.dzirbel.kotify.repository2.Repository
+import com.dzirbel.kotify.repository.Repository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job

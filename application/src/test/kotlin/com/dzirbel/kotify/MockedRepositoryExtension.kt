@@ -1,13 +1,13 @@
 package com.dzirbel.kotify
 
-import com.dzirbel.kotify.repository2.artist.ArtistAlbumsRepository
-import com.dzirbel.kotify.repository2.artist.ArtistRepository
-import com.dzirbel.kotify.repository2.artist.SavedArtistRepository
-import com.dzirbel.kotify.repository2.playlist.PlaylistRepository
-import com.dzirbel.kotify.repository2.playlist.PlaylistTracksRepository
-import com.dzirbel.kotify.repository2.playlist.SavedPlaylistRepository
-import com.dzirbel.kotify.repository2.rating.TrackRatingRepository
-import com.dzirbel.kotify.repository2.track.SavedTrackRepository
+import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
+import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.artist.SavedArtistRepository
+import com.dzirbel.kotify.repository.playlist.PlaylistRepository
+import com.dzirbel.kotify.repository.playlist.PlaylistTracksRepository
+import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
+import com.dzirbel.kotify.repository.rating.TrackRatingRepository
+import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import org.junit.jupiter.api.extension.AfterEachCallback
