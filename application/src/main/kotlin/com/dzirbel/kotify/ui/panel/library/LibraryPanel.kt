@@ -35,7 +35,6 @@ import com.dzirbel.kotify.ui.page.albums.AlbumsPage
 import com.dzirbel.kotify.ui.page.artists.ArtistsPage
 import com.dzirbel.kotify.ui.page.library.LibraryStatePage
 import com.dzirbel.kotify.ui.page.playlist.PlaylistPage
-import com.dzirbel.kotify.ui.page.tracks.TracksPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
@@ -93,12 +92,6 @@ fun LibraryPanel() {
                 text = "Albums",
                 selected = pageStack.value.current == AlbumsPage,
                 onClick = { pageStack.mutate { to(AlbumsPage) } },
-            )
-
-            MaxWidthButton(
-                text = "Songs",
-                selected = pageStack.value.current == TracksPage,
-                onClick = { pageStack.mutate { to(TracksPage) } },
             )
 
             VerticalSpacer(Dimens.space3)
