@@ -124,7 +124,7 @@ private fun DebugPanelContent(tab: DebugTab, scrollState: ScrollState, onClickTa
                 DebugTab.NETWORK -> NetworkTab(scrollState)
                 DebugTab.DATABASE -> DatabaseTab(scrollState)
                 DebugTab.IMAGE_CACHE -> ImageCacheTab(scrollState)
-                DebugTab.UI -> UITab(scrollState)
+                DebugTab.UI -> UITab()
             }
         }
 

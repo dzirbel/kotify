@@ -6,7 +6,6 @@ import com.dzirbel.kotify.Logger.Network.intercept
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.ImageCacheEvent
-import com.dzirbel.kotify.ui.framework.Presenter
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -240,39 +239,5 @@ sealed class Logger<T> {
         }
     }
 
-    object UI : Logger<UI.EventData>() {
-        enum class EventType {
-            ERROR, STATE, EVENT
-        }
-
-        data class EventData(val presenterClass: String?, val type: EventType)
-
-        fun handleError(presenter: Presenter<*, *>, throwable: Throwable) {
-            val presenterClass = presenter::class.simpleName
-            log(
-                title = "[$presenterClass] ERROR ${throwable::class.simpleName} : ${throwable.message}",
-                content = throwable.stackTraceToString(),
-                type = Event.Type.WARNING,
-                data = EventData(presenterClass = presenterClass, type = EventType.ERROR),
-            )
-        }
-
-        fun handleState(presenter: Presenter<*, *>, state: Any, stateCount: Int) {
-            val presenterClass = presenter::class.simpleName
-            log(
-                title = "[$presenterClass] STATE #$stateCount ${state::class.simpleName}",
-                content = state.toString(),
-                data = EventData(presenterClass = presenterClass, type = EventType.STATE),
-            )
-        }
-
-        fun handleEvent(presenter: Presenter<*, *>, event: Any, eventCount: Int) {
-            val presenterClass = presenter::class.simpleName
-            log(
-                title = "[$presenterClass] EVENT #$eventCount ${event::class.simpleName}",
-                content = event.toString(),
-                data = EventData(presenterClass = presenterClass, type = EventType.EVENT),
-            )
-        }
-    }
+    object UI : Logger<Unit>()
 }
