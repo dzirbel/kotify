@@ -20,6 +20,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import okhttp3.FormBody
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.FileNotFoundException
@@ -134,8 +135,11 @@ data class AccessToken(
          * If the cached token has expired and has a [AccessToken.refreshToken], it is refreshed (i.e. a new
          * [AccessToken] is fetched based on the old [AccessToken.refreshToken]) and the new token is returned.
          */
-        suspend fun getOrThrow(clientId: String = OAuth.DEFAULT_CLIENT_ID): AccessToken {
-            return get(clientId) ?: throw NoAccessTokenError()
+        suspend fun getOrThrow(
+            clientId: String = OAuth.DEFAULT_CLIENT_ID,
+            client: OkHttpClient = Spotify.configuration.oauthOkHttpClient,
+        ): AccessToken {
+            return get(clientId = clientId, client = client) ?: throw NoAccessTokenError()
         }
 
         /**
@@ -144,11 +148,14 @@ data class AccessToken(
          * If the cached token has expired and has a [AccessToken.refreshToken], it is refreshed (i.e. a new
          * [AccessToken] is fetched based on the old [AccessToken.refreshToken]) and the new token is returned.
          */
-        suspend fun get(clientId: String = OAuth.DEFAULT_CLIENT_ID): AccessToken? {
+        suspend fun get(
+            clientId: String = OAuth.DEFAULT_CLIENT_ID,
+            client: OkHttpClient = Spotify.configuration.oauthOkHttpClient,
+        ): AccessToken? {
             val token = _tokenFlow.value ?: load() ?: return null
 
             if (token.isExpired) {
-                refresh(clientId)
+                refresh(clientId = clientId, client = client)
             }
 
             return _tokenFlow.value
@@ -229,7 +236,7 @@ data class AccessToken(
          *
          * If successful, the new access token is immediately available in-memory and written to disk.
          */
-        private suspend fun refresh(clientId: String) {
+        private suspend fun refresh(clientId: String, client: OkHttpClient) {
             suspend fun fetchRefresh(refreshToken: String, clientId: String) {
                 val body = FormBody.Builder()
                     .add("grant_type", "refresh_token")
@@ -243,7 +250,7 @@ data class AccessToken(
                     .build()
 
                 val token = try {
-                    Spotify.configuration.oauthOkHttpClient.newCall(request).await()
+                    client.newCall(request).await()
                         .use { response -> response.bodyFromJson<AccessToken>() }
                 } catch (_: Throwable) {
                     clear()

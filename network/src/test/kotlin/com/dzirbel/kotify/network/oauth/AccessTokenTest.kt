@@ -13,13 +13,15 @@ import assertk.assertions.isNotSameAs
 import assertk.assertions.isNull
 import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
-import com.dzirbel.kotify.network.MockRequestInterceptor
-import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.network.MockOkHttpClient
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -84,28 +86,32 @@ internal class AccessTokenTest {
 
     @Test
     fun testGetPutClear() {
-        assertNoToken()
+        val client = MockOkHttpClient()
+
+        assertNoToken(client = client)
 
         val token1 = AccessToken(accessToken = "token1", tokenType = "", expiresIn = 0)
         AccessToken.Cache.put(token1)
 
         assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
-        assertThat(runBlocking { AccessToken.Cache.get() }).isSameAs(token1)
-        assertThat(runBlocking { AccessToken.Cache.getOrThrow() }).isSameAs(token1)
+        assertThat(runBlocking { AccessToken.Cache.get(client = client) }).isSameAs(token1)
+        assertThat(runBlocking { AccessToken.Cache.getOrThrow(client = client) }).isSameAs(token1)
 
         val token2 = AccessToken(accessToken = "token2", tokenType = "", expiresIn = 0)
         AccessToken.Cache.put(token2)
 
         assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
-        assertThat(runBlocking { AccessToken.Cache.get() }).isSameAs(token2)
-        assertThat(runBlocking { AccessToken.Cache.getOrThrow() }).isSameAs(token2)
+        assertThat(runBlocking { AccessToken.Cache.get(client = client) }).isSameAs(token2)
+        assertThat(runBlocking { AccessToken.Cache.getOrThrow(client = client) }).isSameAs(token2)
 
         AccessToken.Cache.clear()
-        assertNoToken()
+        assertNoToken(client = client)
     }
 
     @RepeatedTest(5)
     fun testSaveLoad() {
+        val client = MockOkHttpClient()
+
         val token1 = AccessToken(accessToken = "token1", tokenType = "", expiresIn = 0)
         assertThat(token1.received).isGreaterThan(0)
         AccessToken.Cache.put(token1)
@@ -113,7 +119,7 @@ internal class AccessTokenTest {
         AccessToken.Cache.reset()
         Thread.sleep(5)
 
-        val loadedToken = runBlocking { AccessToken.Cache.get() }
+        val loadedToken = runBlocking { AccessToken.Cache.get(client = client) }
         assertThat(loadedToken).isEqualTo(token1)
         assertThat(loadedToken).isNotSameAs(token1)
     }
@@ -169,13 +175,9 @@ internal class AccessTokenTest {
             }
         """.trimIndent()
 
-        withSpotifyConfiguration(
-            Spotify.configuration.copy(
-                oauthOkHttpClient = MockRequestInterceptor(
-                    responseBody = tokenBody.toResponseBody("text/plain".toMediaType()),
-                ).client,
-            ),
-        ) {
+        val client = MockOkHttpClient(responseBody = tokenBody.toResponseBody("text/plain".toMediaType()))
+
+        runTest {
             val expiredToken = AccessToken(
                 accessToken = "",
                 tokenType = "",
@@ -184,9 +186,10 @@ internal class AccessTokenTest {
                 refreshToken = "refresh",
             )
             assertThat(expiredToken.isExpired).isTrue()
+
             AccessToken.Cache.put(expiredToken)
 
-            val newToken = requireNotNull(runBlocking { AccessToken.Cache.get() })
+            val newToken = requireNotNull(AccessToken.Cache.get(client = client))
 
             assertThat(newToken).isNotEqualTo(expiredToken)
             assertThat(newToken.isExpired).isFalse()
@@ -194,20 +197,15 @@ internal class AccessTokenTest {
             assertThat(newToken.tokenType).isEqualTo("def")
             assertThat(newToken.expiresIn).isEqualTo(30)
 
-            assertThat(runBlocking { AccessToken.Cache.get() }).isEqualTo(newToken)
+            assertThat(AccessToken.Cache.get(client = client)).isEqualTo(newToken)
         }
     }
 
     @Test
     fun testRefreshError() {
-        withSpotifyConfiguration(
-            Spotify.configuration.copy(
-                oauthOkHttpClient = MockRequestInterceptor(
-                    responseCode = 500,
-                    responseMessage = "Internal server error",
-                ).client,
-            ),
-        ) {
+        val client = MockOkHttpClient(responseCode = 500, responseMessage = "Internal server error")
+
+        runTest {
             val expiredToken = AccessToken(
                 accessToken = "",
                 tokenType = "",
@@ -216,12 +214,13 @@ internal class AccessTokenTest {
                 refreshToken = "refresh",
             )
             assertThat(expiredToken.isExpired).isTrue()
+
             AccessToken.Cache.put(expiredToken)
 
-            val newToken = runBlocking { AccessToken.Cache.get() }
+            val newToken = AccessToken.Cache.get(client = client)
 
             assertThat(newToken).isNull()
-            assertNoToken()
+            assertNoToken(client = client)
         }
     }
 
@@ -235,12 +234,12 @@ internal class AccessTokenTest {
             }
         """.trimIndent()
 
-        val interceptor = MockRequestInterceptor(
+        val client = MockOkHttpClient(
             responseBody = tokenBody.toResponseBody("text/plain".toMediaType()),
             delayMs = 100,
         )
 
-        withSpotifyConfiguration(Spotify.configuration.copy(oauthOkHttpClient = interceptor.client)) {
+        runTest {
             val expiredToken = AccessToken(
                 accessToken = "",
                 tokenType = "",
@@ -249,26 +248,29 @@ internal class AccessTokenTest {
                 refreshToken = "refresh",
             )
             assertThat(expiredToken.isExpired).isTrue()
+
             AccessToken.Cache.put(expiredToken)
 
-            runBlocking {
-                val request1 = async { AccessToken.Cache.get() }
-                val request2 = async {
-                    delay(50)
-                    AccessToken.Cache.get()
-                }
-
-                val token1 = request1.await()
-                val token2 = request2.await()
-
-                assertThat(token1).isSameAs(token2)
-                assertThat(interceptor.requests).hasSize(1)
+            val request1 = async { AccessToken.Cache.get(client = client) }
+            val request2 = async {
+                delay(50)
+                AccessToken.Cache.get(client = client)
             }
+
+            val token1 = request1.await()
+            val token2 = request2.await()
+
+            runCurrent()
+
+            assertThat(token1).isSameAs(token2)
+            assertThat(client.requests).hasSize(1)
         }
     }
 
     @Test
     fun testRequireRefreshable() {
+        val client = MockOkHttpClient()
+
         val notRefreshable = AccessToken(accessToken = "token", tokenType = "type", expiresIn = 10)
         assertThat(notRefreshable.refreshToken).isNull()
 
@@ -277,7 +279,7 @@ internal class AccessTokenTest {
 
         AccessToken.Cache.requireRefreshable()
 
-        assertNoToken()
+        assertNoToken(client = client)
 
         val refreshable = AccessToken(
             accessToken = "token2",
@@ -295,10 +297,12 @@ internal class AccessTokenTest {
         assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
     }
 
-    private fun assertNoToken() {
+    private fun assertNoToken(client: OkHttpClient) {
         assertThat(AccessToken.Cache.tokenFlow.value).isNull()
-        assertThat(runBlocking { AccessToken.Cache.get() }).isNull()
-        assertThrows<AccessToken.Cache.NoAccessTokenError> { runBlocking { AccessToken.Cache.getOrThrow() } }
+        assertThat(runBlocking { AccessToken.Cache.get(client = client) }).isNull()
+        assertThrows<AccessToken.Cache.NoAccessTokenError> {
+            runBlocking { AccessToken.Cache.getOrThrow(client = client) }
+        }
     }
 
     companion object {
@@ -317,21 +321,6 @@ internal class AccessTokenTest {
         fun after() {
             AccessToken.Cache.cacheFile = originalCacheFile
             originalCacheFile = null
-        }
-
-        /**
-         * Temporarily sets the [Spotify.configuration] to [configuration], runs [block], and then resets the
-         * [Spotify.configuration] to its previous value.
-         */
-        private fun withSpotifyConfiguration(configuration: Spotify.Configuration, block: () -> Unit) {
-            val oldConfig = Spotify.configuration
-            Spotify.configuration = configuration
-
-            try {
-                block()
-            } finally {
-                Spotify.configuration = oldConfig
-            }
         }
     }
 }

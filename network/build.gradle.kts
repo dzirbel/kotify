@@ -29,5 +29,6 @@ dependencies {
     testFixturesImplementation(libs.junit5.api)
     testFixturesImplementation(libs.kotlinx.coroutines.core)
     testFixturesImplementation(libs.kotlinx.serialization.json)
+    testFixturesImplementation(libs.mockk)
     testFixturesImplementation(libs.okhttp)
 }

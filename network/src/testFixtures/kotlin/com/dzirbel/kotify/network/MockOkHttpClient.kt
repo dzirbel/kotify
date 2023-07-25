@@ -2,6 +2,7 @@ package com.dzirbel.kotify.network
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import okhttp3.Call
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -11,26 +12,18 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 
-class MockRequestInterceptor(
-    var responseCode: Int = 200,
-    var responseMessage: String = "OK",
+class MockOkHttpClient(
+    private val responseCode: Int = 200,
+    private val responseMessage: String = "OK",
     responseBody: ResponseBody = "".toResponseBody("text/plain".toMediaType()),
-    var delayMs: Long? = null,
+    private val delayMs: Long? = null,
     val requests: MutableList<Request> = mutableListOf(),
-) {
-    val client: OkHttpClient
-        get() = OkHttpClient.Builder().addInterceptor(::intercept).build()
+) : OkHttpClient() {
+    private val client = Builder().addInterceptor(::intercept).build()
 
     // extract the response body data since a ResponseBody can only be consumed once
-    private var bodyBytes = responseBody.bytes()
-    private var bodyMediaType = responseBody.contentType()
-
-    var responseBody: ResponseBody = responseBody
-        set(value) {
-            field = value
-            bodyBytes = value.bytes()
-            bodyMediaType = value.contentType()
-        }
+    private val bodyBytes = responseBody.bytes()
+    private val bodyMediaType = responseBody.contentType()
 
     private fun intercept(chain: Interceptor.Chain): Response {
         requests.add(chain.request())
@@ -43,4 +36,6 @@ class MockRequestInterceptor(
             .body(bodyBytes.toResponseBody(bodyMediaType))
             .build()
     }
+
+    override fun newCall(request: Request): Call = client.newCall(request)
 }

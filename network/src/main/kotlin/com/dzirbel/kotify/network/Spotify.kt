@@ -61,26 +61,7 @@ object Spotify {
     data class Configuration(
         val okHttpClient: OkHttpClient = OkHttpClient(),
         val oauthOkHttpClient: OkHttpClient = OkHttpClient(),
-        val requestInterceptor: RequestInterceptor? = null,
     )
-
-    /**
-     * A simple [Configuration] option which allows intercepting HTTP requests, preventing them from actually being sent
-     * over the network.
-     *
-     * Note that if the [Configuration] has a [Configuration.requestInterceptor] then all requests will be intercepted,
-     * i.e. all-or-nothing. This could be generalized in the future, but works for the current use case of intercepting
-     * network requests in unit tests.
-     *
-     * TODO consider using OkHttp interceptors or mocking instead
-     */
-    fun interface RequestInterceptor {
-        /**
-         * Returns the intercepted value for the given [method] and [path]. Even null values will be returned as the
-         * response, since some requests may have optional return types.
-         */
-        fun interceptFor(method: String, path: String): Any?
-    }
 
     var configuration: Configuration = Configuration()
 
@@ -163,10 +144,6 @@ object Spotify {
         // check that the request is not being done on the main dispatcher
         require(coroutineContext[ContinuationInterceptor] !is MainCoroutineDispatcher)
         // TODO verify not in unit test
-
-        configuration.requestInterceptor?.let {
-            return it.interceptFor(method = method, path = path) as T
-        }
 
         val token = AccessToken.Cache.getOrThrow()
 

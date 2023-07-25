@@ -1,2 +1,2 @@
 com.dzirbel.kotify.db.DatabaseExtension
-com.dzirbel.kotify.repository.NetworkExtension
+com.dzirbel.kotify.network.NetworkExtension

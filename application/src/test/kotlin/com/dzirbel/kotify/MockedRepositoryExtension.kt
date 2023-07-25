@@ -1,5 +1,7 @@
 package com.dzirbel.kotify
 
+import com.dzirbel.kotify.repository.album.AlbumTracksRepository
+import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.SavedArtistRepository
@@ -18,10 +20,12 @@ class MockedRepositoryExtension : BeforeEachCallback, AfterEachCallback {
     // TODO finish
     // TODO extract?
     private val repositories = arrayOf(
+        AlbumTracksRepository,
         ArtistRepository,
         ArtistAlbumsRepository,
         PlaylistRepository,
         PlaylistTracksRepository,
+        SavedAlbumRepository,
         SavedArtistRepository,
         SavedPlaylistRepository,
         SavedTrackRepository,
