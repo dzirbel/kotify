@@ -54,6 +54,14 @@ interface Repository<T> {
 
     companion object {
         /**
+         * Whether access to repository implementations is allowed; defaults to false to prevent access from tests which
+         * should not access repositories (such as screenshot tests where repository responses should be mocked).
+         *
+         * Applies to [Repository] implementations as well as [SavedRepository] and [RatingRepository].
+         */
+        var enabled: Boolean = false
+
+        /**
          * The default [CoroutineScope] used for repository actions which should persist as long as the application,
          * e.g. fetching a resource which could be used on multiple screens.
          */
@@ -66,5 +74,12 @@ interface Repository<T> {
          * Should not be used when unauthenticated (i.e. the scope is not cancelled on sign in).
          */
         val userSessionScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+
+        /**
+         * Throws an [IllegalStateException] if [enabled] is not true.
+         */
+        internal fun checkEnabled() {
+            check(enabled) { "illegal repository access" }
+        }
     }
 }

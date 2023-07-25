@@ -44,11 +44,11 @@ data class RelativeTimeInfo(
          * Uses [time] as the current time for computing relative time [of] within [block]. Used for mocking how
          * relative time appears in tests.
          */
-        fun withMockedTime(time: Instant, block: () -> Unit) {
+        fun withMockedTime(time: Instant = Instant.now(), block: (Instant) -> Unit) {
             require(mockedTime == null)
             mockedTime = time
             try {
-                block()
+                block(time)
             } finally {
                 mockedTime = null
             }

@@ -13,8 +13,10 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
 @Tag(TAG_NETWORK)
+@ExtendWith(NetworkExtension::class)
 class SpotifyLibraryTest {
     @Test
     fun getSavedAlbums() {

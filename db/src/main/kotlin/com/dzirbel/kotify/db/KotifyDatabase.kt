@@ -64,6 +64,17 @@ object KotifyDatabase {
         fun onTransactionStart(transaction: Transaction, name: String?)
     }
 
+    /**
+     * Global delay applied to each transaction to simulate slower database conditions during performance testing.
+     */
+    var transactionDelayMs: Long = 0L
+
+    /**
+     * Whether calls to [KotifyDatabase] are allowed; defaults to false to prevent access from tests which should not
+     * make accidental (and potentially expensive) calls to the database.
+     */
+    var enabled: Boolean = false
+
     private lateinit var db: Database
 
     /**
@@ -73,11 +84,6 @@ object KotifyDatabase {
     private val dbDispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1)
 
     private var synchronousTransactions = false
-
-    /**
-     * Global delay applied to each transaction to simulate slower database conditions during performance testing.
-     */
-    var transactionDelayMs: Long = 0L
 
     private val initialized = AtomicBoolean(false)
 
@@ -128,6 +134,8 @@ object KotifyDatabase {
      * on a single thread to avoid database locking.
      */
     suspend fun <T> transaction(name: String?, statement: Transaction.() -> T): T {
+        check(enabled)
+        check(initialized.get()) { "database not initialized" }
         check(db.transactionManager.currentOrNull() == null) { "transaction already in progress" }
 
         delay(transactionDelayMs)

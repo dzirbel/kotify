@@ -17,16 +17,32 @@ import com.dzirbel.kotify.util.collectingToList
 import com.dzirbel.kotify.util.delayed
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.confirmVerified
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
 // TODO finish test
 class PlayerRepositoryTest {
+    @BeforeEach
+    fun setup() {
+        mockkObject(Spotify.Player)
+    }
+
+    @AfterEach
+    fun cleanup() {
+        confirmVerified(Spotify.Player)
+        unmockkObject(Spotify.Player)
+    }
+
     @Test
     fun refreshPlayback() {
         val playback = SpotifyPlayback(track = FullSpotifyTrack(), progressMs = 10)

@@ -68,6 +68,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
         id: String,
         cacheStrategy: CacheStrategy<DatabaseType>,
     ): StateFlow<CacheState<DatabaseType>?> {
+        Repository.checkEnabled()
         return states.getOrCreateStateFlow(id) {
             scope.launch { load(id = id, cacheStrategy = cacheStrategy) }
         }
@@ -77,12 +78,14 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
         ids: Iterable<String>,
         cacheStrategy: CacheStrategy<DatabaseType>,
     ): List<StateFlow<CacheState<DatabaseType>?>> {
+        Repository.checkEnabled()
         return states.getOrCreateStateFlows(keys = ids) { creations ->
             scope.launch { load(ids = creations.keys, cacheStrategy = cacheStrategy) }
         }
     }
 
     final override fun refreshFromRemote(id: String): Job {
+        Repository.checkEnabled()
         return scope.launch { load(id = id, cacheStrategy = CacheStrategy.NeverValid()) }
     }
 

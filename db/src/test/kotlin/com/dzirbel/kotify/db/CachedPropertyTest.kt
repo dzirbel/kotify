@@ -6,7 +6,9 @@ import assertk.assertions.isNull
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.ExtendWith
 
+@ExtendWith(DatabaseExtension::class)
 internal class CachedPropertyTest {
     @Test
     fun testReadOnlyCachedProperty() {

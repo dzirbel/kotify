@@ -16,7 +16,9 @@ import com.dzirbel.kotify.repository.rating.RatingRepository
 @Composable
 fun <T> SavedRepository.rememberSavedStates(entities: Iterable<T>, toId: (T) -> String) {
     remember(entities) {
-        savedStatesOf(ids = entities.map(toId))
+        if (entities.any()) {
+            savedStatesOf(ids = entities.map(toId))
+        }
     }
 }
 
@@ -32,6 +34,8 @@ fun <T> SavedRepository.rememberSavedStates(entities: Iterable<T>, toId: (T) -> 
 @Composable
 fun <T> RatingRepository.rememberRatingStates(entities: Iterable<T>, toId: (T) -> String) {
     remember(entities) {
-        ratingStatesOf(ids = entities.map(toId))
+        if (entities.any()) {
+            ratingStatesOf(ids = entities.map(toId))
+        }
     }
 }

@@ -200,7 +200,7 @@ private fun ArtistCell(artist: Artist, onRightClick: () -> Unit) {
 
         // TODO have the TrackRatingRepository provide a state by artist directly
         val artistTrackIds = artist.produceTransactionState("load artist tracks") { trackIds.live }.value
-        val averageRating = artistTrackIds?.let {
+        val averageRating = artistTrackIds?.takeIf { it.isNotEmpty() }?.let {
             remember(artist.id.value) { TrackRatingRepository.averageRatingStateOf(artistTrackIds) }
         }
             ?.collectAsState()

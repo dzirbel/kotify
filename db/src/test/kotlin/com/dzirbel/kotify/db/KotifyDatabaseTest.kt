@@ -15,7 +15,9 @@ import org.jetbrains.exposed.sql.selectAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.extension.ExtendWith
 
+@ExtendWith(DatabaseExtension::class)
 internal class KotifyDatabaseTest {
     private object TestTable : Table(name = "test_table") {
         val name: Column<String> = text("name")

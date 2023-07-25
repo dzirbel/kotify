@@ -13,11 +13,13 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.time.Instant
 
 // TODO test multiple users
+@ExtendWith(DatabaseExtension::class)
 internal class SavedEntityTableTest {
     private object TestSavedEntityTable : SavedEntityTable(name = "test_saved_entities")
 

@@ -6,12 +6,15 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.dzirbel.kotify.db.DatabaseExtension
 import com.dzirbel.kotify.db.KotifyDatabase
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
+@ExtendWith(DatabaseExtension::class)
 internal class GlobalUpdateTimesRepositoryTest {
     @Test
     fun testUnset() {

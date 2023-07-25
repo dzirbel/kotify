@@ -30,6 +30,7 @@ open class TrackRatingRepository internal constructor(
     private val states = SynchronizedWeakStateFlowMap<String, Rating>()
 
     override fun ratingStateOf(id: String): StateFlow<Rating?> {
+        Repository.checkEnabled()
         return states.getOrCreateStateFlow(key = id) {
             userSessionScope.launch {
                 val rating = lastRatingOf(id = id)
@@ -39,6 +40,7 @@ open class TrackRatingRepository internal constructor(
     }
 
     override fun ratingStatesOf(ids: Iterable<String>): List<StateFlow<Rating?>> {
+        Repository.checkEnabled()
         return states.getOrCreateStateFlows(keys = ids) { creations ->
             userSessionScope.launch {
                 val createdIdsList = creations.keys.toList()
@@ -51,12 +53,14 @@ open class TrackRatingRepository internal constructor(
     }
 
     override fun averageRatingStateOf(ids: List<String>): StateFlow<AverageRating> {
+        Repository.checkEnabled()
         // could theoretically be optimized by skipping the ordering of the rating list by the order of ids, since that
         // is irrelevant to the average
         return ratingStatesOf(ids = ids).combineState { AverageRating(ids, it) }
     }
 
     override fun rate(id: String, rating: Rating?) {
+        Repository.checkEnabled()
         val userId = UserRepository.requireCurrentUserId
         applicationScope.launch {
             // assumes the new rating is always newer than the most recent one in the DB (unlike old implementation)
@@ -82,6 +86,7 @@ open class TrackRatingRepository internal constructor(
     }
 
     override suspend fun ratedEntities(userId: String): Set<String> {
+        Repository.checkEnabled()
         return KotifyDatabase.transaction("load rated track ids for user $userId") {
             TrackRatingTable
                 .slice(TrackRatingTable.track)
@@ -92,6 +97,7 @@ open class TrackRatingRepository internal constructor(
     }
 
     override fun clearAllRatings(userId: String?) {
+        Repository.checkEnabled()
         applicationScope.launch {
             KotifyDatabase.transaction(userId?.let { "clear ratings for user $userId" } ?: "clear all ratings") {
                 if (userId == null) {

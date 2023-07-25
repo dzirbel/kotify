@@ -9,6 +9,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.oauth.AccessToken
+import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.ui.IconCache
 import com.dzirbel.kotify.ui.KeyboardShortcuts
@@ -38,6 +39,8 @@ fun main(args: Array<String>) {
         }
 
         measureInitTime("database") {
+            KotifyDatabase.enabled = true
+
             KotifyDatabase.init(
                 dbFile = Application.cacheDir.resolve("cache.db"),
                 sqlLogger = Logger.Database,
@@ -57,6 +60,8 @@ fun main(args: Array<String>) {
                 okHttpClient = okHttpClient,
                 oauthOkHttpClient = okHttpClient,
             )
+
+            Spotify.enabled = true
         }
 
         measureInitTime("access token") {
@@ -68,9 +73,9 @@ fun main(args: Array<String>) {
             SpotifyImageCache.init(imagesDir = Application.cacheDir.resolve("images"))
         }
 
-        measureInitTime("icon cache") {
-            IconCache.loadBlocking = false
-        }
+        // misc actions with negligible expected runtime
+        IconCache.loadBlocking = false
+        Repository.enabled = true
     }
 
     Logger.Events.info(

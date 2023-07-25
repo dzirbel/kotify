@@ -4,10 +4,12 @@ import com.dzirbel.kotify.network.properties.EpisodeProperties
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 @Tag(TAG_NETWORK)
+@ExtendWith(NetworkExtension::class)
 class SpotifyEpisodesTest {
     @ParameterizedTest
     @MethodSource("episodes")

@@ -45,13 +45,13 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     )
 
     override val library: StateFlow<SavedRepository.Library?>
-        get() = libraryResource.flow.also { libraryResource.ensureLoaded() }
+        get() = libraryResource.flow.also { Repository.checkEnabled() }.also { libraryResource.ensureLoaded() }
 
     override val libraryRefreshing: StateFlow<Boolean>
-        get() = libraryResource.refreshingFlow
+        get() = libraryResource.refreshingFlow.also { Repository.checkEnabled() }
 
     private val currentUserLibraryUpdateKey: String
-        get() = "$baseLibraryUpdateKey-${UserRepository.requireCurrentUserId}"
+        get() = "$baseLibraryUpdateKey-${UserRepository.requireCurrentUserId}".also { Repository.checkEnabled() }
 
     private val savedStates = SynchronizedWeakStateFlowMap<String, ToggleableState<Boolean>>()
 
@@ -90,14 +90,17 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     protected abstract fun convert(savedNetworkType: SavedNetworkType): Pair<String, Instant?>
 
     final override fun init() {
+        Repository.checkEnabled()
         libraryResource.initFromCache()
     }
 
     final override fun refreshLibrary() {
+        Repository.checkEnabled()
         libraryResource.refreshFromRemote()
     }
 
     final override fun savedStateOf(id: String): StateFlow<ToggleableState<Boolean>?> {
+        Repository.checkEnabled()
         return savedStates.getOrCreateStateFlow(
             key = id,
             defaultValue = {
@@ -139,6 +142,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     }
 
     final override fun savedStatesOf(ids: Iterable<String>): List<StateFlow<ToggleableState<Boolean>?>> {
+        Repository.checkEnabled()
         return savedStates.getOrCreateStateFlows(
             keys = ids,
             defaultValue = { id ->
@@ -201,6 +205,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     }
 
     final override fun setSaved(id: String, saved: Boolean) {
+        Repository.checkEnabled()
         val saveTime = Instant.now()
 
         // TODO prevent concurrent updates to saved state for the same id
@@ -236,6 +241,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     }
 
     final override fun invalidateUser() {
+        Repository.checkEnabled()
         libraryResource.invalidate()
         savedStates.clear()
     }

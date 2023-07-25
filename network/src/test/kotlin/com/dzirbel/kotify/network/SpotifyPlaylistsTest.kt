@@ -16,6 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
@@ -23,6 +24,7 @@ import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
 
 @Tag(TAG_NETWORK)
+@ExtendWith(NetworkExtension::class)
 class SpotifyPlaylistsTest {
     @Test
     fun getPlaylists() {

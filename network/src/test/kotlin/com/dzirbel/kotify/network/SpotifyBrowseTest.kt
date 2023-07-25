@@ -8,8 +8,10 @@ import com.dzirbel.kotify.util.containsAllElementsOf
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
 @Tag(TAG_NETWORK)
+@ExtendWith(NetworkExtension::class)
 internal class SpotifyBrowseTest {
     @Test
     fun categories() {

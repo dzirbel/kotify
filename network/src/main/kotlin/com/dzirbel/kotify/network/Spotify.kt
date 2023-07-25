@@ -65,6 +65,12 @@ object Spotify {
 
     var configuration: Configuration = Configuration()
 
+    /**
+     * Whether executing network requests is allowed; defaults to false to prevent access from tests which should not
+     * make accidental (and potentially expensive) calls to the network.
+     */
+    var enabled: Boolean = false
+
     const val FROM_TOKEN = "from_token"
     const val API_URL = "https://api.spotify.com/v1/"
 
@@ -143,7 +149,8 @@ object Spotify {
     ): T {
         // check that the request is not being done on the main dispatcher
         require(coroutineContext[ContinuationInterceptor] !is MainCoroutineDispatcher)
-        // TODO verify not in unit test
+
+        check(enabled) { "Spotify network calls are not enabled" }
 
         val token = AccessToken.Cache.getOrThrow()
 

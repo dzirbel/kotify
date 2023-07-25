@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.page.artist
 
+import com.dzirbel.kotify.db.DatabaseExtension
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.blockingTransaction
 import com.dzirbel.kotify.repository.Artist
@@ -14,46 +15,50 @@ import com.dzirbel.kotify.repository.mockStateNull
 import com.dzirbel.kotify.ui.framework.render
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.util.RelativeTimeInfo
+import com.dzirbel.kotify.util.withMockedObjects
 import org.junit.jupiter.api.Test
-import java.time.Instant
+import org.junit.jupiter.api.extension.ExtendWith
 
+@ExtendWith(DatabaseExtension::class)
 internal class ArtistPageScreenshotTest {
     @Test
     fun empty() {
         val artistId = "artistId"
 
-        ArtistRepository.mockStateNull(id = artistId)
-        ArtistAlbumsRepository.mockStateNull(id = artistId)
+        withMockedObjects(ArtistAlbumsRepository, ArtistRepository) {
+            ArtistRepository.mockStateNull(id = artistId)
+            ArtistAlbumsRepository.mockStateNull(id = artistId)
 
-        screenshotTest(filename = "empty") {
-            ArtistPage(artistId = artistId).render()
+            screenshotTest(filename = "empty") {
+                ArtistPage(artistId = artistId).render()
+            }
         }
     }
 
     @Test
     fun full() {
-        val now = Instant.now()
+        RelativeTimeInfo.withMockedTime { now ->
+            val artist = Artist(fullUpdateTime = now, albumsFetched = now)
+            val artistAlbums = ArtistAlbumList(artistId = artist.id.value, count = 20)
 
-        val artist = Artist(fullUpdateTime = now, albumsFetched = now)
-        val artistAlbums = ArtistAlbumList(artistId = artist.id.value, count = 20)
-
-        KotifyDatabase.blockingTransaction {
-            for (artistAlbum in artistAlbums) {
-                artistAlbum.album.loadToCache()
+            KotifyDatabase.blockingTransaction {
+                for (artistAlbum in artistAlbums) {
+                    artistAlbum.album.loadToCache()
+                }
             }
-        }
 
-        ArtistRepository.mockStateCached(id = artist.id.value, value = artist, cacheTime = now)
-        ArtistAlbumsRepository.mockStateCached(id = artist.id.value, value = artistAlbums, cacheTime = now)
-        SavedAlbumRepository.mockLibrary(ids = null)
+            withMockedObjects(AlbumTracksRepository, ArtistAlbumsRepository, ArtistRepository, SavedAlbumRepository) {
+                ArtistRepository.mockStateCached(id = artist.id.value, value = artist, cacheTime = now)
+                ArtistAlbumsRepository.mockStateCached(id = artist.id.value, value = artistAlbums, cacheTime = now)
+                SavedAlbumRepository.mockLibrary(ids = null)
 
-        for (album in artistAlbums) {
-            AlbumTracksRepository.mockStateNull(album.albumId.value)
-        }
+                for (album in artistAlbums) {
+                    AlbumTracksRepository.mockStateNull(album.albumId.value)
+                }
 
-        RelativeTimeInfo.withMockedTime(now) {
-            screenshotTest(filename = "full", windowWidth = 1500) {
-                ArtistPage(artistId = artist.id.value).render()
+                screenshotTest(filename = "full", windowWidth = 1500) {
+                    ArtistPage(artistId = artist.id.value).render()
+                }
             }
         }
     }
