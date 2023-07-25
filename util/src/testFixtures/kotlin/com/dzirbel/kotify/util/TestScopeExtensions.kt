@@ -3,6 +3,7 @@ package com.dzirbel.kotify.util
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 
 /**
  * Concurrently collects [flow] to a live [List] passed to [block] while [block] is executed.
@@ -13,6 +14,7 @@ import kotlinx.coroutines.test.TestScope
 fun <T> TestScope.collectingToList(flow: Flow<T>, block: (List<T>) -> Unit) {
     val list = mutableListOf<T>()
     val job = launch { flow.collect(list::add) }
+    runCurrent() // start collection immediately
 
     block(list)
 

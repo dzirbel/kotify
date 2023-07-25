@@ -9,13 +9,6 @@ import assertk.assertions.isNull
 import java.util.SortedMap
 
 /**
- * Wraps this value with in an [Assert] and invokes [assertion] on it, as a convenience to avoid calls to let{}.
- */
-fun <T> T.assertThat(assertion: Assert<T>.() -> Unit) {
-    assertk.assertThat(this).assertion()
-}
-
-/**
  * Asserts that the value is null if [shouldBeNull] is true or is non-null if it is false.
  */
 fun <T : Any> Assert<T?>.isNullIf(shouldBeNull: Boolean) {
