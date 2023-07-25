@@ -15,7 +15,7 @@ class Genre(id: EntityID<UUID>) : UUIDEntity(id = id) {
     var name: String by GenreTable.name
 
     companion object : UUIDEntityClass<Genre>(GenreTable) {
-        fun from(genre: String): Genre {
+        fun findOrCreate(genre: String): Genre {
             Genre.find { GenreTable.name eq genre }
                 .limit(1)
                 .firstOrNull()

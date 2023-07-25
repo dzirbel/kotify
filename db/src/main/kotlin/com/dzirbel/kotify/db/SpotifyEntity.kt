@@ -31,42 +31,22 @@ abstract class SpotifyEntity(id: EntityID<String>, table: SpotifyEntityTable) : 
 
     var createdTime: Instant by table.createdTime
     var updatedTime: Instant by table.updatedTime
-    var fullUpdatedTime: Instant? by table.fullUpdatedTime
+    var fullUpdatedTime: Instant? by table.fullUpdatedTime // TODO practically unused
 }
 
 /**
  * Base [EntityClass] which serves as the companion object for a [SpotifyEntityTable].
- *
- * Contains common functionality to power a [DatabaseRepository] based on this table type, in particular to convert
- * network models of [NetworkType] to database models of [EntityType].
  */
 abstract class SpotifyEntityClass<EntityType : SpotifyEntity, NetworkType : SpotifyObject>(table: SpotifyEntityTable) :
     EntityClass<String, EntityType>(table) {
 
     /**
-     * Sets fields on this [EntityType] according to the given [networkModel]. Used either to create a new entity or
-     * update an existing one from a new [networkModel].
-     */
-    protected abstract fun EntityType.update(networkModel: NetworkType)
-
-    /**
-     * Converts the given [networkModel] into an [EntityType], either creating a new entity or updating the existing one
-     * based on the new network values.
+     * Convenience function which finds and updates the [EntityType] with the given [id] or creates a new one if none
+     * exists; in either case, the entity is returned.
      *
-     * Returns null if [networkModel] has no ID.
-     *
-     * Must be called from within a transaction.
+     * This consolidates logic to set common properties like [SpotifyEntity.updatedTime] and [SpotifyEntity.name] as
+     * well as calling [update] in either case of finding or creating an entity.
      */
-    fun from(networkModel: NetworkType): EntityType? {
-        return updateOrInsert(networkModel) { update(networkModel) }
-    }
-
-    fun updateOrInsert(networkModel: NetworkType, update: EntityType.() -> Unit): EntityType? {
-        return networkModel.id?.let { id ->
-            updateOrInsert(id = id, networkModel = networkModel, update = update)
-        }
-    }
-
     fun updateOrInsert(id: String, networkModel: NetworkType, update: EntityType.() -> Unit): EntityType {
         return findById(id)
             ?.apply {
@@ -81,14 +61,4 @@ abstract class SpotifyEntityClass<EntityType : SpotifyEntity, NetworkType : Spot
                 update()
             }
     }
-
-    /**
-     * Converts the given [networkModels] into [EntityType]s, either creating new entities or updating existing ones
-     * based on the new network values.
-     *
-     * The returned list includes null values for [networkModels] with no ID.
-     *
-     * Must be called from within a transaction.
-     */
-    fun from(networkModels: List<NetworkType?>): List<EntityType?> = networkModels.map { it?.let { _ -> from(it) } }
 }

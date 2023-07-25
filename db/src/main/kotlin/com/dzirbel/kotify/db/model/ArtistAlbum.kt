@@ -9,6 +9,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.and
 
+// TODO make album-artist pair unique
 object ArtistAlbumTable : IntIdTable() {
     val album = reference("album", AlbumTable)
     val artist = reference("artist", ArtistTable)
@@ -24,18 +25,19 @@ class ArtistAlbum(id: EntityID<Int>) : IntEntity(id) {
     val album: ReadWriteCachedProperty<Album> by (Album referencedOn ArtistAlbumTable.album).cached()
 
     companion object : IntEntityClass<ArtistAlbum>(ArtistAlbumTable) {
-        private fun recordFor(artistId: String, albumId: String): ArtistAlbum {
+        fun findOrCreate(artistId: String, albumId: String, albumGroup: SpotifyAlbum.Type?): ArtistAlbum {
             return find { (ArtistAlbumTable.album eq albumId) and (ArtistAlbumTable.artist eq artistId) }
                 .firstOrNull()
+                ?.also { artistAlbum ->
+                    if (albumGroup != null && artistAlbum.albumGroup != albumGroup) {
+                        artistAlbum.albumGroup = albumGroup
+                    }
+                }
                 ?: ArtistAlbum.new {
                     this.albumId = EntityID(id = albumId, table = AlbumTable)
                     this.artistId = EntityID(id = artistId, table = ArtistTable)
+                    this.albumGroup = albumGroup
                 }
-        }
-
-        fun from(artistId: String, albumId: String, albumGroup: SpotifyAlbum.Type?): ArtistAlbum {
-            return recordFor(artistId = artistId, albumId = albumId)
-                .also { it.albumGroup = albumGroup ?: it.albumGroup }
         }
     }
 }

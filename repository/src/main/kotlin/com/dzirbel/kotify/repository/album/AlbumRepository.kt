@@ -1,16 +1,16 @@
 package com.dzirbel.kotify.repository.album
 
 import com.dzirbel.kotify.db.model.Album
-import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.db.model.Genre
 import com.dzirbel.kotify.db.model.Image
-import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.track.TrackRepository
 import com.dzirbel.kotify.util.flatMapParallel
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
@@ -39,12 +39,12 @@ open class AlbumRepository internal constructor(scope: CoroutineScope) :
             // attempt to link artists from network model; do not set albumGroup since it is unavailable from an album
             // context
             networkModel.artists.forEach { artistModel ->
-                Artist.from(artistModel)?.let { artist ->
-                    ArtistAlbum.from(artistId = artist.id.value, albumId = id, albumGroup = null)
+                ArtistRepository.convert(artistModel)?.let { artist ->
+                    ArtistAlbum.findOrCreate(artistId = artist.id.value, albumId = id, albumGroup = null)
                 }
             }
 
-            images.set(networkModel.images.map { Image.from(it) })
+            images.set(networkModel.images.map { Image.findOrCreate(it) })
 
             if (networkModel is FullSpotifyAlbum) {
                 fullUpdatedTime = Instant.now()
@@ -53,8 +53,8 @@ open class AlbumRepository internal constructor(scope: CoroutineScope) :
                 popularity = networkModel.popularity
                 totalTracks = networkModel.tracks.total
 
-                genres.set(networkModel.genres.map { Genre.from(it) })
-                tracks.set(networkModel.tracks.items.mapNotNull { Track.from(it) })
+                genres.set(networkModel.genres.map { Genre.findOrCreate(it) })
+                tracks.set(networkModel.tracks.items.mapNotNull { TrackRepository.convert(it) })
             }
         }
     }

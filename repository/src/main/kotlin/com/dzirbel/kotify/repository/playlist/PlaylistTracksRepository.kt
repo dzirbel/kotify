@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.repository.playlist
 
-import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.PlaylistTable
 import com.dzirbel.kotify.db.model.PlaylistTrack
+import com.dzirbel.kotify.db.model.PlaylistTrackTable
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.asFlow
@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.update
 import java.time.Instant
 
@@ -43,13 +44,18 @@ open class PlaylistTracksRepository internal constructor(scope: CoroutineScope) 
     }
 
     override fun fetchFromDatabase(id: String): Pair<List<PlaylistTrack>, Instant>? {
-        return Playlist.trackFetchTime(playlistId = id)?.let { fetchTime ->
-            // TODO loadToCache()
-            Playlist.tracksInOrder(playlistId = id).onEach { playlistTrack ->
-                playlistTrack.track.loadToCache()
-                playlistTrack.track.cached.artists.loadToCache()
-                playlistTrack.track.cached.album.loadToCache()
-            } to fetchTime
+        return PlaylistTable.tracksFetchTime(playlistId = id)?.let { fetchTime ->
+            val tracks = PlaylistTrack
+                .find { PlaylistTrackTable.playlist eq id }
+                .orderBy(PlaylistTrackTable.indexOnPlaylist to SortOrder.ASC)
+                .onEach { playlistTrack ->
+                    // TODO loadToCache()
+                    playlistTrack.track.loadToCache()
+                    playlistTrack.track.cached.artists.loadToCache()
+                    playlistTrack.track.cached.album.loadToCache()
+                }
+
+            tracks.toList() to fetchTime
         }
     }
 
@@ -107,9 +113,9 @@ open class PlaylistTracksRepository internal constructor(scope: CoroutineScope) 
      */
     fun convertTrack(spotifyPlaylistTrack: SpotifyPlaylistTrack, playlistId: String, index: Int): PlaylistTrack? {
         return spotifyPlaylistTrack.track
-            ?.let { track -> track.id?.let { trackId -> TrackRepository.convert(trackId, track) } }
+            ?.let { TrackRepository.convert(it) }
             ?.let { track ->
-                PlaylistTrack.recordFor(trackId = track.id.value, playlistId = playlistId).apply {
+                PlaylistTrack.findOrCreate(trackId = track.id.value, playlistId = playlistId).apply {
                     spotifyPlaylistTrack.addedBy?.let { addedBy.set(UserRepository.convert(it.id, it)) }
                     spotifyPlaylistTrack.addedAt?.let { addedAt = it }
                     isLocal = spotifyPlaylistTrack.isLocal

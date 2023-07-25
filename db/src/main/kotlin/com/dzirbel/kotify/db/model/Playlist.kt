@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadOnlyCachedProperty
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SavedEntityTable
@@ -11,12 +10,7 @@ import com.dzirbel.kotify.db.cached
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.db.util.largest
-import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
-import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
-import com.dzirbel.kotify.network.model.asFlow
-import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SortOrder
@@ -36,6 +30,15 @@ object PlaylistTable : SpotifyEntityTable(name = "playlists") {
     val followersTotal: Column<Int?> = integer("followers_total").nullable()
     val totalTracks: Column<Int?> = integer("total_tracks").nullable()
     val tracksFetched: Column<Instant?> = timestamp("tracks_fetched_time").nullable()
+
+    fun tracksFetchTime(playlistId: String): Instant? {
+        // TODO also compare totalTracks to number of tracks in DB?
+        return slice(tracksFetched)
+            .select { PlaylistTable.id eq playlistId }
+            .limit(1)
+            .firstOrNull()
+            ?.get(tracksFetched)
+    }
 
     object PlaylistImageTable : Table() {
         val playlist = reference("playlist", PlaylistTable)
@@ -62,91 +65,12 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
     val largestImage: ReadOnlyCachedProperty<Image?> by (Image via PlaylistTable.PlaylistImageTable)
         .cachedReadOnly { it.largest() }
 
+    // TODO only used in tests, remove
     val playlistTracksInOrder: ReadOnlyCachedProperty<List<PlaylistTrack>> = ReadOnlyCachedProperty {
         PlaylistTrack.find { PlaylistTrackTable.playlist eq this@Playlist.id }
             .orderBy(PlaylistTrackTable.indexOnPlaylist to SortOrder.ASC)
             .toList()
     }
 
-    val tracks: ReadOnlyCachedProperty<List<Track>> by (PlaylistTrack referrersOn PlaylistTrackTable.playlist)
-        .cachedReadOnly(baseToDerived = { playlistTracks -> playlistTracks.map { it.track.live } })
-
-    val hasAllTracks: Boolean
-        get() = tracksFetched != null
-
-    companion object : SpotifyEntityClass<Playlist, SpotifyPlaylist>(PlaylistTable) {
-        fun trackFetchTime(playlistId: String): Instant? {
-            // TODO also compare totalTracks to number of tracks in DB?
-            return PlaylistTable
-                .slice(PlaylistTable.tracksFetched)
-                .select { PlaylistTable.id eq playlistId }
-                .limit(1)
-                .firstOrNull()
-                ?.get(PlaylistTable.tracksFetched)
-        }
-
-        fun tracksInOrder(playlistId: String): List<PlaylistTrack> {
-            return PlaylistTrack
-                .find { PlaylistTrackTable.playlist eq playlistId }
-                .orderBy(PlaylistTrackTable.indexOnPlaylist to SortOrder.ASC)
-                .toList()
-        }
-
-        override fun Playlist.update(networkModel: SpotifyPlaylist) {
-            collaborative = networkModel.collaborative
-            networkModel.description?.let { description = it }
-            networkModel.public?.let { public = it }
-            snapshotId = networkModel.snapshotId
-
-            User.from(networkModel.owner)?.let { owner.set(it) }
-
-            images.set(networkModel.images.map { Image.from(it) })
-
-            if (networkModel is SimplifiedSpotifyPlaylist) {
-                networkModel.tracks?.let {
-                    totalTracks = it.total
-                }
-            }
-
-            if (networkModel is FullSpotifyPlaylist) {
-                fullUpdatedTime = Instant.now()
-                followersTotal = networkModel.followers.total
-
-                totalTracks = networkModel.tracks.total
-                networkModel.tracks.items.mapIndexedNotNull { index, track ->
-                    PlaylistTrack.from(spotifyPlaylistTrack = track, playlistId = id.value, index = index)
-                }
-            }
-        }
-
-        // TODO move to repository?
-        suspend fun getAllTracks(playlistId: String, allowCache: Boolean = true): Pair<Playlist?, List<PlaylistTrack>> {
-            var playlist: Playlist? = null
-            if (allowCache) {
-                KotifyDatabase.transaction("load playlist tracks for id $playlistId") {
-                    findById(id = playlistId)
-                        ?.also { playlist = it }
-                        ?.takeIf { it.hasAllTracks }
-                        ?.playlistTracksInOrder
-                        ?.live
-                }
-                    ?.let { return Pair(playlist, it) }
-            }
-
-            val networkTracks = Spotify.Playlists.getPlaylistTracks(playlistId = playlistId).asFlow().toList()
-
-            val tracks = KotifyDatabase.transaction("save playlist ${playlist?.name ?: "id $playlistId"} tracks") {
-                (playlist ?: findById(id = playlistId))?.let { playlist ->
-                    playlist.tracksFetched = Instant.now()
-                    // TODO PlaylistRepository.updateLiveState(id = playlistId, value = playlist)
-                }
-
-                networkTracks.mapIndexedNotNull { index, track ->
-                    PlaylistTrack.from(spotifyPlaylistTrack = track, playlistId = playlistId, index = index)
-                }
-            }
-
-            return Pair(playlist, tracks)
-        }
-    }
+    companion object : SpotifyEntityClass<Playlist, SpotifyPlaylist>(PlaylistTable)
 }

@@ -41,10 +41,12 @@ open class UserRepository internal constructor(
 
     override suspend fun fetchFromRemote(id: String) = Spotify.UsersProfile.getUser(userId = id)
 
+    override fun convert(networkModel: SpotifyUser): User = convert(networkModel.id, networkModel)
+
     override fun convert(id: String, networkModel: SpotifyUser): User {
         return User.updateOrInsert(id = id, networkModel = networkModel) {
             networkModel.images?.let { images ->
-                this.images.set(images.map { Image.from(it) })
+                this.images.set(images.map { Image.findOrCreate(it) })
             }
 
             networkModel.followers?.let {
@@ -123,7 +125,7 @@ open class UserRepository internal constructor(
         return KotifyDatabase.transaction("set current user") {
             UserTable.CurrentUserTable.set(user.id)
 
-            convert(id = user.id, networkModel = user)
+            convert(networkModel = user)
         }
     }
 

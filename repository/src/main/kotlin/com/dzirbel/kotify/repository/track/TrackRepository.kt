@@ -1,7 +1,5 @@
 package com.dzirbel.kotify.repository.track
 
-import com.dzirbel.kotify.db.model.Album
-import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
@@ -9,6 +7,8 @@ import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.album.AlbumRepository
+import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.util.flatMapParallel
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
@@ -31,10 +31,10 @@ open class TrackRepository internal constructor(scope: CoroutineScope) :
             playable = networkModel.isPlayable
             trackNumber = networkModel.trackNumber
             networkModel.album
-                ?.let { Album.from(it) }
+                ?.let { AlbumRepository.convert(it) }
                 ?.let { album.set(it) }
 
-            artists.set(networkModel.artists.mapNotNull { Artist.from(it) })
+            artists.set(networkModel.artists.mapNotNull { ArtistRepository.convert(it) })
 
             if (networkModel is SimplifiedSpotifyTrack) {
                 networkModel.popularity?.let {

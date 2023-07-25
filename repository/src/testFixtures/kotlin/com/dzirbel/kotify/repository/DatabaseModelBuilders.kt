@@ -9,19 +9,21 @@ import com.dzirbel.kotify.network.FullSpotifyAlbum
 import com.dzirbel.kotify.network.FullSpotifyArtist
 import com.dzirbel.kotify.network.FullSpotifyArtistList
 import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.repository.album.AlbumRepository
+import com.dzirbel.kotify.repository.artist.ArtistRepository
 import java.time.Instant
 
 @Suppress("FunctionNaming")
 fun ArtistList(count: Int): List<Artist> {
     val networkArtists = FullSpotifyArtistList(count = count)
     return KotifyDatabase.blockingTransaction {
-        networkArtists.map { requireNotNull(Artist.from(it)) }
+        networkArtists.map { requireNotNull(ArtistRepository.convert(it)) }
     }
 }
 
 fun Artist(fullUpdateTime: Instant? = null, albumsFetched: Instant? = null): Artist {
     return KotifyDatabase.blockingTransaction {
-        val artist = requireNotNull(Artist.from(FullSpotifyArtist()))
+        val artist = requireNotNull(ArtistRepository.convert(FullSpotifyArtist()))
         fullUpdateTime?.let { artist.fullUpdatedTime = it }
         albumsFetched?.let { artist.albumsFetched = it }
 
@@ -34,7 +36,7 @@ fun ArtistAlbumList(artistId: String, count: Int, fullUpdateTime: Instant? = nul
     val albums = AlbumList(count, fullUpdateTime = fullUpdateTime)
     return KotifyDatabase.blockingTransaction {
         albums.map {
-            ArtistAlbum.from(
+            ArtistAlbum.findOrCreate(
                 artistId = artistId,
                 albumId = it.id.value,
                 albumGroup = SpotifyAlbum.Type.ALBUM,
@@ -48,7 +50,7 @@ fun AlbumList(count: Int, fullUpdateTime: Instant? = null): List<Album> {
     val networkAlbums = List(count) { FullSpotifyAlbum(id = "album-$it", name = "Album $it") }
     return KotifyDatabase.blockingTransaction {
         networkAlbums.map { networkAlbum ->
-            val album = requireNotNull(Album.from(networkAlbum))
+            val album = requireNotNull(AlbumRepository.convert(networkAlbum))
             fullUpdateTime?.let { album.fullUpdatedTime = it }
 
             album

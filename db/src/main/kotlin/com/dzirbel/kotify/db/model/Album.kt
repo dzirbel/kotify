@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.ReadOnlyCachedProperty
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SavedEntityTable
@@ -11,17 +10,12 @@ import com.dzirbel.kotify.db.TransactionReadOnlyCachedProperty
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.db.util.largest
-import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.ReleaseDate
 import com.dzirbel.kotify.network.model.SpotifyAlbum
-import com.dzirbel.kotify.network.model.asFlow
-import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
-import org.jetbrains.exposed.sql.select
 import java.time.Instant
 
 object AlbumTable : SpotifyEntityTable(name = "albums") {
@@ -75,73 +69,8 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
         releaseDate?.let { ReleaseDate.parse(it) }
     }
 
-    /**
-     * IDs of the tracks on this album; not guaranteed to contain all the tracks, just the ones in
-     * [AlbumTable.AlbumTrackTable].
-     */
-    val trackIds: ReadOnlyCachedProperty<List<String>> = ReadOnlyCachedProperty {
-        AlbumTable.AlbumTrackTable
-            .select { AlbumTable.AlbumTrackTable.album eq id }
-            .map { it[AlbumTable.AlbumTrackTable.track].value }
-    }
-
     val largestImage: TransactionReadOnlyCachedProperty<Image?> by (Image via AlbumTable.AlbumImageTable)
         .cachedReadOnly(transactionName = "load album ${id.value} largest image") { it.largest() }
 
-    /**
-     * Whether all the tracks on this album (or the expected number of tracks) are in the database. Must be called from
-     * within a transaction.
-     */
-    val hasAllTracks: Boolean
-        get() = totalTracks?.let { tracks.live.size == it } == true
-
-    // TODO move to repository?
-    suspend fun getAllTracks(): List<Track> {
-        totalTracks
-            ?.let { totalTracks ->
-                KotifyDatabase.transaction("load album $name tracks") {
-                    tracks.live.takeIf { it.size == totalTracks }
-                }
-            }
-            ?.let { return it }
-
-        val networkTracks = Spotify.Albums.getAlbumTracks(id = id.value).asFlow().toList()
-
-        return KotifyDatabase.transaction("set album $name tracks") {
-            networkTracks.mapNotNull { Track.from(it) }
-                .also { tracks.set(it) }
-        }
-    }
-
-    companion object : SpotifyEntityClass<Album, SpotifyAlbum>(AlbumTable) {
-        override fun Album.update(networkModel: SpotifyAlbum) {
-            albumType = networkModel.albumType
-            releaseDate = networkModel.releaseDate
-            releaseDatePrecision = networkModel.releaseDatePrecision
-            networkModel.totalTracks?.let {
-                totalTracks = it
-            }
-
-            // attempt to link artists from network model; do not set albumGroup since it is unavailable from an album
-            // context
-            networkModel.artists.forEach { artistModel ->
-                Artist.from(artistModel)?.let { artist ->
-                    ArtistAlbum.from(artistId = artist.id.value, albumId = id.value, albumGroup = null)
-                }
-            }
-
-            images.set(networkModel.images.map { Image.from(it) })
-
-            if (networkModel is FullSpotifyAlbum) {
-                fullUpdatedTime = Instant.now()
-
-                label = networkModel.label
-                popularity = networkModel.popularity
-                totalTracks = networkModel.tracks.total
-
-                genres.set(networkModel.genres.map { Genre.from(it) })
-                tracks.set(networkModel.tracks.items.mapNotNull { Track.from(it) })
-            }
-        }
-    }
+    companion object : SpotifyEntityClass<Album, SpotifyAlbum>(AlbumTable)
 }

@@ -28,8 +28,8 @@ open class ArtistRepository internal constructor(scope: CoroutineScope) :
 
                 popularity = networkModel.popularity
                 followersTotal = networkModel.followers.total
-                images.set(networkModel.images.map { Image.from(it) })
-                genres.set(networkModel.genres.map { Genre.from(it) })
+                images.set(networkModel.images.map { Image.findOrCreate(it) })
+                genres.set(networkModel.genres.map { Genre.findOrCreate(it) })
             }
         }
     }

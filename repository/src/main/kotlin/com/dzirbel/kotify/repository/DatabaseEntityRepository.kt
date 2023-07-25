@@ -15,6 +15,15 @@ abstract class DatabaseEntityRepository<EntityType : SpotifyEntity, NetworkType 
     scope: CoroutineScope,
 ) : DatabaseRepository<EntityType, NetworkType>(entityName = entityName, scope = scope) {
 
+    /**
+     * Convenience variant of [convert] which uses the [networkModel]'s ID field, if it is non-null.
+     *
+     * Repositories whose [NetworkType]s always have an ID can override this to provide a non-null return type.
+     */
+    open fun convert(networkModel: NetworkType): EntityType? {
+        return networkModel.id?.let { convert(id = it, networkModel = networkModel) }
+    }
+
     final override fun fetchFromDatabase(id: String): Pair<EntityType, Instant>? {
         return entityClass.findById(id)?.let { entity -> entity to entity.updatedTime }
     }

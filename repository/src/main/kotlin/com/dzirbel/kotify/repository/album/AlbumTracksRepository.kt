@@ -30,9 +30,7 @@ open class AlbumTracksRepository internal constructor(scope: CoroutineScope) :
 
     override fun convert(id: String, networkModel: List<SimplifiedSpotifyTrack>): List<Track> {
         // TODO do not ignore tracks with null id
-        val tracks = networkModel.mapNotNull { track ->
-            track.id?.let { id -> TrackRepository.convert(id, track) }
-        }
+        val tracks = networkModel.mapNotNull { track -> TrackRepository.convert(track) }
 
         Album.findById(id)?.let { album ->
             album.tracks.set(tracks)

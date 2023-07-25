@@ -10,7 +10,6 @@ import com.dzirbel.kotify.db.TransactionReadOnlyCachedProperty
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.db.util.largest
-import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyArtist
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
@@ -56,6 +55,8 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
     /**
      * IDs of the tracks by this artist; not guaranteed to contain all the tracks, just the ones in
      * [TrackTable.TrackArtistTable].
+     *
+     * TODO move to an artist track repository?
      */
     val trackIds: ReadOnlyCachedProperty<List<String>> = ReadOnlyCachedProperty {
         TrackTable.TrackArtistTable
@@ -63,19 +64,5 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
             .map { it[TrackTable.TrackArtistTable.track].value }
     }
 
-    val hasAllAlbums: Boolean
-        get() = albumsFetched != null
-
-    companion object : SpotifyEntityClass<Artist, SpotifyArtist>(ArtistTable) {
-        override fun Artist.update(networkModel: SpotifyArtist) {
-            if (networkModel is FullSpotifyArtist) {
-                fullUpdatedTime = Instant.now()
-
-                popularity = networkModel.popularity
-                followersTotal = networkModel.followers.total
-                images.set(networkModel.images.map { Image.from(it) })
-                genres.set(networkModel.genres.map { Genre.from(it) })
-            }
-        }
-    }
+    companion object : SpotifyEntityClass<Artist, SpotifyArtist>(ArtistTable)
 }

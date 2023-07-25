@@ -7,13 +7,10 @@ import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cached
 import com.dzirbel.kotify.db.cachedAsList
-import com.dzirbel.kotify.network.model.FullSpotifyTrack
-import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
-import java.time.Instant
 
 object TrackTable : SpotifyEntityTable(name = "tracks") {
     val discNumber: Column<Int> = integer("disc_number")
@@ -48,30 +45,5 @@ class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
 
     val artists: ReadWriteCachedProperty<List<Artist>> by (Artist via TrackTable.TrackArtistTable).cachedAsList()
 
-    companion object : SpotifyEntityClass<Track, SpotifyTrack>(TrackTable) {
-        override fun Track.update(networkModel: SpotifyTrack) {
-            discNumber = networkModel.discNumber
-            durationMs = networkModel.durationMs
-            explicit = networkModel.explicit
-            local = networkModel.isLocal
-            playable = networkModel.isPlayable
-            trackNumber = networkModel.trackNumber
-            networkModel.album
-                ?.let { Album.from(it) }
-                ?.let { album.set(it) }
-
-            artists.set(networkModel.artists.mapNotNull { Artist.from(it) })
-
-            if (networkModel is SimplifiedSpotifyTrack) {
-                networkModel.popularity?.let {
-                    popularity = it
-                }
-            }
-
-            if (networkModel is FullSpotifyTrack) {
-                fullUpdatedTime = Instant.now()
-                popularity = networkModel.popularity
-            }
-        }
-    }
+    companion object : SpotifyEntityClass<Track, SpotifyTrack>(TrackTable)
 }

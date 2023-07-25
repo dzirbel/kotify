@@ -33,11 +33,13 @@ open class ArtistAlbumsRepository internal constructor(scope: CoroutineScope) :
 
     override fun convert(id: String, networkModel: List<SimplifiedSpotifyAlbum>): List<ArtistAlbum> {
         return networkModel.mapNotNull { artistAlbum ->
-            artistAlbum.id?.let { albumId ->
-                val album = AlbumRepository.convert(id = albumId, networkModel = artistAlbum)
-
+            AlbumRepository.convert(artistAlbum)?.let { album ->
                 // TODO ArtistAlbum may have multiple artists
-                ArtistAlbum.from(artistId = id, albumId = album.id.value, albumGroup = artistAlbum.albumGroup).also {
+                ArtistAlbum.findOrCreate(
+                    artistId = id,
+                    albumId = album.id.value,
+                    albumGroup = artistAlbum.albumGroup,
+                ).also {
                     // TODO loadToCache
                     it.album.loadToCache()
                 }

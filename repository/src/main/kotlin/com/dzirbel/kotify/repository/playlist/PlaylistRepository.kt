@@ -24,9 +24,9 @@ open class PlaylistRepository internal constructor(scope: CoroutineScope) :
             networkModel.public?.let { public = it }
             snapshotId = networkModel.snapshotId
 
-            owner.set(UserRepository.convert(networkModel.owner.id, networkModel.owner))
+            owner.set(UserRepository.convert(networkModel.owner))
 
-            images.set(networkModel.images.map { Image.from(it) })
+            images.set(networkModel.images.map { Image.findOrCreate(it) })
 
             if (networkModel is SimplifiedSpotifyPlaylist) {
                 networkModel.tracks?.let {

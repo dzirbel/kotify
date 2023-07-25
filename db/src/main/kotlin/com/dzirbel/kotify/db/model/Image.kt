@@ -20,10 +20,19 @@ class Image(id: EntityID<UUID>) : UUIDEntity(id = id) {
     var height: Int? by ImageTable.height
 
     companion object : UUIDEntityClass<Image>(ImageTable) {
-        fun from(networkModel: SpotifyImage): Image {
+        fun findOrCreate(networkModel: SpotifyImage): Image {
             Image.find { ImageTable.url eq networkModel.url }
                 .limit(1)
                 .firstOrNull()
+                ?.also { image ->
+                    if (networkModel.width != null && networkModel.width != image.width) {
+                        image.width = networkModel.width
+                    }
+
+                    if (networkModel.height != null && networkModel.height != image.height) {
+                        image.height = networkModel.height
+                    }
+                }
                 ?.let { return it }
 
             return new(id = UUID.randomUUID()) {
