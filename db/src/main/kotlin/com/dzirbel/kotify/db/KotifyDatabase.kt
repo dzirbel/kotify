@@ -14,7 +14,6 @@ import com.dzirbel.kotify.db.model.UserTable
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -140,7 +139,7 @@ object KotifyDatabase {
                         it.onTransactionStart(transaction = this, name = name)
                     }
 
-                    runBlocking { statement() }
+                    statement()
                 }
             }
         } else {
