@@ -8,6 +8,7 @@ import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.util.updateOrInsert
 import com.dzirbel.kotify.util.flatMapParallel
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
@@ -28,7 +29,9 @@ open class ArtistRepository internal constructor(scope: CoroutineScope) :
 
                 popularity = networkModel.popularity
                 followersTotal = networkModel.followers.total
-                images.set(networkModel.images.map { Image.findOrCreate(it) })
+                images.set(
+                    networkModel.images.map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) },
+                )
                 genres.set(networkModel.genres.map { Genre.findOrCreate(it) })
             }
         }

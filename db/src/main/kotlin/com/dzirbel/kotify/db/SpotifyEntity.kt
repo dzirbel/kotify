@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.db
 
-import com.dzirbel.kotify.network.model.SpotifyObject
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -37,28 +36,5 @@ abstract class SpotifyEntity(id: EntityID<String>, table: SpotifyEntityTable) : 
 /**
  * Base [EntityClass] which serves as the companion object for a [SpotifyEntityTable].
  */
-abstract class SpotifyEntityClass<EntityType : SpotifyEntity, NetworkType : SpotifyObject>(table: SpotifyEntityTable) :
-    EntityClass<String, EntityType>(table) {
-
-    /**
-     * Convenience function which finds and updates the [EntityType] with the given [id] or creates a new one if none
-     * exists; in either case, the entity is returned.
-     *
-     * This consolidates logic to set common properties like [SpotifyEntity.updatedTime] and [SpotifyEntity.name] as
-     * well as calling [update] in either case of finding or creating an entity.
-     */
-    fun updateOrInsert(id: String, networkModel: NetworkType, update: EntityType.() -> Unit): EntityType {
-        return findById(id)
-            ?.apply {
-                updatedTime = Instant.now()
-                networkModel.name?.let { name = it }
-                uri = networkModel.uri
-                update()
-            }
-            ?: new(id = id) {
-                networkModel.name?.let { name = it }
-                uri = networkModel.uri
-                update()
-            }
-    }
-}
+abstract class SpotifyEntityClass<EntityType : SpotifyEntity>(table: SpotifyEntityTable) :
+    EntityClass<String, EntityType>(table)

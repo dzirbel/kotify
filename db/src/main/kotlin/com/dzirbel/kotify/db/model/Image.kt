@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.network.model.SpotifyImage
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -20,25 +19,25 @@ class Image(id: EntityID<UUID>) : UUIDEntity(id = id) {
     var height: Int? by ImageTable.height
 
     companion object : UUIDEntityClass<Image>(ImageTable) {
-        fun findOrCreate(networkModel: SpotifyImage): Image {
-            Image.find { ImageTable.url eq networkModel.url }
+        fun findOrCreate(url: String, width: Int?, height: Int?): Image {
+            Image.find { ImageTable.url eq url }
                 .limit(1)
                 .firstOrNull()
                 ?.also { image ->
-                    if (networkModel.width != null && networkModel.width != image.width) {
-                        image.width = networkModel.width
+                    if (width != null && width != image.width) {
+                        image.width = width
                     }
 
-                    if (networkModel.height != null && networkModel.height != image.height) {
-                        image.height = networkModel.height
+                    if (height != null && height != image.height) {
+                        image.height = height
                     }
                 }
                 ?.let { return it }
 
             return new(id = UUID.randomUUID()) {
-                url = networkModel.url
-                width = networkModel.width
-                height = networkModel.height
+                this.url = url
+                this.width = width
+                this.height = height
             }
         }
     }

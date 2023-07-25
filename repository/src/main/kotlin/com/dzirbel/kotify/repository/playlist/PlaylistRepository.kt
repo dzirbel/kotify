@@ -9,6 +9,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.repository.util.updateOrInsert
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
@@ -26,7 +27,9 @@ open class PlaylistRepository internal constructor(scope: CoroutineScope) :
 
             owner.set(UserRepository.convert(networkModel.owner))
 
-            images.set(networkModel.images.map { Image.findOrCreate(it) })
+            images.set(
+                networkModel.images.map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) },
+            )
 
             if (networkModel is SimplifiedSpotifyPlaylist) {
                 networkModel.tracks?.let {

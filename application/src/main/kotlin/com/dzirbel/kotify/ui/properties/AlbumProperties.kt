@@ -3,8 +3,8 @@ package com.dzirbel.kotify.ui.properties
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.db.model.AlbumType
 import com.dzirbel.kotify.db.model.ArtistAlbum
-import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.repository.rating.AverageRating
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
@@ -30,24 +30,24 @@ open class AlbumReleaseDateProperty<A>(
     object ForArtistAlbum : AlbumReleaseDateProperty<ArtistAlbum>(toAlbum = { it.album.cached })
 }
 
-open class AlbumTypeDividableProperty<A>(private val toAlbumType: (A) -> SpotifyAlbum.Type?) : DividableProperty<A> {
+open class AlbumTypeDividableProperty<A>(private val toAlbumType: (A) -> AlbumType?) : DividableProperty<A> {
     override val title = "Album type"
 
-    override fun divisionFor(element: A): SpotifyAlbum.Type? = toAlbumType(element)
+    override fun divisionFor(element: A): AlbumType? = toAlbumType(element)
 
     @Composable
     override fun DivisionIcon(division: Any?) {
-        (division as? SpotifyAlbum.Type)?.iconName?.let { iconName ->
+        (division as? AlbumType)?.iconName?.let { iconName ->
             CachedIcon(name = iconName, size = Dimens.iconSizeFor(fontSize = MaterialTheme.typography.h5.fontSize))
         }
     }
 
     override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
-        return sortOrder.compareNullable(first as? SpotifyAlbum.Type, second as? SpotifyAlbum.Type)
+        return sortOrder.compareNullable(first as? AlbumType, second as? AlbumType)
     }
 
     override fun divisionTitle(division: Any?): String? {
-        return (division as? SpotifyAlbum.Type)?.displayName ?: "Unknown"
+        return (division as? AlbumType)?.displayName ?: "Unknown"
     }
 
     companion object : AlbumTypeDividableProperty<Album>(toAlbumType = { it.albumType })

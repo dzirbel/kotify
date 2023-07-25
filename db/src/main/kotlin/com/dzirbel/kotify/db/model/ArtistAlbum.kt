@@ -2,7 +2,6 @@ package com.dzirbel.kotify.db.model
 
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.cached
-import com.dzirbel.kotify.network.model.SpotifyAlbum
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -13,11 +12,11 @@ import org.jetbrains.exposed.sql.and
 object ArtistAlbumTable : IntIdTable() {
     val album = reference("album", AlbumTable)
     val artist = reference("artist", ArtistTable)
-    val albumGroup = enumeration("album_group", SpotifyAlbum.Type::class).nullable()
+    val albumGroup = enumeration("album_group", AlbumType::class).nullable()
 }
 
 class ArtistAlbum(id: EntityID<Int>) : IntEntity(id) {
-    var albumGroup: SpotifyAlbum.Type? by ArtistAlbumTable.albumGroup
+    var albumGroup: AlbumType? by ArtistAlbumTable.albumGroup
     var albumId: EntityID<String> by ArtistAlbumTable.album
     var artistId: EntityID<String> by ArtistAlbumTable.artist
 
@@ -25,7 +24,7 @@ class ArtistAlbum(id: EntityID<Int>) : IntEntity(id) {
     val album: ReadWriteCachedProperty<Album> by (Album referencedOn ArtistAlbumTable.album).cached()
 
     companion object : IntEntityClass<ArtistAlbum>(ArtistAlbumTable) {
-        fun findOrCreate(artistId: String, albumId: String, albumGroup: SpotifyAlbum.Type?): ArtistAlbum {
+        fun findOrCreate(artistId: String, albumId: String, albumGroup: AlbumType?): ArtistAlbum {
             return find { (ArtistAlbumTable.album eq albumId) and (ArtistAlbumTable.artist eq artistId) }
                 .firstOrNull()
                 ?.also { artistAlbum ->

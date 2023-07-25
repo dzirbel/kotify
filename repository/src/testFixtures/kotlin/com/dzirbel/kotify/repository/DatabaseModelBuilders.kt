@@ -3,12 +3,12 @@ package com.dzirbel.kotify.repository
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.blockingTransaction
 import com.dzirbel.kotify.db.model.Album
+import com.dzirbel.kotify.db.model.AlbumType
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.network.FullSpotifyAlbum
 import com.dzirbel.kotify.network.FullSpotifyArtist
 import com.dzirbel.kotify.network.FullSpotifyArtistList
-import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import java.time.Instant
@@ -39,7 +39,7 @@ fun ArtistAlbumList(artistId: String, count: Int, fullUpdateTime: Instant? = nul
             ArtistAlbum.findOrCreate(
                 artistId = artistId,
                 albumId = it.id.value,
-                albumGroup = SpotifyAlbum.Type.ALBUM,
+                albumGroup = AlbumType.ALBUM,
             )
         }
     }

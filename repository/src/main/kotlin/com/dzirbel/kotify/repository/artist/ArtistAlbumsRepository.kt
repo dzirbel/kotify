@@ -8,6 +8,7 @@ import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository.DatabaseRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.album.AlbumRepository
+import com.dzirbel.kotify.repository.album.toAlbumType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import java.time.Instant
@@ -38,7 +39,7 @@ open class ArtistAlbumsRepository internal constructor(scope: CoroutineScope) :
                 ArtistAlbum.findOrCreate(
                     artistId = id,
                     albumId = album.id.value,
-                    albumGroup = artistAlbum.albumGroup,
+                    albumGroup = artistAlbum.albumGroup?.toAlbumType(),
                 ).also {
                     // TODO loadToCache
                     it.album.loadToCache()

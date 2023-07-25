@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.network.model
+package com.dzirbel.kotify.db.model
 
 /**
  * Represents a year-month-date combination parse-able from spotify network models, which may not include a month and/or

@@ -18,9 +18,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.db.model.AlbumType
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
-import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.ui.components.AlbumCell
@@ -64,7 +64,7 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
     override fun BoxScope.bind(visible: Boolean): String? {
         val artist = ArtistRepository.stateOf(artistId).collectAsState().value?.cachedValue
 
-        val displayedAlbumTypes = remember { mutableStateOf(persistentSetOf(SpotifyAlbum.Type.ALBUM)) }
+        val displayedAlbumTypes = remember { mutableStateOf(persistentSetOf(AlbumType.ALBUM)) }
 
         val artistAlbums = rememberListAdapterState(
             key = artistId,
@@ -120,8 +120,8 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
 private fun ArtistPageHeader(
     artist: Artist?,
     albums: ListAdapterState<ArtistAlbum>,
-    displayedAlbumTypes: PersistentSet<SpotifyAlbum.Type>,
-    setDisplayedAlbumTypes: (PersistentSet<SpotifyAlbum.Type>) -> Unit,
+    displayedAlbumTypes: PersistentSet<AlbumType>,
+    setDisplayedAlbumTypes: (PersistentSet<AlbumType>) -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space5, vertical = Dimens.space4),
@@ -186,7 +186,7 @@ private fun ArtistPageHeader(
     }
 }
 
-private fun filterFor(albumTypes: Set<SpotifyAlbum.Type>): ((ArtistAlbum) -> Boolean)? {
+private fun filterFor(albumTypes: Set<AlbumType>): ((ArtistAlbum) -> Boolean)? {
     return if (albumTypes.isNotEmpty()) {
         { album -> albumTypes.contains(album.albumGroup) }
     } else {

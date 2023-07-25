@@ -9,6 +9,7 @@ import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.util.updateOrInsert
 import com.dzirbel.kotify.util.flatMapParallel
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant

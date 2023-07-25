@@ -7,7 +7,6 @@ import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cached
 import com.dzirbel.kotify.db.cachedAsList
-import com.dzirbel.kotify.network.model.SpotifyTrack
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
@@ -45,5 +44,5 @@ class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
 
     val artists: ReadWriteCachedProperty<List<Artist>> by (Artist via TrackTable.TrackArtistTable).cachedAsList()
 
-    companion object : SpotifyEntityClass<Track, SpotifyTrack>(TrackTable)
+    companion object : SpotifyEntityClass<Track>(TrackTable)
 }

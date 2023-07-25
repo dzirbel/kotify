@@ -12,6 +12,7 @@ import com.dzirbel.kotify.repository.CacheState
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.savedRepositories
+import com.dzirbel.kotify.repository.util.updateOrInsert
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancelChildren
@@ -46,7 +47,7 @@ open class UserRepository internal constructor(
     override fun convert(id: String, networkModel: SpotifyUser): User {
         return User.updateOrInsert(id = id, networkModel = networkModel) {
             networkModel.images?.let { images ->
-                this.images.set(images.map { Image.findOrCreate(it) })
+                this.images.set(images.map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) })
             }
 
             networkModel.followers?.let {

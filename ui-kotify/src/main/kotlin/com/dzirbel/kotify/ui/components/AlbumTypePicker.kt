@@ -2,7 +2,7 @@ package com.dzirbel.kotify.ui.components
 
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.db.model.AlbumType
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.util.immutable.toImmutableList
@@ -11,12 +11,12 @@ import kotlinx.collections.immutable.PersistentSet
 
 @Composable
 fun AlbumTypePicker(
-    albumTypeCounts: ImmutableMap<SpotifyAlbum.Type?, Int>?,
-    albumTypes: PersistentSet<SpotifyAlbum.Type>,
-    onSelectAlbumTypes: (PersistentSet<SpotifyAlbum.Type>) -> Unit,
+    albumTypeCounts: ImmutableMap<AlbumType?, Int>?,
+    albumTypes: PersistentSet<AlbumType>,
+    onSelectAlbumTypes: (PersistentSet<AlbumType>) -> Unit,
 ) {
     ToggleButtonGroup(
-        elements = SpotifyAlbum.Type.values().toImmutableList(),
+        elements = AlbumType.values().toImmutableList(),
         selectedElements = albumTypes,
         onSelectElements = onSelectAlbumTypes,
         content = { albumType ->

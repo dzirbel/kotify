@@ -10,7 +10,6 @@ import com.dzirbel.kotify.db.TransactionReadOnlyCachedProperty
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.db.util.largest
-import com.dzirbel.kotify.network.model.SpotifyArtist
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
@@ -64,5 +63,5 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
             .map { it[TrackTable.TrackArtistTable.track].value }
     }
 
-    companion object : SpotifyEntityClass<Artist, SpotifyArtist>(ArtistTable)
+    companion object : SpotifyEntityClass<Artist>(ArtistTable)
 }

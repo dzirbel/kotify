@@ -8,7 +8,6 @@ import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.db.util.smallest
-import com.dzirbel.kotify.network.model.SpotifyUser
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
@@ -50,5 +49,5 @@ class User(id: EntityID<String>) : SpotifyEntity(id = id, table = UserTable) {
     val thumbnailImage: ReadOnlyCachedProperty<Image?> by (Image via UserTable.UserImageTable)
         .cachedReadOnly { it.smallest() }
 
-    companion object : SpotifyEntityClass<User, SpotifyUser>(UserTable)
+    companion object : SpotifyEntityClass<User>(UserTable)
 }

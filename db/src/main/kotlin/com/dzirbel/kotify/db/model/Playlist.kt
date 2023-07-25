@@ -10,7 +10,6 @@ import com.dzirbel.kotify.db.cached
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.db.util.largest
-import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SortOrder
@@ -72,5 +71,5 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
             .toList()
     }
 
-    companion object : SpotifyEntityClass<Playlist, SpotifyPlaylist>(PlaylistTable)
+    companion object : SpotifyEntityClass<Playlist>(PlaylistTable)
 }

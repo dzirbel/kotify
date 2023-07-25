@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.ui.properties
 
-import com.dzirbel.kotify.network.model.ReleaseDate
+import com.dzirbel.kotify.db.model.ReleaseDate
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty

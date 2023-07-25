@@ -10,16 +10,21 @@ import com.dzirbel.kotify.db.TransactionReadOnlyCachedProperty
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.db.util.largest
-import com.dzirbel.kotify.network.model.ReleaseDate
-import com.dzirbel.kotify.network.model.SpotifyAlbum
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant
 
+enum class AlbumType(val displayName: String, val iconName: String) {
+    ALBUM(displayName = "Album", iconName = "album"),
+    SINGLE(displayName = "Single", iconName = "audiotrack"),
+    COMPILATION(displayName = "Compilation", iconName = "library-music"),
+    APPEARS_ON(displayName = "Appears On", iconName = "audio-file"),
+}
+
 object AlbumTable : SpotifyEntityTable(name = "albums") {
-    val albumType: Column<SpotifyAlbum.Type?> = enumeration("album_type", SpotifyAlbum.Type::class).nullable()
+    val albumType: Column<AlbumType?> = enumeration("album_type", AlbumType::class).nullable()
     val releaseDate: Column<String?> = text("release_date").nullable()
     val releaseDatePrecision: Column<String?> = text("release_date_precision").nullable()
     val totalTracks: Column<Int?> = integer("total_tracks").nullable()
@@ -49,7 +54,7 @@ object AlbumTable : SpotifyEntityTable(name = "albums") {
 }
 
 class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
-    var albumType: SpotifyAlbum.Type? by AlbumTable.albumType
+    var albumType: AlbumType? by AlbumTable.albumType
     var releaseDate: String? by AlbumTable.releaseDate
     var releaseDatePrecision: String? by AlbumTable.releaseDatePrecision
     var totalTracks: Int? by AlbumTable.totalTracks
@@ -72,5 +77,5 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
     val largestImage: TransactionReadOnlyCachedProperty<Image?> by (Image via AlbumTable.AlbumImageTable)
         .cachedReadOnly(transactionName = "load album ${id.value} largest image") { it.largest() }
 
-    companion object : SpotifyEntityClass<Album, SpotifyAlbum>(AlbumTable)
+    companion object : SpotifyEntityClass<Album>(AlbumTable)
 }

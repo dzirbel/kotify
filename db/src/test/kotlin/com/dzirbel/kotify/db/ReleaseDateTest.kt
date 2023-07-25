@@ -1,7 +1,8 @@
-package com.dzirbel.kotify.network.model
+package com.dzirbel.kotify.db
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import com.dzirbel.kotify.db.model.ReleaseDate
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.math.sign

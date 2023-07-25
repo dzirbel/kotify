@@ -6,7 +6,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":network")) // TODO required for translation from network models, move that to repos?
     implementation(project(":util"))
 
     testImplementation(testFixtures(project(":util")))
