@@ -5,7 +5,6 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
 import com.dzirbel.kotify.network.model.asFlow
-import com.dzirbel.kotify.util.TAG_NETWORK
 import com.dzirbel.kotify.util.containsExactlyElementsOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking

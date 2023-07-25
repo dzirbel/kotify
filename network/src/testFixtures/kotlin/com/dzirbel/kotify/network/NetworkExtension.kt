@@ -1,9 +1,6 @@
-package com.dzirbel.kotify
+package com.dzirbel.kotify.network
 
-import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.TestSpotifyInterceptor
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.util.TAG_NETWORK
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -14,13 +11,12 @@ import java.io.File
  *
  * This extension is applied automatically to all tests which are run without the [TAG_NETWORK] tag via a service
  * loader.
- *
- * TODO duplicate in :network
  */
 class NetworkExtension : BeforeEachCallback, AfterEachCallback {
     override fun beforeEach(context: ExtensionContext) {
         if (context.tags.contains(TAG_NETWORK)) {
-            AccessToken.Cache.cacheFile = File(".kotify/test-cache/access_token.json")
+            // TODO deduplicate references to access token location
+            AccessToken.Cache.cacheFile = File("../.kotify/test-cache/access_token.json")
         } else {
             Spotify.configuration = Spotify.Configuration(
                 requestInterceptor = TestSpotifyInterceptor,

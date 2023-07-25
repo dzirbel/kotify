@@ -25,4 +25,6 @@ dependencies {
 
     testImplementation(libs.assertk)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    testFixturesImplementation(libs.junit5.api)
 }

@@ -26,6 +26,7 @@ dependencies {
     testImplementation(libs.ktor.client)
 
     testFixturesImplementation(libs.assertk)
+    testFixturesImplementation(libs.junit5.api)
     testFixturesImplementation(libs.kotlinx.coroutines.core)
     testFixturesImplementation(libs.kotlinx.serialization.json)
     testFixturesImplementation(libs.okhttp)

@@ -8,8 +8,8 @@ plugins {
 
 dependencies {
     implementation(project(":repository"))
-    implementation(project(":util"))
     implementation(project(":ui-common"))
+    implementation(project(":util"))
 
     testImplementation(testFixtures(project(":network")))
     testImplementation(testFixtures(project(":ui-common")))

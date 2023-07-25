@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.repository
 
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.util.TAG_NETWORK
+import com.dzirbel.kotify.network.TAG_NETWORK
 import io.mockk.clearAllMocks
 import io.mockk.confirmVerified
 import io.mockk.mockkObject
@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
+// TODO consolidate with extension in :network
 class NetworkExtension : BeforeAllCallback, AfterEachCallback, AfterAllCallback {
     override fun beforeAll(context: ExtensionContext) {
         if (!context.tags.contains(TAG_NETWORK)) {

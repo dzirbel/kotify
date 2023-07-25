@@ -28,11 +28,11 @@ class MockedRepositoryExtension : BeforeEachCallback, AfterEachCallback {
         TrackRatingRepository,
     )
 
-    override fun beforeEach(context: ExtensionContext?) {
+    override fun beforeEach(context: ExtensionContext) {
         mockkObject(*repositories)
     }
 
-    override fun afterEach(context: ExtensionContext?) {
+    override fun afterEach(context: ExtensionContext) {
         unmockkObject(*repositories)
     }
 }

@@ -1,3 +1,3 @@
-com.dzirbel.kotify.DatabaseExtension
+com.dzirbel.kotify.db.DatabaseExtension
 com.dzirbel.kotify.MockedRepositoryExtension
-com.dzirbel.kotify.NetworkExtension
+com.dzirbel.kotify.network.NetworkExtension

@@ -1,6 +1,5 @@
-package com.dzirbel.kotify.repository
+package com.dzirbel.kotify.db
 
-import com.dzirbel.kotify.db.KotifyDatabase
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -16,8 +15,9 @@ class DatabaseExtension : BeforeAllCallback, AfterEachCallback {
     private val initializedDb = AtomicBoolean(false)
 
     override fun beforeAll(context: ExtensionContext) {
+        // only initialize the DB once per test suite (whereas beforeAll is called once per test class)
         if (!initializedDb.getAndSet(true)) {
-            // use database file relative to this module to avoid interference with parallel test suites
+            // use database file relative to the module to avoid interference with parallel test suites
             KotifyDatabase.init(dbFile = File("test.db").also(File::deleteOnExit))
         }
     }

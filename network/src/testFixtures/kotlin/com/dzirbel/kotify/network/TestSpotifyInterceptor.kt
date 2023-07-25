@@ -12,6 +12,8 @@ import com.dzirbel.kotify.util.containsExactlyElementsOfInAnyOrder
  * [Spotify.Configuration]. It is a workaround for mocking [Spotify] methods to retain purity and performance in tests,
  * but is less convenient in that the exact network call paths/methods must be provided and there aren't (yet) any ways
  * to verify that the expected parameters are supplied for a particular call.
+ *
+ * TODO replce with mocking
  */
 object TestSpotifyInterceptor : Spotify.RequestInterceptor {
     private val interceptedCalls = mutableListOf<String>()
