@@ -32,7 +32,7 @@ fun Any.screenshotTest(
     windowWidth: Int = 1024,
     windowHeight: Int = 768,
     record: Boolean = false,
-    colorsSet: Set<Colors> = Colors.values().toSet(),
+    colorsSet: Set<Colors> = Colors.entries.toSet(),
     setUpComposeScene: ImageComposeScene.() -> Unit = {},
     content: @Composable () -> Unit,
 ) {

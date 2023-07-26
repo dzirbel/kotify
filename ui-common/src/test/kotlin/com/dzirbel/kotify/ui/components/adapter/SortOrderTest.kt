@@ -84,7 +84,7 @@ internal class SortOrderTest {
         @JvmStatic
         fun testSortNullable(): List<SortNullableCase> {
             return listOf(true, false)
-                .zip(SortOrder.values())
+                .zip(SortOrder.entries)
                 .map { SortNullableCase(it.second, it.first) }
         }
     }

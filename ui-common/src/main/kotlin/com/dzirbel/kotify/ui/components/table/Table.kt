@@ -147,7 +147,7 @@ fun <E> Table(
                     }
                     val colConstraints = Constraints(minWidth = min, maxWidth = max)
 
-                    val maxCellWidth = (0 until numRows).maxOfOrNull { row ->
+                    val maxCellWidth = (0..<numRows).maxOfOrNull { row ->
                         val index = cellPlaceablesIndex(row = row, col = colIndex)
                         cellMeasurables[index].measure(colConstraints)
                             .also { cellPlaceables[index] = it }
@@ -213,7 +213,7 @@ fun <E> Table(
                 val division = divisionElements[divisionIndex]
 
                 IntArray(division.size) { row ->
-                    (0 until numCols).maxOf { col ->
+                    (0..<numCols).maxOf { col ->
                         cellPlaceables[cellPlaceablesIndex(row = division[row].index, col = col)].height
                     }
                         .also { totalHeight += it }

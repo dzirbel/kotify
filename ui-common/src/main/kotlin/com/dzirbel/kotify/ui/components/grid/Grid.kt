@@ -384,7 +384,7 @@ fun <E> Grid(
                             )
                         }
 
-                        for (colIndex in 0 until cols) {
+                        for (colIndex in 0..<cols) {
                             // getOrNull in case the column exceeds the number of elements in the last row
                             division.getOrNull(colIndex + rowIndex * cols)?.index?.let { elementIndex ->
                                 val placeable = cellPlaceables[elementIndex]

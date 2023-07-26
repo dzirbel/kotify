@@ -2,7 +2,7 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.compose.ComposeExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // apply plugins to the root project so that we can access their classes in the shared configuration
 plugins {
@@ -75,43 +75,39 @@ fun Project.configureDetekt() {
 }
 
 fun Project.configureKotlin() {
-    tasks.withType<KotlinCompile>().configureEach {
-        kotlinOptions {
+    kotlin {
+        compilerOptions {
             allWarningsAsErrors = true
-            jvmTarget = libs.versions.jvm.get()
+            jvmTarget.set(libs.versions.jvm.map(JvmTarget::fromTarget))
 
-            freeCompilerArgs += "-opt-in=kotlin.time.ExperimentalTime"
-            freeCompilerArgs += "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
-            freeCompilerArgs += "-opt-in=kotlinx.coroutines.FlowPreview"
-            freeCompilerArgs += "-opt-in=kotlin.contracts.ExperimentalContracts"
-            freeCompilerArgs += "-opt-in=kotlinx.coroutines.DelicateCoroutinesApi" // allow use of GlobalScope
+            freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
+            freeCompilerArgs.add("-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
+            freeCompilerArgs.add("-opt-in=kotlinx.coroutines.FlowPreview")
+            freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
+            freeCompilerArgs.add("-opt-in=kotlinx.coroutines.DelicateCoroutinesApi") // allow use of GlobalScope
 
             // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
-            freeCompilerArgs += "-Xcontext-receivers"
+            freeCompilerArgs.add("-Xcontext-receivers")
 
             if (project.extensions.findByType<ComposeExtension>() != null) {
-                freeCompilerArgs += "-opt-in=androidx.compose.ui.ExperimentalComposeUiApi"
-                freeCompilerArgs += "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi"
-                freeCompilerArgs += "-opt-in=androidx.compose.material.ExperimentalMaterialApi"
+                freeCompilerArgs.add("-opt-in=androidx.compose.ui.ExperimentalComposeUiApi")
+                freeCompilerArgs.add("-opt-in=androidx.compose.foundation.ExperimentalFoundationApi")
+                freeCompilerArgs.add("-opt-in=androidx.compose.material.ExperimentalMaterialApi")
 
                 // enable Compose compiler metrics and reports:
                 // https://github.com/androidx/androidx/blob/androidx-main/compose/compiler/design/compiler-metrics.md
                 val composeCompilerReportsDir = project.buildDir.resolve("compose")
-                freeCompilerArgs += listOf(
+                freeCompilerArgs.addAll(
                     "-P",
                     "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$composeCompilerReportsDir"
                 )
 
-                freeCompilerArgs += listOf(
+                freeCompilerArgs.addAll(
                     "-P",
                     "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=$composeCompilerReportsDir"
                 )
             }
         }
-    }
-
-    tasks.withType<JavaCompile>().configureEach {
-        targetCompatibility = libs.versions.jvm.get()
     }
 }
 

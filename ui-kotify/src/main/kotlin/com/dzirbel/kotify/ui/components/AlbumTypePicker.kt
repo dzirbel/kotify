@@ -5,9 +5,9 @@ import androidx.compose.runtime.Composable
 import com.dzirbel.kotify.db.model.AlbumType
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.util.immutable.toImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.toImmutableList
 
 @Composable
 fun AlbumTypePicker(
@@ -16,7 +16,7 @@ fun AlbumTypePicker(
     onSelectAlbumTypes: (PersistentSet<AlbumType>) -> Unit,
 ) {
     ToggleButtonGroup(
-        elements = AlbumType.values().toImmutableList(),
+        elements = AlbumType.entries.toImmutableList(),
         selectedElements = albumTypes,
         onSelectElements = onSelectAlbumTypes,
         content = { albumType ->

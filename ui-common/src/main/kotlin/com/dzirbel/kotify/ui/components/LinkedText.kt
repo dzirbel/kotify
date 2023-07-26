@@ -156,7 +156,7 @@ private class LinkElementBuilder(
         }
 
         val endOffset = currentOffset + text.length
-        val isHovered = hoveredOffset in currentOffset until endOffset
+        val isHovered = hoveredOffset in currentOffset..<endOffset
         val spanStyle = if (isHovered) hoveredSpanStyle else unhoveredSpanStyle
 
         builder.append(

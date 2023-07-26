@@ -53,8 +53,8 @@ private val debugPanelSize = PanelSize(
  */
 @Composable
 fun DebugPanel(content: @Composable () -> Unit) {
-    val tab = remember { mutableStateOf(DebugTab.values().first()) }
-    val scrollStates = remember { DebugTab.values().associateWith { ScrollState(0) } }
+    val tab = remember { mutableStateOf(DebugTab.entries.first()) }
+    val scrollStates = remember { DebugTab.entries.associateWith { ScrollState(0) } }
     val scrollState = scrollStates.getValue(tab.value)
 
     SidePanel(
@@ -102,7 +102,7 @@ private fun DebugPanelContent(tab: DebugTab, scrollState: ScrollState, onClickTa
                     )
                 }
 
-                DebugTab.values().forEach { buttonTab ->
+                DebugTab.entries.forEach { buttonTab ->
                     SimpleTextButton(
                         onClick = { onClickTab(buttonTab) },
                         modifier = Modifier.fillMaxWidth().weight(1f),
