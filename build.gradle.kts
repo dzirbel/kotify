@@ -109,6 +109,10 @@ fun Project.configureKotlin() {
             }
         }
     }
+
+    java {
+        targetCompatibility = libs.versions.jvm.map { JavaVersion.valueOf("VERSION_$it") }.get()
+    }
 }
 
 fun Project.configureTests() {
