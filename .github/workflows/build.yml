@@ -8,7 +8,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ windows-latest ] # screenshot tests must be run on windows
+        os: [ ubuntu-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3

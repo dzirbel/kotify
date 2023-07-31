@@ -13,10 +13,10 @@ import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dzirbel.kotify.ui.theme.KotifyTypography
 import com.dzirbel.kotify.ui.theme.LocalColors
 import java.util.Locale
 import kotlin.time.Duration
@@ -108,7 +108,7 @@ fun Modifier.metricsPanel(tag: String? = null): Modifier {
                     // measure the text with a monospace font
                     val textLayoutResult = textMeasurer.measure(
                         text = text,
-                        style = TextStyle(fontSize = panelFontSize, fontFamily = FontFamily.Monospace),
+                        style = TextStyle(fontSize = panelFontSize, fontFamily = KotifyTypography.Monospace),
                     )
                     val paddingPx = panelPadding.toPx()
 

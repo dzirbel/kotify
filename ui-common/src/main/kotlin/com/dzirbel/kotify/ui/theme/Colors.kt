@@ -10,6 +10,7 @@ import androidx.compose.foundation.defaultScrollbarStyle
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Typography
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
@@ -143,7 +144,10 @@ enum class Colors(
             LocalSurfaceBackground provides surfaces.first(),
             LocalColors provides this,
         ) {
-            MaterialTheme(colors = materialColors) {
+            MaterialTheme(
+                colors = materialColors,
+                typography = Typography(defaultFontFamily = KotifyTypography.Default),
+            ) {
                 LocalColors.current.WithSurface(increment = 0, content = content)
             }
         }

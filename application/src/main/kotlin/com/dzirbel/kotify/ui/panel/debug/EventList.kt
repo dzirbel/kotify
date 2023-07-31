@@ -30,11 +30,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerButton
-import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.KotifyTypography
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.applyIf
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
@@ -132,7 +132,7 @@ private fun <T> EventItem(event: Logger.Event<T>) {
 
                 Text(
                     text = event.title,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = KotifyTypography.Monospace,
                 )
             }
 
@@ -148,14 +148,14 @@ private fun <T> EventItem(event: Logger.Event<T>) {
         if (expanded) {
             Text(
                 text = event.content.orEmpty(),
-                fontFamily = FontFamily.Monospace,
+                fontFamily = KotifyTypography.Monospace,
                 modifier = Modifier.padding(start = Dimens.space3),
             )
         }
 
         Text(
             text = remember(event.time) { formatDateTime(event.time, includeMillis = true) },
-            style = MaterialTheme.typography.overline.copy(fontFamily = FontFamily.Monospace),
+            style = MaterialTheme.typography.overline.copy(fontFamily = KotifyTypography.Monospace),
             modifier = Modifier.padding(Dimens.space2).align(Alignment.End),
         )
     }

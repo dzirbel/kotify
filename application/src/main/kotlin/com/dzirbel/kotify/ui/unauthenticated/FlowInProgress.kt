@@ -14,11 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.font.FontFamily
 import com.dzirbel.kotify.network.oauth.LocalOAuthServer
 import com.dzirbel.kotify.ui.components.CopyButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.KotifyTypography
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.getClipboard
@@ -45,7 +45,7 @@ fun FlowInProgress(
             Text(
                 text = oauthError.stackTraceToString(),
                 color = LocalColors.current.error,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = KotifyTypography.Monospace,
             )
         }
 
