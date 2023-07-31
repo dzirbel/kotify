@@ -7,11 +7,13 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-java@v3
         with:
           distribution: 'adopt'
@@ -29,9 +31,9 @@ jobs:
           retention-days: 7
 
       - name: Upload test results to codecov
-        run: |
-          Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
-          .\codecov.exe -t ${CODECOV_TOKEN} -F unit -f "./build/reports/jacoco/jacocoTestReportLocal/jacocoTestReportLocal.xml"
+        uses: codecov/codecov-action@v3
         if: ${{ always() }} # upload even if the build failed, in case it was just test failures
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: ./build/reports/jacoco/jacocoTestReportLocal/jacocoTestReportLocal.xml
