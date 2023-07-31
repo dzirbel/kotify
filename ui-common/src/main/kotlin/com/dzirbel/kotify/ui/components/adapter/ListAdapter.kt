@@ -209,6 +209,7 @@ class ListAdapter<E> private constructor(
         return withFilter(
             filterString = filterString,
             filter = filterString?.let {
+                @Suppress("Wrapping") // ktlint false positive; fixed by https://github.com/pinterest/ktlint/pull/2127
                 { element ->
                     elementProperty(element).contains(filterString, ignoreCase = ignoreCase)
                 }

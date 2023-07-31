@@ -199,7 +199,9 @@ object Application {
                 Logger.Events.warn("Cannot write to $directoryName directory $absolutePath")
                 null
             }
-            else -> this
+            else -> {
+                this
+            }
         }
     }
 }

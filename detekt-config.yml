@@ -724,7 +724,7 @@ style:
     singleLine: 'never'
     multiLine: 'always'
   BracesOnWhenStatements:
-    active: false # mixing braces can be convenient
+    active: true
     singleLine: 'necessary'
     multiLine: 'consistent'
   CanBeNonNullable:
@@ -845,8 +845,6 @@ style:
   OptionalAbstractKeyword:
     active: true
   OptionalUnit:
-    active: true
-  OptionalWhenBraces:
     active: true
   PreferToOverPairSyntax:
     active: false
