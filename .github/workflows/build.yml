@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest ]
+        os: [ ubuntu-latest ] # TODO run across operating systems once https://github.com/JetBrains/compose-multiplatform/issues/3442 is resolved
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
