@@ -3,6 +3,8 @@ package com.dzirbel.kotify.ui.page.playlist
 import com.dzirbel.kotify.db.DatabaseExtension
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.blockingTransaction
+import com.dzirbel.kotify.db.model.Playlist
+import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.network.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.SimplifiedSpotifyAlbum
 import com.dzirbel.kotify.network.SimplifiedSpotifyArtist
@@ -75,17 +77,15 @@ internal class PlaylistPageScreenshotTest {
             followers = 10,
         )
 
-        val playlist = KotifyDatabase.blockingTransaction {
-            PlaylistRepository.convert(playlistId, networkPlaylist)
-        }
-
-        val tracks = KotifyDatabase.blockingTransaction {
-            playlist.playlistTracksInOrder.live
-                .onEach { playlistTrack ->
-                    playlistTrack.track.loadToCache()
-                    playlistTrack.track.cached.album.loadToCache()
-                    playlistTrack.track.cached.artists.loadToCache()
-                }
+        val playlist: Playlist
+        val tracks: List<PlaylistTrack>
+        KotifyDatabase.blockingTransaction {
+            playlist = PlaylistRepository.convert(playlistId, networkPlaylist)
+            tracks = PlaylistTrack.tracksInOrder(playlistId).onEach { playlistTrack ->
+                playlistTrack.track.loadToCache()
+                playlistTrack.track.cached.artists.loadToCache()
+                playlistTrack.track.cached.album.loadToCache()
+            }
         }
 
         RelativeTimeInfo.withMockedTime { now ->

@@ -2,7 +2,6 @@ package com.dzirbel.kotify.repository.playlist
 
 import com.dzirbel.kotify.db.model.PlaylistTable
 import com.dzirbel.kotify.db.model.PlaylistTrack
-import com.dzirbel.kotify.db.model.PlaylistTrackTable
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.asFlow
@@ -15,7 +14,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
-import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.update
 import java.time.Instant
 
@@ -45,9 +43,7 @@ open class PlaylistTracksRepository internal constructor(scope: CoroutineScope) 
 
     override fun fetchFromDatabase(id: String): Pair<List<PlaylistTrack>, Instant>? {
         return PlaylistTable.tracksFetchTime(playlistId = id)?.let { fetchTime ->
-            val tracks = PlaylistTrack
-                .find { PlaylistTrackTable.playlist eq id }
-                .orderBy(PlaylistTrackTable.indexOnPlaylist to SortOrder.ASC)
+            val tracks = PlaylistTrack.tracksInOrder(playlistId = id)
                 .onEach { playlistTrack ->
                     // TODO loadToCache()
                     playlistTrack.track.loadToCache()
@@ -55,7 +51,7 @@ open class PlaylistTracksRepository internal constructor(scope: CoroutineScope) 
                     playlistTrack.track.cached.album.loadToCache()
                 }
 
-            tracks.toList() to fetchTime
+            tracks to fetchTime
         }
     }
 

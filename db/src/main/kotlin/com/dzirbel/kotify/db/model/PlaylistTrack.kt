@@ -7,6 +7,7 @@ import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import java.time.Instant
 
@@ -48,6 +49,15 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
                     this.trackId = EntityID(id = trackId, table = TrackTable)
                     this.playlistId = EntityID(id = playlistId, table = PlaylistTable)
                 }
+        }
+
+        /**
+         * Returns the tracks of the playlist with the given [playlistId] in the order they appear on the playlist.
+         */
+        fun tracksInOrder(playlistId: String): List<PlaylistTrack> {
+            return find { PlaylistTrackTable.playlist eq playlistId }
+                .orderBy(PlaylistTrackTable.indexOnPlaylist to SortOrder.ASC)
+                .toList()
         }
     }
 }

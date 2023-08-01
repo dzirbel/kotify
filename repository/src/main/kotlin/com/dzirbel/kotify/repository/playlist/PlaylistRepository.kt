@@ -43,6 +43,7 @@ open class PlaylistRepository internal constructor(scope: CoroutineScope) :
 
                 totalTracks = networkModel.tracks.total
 
+                tracksFetched = Instant.now()
                 networkModel.tracks.items.mapIndexedNotNull { index, track ->
                     PlaylistTracksRepository.convertTrack(
                         spotifyPlaylistTrack = track,

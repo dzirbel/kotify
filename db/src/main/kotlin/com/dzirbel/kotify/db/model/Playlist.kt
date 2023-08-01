@@ -12,7 +12,6 @@ import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.db.util.largest
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
@@ -63,13 +62,6 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
     val images: ReadWriteCachedProperty<List<Image>> by (Image via PlaylistTable.PlaylistImageTable).cachedAsList()
     val largestImage: ReadOnlyCachedProperty<Image?> by (Image via PlaylistTable.PlaylistImageTable)
         .cachedReadOnly { it.largest() }
-
-    // TODO only used in tests, remove
-    val playlistTracksInOrder: ReadOnlyCachedProperty<List<PlaylistTrack>> = ReadOnlyCachedProperty {
-        PlaylistTrack.find { PlaylistTrackTable.playlist eq this@Playlist.id }
-            .orderBy(PlaylistTrackTable.indexOnPlaylist to SortOrder.ASC)
-            .toList()
-    }
 
     companion object : SpotifyEntityClass<Playlist>(PlaylistTable)
 }
