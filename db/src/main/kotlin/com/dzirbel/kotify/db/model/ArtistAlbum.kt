@@ -8,11 +8,14 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.and
 
-// TODO make album-artist pair unique
 object ArtistAlbumTable : IntIdTable() {
     val album = reference("album", AlbumTable)
     val artist = reference("artist", ArtistTable)
     val albumGroup = enumeration("album_group", AlbumType::class).nullable()
+
+    init {
+        uniqueIndex(album, artist)
+    }
 }
 
 class ArtistAlbum(id: EntityID<Int>) : IntEntity(id) {
