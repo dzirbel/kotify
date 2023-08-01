@@ -26,9 +26,8 @@ sealed interface TrackPosition {
      * the play position at that time, [fetchedPositionMs].
      */
     data class Fetched(val fetchedTimestamp: Long, val fetchedPositionMs: Int, val playing: Boolean) : TrackPosition {
-        // TODO verify
         override val currentPositionMs: Int
-            get() = positionRelativeTo(System.currentTimeMillis())
+            get() = positionRelativeTo(currentTime())
 
         private fun positionRelativeTo(timestamp: Long): Int {
             return if (playing) {
@@ -42,7 +41,7 @@ sealed interface TrackPosition {
             return Fetched(
                 fetchedTimestamp = playTimestamp,
                 fetchedPositionMs = positionRelativeTo(playTimestamp),
-                playing = false,
+                playing = true,
             )
         }
 
@@ -53,5 +52,12 @@ sealed interface TrackPosition {
                 playing = false,
             )
         }
+    }
+
+    companion object {
+        /**
+         * Simple wrapper on [System.currentTimeMillis] to allow mocking in tests.
+         */
+        fun currentTime(): Long = System.currentTimeMillis()
     }
 }
