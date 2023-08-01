@@ -12,6 +12,11 @@ plugins {
     kotlin("jvm") version libs.versions.kotlin
 }
 
+// provide a repository for the root project to resolve jacoco
+repositories {
+    mavenCentral()
+}
+
 // create root project tasks which depend on all subproject test tasks
 val jacocoTestReportLocal = project.tasks.create<JacocoReport>("jacocoTestReportLocal")
 val jacocoTestReportIntegration = project.tasks.create<JacocoReport>("jacocoTestReportIntegration")
@@ -21,6 +26,7 @@ configureJacoco() // configure jacoco for the root project to use correct versio
 subprojects {
     repositories {
         mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
 
     configurations.all {
@@ -37,8 +43,8 @@ subprojects {
     afterEvaluate {
         configureKotlin()
         configureDetekt()
-        configureJacoco()
         configureTests()
+        configureJacoco()
     }
 }
 
