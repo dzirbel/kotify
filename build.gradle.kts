@@ -146,11 +146,18 @@ fun Project.configureTests() {
 
         // hacky, but causes gradle builds to fail if tests write or std_err (which often indicates exceptions handled
         // by the Thread.uncaughtExceptionHandler)
-        addTestOutputListener { _, outputEvent ->
-            if (outputEvent.destination == TestOutputEvent.Destination.StdErr) {
-                throw AssertionError("Failing due to test output to STANDARD_ERROR")
+        addTestOutputListener(
+            object : TestOutputListener {
+                private var hasFailed = false // only throw an AssertionError once to avoid them cluttering the output
+
+                override fun onOutput(testDescriptor: TestDescriptor, outputEvent: TestOutputEvent) {
+                    if (!hasFailed && outputEvent.destination == TestOutputEvent.Destination.StdErr) {
+                        hasFailed = true
+                        throw AssertionError("Failing due to test output to STANDARD_ERROR")
+                    }
+                }
             }
-        }
+        )
     }
 }
 

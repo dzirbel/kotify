@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerButton
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
 import com.dzirbel.kotify.repository.artist.SavedArtistRepository
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
@@ -58,9 +59,11 @@ import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistPopularityProperty
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.ui.util.rememberArtistTracksStates
 import com.dzirbel.kotify.util.combinedStateWhenAllNotNull
 import com.dzirbel.kotify.util.flatMapLatestIn
 import com.dzirbel.kotify.util.immutable.orEmpty
@@ -68,6 +71,8 @@ import com.dzirbel.kotify.util.produceTransactionState
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 
 private val properties: PersistentList<AdapterProperty<Artist>> = persistentListOf(
     ArtistNameProperty,
@@ -78,8 +83,10 @@ private val properties: PersistentList<AdapterProperty<Artist>> = persistentList
 object ArtistsPage : Page<Unit>() {
     @Composable
     override fun BoxScope.bind(visible: Boolean) {
+        val savedArtistIdsFlow = remember { SavedArtistRepository.library }
+
         val artistsAdapter = rememberListAdapterState(defaultSort = ArtistNameProperty) { scope ->
-            SavedArtistRepository.library.flatMapLatestIn(scope) { library ->
+            savedArtistIdsFlow.flatMapLatestIn(scope) { library ->
                 library?.ids
                     ?.let { artistIds ->
                         ArtistRepository.statesOf(artistIds).combinedStateWhenAllNotNull { it?.cachedValue }
@@ -89,6 +96,9 @@ object ArtistsPage : Page<Unit>() {
         }
 
         val selectedArtistIndex = remember { mutableStateOf<Int?>(null) }
+
+        val savedArtistIds = savedArtistIdsFlow.collectAsState().value?.ids
+        ArtistTracksRepository.rememberArtistTracksStates(savedArtistIds)
 
         VerticalScrollPage(
             visible = visible,
@@ -174,11 +184,12 @@ private fun ArtistsPageHeader(artistsAdapter: ListAdapterState<Artist>) {
 
 @Composable
 private fun ArtistCell(artist: Artist, onRightClick: () -> Unit) {
+    val artistId = artist.id.value
     Column(
         Modifier
             .instrument()
             .onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
-                pageStack.mutate { to(ArtistPage(artistId = artist.id.value)) }
+                pageStack.mutate { to(ArtistPage(artistId = artistId)) }
             }
             .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = onRightClick)
             .padding(Dimens.space3),
@@ -193,18 +204,19 @@ private fun ArtistCell(artist: Artist, onRightClick: () -> Unit) {
         ) {
             Text(text = artist.name, modifier = Modifier.weight(1f))
 
-            ToggleSaveButton(repository = SavedArtistRepository, id = artist.id.value)
+            ToggleSaveButton(repository = SavedArtistRepository, id = artistId)
 
             PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
         }
 
-        // TODO have the TrackRatingRepository provide a state by artist directly
-        val artistTrackIds = artist.produceTransactionState("load artist tracks") { trackIds.live }.value
-        val averageRating = artistTrackIds?.takeIf { it.isNotEmpty() }?.let {
-            remember(artist.id.value) { TrackRatingRepository.averageRatingStateOf(artistTrackIds) }
+        val averageRating = remember(artistId) {
+            ArtistTracksRepository.artistTracksStateOf(artistId = artistId)
+                .filterNotNull()
+                .flatMapLatest { TrackRatingRepository.averageRatingStateOf(ids = it) }
         }
-            ?.collectAsState()
-            ?.value
+            .collectAsStateSwitchable(key = artistId, initial = { null })
+            .value
+
         AverageStarRating(averageRating = averageRating)
     }
 }
@@ -214,6 +226,7 @@ private const val DETAILS_ALBUMS_WEIGHT = 0.7f
 
 @Composable
 private fun ArtistDetailInsert(artist: Artist) {
+    val artistId = artist.id.value
     Row(modifier = Modifier.padding(Dimens.space4), horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
         LoadedImage(imageProperty = artist.largestImage)
 
@@ -223,7 +236,7 @@ private fun ArtistDetailInsert(artist: Artist) {
         ) {
             Text(text = artist.name, style = MaterialTheme.typography.h5)
 
-            ArtistRepository.stateOf(id = artist.id.value)
+            ArtistRepository.stateOf(id = artistId)
                 .collectAsState()
                 .derived { it?.cacheTime?.toEpochMilli() }
                 .value
@@ -239,9 +252,14 @@ private fun ArtistDetailInsert(artist: Artist) {
                 }
             }
 
-            // TODO have the TrackRatingRepository provide a state by artist directly
-            val artistTrackIds = artist.produceTransactionState("load artist tracks") { trackIds.live }.value
-            val averageRating = artistTrackIds?.let { TrackRatingRepository.averageRatingStateOf(ids = it) }?.value
+            val averageRating = remember(artistId) {
+                ArtistTracksRepository.artistTracksStateOf(artistId = artistId)
+                    .filterNotNull()
+                    .flatMapLatest { TrackRatingRepository.averageRatingStateOf(ids = it) }
+            }
+                .collectAsStateSwitchable(key = artistId, initial = { null })
+                .value
+
             if (averageRating != null) {
                 RatingHistogram(averageRating)
             }

@@ -3,7 +3,9 @@ package com.dzirbel.kotify.ui.page.artists
 import com.dzirbel.kotify.db.DatabaseExtension
 import com.dzirbel.kotify.repository.ArtistList
 import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
 import com.dzirbel.kotify.repository.artist.SavedArtistRepository
+import com.dzirbel.kotify.repository.mockArtistTracksNull
 import com.dzirbel.kotify.repository.mockLibrary
 import com.dzirbel.kotify.repository.mockStates
 import com.dzirbel.kotify.ui.framework.render
@@ -32,9 +34,10 @@ internal class ArtistsPageScreenshotTest {
         val ids = artists.map { it.id.value }
 
         RelativeTimeInfo.withMockedTime { now ->
-            withMockedObjects(ArtistRepository, SavedArtistRepository) {
+            withMockedObjects(ArtistRepository, SavedArtistRepository, ArtistTracksRepository) {
                 SavedArtistRepository.mockLibrary(ids = ids.toSet(), cacheTime = now)
                 ArtistRepository.mockStates(ids = ids, values = artists, cacheTime = now)
+                ArtistTracksRepository.mockArtistTracksNull()
 
                 screenshotTest(filename = "full") {
                     ArtistsPage.render()

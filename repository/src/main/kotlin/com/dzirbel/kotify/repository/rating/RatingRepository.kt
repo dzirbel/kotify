@@ -28,7 +28,7 @@ interface RatingRepository {
      * Returns a live [StateFlow] reflecting the current [AverageRating] (for the current user) of the entities with the
      * given [ids].
      */
-    fun averageRatingStateOf(ids: List<String>): StateFlow<AverageRating>
+    fun averageRatingStateOf(ids: Iterable<String>): StateFlow<AverageRating>
 
     /**
      * Asynchronously applies the given [rating] to the entity with the given [id].

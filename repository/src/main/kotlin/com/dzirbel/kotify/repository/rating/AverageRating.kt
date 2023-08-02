@@ -8,22 +8,12 @@ import com.dzirbel.kotify.util.averageOrNull
  *
  * TODO used by RatingHistogram as well - not always treated as just an average
  */
-data class AverageRating(val ratings: Map<String, Rating?>) {
+class AverageRating(val ratings: Iterable<Rating?>) {
     val averagePercent by lazy {
-        ratings.values.averageOrNull { it.ratingPercent }
+        ratings.averageOrNull { it.ratingPercent }
     }
 
     val numRatings by lazy {
-        ratings.count { it.value != null }
-    }
-
-    constructor(ids: List<String>, ratings: Array<Rating?>) : this(
-        ratings = ratings
-            .withIndex()
-            .associate { (index, rating) -> ids[index] to rating },
-    )
-
-    companion object {
-        val empty = AverageRating(emptyMap())
+        ratings.count { it != null }
     }
 }

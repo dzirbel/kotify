@@ -9,13 +9,18 @@ import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
 import com.dzirbel.kotify.repository.util.updateOrInsert
 import com.dzirbel.kotify.util.flatMapParallel
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
-open class TrackRepository internal constructor(scope: CoroutineScope) :
-    DatabaseEntityRepository<Track, SpotifyTrack>(entityClass = Track, scope = scope) {
+open class TrackRepository internal constructor(
+    scope: CoroutineScope,
+    private val albumRepository: AlbumRepository,
+    private val artistRepository: ArtistRepository,
+    private val artistTracksRepository: ArtistTracksRepository,
+) : DatabaseEntityRepository<Track, SpotifyTrack>(entityClass = Track, scope = scope) {
 
     override suspend fun fetchFromRemote(id: String) = Spotify.Tracks.getTrack(id = id)
     override suspend fun fetchFromRemote(ids: List<String>): List<FullSpotifyTrack> {
@@ -32,10 +37,13 @@ open class TrackRepository internal constructor(scope: CoroutineScope) :
             playable = networkModel.isPlayable
             trackNumber = networkModel.trackNumber
             networkModel.album
-                ?.let { AlbumRepository.convert(it) }
+                ?.let { albumRepository.convert(it) }
                 ?.let { album.set(it) }
 
-            artists.set(networkModel.artists.mapNotNull { ArtistRepository.convert(it) })
+            artistTracksRepository.setTrackArtists(
+                trackId = id,
+                artistIds = networkModel.artists.mapNotNull { artistRepository.convert(it)?.id?.value },
+            )
 
             if (networkModel is SimplifiedSpotifyTrack) {
                 networkModel.popularity?.let {
@@ -50,5 +58,10 @@ open class TrackRepository internal constructor(scope: CoroutineScope) :
         }
     }
 
-    companion object : TrackRepository(scope = Repository.applicationScope)
+    companion object : TrackRepository(
+        scope = Repository.applicationScope,
+        albumRepository = AlbumRepository,
+        artistRepository = ArtistRepository,
+        artistTracksRepository = ArtistTracksRepository,
+    )
 }

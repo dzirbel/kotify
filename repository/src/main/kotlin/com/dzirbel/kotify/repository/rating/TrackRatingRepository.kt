@@ -52,11 +52,11 @@ open class TrackRatingRepository internal constructor(
         }
     }
 
-    override fun averageRatingStateOf(ids: List<String>): StateFlow<AverageRating> {
+    override fun averageRatingStateOf(ids: Iterable<String>): StateFlow<AverageRating> {
         Repository.checkEnabled()
         // could theoretically be optimized by skipping the ordering of the rating list by the order of ids, since that
         // is irrelevant to the average
-        return ratingStatesOf(ids = ids).combineState { AverageRating(ids, it) }
+        return ratingStatesOf(ids = ids).combineState { AverageRating(it.asIterable()) }
     }
 
     override fun rate(id: String, rating: Rating?) {

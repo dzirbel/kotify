@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.ReadOnlyCachedProperty
 import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SpotifyEntity
@@ -14,7 +13,6 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
-import org.jetbrains.exposed.sql.select
 import java.time.Instant
 
 object ArtistTable : SpotifyEntityTable(name = "artists") {
@@ -50,18 +48,6 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
 
     val largestImage: TransactionReadOnlyCachedProperty<Image?> by (Image via ArtistTable.ArtistImageTable)
         .cachedReadOnly(transactionName = "load artist ${id.value} largest image") { it.largest() }
-
-    /**
-     * IDs of the tracks by this artist; not guaranteed to contain all the tracks, just the ones in
-     * [TrackTable.TrackArtistTable].
-     *
-     * TODO move to an artist track repository?
-     */
-    val trackIds: ReadOnlyCachedProperty<List<String>> = ReadOnlyCachedProperty {
-        TrackTable.TrackArtistTable
-            .select { TrackTable.TrackArtistTable.artist eq id }
-            .map { it[TrackTable.TrackArtistTable.track].value }
-    }
 
     companion object : SpotifyEntityClass<Artist>(ArtistTable)
 }

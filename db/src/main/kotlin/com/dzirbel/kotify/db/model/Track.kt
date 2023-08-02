@@ -9,7 +9,13 @@ import com.dzirbel.kotify.db.cached
 import com.dzirbel.kotify.db.cachedAsList
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.batchInsert
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.select
 
 object TrackTable : SpotifyEntityTable(name = "tracks") {
     val discNumber: Column<Int> = integer("disc_number")
@@ -26,6 +32,36 @@ object TrackTable : SpotifyEntityTable(name = "tracks") {
         val track = reference("track", TrackTable)
         val artist = reference("artist", ArtistTable)
         override val primaryKey = PrimaryKey(track, artist)
+
+        fun artistIdsForTrack(trackId: String): Set<String> {
+            return slice(artist)
+                .select { track eq trackId }
+                .mapTo(mutableSetOf()) { it[artist].value }
+        }
+
+        fun trackIdsForArtist(artistId: String): Set<String> {
+            return slice(track)
+                .select { artist eq artistId }
+                .mapTo(mutableSetOf()) { it[track].value }
+        }
+
+        fun setTrackArtists(trackId: String, artistIds: Iterable<String>) {
+            val currentArtistIds = artistIdsForTrack(trackId)
+            val newArtistIdsSet = artistIds.toSet()
+
+            val artistsToRemove = currentArtistIds.minus(newArtistIdsSet)
+            if (artistsToRemove.isNotEmpty()) {
+                deleteWhere { (track eq trackId) and (artist inList artistsToRemove) }
+            }
+
+            val artistsToAdd = newArtistIdsSet.minus(currentArtistIds)
+            if (artistsToAdd.isNotEmpty()) {
+                batchInsert(artistsToAdd, shouldReturnGeneratedValues = false) { artistId ->
+                    this[track] = trackId
+                    this[artist] = artistId
+                }
+            }
+        }
     }
 
     object SavedTracksTable : SavedEntityTable(name = "saved_tracks")
@@ -39,6 +75,7 @@ class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
     var playable: Boolean? by TrackTable.playable
     var trackNumber: Int by TrackTable.trackNumber
     var popularity: Int? by TrackTable.popularity
+    var albumId: EntityID<String>? by TrackTable.album
 
     val album: ReadWriteCachedProperty<Album?> by (Album optionalReferencedOn TrackTable.album).cached()
 

@@ -44,8 +44,8 @@ fun RatingHistogram(
 ) {
     val ratingCounts = MutableList(maxRating + 1) { 0 }
     var maxRatingCount = 0
-    ratings?.ratings?.forEach { ratingState ->
-        ratingState.value?.let { rating ->
+    ratings?.ratings?.forEach { rating ->
+        if (rating != null) {
             val ratingRelative = rating.ratingRelativeToMax(maxRating = maxRating).roundToInt()
             maxRatingCount = max(maxRatingCount, ++ratingCounts[ratingRelative])
         }

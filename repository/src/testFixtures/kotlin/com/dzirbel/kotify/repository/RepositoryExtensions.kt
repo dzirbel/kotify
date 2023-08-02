@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository
 
+import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
 import com.dzirbel.kotify.repository.rating.Rating
 import com.dzirbel.kotify.repository.rating.RatingRepository
 import com.dzirbel.kotify.repository.util.ToggleableState
@@ -92,5 +93,17 @@ fun RatingRepository.mockRatings(ids: List<String>, ratings: List<Rating?>) {
         val id = firstArg<String>()
         val index = ids.indexOf(id).takeIf { it != -1 }
         requireNotNull(index?.let { flows.getOrNull(it) })
+    }
+}
+
+/**
+ * Mocks all calls to [ArtistTracksRepository.artistTracksStateOf] and [ArtistTracksRepository.artistTracksStatesOf] to
+ * return a null set of track IDs.
+ */
+fun ArtistTracksRepository.mockArtistTracksNull() {
+    every { artistTracksStateOf(any()) } returns MutableStateFlow(null)
+    every { artistTracksStatesOf(any()) } answers {
+        val n = firstArg<Iterable<String>>().count()
+        List(n) { MutableStateFlow(null) }
     }
 }
