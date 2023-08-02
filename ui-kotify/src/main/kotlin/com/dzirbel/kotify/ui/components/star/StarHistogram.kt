@@ -37,14 +37,14 @@ private val BAR_HEIGHT_DEFAULT = 150.dp
 
 @Composable
 fun RatingHistogram(
-    ratings: AverageRating?,
+    ratings: AverageRating,
     maxRating: Int = Rating.DEFAULT_MAX_RATING,
     barWidth: Dp = BAR_WIDTH_DEFAULT,
     barHeight: Dp = BAR_HEIGHT_DEFAULT,
 ) {
     val ratingCounts = MutableList(maxRating + 1) { 0 }
     var maxRatingCount = 0
-    ratings?.ratings?.forEach { rating ->
+    ratings.ratings.forEach { rating ->
         if (rating != null) {
             val ratingRelative = rating.ratingRelativeToMax(maxRating = maxRating).roundToInt()
             maxRatingCount = max(maxRatingCount, ++ratingCounts[ratingRelative])

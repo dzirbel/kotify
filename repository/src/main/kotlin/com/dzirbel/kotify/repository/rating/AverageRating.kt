@@ -16,4 +16,8 @@ class AverageRating(val ratings: Iterable<Rating?>) {
     val numRatings by lazy {
         ratings.count { it != null }
     }
+
+    companion object {
+        val empty = AverageRating(emptyList())
+    }
 }

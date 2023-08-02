@@ -43,7 +43,7 @@ interface RatingDividableProperty<E> : DividableProperty<E> {
 }
 
 abstract class PropertyByAverageRating<E>(
-    private val ratings: Map<String, StateFlow<AverageRating>>,
+    private val ratings: Map<String, StateFlow<AverageRating?>>?,
     private val maxRating: Int = Rating.DEFAULT_MAX_AVERAGE_RATING,
     override val title: String = "Rating",
 ) : SortableProperty<E>, RatingDividableProperty<E>, Column<E> {
@@ -59,11 +59,11 @@ abstract class PropertyByAverageRating<E>(
 
     @Composable
     override fun Item(item: E) {
-        val averageRating = ratings[idOf(item)]?.collectAsState()?.value
+        val averageRating = ratings?.get(idOf(item))?.collectAsState()?.value
         AverageStarRating(averageRating = averageRating, maxRating = maxRating)
     }
 
     override fun ratingOf(element: E): Double? {
-        return ratings[idOf(element)]?.value?.averagePercent?.let { it * maxRating }
+        return ratings?.get(idOf(element))?.value?.averagePercent?.let { it * maxRating }
     }
 }

@@ -21,6 +21,8 @@ object ArtistPopularityProperty : PropertyByNumber<Artist>(
     override fun toNumber(item: Artist): Int? = item.popularity
 }
 
-class ArtistRatingProperty(ratings: Map<String, StateFlow<AverageRating>>) : PropertyByAverageRating<Artist>(ratings) {
+class ArtistRatingProperty(ratings: Map<String, StateFlow<AverageRating?>>?) :
+    PropertyByAverageRating<Artist>(ratings) {
+
     override fun idOf(element: Artist) = element.id.value
 }

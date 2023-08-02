@@ -3,11 +3,14 @@ package com.dzirbel.kotify.repository.rating
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.TrackRatingTable
 import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.util.combineState
+import com.dzirbel.kotify.util.flatMapLatestIn
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.SortOrder
@@ -57,6 +60,18 @@ open class TrackRatingRepository internal constructor(
         // could theoretically be optimized by skipping the ordering of the rating list by the order of ids, since that
         // is irrelevant to the average
         return ratingStatesOf(ids = ids).combineState { AverageRating(it.asIterable()) }
+    }
+
+    /**
+     * Combines the [ArtistTracksRepository.artistTracksStatesOf] with [averageRatingStateOf] to produce a [StateFlow]
+     * of the average rating of the tracks by the artist, with collection in [scope].
+     */
+    fun averageRatingStateOfArtist(artistId: String, scope: CoroutineScope): StateFlow<AverageRating> {
+        return ArtistTracksRepository.artistTracksStateOf(artistId = artistId)
+            .flatMapLatestIn(scope) { trackIds ->
+                trackIds?.let { TrackRatingRepository.averageRatingStateOf(ids = trackIds) }
+                    ?: MutableStateFlow(AverageRating.empty)
+            }
     }
 
     override fun rate(id: String, rating: Rating?) {

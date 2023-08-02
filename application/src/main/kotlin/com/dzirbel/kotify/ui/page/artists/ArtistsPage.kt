@@ -59,12 +59,14 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistPopularityProperty
+import com.dzirbel.kotify.ui.properties.ArtistRatingProperty
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.rememberArtistTracksStates
+import com.dzirbel.kotify.ui.util.rememberWithCoroutineScope
 import com.dzirbel.kotify.util.combinedStateWhenAllNotNull
 import com.dzirbel.kotify.util.flatMapLatestIn
 import com.dzirbel.kotify.util.immutable.orEmpty
@@ -73,14 +75,6 @@ import com.dzirbel.kotify.util.produceTransactionState
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-
-private val properties: PersistentList<AdapterProperty<Artist>> = persistentListOf(
-    ArtistNameProperty,
-    ArtistPopularityProperty,
-    // ArtistRatingProperty(ratings = artistRatings), TODO add ArtistRatingProperty back
-)
 
 object ArtistsPage : Page<Unit>() {
     @Composable
@@ -112,11 +106,23 @@ object ArtistsPage : Page<Unit>() {
         val savedArtistIds = savedArtistIdsFlow.collectAsState().value?.ids
         ArtistTracksRepository.rememberArtistTracksStates(savedArtistIds)
 
+        val artistProperties = rememberWithCoroutineScope(savedArtistIds) { scope ->
+            persistentListOf(
+                ArtistNameProperty,
+                ArtistPopularityProperty,
+                ArtistRatingProperty(
+                    ratings = savedArtistIds?.associateWith { artistId ->
+                        TrackRatingRepository.averageRatingStateOfArtist(artistId = artistId, scope = scope)
+                    },
+                ),
+            )
+        }
+
         VerticalScrollPage(
             visible = visible,
             onHeaderVisibilityChanged = { headerVisible -> navigationTitleState.targetState = !headerVisible },
             header = {
-                ArtistsPageHeader(artistsAdapter = artistsAdapter)
+                ArtistsPageHeader(artistsAdapter = artistsAdapter, artistProperties = artistProperties)
             },
             content = {
                 if (artistsAdapter.derived { it.hasElements }.value) {
@@ -150,7 +156,10 @@ object ArtistsPage : Page<Unit>() {
 }
 
 @Composable
-private fun ArtistsPageHeader(artistsAdapter: ListAdapterState<Artist>) {
+private fun ArtistsPageHeader(
+    artistsAdapter: ListAdapterState<Artist>,
+    artistProperties: PersistentList<AdapterProperty<Artist>>,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space5, vertical = Dimens.space4),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -180,13 +189,13 @@ private fun ArtistsPageHeader(artistsAdapter: ListAdapterState<Artist>) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
             DividerSelector(
-                dividableProperties = properties.dividableProperties(),
+                dividableProperties = artistProperties.dividableProperties(),
                 currentDivider = artistsAdapter.derived { it.divider }.value,
                 onSelectDivider = artistsAdapter::withDivider,
             )
 
             SortSelector(
-                sortableProperties = properties.sortableProperties(),
+                sortableProperties = artistProperties.sortableProperties(),
                 sorts = artistsAdapter.derived { it.sorts.orEmpty() }.value,
                 onSetSort = artistsAdapter::withSort,
             )
@@ -221,12 +230,10 @@ private fun ArtistCell(artist: Artist, onRightClick: () -> Unit) {
             PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
         }
 
-        val averageRating = remember(artistId) {
-            ArtistTracksRepository.artistTracksStateOf(artistId = artistId)
-                .filterNotNull()
-                .flatMapLatest { TrackRatingRepository.averageRatingStateOf(ids = it) }
+        val averageRating = rememberWithCoroutineScope(artistId) { scope ->
+            TrackRatingRepository.averageRatingStateOfArtist(artistId = artistId, scope = scope)
         }
-            .collectAsStateSwitchable(key = artistId, initial = { null })
+            .collectAsStateSwitchable(key = artistId)
             .value
 
         AverageStarRating(averageRating = averageRating)
@@ -264,17 +271,13 @@ private fun ArtistDetailInsert(artist: Artist) {
                 }
             }
 
-            val averageRating = remember(artistId) {
-                ArtistTracksRepository.artistTracksStateOf(artistId = artistId)
-                    .filterNotNull()
-                    .flatMapLatest { TrackRatingRepository.averageRatingStateOf(ids = it) }
+            val averageRating = rememberWithCoroutineScope(artistId) { scope ->
+                TrackRatingRepository.averageRatingStateOfArtist(artistId = artistId, scope = scope)
             }
-                .collectAsStateSwitchable(key = artistId, initial = { null })
+                .collectAsStateSwitchable(key = artistId)
                 .value
 
-            if (averageRating != null) {
-                RatingHistogram(averageRating)
-            }
+            RatingHistogram(averageRating)
         }
 
         artist.artistAlbums.produceTransactionState(
