@@ -18,7 +18,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.time.Instant
 
-// TODO test multiple users
 @ExtendWith(DatabaseExtension::class)
 internal class SavedEntityTableTest {
     private object TestSavedEntityTable : SavedEntityTable(name = "test_saved_entities")
@@ -176,6 +175,66 @@ internal class SavedEntityTableTest {
             assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isNull()
             assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime2)
             assertThat(TestSavedEntityTable.savedEntityIds(userId)).containsExactlyInAnyOrder(entityId)
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `set and get saved state for different users`(saved: Boolean) {
+        val entityId = "id"
+        val user1 = "user1"
+        val user2 = "user2"
+        val savedTime1 = Instant.ofEpochMilli(1)
+        val savedCheckTime1 = Instant.ofEpochMilli(2)
+        val savedTime2 = Instant.ofEpochMilli(3)
+        val savedCheckTime2 = Instant.ofEpochMilli(4)
+
+        KotifyDatabase.blockingTransaction {
+            TestSavedEntityTable.setSaved(
+                entityId = entityId,
+                userId = user1,
+                saved = saved,
+                savedTime = savedTime1,
+                savedCheckTime = savedCheckTime1,
+            )
+        }
+
+        KotifyDatabase.blockingTransaction {
+            assertThat(TestSavedEntityTable.isSaved(entityId, user1)).isNotNull().isEqualTo(saved)
+            assertThat(TestSavedEntityTable.savedTime(entityId, user1)).isEqualTo(savedTime1.takeIf { saved })
+            assertThat(TestSavedEntityTable.savedCheckTime(entityId, user1)).isNotNull().isEqualTo(savedCheckTime1)
+            assertThat(TestSavedEntityTable.savedEntityIds(user1))
+                .containsExactlyElementsOfInAnyOrder(if (saved) setOf(entityId) else emptySet())
+
+            assertThat(TestSavedEntityTable.isSaved(entityId, user2)).isNull()
+            assertThat(TestSavedEntityTable.savedTime(entityId, user2)).isNull()
+            assertThat(TestSavedEntityTable.savedCheckTime(entityId, user2)).isNull()
+            assertThat(TestSavedEntityTable.savedEntityIds(user2)).isEmpty()
+        }
+
+        val saved2 = !saved
+        KotifyDatabase.blockingTransaction {
+            TestSavedEntityTable.setSaved(
+                entityId = entityId,
+                userId = user2,
+                saved = saved2,
+                savedTime = savedTime2,
+                savedCheckTime = savedCheckTime2,
+            )
+        }
+
+        KotifyDatabase.blockingTransaction {
+            assertThat(TestSavedEntityTable.isSaved(entityId, user1)).isNotNull().isEqualTo(saved)
+            assertThat(TestSavedEntityTable.savedTime(entityId, user1)).isEqualTo(savedTime1.takeIf { saved })
+            assertThat(TestSavedEntityTable.savedCheckTime(entityId, user1)).isNotNull().isEqualTo(savedCheckTime1)
+            assertThat(TestSavedEntityTable.savedEntityIds(user1))
+                .containsExactlyElementsOfInAnyOrder(if (saved) setOf(entityId) else emptySet())
+
+            assertThat(TestSavedEntityTable.isSaved(entityId, user2)).isNotNull().isEqualTo(saved2)
+            assertThat(TestSavedEntityTable.savedTime(entityId, user2)).isEqualTo(savedTime2.takeIf { saved2 })
+            assertThat(TestSavedEntityTable.savedCheckTime(entityId, user2)).isNotNull().isEqualTo(savedCheckTime2)
+            assertThat(TestSavedEntityTable.savedEntityIds(user2))
+                .containsExactlyElementsOfInAnyOrder(if (saved2) setOf(entityId) else emptySet())
         }
     }
 }
