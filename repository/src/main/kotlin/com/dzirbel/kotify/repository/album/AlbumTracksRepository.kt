@@ -22,7 +22,9 @@ open class AlbumTracksRepository internal constructor(scope: CoroutineScope) :
     override fun fetchFromDatabase(id: String): Pair<List<Track>, Instant>? {
         return Album.findById(id)?.let { album ->
             album.tracksFetched?.let { tracksFetched ->
-                val tracks = album.tracks.live.takeIf { it.size == album.totalTracks }
+                val tracks = album.tracks.live
+                    .takeIf { it.size == album.totalTracks }
+                    ?.onEach { it.artists.loadToCache() } // TODO loadToCache
                 tracks?.let { Pair(it, tracksFetched) }
             }
         }
@@ -31,6 +33,7 @@ open class AlbumTracksRepository internal constructor(scope: CoroutineScope) :
     override fun convert(id: String, networkModel: List<SimplifiedSpotifyTrack>): List<Track> {
         // TODO do not ignore tracks with null id
         val tracks = networkModel.mapNotNull { track -> TrackRepository.convert(track) }
+            .onEach { it.artists.loadToCache() } // TODO loadToCache
 
         Album.findById(id)?.let { album ->
             album.tracks.set(tracks)

@@ -34,6 +34,7 @@ import com.dzirbel.kotify.ui.framework.VerticalScrollPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.properties.TrackAlbumIndexProperty
+import com.dzirbel.kotify.ui.properties.TrackArtistsProperty
 import com.dzirbel.kotify.ui.properties.TrackDurationProperty
 import com.dzirbel.kotify.ui.properties.TrackNameProperty
 import com.dzirbel.kotify.ui.properties.TrackPlayingColumn
@@ -82,7 +83,7 @@ data class AlbumPage(val albumId: String) : Page<String?>() {
                 TrackAlbumIndexProperty,
                 TrackSavedProperty(trackIdOf = { track -> track.id.value }),
                 TrackNameProperty,
-                // TrackArtistsProperty, TODO re-add
+                TrackArtistsProperty,
                 TrackRatingProperty(trackIdOf = { track -> track.id.value }),
                 TrackDurationProperty,
                 TrackPopularityProperty,
