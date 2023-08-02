@@ -72,7 +72,7 @@ fun LoadedImage(
     shape: Shape = RoundedCornerShape(Dimens.cornerSize),
 ) {
     val imageState = url?.let {
-        produceState(initialValue = SpotifyImageCache.getFromMemory(url)) {
+        produceState(initialValue = SpotifyImageCache.getFromMemory(url), key1 = url) {
             SpotifyImageCache.get(url = url).firstOrNull { it != null }?.let { value = it }
         }
     }
