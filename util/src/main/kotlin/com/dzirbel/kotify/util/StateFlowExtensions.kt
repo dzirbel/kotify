@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -81,4 +82,14 @@ fun <T, R> StateFlow<T>.flatMapLatestIn(scope: CoroutineScope, transform: (T) ->
         .dropWhile { it == initialValue } // hack: ensure flatMapLatest is not called with the initial value
         .flatMapLatest(transform)
         .stateIn(scope, SharingStarted.Eagerly, transform(initialValue).value)
+}
+
+/**
+ * Applies [action] to each value emitted by this [StateFlow], where collection of the mapped flow is done in the given
+ * [scope].
+ *
+ * See https://github.com/Kotlin/kotlinx.coroutines/issues/2514 (among others)
+ */
+fun <T> StateFlow<T>.onEachIn(scope: CoroutineScope, action: suspend (T) -> Unit): StateFlow<T> {
+    return this.onEach(action).stateIn(scope, SharingStarted.Eagerly, value)
 }

@@ -10,8 +10,6 @@ import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.exposed.sql.Max
-import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
@@ -33,7 +31,7 @@ open class TrackRatingRepository internal constructor(
         Repository.checkEnabled()
         return states.getOrCreateStateFlow(key = id) {
             userSessionScope.launch {
-                val rating = lastRatingOf(id = id)
+                val rating = KotifyDatabase.transaction("load last rating of track id $id") { lastRatingOf(id = id) }
                 states.updateValue(id, rating)
             }
         }
@@ -43,9 +41,11 @@ open class TrackRatingRepository internal constructor(
         Repository.checkEnabled()
         return states.getOrCreateStateFlows(keys = ids) { creations ->
             userSessionScope.launch {
-                val createdIdsList = creations.keys.toList()
-                val ratings = lastRatingsOf(ids = createdIdsList)
-                createdIdsList.zipEach(ratings) { id, rating ->
+                val createdIds = creations.keys.toList() // convert to list to ensure consistent order
+                val ratings = KotifyDatabase.transaction("load last ratings of ${createdIds.size} tracks") {
+                    createdIds.map { lastRatingOf(id = it) }
+                }
+                createdIds.zipEach(ratings) { id, rating ->
                     states.updateValue(id, rating)
                 }
             }
@@ -118,43 +118,21 @@ open class TrackRatingRepository internal constructor(
         }
     }
 
-    private suspend fun lastRatingOf(id: String, userId: String = UserRepository.requireCurrentUserId): Rating? {
-        return KotifyDatabase.transaction("load last rating of track id $id") {
-            TrackRatingTable
-                .select { TrackRatingTable.track eq id }
-                .andWhere { TrackRatingTable.userId eq userId }
-                .orderBy(TrackRatingTable.rateTime to SortOrder.DESC)
-                .limit(1)
-                .firstOrNull()
-                ?.asRating()
-        }
-    }
-
-    private suspend fun lastRatingsOf(
-        ids: List<String>,
-        userId: String = UserRepository.requireCurrentUserId,
-    ): List<Rating?> {
-        // map by ID to ensure returned results are in the same order as the inputs
-        val mapById = KotifyDatabase.transaction("load last ratings of ${ids.size} tracks") {
-            TrackRatingTable
-                .select { TrackRatingTable.track inList ids }
-                .andWhere { TrackRatingTable.userId eq userId }
-                .groupBy(TrackRatingTable.track)
-                .having {
-                    TrackRatingTable.rateTime eq Max(TrackRatingTable.rateTime, TrackRatingTable.rateTime.columnType)
-                }
-                .associate { it[TrackRatingTable.track].value to it.asRating() }
-        }
-
-        return ids.map { id -> mapById[id] }
-    }
-
-    private fun ResultRow.asRating(): Rating {
-        return Rating(
-            rating = this[TrackRatingTable.rating],
-            maxRating = this[TrackRatingTable.maxRating],
-            rateTime = this[TrackRatingTable.rateTime],
-        )
+    private fun lastRatingOf(id: String, userId: String = UserRepository.requireCurrentUserId): Rating? {
+        return TrackRatingTable
+            .slice(TrackRatingTable.rating, TrackRatingTable.maxRating, TrackRatingTable.rateTime)
+            .select { TrackRatingTable.track eq id }
+            .andWhere { TrackRatingTable.userId eq userId }
+            .orderBy(TrackRatingTable.rateTime to SortOrder.DESC)
+            .limit(1)
+            .firstOrNull()
+            ?.let {
+                Rating(
+                    rating = it[TrackRatingTable.rating],
+                    maxRating = it[TrackRatingTable.maxRating],
+                    rateTime = it[TrackRatingTable.rateTime],
+                )
+            }
     }
 
     companion object : TrackRatingRepository(

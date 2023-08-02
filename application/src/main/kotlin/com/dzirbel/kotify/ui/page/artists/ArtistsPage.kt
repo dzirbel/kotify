@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerButton
+import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
@@ -67,6 +68,7 @@ import com.dzirbel.kotify.ui.util.rememberArtistTracksStates
 import com.dzirbel.kotify.util.combinedStateWhenAllNotNull
 import com.dzirbel.kotify.util.flatMapLatestIn
 import com.dzirbel.kotify.util.immutable.orEmpty
+import com.dzirbel.kotify.util.onEachIn
 import com.dzirbel.kotify.util.produceTransactionState
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -86,13 +88,23 @@ object ArtistsPage : Page<Unit>() {
         val savedArtistIdsFlow = remember { SavedArtistRepository.library }
 
         val artistsAdapter = rememberListAdapterState(defaultSort = ArtistNameProperty) { scope ->
-            savedArtistIdsFlow.flatMapLatestIn(scope) { library ->
-                library?.ids
-                    ?.let { artistIds ->
-                        ArtistRepository.statesOf(artistIds).combinedStateWhenAllNotNull { it?.cachedValue }
+            savedArtistIdsFlow
+                .flatMapLatestIn(scope) { library ->
+                    library?.ids
+                        ?.let { artistIds ->
+                            ArtistRepository.statesOf(artistIds).combinedStateWhenAllNotNull { it?.cachedValue }
+                        }
+                        ?: MutableStateFlow(null)
+                }
+                .onEachIn(scope) { artists ->
+                    if (artists != null) {
+                        KotifyDatabase.transaction(name = "load artist images") {
+                            for (artist in artists) {
+                                artist.largestImage.loadToCache()
+                            }
+                        }
                     }
-                    ?: MutableStateFlow(null)
-            }
+                }
         }
 
         val selectedArtistIndex = remember { mutableStateOf<Int?>(null) }
