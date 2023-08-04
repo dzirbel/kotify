@@ -5,7 +5,6 @@ import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
-import com.dzirbel.kotify.db.TransactionReadOnlyCachedProperty
 import com.dzirbel.kotify.db.cachedAsList
 import com.dzirbel.kotify.db.cachedReadOnly
 import com.dzirbel.kotify.db.util.largest
@@ -46,8 +45,8 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
     val artistAlbums by (ArtistAlbum referrersOn ArtistAlbumTable.artist)
         .cachedReadOnly(transactionName = "load artist ${id.value} albums") { it.toList() }
 
-    val largestImage: TransactionReadOnlyCachedProperty<Image?> by (Image via ArtistTable.ArtistImageTable)
-        .cachedReadOnly(transactionName = "load artist ${id.value} largest image") { it.largest() }
+    val largestImage by (Image via ArtistTable.ArtistImageTable)
+        .cachedReadOnly { it.largest() }
 
     companion object : SpotifyEntityClass<Artist>(ArtistTable)
 }

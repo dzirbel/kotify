@@ -84,7 +84,7 @@ fun <T> Flow<T>.collectAsStateSwitchable(
     }
 
     val result = remember(key) { mutableStateOf(initial()) }
-    LaunchedEffect(this, context) {
+    LaunchedEffect(this, context, key) {
         ProduceStateScopeImpl(result, coroutineContext).run {
             if (context == EmptyCoroutineContext) {
                 collect { value = it }

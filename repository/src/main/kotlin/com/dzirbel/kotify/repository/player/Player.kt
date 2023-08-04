@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.repository.player
 
 import com.dzirbel.kotify.db.model.Album
-import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
@@ -12,6 +11,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlaybackOffset
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
+import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.util.ToggleableState
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,7 +51,7 @@ interface Player {
                 }
             }
 
-            fun artist(artist: Artist) = artist.uri?.let { PlayContext(contextUri = it) }
+            fun artist(artist: ArtistViewModel) = artist.uri?.let { PlayContext(contextUri = it) }
 
             /**
              * Returns a [PlayContext] which plays the given [playlist].

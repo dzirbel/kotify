@@ -8,12 +8,10 @@ import com.dzirbel.kotify.network.util.await
 import com.dzirbel.kotify.repository.Repository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.yield
@@ -98,36 +96,11 @@ open class SpotifyImageCache internal constructor(
     }
 
     /**
-     * Synchronously loads all the given [urls] from the file cache, if they are not currently in the in-memory cache or
-     * already being loaded. This is useful for batch loading a set of images all at once.
-     */
-    suspend fun loadFromFileCache(urls: Iterable<String>) {
-        val jobs = mutableSetOf<Job>()
-        for (url in urls) {
-            if (!images.containsKey(url)) {
-                jobs.add(
-                    scope.launch {
-                        val (_, image) = fromFileCache(url)
-
-                        if (image != null) {
-                            // only add to map if an image was loaded successfully to avoid adding an empty flow which
-                            // will prevent loading remotely
-                            @Suppress("IgnoredReturnValue") // ignore previous association
-                            images.putIfAbsent(url, MutableStateFlow(image))
-                        }
-                    },
-                )
-            }
-        }
-
-        jobs.joinAll()
-    }
-
-    /**
      * Returns the [ImageBitmap] from the given [url] if it is immediately available in memory.
      */
     fun getFromMemory(url: String): ImageBitmap? {
         return images[url]?.value
+            ?.also { Logger.ImageCache.handleImageCacheEvent(ImageCacheEvent.InMemory(url = url)) }
     }
 
     /**

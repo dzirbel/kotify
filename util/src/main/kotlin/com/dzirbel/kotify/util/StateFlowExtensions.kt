@@ -89,9 +89,11 @@ fun <T, R> StateFlow<T>.flatMapLatestIn(scope: CoroutineScope, transform: (T) ->
  * [scope].
  *
  * See https://github.com/Kotlin/kotlinx.coroutines/issues/2514 (among others)
- *
- * TODO does not invoke action on the initial value
  */
-fun <T> StateFlow<T>.onEachIn(scope: CoroutineScope, action: suspend (T) -> Unit): StateFlow<T> {
-    return this.onEach(action).stateIn(scope, SharingStarted.Eagerly, value)
+fun <T> StateFlow<T>.onEachIn(scope: CoroutineScope, action: (T) -> Unit): StateFlow<T> {
+    val initialValue = value
+    return this
+        .dropWhile { it == initialValue } // hack: ensure action is not called with the initial value twice
+        .onEach(action)
+        .stateIn(scope, SharingStarted.Eagerly, value.also(action))
 }

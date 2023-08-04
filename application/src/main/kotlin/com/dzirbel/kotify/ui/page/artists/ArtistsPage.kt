@@ -17,15 +17,19 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerButton
-import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.db.model.Artist
+import com.dzirbel.kotify.repository.LazyTransactionStateFlow.Companion.requestBatched
+import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
+import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.artist.SavedArtistRepository
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
@@ -66,52 +70,67 @@ import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.rememberArtistTracksStates
-import com.dzirbel.kotify.ui.util.rememberWithCoroutineScope
 import com.dzirbel.kotify.util.combinedStateWhenAllNotNull
 import com.dzirbel.kotify.util.flatMapLatestIn
 import com.dzirbel.kotify.util.immutable.orEmpty
+import com.dzirbel.kotify.util.mapIn
 import com.dzirbel.kotify.util.onEachIn
-import com.dzirbel.kotify.util.produceTransactionState
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.runningReduce
+import kotlinx.coroutines.flow.stateIn
 
 object ArtistsPage : Page<Unit>() {
     @Composable
     override fun BoxScope.bind(visible: Boolean) {
-        val savedArtistIdsFlow = remember { SavedArtistRepository.library }
+        val scope = rememberCoroutineScope()
 
-        val artistsAdapter = rememberListAdapterState(defaultSort = ArtistNameProperty) { scope ->
-            savedArtistIdsFlow
-                .flatMapLatestIn(scope) { library ->
-                    library?.ids
-                        ?.let { artistIds ->
-                            ArtistRepository.statesOf(artistIds).combinedStateWhenAllNotNull { it?.cachedValue }
-                        }
-                        ?: MutableStateFlow(null)
-                }
-                .onEachIn(scope) { artists ->
-                    if (artists != null) {
-                        KotifyDatabase.transaction(name = "load artist images") {
-                            for (artist in artists) {
-                                artist.largestImage.loadToCache()
-                            }
-                        }
+        // accumulate saved artist IDs, never removing them from the library so that the artist does not disappear from
+        // the grid when removed (to make it easy to add them back if it was an accident)
+        val displayedLibraryFlow = remember {
+            val libraryFlow = SavedArtistRepository.library
+
+            libraryFlow
+                .runningReduce { accumulator, value ->
+                    value?.let {
+                        SavedRepository.Library(
+                            ids = accumulator?.ids?.let { ids -> ids + value.ids } ?: value.ids,
+                            cacheTime = value.cacheTime,
+                        )
                     }
                 }
+                .stateIn(scope, SharingStarted.Eagerly, libraryFlow.value)
         }
 
-        val selectedArtistIndex = remember { mutableStateOf<Int?>(null) }
+        val artistsAdapter = rememberListAdapterState(defaultSort = ArtistNameProperty, scope = scope) {
+            displayedLibraryFlow.flatMapLatestIn(scope) { library ->
+                if (library == null) {
+                    MutableStateFlow(null)
+                } else {
+                    // TODO load full artist models (to avoid missing images)
+                    ArtistRepository.statesOf(library.ids)
+                        .combinedStateWhenAllNotNull { it?.cachedValue }
+                        .mapIn(scope) { artists ->
+                            artists?.map { ArtistViewModel(it) } // TODO return VMs from repository directly
+                        }
+                        .onEachIn(scope) { artists ->
+                            artists?.requestBatched("load ${artists.size} artist largest images") { it.largestImage }
+                        }
+                }
+            }
+        }
 
-        val savedArtistIds = savedArtistIdsFlow.collectAsState().value?.ids
-        ArtistTracksRepository.rememberArtistTracksStates(savedArtistIds)
+        val artistIds = displayedLibraryFlow.collectAsState().value?.ids
+        ArtistTracksRepository.rememberArtistTracksStates(artistIds)
 
-        val artistProperties = rememberWithCoroutineScope(savedArtistIds) { scope ->
+        val artistProperties = remember(artistIds) {
             persistentListOf(
                 ArtistNameProperty,
                 ArtistPopularityProperty,
                 ArtistRatingProperty(
-                    ratings = savedArtistIds?.associateWith { artistId ->
+                    ratings = artistIds?.associateWith { artistId ->
                         TrackRatingRepository.averageRatingStateOfArtist(artistId = artistId, scope = scope)
                     },
                 ),
@@ -126,6 +145,8 @@ object ArtistsPage : Page<Unit>() {
             },
             content = {
                 if (artistsAdapter.derived { it.hasElements }.value) {
+                    var selectedArtistIndex by remember { mutableStateOf<Int?>(null) }
+
                     Grid(
                         elements = artistsAdapter.value,
                         edgePadding = PaddingValues(
@@ -133,18 +154,19 @@ object ArtistsPage : Page<Unit>() {
                             end = Dimens.space5 - Dimens.space3,
                             bottom = Dimens.space3,
                         ),
-                        selectedElementIndex = selectedArtistIndex.value,
+                        selectedElementIndex = selectedArtistIndex,
                         detailInsertContent = { _, artist ->
                             ArtistDetailInsert(artist = artist)
                         },
-                    ) { index, artist ->
-                        ArtistCell(
-                            artist = artist,
-                            onRightClick = {
-                                selectedArtistIndex.value = index.takeIf { it != selectedArtistIndex.value }
-                            },
-                        )
-                    }
+                        cellContent = { index, artist ->
+                            ArtistCell(
+                                artist = artist,
+                                onRightClick = {
+                                    selectedArtistIndex = index.takeIf { it != selectedArtistIndex }
+                                },
+                            )
+                        },
+                    )
                 } else {
                     PageLoadingSpinner()
                 }
@@ -157,8 +179,8 @@ object ArtistsPage : Page<Unit>() {
 
 @Composable
 private fun ArtistsPageHeader(
-    artistsAdapter: ListAdapterState<Artist>,
-    artistProperties: PersistentList<AdapterProperty<Artist>>,
+    artistsAdapter: ListAdapterState<ArtistViewModel>,
+    artistProperties: PersistentList<AdapterProperty<ArtistViewModel>>,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space5, vertical = Dimens.space4),
@@ -204,18 +226,17 @@ private fun ArtistsPageHeader(
 }
 
 @Composable
-private fun ArtistCell(artist: Artist, onRightClick: () -> Unit) {
-    val artistId = artist.id.value
+private fun ArtistCell(artist: ArtistViewModel, onRightClick: () -> Unit) {
     Column(
         Modifier
             .instrument()
             .onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
-                pageStack.mutate { to(ArtistPage(artistId = artistId)) }
+                pageStack.mutate { to(ArtistPage(artistId = artist.id)) }
             }
             .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = onRightClick)
             .padding(Dimens.space3),
     ) {
-        LoadedImage(imageProperty = artist.largestImage, modifier = Modifier.align(Alignment.CenterHorizontally))
+        LoadedImage(artist.largestImage, modifier = Modifier.align(Alignment.CenterHorizontally))
 
         VerticalSpacer(Dimens.space3)
 
@@ -225,15 +246,16 @@ private fun ArtistCell(artist: Artist, onRightClick: () -> Unit) {
         ) {
             Text(text = artist.name, modifier = Modifier.weight(1f))
 
-            ToggleSaveButton(repository = SavedArtistRepository, id = artistId)
+            ToggleSaveButton(repository = SavedArtistRepository, id = artist.id)
 
             PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
         }
 
-        val averageRating = rememberWithCoroutineScope(artistId) { scope ->
-            TrackRatingRepository.averageRatingStateOfArtist(artistId = artistId, scope = scope)
+        val scope = rememberCoroutineScope()
+        val averageRating = remember(artist.id) {
+            TrackRatingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
         }
-            .collectAsStateSwitchable(key = artistId)
+            .collectAsStateSwitchable(key = artist.id)
             .value
 
         AverageStarRating(averageRating = averageRating)
@@ -244,10 +266,9 @@ private const val DETAILS_COLUMN_WEIGHT = 0.3f
 private const val DETAILS_ALBUMS_WEIGHT = 0.7f
 
 @Composable
-private fun ArtistDetailInsert(artist: Artist) {
-    val artistId = artist.id.value
+private fun ArtistDetailInsert(artist: ArtistViewModel) {
     Row(modifier = Modifier.padding(Dimens.space4), horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-        LoadedImage(imageProperty = artist.largestImage)
+        LoadedImage(artist.largestImage)
 
         Column(
             modifier = Modifier.weight(weight = DETAILS_COLUMN_WEIGHT),
@@ -255,7 +276,7 @@ private fun ArtistDetailInsert(artist: Artist) {
         ) {
             Text(text = artist.name, style = MaterialTheme.typography.h5)
 
-            ArtistRepository.stateOf(id = artistId)
+            ArtistRepository.stateOf(id = artist.id)
                 .collectAsState()
                 .derived { it?.cacheTime?.toEpochMilli() }
                 .value
@@ -263,31 +284,25 @@ private fun ArtistDetailInsert(artist: Artist) {
                     Text(liveRelativeDateText(timestamp = timestamp) { "Saved $it" })
                 }
 
-            artist.produceTransactionState("load artist genres") { genres.live }.value?.let { genres ->
+            artist.genres.collectAsState().value?.let { genres ->
                 Flow {
                     for (genre in genres) {
-                        Pill(text = genre.name)
+                        Pill(text = genre)
                     }
                 }
             }
 
-            val averageRating = rememberWithCoroutineScope(artistId) { scope ->
-                TrackRatingRepository.averageRatingStateOfArtist(artistId = artistId, scope = scope)
+            val scope = rememberCoroutineScope()
+            val averageRating = remember(artist.id) {
+                TrackRatingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
             }
-                .collectAsStateSwitchable(key = artistId)
+                .collectAsStateSwitchable(key = artist.id)
                 .value
 
             RatingHistogram(averageRating)
         }
 
-        artist.artistAlbums.produceTransactionState(
-            onLive = { artistsAlbums ->
-                artistsAlbums.onEach { artistAlbum ->
-                    artistAlbum.album.loadToCache()
-                    artistAlbum.album.live.largestImage.loadToCache()
-                }
-            },
-        ).value?.let { albums ->
+        artist.albums.collectAsState().value?.let { albums ->
             val adapter = remember { ListAdapter.of(elements = albums, defaultSort = AlbumNameProperty.ForArtistAlbum) }
             Grid(
                 modifier = Modifier.weight(DETAILS_ALBUMS_WEIGHT),

@@ -175,6 +175,7 @@ fun SmallAlbumCell(album: Album, onClick: () -> Unit) {
     ) {
         Box {
             LoadedImage(
+                // TODO use thumbnail image instead
                 imageProperty = album.largestImage,
                 size = Dimens.contentImageSmall,
                 modifier = Modifier.align(Alignment.Center),

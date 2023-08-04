@@ -22,11 +22,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun <E> rememberListAdapterState(
     key: Any? = null,
+    scope: CoroutineScope = rememberCoroutineScope(),
     defaultSort: SortableProperty<E>? = null,
     defaultFilter: ((E) -> Boolean)? = null,
     source: (CoroutineScope) -> StateFlow<List<E>?>,
 ): ListAdapterState<E> {
-    val scope = rememberCoroutineScope()
     val sourceFlow = remember(key) { source(scope) }
     val initialValue = remember(key) { sourceFlow.value }
     return remember(key) {

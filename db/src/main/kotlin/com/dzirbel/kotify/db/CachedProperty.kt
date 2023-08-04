@@ -69,6 +69,13 @@ open class ReadOnlyCachedProperty<V>(private val requireGetInTransaction: Boolea
         }
 
     /**
+     * Gets the cached value if it is available, otherwise gets the [live] value.
+     */
+    val value: V
+        @Suppress("UNCHECKED_CAST")
+        get() = if (hasCachedValue) cachedValue as V else live
+
+    /**
      * Loads the [live] value into the cache. Equivalent to calling [live], but exists to be explicit that the cached
      * value is being prepared but not returned.
      *

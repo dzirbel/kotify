@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -24,12 +25,17 @@ import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
 
 /**
  * Displays an image from the lazy [image] source (only read during the drawing phase) as a square with the given [size]
  * and clipped to [shape].
+ *
+ * TODO image scaling
  */
 @Composable
 fun LoadedImage(
@@ -78,6 +84,31 @@ fun LoadedImage(
     }
 
     LoadedImage(image = { imageState?.value }, modifier = modifier, size = size, shape = shape)
+}
+
+/**
+ * Variant of [LoadedImage] which asynchronously maps urls from [urlFlow] to images loaded via the [SpotifyImageCache].
+ */
+@Composable
+fun LoadedImage(
+    urlFlow: StateFlow<String?>,
+    modifier: Modifier = Modifier,
+    size: Dp = Dimens.contentImage,
+    shape: Shape = RoundedCornerShape(Dimens.cornerSize),
+) {
+    val initialValue = remember(urlFlow) {
+        urlFlow.value?.let { SpotifyImageCache.getFromMemory(it) }
+    }
+
+    val imageState = remember(urlFlow) {
+        // use flatMapLatest to avoid reverting to a previous image if the url changes while loading
+        urlFlow
+            .filterNotNull()
+            .flatMapLatest { SpotifyImageCache.get(it) }
+    }
+        .collectAsState(initial = initialValue)
+
+    LoadedImage(image = { imageState.value }, modifier = modifier, size = size, shape = shape)
 }
 
 /**

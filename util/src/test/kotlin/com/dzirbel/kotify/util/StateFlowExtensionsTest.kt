@@ -221,7 +221,7 @@ class StateFlowExtensionsTest {
             assertThat(mappedValues).containsExactly(1)
             assertThat(mapped.value).isEqualTo(2)
 
-            coroutineContext.cancelChildren() // cancel to stop mapIn collection
+            coroutineContext.cancelChildren() // cancel to stop flatMapLatestIn collection
         }
     }
 
@@ -264,7 +264,7 @@ class StateFlowExtensionsTest {
             assertThat(mappedValues).containsExactly(1, 2, 4)
             assertThat(mapped.value).isEqualTo(8)
 
-            coroutineContext.cancelChildren() // cancel to stop mapIn collection
+            coroutineContext.cancelChildren() // cancel to stop flatMapLatestIn collection
         }
     }
 
@@ -305,7 +305,7 @@ class StateFlowExtensionsTest {
             assertThat(mappedValues).containsExactly(1, 2, 3)
             assertThat(mapped.value).isEqualTo(5)
 
-            coroutineContext.cancelChildren() // cancel to stop mapIn collection
+            coroutineContext.cancelChildren() // cancel to stop flatMapLatestIn collection
         }
     }
 
@@ -345,7 +345,101 @@ class StateFlowExtensionsTest {
             assertThat(mapped1.value).isEqualTo(4)
             assertThat(mapped2.value).isEqualTo(6)
 
-            coroutineContext.cancelChildren() // cancel to stop mapIn collection
+            coroutineContext.cancelChildren() // cancel to stop flatMapLatestIn collection
+        }
+    }
+
+    @Test
+    fun `onEachIn initial value`() {
+        runTest {
+            val seenValues = mutableListOf<Int>()
+            val flow = MutableStateFlow(1)
+                .onEachIn(scope = this) { seenValues.add(it) }
+
+            // initial action takes place immediately
+            assertThat(seenValues).containsExactly(1)
+            assertThat(flow.value).isEqualTo(1)
+
+            // starting collection does not re-invoke action on the initial element
+            runCurrent()
+
+            assertThat(seenValues).containsExactly(1)
+            assertThat(flow.value).isEqualTo(1)
+
+            coroutineContext.cancelChildren() // cancel to stop onEachIn collection
+        }
+    }
+
+    @Test
+    fun `onEachIn updated value is reflected`() {
+        val base = MutableStateFlow(0)
+        runTest {
+            base.value = 1 // emitted values before collection are ignored
+
+            val seenValues = mutableListOf<Int>()
+            val flow = base
+                .onEachIn(scope = this) { seenValues.add(it) }
+
+            base.value = 2
+
+            // action does not occur until collection is resumed
+            assertThat(seenValues).containsExactly(1)
+            assertThat(flow.value).isEqualTo(1)
+
+            runCurrent()
+
+            assertThat(seenValues).containsExactly(1, 2)
+            assertThat(flow.value).isEqualTo(2)
+
+            // assigning the same value does not trigger a mapping
+            base.value = 2
+            runCurrent()
+
+            assertThat(seenValues).containsExactly(1, 2)
+            assertThat(flow.value).isEqualTo(2)
+
+            // multiple updates before collection skips any prior values
+            base.value = 3
+            base.value = 4
+
+            runCurrent()
+
+            assertThat(seenValues).containsExactly(1, 2, 4)
+            assertThat(flow.value).isEqualTo(4)
+
+            coroutineContext.cancelChildren() // cancel to stop onEachIn collection
+        }
+    }
+
+    @Test
+    fun `onEachIn with two collectors`() {
+        val base = MutableStateFlow(1)
+        runTest {
+            val seenValues1 = mutableListOf<Int>()
+            val seenValues2 = mutableListOf<Int>()
+            val flow1 = base.onEachIn(scope = this) { seenValues1.add(it) }
+            val flow2 = base.onEachIn(scope = this) { seenValues2.add(it) }
+
+            assertThat(seenValues1).containsExactly(1)
+            assertThat(seenValues2).containsExactly(1)
+            assertThat(flow1.value).isEqualTo(1)
+            assertThat(flow2.value).isEqualTo(1)
+
+            base.value = 2
+
+            assertThat(seenValues1).containsExactly(1)
+            assertThat(seenValues2).containsExactly(1)
+            assertThat(flow1.value).isEqualTo(1)
+            assertThat(flow2.value).isEqualTo(1)
+
+            runCurrent()
+
+            assertThat(seenValues1).containsExactly(1, 2)
+            assertThat(seenValues2).containsExactly(1, 2)
+            assertThat(flow1.value).isEqualTo(2)
+            assertThat(flow2.value).isEqualTo(2)
+
+            coroutineContext.cancelChildren() // cancel to stop onEachIn collection
         }
     }
 
