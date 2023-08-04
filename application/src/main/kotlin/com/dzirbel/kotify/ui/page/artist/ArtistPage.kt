@@ -19,10 +19,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.AlbumType
-import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.ui.components.AlbumCell
 import com.dzirbel.kotify.ui.components.AlbumTypePicker
 import com.dzirbel.kotify.ui.components.DividerSelector
@@ -118,7 +118,7 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
 
 @Composable
 private fun ArtistPageHeader(
-    artist: Artist?,
+    artist: ArtistViewModel?,
     albums: ListAdapterState<ArtistAlbum>,
     displayedAlbumTypes: PersistentSet<AlbumType>,
     setDisplayedAlbumTypes: (PersistentSet<AlbumType>) -> Unit,
@@ -145,7 +145,7 @@ private fun ArtistPageHeader(
                     if (artist != null) {
                         InvalidateButton(
                             repository = ArtistRepository,
-                            id = artist.id.value,
+                            id = artist.id,
                             entityName = "Artist",
                             contentPadding = PaddingValues(all = Dimens.space2),
                         )
@@ -154,7 +154,7 @@ private fun ArtistPageHeader(
 
                         InvalidateButton(
                             repository = ArtistAlbumsRepository,
-                            id = artist.id.value,
+                            id = artist.id,
                             entityName = "Albums",
                             contentPadding = PaddingValues(all = Dimens.space2),
                         )

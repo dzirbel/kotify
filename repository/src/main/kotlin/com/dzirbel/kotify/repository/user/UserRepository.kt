@@ -24,7 +24,7 @@ import java.time.Instant
 open class UserRepository internal constructor(
     private val applicationScope: CoroutineScope,
     private val userSessionScope: CoroutineScope,
-) : DatabaseEntityRepository<User, SpotifyUser>(entityClass = User, scope = applicationScope) {
+) : DatabaseEntityRepository<User, User, SpotifyUser>(entityClass = User, scope = applicationScope) {
 
     private val _currentUserId = MutableStateFlow<String?>(null)
     val currentUserId: StateFlow<String?>
@@ -42,9 +42,9 @@ open class UserRepository internal constructor(
 
     override suspend fun fetchFromRemote(id: String) = Spotify.UsersProfile.getUser(userId = id)
 
-    override fun convert(networkModel: SpotifyUser): User = convert(networkModel.id, networkModel)
+    override fun convertToDB(networkModel: SpotifyUser): User = convertToDB(networkModel.id, networkModel)
 
-    override fun convert(id: String, networkModel: SpotifyUser): User {
+    override fun convertToDB(id: String, networkModel: SpotifyUser): User {
         return User.updateOrInsert(id = id, networkModel = networkModel) {
             networkModel.images?.let { images ->
                 this.images.set(images.map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) })
@@ -60,6 +60,8 @@ open class UserRepository internal constructor(
             }
         }
     }
+
+    override fun convertToVM(databaseModel: User) = databaseModel
 
     fun onConnectToDatabase() {
         _currentUserId.value = UserTable.CurrentUserTable.get()
@@ -126,7 +128,7 @@ open class UserRepository internal constructor(
         return KotifyDatabase.transaction("set current user") {
             UserTable.CurrentUserTable.set(user.id)
 
-            convert(networkModel = user)
+            convertToDB(networkModel = user)
         }
     }
 

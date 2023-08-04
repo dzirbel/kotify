@@ -12,8 +12,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import java.time.Instant
 
-open class AlbumTracksRepository internal constructor(scope: CoroutineScope) :
-    DatabaseRepository<List<Track>, List<SimplifiedSpotifyTrack>>(entityName = "album tracks", scope = scope) {
+open class AlbumTracksRepository internal constructor(
+    scope: CoroutineScope,
+    private val trackRepository: TrackRepository,
+) : DatabaseRepository<List<Track>, List<Track>, List<SimplifiedSpotifyTrack>>(
+    entityName = "album tracks",
+    scope = scope,
+) {
 
     override suspend fun fetchFromRemote(id: String): List<SimplifiedSpotifyTrack> {
         return Spotify.Albums.getAlbumTracks(id = id).asFlow().toList()
@@ -30,9 +35,9 @@ open class AlbumTracksRepository internal constructor(scope: CoroutineScope) :
         }
     }
 
-    override fun convert(id: String, networkModel: List<SimplifiedSpotifyTrack>): List<Track> {
+    override fun convertToDB(id: String, networkModel: List<SimplifiedSpotifyTrack>): List<Track> {
         // TODO do not ignore tracks with null id
-        val tracks = networkModel.mapNotNull { track -> TrackRepository.convert(track) }
+        val tracks = networkModel.mapNotNull { track -> trackRepository.convertToDB(track) }
             .onEach { it.artists.loadToCache() } // TODO loadToCache
 
         Album.findById(id)?.let { album ->
@@ -43,5 +48,7 @@ open class AlbumTracksRepository internal constructor(scope: CoroutineScope) :
         return tracks
     }
 
-    companion object : AlbumTracksRepository(scope = Repository.applicationScope)
+    override fun convertToVM(databaseModel: List<Track>) = databaseModel
+
+    companion object : AlbumTracksRepository(scope = Repository.applicationScope, trackRepository = TrackRepository)
 }

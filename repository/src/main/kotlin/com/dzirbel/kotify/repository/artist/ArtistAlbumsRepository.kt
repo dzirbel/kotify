@@ -13,8 +13,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import java.time.Instant
 
-open class ArtistAlbumsRepository internal constructor(scope: CoroutineScope) :
-    DatabaseRepository<List<ArtistAlbum>, List<SimplifiedSpotifyAlbum>>(entityName = "artist albums", scope = scope) {
+open class ArtistAlbumsRepository internal constructor(
+    scope: CoroutineScope,
+    private val albumRepository: AlbumRepository,
+) : DatabaseRepository<List<ArtistAlbum>, List<ArtistAlbum>, List<SimplifiedSpotifyAlbum>>(
+    entityName = "artist albums",
+    scope = scope,
+) {
 
     override suspend fun fetchFromRemote(id: String): List<SimplifiedSpotifyAlbum> {
         return Spotify.Artists.getArtistAlbums(id = id).asFlow().toList()
@@ -32,9 +37,9 @@ open class ArtistAlbumsRepository internal constructor(scope: CoroutineScope) :
         }
     }
 
-    override fun convert(id: String, networkModel: List<SimplifiedSpotifyAlbum>): List<ArtistAlbum> {
+    override fun convertToDB(id: String, networkModel: List<SimplifiedSpotifyAlbum>): List<ArtistAlbum> {
         return networkModel.mapNotNull { artistAlbum ->
-            AlbumRepository.convert(artistAlbum)?.let { album ->
+            albumRepository.convertToDB(artistAlbum)?.let { album ->
                 // TODO ArtistAlbum may have multiple artists
                 ArtistAlbum.findOrCreate(
                     artistId = id,
@@ -48,5 +53,7 @@ open class ArtistAlbumsRepository internal constructor(scope: CoroutineScope) :
         }
     }
 
-    companion object : ArtistAlbumsRepository(scope = Repository.applicationScope)
+    override fun convertToVM(databaseModel: List<ArtistAlbum>) = databaseModel
+
+    companion object : ArtistAlbumsRepository(scope = Repository.applicationScope, albumRepository = AlbumRepository)
 }

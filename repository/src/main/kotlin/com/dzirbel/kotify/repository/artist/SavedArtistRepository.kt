@@ -35,7 +35,7 @@ open class SavedArtistRepository internal constructor(scope: CoroutineScope) :
     }
 
     override fun convert(savedNetworkType: FullSpotifyArtist): Pair<String, Instant?> {
-        ArtistRepository.convert(savedNetworkType)
+        ArtistRepository.convertToDB(savedNetworkType)
         return savedNetworkType.id to null
     }
 

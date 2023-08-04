@@ -13,13 +13,12 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import kotlin.time.TimeSource
 
-// TODO expose a different type than the DB model?
-abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructor(
+abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal constructor(
     protected val entityName: String,
     protected val scope: CoroutineScope,
-) : Repository<DatabaseType> {
+) : Repository<ViewModel> {
 
-    private val states = SynchronizedWeakStateFlowMap<String, CacheState<DatabaseType>>()
+    private val states = SynchronizedWeakStateFlowMap<String, CacheState<ViewModel>>()
 
     /**
      * Fetches the [DatabaseType] and the time it was last updated from the remote data source from the local database,
@@ -56,18 +55,17 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
      *
      * Must be called from within a database transaction.
      */
-    abstract fun convert(id: String, networkModel: NetworkType): DatabaseType
+    abstract fun convertToDB(id: String, networkModel: NetworkType): DatabaseType
 
-    open fun convert(ids: List<String>, networkModels: List<NetworkType?>): List<DatabaseType?> {
-        return networkModels.zip(ids) { networkModel, id ->
-            networkModel?.let { convert(id, it) }
-        }
-    }
+    /**
+     * Converts the given [databaseModel] into a [ViewModel] suitable for external use.
+     */
+    abstract fun convertToVM(databaseModel: DatabaseType): ViewModel
 
     final override fun stateOf(
         id: String,
-        cacheStrategy: CacheStrategy<DatabaseType>,
-    ): StateFlow<CacheState<DatabaseType>?> {
+        cacheStrategy: CacheStrategy<ViewModel>,
+    ): StateFlow<CacheState<ViewModel>?> {
         Repository.checkEnabled()
         return states.getOrCreateStateFlow(id) {
             scope.launch { load(id = id, cacheStrategy = cacheStrategy) }
@@ -76,8 +74,8 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
 
     final override fun statesOf(
         ids: Iterable<String>,
-        cacheStrategy: CacheStrategy<DatabaseType>,
-    ): List<StateFlow<CacheState<DatabaseType>?>> {
+        cacheStrategy: CacheStrategy<ViewModel>,
+    ): List<StateFlow<CacheState<ViewModel>?>> {
         Repository.checkEnabled()
         return states.getOrCreateStateFlows(keys = ids) { creations ->
             scope.launch { load(ids = creations.keys, cacheStrategy = cacheStrategy) }
@@ -95,7 +93,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
      *
      * If [cacheStrategy] is [CacheStrategy.NeverValid] then the call to the cache is skipped entirely.
      */
-    private suspend fun load(id: String, cacheStrategy: CacheStrategy<DatabaseType>) {
+    private suspend fun load(id: String, cacheStrategy: CacheStrategy<ViewModel>) {
         if (states.getValue(id).needsLoad(cacheStrategy)) {
             val allowCache = cacheStrategy !is CacheStrategy.NeverValid
             val loadedFromCache = allowCache && loadFromCache(id = id, cacheStrategy = cacheStrategy)
@@ -112,7 +110,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
      *
      * If [cacheStrategy] is [CacheStrategy.NeverValid] then the call to the cache is skipped entirely.
      */
-    private suspend fun load(ids: Iterable<String>, cacheStrategy: CacheStrategy<DatabaseType>) {
+    private suspend fun load(ids: Iterable<String>, cacheStrategy: CacheStrategy<ViewModel>) {
         val idsToLoad = ids.filter { id ->
             states.getValue(id).needsLoad(cacheStrategy)
         }
@@ -135,7 +133,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
      * Loads data for the given [id] from the cache and applies it to [states], returning true if successful (i.e. the
      * value was present in the cache and valid according to [cacheStrategy]) or false otherwise.
      */
-    private suspend fun loadFromCache(id: String, cacheStrategy: CacheStrategy<DatabaseType>): Boolean {
+    private suspend fun loadFromCache(id: String, cacheStrategy: CacheStrategy<ViewModel>): Boolean {
         val pair = try {
             KotifyDatabase.transaction(name = "load $entityName $id") {
                 fetchFromDatabase(id = id)
@@ -147,8 +145,9 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
             return false
         }
 
-        return if (pair != null && cacheStrategy.isValid(pair.first)) {
-            states.updateValue(id, CacheState.Loaded(pair.first, pair.second))
+        val viewModel = pair?.first?.let(::convertToVM)
+        return if (viewModel != null && cacheStrategy.isValid(viewModel)) {
+            states.updateValue(id, CacheState.Loaded(viewModel, pair.second))
             true
         } else {
             false
@@ -159,7 +158,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
      * Loads data for the given [ids] from the cache and applies them to [states], returning a list of IDs which were
      * NOT successfully loaded (i.e. not present in the cache or not valid according to [cacheStrategy]).
      */
-    private suspend fun loadFromCache(ids: List<String>, cacheStrategy: CacheStrategy<DatabaseType>): List<String> {
+    private suspend fun loadFromCache(ids: List<String>, cacheStrategy: CacheStrategy<ViewModel>): List<String> {
         val cachedEntities = try {
             KotifyDatabase.transaction(name = "load ${ids.size} ${entityName}s") {
                 fetchFromDatabase(ids = ids)
@@ -174,8 +173,9 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
         val missingIds = mutableListOf<String>()
 
         ids.zipEach(cachedEntities) { id, pair ->
-            if (pair != null && cacheStrategy.isValid(pair.first)) {
-                states.updateValue(id, CacheState.Loaded(pair.first, pair.second))
+            val viewModel = pair?.first?.let(::convertToVM)
+            if (viewModel != null && cacheStrategy.isValid(viewModel)) {
+                states.updateValue(id, CacheState.Loaded(viewModel, pair.second))
             } else {
                 missingIds.add(id)
             }
@@ -193,7 +193,7 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
         val start = TimeSource.Monotonic.markNow()
         val remoteEntity = try {
             fetchFromRemote(id)?.let { networkModel ->
-                KotifyDatabase.transaction("save $entityName $id") { convert(id, networkModel) }
+                KotifyDatabase.transaction("save $entityName $id") { convertToDB(id, networkModel) }
             }
         } catch (cancellationException: CancellationException) {
             throw cancellationException
@@ -204,7 +204,10 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
 
         val fetchTime = start.midpointInstantToNow()
 
-        states.updateValue(id, remoteEntity?.let { CacheState.Loaded(it, fetchTime) } ?: CacheState.NotFound())
+        states.updateValue(
+            id,
+            remoteEntity?.let { CacheState.Loaded(convertToVM(it), fetchTime) } ?: CacheState.NotFound(),
+        )
     }
 
     /**
@@ -221,7 +224,9 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
             val notNullNetworkModels = networkModels.count { it != null }
             if (notNullNetworkModels > 0) {
                 KotifyDatabase.transaction("save $notNullNetworkModels ${entityName}s") {
-                    convert(ids, networkModels)
+                    networkModels.zip(ids) { networkModel, id ->
+                        networkModel?.let { convertToDB(id, it) }
+                    }
                 }
             } else {
                 emptyList()
@@ -239,14 +244,17 @@ abstract class DatabaseRepository<DatabaseType, NetworkType> internal constructo
         val fetchTime = start.midpointInstantToNow()
 
         ids.zipEach(remoteEntities) { id, remoteEntity ->
-            states.updateValue(id, remoteEntity?.let { CacheState.Loaded(it, fetchTime) } ?: CacheState.NotFound())
+            states.updateValue(
+                id,
+                remoteEntity?.let { CacheState.Loaded(convertToVM(it), fetchTime) } ?: CacheState.NotFound(),
+            )
         }
     }
 
     /**
      * Determines whether this [CacheState] should be refreshed according to [cacheStrategy].
      */
-    private fun <T> CacheState<T>?.needsLoad(cacheStrategy: CacheStrategy<T>): Boolean {
+    private fun CacheState<ViewModel>?.needsLoad(cacheStrategy: CacheStrategy<ViewModel>): Boolean {
         return when (this) {
             is CacheState.Loaded -> !cacheStrategy.isValid(cachedValue)
             is CacheState.Refreshing -> false

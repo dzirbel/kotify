@@ -17,8 +17,14 @@ import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.sql.update
 import java.time.Instant
 
-open class PlaylistTracksRepository internal constructor(scope: CoroutineScope) :
-    DatabaseRepository<List<PlaylistTrack>, List<SpotifyPlaylistTrack>>(entityName = "playlist tracks", scope = scope) {
+open class PlaylistTracksRepository internal constructor(
+    scope: CoroutineScope,
+    private val trackRepository: TrackRepository,
+    private val userRepository: UserRepository,
+) : DatabaseRepository<List<PlaylistTrack>, List<PlaylistTrack>, List<SpotifyPlaylistTrack>>(
+    entityName = "playlist tracks",
+    scope = scope,
+) {
 
     sealed interface PlaylistReorderState {
         /**
@@ -55,7 +61,7 @@ open class PlaylistTracksRepository internal constructor(scope: CoroutineScope) 
         }
     }
 
-    override fun convert(id: String, networkModel: List<SpotifyPlaylistTrack>): List<PlaylistTrack> {
+    override fun convertToDB(id: String, networkModel: List<SpotifyPlaylistTrack>): List<PlaylistTrack> {
         PlaylistTable.update(where = { PlaylistTable.id eq id }) {
             it[tracksFetched] = Instant.now()
         }
@@ -64,6 +70,8 @@ open class PlaylistTracksRepository internal constructor(scope: CoroutineScope) 
             convertTrack(spotifyPlaylistTrack = spotifyPlaylistTrack, playlistId = id, index = index)
         }
     }
+
+    override fun convertToVM(databaseModel: List<PlaylistTrack>) = databaseModel
 
     /**
      * Reorders the given [tracks] for the playlist with the given [playlistId] according to the given [comparator].
@@ -109,10 +117,10 @@ open class PlaylistTracksRepository internal constructor(scope: CoroutineScope) 
      */
     fun convertTrack(spotifyPlaylistTrack: SpotifyPlaylistTrack, playlistId: String, index: Int): PlaylistTrack? {
         return spotifyPlaylistTrack.track
-            ?.let { TrackRepository.convert(it) }
+            ?.let { trackRepository.convertToDB(it) }
             ?.let { track ->
                 PlaylistTrack.findOrCreate(trackId = track.id.value, playlistId = playlistId).apply {
-                    spotifyPlaylistTrack.addedBy?.let { addedBy.set(UserRepository.convert(it.id, it)) }
+                    spotifyPlaylistTrack.addedBy?.let { addedBy.set(userRepository.convertToDB(it.id, it)) }
                     spotifyPlaylistTrack.addedAt?.let { addedAt = it }
                     isLocal = spotifyPlaylistTrack.isLocal
                     indexOnPlaylist = index
@@ -125,5 +133,9 @@ open class PlaylistTracksRepository internal constructor(scope: CoroutineScope) 
             }
     }
 
-    companion object : PlaylistTracksRepository(scope = Repository.applicationScope)
+    companion object : PlaylistTracksRepository(
+        scope = Repository.applicationScope,
+        trackRepository = TrackRepository,
+        userRepository = UserRepository,
+    )
 }

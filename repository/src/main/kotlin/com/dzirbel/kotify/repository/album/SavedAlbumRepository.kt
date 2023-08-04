@@ -31,7 +31,7 @@ open class SavedAlbumRepository internal constructor(scope: CoroutineScope) :
 
     override fun convert(savedNetworkType: SpotifySavedAlbum): Pair<String, Instant?> {
         val album = savedNetworkType.album
-        AlbumRepository.convert(networkModel = album)
+        AlbumRepository.convertToDB(networkModel = album)
         return album.id to parseInstantOrNull(savedNetworkType.addedAt)
     }
 

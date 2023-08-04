@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
 open class ArtistRepository internal constructor(scope: CoroutineScope) :
-    DatabaseEntityRepository<Artist, SpotifyArtist>(entityClass = Artist, scope = scope) {
+    DatabaseEntityRepository<ArtistViewModel, Artist, SpotifyArtist>(entityClass = Artist, scope = scope) {
 
     override suspend fun fetchFromRemote(id: String) = Spotify.Artists.getArtist(id = id)
     override suspend fun fetchFromRemote(ids: List<String>): List<SpotifyArtist?> {
@@ -22,7 +22,7 @@ open class ArtistRepository internal constructor(scope: CoroutineScope) :
             .flatMapParallel { idsChunk -> Spotify.Artists.getArtists(ids = idsChunk) }
     }
 
-    override fun convert(id: String, networkModel: SpotifyArtist): Artist {
+    override fun convertToDB(id: String, networkModel: SpotifyArtist): Artist {
         return Artist.updateOrInsert(id = id, networkModel = networkModel) {
             if (networkModel is FullSpotifyArtist) {
                 fullUpdatedTime = Instant.now()
@@ -36,6 +36,8 @@ open class ArtistRepository internal constructor(scope: CoroutineScope) :
             }
         }
     }
+
+    override fun convertToVM(databaseModel: Artist) = ArtistViewModel(databaseModel)
 
     companion object : ArtistRepository(scope = Repository.applicationScope)
 }

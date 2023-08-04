@@ -17,10 +17,12 @@ import java.time.Instant
 
 open class TrackRepository internal constructor(
     scope: CoroutineScope,
-    private val albumRepository: AlbumRepository,
+    albumRepository: Lazy<AlbumRepository>, // lazy to avoid circular dependency
     private val artistRepository: ArtistRepository,
     private val artistTracksRepository: ArtistTracksRepository,
-) : DatabaseEntityRepository<Track, SpotifyTrack>(entityClass = Track, scope = scope) {
+) : DatabaseEntityRepository<Track, Track, SpotifyTrack>(entityClass = Track, scope = scope) {
+
+    private val albumRepository by albumRepository
 
     override suspend fun fetchFromRemote(id: String) = Spotify.Tracks.getTrack(id = id)
     override suspend fun fetchFromRemote(ids: List<String>): List<FullSpotifyTrack> {
@@ -28,7 +30,7 @@ open class TrackRepository internal constructor(
             .flatMapParallel { idsChunk -> Spotify.Tracks.getTracks(ids = idsChunk) }
     }
 
-    override fun convert(id: String, networkModel: SpotifyTrack): Track {
+    override fun convertToDB(id: String, networkModel: SpotifyTrack): Track {
         return Track.updateOrInsert(id = id, networkModel = networkModel) {
             discNumber = networkModel.discNumber
             durationMs = networkModel.durationMs
@@ -37,12 +39,12 @@ open class TrackRepository internal constructor(
             playable = networkModel.isPlayable
             trackNumber = networkModel.trackNumber
             networkModel.album
-                ?.let { albumRepository.convert(it) }
+                ?.let { albumRepository.convertToDB(it) }
                 ?.let { album.set(it) }
 
             artistTracksRepository.setTrackArtists(
                 trackId = id,
-                artistIds = networkModel.artists.mapNotNull { artistRepository.convert(it)?.id?.value },
+                artistIds = networkModel.artists.mapNotNull { artistRepository.convertToDB(it)?.id?.value },
             )
 
             if (networkModel is SimplifiedSpotifyTrack) {
@@ -58,9 +60,11 @@ open class TrackRepository internal constructor(
         }
     }
 
+    override fun convertToVM(databaseModel: Track) = databaseModel
+
     companion object : TrackRepository(
         scope = Repository.applicationScope,
-        albumRepository = AlbumRepository,
+        albumRepository = lazy { AlbumRepository },
         artistRepository = ArtistRepository,
         artistTracksRepository = ArtistTracksRepository,
     )

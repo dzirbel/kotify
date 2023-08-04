@@ -73,7 +73,6 @@ import com.dzirbel.kotify.ui.util.rememberArtistTracksStates
 import com.dzirbel.kotify.util.combinedStateWhenAllNotNull
 import com.dzirbel.kotify.util.flatMapLatestIn
 import com.dzirbel.kotify.util.immutable.orEmpty
-import com.dzirbel.kotify.util.mapIn
 import com.dzirbel.kotify.util.onEachIn
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -112,9 +111,6 @@ object ArtistsPage : Page<Unit>() {
                     // TODO load full artist models (to avoid missing images)
                     ArtistRepository.statesOf(library.ids)
                         .combinedStateWhenAllNotNull { it?.cachedValue }
-                        .mapIn(scope) { artists ->
-                            artists?.map { ArtistViewModel(it) } // TODO return VMs from repository directly
-                        }
                         .onEachIn(scope) { artists ->
                             artists?.requestBatched("load ${artists.size} artist largest images") { it.largestImage }
                         }

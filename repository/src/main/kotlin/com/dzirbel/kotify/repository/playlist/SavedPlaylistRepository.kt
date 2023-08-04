@@ -37,7 +37,7 @@ open class SavedPlaylistRepository internal constructor(scope: CoroutineScope) :
     }
 
     override fun convert(savedNetworkType: SpotifyPlaylist): Pair<String, Instant?> {
-        PlaylistRepository.convert(savedNetworkType)
+        PlaylistRepository.convertToDB(savedNetworkType)
         return savedNetworkType.id to null
     }
 

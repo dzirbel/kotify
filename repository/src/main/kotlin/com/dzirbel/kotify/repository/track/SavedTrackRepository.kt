@@ -30,7 +30,7 @@ open class SavedTrackRepository(scope: CoroutineScope) :
 
     override fun convert(savedNetworkType: SpotifySavedTrack): Pair<String, Instant?> {
         val track = savedNetworkType.track
-        TrackRepository.convert(networkModel = track)
+        TrackRepository.convertToDB(networkModel = track)
         return track.id to null
     }
 

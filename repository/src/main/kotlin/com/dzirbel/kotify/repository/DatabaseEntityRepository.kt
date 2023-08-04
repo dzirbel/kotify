@@ -9,19 +9,21 @@ import java.time.Instant
 /**
  * A [DatabaseRepository] with a [SpotifyEntity] as the local database entity.
  */
-abstract class DatabaseEntityRepository<EntityType : SpotifyEntity, NetworkType : SpotifyObject> internal constructor(
+@Suppress("TypeParameterListSpacing") // no wrapping option appears to satisfy linting
+abstract class DatabaseEntityRepository<ViewModel, EntityType : SpotifyEntity, NetworkType : SpotifyObject>
+internal constructor(
     private val entityClass: EntityClass<String, EntityType>,
     entityName: String = entityClass.table.tableName.removeSuffix("s"),
     scope: CoroutineScope,
-) : DatabaseRepository<EntityType, NetworkType>(entityName = entityName, scope = scope) {
+) : DatabaseRepository<ViewModel, EntityType, NetworkType>(entityName = entityName, scope = scope) {
 
     /**
-     * Convenience variant of [convert] which uses the [networkModel]'s ID field, if it is non-null.
+     * Convenience variant of [convertToDB] which uses the [networkModel]'s ID field, if it is non-null.
      *
      * Repositories whose [NetworkType]s always have an ID can override this to provide a non-null return type.
      */
-    open fun convert(networkModel: NetworkType): EntityType? {
-        return networkModel.id?.let { convert(id = it, networkModel = networkModel) }
+    open fun convertToDB(networkModel: NetworkType): EntityType? {
+        return networkModel.id?.let { convertToDB(id = it, networkModel = networkModel) }
     }
 
     final override fun fetchFromDatabase(id: String): Pair<EntityType, Instant>? {

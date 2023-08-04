@@ -29,8 +29,11 @@ fun SpotifyAlbum.Type.toAlbumType(): AlbumType {
     }
 }
 
-open class AlbumRepository internal constructor(scope: CoroutineScope) :
-    DatabaseEntityRepository<Album, SpotifyAlbum>(entityClass = Album, scope = scope) {
+open class AlbumRepository internal constructor(
+    scope: CoroutineScope,
+    private val artistRepository: ArtistRepository,
+    private val trackRepository: TrackRepository,
+) : DatabaseEntityRepository<Album, Album, SpotifyAlbum>(entityClass = Album, scope = scope) {
 
     override suspend fun fetchFromRemote(id: String) = Spotify.Albums.getAlbum(id = id)
     override suspend fun fetchFromRemote(ids: List<String>): List<SpotifyAlbum?> {
@@ -38,7 +41,7 @@ open class AlbumRepository internal constructor(scope: CoroutineScope) :
             .flatMapParallel { idsChunk -> Spotify.Albums.getAlbums(ids = idsChunk) }
     }
 
-    override fun convert(id: String, networkModel: SpotifyAlbum): Album {
+    override fun convertToDB(id: String, networkModel: SpotifyAlbum): Album {
         return Album.updateOrInsert(id = id, networkModel = networkModel) {
             albumType = networkModel.albumType?.toAlbumType()
             releaseDate = networkModel.releaseDate
@@ -50,7 +53,7 @@ open class AlbumRepository internal constructor(scope: CoroutineScope) :
             // attempt to link artists from network model; do not set albumGroup since it is unavailable from an album
             // context
             networkModel.artists.forEach { artistModel ->
-                ArtistRepository.convert(artistModel)?.let { artist ->
+                artistRepository.convertToDB(artistModel)?.let { artist ->
                     ArtistAlbum.findOrCreate(artistId = artist.id.value, albumId = id, albumGroup = null)
                 }
             }
@@ -67,10 +70,16 @@ open class AlbumRepository internal constructor(scope: CoroutineScope) :
                 totalTracks = networkModel.tracks.total
 
                 genres.set(networkModel.genres.map { Genre.findOrCreate(it) })
-                tracks.set(networkModel.tracks.items.mapNotNull { TrackRepository.convert(it) })
+                tracks.set(networkModel.tracks.items.mapNotNull { trackRepository.convertToDB(it) })
             }
         }
     }
 
-    companion object : AlbumRepository(scope = Repository.applicationScope)
+    override fun convertToVM(databaseModel: Album) = databaseModel
+
+    companion object : AlbumRepository(
+        scope = Repository.applicationScope,
+        artistRepository = ArtistRepository,
+        trackRepository = TrackRepository,
+    )
 }

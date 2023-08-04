@@ -4,6 +4,7 @@ import com.dzirbel.kotify.db.DatabaseExtension
 import com.dzirbel.kotify.repository.ArtistList
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
+import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.artist.SavedArtistRepository
 import com.dzirbel.kotify.repository.mockArtistTracksNull
 import com.dzirbel.kotify.repository.mockLibrary
@@ -30,8 +31,8 @@ internal class ArtistsPageScreenshotTest {
 
     @Test
     fun full() {
-        val artists = ArtistList(count = 10)
-        val ids = artists.map { it.id.value }
+        val artists = ArtistList(count = 10).map { ArtistViewModel(it) }
+        val ids = artists.map { it.id }
 
         RelativeTimeInfo.withMockedTime { now ->
             withMockedObjects(ArtistRepository, SavedArtistRepository, ArtistTracksRepository) {

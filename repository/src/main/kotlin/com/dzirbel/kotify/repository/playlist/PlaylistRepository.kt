@@ -13,19 +13,22 @@ import com.dzirbel.kotify.repository.util.updateOrInsert
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
-open class PlaylistRepository internal constructor(scope: CoroutineScope) :
-    DatabaseEntityRepository<Playlist, SpotifyPlaylist>(entityClass = Playlist, scope = scope) {
+open class PlaylistRepository internal constructor(
+    scope: CoroutineScope,
+    private val playlistTracksRepository: PlaylistTracksRepository,
+    private val userRepository: UserRepository,
+) : DatabaseEntityRepository<Playlist, Playlist, SpotifyPlaylist>(entityClass = Playlist, scope = scope) {
 
     override suspend fun fetchFromRemote(id: String) = Spotify.Playlists.getPlaylist(playlistId = id)
 
-    override fun convert(id: String, networkModel: SpotifyPlaylist): Playlist {
+    override fun convertToDB(id: String, networkModel: SpotifyPlaylist): Playlist {
         return Playlist.updateOrInsert(id = id, networkModel = networkModel) {
             collaborative = networkModel.collaborative
             networkModel.description?.let { description = it }
             networkModel.public?.let { public = it }
             snapshotId = networkModel.snapshotId
 
-            owner.set(UserRepository.convert(networkModel.owner))
+            owner.set(userRepository.convertToDB(networkModel.owner))
 
             images.set(
                 networkModel.images.map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) },
@@ -45,7 +48,7 @@ open class PlaylistRepository internal constructor(scope: CoroutineScope) :
 
                 tracksFetched = Instant.now()
                 networkModel.tracks.items.mapIndexedNotNull { index, track ->
-                    PlaylistTracksRepository.convertTrack(
+                    playlistTracksRepository.convertTrack(
                         spotifyPlaylistTrack = track,
                         playlistId = networkModel.id,
                         index = index,
@@ -55,5 +58,11 @@ open class PlaylistRepository internal constructor(scope: CoroutineScope) :
         }
     }
 
-    companion object : PlaylistRepository(scope = Repository.applicationScope)
+    override fun convertToVM(databaseModel: Playlist) = databaseModel
+
+    companion object : PlaylistRepository(
+        scope = Repository.applicationScope,
+        playlistTracksRepository = PlaylistTracksRepository,
+        userRepository = UserRepository,
+    )
 }

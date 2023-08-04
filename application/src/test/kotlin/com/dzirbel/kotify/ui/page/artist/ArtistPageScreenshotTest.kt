@@ -9,6 +9,7 @@ import com.dzirbel.kotify.repository.album.AlbumTracksRepository
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.mockLibrary
 import com.dzirbel.kotify.repository.mockStateCached
 import com.dzirbel.kotify.repository.mockStateNull
@@ -38,8 +39,8 @@ internal class ArtistPageScreenshotTest {
     @Test
     fun full() {
         RelativeTimeInfo.withMockedTime { now ->
-            val artist = Artist(fullUpdateTime = now, albumsFetched = now)
-            val artistAlbums = ArtistAlbumList(artistId = artist.id.value, count = 20)
+            val artist = ArtistViewModel(Artist(fullUpdateTime = now, albumsFetched = now))
+            val artistAlbums = ArtistAlbumList(artistId = artist.id, count = 20)
 
             KotifyDatabase.blockingTransaction {
                 for (artistAlbum in artistAlbums) {
@@ -48,8 +49,8 @@ internal class ArtistPageScreenshotTest {
             }
 
             withMockedObjects(AlbumTracksRepository, ArtistAlbumsRepository, ArtistRepository, SavedAlbumRepository) {
-                ArtistRepository.mockStateCached(id = artist.id.value, value = artist, cacheTime = now)
-                ArtistAlbumsRepository.mockStateCached(id = artist.id.value, value = artistAlbums, cacheTime = now)
+                ArtistRepository.mockStateCached(id = artist.id, value = artist, cacheTime = now)
+                ArtistAlbumsRepository.mockStateCached(id = artist.id, value = artistAlbums, cacheTime = now)
                 SavedAlbumRepository.mockLibrary(ids = null)
 
                 for (album in artistAlbums) {
@@ -57,7 +58,7 @@ internal class ArtistPageScreenshotTest {
                 }
 
                 screenshotTest(filename = "full", windowWidth = 1500) {
-                    ArtistPage(artistId = artist.id.value).render()
+                    ArtistPage(artistId = artist.id).render()
                 }
             }
         }

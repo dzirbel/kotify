@@ -80,7 +80,7 @@ internal class PlaylistPageScreenshotTest {
         val playlist: Playlist
         val tracks: List<PlaylistTrack>
         KotifyDatabase.blockingTransaction {
-            playlist = PlaylistRepository.convert(playlistId, networkPlaylist)
+            playlist = PlaylistRepository.convertToDB(playlistId, networkPlaylist)
             tracks = PlaylistTrack.tracksInOrder(playlistId).onEach { playlistTrack ->
                 playlistTrack.track.loadToCache()
                 playlistTrack.track.cached.artists.loadToCache()
