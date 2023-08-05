@@ -3,10 +3,9 @@ package com.dzirbel.kotify.db
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.upsert
 import java.time.Instant
 
 /**
@@ -81,25 +80,14 @@ abstract class SavedEntityTable(name: String) : Table(name = name) {
      * Must be called from within a transaction.
      */
     fun setSaved(entityId: String, userId: String, saved: Boolean, savedTime: Instant?, savedCheckTime: Instant) {
-        // TODO use upsert when available, i.e. release including https://github.com/JetBrains/Exposed/pull/1743
+        upsert(entityIdColumn, userIdColumn) { statement ->
+            statement[entityIdColumn] = entityId
+            statement[userIdColumn] = userId
 
-        val updated = update(where = { (entityIdColumn eq entityId) and (userIdColumn eq userId) }) { statement ->
             statement[savedColumn] = saved
             // TODO do not change savedTime (in particular, do not set it to null) if saved value has not changed
             statement[savedTimeColumn] = savedTime?.takeIf { saved }
             statement[savedCheckTimeColumn] = savedCheckTime
-        }
-
-        if (updated == 0) {
-            insert { statement ->
-                statement[entityIdColumn] = entityId
-                statement[userIdColumn] = userId
-                statement[savedColumn] = saved
-                if (saved && savedTime != null) {
-                    statement[savedTimeColumn] = savedTime
-                }
-                statement[savedCheckTimeColumn] = savedCheckTime
-            }
         }
     }
 
