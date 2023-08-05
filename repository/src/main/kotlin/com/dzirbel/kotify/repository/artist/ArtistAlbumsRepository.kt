@@ -34,6 +34,12 @@ open class ArtistAlbumsRepository internal constructor(
     }
 
     override fun convertToDB(id: String, networkModel: List<SimplifiedSpotifyAlbum>): List<ArtistAlbum> {
+        // TODO use artist repository here?
+        // TODO update album fetch time even when artist is not in DB
+        Artist.findById(id)?.let { artist ->
+            artist.albumsFetched = Instant.now()
+        }
+
         return networkModel.mapNotNull { artistAlbum ->
             albumRepository.convertToDB(artistAlbum)?.let { album ->
                 // TODO ArtistAlbum may have multiple artists
