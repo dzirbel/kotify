@@ -2,8 +2,8 @@ package com.dzirbel.kotify.repository.playlist
 
 import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.model.Playlist
-import com.dzirbel.kotify.db.util.LazyTransactionStateFlow
 import com.dzirbel.kotify.db.util.largest
+import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow
 
 @Stable
 class PlaylistViewModel(playlist: Playlist) {

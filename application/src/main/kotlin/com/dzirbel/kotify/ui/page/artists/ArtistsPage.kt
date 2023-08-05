@@ -25,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerButton
-import com.dzirbel.kotify.db.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
@@ -34,6 +33,7 @@ import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.artist.SavedArtistRepository
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
+import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.ui.components.DividerSelector
 import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Interpunct

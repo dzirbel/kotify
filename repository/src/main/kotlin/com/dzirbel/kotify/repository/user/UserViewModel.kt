@@ -2,8 +2,8 @@ package com.dzirbel.kotify.repository.user
 
 import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.model.User
-import com.dzirbel.kotify.db.util.LazyTransactionStateFlow
 import com.dzirbel.kotify.db.util.smallest
+import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow
 
 @Stable
 class UserViewModel(user: User) {

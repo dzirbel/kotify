@@ -15,7 +15,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.db.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.playlist.PlaylistRepository
@@ -26,6 +25,7 @@ import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner

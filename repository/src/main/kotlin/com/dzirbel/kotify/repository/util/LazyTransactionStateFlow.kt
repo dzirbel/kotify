@@ -1,10 +1,10 @@
-package com.dzirbel.kotify.db.util
+package com.dzirbel.kotify.repository.util
 
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.db.util.LazyTransactionStateFlow.Companion.requestBatched
+import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,14 +19,11 @@ import java.util.concurrent.atomic.AtomicBoolean
  * - lazy: only loaded on the first collection of the flow
  * - observable: the loaded value can be observed as a [StateFlow] (e.g. collected into a Compose State)
  * - batched: multiple properties can be loaded in a single transaction via [requestBatched]
- *
- * TODO use of GlobalScope
- * TODO move to :repository
  */
 class LazyTransactionStateFlow<T>(
     private val transactionName: String,
     initialValue: T? = null,
-    private val scope: CoroutineScope = GlobalScope,
+    private val scope: CoroutineScope = Repository.applicationScope,
     private val getter: () -> T?,
 ) : StateFlow<T?> {
     private val requested = AtomicBoolean(initialValue != null)
@@ -55,7 +52,7 @@ class LazyTransactionStateFlow<T>(
          */
         fun <T, R : Any> Iterable<T>.requestBatched(
             transactionName: (Int) -> String,
-            scope: CoroutineScope = GlobalScope,
+            scope: CoroutineScope = Repository.applicationScope,
             extractor: (T) -> LazyTransactionStateFlow<R>,
         ) {
             val unrequestedProperties = mapNotNull { element ->
