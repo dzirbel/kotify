@@ -6,6 +6,7 @@ import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisallowComposableCalls
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -82,7 +83,7 @@ fun LinkedText(
     unhoveredSpanStyle: SpanStyle = SpanStyle(),
     hoveredSpanStyle: SpanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
     onClickLink: (String) -> Unit = { openInBrowser(it) },
-    elements: LinkElementScope.() -> Unit,
+    elements: @DisallowComposableCalls LinkElementScope.() -> Unit,
 ) {
     val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
 

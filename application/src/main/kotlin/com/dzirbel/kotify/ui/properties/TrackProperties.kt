@@ -17,17 +17,16 @@ import com.dzirbel.kotify.repository.playlist.PlaylistTrackViewModel
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.track.TrackViewModel
+import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.adapter.compareNullable
-import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByLinkedText
 import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByNumber
 import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByString
 import com.dzirbel.kotify.ui.components.star.StarRating
 import com.dzirbel.kotify.ui.components.table.Column
-import com.dzirbel.kotify.ui.components.table.ColumnByLinkedText
 import com.dzirbel.kotify.ui.components.table.ColumnWidth
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
@@ -69,20 +68,25 @@ open class TrackDurationProperty<T>(private val toTrack: (T) -> TrackViewModel) 
 }
 
 open class TrackArtistsProperty<T>(private val toTrack: (T) -> TrackViewModel) :
-    PropertyByLinkedText<T>(title = "Artist") {
+    PropertyByString<T>(title = "Artist") {
 
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override fun links(item: T): List<ColumnByLinkedText.Link> {
-        // TODO race condition
-        return toTrack(item).artists.requireLoaded()?.map { artist ->
-            ColumnByLinkedText.Link(text = artist.name, link = artist.id)
-        }
-            .orEmpty()
-    }
+    override fun toString(item: T): String? = toTrack(item).artists.value?.joinToString()
 
-    override fun onClickLink(link: String) {
-        pageStack.mutate { to(ArtistPage(artistId = link)) }
+    @Composable
+    override fun Item(item: T) {
+        val artists = toTrack(item).artists.collectAsState().value
+
+        LinkedText(
+            key = artists,
+            modifier = Modifier.padding(cellPadding),
+            onClickLink = { link -> pageStack.mutate { to(ArtistPage(artistId = link)) } },
+        ) {
+            list(artists.orEmpty()) {
+                link(text = it.name, link = it.id)
+            }
+        }
     }
 
     companion object : TrackArtistsProperty<TrackViewModel>(toTrack = { it })
@@ -90,19 +94,25 @@ open class TrackArtistsProperty<T>(private val toTrack: (T) -> TrackViewModel) :
 }
 
 open class TrackAlbumProperty<T>(private val toTrack: (T) -> TrackViewModel) :
-    PropertyByLinkedText<T>(title = "Album") {
+    PropertyByString<T>(title = "Album") {
 
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override fun links(item: T): List<ColumnByLinkedText.Link> {
-        // TODO race condition
-        return toTrack(item).album.requireLoaded()
-            ?.let { album -> listOf(ColumnByLinkedText.Link(text = album.name, link = album.id)) }
-            .orEmpty()
-    }
+    override fun toString(item: T): String? = toTrack(item).album.value?.name
 
-    override fun onClickLink(link: String) {
-        pageStack.mutate { to(AlbumPage(albumId = link)) }
+    @Composable
+    override fun Item(item: T) {
+        val album = toTrack(item).album.collectAsState().value
+
+        if (album != null) {
+            LinkedText(
+                key = album,
+                modifier = Modifier.padding(cellPadding),
+                onClickLink = { link -> pageStack.mutate { to(AlbumPage(albumId = link)) } },
+            ) {
+                link(text = album.name, link = album.id)
+            }
+        }
     }
 
     companion object : TrackAlbumProperty<TrackViewModel>(toTrack = { it })

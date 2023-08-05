@@ -48,11 +48,6 @@ class LazyTransactionStateFlow<T>(
         flow.collect(collector)
     }
 
-    fun requireLoaded(): T? {
-        check(requested.get()) { "transaction value has not been loaded" }
-        return flow.value
-    }
-
     companion object {
         /**
          * Initiates loading for the [LazyTransactionStateFlow]s produced by [extractor] on this [Iterable], with values
