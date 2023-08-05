@@ -20,7 +20,7 @@ open class TrackRepository internal constructor(
     albumRepository: Lazy<AlbumRepository>, // lazy to avoid circular dependency
     private val artistRepository: ArtistRepository,
     private val artistTracksRepository: ArtistTracksRepository,
-) : DatabaseEntityRepository<Track, Track, SpotifyTrack>(entityClass = Track, scope = scope) {
+) : DatabaseEntityRepository<TrackViewModel, Track, SpotifyTrack>(entityClass = Track, scope = scope) {
 
     private val albumRepository by albumRepository
 
@@ -40,7 +40,7 @@ open class TrackRepository internal constructor(
             trackNumber = networkModel.trackNumber
             networkModel.album
                 ?.let { albumRepository.convertToDB(it) }
-                ?.let { album.set(it) }
+                ?.let { album = it }
 
             artistTracksRepository.setTrackArtists(
                 trackId = id,
@@ -60,7 +60,7 @@ open class TrackRepository internal constructor(
         }
     }
 
-    override fun convertToVM(databaseModel: Track) = databaseModel
+    override fun convertToVM(databaseModel: Track) = TrackViewModel(databaseModel)
 
     companion object : TrackRepository(
         scope = Repository.applicationScope,

@@ -15,9 +15,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.repository.player.PlayerRepository
 import com.dzirbel.kotify.repository.playlist.PlaylistRepository
+import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
 import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalDivider
@@ -97,13 +97,13 @@ fun LibraryPanel() {
 }
 
 @Composable
-private fun PlaylistItem(playlist: Playlist) {
-    val selected = pageStack.value.current == PlaylistPage(playlistId = playlist.id.value)
+private fun PlaylistItem(playlist: PlaylistViewModel) {
+    val selected = pageStack.value.current == PlaylistPage(playlistId = playlist.id)
 
     SimpleTextButton(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
-        onClick = { pageStack.mutate { to(PlaylistPage(playlistId = playlist.id.value)) } },
+        onClick = { pageStack.mutate { to(PlaylistPage(playlistId = playlist.id)) } },
     ) {
         Text(
             text = playlist.name,

@@ -1,7 +1,5 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.ReadWriteCachedProperty
-import com.dzirbel.kotify.db.cached
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -9,7 +7,6 @@ import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
-import java.time.Instant
 
 object PlaylistTrackTable : IntIdTable() {
     val addedAd: Column<String?> = varchar("added_at", 20).nullable()
@@ -33,13 +30,9 @@ class PlaylistTrack(id: EntityID<Int>) : IntEntity(id) {
     var isLocal: Boolean by PlaylistTrackTable.isLocal
     var indexOnPlaylist: Int by PlaylistTrackTable.indexOnPlaylist
 
-    val addedBy: ReadWriteCachedProperty<User> by (User referencedOn PlaylistTrackTable.addedBy).cached()
-    val playlist: ReadWriteCachedProperty<Playlist> by (Playlist referencedOn PlaylistTrackTable.playlist).cached()
-    val track: ReadWriteCachedProperty<Track> by (Track referencedOn PlaylistTrackTable.track).cached()
-
-    val addedAtInstant: Instant? by lazy {
-        addedAt?.let { Instant.parse(it) }
-    }
+    var addedBy: User by User referencedOn PlaylistTrackTable.addedBy
+    var playlist: Playlist by Playlist referencedOn PlaylistTrackTable.playlist
+    var track: Track by Track referencedOn PlaylistTrackTable.track
 
     companion object : IntEntityClass<PlaylistTrack>(PlaylistTrackTable) {
         fun findOrCreate(trackId: String, playlistId: String): PlaylistTrack {

@@ -3,6 +3,7 @@ package com.dzirbel.kotify.repository.artist
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.Genre
 import com.dzirbel.kotify.db.model.Image
+import com.dzirbel.kotify.db.util.sized
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyArtist
@@ -29,10 +30,11 @@ open class ArtistRepository internal constructor(scope: CoroutineScope) :
 
                 popularity = networkModel.popularity
                 followersTotal = networkModel.followers.total
-                images.set(
-                    networkModel.images.map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) },
-                )
-                genres.set(networkModel.genres.map { Genre.findOrCreate(it) })
+                images = networkModel.images
+                    .map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) }
+                    .sized()
+
+                genres = networkModel.genres.map { Genre.findOrCreate(it) }.sized()
             }
         }
     }

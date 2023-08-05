@@ -5,6 +5,7 @@ import com.dzirbel.kotify.db.model.AlbumType
 import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.db.model.Genre
 import com.dzirbel.kotify.db.model.Image
+import com.dzirbel.kotify.db.util.sized
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyAlbum
@@ -33,7 +34,7 @@ open class AlbumRepository internal constructor(
     scope: CoroutineScope,
     private val artistRepository: ArtistRepository,
     private val trackRepository: TrackRepository,
-) : DatabaseEntityRepository<Album, Album, SpotifyAlbum>(entityClass = Album, scope = scope) {
+) : DatabaseEntityRepository<AlbumViewModel, Album, SpotifyAlbum>(entityClass = Album, scope = scope) {
 
     override suspend fun fetchFromRemote(id: String) = Spotify.Albums.getAlbum(id = id)
     override suspend fun fetchFromRemote(ids: List<String>): List<SpotifyAlbum?> {
@@ -58,9 +59,9 @@ open class AlbumRepository internal constructor(
                 }
             }
 
-            images.set(
-                networkModel.images.map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) },
-            )
+            images = networkModel.images
+                .map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) }
+                .sized()
 
             if (networkModel is FullSpotifyAlbum) {
                 fullUpdatedTime = Instant.now()
@@ -69,13 +70,13 @@ open class AlbumRepository internal constructor(
                 popularity = networkModel.popularity
                 totalTracks = networkModel.tracks.total
 
-                genres.set(networkModel.genres.map { Genre.findOrCreate(it) })
-                tracks.set(networkModel.tracks.items.mapNotNull { trackRepository.convertToDB(it) })
+                genres = networkModel.genres.map { Genre.findOrCreate(it) }.sized()
+                tracks = networkModel.tracks.items.mapNotNull { trackRepository.convertToDB(it) }.sized()
             }
         }
     }
 
-    override fun convertToVM(databaseModel: Album) = databaseModel
+    override fun convertToVM(databaseModel: Album) = AlbumViewModel(databaseModel)
 
     companion object : AlbumRepository(
         scope = Repository.applicationScope,

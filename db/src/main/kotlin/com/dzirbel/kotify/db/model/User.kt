@@ -1,15 +1,11 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.ReadOnlyCachedProperty
-import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
-import com.dzirbel.kotify.db.cachedAsList
-import com.dzirbel.kotify.db.cachedReadOnly
-import com.dzirbel.kotify.db.util.smallest
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.insert
@@ -45,9 +41,7 @@ class User(id: EntityID<String>) : SpotifyEntity(id = id, table = UserTable) {
     var followersTotal: Int? by UserTable.followersTotal
     var email: String? by UserTable.email
 
-    val images: ReadWriteCachedProperty<List<Image>> by (Image via UserTable.UserImageTable).cachedAsList()
-    val thumbnailImage: ReadOnlyCachedProperty<Image?> by (Image via UserTable.UserImageTable)
-        .cachedReadOnly { it.smallest() }
+    var images: SizedIterable<Image> by Image via UserTable.UserImageTable
 
     companion object : SpotifyEntityClass<User>(UserTable)
 }

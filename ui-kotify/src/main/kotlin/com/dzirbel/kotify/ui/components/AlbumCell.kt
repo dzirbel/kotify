@@ -21,8 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
-import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.repository.album.AlbumTracksRepository
+import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.rating.AverageRating
@@ -37,7 +37,7 @@ import kotlinx.coroutines.flow.mapNotNull
 
 @Composable
 fun AlbumCell(
-    album: Album,
+    album: AlbumViewModel,
     isSaved: Boolean?,
     onToggleSave: (Boolean) -> Unit,
     showRating: Boolean = false,
@@ -52,7 +52,7 @@ fun AlbumCell(
             .padding(Dimens.space3),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {
-        LoadedImage(imageProperty = album.largestImage, modifier = Modifier.align(Alignment.CenterHorizontally))
+        LoadedImage(album.largestImageUrl, modifier = Modifier.align(Alignment.CenterHorizontally))
 
         Row(
             modifier = Modifier.widthIn(max = Dimens.contentImage),
@@ -100,7 +100,7 @@ fun AlbumCell(
 }
 
 @Composable
-fun AlbumCell(album: Album, showRating: Boolean = true, onClick: () -> Unit) {
+fun AlbumCell(album: AlbumViewModel, showRating: Boolean = true, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .instrument()
@@ -109,7 +109,7 @@ fun AlbumCell(album: Album, showRating: Boolean = true, onClick: () -> Unit) {
             .padding(Dimens.space3),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {
-        LoadedImage(imageProperty = album.largestImage, modifier = Modifier.align(Alignment.CenterHorizontally))
+        LoadedImage(album.largestImageUrl, modifier = Modifier.align(Alignment.CenterHorizontally))
 
         Row(
             modifier = Modifier.widthIn(max = Dimens.contentImage),
@@ -117,7 +117,7 @@ fun AlbumCell(album: Album, showRating: Boolean = true, onClick: () -> Unit) {
         ) {
             Text(text = album.name, modifier = Modifier.weight(1f))
 
-            ToggleSaveButton(repository = SavedAlbumRepository, id = album.id.value)
+            ToggleSaveButton(repository = SavedAlbumRepository, id = album.id)
 
             PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)
         }
@@ -151,9 +151,9 @@ fun AlbumCell(album: Album, showRating: Boolean = true, onClick: () -> Unit) {
         }
 
         if (showRating) {
-            val averageRating = remember(album.id.value) {
-                AlbumTracksRepository.stateOf(id = album.id.value)
-                    .mapNotNull { it?.cachedValue?.map { track -> track.id.value } }
+            val averageRating = remember(album.id) {
+                AlbumTracksRepository.stateOf(id = album.id)
+                    .mapNotNull { it?.cachedValue?.map { track -> track.id } }
                     .flatMapLatest { tracks -> TrackRatingRepository.averageRatingStateOf(ids = tracks) }
             }
                 .collectAsState(initial = null)
@@ -165,7 +165,7 @@ fun AlbumCell(album: Album, showRating: Boolean = true, onClick: () -> Unit) {
 }
 
 @Composable
-fun SmallAlbumCell(album: Album, onClick: () -> Unit) {
+fun SmallAlbumCell(album: AlbumViewModel, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(Dimens.cornerSize))
@@ -176,7 +176,7 @@ fun SmallAlbumCell(album: Album, onClick: () -> Unit) {
         Box {
             LoadedImage(
                 // TODO use thumbnail image instead
-                imageProperty = album.largestImage,
+                urlFlow = album.largestImageUrl,
                 size = Dimens.contentImageSmall,
                 modifier = Modifier.align(Alignment.Center),
             )
@@ -191,7 +191,7 @@ fun SmallAlbumCell(album: Album, onClick: () -> Unit) {
                     .padding(Dimens.space1),
                 horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
             ) {
-                ToggleSaveButton(repository = SavedAlbumRepository, id = album.id.value)
+                ToggleSaveButton(repository = SavedAlbumRepository, id = album.id)
 
                 PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)
             }

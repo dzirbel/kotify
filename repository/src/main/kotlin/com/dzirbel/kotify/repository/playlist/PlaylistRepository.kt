@@ -2,6 +2,7 @@ package com.dzirbel.kotify.repository.playlist
 
 import com.dzirbel.kotify.db.model.Image
 import com.dzirbel.kotify.db.model.Playlist
+import com.dzirbel.kotify.db.util.sized
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyPlaylist
@@ -17,7 +18,7 @@ open class PlaylistRepository internal constructor(
     scope: CoroutineScope,
     private val playlistTracksRepository: PlaylistTracksRepository,
     private val userRepository: UserRepository,
-) : DatabaseEntityRepository<Playlist, Playlist, SpotifyPlaylist>(entityClass = Playlist, scope = scope) {
+) : DatabaseEntityRepository<PlaylistViewModel, Playlist, SpotifyPlaylist>(entityClass = Playlist, scope = scope) {
 
     override suspend fun fetchFromRemote(id: String) = Spotify.Playlists.getPlaylist(playlistId = id)
 
@@ -28,11 +29,11 @@ open class PlaylistRepository internal constructor(
             networkModel.public?.let { public = it }
             snapshotId = networkModel.snapshotId
 
-            owner.set(userRepository.convertToDB(networkModel.owner))
+            owner = userRepository.convertToDB(networkModel.owner)
 
-            images.set(
-                networkModel.images.map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) },
-            )
+            images = networkModel.images
+                .map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) }
+                .sized()
 
             if (networkModel is SimplifiedSpotifyPlaylist) {
                 networkModel.tracks?.let {
@@ -58,7 +59,7 @@ open class PlaylistRepository internal constructor(
         }
     }
 
-    override fun convertToVM(databaseModel: Playlist) = databaseModel
+    override fun convertToVM(databaseModel: Playlist) = PlaylistViewModel(databaseModel)
 
     companion object : PlaylistRepository(
         scope = Repository.applicationScope,

@@ -1,13 +1,14 @@
-package com.dzirbel.kotify.repository
+package com.dzirbel.kotify.db.util
 
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.repository.LazyTransactionStateFlow.Companion.requestBatched
+import com.dzirbel.kotify.db.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.util.zipEach
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.exposed.sql.Transaction
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -19,12 +20,14 @@ import java.util.concurrent.atomic.AtomicBoolean
  * - observable: the loaded value can be observed as a [StateFlow] (e.g. collected into a Compose State)
  * - batched: multiple properties can be loaded in a single transaction via [requestBatched]
  *
- * TODO make @Stable
+ * TODO make @Stable?
+ * TODO use of GlobalScope
  */
-class LazyTransactionStateFlow<T : Any>(
+class LazyTransactionStateFlow<T>(
     private val transactionName: String,
     initialValue: T? = null,
-    private val getter: Transaction.() -> T?,
+    private val scope: CoroutineScope = GlobalScope,
+    private val getter: () -> T?,
 ) : StateFlow<T?> {
     private val requested = AtomicBoolean(initialValue != null)
     private val flow = MutableStateFlow(initialValue)
@@ -37,13 +40,17 @@ class LazyTransactionStateFlow<T : Any>(
 
     override suspend fun collect(collector: FlowCollector<T?>): Nothing {
         if (!requested.getAndSet(true)) {
-            Repository.applicationScope.launch {
-                flow.value = KotifyDatabase.transaction(name = transactionName, statement = getter)
+            scope.launch {
+                flow.value = KotifyDatabase.transaction(name = transactionName) { getter() }
             }
         }
 
-        // TODO don't need to collect indefinitely, can collect only until there is a non-null value
         flow.collect(collector)
+    }
+
+    fun requireLoaded(): T? {
+        check(requested.get()) { "transaction value has not been loaded" }
+        return flow.value
     }
 
     companion object {
@@ -52,7 +59,8 @@ class LazyTransactionStateFlow<T : Any>(
          * loaded in a single batched transaction.
          */
         fun <T, R : Any> Iterable<T>.requestBatched(
-            transactionName: String,
+            transactionName: (Int) -> String,
+            scope: CoroutineScope = GlobalScope,
             extractor: (T) -> LazyTransactionStateFlow<R>,
         ) {
             val unrequestedProperties = mapNotNull { element ->
@@ -60,8 +68,8 @@ class LazyTransactionStateFlow<T : Any>(
             }
 
             if (unrequestedProperties.isNotEmpty()) {
-                Repository.applicationScope.launch {
-                    val values = KotifyDatabase.transaction(name = transactionName) {
+                scope.launch {
+                    val values = KotifyDatabase.transaction(name = transactionName(unrequestedProperties.size)) {
                         unrequestedProperties.map { property ->
                             // use with{} to include both property and transaction as receiver params
                             with(property) { getter() }

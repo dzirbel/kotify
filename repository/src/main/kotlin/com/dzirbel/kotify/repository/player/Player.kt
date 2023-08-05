@@ -1,7 +1,5 @@
 package com.dzirbel.kotify.repository.player
 
-import com.dzirbel.kotify.db.model.Album
-import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
@@ -11,7 +9,9 @@ import com.dzirbel.kotify.network.model.SpotifyPlaybackOffset
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
+import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
+import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
 import com.dzirbel.kotify.repository.util.ToggleableState
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,12 +40,12 @@ interface Player {
             /**
              * Returns a [PlayContext] which plays the given [album].
              */
-            fun album(album: Album) = album.uri?.let { PlayContext(contextUri = it) }
+            fun album(album: AlbumViewModel) = album.uri?.let { PlayContext(contextUri = it) }
 
             /**
              * Returns a [PlayContext] which plays the track at the given [index] on the given [album].
              */
-            fun albumTrack(album: Album, index: Int): PlayContext? {
+            fun albumTrack(album: AlbumViewModel, index: Int): PlayContext? {
                 return album.uri?.let { uri ->
                     PlayContext(contextUri = uri, offset = SpotifyPlaybackOffset(position = index))
                 }
@@ -56,12 +56,12 @@ interface Player {
             /**
              * Returns a [PlayContext] which plays the given [playlist].
              */
-            fun playlist(playlist: Playlist) = playlist.uri?.let { PlayContext(contextUri = it) }
+            fun playlist(playlist: PlaylistViewModel) = playlist.uri?.let { PlayContext(contextUri = it) }
 
             /**
              * Returns a [PlayContext] which plays the track at the given [index] on the given [playlist].
              */
-            fun playlistTrack(playlist: Playlist, index: Int): PlayContext? {
+            fun playlistTrack(playlist: PlaylistViewModel, index: Int): PlayContext? {
                 return playlist.uri?.let {
                     PlayContext(contextUri = it, offset = SpotifyPlaybackOffset(position = index))
                 }

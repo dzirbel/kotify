@@ -5,6 +5,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.blockingTransaction
 import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.model.PlaylistTrack
+import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.network.FullSpotifyPlaylist
 import com.dzirbel.kotify.network.SimplifiedSpotifyAlbum
 import com.dzirbel.kotify.network.SimplifiedSpotifyArtist
@@ -15,12 +16,15 @@ import com.dzirbel.kotify.repository.mockSaveStates
 import com.dzirbel.kotify.repository.mockStateCached
 import com.dzirbel.kotify.repository.mockStateNull
 import com.dzirbel.kotify.repository.playlist.PlaylistRepository
+import com.dzirbel.kotify.repository.playlist.PlaylistTrackViewModel
 import com.dzirbel.kotify.repository.playlist.PlaylistTracksRepository
+import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
 import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.repository.rating.Rating
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.repository.user.UserViewModel
 import com.dzirbel.kotify.ui.framework.render
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.util.RelativeTimeInfo
@@ -78,14 +82,12 @@ internal class PlaylistPageScreenshotTest {
         )
 
         val playlist: Playlist
-        val tracks: List<PlaylistTrack>
+        val owner: User
+        val tracks: List<PlaylistTrackViewModel>
         KotifyDatabase.blockingTransaction {
             playlist = PlaylistRepository.convertToDB(playlistId, networkPlaylist)
-            tracks = PlaylistTrack.tracksInOrder(playlistId).onEach { playlistTrack ->
-                playlistTrack.track.loadToCache()
-                playlistTrack.track.cached.artists.loadToCache()
-                playlistTrack.track.cached.album.loadToCache()
-            }
+            owner = playlist.owner
+            tracks = PlaylistTrack.tracksInOrder(playlistId).map { PlaylistTrackViewModel(it) }
         }
 
         RelativeTimeInfo.withMockedTime { now ->
@@ -97,11 +99,11 @@ internal class PlaylistPageScreenshotTest {
                 SavedTrackRepository,
                 UserRepository,
             ) {
-                PlaylistRepository.mockStateCached(playlistId, playlist, now)
+                PlaylistRepository.mockStateCached(playlistId, PlaylistViewModel(playlist), now)
                 PlaylistTracksRepository.mockStateCached(playlistId, tracks, now)
                 SavedPlaylistRepository.mockSaveState(playlistId, saved = true)
 
-                val trackIds = tracks.map { it.trackId.value }
+                val trackIds = tracks.map { it.track.id }
                 val ratings = tracks.map { track ->
                     track.indexOnPlaylist.takeIf { it % 2 != 0 }?.let { it % 10 }
                 }
@@ -116,7 +118,7 @@ internal class PlaylistPageScreenshotTest {
                     saved = ratings.map { rating -> rating?.let { it > 5 } },
                 )
 
-                UserRepository.mockStateCached(id = playlist.ownerId.value, playlist.owner.cached, cacheTime = now)
+                UserRepository.mockStateCached(id = owner.id.value, value = UserViewModel(owner), cacheTime = now)
 
                 screenshotTest(filename = "full", windowWidth = 1500) {
                     PlaylistPage(playlistId = playlistId).render()

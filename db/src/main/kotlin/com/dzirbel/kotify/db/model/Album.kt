@@ -1,17 +1,12 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.ReadOnlyCachedProperty
-import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
-import com.dzirbel.kotify.db.TransactionReadOnlyCachedProperty
-import com.dzirbel.kotify.db.cachedAsList
-import com.dzirbel.kotify.db.cachedReadOnly
-import com.dzirbel.kotify.db.util.largest
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant
@@ -62,20 +57,10 @@ class Album(id: EntityID<String>) : SpotifyEntity(id = id, table = AlbumTable) {
     var label: String? by AlbumTable.label
     var popularity: Int? by AlbumTable.popularity
 
-    val images: ReadWriteCachedProperty<List<Image>> by (Image via AlbumTable.AlbumImageTable).cachedAsList()
-    val genres: ReadWriteCachedProperty<List<Genre>> by (Genre via AlbumTable.AlbumGenreTable).cachedAsList()
-    val tracks: ReadWriteCachedProperty<List<Track>> by (Track via AlbumTable.AlbumTrackTable).cachedAsList()
-
-    val artists: ReadOnlyCachedProperty<List<Artist>> = ReadOnlyCachedProperty {
-        ArtistAlbum.find { ArtistAlbumTable.album eq id }.map { it.artist.live }
-    }
-
-    val parsedReleaseDate: ReleaseDate? by lazy {
-        releaseDate?.let { ReleaseDate.parse(it) }
-    }
-
-    val largestImage: TransactionReadOnlyCachedProperty<Image?> by (Image via AlbumTable.AlbumImageTable)
-        .cachedReadOnly(transactionName = "load album ${id.value} largest image") { it.largest() }
+    var images: SizedIterable<Image> by Image via AlbumTable.AlbumImageTable
+    var genres: SizedIterable<Genre> by Genre via AlbumTable.AlbumGenreTable
+    var tracks: SizedIterable<Track> by Track via AlbumTable.AlbumTrackTable
+    var artists: SizedIterable<Artist> by Artist via ArtistAlbumTable
 
     companion object : SpotifyEntityClass<Album>(AlbumTable)
 }

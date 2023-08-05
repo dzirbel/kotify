@@ -1,14 +1,12 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
-import com.dzirbel.kotify.db.cached
-import com.dzirbel.kotify.db.cachedAsList
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.Table
@@ -77,9 +75,8 @@ class Track(id: EntityID<String>) : SpotifyEntity(id = id, table = TrackTable) {
     var popularity: Int? by TrackTable.popularity
     var albumId: EntityID<String>? by TrackTable.album
 
-    val album: ReadWriteCachedProperty<Album?> by (Album optionalReferencedOn TrackTable.album).cached()
-
-    val artists: ReadWriteCachedProperty<List<Artist>> by (Artist via TrackTable.TrackArtistTable).cachedAsList()
+    var album: Album? by Album optionalReferencedOn TrackTable.album
+    var artists: SizedIterable<Artist> by Artist via TrackTable.TrackArtistTable
 
     companion object : SpotifyEntityClass<Track>(TrackTable)
 }

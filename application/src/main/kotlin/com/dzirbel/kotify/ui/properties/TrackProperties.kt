@@ -13,10 +13,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import com.dzirbel.kotify.db.model.PlaylistTrack
-import com.dzirbel.kotify.db.model.Track
+import com.dzirbel.kotify.repository.playlist.PlaylistTrackViewModel
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
+import com.dzirbel.kotify.repository.track.TrackViewModel
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
@@ -39,24 +39,24 @@ import com.dzirbel.kotify.ui.util.applyIf
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
 
-open class TrackNameProperty<T>(private val toTrack: (T) -> Track) : PropertyByString<T>(title = "Name") {
+open class TrackNameProperty<T>(private val toTrack: (T) -> TrackViewModel) : PropertyByString<T>(title = "Name") {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun toString(item: T) = toTrack(item).name
 
-    companion object : TrackNameProperty<Track>(toTrack = { it })
-    object ForPlaylistTrack : TrackNameProperty<PlaylistTrack>(toTrack = { it.track.cached })
+    companion object : TrackNameProperty<TrackViewModel>(toTrack = { it })
+    object ForPlaylistTrack : TrackNameProperty<PlaylistTrackViewModel>(toTrack = { it.track })
 }
 
-open class TrackAlbumIndexProperty<T>(private val toTrack: (T) -> Track) :
+open class TrackAlbumIndexProperty<T>(private val toTrack: (T) -> TrackViewModel) :
     PropertyByNumber<T>(title = "#", divisionRange = TRACK_INDEX_DIVISION_RANGE) {
     override fun toNumber(item: T) = toTrack(item).trackNumber
 
-    companion object : TrackAlbumIndexProperty<Track>(toTrack = { it })
-    object ForPlaylistTrack : TrackAlbumIndexProperty<PlaylistTrack>(toTrack = { it.track.cached })
+    companion object : TrackAlbumIndexProperty<TrackViewModel>(toTrack = { it })
+    object ForPlaylistTrack : TrackAlbumIndexProperty<PlaylistTrackViewModel>(toTrack = { it.track })
 }
 
-open class TrackDurationProperty<T>(private val toTrack: (T) -> Track) :
+open class TrackDurationProperty<T>(private val toTrack: (T) -> TrackViewModel) :
     PropertyByNumber<T>(title = "Duration", divisionRange = DURATION_DIVISION_RANGE_MS) {
     override val cellAlignment = Alignment.TopEnd
 
@@ -64,33 +64,40 @@ open class TrackDurationProperty<T>(private val toTrack: (T) -> Track) :
 
     override fun toString(item: T): String = formatDuration(toNumber(item))
 
-    companion object : TrackDurationProperty<Track>(toTrack = { it })
-    object ForPlaylistTrack : TrackDurationProperty<PlaylistTrack>(toTrack = { it.track.cached })
+    companion object : TrackDurationProperty<TrackViewModel>(toTrack = { it })
+    object ForPlaylistTrack : TrackDurationProperty<PlaylistTrackViewModel>(toTrack = { it.track })
 }
 
-open class TrackArtistsProperty<T>(private val toTrack: (T) -> Track) : PropertyByLinkedText<T>(title = "Artist") {
+open class TrackArtistsProperty<T>(private val toTrack: (T) -> TrackViewModel) :
+    PropertyByLinkedText<T>(title = "Artist") {
+
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun links(item: T): List<ColumnByLinkedText.Link> {
-        return toTrack(item).artists.cached.map { artist ->
-            ColumnByLinkedText.Link(text = artist.name, link = artist.id.value)
+        // TODO race condition
+        return toTrack(item).artists.requireLoaded()?.map { artist ->
+            ColumnByLinkedText.Link(text = artist.name, link = artist.id)
         }
+            .orEmpty()
     }
 
     override fun onClickLink(link: String) {
         pageStack.mutate { to(ArtistPage(artistId = link)) }
     }
 
-    companion object : TrackArtistsProperty<Track>(toTrack = { it })
-    object ForPlaylistTrack : TrackArtistsProperty<PlaylistTrack>(toTrack = { it.track.cached })
+    companion object : TrackArtistsProperty<TrackViewModel>(toTrack = { it })
+    object ForPlaylistTrack : TrackArtistsProperty<PlaylistTrackViewModel>(toTrack = { it.track })
 }
 
-open class TrackAlbumProperty<T>(private val toTrack: (T) -> Track) : PropertyByLinkedText<T>(title = "Album") {
+open class TrackAlbumProperty<T>(private val toTrack: (T) -> TrackViewModel) :
+    PropertyByLinkedText<T>(title = "Album") {
+
     override val width = ColumnWidth.Weighted(weight = 1f)
 
     override fun links(item: T): List<ColumnByLinkedText.Link> {
-        return toTrack(item).album.cachedOrNull
-            ?.let { album -> listOf(ColumnByLinkedText.Link(text = album.name, link = album.id.value)) }
+        // TODO race condition
+        return toTrack(item).album.requireLoaded()
+            ?.let { album -> listOf(ColumnByLinkedText.Link(text = album.name, link = album.id)) }
             .orEmpty()
     }
 
@@ -98,11 +105,11 @@ open class TrackAlbumProperty<T>(private val toTrack: (T) -> Track) : PropertyBy
         pageStack.mutate { to(AlbumPage(albumId = link)) }
     }
 
-    companion object : TrackAlbumProperty<Track>(toTrack = { it })
-    object ForPlaylistTrack : TrackAlbumProperty<PlaylistTrack>(toTrack = { it.track.cached })
+    companion object : TrackAlbumProperty<TrackViewModel>(toTrack = { it })
+    object ForPlaylistTrack : TrackAlbumProperty<PlaylistTrackViewModel>(toTrack = { it.track })
 }
 
-open class TrackPopularityProperty<T>(private val toTrack: (T) -> Track) :
+open class TrackPopularityProperty<T>(private val toTrack: (T) -> TrackViewModel) :
     PropertyByNumber<T>(title = "Popularity", divisionRange = POPULARITY_DIVISION_RANGE) {
     override val defaultSortOrder = SortOrder.DESCENDING
     override val defaultDivisionSortOrder = SortOrder.DESCENDING
@@ -140,8 +147,8 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> Track) :
         }
     }
 
-    companion object : TrackPopularityProperty<Track>(toTrack = { it })
-    object ForPlaylistTrack : TrackPopularityProperty<PlaylistTrack>(toTrack = { it.track.cached })
+    companion object : TrackPopularityProperty<TrackViewModel>(toTrack = { it })
+    object ForPlaylistTrack : TrackPopularityProperty<PlaylistTrackViewModel>(toTrack = { it.track })
 }
 
 class TrackSavedProperty<T>(

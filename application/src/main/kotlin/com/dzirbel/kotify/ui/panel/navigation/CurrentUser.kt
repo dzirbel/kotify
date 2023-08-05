@@ -19,17 +19,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.repository.CacheState
 import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.repository.user.UserViewModel
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.util.produceTransactionState
 
 private val CURRENT_USER_DROPDOWN_MAX_WIDTH = 500.dp
 
@@ -41,11 +40,7 @@ fun CurrentUser() {
     SimpleTextButton(onClick = { expandedState.value = !expandedState.value }) {
         val currentUser = currentUserCacheState?.cachedValue
 
-        val thumbnail = currentUser
-            ?.produceTransactionState("load current user image thumbnail") { thumbnailImage.live }
-            ?.value
-
-        LoadedImage(url = thumbnail?.url, modifier = Modifier.size(Dimens.iconMedium))
+        LoadedImage(currentUser?.thumbnailImageUrl, modifier = Modifier.size(Dimens.iconMedium))
 
         HorizontalSpacer(Dimens.space2)
 
@@ -78,7 +73,7 @@ fun CurrentUser() {
 }
 
 @Composable
-private fun CurrentUserDropdownContent(user: User?) {
+private fun CurrentUserDropdownContent(user: UserViewModel?) {
     Column(
         modifier = Modifier.padding(Dimens.space3).widthIn(max = CURRENT_USER_DROPDOWN_MAX_WIDTH),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2),

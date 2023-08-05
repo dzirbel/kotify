@@ -1,17 +1,12 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.ReadOnlyCachedProperty
-import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
-import com.dzirbel.kotify.db.cached
-import com.dzirbel.kotify.db.cachedAsList
-import com.dzirbel.kotify.db.cachedReadOnly
-import com.dzirbel.kotify.db.util.largest
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
@@ -57,11 +52,9 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
     var totalTracks: Int? by PlaylistTable.totalTracks
     var tracksFetched: Instant? by PlaylistTable.tracksFetched
 
-    val owner: ReadWriteCachedProperty<User> by (User referencedOn PlaylistTable.owner).cached()
+    var owner: User by User referencedOn PlaylistTable.owner
 
-    val images: ReadWriteCachedProperty<List<Image>> by (Image via PlaylistTable.PlaylistImageTable).cachedAsList()
-    val largestImage: ReadOnlyCachedProperty<Image?> by (Image via PlaylistTable.PlaylistImageTable)
-        .cachedReadOnly { it.largest() }
+    var images: SizedIterable<Image> by Image via PlaylistTable.PlaylistImageTable
 
     companion object : SpotifyEntityClass<Playlist>(PlaylistTable)
 }

@@ -62,7 +62,7 @@ object AlbumsPage : Page<Unit>() {
                     Grid(elements = albumsAdapter.value) { _, album ->
                         AlbumCell(
                             album = album,
-                            onClick = { pageStack.mutate { to(AlbumPage(albumId = album.id.value)) } },
+                            onClick = { pageStack.mutate { to(AlbumPage(albumId = album.id)) } },
                         )
                     }
                 } else {

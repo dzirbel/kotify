@@ -25,8 +25,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerButton
-import com.dzirbel.kotify.repository.LazyTransactionStateFlow.Companion.requestBatched
+import com.dzirbel.kotify.db.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
@@ -112,7 +113,10 @@ object ArtistsPage : Page<Unit>() {
                     ArtistRepository.statesOf(library.ids)
                         .combinedStateWhenAllNotNull { it?.cachedValue }
                         .onEachIn(scope) { artists ->
-                            artists?.requestBatched("load ${artists.size} artist largest images") { it.largestImage }
+                            artists?.requestBatched(
+                                transactionName = { "load $it artist largest images" },
+                                extractor = { it.largestImageUrl },
+                            )
                         }
                 }
             }
@@ -232,7 +236,7 @@ private fun ArtistCell(artist: ArtistViewModel, onRightClick: () -> Unit) {
             .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = onRightClick)
             .padding(Dimens.space3),
     ) {
-        LoadedImage(artist.largestImage, modifier = Modifier.align(Alignment.CenterHorizontally))
+        LoadedImage(artist.largestImageUrl, modifier = Modifier.align(Alignment.CenterHorizontally))
 
         VerticalSpacer(Dimens.space3)
 
@@ -264,7 +268,7 @@ private const val DETAILS_ALBUMS_WEIGHT = 0.7f
 @Composable
 private fun ArtistDetailInsert(artist: ArtistViewModel) {
     Row(modifier = Modifier.padding(Dimens.space4), horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-        LoadedImage(artist.largestImage)
+        LoadedImage(artist.largestImageUrl)
 
         Column(
             modifier = Modifier.weight(weight = DETAILS_COLUMN_WEIGHT),
@@ -283,7 +287,7 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
             artist.genres.collectAsState().value?.let { genres ->
                 Flow {
                     for (genre in genres) {
-                        Pill(text = genre)
+                        Pill(text = genre.name)
                     }
                 }
             }
@@ -298,15 +302,18 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
             RatingHistogram(averageRating)
         }
 
-        artist.albums.collectAsState().value?.let { albums ->
-            val adapter = remember { ListAdapter.of(elements = albums, defaultSort = AlbumNameProperty.ForArtistAlbum) }
+        ArtistAlbumsRepository.stateOf(artist.id).collectAsState().value?.let { cacheState ->
+            val adapter = remember {
+                ListAdapter.of(elements = cacheState.cachedValue, defaultSort = AlbumNameProperty.ForArtistAlbum)
+            }
+
             Grid(
                 modifier = Modifier.weight(DETAILS_ALBUMS_WEIGHT),
                 elements = adapter,
             ) { _, artistAlbum ->
                 SmallAlbumCell(
-                    album = artistAlbum.album.cached,
-                    onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.albumId.value)) } },
+                    album = artistAlbum.album,
+                    onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.album.id)) } },
                 )
             }
         }

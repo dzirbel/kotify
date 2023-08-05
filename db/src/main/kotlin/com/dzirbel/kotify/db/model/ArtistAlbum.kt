@@ -1,7 +1,5 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.ReadWriteCachedProperty
-import com.dzirbel.kotify.db.cached
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -23,8 +21,8 @@ class ArtistAlbum(id: EntityID<Int>) : IntEntity(id) {
     var albumId: EntityID<String> by ArtistAlbumTable.album
     var artistId: EntityID<String> by ArtistAlbumTable.artist
 
-    val artist: ReadWriteCachedProperty<Artist> by (Artist referencedOn ArtistAlbumTable.artist).cached()
-    val album: ReadWriteCachedProperty<Album> by (Album referencedOn ArtistAlbumTable.album).cached()
+    var artist: Artist by Artist referencedOn ArtistAlbumTable.artist
+    var album: Album by Album referencedOn ArtistAlbumTable.album
 
     companion object : IntEntityClass<ArtistAlbum>(ArtistAlbumTable) {
         fun findOrCreate(artistId: String, albumId: String, albumGroup: AlbumType?): ArtistAlbum {

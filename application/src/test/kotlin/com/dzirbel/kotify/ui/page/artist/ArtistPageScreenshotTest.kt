@@ -7,6 +7,7 @@ import com.dzirbel.kotify.repository.Artist
 import com.dzirbel.kotify.repository.ArtistAlbumList
 import com.dzirbel.kotify.repository.album.AlbumTracksRepository
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
+import com.dzirbel.kotify.repository.artist.ArtistAlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
@@ -41,20 +42,17 @@ internal class ArtistPageScreenshotTest {
         RelativeTimeInfo.withMockedTime { now ->
             val artist = ArtistViewModel(Artist(fullUpdateTime = now, albumsFetched = now))
             val artistAlbums = ArtistAlbumList(artistId = artist.id, count = 20)
-
-            KotifyDatabase.blockingTransaction {
-                for (artistAlbum in artistAlbums) {
-                    artistAlbum.album.loadToCache()
-                }
+            val artistAlbumViewModels = KotifyDatabase.blockingTransaction {
+                artistAlbums.map { ArtistAlbumViewModel(it) }
             }
 
             withMockedObjects(AlbumTracksRepository, ArtistAlbumsRepository, ArtistRepository, SavedAlbumRepository) {
                 ArtistRepository.mockStateCached(id = artist.id, value = artist, cacheTime = now)
-                ArtistAlbumsRepository.mockStateCached(id = artist.id, value = artistAlbums, cacheTime = now)
+                ArtistAlbumsRepository.mockStateCached(id = artist.id, value = artistAlbumViewModels, cacheTime = now)
                 SavedAlbumRepository.mockLibrary(ids = null)
 
-                for (album in artistAlbums) {
-                    AlbumTracksRepository.mockStateNull(album.albumId.value)
+                for (artistAlbum in artistAlbumViewModels) {
+                    AlbumTracksRepository.mockStateNull(artistAlbum.album.id)
                 }
 
                 screenshotTest(filename = "full", windowWidth = 1500) {

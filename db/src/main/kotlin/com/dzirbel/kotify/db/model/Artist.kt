@@ -1,15 +1,12 @@
 package com.dzirbel.kotify.db.model
 
-import com.dzirbel.kotify.db.ReadWriteCachedProperty
 import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
-import com.dzirbel.kotify.db.cachedAsList
-import com.dzirbel.kotify.db.cachedReadOnly
-import com.dzirbel.kotify.db.util.largest
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant
@@ -39,14 +36,10 @@ class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable)
     var followersTotal: Int? by ArtistTable.followersTotal
     var albumsFetched: Instant? by ArtistTable.albumsFetched
 
-    val images: ReadWriteCachedProperty<List<Image>> by (Image via ArtistTable.ArtistImageTable).cachedAsList()
-    val genres: ReadWriteCachedProperty<List<Genre>> by (Genre via ArtistTable.ArtistGenreTable).cachedAsList()
+    var images: SizedIterable<Image> by Image via ArtistTable.ArtistImageTable
+    var genres: SizedIterable<Genre> by Genre via ArtistTable.ArtistGenreTable
 
-    val artistAlbums by (ArtistAlbum referrersOn ArtistAlbumTable.artist)
-        .cachedReadOnly(transactionName = "load artist ${id.value} albums") { it.toList() }
-
-    val largestImage by (Image via ArtistTable.ArtistImageTable)
-        .cachedReadOnly { it.largest() }
+    val artistAlbums: SizedIterable<ArtistAlbum> by ArtistAlbum referrersOn ArtistAlbumTable.artist
 
     companion object : SpotifyEntityClass<Artist>(ArtistTable)
 }

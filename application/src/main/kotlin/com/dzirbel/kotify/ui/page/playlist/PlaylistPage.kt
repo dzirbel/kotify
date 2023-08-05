@@ -15,12 +15,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.db.model.Playlist
-import com.dzirbel.kotify.db.model.PlaylistTrack
+import com.dzirbel.kotify.db.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.playlist.PlaylistRepository
+import com.dzirbel.kotify.repository.playlist.PlaylistTrackViewModel
 import com.dzirbel.kotify.repository.playlist.PlaylistTracksRepository
+import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
 import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
@@ -58,7 +59,6 @@ import com.dzirbel.kotify.util.formatMediumDuration
 import com.dzirbel.kotify.util.immutable.orEmpty
 import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
 import com.dzirbel.kotify.util.mapIn
-import com.dzirbel.kotify.util.produceTransactionState
 import com.dzirbel.kotify.util.takingIf
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentList
@@ -77,14 +77,25 @@ data class PlaylistPage(private val playlistId: String) : Page<String?>() {
             key = playlistId,
             defaultSort = PlaylistTrackIndexProperty,
             source = { scope ->
-                PlaylistTracksRepository.stateOf(id = playlistId).mapIn(scope) { it?.cachedValue }
+                PlaylistTracksRepository.stateOf(id = playlistId).mapIn(scope) { cacheState ->
+                    cacheState?.cachedValue?.also { playlistTracks ->
+                        playlistTracks.requestBatched(
+                            transactionName = { "$it playlist track albums" },
+                            extractor = { it.track.album },
+                        )
+                        playlistTracks.requestBatched(
+                            transactionName = { "$it playlist track artists" },
+                            extractor = { it.track.artists },
+                        )
+                    }
+                }
             },
         )
 
         val columns = remember(playlist) { playlistTrackColumns(playlist) }
 
-        SavedTrackRepository.rememberSavedStates(playlistTracksAdapter.value) { it.trackId.value }
-        TrackRatingRepository.rememberRatingStates(playlistTracksAdapter.value) { it.trackId.value }
+        SavedTrackRepository.rememberSavedStates(playlistTracksAdapter.value) { it.track.id }
+        TrackRatingRepository.rememberRatingStates(playlistTracksAdapter.value) { it.track.id }
 
         VerticalScrollPage(
             visible = visible,
@@ -120,10 +131,10 @@ data class PlaylistPage(private val playlistId: String) : Page<String?>() {
 @Composable
 private fun PlaylistHeader(
     playlistId: String,
-    playlist: Playlist?,
-    sortableProperties: ImmutableList<SortableProperty<PlaylistTrack>>,
-    adapter: ListAdapter<PlaylistTrack>,
-    onSetSort: (PersistentList<Sort<PlaylistTrack>>) -> Unit,
+    playlist: PlaylistViewModel?,
+    sortableProperties: ImmutableList<SortableProperty<PlaylistTrackViewModel>>,
+    adapter: ListAdapter<PlaylistTrackViewModel>,
+    onSetSort: (PersistentList<Sort<PlaylistTrackViewModel>>) -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
@@ -133,12 +144,7 @@ private fun PlaylistHeader(
             horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val image = playlist?.let {
-                playlist.largestImage.cachedOrNull
-                    ?: playlist.produceTransactionState("load playlist image") { largestImage.live }.value
-            }
-
-            LoadedImage(url = image?.url)
+            LoadedImage(playlist?.largestImageUrl)
 
             if (playlist != null) {
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
@@ -148,12 +154,12 @@ private fun PlaylistHeader(
                         Text(it)
                     }
 
-                    val owner = UserRepository.stateOf(id = playlist.ownerId.value).collectAsState().value?.cachedValue
+                    val owner = UserRepository.stateOf(id = playlist.ownerId).collectAsState().value?.cachedValue
                     Text("Created by ${owner?.name ?: "..."}; ${playlist.followersTotal} followers")
 
                     val totalDuration = takingIf(adapter.hasElements) {
                         remember(adapter) {
-                            adapter.sumOf { it.track.cached.durationMs }.milliseconds.formatMediumDuration()
+                            adapter.sumOf { it.track.durationMs }.milliseconds.formatMediumDuration()
                         }
                     }
 
@@ -240,10 +246,10 @@ private fun PlaylistReorderButton(
     }
 }
 
-private fun playlistTrackColumns(playlist: Playlist?): PersistentList<Column<PlaylistTrack>> {
+private fun playlistTrackColumns(playlist: PlaylistViewModel?): PersistentList<Column<PlaylistTrackViewModel>> {
     return persistentListOf(
         TrackPlayingColumn(
-            trackIdOf = { playlistTrack -> playlistTrack.trackId.value },
+            trackIdOf = { playlistTrack -> playlistTrack.track.id },
             playContextFromTrack = { playlistTrack ->
                 playlist?.let {
                     // TODO use current sort order instead of playlist order?
@@ -252,11 +258,11 @@ private fun playlistTrackColumns(playlist: Playlist?): PersistentList<Column<Pla
             },
         ),
         PlaylistTrackIndexProperty,
-        TrackSavedProperty(trackIdOf = { playlistTrack -> playlistTrack.trackId.value }),
+        TrackSavedProperty(trackIdOf = { playlistTrack -> playlistTrack.track.id }),
         TrackNameProperty.ForPlaylistTrack,
         TrackArtistsProperty.ForPlaylistTrack,
         TrackAlbumProperty.ForPlaylistTrack,
-        TrackRatingProperty(trackIdOf = { playlistTrack -> playlistTrack.trackId.value }),
+        TrackRatingProperty(trackIdOf = { playlistTrack -> playlistTrack.track.id }),
         PlaylistTrackAddedAtProperty,
         TrackDurationProperty.ForPlaylistTrack,
         TrackPopularityProperty.ForPlaylistTrack,

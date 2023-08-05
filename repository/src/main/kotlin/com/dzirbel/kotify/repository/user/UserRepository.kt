@@ -4,6 +4,7 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Image
 import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.db.model.UserTable
+import com.dzirbel.kotify.db.util.sized
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.PrivateSpotifyUser
 import com.dzirbel.kotify.network.model.SpotifyUser
@@ -24,14 +25,14 @@ import java.time.Instant
 open class UserRepository internal constructor(
     private val applicationScope: CoroutineScope,
     private val userSessionScope: CoroutineScope,
-) : DatabaseEntityRepository<User, User, SpotifyUser>(entityClass = User, scope = applicationScope) {
+) : DatabaseEntityRepository<UserViewModel, User, SpotifyUser>(entityClass = User, scope = applicationScope) {
 
     private val _currentUserId = MutableStateFlow<String?>(null)
     val currentUserId: StateFlow<String?>
         get() = _currentUserId
 
-    private val _currentUser = MutableStateFlow<CacheState<User>?>(null)
-    val currentUser: StateFlow<CacheState<User>?>
+    private val _currentUser = MutableStateFlow<CacheState<UserViewModel>?>(null)
+    val currentUser: StateFlow<CacheState<UserViewModel>?>
         get() = _currentUser
 
     val hasCurrentUserId: Boolean
@@ -47,7 +48,9 @@ open class UserRepository internal constructor(
     override fun convertToDB(id: String, networkModel: SpotifyUser): User {
         return User.updateOrInsert(id = id, networkModel = networkModel) {
             networkModel.images?.let { images ->
-                this.images.set(images.map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) })
+                this.images = images
+                    .map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) }
+                    .sized()
             }
 
             networkModel.followers?.let {
@@ -61,7 +64,7 @@ open class UserRepository internal constructor(
         }
     }
 
-    override fun convertToVM(databaseModel: User) = databaseModel
+    override fun convertToVM(databaseModel: User) = UserViewModel(databaseModel)
 
     fun onConnectToDatabase() {
         _currentUserId.value = UserTable.CurrentUserTable.get()
@@ -78,7 +81,10 @@ open class UserRepository internal constructor(
 
             val cachedUpdateTime = cachedUser?.fullUpdatedTime
             if (cachedUpdateTime != null) {
-                _currentUser.value = CacheState.Loaded(cachedValue = cachedUser, cacheTime = cachedUpdateTime)
+                _currentUser.value = CacheState.Loaded(
+                    cachedValue = UserViewModel(cachedUser),
+                    cacheTime = cachedUpdateTime,
+                )
             } else {
                 _currentUser.value = CacheState.Refreshing()
 
@@ -96,7 +102,7 @@ open class UserRepository internal constructor(
                 _currentUserId.value = remoteUser.id.value
 
                 _currentUser.value = CacheState.Loaded(
-                    cachedValue = remoteUser,
+                    cachedValue = UserViewModel(remoteUser),
                     cacheTime = remoteUser.updatedTime,
                 )
             }

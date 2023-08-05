@@ -16,23 +16,19 @@ import java.time.Instant
 open class ArtistAlbumsRepository internal constructor(
     scope: CoroutineScope,
     private val albumRepository: AlbumRepository,
-) : DatabaseRepository<List<ArtistAlbum>, List<ArtistAlbum>, List<SimplifiedSpotifyAlbum>>(
+) : DatabaseRepository<List<ArtistAlbumViewModel>, List<ArtistAlbum>, List<SimplifiedSpotifyAlbum>>(
     entityName = "artist albums",
     scope = scope,
 ) {
-
     override suspend fun fetchFromRemote(id: String): List<SimplifiedSpotifyAlbum> {
         return Spotify.Artists.getArtistAlbums(id = id).asFlow().toList()
     }
 
     override fun fetchFromDatabase(id: String): Pair<List<ArtistAlbum>, Instant>? {
+        // TODO use artist repository here?
         return Artist.findById(id)?.let { artist ->
             artist.albumsFetched?.let { albumsFetched ->
-                val artistAlbums = artist.artistAlbums.live.onEach {
-                    // TODO loadToCache
-                    it.album.loadToCache()
-                }
-                Pair(artistAlbums, albumsFetched)
+                Pair(artist.artistAlbums.toList(), albumsFetched)
             }
         }
     }
@@ -45,15 +41,12 @@ open class ArtistAlbumsRepository internal constructor(
                     artistId = id,
                     albumId = album.id.value,
                     albumGroup = artistAlbum.albumGroup?.toAlbumType(),
-                ).also {
-                    // TODO loadToCache
-                    it.album.loadToCache()
-                }
+                )
             }
         }
     }
 
-    override fun convertToVM(databaseModel: List<ArtistAlbum>) = databaseModel
+    override fun convertToVM(databaseModel: List<ArtistAlbum>) = databaseModel.map(::ArtistAlbumViewModel)
 
     companion object : ArtistAlbumsRepository(scope = Repository.applicationScope, albumRepository = AlbumRepository)
 }

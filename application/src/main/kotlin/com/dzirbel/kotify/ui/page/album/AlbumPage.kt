@@ -13,12 +13,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.album.AlbumTracksRepository
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
+import com.dzirbel.kotify.repository.track.TrackViewModel
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -28,6 +28,7 @@ import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.adapter.ListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
+import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.framework.Page
 import com.dzirbel.kotify.ui.framework.VerticalScrollPage
@@ -48,8 +49,8 @@ import com.dzirbel.kotify.ui.util.rememberRatingStates
 import com.dzirbel.kotify.util.formatMediumDuration
 import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
 import com.dzirbel.kotify.util.mapIn
-import com.dzirbel.kotify.util.produceTransactionState
 import com.dzirbel.kotify.util.takingIf
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapNotNull
@@ -68,12 +69,12 @@ data class AlbumPage(val albumId: String) : Page<String?>() {
             AlbumTracksRepository.stateOf(id = albumId).mapIn(scope) { it?.cachedValue }
         }
 
-        TrackRatingRepository.rememberRatingStates(tracksAdapterState.value) { it.id.value }
+        TrackRatingRepository.rememberRatingStates(tracksAdapterState.value) { it.id }
 
-        val trackProperties = remember(album) {
+        val trackProperties: PersistentList<Column<TrackViewModel>> = remember(album) {
             persistentListOf(
                 TrackPlayingColumn(
-                    trackIdOf = { it.id.value },
+                    trackIdOf = { it.id },
                     playContextFromTrack = { track ->
                         album?.let {
                             Player.PlayContext.albumTrack(album = album, index = track.trackNumber)
@@ -81,10 +82,10 @@ data class AlbumPage(val albumId: String) : Page<String?>() {
                     },
                 ),
                 TrackAlbumIndexProperty,
-                TrackSavedProperty(trackIdOf = { track -> track.id.value }),
+                TrackSavedProperty(trackIdOf = { track -> track.id }),
                 TrackNameProperty,
                 TrackArtistsProperty,
-                TrackRatingProperty(trackIdOf = { track -> track.id.value }),
+                TrackRatingProperty(trackIdOf = { track -> track.id }),
                 TrackDurationProperty,
                 TrackPopularityProperty,
             )
@@ -116,7 +117,7 @@ data class AlbumPage(val albumId: String) : Page<String?>() {
 }
 
 @Composable
-private fun AlbumHeader(albumId: String, adapter: ListAdapterState<Track>) {
+private fun AlbumHeader(albumId: String, adapter: ListAdapterState<TrackViewModel>) {
     val albumCacheState = AlbumRepository.stateOf(albumId).collectAsState().value
     val album = albumCacheState?.cachedValue
 
@@ -128,19 +129,18 @@ private fun AlbumHeader(albumId: String, adapter: ListAdapterState<Track>) {
             horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            LoadedImage(album?.largestImage)
+            LoadedImage(album?.largestImageUrl)
 
             if (album != null) {
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
                     Text(album.name, style = MaterialTheme.typography.h5)
 
-                    val artists = album.produceTransactionState("load album artists") { album.artists.live }.value
-                    if (artists != null) {
+                    album.artists.collectAsState().value?.let { artists ->
                         LinkedText(
                             onClickLink = { artistId -> pageStack.mutate { to(ArtistPage(artistId = artistId)) } },
                         ) {
                             text("By ")
-                            list(artists) { artist -> link(text = artist.name, link = artist.id.value) }
+                            list(artists) { artist -> link(text = artist.name, link = artist.id) }
                         }
                     }
 
@@ -165,7 +165,7 @@ private fun AlbumHeader(albumId: String, adapter: ListAdapterState<Track>) {
 
                     val averageRating = remember(albumId) {
                         AlbumTracksRepository.stateOf(id = albumId)
-                            .mapNotNull { it?.cachedValue?.map { track -> track.id.value } }
+                            .mapNotNull { it?.cachedValue?.map { track -> track.id } }
                             .flatMapLatest { tracks -> TrackRatingRepository.averageRatingStateOf(ids = tracks) }
                     }
                         .collectAsState(initial = null)

@@ -21,7 +21,7 @@ open class PlaylistTracksRepository internal constructor(
     scope: CoroutineScope,
     private val trackRepository: TrackRepository,
     private val userRepository: UserRepository,
-) : DatabaseRepository<List<PlaylistTrack>, List<PlaylistTrack>, List<SpotifyPlaylistTrack>>(
+) : DatabaseRepository<List<PlaylistTrackViewModel>, List<PlaylistTrack>, List<SpotifyPlaylistTrack>>(
     entityName = "playlist tracks",
     scope = scope,
 ) {
@@ -50,13 +50,6 @@ open class PlaylistTracksRepository internal constructor(
     override fun fetchFromDatabase(id: String): Pair<List<PlaylistTrack>, Instant>? {
         return PlaylistTable.tracksFetchTime(playlistId = id)?.let { fetchTime ->
             val tracks = PlaylistTrack.tracksInOrder(playlistId = id)
-                .onEach { playlistTrack ->
-                    // TODO loadToCache()
-                    playlistTrack.track.loadToCache()
-                    playlistTrack.track.cached.artists.loadToCache()
-                    playlistTrack.track.cached.album.loadToCache()
-                }
-
             tracks to fetchTime
         }
     }
@@ -71,7 +64,7 @@ open class PlaylistTracksRepository internal constructor(
         }
     }
 
-    override fun convertToVM(databaseModel: List<PlaylistTrack>) = databaseModel
+    override fun convertToVM(databaseModel: List<PlaylistTrack>) = databaseModel.map(::PlaylistTrackViewModel)
 
     /**
      * Reorders the given [tracks] for the playlist with the given [playlistId] according to the given [comparator].
@@ -80,8 +73,8 @@ open class PlaylistTracksRepository internal constructor(
      */
     fun reorder(
         playlistId: String,
-        tracks: List<PlaylistTrack>,
-        comparator: Comparator<PlaylistTrack>,
+        tracks: List<PlaylistTrackViewModel>,
+        comparator: Comparator<PlaylistTrackViewModel>,
     ): Flow<PlaylistReorderState> {
         // TODO prevent concurrent reorders of the same playlist
         return flow {
@@ -120,15 +113,10 @@ open class PlaylistTracksRepository internal constructor(
             ?.let { trackRepository.convertToDB(it) }
             ?.let { track ->
                 PlaylistTrack.findOrCreate(trackId = track.id.value, playlistId = playlistId).apply {
-                    spotifyPlaylistTrack.addedBy?.let { addedBy.set(userRepository.convertToDB(it.id, it)) }
+                    spotifyPlaylistTrack.addedBy?.let { addedBy = userRepository.convertToDB(it.id, it) }
                     spotifyPlaylistTrack.addedAt?.let { addedAt = it }
                     isLocal = spotifyPlaylistTrack.isLocal
                     indexOnPlaylist = index
-
-                    // TODO loadToCache()
-                    this.track.loadToCache()
-                    this.track.cached.artists.loadToCache()
-                    this.track.cached.album.loadToCache()
                 }
             }
     }
