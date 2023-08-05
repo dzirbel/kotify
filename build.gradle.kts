@@ -84,9 +84,7 @@ fun Project.configureKotlin() {
             allWarningsAsErrors = true
             jvmTarget.set(libs.versions.jvm.map(JvmTarget::fromTarget))
 
-            freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
             freeCompilerArgs.add("-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
-            freeCompilerArgs.add("-opt-in=kotlinx.coroutines.FlowPreview")
             freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
             freeCompilerArgs.add("-opt-in=kotlinx.coroutines.DelicateCoroutinesApi") // allow use of GlobalScope
 
