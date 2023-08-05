@@ -13,6 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.db.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.album.AlbumTracksRepository
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
@@ -49,6 +50,7 @@ import com.dzirbel.kotify.ui.util.rememberRatingStates
 import com.dzirbel.kotify.util.formatMediumDuration
 import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
 import com.dzirbel.kotify.util.mapIn
+import com.dzirbel.kotify.util.onEachIn
 import com.dzirbel.kotify.util.takingIf
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -66,7 +68,11 @@ data class AlbumPage(val albumId: String) : Page<String?>() {
             defaultSort = TrackAlbumIndexProperty,
         ) { scope ->
             // TODO load full track objects
-            AlbumTracksRepository.stateOf(id = albumId).mapIn(scope) { it?.cachedValue }
+            AlbumTracksRepository.stateOf(id = albumId)
+                .mapIn(scope) { it?.cachedValue }
+                .onEachIn(scope) { tracks ->
+                    tracks?.requestBatched(transactionName = { "album $albumId $it track artists" }) { it.artists }
+                }
         }
 
         TrackRatingRepository.rememberRatingStates(tracksAdapterState.value) { it.id }

@@ -47,7 +47,6 @@ import com.dzirbel.kotify.ui.components.SortSelector
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
-import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.ListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.dividableProperties
 import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
@@ -61,7 +60,6 @@ import com.dzirbel.kotify.ui.framework.VerticalScrollPage
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
-import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistPopularityProperty
 import com.dzirbel.kotify.ui.properties.ArtistRatingProperty
@@ -74,6 +72,7 @@ import com.dzirbel.kotify.ui.util.rememberArtistTracksStates
 import com.dzirbel.kotify.util.combinedStateWhenAllNotNull
 import com.dzirbel.kotify.util.flatMapLatestIn
 import com.dzirbel.kotify.util.immutable.orEmpty
+import com.dzirbel.kotify.util.mapIn
 import com.dzirbel.kotify.util.onEachIn
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -302,20 +301,19 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
             RatingHistogram(averageRating)
         }
 
-        ArtistAlbumsRepository.stateOf(artist.id).collectAsState().value?.let { cacheState ->
-            val adapter = remember {
-                ListAdapter.of(elements = cacheState.cachedValue, defaultSort = AlbumNameProperty.ForArtistAlbum)
-            }
+        // TODO add loading state
+        val adapter = rememberListAdapterState(key = artist.id) { scope ->
+            ArtistAlbumsRepository.stateOf(artist.id).mapIn(scope) { it?.cachedValue }
+        }
 
-            Grid(
-                modifier = Modifier.weight(DETAILS_ALBUMS_WEIGHT),
-                elements = adapter,
-            ) { _, artistAlbum ->
-                SmallAlbumCell(
-                    album = artistAlbum.album,
-                    onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.album.id)) } },
-                )
-            }
+        Grid(
+            modifier = Modifier.weight(DETAILS_ALBUMS_WEIGHT),
+            elements = adapter.value,
+        ) { _, artistAlbum ->
+            SmallAlbumCell(
+                album = artistAlbum.album,
+                onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.album.id)) } },
+            )
         }
     }
 }

@@ -28,6 +28,8 @@ import org.jetbrains.exposed.sql.transactions.transactionManager
 import java.io.File
 import java.sql.Connection
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 private val tables = arrayOf(
     AlbumTable,
@@ -134,6 +136,10 @@ object KotifyDatabase {
      * on a single thread to avoid database locking.
      */
     suspend fun <T> transaction(name: String?, statement: Transaction.() -> T): T {
+        contract {
+            callsInPlace(statement, InvocationKind.EXACTLY_ONCE)
+        }
+
         check(enabled)
         check(initialized.get()) { "database not initialized" }
         check(db.transactionManager.currentOrNull() == null) { "transaction already in progress" }

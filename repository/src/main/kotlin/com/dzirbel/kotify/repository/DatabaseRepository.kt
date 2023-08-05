@@ -3,6 +3,7 @@ package com.dzirbel.kotify.repository
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.repository.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.repository.util.midpointInstantToNow
+import com.dzirbel.kotify.util.mapFirst
 import com.dzirbel.kotify.util.mapParallel
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.CancellationException
@@ -134,9 +135,14 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
      * value was present in the cache and valid according to [cacheStrategy]) or false otherwise.
      */
     private suspend fun loadFromCache(id: String, cacheStrategy: CacheStrategy<ViewModel>): Boolean {
-        val pair = try {
+        val viewModel: ViewModel?
+        val lastUpdated: Instant?
+
+        try {
             KotifyDatabase.transaction(name = "load $entityName $id") {
-                fetchFromDatabase(id = id)
+                val pair = fetchFromDatabase(id = id)
+                viewModel = pair?.first?.let { convertToVM(it) }
+                lastUpdated = pair?.second
             }
         } catch (cancellationException: CancellationException) {
             throw cancellationException
@@ -145,9 +151,8 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
             return false
         }
 
-        val viewModel = pair?.first?.let(::convertToVM)
-        return if (viewModel != null && cacheStrategy.isValid(viewModel)) {
-            states.updateValue(id, CacheState.Loaded(viewModel, pair.second))
+        return if (viewModel != null && lastUpdated != null && cacheStrategy.isValid(viewModel)) {
+            states.updateValue(id, CacheState.Loaded(viewModel, lastUpdated))
             true
         } else {
             false
@@ -161,7 +166,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
     private suspend fun loadFromCache(ids: List<String>, cacheStrategy: CacheStrategy<ViewModel>): List<String> {
         val cachedEntities = try {
             KotifyDatabase.transaction(name = "load ${ids.size} ${entityName}s") {
-                fetchFromDatabase(ids = ids)
+                fetchFromDatabase(ids = ids).map { it?.mapFirst(::convertToVM) }
             }
         } catch (cancellationException: CancellationException) {
             throw cancellationException
@@ -173,7 +178,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         val missingIds = mutableListOf<String>()
 
         ids.zipEach(cachedEntities) { id, pair ->
-            val viewModel = pair?.first?.let(::convertToVM)
+            val viewModel = pair?.first
             if (viewModel != null && cacheStrategy.isValid(viewModel)) {
                 states.updateValue(id, CacheState.Loaded(viewModel, pair.second))
             } else {
@@ -193,7 +198,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         val start = TimeSource.Monotonic.markNow()
         val remoteEntity = try {
             fetchFromRemote(id)?.let { networkModel ->
-                KotifyDatabase.transaction("save $entityName $id") { convertToDB(id, networkModel) }
+                KotifyDatabase.transaction("save $entityName $id") { convertToVM(convertToDB(id, networkModel)) }
             }
         } catch (cancellationException: CancellationException) {
             throw cancellationException
@@ -204,10 +209,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
 
         val fetchTime = start.midpointInstantToNow()
 
-        states.updateValue(
-            id,
-            remoteEntity?.let { CacheState.Loaded(convertToVM(it), fetchTime) } ?: CacheState.NotFound(),
-        )
+        states.updateValue(id, remoteEntity?.let { CacheState.Loaded(it, fetchTime) } ?: CacheState.NotFound())
     }
 
     /**
@@ -225,7 +227,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
             if (notNullNetworkModels > 0) {
                 KotifyDatabase.transaction("save $notNullNetworkModels ${entityName}s") {
                     networkModels.zip(ids) { networkModel, id ->
-                        networkModel?.let { convertToDB(id, it) }
+                        networkModel?.let { convertToVM(convertToDB(id, it)) }
                     }
                 }
             } else {
@@ -244,10 +246,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         val fetchTime = start.midpointInstantToNow()
 
         ids.zipEach(remoteEntities) { id, remoteEntity ->
-            states.updateValue(
-                id,
-                remoteEntity?.let { CacheState.Loaded(convertToVM(it), fetchTime) } ?: CacheState.NotFound(),
-            )
+            states.updateValue(id, remoteEntity?.let { CacheState.Loaded(it, fetchTime) } ?: CacheState.NotFound())
         }
     }
 
