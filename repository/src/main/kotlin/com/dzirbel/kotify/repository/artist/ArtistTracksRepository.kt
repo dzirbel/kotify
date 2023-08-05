@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository.artist
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.TrackTable
 import com.dzirbel.kotify.repository.Repository
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
  *
  * TODO make it regular Repository to allow reuse of extensions
  */
+@Stable
 open class ArtistTracksRepository internal constructor(private val scope: CoroutineScope) {
 
     // map from artist ID to the set of track IDs for that artist

@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.repository.util.ToggleableState
 import kotlinx.coroutines.flow.StateFlow
 import java.time.Instant
@@ -9,11 +10,13 @@ import java.time.Instant
  *
  * TODO expose save times and save check times
  */
+@Stable
 interface SavedRepository {
     /**
      * Wraps the state of a saved library; a set of [ids] and an [Instant] at the last time it was fetched from the
      * remote data source.
      */
+    @Stable
     data class Library(
         val ids: Set<String>,
         val cacheTime: Instant,

@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.compose)
     alias(libs.plugins.detekt)
     id("jacoco")
     id("java-test-fixtures")
@@ -17,6 +18,7 @@ dependencies {
     testFixturesImplementation(testFixtures(project(":db")))
     testFixturesImplementation(testFixtures(project(":network")))
 
+    implementation(compose.runtime)
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.javatime)
@@ -31,6 +33,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.slf4j.nop) // suppress warnings from mockk: https://github.com/mockk/mockk/issues/243
 
+    testFixturesImplementation(compose.runtime)
     testFixturesImplementation(libs.mockk)
     testFixturesImplementation(libs.slf4j.nop) // suppress warnings from mockk: https://github.com/mockk/mockk/issues/243
 }

@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository
 
+import androidx.compose.runtime.Stable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
  * This is the entrypoint for most UI elements to access data. In particular, the state of an entity is exposed via
  * [stateOf] which returns a [StateFlow] to which the UI can bind for a live view of the data.
  */
+@Stable
 interface Repository<T> {
     /**
      * The [CacheStrategy] applied by default determine the validity of locally cached data.

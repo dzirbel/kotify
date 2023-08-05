@@ -1,10 +1,12 @@
 package com.dzirbel.kotify.repository.track
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.db.util.LazyTransactionStateFlow
 import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 
+@Stable
 class TrackViewModel(track: Track) {
     val id: String = track.id.value
     val uri: String? = track.uri

@@ -3,10 +3,12 @@ package com.dzirbel.kotify.ui.framework
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 
 /**
  * Represents a page in a [PageStack] and how it is rendered.
  */
+@Stable
 abstract class Page<T> {
     /**
      * The [MutableTransitionState] which contains the animation state of the page name and highlighted background for

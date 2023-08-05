@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui
 
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.dzirbel.kotify.Logger
@@ -26,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 
+@Stable
 sealed class ImageCacheEvent {
     data class InMemory(val url: String) : ImageCacheEvent()
     data class OnDisk(val url: String, val duration: Duration, val cacheFile: File) : ImageCacheEvent()

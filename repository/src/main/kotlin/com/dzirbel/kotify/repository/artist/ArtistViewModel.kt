@@ -1,10 +1,12 @@
 package com.dzirbel.kotify.repository.artist
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.util.LazyTransactionStateFlow
 import com.dzirbel.kotify.db.util.largest
 import com.dzirbel.kotify.repository.genre.GenreViewModel
 
+@Stable
 class ArtistViewModel(artist: Artist) {
     val id: String = artist.id.value
     val uri: String? = artist.uri

@@ -1,11 +1,13 @@
 package com.dzirbel.kotify.repository.rating
 
+import androidx.compose.runtime.Stable
 import java.time.Instant
 
 /**
  * Wrapper around a singe user-provided rating. To allow changing the rating format in the future, both the current
  * [rating] and the [maxRating] are included, as well as the [rateTime] when the rating was given.
  */
+@Stable
 data class Rating(
     val rating: Int,
     val maxRating: Int = DEFAULT_MAX_RATING,

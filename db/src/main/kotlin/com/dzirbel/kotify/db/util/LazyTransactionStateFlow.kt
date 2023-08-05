@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * - observable: the loaded value can be observed as a [StateFlow] (e.g. collected into a Compose State)
  * - batched: multiple properties can be loaded in a single transaction via [requestBatched]
  *
- * TODO make @Stable?
  * TODO use of GlobalScope
+ * TODO move to :repository
  */
 class LazyTransactionStateFlow<T>(
     private val transactionName: String,

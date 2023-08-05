@@ -1,11 +1,13 @@
 package com.dzirbel.kotify.repository
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.SpotifyEntity
 import java.time.Instant
 
 /**
  * Wraps the state of a value retrieved from a [Repository].
  */
+@Stable
 sealed interface CacheState<T> {
     /**
      * The current value to be reflected.

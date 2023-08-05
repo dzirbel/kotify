@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository.player
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
@@ -21,10 +22,12 @@ import kotlinx.coroutines.flow.StateFlow
  * always [PlayerRepository] and is only separated as in interface to make the API more clear and separate from the
  * implementation.
  */
+@Stable
 interface Player {
     /**
      * Encapsulates options to start playback.
      */
+    @Stable
     class PlayContext private constructor(
         val contextUri: String?,
         val trackUris: List<String>? = null,

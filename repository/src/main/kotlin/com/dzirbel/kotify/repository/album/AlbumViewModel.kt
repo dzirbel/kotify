@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository.album
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumType
 import com.dzirbel.kotify.db.util.LazyTransactionStateFlow
@@ -7,6 +8,7 @@ import com.dzirbel.kotify.db.util.largest
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.util.ReleaseDate
 
+@Stable
 class AlbumViewModel internal constructor(album: Album) {
     val id: String = album.id.value
     val uri: String? = album.uri

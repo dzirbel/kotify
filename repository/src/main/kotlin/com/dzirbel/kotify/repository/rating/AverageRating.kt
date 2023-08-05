@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository.rating
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.util.averageOrNull
 
 /**
@@ -8,6 +9,7 @@ import com.dzirbel.kotify.util.averageOrNull
  *
  * TODO used by RatingHistogram as well - not always treated as just an average
  */
+@Stable
 class AverageRating(val ratings: Iterable<Rating?>) {
     val averagePercent by lazy {
         ratings.averageOrNull { it.ratingPercent }

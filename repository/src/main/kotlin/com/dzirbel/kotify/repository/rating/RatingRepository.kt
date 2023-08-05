@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository.rating
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.repository.user.UserRepository
 import kotlinx.coroutines.flow.StateFlow
 
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
  * In practice this is always [TrackRatingRepository] since no other entities can be rated individually, but the API is
  * kept separate to decouple it from the implementation.
  */
+@Stable
 interface RatingRepository {
     /**
      * Returns a live [StateFlow] reflecting the current [Rating] (for the current user) of the entity with the given

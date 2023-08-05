@@ -1,5 +1,7 @@
 package com.dzirbel.kotify.ui.framework
 
+import androidx.compose.runtime.Stable
+
 /**
  * A simple, immutable stack of [Page]s that can be navigated between.
  *
@@ -9,6 +11,7 @@ package com.dzirbel.kotify.ui.framework
  *
  * A [PageStack] may be not be empty.
  */
+@Stable
 class PageStack private constructor(
     val pages: List<Page<*>>,
     val currentIndex: Int,

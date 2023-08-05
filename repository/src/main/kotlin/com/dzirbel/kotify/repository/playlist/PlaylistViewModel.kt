@@ -1,9 +1,11 @@
 package com.dzirbel.kotify.repository.playlist
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.model.Playlist
 import com.dzirbel.kotify.db.util.LazyTransactionStateFlow
 import com.dzirbel.kotify.db.util.largest
 
+@Stable
 class PlaylistViewModel(playlist: Playlist) {
     val id: String = playlist.id.value
     val uri: String? = playlist.uri
