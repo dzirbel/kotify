@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import com.dzirbel.kotify.repository.CacheStrategy
 import com.dzirbel.kotify.repository.player.PlayerRepository
 import com.dzirbel.kotify.repository.playlist.PlaylistRepository
 import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
@@ -74,7 +75,8 @@ fun LibraryPanel() {
             val savedPlaylistIds = SavedPlaylistRepository.library.collectAsState().value?.ids
             if (savedPlaylistIds != null) {
                 val playlistStates = remember(savedPlaylistIds) {
-                    PlaylistRepository.statesOf(ids = savedPlaylistIds)
+                    // do not require a full playlist model
+                    PlaylistRepository.statesOf(ids = savedPlaylistIds, cacheStrategy = CacheStrategy.EntityTTL())
                 }
 
                 savedPlaylistIds.zipEach(playlistStates) { playlistId, playlistState ->
