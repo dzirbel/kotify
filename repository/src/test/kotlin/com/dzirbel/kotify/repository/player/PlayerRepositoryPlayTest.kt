@@ -3,8 +3,6 @@ package com.dzirbel.kotify.repository.player
 import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
-import assertk.assertions.isFalse
-import assertk.assertions.isTrue
 import com.dzirbel.kotify.network.FullSpotifyTrack
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.SpotifyPlaybackContext
@@ -69,7 +67,7 @@ class PlayerRepositoryPlayTest : BasePlayerRepositoryTest() {
             collectingToList(repository.errors) { errors ->
                 repository.refreshTrack()
                 advanceUntilIdle()
-                assertThat((repository.trackPosition.value as TrackPosition.Fetched).playing).isFalse()
+                assertThat((repository.trackPosition.value as TrackPosition.Fetched).playing).isEqualTo(false)
                 assertThat((repository.trackPosition.value as TrackPosition.Fetched).fetchedPositionMs).isEqualTo(10)
 
                 repository.play(context = null)
@@ -77,7 +75,7 @@ class PlayerRepositoryPlayTest : BasePlayerRepositoryTest() {
                 advanceUntilIdle()
 
                 assertThat(repository.playing.value).isEqualTo(ToggleableState.Set(true))
-                assertThat((repository.trackPosition.value as TrackPosition.Fetched).playing).isTrue()
+                assertThat((repository.trackPosition.value as TrackPosition.Fetched).playing).isEqualTo(true)
                 assertThat((repository.trackPosition.value as TrackPosition.Fetched).fetchedPositionMs).isEqualTo(10)
 
                 assertThat(errors).isEmpty()

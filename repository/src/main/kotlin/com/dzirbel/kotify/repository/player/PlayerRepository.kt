@@ -107,6 +107,7 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
         fetchPlaybackLock.launch(scope = scope) {
             _refreshingPlayback.value = true
 
+            val start = TimeSource.Monotonic.markNow()
             val playback = try {
                 Spotify.Player.getCurrentPlayback()
             } catch (ex: CancellationException) {
@@ -118,7 +119,7 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
             }
 
             if (playback != null) {
-                updateWithPlayback(playback)
+                updateWithPlayback(playback, fetchTimestamp = start.midpointTimestampToNow())
             }
 
             _refreshingPlayback.value = false
@@ -148,6 +149,7 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
         fetchTrackPlaybackLock.launch(scope = scope) {
             _refreshingTrack.value = true
 
+            val start = TimeSource.Monotonic.markNow()
             val trackPlayback = try {
                 Spotify.Player.getCurrentlyPlayingTrack()
             } catch (ex: CancellationException) {
@@ -157,6 +159,7 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
                 _errors.emit(throwable)
                 null
             }
+            val fetchTimestamp = start.midpointTimestampToNow()
 
             if (trackPlayback != null) {
                 if (condition?.invoke(trackPlayback) == false) {
@@ -173,15 +176,15 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
                         }
                     } else {
                         // retries have failed to meet the condition, now use the provided playback
-                        updateWithTrackPlayback(trackPlayback)
+                        updateWithTrackPlayback(trackPlayback, fetchTimestamp = fetchTimestamp)
                     }
                 } else {
                     // condition is null or has been met, apply the new playback
-                    updateWithTrackPlayback(trackPlayback)
+                    updateWithTrackPlayback(trackPlayback, fetchTimestamp = fetchTimestamp)
                 }
             } else {
                 // if there is no playback, stop retries regardless
-                updateWithTrackPlayback(null)
+                updateWithTrackPlayback(null, fetchTimestamp = fetchTimestamp)
             }
 
             _refreshingTrack.value = false
@@ -221,7 +224,8 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
 
                 val trackPosition = _trackPosition.value
                 if (context == null && trackPosition is TrackPosition.Fetched) {
-                    // resuming playback from a known position
+                    // resuming playback from a known position, optimistically set the track position (before updating
+                    // from the remote below as well)
                     _trackPosition.value = trackPosition.play(playTimestamp = start.midpointTimestampToNow())
                 }
 
@@ -229,8 +233,6 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
                 refreshTrackWithRetries {
                     it.isPlaying && (context == null || it.context?.uri == context.contextUri)
                 }
-
-                context?.contextUri?.let { _playbackContextUri.value = it }
             }
         }
     }
@@ -246,7 +248,8 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
                     _trackPosition.value = position.pause(pauseTimestamp = start.midpointTimestampToNow())
                 }
 
-                // TODO verify applied?
+                // verify applied by refreshing until not playing
+                refreshTrackWithRetries { !it.isPlaying }
             }
         }
     }
@@ -320,16 +323,29 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
                 false
             }
 
+            val end = TimeSource.Monotonic.markNow()
+
             if (success) {
+                // optimistically update the track position before refreshing from the remote below
                 _trackPosition.value = TrackPosition.Fetched(
                     fetchedTimestamp = start.midpointTimestampToNow(),
                     fetchedPositionMs = positionMs,
-                    playing = _playing.value?.value == true, // TODO ?
+                    playing = _playing.value?.value,
                 )
 
-                // refresh the track to get a more accurate progress indication
-                // TODO often fetches before the new position has been applied
-                refreshTrack()
+                // returns the range of progressMs the track could have if the seek was applied between the measured
+                // start and end times (including a buffer for a time the remote takes to apply the seek, even after
+                // returning from the endpoint)
+                fun possibleProgressMsRange(): LongRange {
+                    val now = TimeSource.Monotonic.markNow()
+                    val msSinceStart = (now - start).inWholeMilliseconds
+                    val msSinceEnd = (now - end).inWholeMilliseconds
+                    return (positionMs + msSinceEnd)..(positionMs + msSinceStart + SEEK_TO_POSITION_BUFFER_MS)
+                }
+
+                refreshTrackWithRetries(backoffStrategy = BackoffStrategy.failFast) {
+                    it.progressMs in possibleProgressMsRange()
+                }
             }
         }
     }
@@ -388,13 +404,13 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
         }
     }
 
-    private fun updateWithPlayback(playback: SpotifyPlayback) {
+    private fun updateWithPlayback(playback: SpotifyPlayback, fetchTimestamp: Long) {
         _playable.value = !playback.device.isRestricted
         _currentDevice.value = playback.device
 
         playback.progressMs?.let { progressMs ->
             _trackPosition.value = TrackPosition.Fetched(
-                fetchedTimestamp = playback.timestamp,
+                fetchedTimestamp = fetchTimestamp,
                 fetchedPositionMs = progressMs.toInt(),
                 playing = playback.isPlaying,
             )
@@ -420,12 +436,12 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
         }
     }
 
-    private fun updateWithTrackPlayback(trackPlayback: SpotifyTrackPlayback?) {
+    private fun updateWithTrackPlayback(trackPlayback: SpotifyTrackPlayback?, fetchTimestamp: Long) {
         _currentTrack.value = trackPlayback?.item
 
         _trackPosition.value = trackPlayback?.let {
             TrackPosition.Fetched(
-                fetchedTimestamp = trackPlayback.timestamp,
+                fetchedTimestamp = fetchTimestamp,
                 fetchedPositionMs = trackPlayback.progressMs.toInt(),
                 playing = trackPlayback.isPlaying,
             )
@@ -446,7 +462,6 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
         }
     }
 
-    // TODO document
     private suspend fun <T> MutableStateFlow<ToggleableState<T>?>.toggleTo(value: T, block: suspend () -> Unit) {
         val previousValue = this.value
         this.value = ToggleableState.TogglingTo(value)
@@ -465,5 +480,10 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
         this.value = if (success) ToggleableState.Set(value) else previousValue
     }
 
-    companion object : PlayerRepository(scope = Repository.userSessionScope)
+    companion object : PlayerRepository(scope = Repository.userSessionScope) {
+        /**
+         * Buffer time in milliseconds to permit when verifying that a seek was applied.
+         */
+        private const val SEEK_TO_POSITION_BUFFER_MS = 2_500
+    }
 }

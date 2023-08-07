@@ -27,5 +27,10 @@ internal interface BackoffStrategy {
          * The default [BackoffStrategy] with a fixed number of delays of increasing duration.
          */
         val default = OfDelays(250, 500, 500, 2000, 5000)
+
+        /**
+         * A [BackoffStrategy] which fails fast, with a small number of delays with short durations.
+         */
+        val failFast = OfDelays(250, 750)
     }
 }

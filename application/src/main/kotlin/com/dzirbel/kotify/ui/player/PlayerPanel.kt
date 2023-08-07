@@ -74,7 +74,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.launch
-import java.util.concurrent.TimeUnit
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -385,12 +384,10 @@ private fun TrackProgress() {
         SeekableSlider(progress = null)
     } else {
         val progressFlow = remember(position) {
-            if (position is TrackPosition.Fetched && position.playing) {
+            if (position is TrackPosition.Fetched && position.playing == true) {
                 flow {
-                    val start = System.nanoTime()
                     while (true) {
-                        val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).toInt()
-                        emit(position.fetchedPositionMs + elapsedMs)
+                        emit(position.currentPositionMs)
                         delay(PROGRESS_SLIDER_UPDATE_DELAY_MS)
                     }
                 }
@@ -399,10 +396,7 @@ private fun TrackProgress() {
             }
         }
 
-        val positionMs: Int = progressFlow.collectAsStateSwitchable(
-            initial = { position.currentPositionMs },
-            key = position,
-        )
+        val positionMs: Int = progressFlow.collectAsState(initial = position.currentPositionMs)
             .value
             .coerceAtMost(track.durationMs.toInt())
 

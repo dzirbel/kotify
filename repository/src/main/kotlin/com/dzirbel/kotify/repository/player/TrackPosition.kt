@@ -25,12 +25,12 @@ sealed interface TrackPosition {
      * moment in time (specifically, [fetchedPositionMs], an estimate or returned Unix time when the state was read) and
      * the play position at that time, [fetchedPositionMs].
      */
-    data class Fetched(val fetchedTimestamp: Long, val fetchedPositionMs: Int, val playing: Boolean) : TrackPosition {
+    data class Fetched(val fetchedTimestamp: Long, val fetchedPositionMs: Int, val playing: Boolean?) : TrackPosition {
         override val currentPositionMs: Int
             get() = positionRelativeTo(currentTime())
 
         private fun positionRelativeTo(timestamp: Long): Int {
-            return if (playing) {
+            return if (playing == true) {
                 (timestamp - fetchedTimestamp).toInt() + fetchedPositionMs
             } else {
                 fetchedPositionMs
