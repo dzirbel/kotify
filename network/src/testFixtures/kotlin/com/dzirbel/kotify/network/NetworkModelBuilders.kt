@@ -12,6 +12,7 @@ import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyExternalId
 import com.dzirbel.kotify.network.model.SpotifyExternalUrl
 import com.dzirbel.kotify.network.model.SpotifyFollowers
+import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
@@ -205,5 +206,14 @@ fun FullSpotifyPlaylist(
         images = emptyList(),
         owner = user,
         snapshotId = "snapshot",
+    )
+}
+
+fun SpotifyPlaybackContext(uri: String): SpotifyPlaybackContext {
+    return SpotifyPlaybackContext(
+        uri = uri,
+        externalUrls = SpotifyExternalUrl(),
+        href = "href",
+        type = "type",
     )
 }

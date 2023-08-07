@@ -621,6 +621,7 @@ potential-bugs:
     forbiddenTypePatterns: ['kotlin.String']
   CastNullableToNonNullableType:
     active: true
+    excludes: ['**/test/**', '**/testFixtures/**']
   CastToNullableType:
     active: true
   Deprecation:

@@ -215,22 +215,22 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
             _playing.toggleTo(true) {
                 val start = TimeSource.Monotonic.markNow()
 
-                Spotify.Player.startPlayback(
-                    contextUri = context?.contextUri?.takeIf { contextUri ->
-                        context.offset != null || context.positionMs != null || contextUri != playbackContextUri.value
-                    },
-                    uris = context?.trackUris,
-                    offset = context?.offset,
-                    positionMs = context?.positionMs,
-                )
+                // TODO check remote to see if context has changed before resuming from a null context?
 
-                (_trackPosition.value as? TrackPosition.Fetched)?.let { position ->
-                    _trackPosition.value = position.play(playTimestamp = start.midpointTimestampToNow())
+                Spotify.Player.startPlayback(contextUri = context?.contextUri, offset = context?.offset)
+
+                val trackPosition = _trackPosition.value
+                if (context == null && trackPosition is TrackPosition.Fetched) {
+                    // resuming playback from a known position
+                    _trackPosition.value = trackPosition.play(playTimestamp = start.midpointTimestampToNow())
+                }
+
+                // verify applied by refreshing until playing, and also until the context matches if provided
+                refreshTrackWithRetries {
+                    it.isPlaying && (context == null || it.context?.uri == context.contextUri)
                 }
 
                 context?.contextUri?.let { _playbackContextUri.value = it }
-
-                // TODO verify applied?
             }
         }
     }

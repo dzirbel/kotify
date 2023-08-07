@@ -29,6 +29,21 @@ class DelayedMockKStubScope<T, B>(
     }
 
     /**
+     * Mocks the stub to return each of [values] in order after the [delayMs].
+     */
+    infix fun returnsMany(values: List<T>) {
+        val remaining = values.toMutableList()
+        baseStub.coAnswers {
+            delay(delayMs)
+            checkNotNull(remaining.removeFirstOrNull()) { "no more values" }
+        }
+    }
+
+    fun returnsMany(vararg values: T) {
+        returnsMany(values.toMutableList())
+    }
+
+    /**
      * Mocks the stub to throw [throwable] after the [delayMs].
      */
     infix fun throws(throwable: Throwable) {

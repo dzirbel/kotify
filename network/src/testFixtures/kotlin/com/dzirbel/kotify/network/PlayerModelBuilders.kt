@@ -2,6 +2,7 @@ package com.dzirbel.kotify.network
 
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
+import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
@@ -22,12 +23,17 @@ fun SpotifyPlayback(track: FullSpotifyTrack? = null, progressMs: Long? = null): 
     )
 }
 
-fun SpotifyTrackPlayback(track: FullSpotifyTrack? = null, progressMs: Long = 0): SpotifyTrackPlayback {
+fun SpotifyTrackPlayback(
+    track: FullSpotifyTrack? = null,
+    progressMs: Long = 0,
+    isPlaying: Boolean = false,
+    context: SpotifyPlaybackContext? = null,
+): SpotifyTrackPlayback {
     return SpotifyTrackPlayback(
         item = track,
         progressMs = progressMs,
-        isPlaying = false,
-        context = null,
+        isPlaying = isPlaying,
+        context = context,
         currentlyPlayingType = SpotifyPlayingType.UNKNOWN,
         actions = null,
         timestamp = 0,

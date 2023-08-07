@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.repository.player
 
 import androidx.compose.runtime.Stable
-import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyPlayback
@@ -28,11 +27,9 @@ interface Player {
      * Encapsulates options to start playback.
      */
     @Stable
-    class PlayContext private constructor(
+    data class PlayContext(
         val contextUri: String?,
-        val trackUris: List<String>? = null,
         val offset: SpotifyPlaybackOffset? = null,
-        val positionMs: Int? = null,
     ) {
         companion object {
             /**
@@ -67,15 +64,6 @@ interface Player {
             fun playlistTrack(playlist: PlaylistViewModel, index: Int): PlayContext? {
                 return playlist.uri?.let {
                     PlayContext(contextUri = it, offset = SpotifyPlaybackOffset(position = index))
-                }
-            }
-
-            /**
-             * Returns a [PlayContext] which plays the given [track] with no context, i.e. plays only the track.
-             */
-            fun track(track: Track): PlayContext? {
-                return track.uri?.let {
-                    PlayContext(contextUri = null, trackUris = listOf(it))
                 }
             }
         }
