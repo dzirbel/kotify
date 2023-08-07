@@ -15,6 +15,7 @@ import com.dzirbel.kotify.repository.util.ToggleableState
 import com.dzirbel.kotify.repository.util.midpointTimestampToNow
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,6 @@ import kotlinx.coroutines.launch
 import kotlin.time.TimeSource
 
 // TODO document
-// TODO fetch next song when current one ends
 open class PlayerRepository internal constructor(private val scope: CoroutineScope) : Player {
 
     private val _refreshingPlayback = MutableStateFlow(false)
@@ -102,6 +102,8 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
     private val toggleShuffleLock = JobLock()
     private val setVolumeLock = JobLock()
     private val transferPlaybackLock = JobLock()
+
+    private var songEndJob: Job? = null
 
     override fun refreshPlayback() {
         fetchPlaybackLock.launch(scope = scope) {
@@ -234,6 +236,8 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
                     it.isPlaying && (context == null || it.context?.uri == context.contextUri)
                 }
             }
+
+            updateSongEndJob()
         }
     }
 
@@ -251,12 +255,15 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
                 // verify applied by refreshing until not playing
                 refreshTrackWithRetries { !it.isPlaying }
             }
+
+            updateSongEndJob()
         }
     }
 
     override fun skipToNext() {
         skipLock.launch(scope = scope) {
             _skipping.value = SkippingState.SKIPPING_TO_NEXT
+            songEndJob?.cancel()
 
             val previousTrack = _currentTrack.value
 
@@ -282,6 +289,7 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
     override fun skipToPrevious() {
         skipLock.launch(scope = scope) {
             _skipping.value = SkippingState.SKIPPING_TO_PREVIOUS
+            songEndJob?.cancel()
 
             val previousTrack = _currentTrack.value
 
@@ -332,6 +340,8 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
                     fetchedPositionMs = positionMs,
                     playing = _playing.value?.value,
                 )
+
+                updateSongEndJob()
 
                 // returns the range of progressMs the track could have if the seek was applied between the measured
                 // start and end times (including a buffer for a time the remote takes to apply the seek, even after
@@ -434,6 +444,8 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
             playback.actions?.skippingPrev == true -> SkippingState.SKIPPING_TO_PREVIOUS
             else -> SkippingState.NOT_SKIPPING
         }
+
+        updateSongEndJob()
     }
 
     private fun updateWithTrackPlayback(trackPlayback: SpotifyTrackPlayback?, fetchTimestamp: Long) {
@@ -451,6 +463,8 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
 
         _playbackContextUri.value = trackPlayback?.context?.uri
         _currentlyPlayingType.value = trackPlayback?.currentlyPlayingType
+
+        updateSongEndJob()
     }
 
     private fun updateWithDevices(devices: List<SpotifyPlaybackDevice>) {
@@ -459,6 +473,23 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
         devices.firstOrNull { it.isActive }?.let { activeDevice ->
             _volume.value = ToggleableState.Set(activeDevice.volumePercent)
             _currentDevice.value = activeDevice
+        }
+    }
+
+    private fun updateSongEndJob() {
+        songEndJob?.cancel()
+
+        val playing = _playing.value?.value == true
+        val track = _currentTrack.value
+        val progressMs = _trackPosition.value?.currentPositionMs
+        if (playing && track != null && progressMs != null) {
+            songEndJob = scope.launch {
+                delay(track.durationMs - progressMs - SONG_END_BUFFER_MS)
+
+                refreshTrackWithRetries(backoffStrategy = BackoffStrategy.songEnd) {
+                    !it.isPlaying || it.item?.id != track.id
+                }
+            }
         }
     }
 
@@ -485,5 +516,11 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
          * Buffer time in milliseconds to permit when verifying that a seek was applied.
          */
         private const val SEEK_TO_POSITION_BUFFER_MS = 2_500
+
+        /**
+         * Negative (i.e. retrying is this much earlier than expected time) buffer time in milliseconds included in the
+         * delay before fetching the next track on song end.
+         */
+        private const val SONG_END_BUFFER_MS = 1_000
     }
 }

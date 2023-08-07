@@ -32,5 +32,10 @@ internal interface BackoffStrategy {
          * A [BackoffStrategy] which fails fast, with a small number of delays with short durations.
          */
         val failFast = OfDelays(250, 750)
+
+        /**
+         * A [BackoffStrategy] used when a song is ending, with roughly evenly spaced delays over 10 seconds.
+         */
+        val songEnd = OfDelays(500, 500, 500, 500, 1000, 1000, 1000, 1000, 2000, 2000)
     }
 }

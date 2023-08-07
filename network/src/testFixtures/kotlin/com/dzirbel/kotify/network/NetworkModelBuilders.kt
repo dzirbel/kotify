@@ -143,6 +143,7 @@ fun FullSpotifyTrack(
     name: String = "Track",
     popularity: Int = 50,
     trackNumber: Int = 1,
+    durationMs: Long = 60_000,
 ): FullSpotifyTrack {
     return FullSpotifyTrack(
         id = id,
@@ -151,7 +152,7 @@ fun FullSpotifyTrack(
         trackNumber = trackNumber,
         artists = emptyList(),
         discNumber = 1,
-        durationMs = 60_000,
+        durationMs = durationMs,
         explicit = false,
         externalUrls = SpotifyExternalUrl(),
         href = "href",
