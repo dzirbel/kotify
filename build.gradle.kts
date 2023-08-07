@@ -145,6 +145,9 @@ fun Project.configureTests() {
             exceptionFormat = TestExceptionFormat.FULL
         }
 
+        // allowing mocking of java.time in JDK 16+ per https://mockk.io/doc/md/jdk16-access-exceptions.html
+        jvmArgs = listOf("--add-opens", "java.base/java.time=ALL-UNNAMED")
+
         // hacky, but causes gradle builds to fail if tests write or std_err (which often indicates exceptions handled
         // by the Thread.uncaughtExceptionHandler)
         addTestOutputListener(

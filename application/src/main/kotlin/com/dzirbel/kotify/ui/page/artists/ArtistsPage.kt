@@ -108,7 +108,6 @@ object ArtistsPage : Page<Unit>() {
                 if (library == null) {
                     MutableStateFlow(null)
                 } else {
-                    // TODO load full artist models (to avoid missing images)
                     ArtistRepository.statesOf(library.ids)
                         .combinedStateWhenAllNotNull { it?.cachedValue }
                         .onEachIn(scope) { artists ->

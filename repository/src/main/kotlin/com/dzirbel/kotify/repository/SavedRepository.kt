@@ -9,6 +9,7 @@ import java.time.Instant
  * Handles logic to manage the save states for a set of entities with String (ID) keys.
  *
  * TODO expose save times and save check times
+ * TODO use CacheStrategy
  */
 @Stable
 interface SavedRepository {

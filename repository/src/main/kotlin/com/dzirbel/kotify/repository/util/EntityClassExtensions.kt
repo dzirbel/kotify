@@ -25,6 +25,7 @@ internal fun <EntityType : SpotifyEntity, NetworkType : SpotifyObject> EntityCla
             update()
         }
         ?: new(id = id) {
+            // note: no need to set updateTime, as it is initialized to the current time
             networkModel.name?.let { name = it }
             uri = networkModel.uri
             update()

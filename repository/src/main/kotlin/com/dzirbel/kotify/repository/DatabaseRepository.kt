@@ -131,8 +131,8 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
     }
 
     /**
-     * Loads data for the given [id] from the cache and applies it to [states], returning true if successful (i.e. the
-     * value was present in the cache and valid according to [cacheStrategy]) or false otherwise.
+     * Loads data for the given [id] from the cache and applies it to [states], returning true if the value was present
+     * and does NOT need to be refreshed according to [cacheStrategy] or false otherwise.
      */
     private suspend fun loadFromCache(id: String, cacheStrategy: CacheStrategy<ViewModel>): Boolean {
         val viewModel: ViewModel?
@@ -151,9 +151,12 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
             return false
         }
 
-        return if (viewModel != null && lastUpdated != null && cacheStrategy.isValid(viewModel)) {
-            states.updateValue(id, CacheState.Loaded(viewModel, lastUpdated))
-            true
+        return if (viewModel != null && lastUpdated != null) {
+            val cacheValidity = cacheStrategy.validity(viewModel)
+            if (cacheValidity.canBeUsed) {
+                states.updateValue(id, CacheState.Loaded(viewModel, lastUpdated))
+            }
+            !cacheValidity.shouldBeRefreshed
         } else {
             false
         }
@@ -161,7 +164,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
 
     /**
      * Loads data for the given [ids] from the cache and applies them to [states], returning a list of IDs which were
-     * NOT successfully loaded (i.e. not present in the cache or not valid according to [cacheStrategy]).
+     * NOT successfully loaded (i.e. not present in the cache or need to be refreshed according to [cacheStrategy]).
      */
     private suspend fun loadFromCache(ids: List<String>, cacheStrategy: CacheStrategy<ViewModel>): List<String> {
         val cachedEntities = try {
@@ -179,8 +182,14 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
 
         ids.zipEach(cachedEntities) { id, pair ->
             val viewModel = pair?.first
-            if (viewModel != null && cacheStrategy.isValid(viewModel)) {
-                states.updateValue(id, CacheState.Loaded(viewModel, pair.second))
+            if (viewModel != null) {
+                val cacheValidity = cacheStrategy.validity(viewModel)
+                if (cacheValidity.canBeUsed) {
+                    states.updateValue(id, CacheState.Loaded(viewModel, pair.second))
+                }
+                if (cacheValidity.shouldBeRefreshed) {
+                    missingIds.add(id)
+                }
             } else {
                 missingIds.add(id)
             }
@@ -255,7 +264,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
      */
     private fun CacheState<ViewModel>?.needsLoad(cacheStrategy: CacheStrategy<ViewModel>): Boolean {
         return when (this) {
-            is CacheState.Loaded -> !cacheStrategy.isValid(cachedValue)
+            is CacheState.Loaded -> cacheStrategy.validity(cachedValue).shouldBeRefreshed
             is CacheState.Refreshing -> false
             is CacheState.NotFound -> false // do not retry on 404s
             is CacheState.Error -> true // always retry on errors

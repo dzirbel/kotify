@@ -10,12 +10,18 @@ import java.time.Instant
  * A [DatabaseRepository] with a [SpotifyEntity] as the local database entity.
  */
 @Suppress("TypeParameterListSpacing") // no wrapping option appears to satisfy linting
-abstract class DatabaseEntityRepository<ViewModel, EntityType : SpotifyEntity, NetworkType : SpotifyObject>
-internal constructor(
+abstract class DatabaseEntityRepository<
+    ViewModel : EntityViewModel,
+    EntityType : SpotifyEntity,
+    NetworkType : SpotifyObject,
+    > internal constructor(
     private val entityClass: EntityClass<String, EntityType>,
     entityName: String = entityClass.table.tableName.removeSuffix("s"),
     scope: CoroutineScope,
 ) : DatabaseRepository<ViewModel, EntityType, NetworkType>(entityName = entityName, scope = scope) {
+
+    override val defaultCacheStrategy = CacheStrategy.RequiringFullEntity<ViewModel>()
+        .then(CacheStrategy.EntityTTL())
 
     /**
      * Convenience variant of [convertToDB] which uses the [networkModel]'s ID field, if it is non-null.
