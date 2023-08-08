@@ -108,10 +108,11 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             },
             onCreate = { default ->
                 if (default == null) {
+                    val userId = UserRepository.requireCurrentUserId
                     scope.launch {
                         val cached = try {
-                            KotifyDatabase.transaction("load save state of $id") {
-                                savedEntityTable.isSaved(entityId = id, userId = UserRepository.requireCurrentUserId)
+                            KotifyDatabase.transaction("load save state of $entityName $id") {
+                                savedEntityTable.isSaved(entityId = id, userId = userId)
                             }
                         } catch (cancellationException: CancellationException) {
                             throw cancellationException
@@ -123,6 +124,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                         if (cached != null) {
                             savedStates.updateValue(id, ToggleableState.Set(cached))
                         } else {
+                            val start = TimeSource.Monotonic.markNow()
                             val remote = try {
                                 fetchIsSaved(ids = listOf(id)).first()
                             } catch (cancellationException: CancellationException) {
@@ -134,6 +136,19 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
                             // TODO expose error state instead of null?
                             savedStates.updateValue(id, remote?.let { ToggleableState.Set(remote) })
+
+                            if (remote != null) {
+                                val saveTime = start.midpointInstantToNow()
+                                KotifyDatabase.transaction("set save state of $entityName $id") {
+                                    savedEntityTable.setSaved(
+                                        entityId = id,
+                                        userId = userId,
+                                        saved = remote,
+                                        savedTime = null,
+                                        savedCheckTime = saveTime,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -151,14 +166,12 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             onCreate = { creations ->
                 val missingIds = creations.filterNotNullValues().keys
                 if (missingIds.isNotEmpty()) {
+                    val userId = UserRepository.requireCurrentUserId
                     scope.launch {
                         val cached = try {
                             KotifyDatabase.transaction("load save states of ${missingIds.size} ${entityName}s") {
                                 missingIds.map { id ->
-                                    savedEntityTable.isSaved(
-                                        entityId = id,
-                                        userId = UserRepository.requireCurrentUserId,
-                                    )
+                                    savedEntityTable.isSaved(entityId = id, userId = userId)
                                 }
                             }
                         } catch (cancellationException: CancellationException) {
@@ -182,6 +195,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                         }
 
                         if (idsToLoadFromRemote.isNotEmpty()) {
+                            val start = TimeSource.Monotonic.markNow()
                             val remote = try {
                                 fetchIsSaved(ids = idsToLoadFromRemote)
                             } catch (cancellationException: CancellationException) {
@@ -196,6 +210,21 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                 idsToLoadFromRemote.zipEach(remote) { id, saved ->
                                     savedStates.updateValue(id, ToggleableState.Set(saved))
                                 }
+
+                                val saveTime = start.midpointInstantToNow()
+                                KotifyDatabase.transaction(
+                                    "set save state of ${idsToLoadFromRemote.size} ${entityName}s",
+                                ) {
+                                    savedEntityTable.setSaved(
+                                        entityIds = idsToLoadFromRemote,
+                                        saved = remote,
+                                        userId = userId,
+                                        savedTime = null,
+                                        savedCheckTime = saveTime,
+                                    )
+                                }
+                            } else {
+                                idsToLoadFromRemote.forEach { id -> savedStates.updateValue(id, null) }
                             }
                         }
                     }

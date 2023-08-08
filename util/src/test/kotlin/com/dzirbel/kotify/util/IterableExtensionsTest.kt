@@ -22,6 +22,13 @@ class IterableExtensionsTest {
     }
 
     @Test
+    fun zipLazy() {
+        val result = listOf(1, 2, 3, 4, 5).zipLazy(listOf(8, 7, 6))
+
+        assertThat(result.toList()).containsExactly(Pair(1, 8), Pair(2, 7), Pair(3, 6))
+    }
+
+    @Test
     fun zipToMap() {
         val map = listOf(1, 1, 2, 2, 3, 4, 5).zipToMap(listOf("a", "b", "c", "d", "e", "f"))
 

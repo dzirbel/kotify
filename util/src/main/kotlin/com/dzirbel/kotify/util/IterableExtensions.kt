@@ -22,6 +22,25 @@ inline fun <A, B> Iterable<A>.zipEach(other: Iterable<B>, onEach: (A, B) -> Unit
 }
 
 /**
+ * Returns a lazily-generator [Iterable] of the pair of this [Iterable] and [other], up to the minimum of the two
+ * iterable lengths.
+ */
+fun <A, B> Iterable<A>.zipLazy(other: Iterable<B>): Iterable<Pair<A, B>> {
+    return object : Iterable<Pair<A, B>> {
+        override fun iterator(): Iterator<Pair<A, B>> {
+            @Suppress("IteratorNotThrowingNoSuchElementException") // thrown by delegate iterators
+            return object : Iterator<Pair<A, B>> {
+                val iteratorA = this@zipLazy.iterator()
+                val iteratorB = other.iterator()
+
+                override fun hasNext() = iteratorA.hasNext() && iteratorB.hasNext()
+                override fun next() = Pair(iteratorA.next(), iteratorB.next())
+            }
+        }
+    }
+}
+
+/**
  * Returns a [Map] of the pair of this [Iterable] and [other], associating keys in this [Iterable] with values in
  * [other]. The returned map only has values from up to the minimum of the two collection sizes.
  */

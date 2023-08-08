@@ -1,8 +1,10 @@
 package com.dzirbel.kotify.db
 
+import com.dzirbel.kotify.util.zipLazy
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.batchUpsert
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.upsert
@@ -74,12 +76,12 @@ abstract class SavedEntityTable(name: String) : Table(name = name) {
     }
 
     /**
-     * Stores the entity with the given [entityId] as the given [saved] state, having been saved at the given
-     * [savedTime].
+     * Stores the entity with the given [entityId] as the given [saved] state for the user with the given [userId],
+     * having been saved at the given [savedTime] if known.
      *
      * Must be called from within a transaction.
      */
-    fun setSaved(entityId: String, userId: String, saved: Boolean, savedTime: Instant?, savedCheckTime: Instant) {
+    fun setSaved(entityId: String, saved: Boolean, userId: String, savedTime: Instant?, savedCheckTime: Instant) {
         upsert(entityIdColumn, userIdColumn) { statement ->
             statement[entityIdColumn] = entityId
             statement[userIdColumn] = userId
@@ -88,6 +90,30 @@ abstract class SavedEntityTable(name: String) : Table(name = name) {
             // TODO do not change savedTime (in particular, do not set it to null) if saved value has not changed
             statement[savedTimeColumn] = savedTime?.takeIf { saved }
             statement[savedCheckTimeColumn] = savedCheckTime
+        }
+    }
+
+    /**
+     * Stores the entities with the given [entityIds] as their respective [saved] states for the user with the given
+     * [userId], having been saved at the given [savedTime] if known.
+     *
+     * Must be called from within a transaction.
+     */
+    fun setSaved(
+        entityIds: Iterable<String>,
+        saved: Iterable<Boolean>,
+        userId: String,
+        savedTime: Instant?,
+        savedCheckTime: Instant,
+    ) {
+        batchUpsert(data = entityIds.zipLazy(saved), shouldReturnGeneratedValues = false) { (entityId, saved) ->
+            this[entityIdColumn] = entityId
+            this[userIdColumn] = userId
+
+            this[savedColumn] = saved
+            // TODO do not change savedTime (in particular, do not set it to null) if saved value has not changed
+            this[savedTimeColumn] = savedTime?.takeIf { saved }
+            this[savedCheckTimeColumn] = savedCheckTime
         }
     }
 

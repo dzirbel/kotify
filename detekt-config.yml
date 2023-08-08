@@ -604,6 +604,7 @@ performance:
   CouldBeSequence:
     active: true
     threshold: 3
+    excludes: ['**/test/**', '**/testFixtures/**']
   ForEachOnRange:
     active: true
   SpreadOperator:

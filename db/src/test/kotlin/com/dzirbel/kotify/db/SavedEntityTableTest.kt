@@ -9,6 +9,7 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.dzirbel.kotify.util.containsExactlyElementsOfInAnyOrder
+import com.dzirbel.kotify.util.zipEach
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -67,6 +68,37 @@ internal class SavedEntityTableTest {
             assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime)
             assertThat(TestSavedEntityTable.savedEntityIds(userId))
                 .containsExactlyElementsOfInAnyOrder(if (saved) setOf(entityId) else emptySet())
+        }
+    }
+
+    @Test
+    fun `batch set and get saved state with known savedTime`() {
+        val entityIds = List(10) { "id$it" }
+        val savedList = entityIds.indices.map { it % 2 == 0 }
+        val userId = "user"
+        val savedTime = Instant.ofEpochMilli(1)
+        val savedCheckTime = Instant.ofEpochMilli(2)
+
+        KotifyDatabase.blockingTransaction {
+            TestSavedEntityTable.setSaved(
+                entityIds = entityIds,
+                userId = userId,
+                saved = savedList,
+                savedTime = savedTime,
+                savedCheckTime = savedCheckTime,
+            )
+        }
+
+        KotifyDatabase.blockingTransaction {
+            entityIds.zipEach(savedList) { entityId, saved ->
+                assertThat(TestSavedEntityTable.isSaved(entityId, userId)).isNotNull().isEqualTo(saved)
+                // savedTime is null if not saved
+                assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isEqualTo(savedTime.takeIf { saved })
+                assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime)
+            }
+
+            assertThat(TestSavedEntityTable.savedEntityIds(userId))
+                .containsExactlyElementsOfInAnyOrder(entityIds.zip(savedList).filter { it.second }.map { it.first })
         }
     }
 
@@ -134,6 +166,57 @@ internal class SavedEntityTableTest {
             assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isEqualTo(savedTime)
             assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime2)
             assertThat(TestSavedEntityTable.savedEntityIds(userId)).containsExactlyInAnyOrder(entityId)
+        }
+    }
+
+    @Test
+    fun `batch update saved state with known savedTime`() {
+        val entityIds = List(20) { "id$it" }
+        val initializedEntityIds = entityIds.take(10)
+        val savedList = entityIds.indices.map { it % 2 == 0 }
+        val savedListInitial = initializedEntityIds.indices.map { it % 3 == 0 }
+        val userId = "user"
+        val savedTime = Instant.ofEpochMilli(1)
+        val savedCheckTime = Instant.ofEpochMilli(2)
+
+        // initialize saved state for half the entities (with different saved states)
+        KotifyDatabase.blockingTransaction {
+            TestSavedEntityTable.setSaved(
+                entityIds = initializedEntityIds,
+                userId = userId,
+                saved = savedListInitial,
+                savedTime = savedTime,
+                savedCheckTime = savedCheckTime,
+            )
+        }
+
+        KotifyDatabase.blockingTransaction {
+            initializedEntityIds.zipEach(savedListInitial) { entityId, saved ->
+                assertThat(TestSavedEntityTable.isSaved(entityId, userId)).isNotNull().isEqualTo(saved)
+            }
+        }
+
+        // initialize or update all entities
+        KotifyDatabase.blockingTransaction {
+            TestSavedEntityTable.setSaved(
+                entityIds = entityIds,
+                userId = userId,
+                saved = savedList,
+                savedTime = savedTime,
+                savedCheckTime = savedCheckTime,
+            )
+        }
+
+        KotifyDatabase.blockingTransaction {
+            entityIds.zipEach(savedList) { entityId, saved ->
+                assertThat(TestSavedEntityTable.isSaved(entityId, userId)).isNotNull().isEqualTo(saved)
+                // savedTime is null if not saved
+                assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isEqualTo(savedTime.takeIf { saved })
+                assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime)
+            }
+
+            assertThat(TestSavedEntityTable.savedEntityIds(userId))
+                .containsExactlyElementsOfInAnyOrder(entityIds.zip(savedList).filter { it.second }.map { it.first })
         }
     }
 
