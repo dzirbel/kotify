@@ -8,7 +8,6 @@ import com.dzirbel.kotify.repository.util.CachedResource
 import com.dzirbel.kotify.repository.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.repository.util.ToggleableState
 import com.dzirbel.kotify.repository.util.midpointInstantToNow
-import com.dzirbel.kotify.util.filterNotNullValues
 import com.dzirbel.kotify.util.plusOrMinus
 import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.CoroutineScope
@@ -171,7 +170,8 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                 libraryResource.flow.value?.ids?.contains(id)?.let { ToggleableState.Set(it) }
             },
             onCreate = { creations ->
-                val missingIds = creations.filterNotNullValues().keys
+                // only load state if it could not be initialized from the library
+                val missingIds = creations.mapNotNull { if (it.value == null) it.key else null }
                 if (missingIds.isNotEmpty()) {
                     val userId = UserRepository.requireCurrentUserId
                     scope.launch {
