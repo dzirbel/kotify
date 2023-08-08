@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
@@ -33,11 +32,11 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dzirbel.kotify.network.FullSpotifyTrackOrEpisode
+import com.dzirbel.kotify.network.model.FullSpotifyEpisode
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
-import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
-import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.SavedArtistRepository
 import com.dzirbel.kotify.repository.player.PlayerRepository
@@ -68,12 +67,10 @@ import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.combineState
 import com.dzirbel.kotify.util.formatDuration
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.runningFold
-import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -90,11 +87,11 @@ private const val PROGRESS_SLIDER_UPDATE_DELAY_MS = 50L
 
 @Composable
 fun PlayerPanel() {
-    val track = PlayerRepository.currentTrack.collectAsState().value
-    val trackId = track?.id
+    val item = PlayerRepository.currentItem.collectAsState().value
+    val itemId = item?.id
 
-    val trackRating = remember(trackId) { trackId?.let { TrackRatingRepository.ratingStateOf(id = it) } }
-        ?.collectAsStateSwitchable(key = trackId)
+    val trackRating = remember(itemId) { itemId?.let { TrackRatingRepository.ratingStateOf(id = it) } }
+        ?.collectAsStateSwitchable(key = itemId)
         ?.value
 
     Column(Modifier.instrument().fillMaxWidth().wrapContentHeight()) {
@@ -107,10 +104,7 @@ fun PlayerPanel() {
                 modifier = Modifier.surfaceBackground().padding(Dimens.space3),
                 content = {
                     Column {
-                        CurrentTrack(
-                            track = track,
-                            trackRating = trackRating,
-                        )
+                        CurrentTrack(item = item, trackRating = trackRating)
                     }
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -199,19 +193,20 @@ fun PlayerPanel() {
 }
 
 @Composable
-private fun CurrentTrack(track: SpotifyTrack?, trackRating: Rating?) {
+private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?) {
     Row(
         modifier = Modifier.instrument(),
         horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
     ) {
-        val album = (track as? FullSpotifyTrack)?.album ?: (track as? SimplifiedSpotifyTrack)?.album
+        val album = (item as? FullSpotifyTrack)?.album
+        val show = (item as? FullSpotifyEpisode)?.show
 
         LoadedImage(
             url = album?.images?.firstOrNull()?.url,
             size = ALBUM_ART_SIZE,
         )
 
-        if (track != null) {
+        if (item != null) {
             Column(
                 modifier = Modifier.sizeIn(minHeight = ALBUM_ART_SIZE),
                 verticalArrangement = Arrangement.Center,
@@ -220,58 +215,52 @@ private fun CurrentTrack(track: SpotifyTrack?, trackRating: Rating?) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
                 ) {
-                    Text(track.name)
+                    Text(item.name.orEmpty())
 
-                    track.id?.let { trackId ->
-                        ToggleSaveButton(repository = SavedTrackRepository, id = trackId)
+                    if (item is FullSpotifyTrack) {
+                        ToggleSaveButton(repository = SavedTrackRepository, id = item.id)
+
+                        StarRating(
+                            rating = trackRating,
+                            onRate = { rating -> TrackRatingRepository.rate(id = item.id, rating = rating) },
+                        )
                     }
-
-                    val scope = rememberCoroutineScope { Dispatchers.IO }
-                    StarRating(
-                        rating = trackRating,
-                        enabled = track.id != null,
-                        onRate = { rating ->
-                            track.id?.let { trackId ->
-                                scope.launch {
-                                    TrackRatingRepository.rate(id = trackId, rating = rating)
-                                }
-                            }
-                        },
-                    )
                 }
 
                 VerticalSpacer(Dimens.space3)
 
-                Row(verticalAlignment = Alignment.Top) {
-                    Text("by ", style = MaterialTheme.typography.caption)
+                if (item is FullSpotifyTrack) {
+                    Row(verticalAlignment = Alignment.Top) {
+                        Text("by ", style = MaterialTheme.typography.caption)
 
-                    Column {
-                        track.artists.forEach { artist ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
-                            ) {
-                                LinkedText(
-                                    key = artist.id,
-                                    style = MaterialTheme.typography.caption,
-                                    onClickLink = { artistId ->
-                                        pageStack.mutate { to(ArtistPage(artistId = artistId)) }
-                                    },
+                        Column {
+                            item.artists.forEach { artist ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
                                 ) {
-                                    link(text = artist.name, link = artist.id)
-                                }
+                                    LinkedText(
+                                        key = artist.id,
+                                        style = MaterialTheme.typography.caption,
+                                        onClickLink = { artistId ->
+                                            pageStack.mutate { to(ArtistPage(artistId = artistId)) }
+                                        },
+                                    ) {
+                                        link(text = artist.name, link = artist.id)
+                                    }
 
-                                artist.id?.let { artistId ->
-                                    ToggleSaveButton(repository = SavedArtistRepository, id = artistId)
+                                    artist.id?.let { artistId ->
+                                        ToggleSaveButton(repository = SavedArtistRepository, id = artistId)
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                VerticalSpacer(Dimens.space2)
-
                 if (album != null) {
+                    VerticalSpacer(Dimens.space2)
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
@@ -290,6 +279,17 @@ private fun CurrentTrack(track: SpotifyTrack?, trackRating: Rating?) {
                         album.id?.let { albumId ->
                             ToggleSaveButton(repository = SavedAlbumRepository, id = albumId)
                         }
+                    }
+                }
+
+                if (show != null) {
+                    VerticalSpacer(Dimens.space2)
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                    ) {
+                        Text("on ${show.name}")
                     }
                 }
             }
@@ -377,7 +377,7 @@ private fun PlayerControls() {
 
 @Composable
 private fun TrackProgress() {
-    val track = PlayerRepository.currentTrack.collectAsState().value
+    val track = PlayerRepository.currentItem.collectAsState().value
     val position = PlayerRepository.trackPosition.collectAsState().value
 
     if (track == null || position == null) {

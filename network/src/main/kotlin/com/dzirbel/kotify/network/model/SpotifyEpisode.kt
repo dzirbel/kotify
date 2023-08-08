@@ -1,5 +1,7 @@
 package com.dzirbel.kotify.network.model
 
+import com.dzirbel.kotify.network.FullSpotifyTrackOrEpisode
+import com.dzirbel.kotify.network.SimplifiedSpotifyTrackOrEpisode
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -26,7 +28,7 @@ interface SpotifyEpisode : SpotifyObject {
     val description: String
 
     /** The episode length in milliseconds. */
-    val durationMs: Int
+    val durationMs: Long
 
     /** Whether or not the episode has explicit content (true = yes it does; false = no it does not OR unknown). */
     val explicit: Boolean
@@ -80,7 +82,7 @@ data class SimplifiedSpotifyEpisode(
     override val uri: String,
     @SerialName("audio_preview_url") override val audioPreviewUrl: String? = null,
     override val description: String,
-    @SerialName("duration_ms") override val durationMs: Int,
+    @SerialName("duration_ms") override val durationMs: Long,
     override val explicit: Boolean,
     @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
     @SerialName("html_description") override val htmlDescription: String?,
@@ -92,7 +94,7 @@ data class SimplifiedSpotifyEpisode(
     @SerialName("release_date") override val releaseDate: String,
     @SerialName("release_date_precision") override val releaseDatePrecision: String,
     @SerialName("resume_point") override val resumePoint: SpotifyResumePoint? = null,
-) : SpotifyEpisode
+) : SpotifyEpisode, SimplifiedSpotifyTrackOrEpisode
 
 @Serializable
 data class FullSpotifyEpisode(
@@ -103,7 +105,7 @@ data class FullSpotifyEpisode(
     override val uri: String,
     @SerialName("audio_preview_url") override val audioPreviewUrl: String? = null,
     override val description: String,
-    @SerialName("duration_ms") override val durationMs: Int,
+    @SerialName("duration_ms") override val durationMs: Long,
     override val explicit: Boolean,
     @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
     @SerialName("html_description") override val htmlDescription: String?,
@@ -118,4 +120,4 @@ data class FullSpotifyEpisode(
 
     /** The show on which the episode belongs. */
     val show: SimplifiedSpotifyShow,
-) : SpotifyEpisode
+) : SpotifyEpisode, FullSpotifyTrackOrEpisode

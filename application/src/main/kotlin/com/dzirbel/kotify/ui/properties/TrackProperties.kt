@@ -38,10 +38,10 @@ import com.dzirbel.kotify.ui.util.applyIf
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.formatDuration
 
-open class TrackNameProperty<T>(private val toTrack: (T) -> TrackViewModel) : PropertyByString<T>(title = "Name") {
+open class TrackNameProperty<T>(private val toTrack: (T) -> TrackViewModel?) : PropertyByString<T>(title = "Name") {
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override fun toString(item: T) = toTrack(item).name
+    override fun toString(item: T) = toTrack(item)?.name
 
     companion object : TrackNameProperty<TrackViewModel>(toTrack = { it })
     object ForPlaylistTrack : TrackNameProperty<PlaylistTrackViewModel>(toTrack = { it.track })
@@ -52,14 +52,13 @@ open class TrackAlbumIndexProperty<T>(private val toTrack: (T) -> TrackViewModel
     override fun toNumber(item: T) = toTrack(item).trackNumber
 
     companion object : TrackAlbumIndexProperty<TrackViewModel>(toTrack = { it })
-    object ForPlaylistTrack : TrackAlbumIndexProperty<PlaylistTrackViewModel>(toTrack = { it.track })
 }
 
-open class TrackDurationProperty<T>(private val toTrack: (T) -> TrackViewModel) :
+open class TrackDurationProperty<T>(private val toTrack: (T) -> TrackViewModel?) :
     PropertyByNumber<T>(title = "Duration", divisionRange = DURATION_DIVISION_RANGE_MS) {
     override val cellAlignment = Alignment.TopEnd
 
-    override fun toNumber(item: T) = toTrack(item).durationMs
+    override fun toNumber(item: T) = toTrack(item)?.durationMs ?: 0
 
     override fun toString(item: T): String = formatDuration(toNumber(item))
 
@@ -67,24 +66,26 @@ open class TrackDurationProperty<T>(private val toTrack: (T) -> TrackViewModel) 
     object ForPlaylistTrack : TrackDurationProperty<PlaylistTrackViewModel>(toTrack = { it.track })
 }
 
-open class TrackArtistsProperty<T>(private val toTrack: (T) -> TrackViewModel) :
+open class TrackArtistsProperty<T>(private val toTrack: (T) -> TrackViewModel?) :
     PropertyByString<T>(title = "Artist") {
 
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override fun toString(item: T): String? = toTrack(item).artists.value?.joinToString()
+    override fun toString(item: T): String? = toTrack(item)?.artists?.value?.joinToString()
 
     @Composable
     override fun Item(item: T) {
-        val artists = toTrack(item).artists.collectAsState().value
+        toTrack(item)?.let { track ->
+            val artists = track.artists.collectAsState().value
 
-        LinkedText(
-            key = artists,
-            modifier = Modifier.padding(cellPadding),
-            onClickLink = { link -> pageStack.mutate { to(ArtistPage(artistId = link)) } },
-        ) {
-            list(artists.orEmpty()) {
-                link(text = it.name, link = it.id)
+            LinkedText(
+                key = artists,
+                modifier = Modifier.padding(cellPadding),
+                onClickLink = { link -> pageStack.mutate { to(ArtistPage(artistId = link)) } },
+            ) {
+                list(artists.orEmpty()) {
+                    link(text = it.name, link = it.id)
+                }
             }
         }
     }
@@ -93,16 +94,16 @@ open class TrackArtistsProperty<T>(private val toTrack: (T) -> TrackViewModel) :
     object ForPlaylistTrack : TrackArtistsProperty<PlaylistTrackViewModel>(toTrack = { it.track })
 }
 
-open class TrackAlbumProperty<T>(private val toTrack: (T) -> TrackViewModel) :
+open class TrackAlbumProperty<T>(private val toTrack: (T) -> TrackViewModel?) :
     PropertyByString<T>(title = "Album") {
 
     override val width = ColumnWidth.Weighted(weight = 1f)
 
-    override fun toString(item: T): String? = toTrack(item).album.value?.name
+    override fun toString(item: T): String? = toTrack(item)?.album?.value?.name
 
     @Composable
     override fun Item(item: T) {
-        val album = toTrack(item).album.collectAsState().value
+        val album = toTrack(item)?.album?.collectAsState()?.value
 
         if (album != null) {
             LinkedText(
@@ -119,7 +120,7 @@ open class TrackAlbumProperty<T>(private val toTrack: (T) -> TrackViewModel) :
     object ForPlaylistTrack : TrackAlbumProperty<PlaylistTrackViewModel>(toTrack = { it.track })
 }
 
-open class TrackPopularityProperty<T>(private val toTrack: (T) -> TrackViewModel) :
+open class TrackPopularityProperty<T>(private val toTrack: (T) -> TrackViewModel?) :
     PropertyByNumber<T>(title = "Popularity", divisionRange = POPULARITY_DIVISION_RANGE) {
     override val defaultSortOrder = SortOrder.DESCENDING
     override val defaultDivisionSortOrder = SortOrder.DESCENDING
@@ -127,7 +128,7 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> TrackViewModel
     override val width: ColumnWidth = ColumnWidth.MatchHeader
     override val cellAlignment = Alignment.TopEnd
 
-    override fun toNumber(item: T) = toTrack(item).popularity
+    override fun toNumber(item: T) = toTrack(item)?.popularity
 
     @Composable
     override fun Item(item: T) {
@@ -162,7 +163,7 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> TrackViewModel
 }
 
 class TrackSavedProperty<T>(
-    private val trackIdOf: (T) -> String,
+    private val trackIdOf: (T) -> String?,
 ) : SortableProperty<T>, DividableProperty<T>, Column<T> {
     override val title = "Saved"
     override val width = ColumnWidth.Fill()
@@ -171,14 +172,14 @@ class TrackSavedProperty<T>(
         // TODO state here is awkward
         val firstId = trackIdOf(first)
         val secondId = trackIdOf(second)
-        val firstSaved = SavedTrackRepository.savedStateOf(firstId).value?.value
-        val secondSaved = SavedTrackRepository.savedStateOf(secondId).value?.value
+        val firstSaved = firstId?.let { SavedTrackRepository.savedStateOf(it).value?.value }
+        val secondSaved = secondId?.let { SavedTrackRepository.savedStateOf(it).value?.value }
         return sortOrder.compareNullable(firstSaved, secondSaved)
     }
 
     override fun divisionFor(element: T): Boolean? {
         // TODO state here is awkward
-        return SavedTrackRepository.savedStateOf(trackIdOf(element)).value?.value
+        return trackIdOf(element)?.let { SavedTrackRepository.savedStateOf(it).value?.value }
     }
 
     override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
@@ -195,16 +196,18 @@ class TrackSavedProperty<T>(
 
     @Composable
     override fun Item(item: T) {
-        ToggleSaveButton(
-            repository = SavedTrackRepository,
-            id = trackIdOf(item),
-            modifier = Modifier.padding(Dimens.space2),
-        )
+        trackIdOf(item)?.let { trackId ->
+            ToggleSaveButton(
+                repository = SavedTrackRepository,
+                id = trackId,
+                modifier = Modifier.padding(Dimens.space2),
+            )
+        }
     }
 }
 
 class TrackRatingProperty<T>(
-    private val trackIdOf: (T) -> String,
+    private val trackIdOf: (T) -> String?,
 ) : SortableProperty<T>, RatingDividableProperty<T>, Column<T> {
     override val title = "Rating"
 
@@ -220,16 +223,16 @@ class TrackRatingProperty<T>(
 
     override fun ratingOf(element: T): Double? {
         // TODO state here is awkward
-        return TrackRatingRepository.ratingStateOf(id = trackIdOf(element)).value?.ratingPercent
+        return trackIdOf(element)?.let { TrackRatingRepository.ratingStateOf(id = it).value?.ratingPercent }
     }
 
     @Composable
     override fun Item(item: T) {
-        val trackId = trackIdOf(item)
-
-        StarRating(
-            rating = TrackRatingRepository.ratingStateOf(id = trackIdOf(item)).collectAsState().value,
-            onRate = { rating -> TrackRatingRepository.rate(id = trackId, rating = rating) },
-        )
+        trackIdOf(item)?.let { trackId ->
+            StarRating(
+                rating = TrackRatingRepository.ratingStateOf(id = trackId).collectAsState().value,
+                onRate = { rating -> TrackRatingRepository.rate(id = trackId, rating = rating) },
+            )
+        }
     }
 }

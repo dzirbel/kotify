@@ -115,7 +115,7 @@ class PlayerRepositoryRefreshTrackTest : BasePlayerRepositoryTest() {
 
     private fun PlayerRepository.assertTrackPlayback(refreshing: Boolean, playback: SpotifyTrackPlayback?) {
         assertThat(refreshingTrack.value).isEqualTo(refreshing)
-        assertThat(currentTrack.value).isEqualTo(playback?.item)
+        assertThat(currentItem.value).isEqualTo(playback?.item)
 
         if (playback?.progressMs != null) {
             val trackPosition = requireNotNull(trackPosition.value) as TrackPosition.Fetched

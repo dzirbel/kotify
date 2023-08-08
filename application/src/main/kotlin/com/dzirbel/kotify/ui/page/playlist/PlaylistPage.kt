@@ -79,13 +79,15 @@ data class PlaylistPage(private val playlistId: String) : Page<String?>() {
             source = { scope ->
                 PlaylistTracksRepository.stateOf(id = playlistId).mapIn(scope) { cacheState ->
                     cacheState?.cachedValue?.also { playlistTracks ->
-                        playlistTracks.requestBatched(
+                        // request albums and artist for tracks (but not episodes)
+                        val tracks = playlistTracks.mapNotNull { it.track }
+                        tracks.requestBatched(
                             transactionName = { "$it playlist track albums" },
-                            extractor = { it.track.album },
+                            extractor = { it.album },
                         )
-                        playlistTracks.requestBatched(
+                        tracks.requestBatched(
                             transactionName = { "$it playlist track artists" },
-                            extractor = { it.track.artists },
+                            extractor = { it.artists },
                         )
                     }
                 }
@@ -94,8 +96,8 @@ data class PlaylistPage(private val playlistId: String) : Page<String?>() {
 
         val columns = remember(playlist) { playlistTrackColumns(playlist) }
 
-        SavedTrackRepository.rememberSavedStates(playlistTracksAdapter.value) { it.track.id }
-        TrackRatingRepository.rememberRatingStates(playlistTracksAdapter.value) { it.track.id }
+        SavedTrackRepository.rememberSavedStates(playlistTracksAdapter.value) { it.track?.id }
+        TrackRatingRepository.rememberRatingStates(playlistTracksAdapter.value) { it.track?.id }
 
         VerticalScrollPage(
             visible = visible,
@@ -159,7 +161,10 @@ private fun PlaylistHeader(
 
                     val totalDuration = takingIf(adapter.hasElements) {
                         remember(adapter) {
-                            adapter.sumOf { it.track.durationMs }.milliseconds.formatMediumDuration()
+                            adapter
+                                .sumOf { it.track?.durationMs ?: it.episode?.durationMs ?: 0 }
+                                .milliseconds
+                                .formatMediumDuration()
                         }
                     }
 
@@ -249,7 +254,7 @@ private fun PlaylistReorderButton(
 private fun playlistTrackColumns(playlist: PlaylistViewModel?): PersistentList<Column<PlaylistTrackViewModel>> {
     return persistentListOf(
         TrackPlayingColumn(
-            trackIdOf = { playlistTrack -> playlistTrack.track.id },
+            trackIdOf = { playlistTrack -> playlistTrack.track?.id },
             playContextFromTrack = { playlistTrack ->
                 playlist?.let {
                     // TODO use current sort order instead of playlist order?
@@ -258,11 +263,11 @@ private fun playlistTrackColumns(playlist: PlaylistViewModel?): PersistentList<C
             },
         ),
         PlaylistTrackIndexProperty,
-        TrackSavedProperty(trackIdOf = { playlistTrack -> playlistTrack.track.id }),
+        TrackSavedProperty(trackIdOf = { playlistTrack -> playlistTrack.track?.id }),
         TrackNameProperty.ForPlaylistTrack,
         TrackArtistsProperty.ForPlaylistTrack,
         TrackAlbumProperty.ForPlaylistTrack,
-        TrackRatingProperty(trackIdOf = { playlistTrack -> playlistTrack.track.id }),
+        TrackRatingProperty(trackIdOf = { playlistTrack -> playlistTrack.track?.id }),
         PlaylistTrackAddedAtProperty,
         TrackDurationProperty.ForPlaylistTrack,
         TrackPopularityProperty.ForPlaylistTrack,

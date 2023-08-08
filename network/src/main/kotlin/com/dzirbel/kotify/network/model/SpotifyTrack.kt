@@ -1,5 +1,7 @@
 package com.dzirbel.kotify.network.model
 
+import com.dzirbel.kotify.network.FullSpotifyTrackOrEpisode
+import com.dzirbel.kotify.network.SimplifiedSpotifyTrackOrEpisode
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -111,7 +113,7 @@ data class SimplifiedSpotifyTrack(
 
     /** Undocumented field. */
     val popularity: Int? = null,
-) : SpotifyTrack
+) : SpotifyTrack, SimplifiedSpotifyTrackOrEpisode
 
 @Serializable
 data class FullSpotifyTrack(
@@ -153,7 +155,7 @@ data class FullSpotifyTrack(
      * popularity value may lag actual popularity by a few days: the value is not updated in real time.
      */
     val popularity: Int,
-) : SpotifyTrack
+) : SpotifyTrack, FullSpotifyTrackOrEpisode
 
 @Serializable
 data class SpotifySavedTrack(

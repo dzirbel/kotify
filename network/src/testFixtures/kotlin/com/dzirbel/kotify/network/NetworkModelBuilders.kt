@@ -14,8 +14,6 @@ import com.dzirbel.kotify.network.model.SpotifyExternalUrl
 import com.dzirbel.kotify.network.model.SpotifyFollowers
 import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.encodeToJsonElement
 import kotlin.time.Duration.Companion.minutes
 
 @Suppress("FunctionNaming")
@@ -189,7 +187,7 @@ fun FullSpotifyPlaylist(
                     addedAt = trackAddedAt?.getOrNull(index),
                     addedBy = user,
                     isLocal = false,
-                    trackOrEpisode = Json.encodeToJsonElement(track),
+                    track = track,
                 )
             },
             href = "href",

@@ -103,7 +103,7 @@ internal class PlaylistPageScreenshotTest {
                 PlaylistTracksRepository.mockStateCached(playlistId, tracks, now)
                 SavedPlaylistRepository.mockSaveState(playlistId, saved = true)
 
-                val trackIds = tracks.map { it.track.id }
+                val trackIds = tracks.mapNotNull { it.track?.id }
                 val ratings = tracks.map { track ->
                     track.indexOnPlaylist.takeIf { it % 2 != 0 }?.let { it % 10 }
                 }

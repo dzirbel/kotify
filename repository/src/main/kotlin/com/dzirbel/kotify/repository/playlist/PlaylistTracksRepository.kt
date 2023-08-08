@@ -3,10 +3,13 @@ package com.dzirbel.kotify.repository.playlist
 import com.dzirbel.kotify.db.model.PlaylistTable
 import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyEpisode
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository.DatabaseRepository
 import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.episode.EpisodeRepository
 import com.dzirbel.kotify.repository.track.TrackRepository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.util.ReorderCalculator
@@ -84,7 +87,6 @@ open class PlaylistTracksRepository internal constructor(
 
             if (ops.isNotEmpty()) {
                 emit(PlaylistReorderState.Reordering(completedOps = 0, totalOps = ops.size))
-                // mutateState { it.copy(reordering = true) }
 
                 for ((index, op) in ops.withIndex()) {
                     Spotify.Playlists.reorderPlaylistItems(
@@ -110,16 +112,29 @@ open class PlaylistTracksRepository internal constructor(
      * the given [playlistId] and at the given [index] on the playlist.
      */
     fun convertTrack(spotifyPlaylistTrack: SpotifyPlaylistTrack, playlistId: String, index: Int): PlaylistTrack? {
-        return spotifyPlaylistTrack.track
-            ?.let { trackRepository.convertToDB(it) }
-            ?.let { track ->
-                PlaylistTrack.findOrCreate(trackId = track.id.value, playlistId = playlistId).apply {
-                    spotifyPlaylistTrack.addedBy?.let { addedBy = userRepository.convertToDB(it.id, it) }
-                    spotifyPlaylistTrack.addedAt?.let { addedAt = it }
-                    isLocal = spotifyPlaylistTrack.isLocal
-                    indexOnPlaylist = index
+        val playlistTrack = when (val track = spotifyPlaylistTrack.track) {
+            is SimplifiedSpotifyTrack -> {
+                trackRepository.convertToDB(track)?.id?.value?.let { trackId ->
+                    PlaylistTrack.findOrCreateFromTrack(trackId = trackId, playlistId = playlistId)
                 }
             }
+
+            is SimplifiedSpotifyEpisode -> {
+                val episode = EpisodeRepository.convertToDB(track)
+                PlaylistTrack.findOrCreateFromEpisode(episodeId = episode.id.value, playlistId = playlistId)
+            }
+
+            else -> {
+                error("unknown track type: $track")
+            }
+        }
+
+        return playlistTrack?.apply {
+            spotifyPlaylistTrack.addedBy?.let { addedBy = userRepository.convertToDB(it.id, it) }
+            spotifyPlaylistTrack.addedAt?.let { addedAt = it }
+            isLocal = spotifyPlaylistTrack.isLocal
+            indexOnPlaylist = index
+        }
     }
 
     companion object : PlaylistTracksRepository(

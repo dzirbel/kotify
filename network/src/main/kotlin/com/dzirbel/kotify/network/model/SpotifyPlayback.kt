@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.network.model
 
+import com.dzirbel.kotify.network.FullSpotifyTrackOrEpisode
 import com.dzirbel.kotify.network.util.CaseInsensitiveEnumSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -29,15 +30,14 @@ data class SpotifyPlayback(
     /**
      * The object type of the currently playing item. Can be one of track, episode, ad or unknown.
      */
-    // TODO nullable when not playing?
     @SerialName("currently_playing_type") val currentlyPlayingType: SpotifyPlayingType,
 
     /**
      * The currently playing track or episode. Can be null.
      *
-     * TODO update to support episode e.g. SpotifyPlaylistTrack
+     * Note: does not appear to every provide an episode object when playing a podcast (rather, it is just null).
      */
-    val item: FullSpotifyTrack?,
+    val item: FullSpotifyTrackOrEpisode?,
 
     /**
      * If shuffle is on or off.
@@ -65,7 +65,6 @@ data class SpotifyTrackPlayback(
     val timestamp: Long,
     @SerialName("progress_ms") val progressMs: Long,
     @SerialName("is_playing") val isPlaying: Boolean,
-    // TODO nullable when not playing?
     @SerialName("currently_playing_type") val currentlyPlayingType: SpotifyPlayingType,
     val item: FullSpotifyTrack?,
     val context: SpotifyPlaybackContext?,

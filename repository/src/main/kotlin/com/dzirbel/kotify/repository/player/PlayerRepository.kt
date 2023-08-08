@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.repository.player
 
+import com.dzirbel.kotify.network.FullSpotifyTrackOrEpisode
 import com.dzirbel.kotify.network.Spotify
-import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
@@ -67,8 +67,8 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
     override val shuffling: StateFlow<ToggleableState<Boolean>?>
         get() = _shuffling
 
-    private val _currentTrack = MutableStateFlow<FullSpotifyTrack?>(null)
-    override val currentTrack: StateFlow<FullSpotifyTrack?>
+    private val _currentTrack = MutableStateFlow<FullSpotifyTrackOrEpisode?>(null)
+    override val currentItem: StateFlow<FullSpotifyTrackOrEpisode?>
         get() = _currentTrack
 
     private val _trackPosition = MutableStateFlow<TrackPosition?>(null)
@@ -132,7 +132,7 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
         refreshTrackWithRetries(condition = null)
     }
 
-    private suspend fun refreshTrackUntilChanged(previousTrack: FullSpotifyTrack?) {
+    private suspend fun refreshTrackUntilChanged(previousTrack: FullSpotifyTrackOrEpisode?) {
         if (previousTrack == null) {
             _errors.emit(IllegalStateException("Missing previous track"))
         } else {

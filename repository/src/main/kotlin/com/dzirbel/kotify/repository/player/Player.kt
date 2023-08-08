@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.repository.player
 
 import androidx.compose.runtime.Stable
+import com.dzirbel.kotify.network.FullSpotifyTrackOrEpisode
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyPlayback
@@ -123,12 +124,13 @@ interface Player {
     val shuffling: StateFlow<ToggleableState<Boolean>?>
 
     /**
-     * The current [FullSpotifyTrack] being played; null if no track is being played or not yet determined.
+     * The current [FullSpotifyTrack] or [FullSpotifyEpisode] being played; null if no track is being played or not yet
+     * determined.
      */
-    val currentTrack: StateFlow<FullSpotifyTrack?>
+    val currentItem: StateFlow<FullSpotifyTrackOrEpisode?>
 
     /**
-     * The last updated position on the [currentTrack]; null if no track is being played or not yet determined.
+     * The last updated position on the [currentItem]; null if no track is being played or not yet determined.
      */
     val trackPosition: StateFlow<TrackPosition?>
 

@@ -29,7 +29,7 @@ import com.dzirbel.kotify.ui.theme.LocalColors
  * playlist tracks) with an icon, and allows playing a [SpotifyTrack] via the [playContextFromTrack].
  */
 class TrackPlayingColumn<T>(
-    private val trackIdOf: (track: T) -> String,
+    private val trackIdOf: (track: T) -> String?,
     /**
      * Returns a [Player.PlayContext] to play when the user selects the given [Track].
      */
@@ -46,11 +46,12 @@ class TrackPlayingColumn<T>(
 
     @Composable
     override fun Item(item: T) {
+        val trackId = trackIdOf(item) ?: return
+
         val hoverInteractionSource = remember { MutableInteractionSource() }
         val hovering = hoverInteractionSource.collectIsHoveredAsState()
 
-        val trackId = trackIdOf(item)
-        val currentTrackState = PlayerRepository.currentTrack.collectAsState()
+        val currentTrackState = PlayerRepository.currentItem.collectAsState()
         val playing = remember(trackId) {
             derivedStateOf { currentTrackState.value?.id == trackId }
         }

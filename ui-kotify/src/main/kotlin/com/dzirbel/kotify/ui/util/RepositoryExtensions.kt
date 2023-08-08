@@ -15,11 +15,11 @@ import com.dzirbel.kotify.repository.rating.RatingRepository
  * async [LaunchedEffect] in order to guarantee it is made before any individual calls below it in the composition.
  */
 @Composable
-fun <T> SavedRepository.rememberSavedStates(entities: Iterable<T>, toId: (T) -> String) {
+fun <T> SavedRepository.rememberSavedStates(entities: Iterable<T>, toId: (T) -> String?) {
     remember(entities) {
         @Suppress("LabeledExpression") // use labeled expression to ensure value is returned (and thus remembered)
         return@remember if (entities.any()) {
-            savedStatesOf(ids = entities.map(toId))
+            savedStatesOf(ids = entities.mapNotNull(toId))
         } else {
             null
         }
@@ -36,11 +36,11 @@ fun <T> SavedRepository.rememberSavedStates(entities: Iterable<T>, toId: (T) -> 
  * composition.
  */
 @Composable
-fun <T> RatingRepository.rememberRatingStates(entities: Iterable<T>, toId: (T) -> String) {
+fun <T> RatingRepository.rememberRatingStates(entities: Iterable<T>, toId: (T) -> String?) {
     remember(entities) {
         @Suppress("LabeledExpression") // use labeled expression to ensure value is returned (and thus remembered)
         return@remember if (entities.any()) {
-            ratingStatesOf(ids = entities.map(toId))
+            ratingStatesOf(ids = entities.mapNotNull(toId))
         } else {
             null
         }

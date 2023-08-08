@@ -42,7 +42,7 @@ class PlayerRepositoryPlayTest : BasePlayerRepositoryTest() {
                 advanceTimeBy(2500)
 
                 assertThat(repository.playing.value).isEqualTo(ToggleableState.Set(true))
-                assertThat(repository.currentTrack.value).isEqualTo(track)
+                assertThat(repository.currentItem.value).isEqualTo(track)
                 assertThat(repository.trackPosition.value)
                     .transform { (it as TrackPosition.Fetched).fetchedPositionMs }
                     .isEqualTo(10)

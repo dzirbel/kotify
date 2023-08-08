@@ -115,7 +115,7 @@ class PlayerRepositoryRefreshPlaybackTest : BasePlayerRepositoryTest() {
 
     private fun PlayerRepository.assertPlayback(refreshing: Boolean, playback: SpotifyPlayback?) {
         assertThat(refreshingPlayback.value).isEqualTo(refreshing)
-        assertThat(currentTrack.value).isEqualTo(playback?.item)
+        assertThat(currentItem.value).isEqualTo(playback?.item)
         assertThat(currentDevice.value).isEqualTo(playback?.device)
 
         if (playback?.progressMs != null) {
