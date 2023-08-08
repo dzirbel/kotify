@@ -72,8 +72,6 @@ fun InvalidateButton(
 /**
  * A wrapper around [InvalidateButton] which reflects the [CacheState] of the entity with the given [id] in the given
  * [repository]
- *
- * TODO stability with Repository param
  */
 @Composable
 fun InvalidateButton(

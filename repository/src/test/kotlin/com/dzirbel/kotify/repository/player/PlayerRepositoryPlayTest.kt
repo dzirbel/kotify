@@ -41,7 +41,6 @@ class PlayerRepositoryPlayTest : BasePlayerRepositoryTest() {
 
                 advanceTimeBy(2500)
 
-                assertThat(errors).isEmpty() // TODO remove
                 assertThat(repository.playing.value).isEqualTo(ToggleableState.Set(true))
                 assertThat(repository.currentTrack.value).isEqualTo(track)
                 assertThat(repository.trackPosition.value)

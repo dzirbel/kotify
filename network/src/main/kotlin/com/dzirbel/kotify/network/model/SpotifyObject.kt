@@ -2,8 +2,6 @@ package com.dzirbel.kotify.network.model
 
 /**
  * Common interface for properties found in most Spotify network objects.
- *
- * TODO refactor UI to avoid direct use of (unstable) network objects
  */
 interface SpotifyObject {
     /** The Spotify ID for the object. */

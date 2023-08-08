@@ -69,7 +69,7 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
         val artistAlbums = rememberListAdapterState(
             key = artistId,
             defaultSort = AlbumReleaseDateProperty.ForArtistAlbum,
-            defaultFilter = filterFor(displayedAlbumTypes.value), // TODO lazy?
+            defaultFilter = filterFor(displayedAlbumTypes.value),
             source = { scope ->
                 ArtistAlbumsRepository.stateOf(id = artistId).mapIn(scope) { it?.cachedValue }
             },
