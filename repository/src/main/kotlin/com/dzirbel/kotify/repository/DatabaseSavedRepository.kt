@@ -63,6 +63,13 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     protected abstract suspend fun fetchIsSaved(ids: List<String>): List<Boolean>
 
     /**
+     * Fetches the saved state of each of the given [id] via a remote call to the network.
+     *
+     * This is the remote primitive and simply fetches the network state but does not cache it.
+     */
+    protected open suspend fun fetchIsSaved(id: String): Boolean = fetchIsSaved(listOf(id)).first()
+
+    /**
      * Updates the saved state of each of the given [ids] to [saved] via a remote call to the network.
      *
      * This is the remote primitive and simply pushes the network state but does not cache it, unlike [setSaved].
@@ -126,7 +133,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                         } else {
                             val start = TimeSource.Monotonic.markNow()
                             val remote = try {
-                                fetchIsSaved(ids = listOf(id)).first()
+                                fetchIsSaved(id = id)
                             } catch (cancellationException: CancellationException) {
                                 throw cancellationException
                             } catch (_: Throwable) {

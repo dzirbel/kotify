@@ -34,6 +34,7 @@ sealed class ImageCacheEvent {
     data class Fetch(val url: String, val duration: Duration, val cacheFile: File?) : ImageCacheEvent()
 }
 
+// TODO support mosaic (playlist cover image) urls e.g. https://mosaic.scdn.co/640/<id>
 private const val SPOTIFY_IMAGE_URL_PREFIX = "https://i.scdn.co/image/"
 
 /**

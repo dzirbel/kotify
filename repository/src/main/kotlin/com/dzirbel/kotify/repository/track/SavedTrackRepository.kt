@@ -14,6 +14,10 @@ import java.time.Instant
 open class SavedTrackRepository(scope: CoroutineScope) :
     DatabaseSavedRepository<SpotifySavedTrack>(savedEntityTable = TrackTable.SavedTracksTable, scope = scope) {
 
+    override suspend fun fetchIsSaved(id: String): Boolean {
+        return Spotify.Library.checkTracks(ids = listOf(id)).first()
+    }
+
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
         return ids.chunked(size = Spotify.MAX_LIMIT).flatMapParallel { chunk ->
             Spotify.Library.checkTracks(ids = chunk)
