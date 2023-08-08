@@ -4,7 +4,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumType
-import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistAlbumViewModel
 import com.dzirbel.kotify.repository.rating.AverageRating
@@ -56,11 +55,11 @@ open class AlbumTypeDividableProperty<A>(private val toAlbumType: (A) -> AlbumTy
     object ForArtistAlbum : AlbumTypeDividableProperty<ArtistAlbumViewModel>(toAlbumType = { it.albumGroup })
 }
 
-class AlbumRatingProperty(ratings: Map<String, StateFlow<AverageRating>>) : PropertyByAverageRating<Album>(ratings) {
+class AlbumRatingProperty(ratings: Map<String, StateFlow<AverageRating>>?) : PropertyByAverageRating<Album>(ratings) {
     override fun idOf(element: Album) = element.id.value
 
-    class ForArtistAlbum(ratings: Map<String, StateFlow<AverageRating>>) :
-        PropertyByAverageRating<ArtistAlbum>(ratings) {
-        override fun idOf(element: ArtistAlbum) = element.albumId.value
+    class ForArtistAlbum(ratings: Map<String, StateFlow<AverageRating>>?) :
+        PropertyByAverageRating<ArtistAlbumViewModel>(ratings) {
+        override fun idOf(element: ArtistAlbumViewModel) = element.album.id
     }
 }

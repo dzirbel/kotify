@@ -3,6 +3,7 @@ package com.dzirbel.kotify.repository.rating
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.TrackRatingTable
 import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.album.AlbumTracksRepository
 import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.util.SynchronizedWeakStateFlowMap
@@ -69,7 +70,21 @@ open class TrackRatingRepository internal constructor(
     fun averageRatingStateOfArtist(artistId: String, scope: CoroutineScope): StateFlow<AverageRating> {
         return ArtistTracksRepository.artistTracksStateOf(artistId = artistId)
             .flatMapLatestIn(scope) { trackIds ->
-                trackIds?.let { TrackRatingRepository.averageRatingStateOf(ids = trackIds) }
+                trackIds?.let { averageRatingStateOf(ids = it) }
+                    ?: MutableStateFlow(AverageRating.empty)
+            }
+    }
+
+    /**
+     * Combines the [AlbumTracksRepository] states with [averageRatingStateOf] to produce a [StateFlow] of the average
+     * rating of the tracks on the album, with collection in [scope].
+     */
+    fun averageRatingStateOfAlbum(albumId: String, scope: CoroutineScope): StateFlow<AverageRating> {
+        return AlbumTracksRepository.stateOf(id = albumId)
+            .flatMapLatestIn(scope) { tracks ->
+                tracks?.cachedValue
+                    ?.map { it.id }
+                    ?.let { averageRatingStateOf(ids = it) }
                     ?: MutableStateFlow(AverageRating.empty)
             }
     }

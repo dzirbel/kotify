@@ -16,13 +16,16 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.AlbumType
+import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistAlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
+import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.components.AlbumCell
 import com.dzirbel.kotify.ui.components.AlbumTypePicker
 import com.dzirbel.kotify.ui.components.DividerSelector
@@ -30,6 +33,7 @@ import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner
 import com.dzirbel.kotify.ui.components.SortSelector
+import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
 import com.dzirbel.kotify.ui.components.adapter.ListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.dividableProperties
 import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
@@ -40,24 +44,20 @@ import com.dzirbel.kotify.ui.framework.VerticalScrollPage
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.properties.AlbumNameProperty
+import com.dzirbel.kotify.ui.properties.AlbumRatingProperty
 import com.dzirbel.kotify.ui.properties.AlbumReleaseDateProperty
 import com.dzirbel.kotify.ui.properties.AlbumTypeDividableProperty
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.ui.util.rememberSavedStates
 import com.dzirbel.kotify.util.countsBy
 import com.dzirbel.kotify.util.immutable.orEmpty
 import com.dzirbel.kotify.util.mapIn
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
-
-private val artistAlbumProperties = persistentListOf(
-    AlbumNameProperty.ForArtistAlbum,
-    AlbumReleaseDateProperty.ForArtistAlbum,
-    AlbumTypeDividableProperty.ForArtistAlbum,
-    // TODO AlbumRatingProperty.ForArtistAlbum(ratings = albumRatings),
-)
 
 data class ArtistPage(val artistId: String) : Page<String?>() {
     @Composable
@@ -75,6 +75,23 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
             },
         )
 
+        SavedAlbumRepository.rememberSavedStates(artistAlbums.value) { it.album.id }
+
+        val scope = rememberCoroutineScope()
+        val artistAlbumProperties = remember(artistAlbums.value) {
+            persistentListOf(
+                AlbumNameProperty.ForArtistAlbum,
+                AlbumReleaseDateProperty.ForArtistAlbum,
+                AlbumTypeDividableProperty.ForArtistAlbum,
+                AlbumRatingProperty.ForArtistAlbum(
+                    ratings = artistAlbums.value.associate { artistAlbum ->
+                        val albumId = artistAlbum.album.id
+                        albumId to TrackRatingRepository.averageRatingStateOfAlbum(albumId = albumId, scope = scope)
+                    },
+                ),
+            )
+        }
+
         VerticalScrollPage(
             visible = visible,
             onHeaderVisibilityChanged = { headerVisible -> navigationTitleState.targetState = !headerVisible },
@@ -82,6 +99,7 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
                 ArtistPageHeader(
                     artist = artist,
                     albums = artistAlbums,
+                    artistAlbumProperties = artistAlbumProperties,
                     displayedAlbumTypes = displayedAlbumTypes.value,
                     setDisplayedAlbumTypes = { types ->
                         displayedAlbumTypes.value = types
@@ -120,6 +138,7 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
 private fun ArtistPageHeader(
     artist: ArtistViewModel?,
     albums: ListAdapterState<ArtistAlbumViewModel>,
+    artistAlbumProperties: PersistentList<AdapterProperty<ArtistAlbumViewModel>>,
     displayedAlbumTypes: PersistentSet<AlbumType>,
     setDisplayedAlbumTypes: (PersistentSet<AlbumType>) -> Unit,
 ) {

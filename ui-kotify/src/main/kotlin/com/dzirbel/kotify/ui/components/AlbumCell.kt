@@ -15,13 +15,12 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
-import com.dzirbel.kotify.repository.album.AlbumTracksRepository
 import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.player.Player
@@ -31,9 +30,8 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.mapNotNull
 
 @Composable
 fun AlbumCell(
@@ -151,12 +149,11 @@ fun AlbumCell(album: AlbumViewModel, showRating: Boolean = true, onClick: () -> 
         }
 
         if (showRating) {
+            val scope = rememberCoroutineScope()
             val averageRating = remember(album.id) {
-                AlbumTracksRepository.stateOf(id = album.id)
-                    .mapNotNull { it?.cachedValue?.map { track -> track.id } }
-                    .flatMapLatest { tracks -> TrackRatingRepository.averageRatingStateOf(ids = tracks) }
+                TrackRatingRepository.averageRatingStateOfAlbum(albumId = album.id, scope = scope)
             }
-                .collectAsState(initial = null)
+                .collectAsStateSwitchable(key = album.id)
                 .value
 
             AverageStarRating(averageRating = averageRating)
