@@ -5,7 +5,7 @@ package com.dzirbel.kotify.util
  * null.
  */
 fun <T, R> Array<T>.mapIfAllNotNull(transform: (T) -> R?): List<R>? {
-    val result = mutableListOf<R>()
+    val result = ArrayList<R>(this.size)
     for (element in this) {
         result.add(transform(element) ?: return null)
     }

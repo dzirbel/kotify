@@ -22,17 +22,42 @@ class StateFlowExtensionsTest {
             val stateFlow3 = MutableStateFlow("3")
             val stateFlows = listOf(stateFlow1, stateFlow2, stateFlow3)
 
-            val combined = stateFlows.combineState { it.joinToString() }
+            val combinedArrays = mutableListOf<List<String>>()
+            val combined = stateFlows.combineState { array ->
+                combinedArrays.add(array.toList())
+                array.joinToString()
+            }
+
+            assertThat(combinedArrays).containsExactly(listOf("1", "2", "3"))
+            assertThat(combined.value).isEqualTo("1, 2, 3")
 
             collecting(combined) {
-                assertThat(combined.value).isEqualTo("1, 2, 3")
-
-                stateFlow1.value = "1a"
-
+                assertThat(combinedArrays).containsExactly(listOf("1", "2", "3"))
                 assertThat(combined.value).isEqualTo("1, 2, 3")
 
                 runCurrent()
 
+                assertThat(combinedArrays).containsExactly(
+                    listOf("1", "2", "3"),
+                    listOf("1", "2", "3"),
+                )
+                assertThat(combined.value).isEqualTo("1, 2, 3")
+
+                stateFlow1.value = "1a"
+
+                assertThat(combinedArrays).containsExactly(
+                    listOf("1", "2", "3"),
+                    listOf("1", "2", "3"),
+                )
+                assertThat(combined.value).isEqualTo("1, 2, 3")
+
+                runCurrent()
+
+                assertThat(combinedArrays).containsExactly(
+                    listOf("1", "2", "3"),
+                    listOf("1", "2", "3"),
+                    listOf("1a", "2", "3"),
+                )
                 assertThat(combined.value).isEqualTo("1a, 2, 3")
             }
         }
@@ -46,18 +71,25 @@ class StateFlowExtensionsTest {
             val stateFlow3 = MutableStateFlow("3")
             val stateFlows = listOf(stateFlow1, stateFlow2, stateFlow3)
 
-            val combined = stateFlows.combineState { it.joinToString() }
+            val combinedArrays = mutableListOf<List<String>>()
+            val combined = stateFlows.combineState { array ->
+                combinedArrays.add(array.toList())
+                array.joinToString()
+            }
 
             collecting(combined) {
+                assertThat(combinedArrays).containsExactly(listOf("1", "2", "3"))
                 assertThat(combined.value).isEqualTo("1, 2, 3")
 
                 stateFlow1.value = "1a"
                 stateFlow2.value = "2a"
 
+                assertThat(combinedArrays).containsExactly(listOf("1", "2", "3"))
                 assertThat(combined.value).isEqualTo("1, 2, 3")
 
                 runCurrent()
 
+                assertThat(combinedArrays).containsExactly(listOf("1", "2", "3"), listOf("1a", "2a", "3"))
                 assertThat(combined.value).isEqualTo("1a, 2a, 3")
             }
         }
@@ -71,17 +103,24 @@ class StateFlowExtensionsTest {
             val stateFlow3 = MutableStateFlow("3")
             val stateFlows = listOf(stateFlow1, stateFlow2, stateFlow3)
 
-            val combined = stateFlows.combineState { it.joinToString() }
+            val combinedArrays = mutableListOf<List<String>>()
+            val combined = stateFlows.combineState { array ->
+                combinedArrays.add(array.toList())
+                array.joinToString()
+            }
 
             collecting(combined) {
+                assertThat(combinedArrays).containsExactly(listOf("1", "2", "3"))
                 assertThat(combined.value).isEqualTo("1, 2, 3")
 
                 stateFlow1.value = "1a"
 
+                assertThat(combinedArrays).containsExactly(listOf("1", "2", "3"))
                 assertThat(combined.value).isEqualTo("1, 2, 3")
 
                 runCurrent()
 
+                assertThat(combinedArrays).containsExactly(listOf("1", "2", "3"), listOf("1a", "2", "3"))
                 assertThat(combined.value).isEqualTo("1a, 2, 3")
             }
 
@@ -89,14 +128,18 @@ class StateFlowExtensionsTest {
             assertThat(combined.value).isEqualTo("1a, 2, 3")
 
             collecting(combined) {
+                assertThat(combinedArrays).containsExactly(listOf("1", "2", "3"), listOf("1a", "2", "3"))
                 assertThat(combined.value).isEqualTo("1a, 2, 3")
 
                 stateFlow3.value = "3a"
 
+                assertThat(combinedArrays).containsExactly(listOf("1", "2", "3"), listOf("1a", "2", "3"))
                 assertThat(combined.value).isEqualTo("1a, 2, 3")
 
                 runCurrent()
 
+                assertThat(combinedArrays)
+                    .containsExactly(listOf("1", "2", "3"), listOf("1a", "2", "3"), listOf("1a", "2", "3a"))
                 assertThat(combined.value).isEqualTo("1a, 2, 3a")
             }
         }
