@@ -35,7 +35,9 @@ internal class GlobalUpdateTimesRepositoryTest {
 
         runBlocking {
             val start = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-            KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.setUpdated(key = key) }
+            KotifyDatabase.transaction(name = null) {
+                GlobalUpdateTimesRepository.setUpdated(key = key, updateTime = Instant.now())
+            }
             val end = Instant.now().truncatedTo(ChronoUnit.MILLIS)
 
             assertThat(KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.updated(key = key) })
@@ -46,7 +48,9 @@ internal class GlobalUpdateTimesRepositoryTest {
             ).isTrue()
 
             val start2 = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-            KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.setUpdated(key = key) }
+            KotifyDatabase.transaction(name = null) {
+                GlobalUpdateTimesRepository.setUpdated(key = key, updateTime = Instant.now())
+            }
             val end2 = Instant.now().truncatedTo(ChronoUnit.MILLIS)
 
             assertThat(KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.updated(key = key) })
@@ -64,7 +68,9 @@ internal class GlobalUpdateTimesRepositoryTest {
 
         runBlocking {
             val start = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-            KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.setUpdated(key = key) }
+            KotifyDatabase.transaction(name = null) {
+                GlobalUpdateTimesRepository.setUpdated(key = key, updateTime = Instant.now())
+            }
             val end = Instant.now().truncatedTo(ChronoUnit.MILLIS)
 
             assertThat(KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.updated(key = key) })

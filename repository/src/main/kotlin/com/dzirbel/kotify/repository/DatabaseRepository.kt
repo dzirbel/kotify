@@ -56,7 +56,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
      *
      * Must be called from within a database transaction.
      */
-    abstract fun convertToDB(id: String, networkModel: NetworkType): DatabaseType
+    abstract fun convertToDB(id: String, networkModel: NetworkType, fetchTime: Instant): DatabaseType
 
     /**
      * Converts the given [databaseModel] into a [ViewModel] suitable for external use.
@@ -147,7 +147,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (_: Throwable) {
-            // TODO log exception?
+            // TODO log exception
             return false
         }
 
@@ -174,7 +174,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (_: Throwable) {
-            // TODO log exception?
+            // TODO log exception
             return ids
         }
 
@@ -205,20 +205,34 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         states.updateValue(id) { CacheState.Refreshing.of(it) }
 
         val start = TimeSource.Monotonic.markNow()
-        val remoteEntity = try {
-            fetchFromRemote(id)?.let { networkModel ->
-                KotifyDatabase.transaction("save $entityName $id") { convertToVM(convertToDB(id, networkModel)) }
-            }
+        val networkModel = try {
+            fetchFromRemote(id)
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (throwable: Throwable) {
+            // TODO log exception
             states.updateValue(id, CacheState.Error(throwable))
             return
         }
 
-        val fetchTime = start.midpointInstantToNow()
+        if (networkModel != null) {
+            val fetchTime = start.midpointInstantToNow()
 
-        states.updateValue(id, remoteEntity?.let { CacheState.Loaded(it, fetchTime) } ?: CacheState.NotFound())
+            val viewModel = try {
+                KotifyDatabase.transaction("save $entityName $id") {
+                    val databaseModel = convertToDB(id = id, networkModel = networkModel, fetchTime = fetchTime)
+                    convertToVM(databaseModel = databaseModel)
+                }
+            } catch (cancellationException: CancellationException) {
+                throw cancellationException
+            } catch (throwable: Throwable) {
+                // TODO log exception
+                states.updateValue(id, CacheState.Error(throwable))
+                return
+            }
+
+            states.updateValue(id, viewModel?.let { CacheState.Loaded(it, fetchTime) } ?: CacheState.NotFound())
+        }
     }
 
     /**
@@ -230,32 +244,44 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         }
 
         val start = TimeSource.Monotonic.markNow()
-        val remoteEntities = try {
-            val networkModels = fetchFromRemote(ids)
-            val notNullNetworkModels = networkModels.count { it != null }
-            if (notNullNetworkModels > 0) {
-                KotifyDatabase.transaction("save $notNullNetworkModels ${entityName}s") {
-                    networkModels.zip(ids) { networkModel, id ->
-                        networkModel?.let { convertToVM(convertToDB(id, it)) }
-                    }
-                }
-            } else {
-                emptyList()
-            }
+        val networkModels = try {
+            fetchFromRemote(ids)
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (throwable: Throwable) {
+            // TODO log exception
             for (id in ids) {
                 states.updateValue(id, CacheState.Error(throwable))
             }
             return
         }
 
-        // TODO may not be the most accurate for batch loads
-        val fetchTime = start.midpointInstantToNow()
+        val notNullNetworkModels = networkModels.count { it != null }
+        if (notNullNetworkModels > 0) {
+            val fetchTime = start.midpointInstantToNow()
 
-        ids.zipEach(remoteEntities) { id, remoteEntity ->
-            states.updateValue(id, remoteEntity?.let { CacheState.Loaded(it, fetchTime) } ?: CacheState.NotFound())
+            val viewModels = try {
+                KotifyDatabase.transaction("save $notNullNetworkModels ${entityName}s") {
+                    networkModels.zip(ids) { networkModel, id ->
+                        networkModel?.let {
+                            val databaseModel = convertToDB(id = id, networkModel = networkModel, fetchTime = fetchTime)
+                            convertToVM(databaseModel = databaseModel)
+                        }
+                    }
+                }
+            } catch (cancellationException: CancellationException) {
+                throw cancellationException
+            } catch (throwable: Throwable) {
+                // TODO log exception
+                for (id in ids) {
+                    states.updateValue(id, CacheState.Error(throwable))
+                }
+                return
+            }
+
+            ids.zipEach(viewModels) { id, viewModel ->
+                states.updateValue(id, viewModel?.let { CacheState.Loaded(it, fetchTime) } ?: CacheState.NotFound())
+            }
         }
     }
 

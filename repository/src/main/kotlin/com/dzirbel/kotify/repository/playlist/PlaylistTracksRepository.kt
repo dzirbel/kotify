@@ -58,13 +58,22 @@ open class PlaylistTracksRepository internal constructor(
         }
     }
 
-    override fun convertToDB(id: String, networkModel: List<SpotifyPlaylistTrack>): List<PlaylistTrack> {
+    override fun convertToDB(
+        id: String,
+        networkModel: List<SpotifyPlaylistTrack>,
+        fetchTime: Instant,
+    ): List<PlaylistTrack> {
         PlaylistTable.update(where = { PlaylistTable.id eq id }) {
-            it[tracksFetched] = Instant.now()
+            it[tracksFetched] = fetchTime
         }
 
         return networkModel.mapIndexedNotNull { index, spotifyPlaylistTrack ->
-            convertTrack(spotifyPlaylistTrack = spotifyPlaylistTrack, playlistId = id, index = index)
+            convertTrack(
+                spotifyPlaylistTrack = spotifyPlaylistTrack,
+                playlistId = id,
+                index = index,
+                fetchTime = fetchTime,
+            )
         }
     }
 
@@ -111,16 +120,21 @@ open class PlaylistTracksRepository internal constructor(
      * Converts the given network model [spotifyPlaylistTrack] to a database model [PlaylistTrack] for the playlist with
      * the given [playlistId] and at the given [index] on the playlist.
      */
-    fun convertTrack(spotifyPlaylistTrack: SpotifyPlaylistTrack, playlistId: String, index: Int): PlaylistTrack? {
+    fun convertTrack(
+        spotifyPlaylistTrack: SpotifyPlaylistTrack,
+        playlistId: String,
+        index: Int,
+        fetchTime: Instant,
+    ): PlaylistTrack? {
         val playlistTrack = when (val track = spotifyPlaylistTrack.track) {
             is SimplifiedSpotifyTrack -> {
-                trackRepository.convertToDB(track)?.id?.value?.let { trackId ->
+                trackRepository.convertToDB(track, fetchTime)?.id?.value?.let { trackId ->
                     PlaylistTrack.findOrCreateFromTrack(trackId = trackId, playlistId = playlistId)
                 }
             }
 
             is SimplifiedSpotifyEpisode -> {
-                val episode = EpisodeRepository.convertToDB(track)
+                val episode = EpisodeRepository.convertToDB(episode = track, fetchTime = fetchTime)
                 PlaylistTrack.findOrCreateFromEpisode(episodeId = episode.id.value, playlistId = playlistId)
             }
 
@@ -130,7 +144,7 @@ open class PlaylistTracksRepository internal constructor(
         }
 
         return playlistTrack?.apply {
-            spotifyPlaylistTrack.addedBy?.let { addedBy = userRepository.convertToDB(it.id, it) }
+            spotifyPlaylistTrack.addedBy?.let { addedBy = userRepository.convertToDB(it, fetchTime) }
             spotifyPlaylistTrack.addedAt?.let { addedAt = it }
             isLocal = spotifyPlaylistTrack.isLocal
             indexOnPlaylist = index

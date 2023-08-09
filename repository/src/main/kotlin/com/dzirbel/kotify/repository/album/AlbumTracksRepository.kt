@@ -36,13 +36,13 @@ open class AlbumTracksRepository internal constructor(
         }
     }
 
-    override fun convertToDB(id: String, networkModel: List<SimplifiedSpotifyTrack>): List<Track> {
+    override fun convertToDB(id: String, networkModel: List<SimplifiedSpotifyTrack>, fetchTime: Instant): List<Track> {
         // TODO do not ignore tracks with null id
-        val tracks = networkModel.mapNotNull { track -> trackRepository.convertToDB(track) }
+        val tracks = networkModel.mapNotNull { track -> trackRepository.convertToDB(track, fetchTime) }
 
         Album.findById(id)?.let { album ->
             album.tracks = tracks.sized()
-            album.tracksFetched = Instant.now() // TODO take as input?
+            album.tracksFetched = fetchTime
         }
 
         return tracks

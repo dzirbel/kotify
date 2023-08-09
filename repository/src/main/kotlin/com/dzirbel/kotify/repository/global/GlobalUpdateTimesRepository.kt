@@ -45,7 +45,8 @@ internal object GlobalUpdateTimesRepository {
      *
      * Must be called from within a transaction.
      */
-    fun setUpdated(key: String, updateTime: Instant = Instant.now()) {
+    fun setUpdated(key: String, updateTime: Instant) {
+        // TODO upsert
         if (GlobalUpdateTimesTable.select { GlobalUpdateTimesTable.key eq key }.any()) {
             GlobalUpdateTimesTable.update(where = { GlobalUpdateTimesTable.key eq key }) {
                 it[GlobalUpdateTimesTable.updateTime] = updateTime

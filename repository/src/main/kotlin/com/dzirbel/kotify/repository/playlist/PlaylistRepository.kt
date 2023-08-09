@@ -22,14 +22,14 @@ open class PlaylistRepository internal constructor(
 
     override suspend fun fetchFromRemote(id: String) = Spotify.Playlists.getPlaylist(playlistId = id)
 
-    override fun convertToDB(id: String, networkModel: SpotifyPlaylist): Playlist {
-        return Playlist.updateOrInsert(id = id, networkModel = networkModel) {
+    override fun convertToDB(id: String, networkModel: SpotifyPlaylist, fetchTime: Instant): Playlist {
+        return Playlist.updateOrInsert(id = id, networkModel = networkModel, fetchTime = fetchTime) {
             collaborative = networkModel.collaborative
             networkModel.description?.let { description = it }
             networkModel.public?.let { public = it }
             snapshotId = networkModel.snapshotId
 
-            owner = userRepository.convertToDB(networkModel.owner)
+            owner = userRepository.convertToDB(networkModel.owner, fetchTime)
 
             images = networkModel.images
                 .map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) }
@@ -42,7 +42,7 @@ open class PlaylistRepository internal constructor(
             }
 
             if (networkModel is FullSpotifyPlaylist) {
-                fullUpdatedTime = Instant.now()
+                fullUpdatedTime = fetchTime
                 followersTotal = networkModel.followers.total
 
                 totalTracks = networkModel.tracks.total
@@ -53,6 +53,7 @@ open class PlaylistRepository internal constructor(
                         spotifyPlaylistTrack = track,
                         playlistId = networkModel.id,
                         index = index,
+                        fetchTime = fetchTime,
                     )
                 }
             }

@@ -28,8 +28,8 @@ abstract class DatabaseEntityRepository<
      *
      * Repositories whose [NetworkType]s always have an ID can override this to provide a non-null return type.
      */
-    open fun convertToDB(networkModel: NetworkType): EntityType? {
-        return networkModel.id?.let { convertToDB(id = it, networkModel = networkModel) }
+    open fun convertToDB(networkModel: NetworkType, fetchTime: Instant): EntityType? {
+        return networkModel.id?.let { convertToDB(id = it, networkModel = networkModel, fetchTime = fetchTime) }
     }
 
     final override fun fetchFromDatabase(id: String): Pair<EntityType, Instant>? {

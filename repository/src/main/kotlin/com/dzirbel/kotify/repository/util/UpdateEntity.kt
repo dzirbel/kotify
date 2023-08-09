@@ -15,17 +15,19 @@ import java.time.Instant
 internal fun <EntityType : SpotifyEntity, NetworkType : SpotifyObject> EntityClass<String, EntityType>.updateOrInsert(
     id: String,
     networkModel: NetworkType,
+    fetchTime: Instant,
     update: EntityType.() -> Unit,
 ): EntityType {
     return findById(id)
         ?.apply {
-            updatedTime = Instant.now()
+            updatedTime = fetchTime
             networkModel.name?.let { name = it }
             uri = networkModel.uri
             update()
         }
         ?: new(id = id) {
             // note: no need to set updateTime, as it is initialized to the current time
+            updatedTime = fetchTime
             networkModel.name?.let { name = it }
             uri = networkModel.uri
             update()

@@ -36,8 +36,8 @@ open class SavedPlaylistRepository internal constructor(scope: CoroutineScope) :
         return Spotify.Playlists.getPlaylists(limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
-    override fun convert(savedNetworkType: SpotifyPlaylist): Pair<String, Instant?> {
-        PlaylistRepository.convertToDB(savedNetworkType)
+    override fun convertToDB(savedNetworkType: SpotifyPlaylist, fetchTime: Instant): Pair<String, Instant?> {
+        PlaylistRepository.convertToDB(networkModel = savedNetworkType, fetchTime = fetchTime)
         return savedNetworkType.id to null
     }
 

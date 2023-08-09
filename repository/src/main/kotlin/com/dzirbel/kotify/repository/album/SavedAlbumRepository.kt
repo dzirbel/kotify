@@ -29,9 +29,9 @@ open class SavedAlbumRepository internal constructor(scope: CoroutineScope) :
         return Spotify.Library.getSavedAlbums(limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
-    override fun convert(savedNetworkType: SpotifySavedAlbum): Pair<String, Instant?> {
+    override fun convertToDB(savedNetworkType: SpotifySavedAlbum, fetchTime: Instant): Pair<String, Instant?> {
         val album = savedNetworkType.album
-        AlbumRepository.convertToDB(networkModel = album)
+        AlbumRepository.convertToDB(networkModel = album, fetchTime = fetchTime)
         return album.id to parseInstantOrNull(savedNetworkType.addedAt)
     }
 

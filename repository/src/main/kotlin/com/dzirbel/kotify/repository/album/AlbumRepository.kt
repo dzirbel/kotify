@@ -42,8 +42,8 @@ open class AlbumRepository internal constructor(
             .flatMapParallel { idsChunk -> Spotify.Albums.getAlbums(ids = idsChunk) }
     }
 
-    override fun convertToDB(id: String, networkModel: SpotifyAlbum): Album {
-        return Album.updateOrInsert(id = id, networkModel = networkModel) {
+    override fun convertToDB(id: String, networkModel: SpotifyAlbum, fetchTime: Instant): Album {
+        return Album.updateOrInsert(id = id, networkModel = networkModel, fetchTime = fetchTime) {
             albumType = networkModel.albumType?.toAlbumType()
             releaseDate = networkModel.releaseDate
             releaseDatePrecision = networkModel.releaseDatePrecision
@@ -54,7 +54,7 @@ open class AlbumRepository internal constructor(
             // attempt to link artists from network model; do not set albumGroup since it is unavailable from an album
             // context
             networkModel.artists.forEach { artistModel ->
-                artistRepository.convertToDB(artistModel)?.let { artist ->
+                artistRepository.convertToDB(artistModel, fetchTime)?.let { artist ->
                     ArtistAlbum.findOrCreate(artistId = artist.id.value, albumId = id, albumGroup = null)
                 }
             }
@@ -64,14 +64,14 @@ open class AlbumRepository internal constructor(
                 .sized()
 
             if (networkModel is FullSpotifyAlbum) {
-                fullUpdatedTime = Instant.now()
+                fullUpdatedTime = fetchTime
 
                 label = networkModel.label
                 popularity = networkModel.popularity
                 totalTracks = networkModel.tracks.total
 
                 genres = networkModel.genres.map { Genre.findOrCreate(it) }.sized()
-                tracks = networkModel.tracks.items.mapNotNull { trackRepository.convertToDB(it) }.sized()
+                tracks = networkModel.tracks.items.mapNotNull { trackRepository.convertToDB(it, fetchTime) }.sized()
             }
         }
     }

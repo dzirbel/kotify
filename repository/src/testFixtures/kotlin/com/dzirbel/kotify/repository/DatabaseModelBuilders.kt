@@ -16,14 +16,16 @@ import java.time.Instant
 @Suppress("FunctionNaming")
 fun ArtistList(count: Int): List<Artist> {
     val networkArtists = FullSpotifyArtistList(count = count)
+    val fetchTime = Instant.now()
     return KotifyDatabase.blockingTransaction {
-        networkArtists.map { requireNotNull(ArtistRepository.convertToDB(it)) }
+        networkArtists.map { requireNotNull(ArtistRepository.convertToDB(it, fetchTime)) }
     }
 }
 
 fun Artist(fullUpdateTime: Instant? = null, albumsFetched: Instant? = null): Artist {
+    val fetchTime = Instant.now()
     return KotifyDatabase.blockingTransaction {
-        val artist = requireNotNull(ArtistRepository.convertToDB(FullSpotifyArtist()))
+        val artist = requireNotNull(ArtistRepository.convertToDB(FullSpotifyArtist(), fetchTime))
         fullUpdateTime?.let { artist.fullUpdatedTime = it }
         albumsFetched?.let { artist.albumsFetched = it }
 
@@ -48,9 +50,10 @@ fun ArtistAlbumList(artistId: String, count: Int, fullUpdateTime: Instant? = nul
 @Suppress("FunctionNaming")
 fun AlbumList(count: Int, fullUpdateTime: Instant? = null): List<Album> {
     val networkAlbums = List(count) { FullSpotifyAlbum(id = "album-$it", name = "Album $it") }
+    val fetchTime = Instant.now()
     return KotifyDatabase.blockingTransaction {
         networkAlbums.map { networkAlbum ->
-            val album = requireNotNull(AlbumRepository.convertToDB(networkAlbum))
+            val album = requireNotNull(AlbumRepository.convertToDB(networkAlbum, fetchTime))
             fullUpdateTime?.let { album.fullUpdatedTime = it }
 
             album

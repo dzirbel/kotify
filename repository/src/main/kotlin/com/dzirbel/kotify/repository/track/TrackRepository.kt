@@ -30,8 +30,8 @@ open class TrackRepository internal constructor(
             .flatMapParallel { idsChunk -> Spotify.Tracks.getTracks(ids = idsChunk) }
     }
 
-    override fun convertToDB(id: String, networkModel: SpotifyTrack): Track {
-        return Track.updateOrInsert(id = id, networkModel = networkModel) {
+    override fun convertToDB(id: String, networkModel: SpotifyTrack, fetchTime: Instant): Track {
+        return Track.updateOrInsert(id = id, networkModel = networkModel, fetchTime = fetchTime) {
             discNumber = networkModel.discNumber
             durationMs = networkModel.durationMs
             explicit = networkModel.explicit
@@ -39,12 +39,12 @@ open class TrackRepository internal constructor(
             playable = networkModel.isPlayable
             trackNumber = networkModel.trackNumber
             networkModel.album
-                ?.let { albumRepository.convertToDB(it) }
+                ?.let { albumRepository.convertToDB(it, fetchTime) }
                 ?.let { album = it }
 
             artistTracksRepository.setTrackArtists(
                 trackId = id,
-                artistIds = networkModel.artists.mapNotNull { artistRepository.convertToDB(it)?.id?.value },
+                artistIds = networkModel.artists.mapNotNull { artistRepository.convertToDB(it, fetchTime)?.id?.value },
             )
 
             if (networkModel is SimplifiedSpotifyTrack) {
@@ -54,7 +54,7 @@ open class TrackRepository internal constructor(
             }
 
             if (networkModel is FullSpotifyTrack) {
-                fullUpdatedTime = Instant.now()
+                fullUpdatedTime = fetchTime
                 popularity = networkModel.popularity
             }
         }

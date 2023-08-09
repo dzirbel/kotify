@@ -23,10 +23,10 @@ open class ArtistRepository internal constructor(scope: CoroutineScope) :
             .flatMapParallel { idsChunk -> Spotify.Artists.getArtists(ids = idsChunk) }
     }
 
-    override fun convertToDB(id: String, networkModel: SpotifyArtist): Artist {
-        return Artist.updateOrInsert(id = id, networkModel = networkModel) {
+    override fun convertToDB(id: String, networkModel: SpotifyArtist, fetchTime: Instant): Artist {
+        return Artist.updateOrInsert(id = id, networkModel = networkModel, fetchTime = fetchTime) {
             if (networkModel is FullSpotifyArtist) {
-                fullUpdatedTime = Instant.now()
+                fullUpdatedTime = fetchTime
 
                 popularity = networkModel.popularity
                 followersTotal = networkModel.followers.total

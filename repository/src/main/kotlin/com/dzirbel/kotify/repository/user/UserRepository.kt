@@ -13,6 +13,7 @@ import com.dzirbel.kotify.repository.CacheState
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.savedRepositories
+import com.dzirbel.kotify.repository.util.midpointInstantToNow
 import com.dzirbel.kotify.repository.util.updateOrInsert
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
+import kotlin.time.TimeSource
 
 open class UserRepository internal constructor(
     private val applicationScope: CoroutineScope,
@@ -43,10 +45,12 @@ open class UserRepository internal constructor(
 
     override suspend fun fetchFromRemote(id: String) = Spotify.UsersProfile.getUser(userId = id)
 
-    override fun convertToDB(networkModel: SpotifyUser): User = convertToDB(networkModel.id, networkModel)
+    override fun convertToDB(networkModel: SpotifyUser, fetchTime: Instant): User {
+        return convertToDB(id = networkModel.id, networkModel = networkModel, fetchTime = fetchTime)
+    }
 
-    override fun convertToDB(id: String, networkModel: SpotifyUser): User {
-        return User.updateOrInsert(id = id, networkModel = networkModel) {
+    override fun convertToDB(id: String, networkModel: SpotifyUser, fetchTime: Instant): User {
+        return User.updateOrInsert(id = id, networkModel = networkModel, fetchTime = fetchTime) {
             networkModel.images?.let { images ->
                 this.images = images
                     .map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) }
@@ -58,7 +62,7 @@ open class UserRepository internal constructor(
             }
 
             if (networkModel is PrivateSpotifyUser) {
-                fullUpdatedTime = Instant.now()
+                fullUpdatedTime = fetchTime
                 email = networkModel.email
             }
         }
@@ -130,11 +134,13 @@ open class UserRepository internal constructor(
     }
 
     private suspend fun getCurrentUserRemote(): User {
+        val start = TimeSource.Monotonic.markNow()
         val user = Spotify.UsersProfile.getCurrentUser()
+        val fetchTime = start.midpointInstantToNow()
         return KotifyDatabase.transaction("set current user") {
             UserTable.CurrentUserTable.set(user.id)
 
-            convertToDB(networkModel = user)
+            convertToDB(networkModel = user, fetchTime = fetchTime)
         }
     }
 

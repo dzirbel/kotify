@@ -34,8 +34,8 @@ open class SavedArtistRepository internal constructor(scope: CoroutineScope) :
             .toList()
     }
 
-    override fun convert(savedNetworkType: FullSpotifyArtist): Pair<String, Instant?> {
-        ArtistRepository.convertToDB(savedNetworkType)
+    override fun convertToDB(savedNetworkType: FullSpotifyArtist, fetchTime: Instant): Pair<String, Instant?> {
+        ArtistRepository.convertToDB(networkModel = savedNetworkType, fetchTime = fetchTime)
         return savedNetworkType.id to null
     }
 

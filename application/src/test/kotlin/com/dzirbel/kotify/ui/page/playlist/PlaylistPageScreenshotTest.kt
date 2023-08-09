@@ -31,6 +31,7 @@ import com.dzirbel.kotify.ui.util.RelativeTimeInfo
 import com.dzirbel.kotify.util.withMockedObjects
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import java.time.Instant
 import java.util.GregorianCalendar
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.minutes
@@ -85,7 +86,7 @@ internal class PlaylistPageScreenshotTest {
         val owner: User
         val tracks: List<PlaylistTrackViewModel>
         KotifyDatabase.blockingTransaction {
-            playlist = PlaylistRepository.convertToDB(playlistId, networkPlaylist)
+            playlist = PlaylistRepository.convertToDB(playlistId, networkPlaylist, fetchTime = Instant.now())
             owner = playlist.owner
             tracks = PlaylistTrack.tracksInOrder(playlistId).map { PlaylistTrackViewModel(it) }
         }

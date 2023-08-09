@@ -93,7 +93,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
      * @return the extracted entity ID and an [Instant] specifying the time the entity was saved, if provided by the
      *  [SavedNetworkType]
      */
-    protected abstract fun convert(savedNetworkType: SavedNetworkType): Pair<String, Instant?>
+    protected abstract fun convertToDB(savedNetworkType: SavedNetworkType, fetchTime: Instant): Pair<String, Instant?>
 
     final override fun init() {
         Repository.checkEnabled()
@@ -303,15 +303,15 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
         val start = TimeSource.Monotonic.markNow()
         val savedNetworkModels = fetchLibrary()
-        val updateTime = start.midpointInstantToNow()
+        val fetchTime = start.midpointInstantToNow()
 
         val remoteLibrary = KotifyDatabase.transaction("save $entityName saved library") {
-            GlobalUpdateTimesRepository.setUpdated(key = currentUserLibraryUpdateKey, updateTime = updateTime)
+            GlobalUpdateTimesRepository.setUpdated(key = currentUserLibraryUpdateKey, updateTime = fetchTime)
 
             val cachedLibrary: Set<String> = libraryResource.flow.value?.ids
                 ?: savedEntityTable.savedEntityIds(userId = userId)
 
-            val remoteLibrary: Set<Pair<String, Instant?>> = savedNetworkModels.mapTo(mutableSetOf(), ::convert)
+            val remoteLibrary: List<Pair<String, Instant?>> = savedNetworkModels.map { convertToDB(it, fetchTime) }
             val remoteLibraryIds: Set<String> = remoteLibrary.mapTo(mutableSetOf()) { it.first }
 
             // remove saved records for entities which are no longer saved
@@ -322,7 +322,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                         userId = userId,
                         saved = false,
                         savedTime = null,
-                        savedCheckTime = updateTime,
+                        savedCheckTime = fetchTime,
                     )
                 }
             }
@@ -335,7 +335,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                         userId = userId,
                         saved = true,
                         savedTime = saveTime,
-                        savedCheckTime = updateTime,
+                        savedCheckTime = fetchTime,
                     )
                 }
             }
@@ -344,6 +344,6 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         }
 
         savedStates.computeAll { id -> ToggleableState.Set(id in remoteLibrary) }
-        return SavedRepository.Library(remoteLibrary, updateTime)
+        return SavedRepository.Library(remoteLibrary, fetchTime)
     }
 }

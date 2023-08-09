@@ -7,6 +7,7 @@ import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository.DatabaseSavedRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.util.coroutines.flatMapParallel
+import com.dzirbel.kotify.util.time.parseInstantOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import java.time.Instant
@@ -32,10 +33,10 @@ open class SavedTrackRepository(scope: CoroutineScope) :
         return Spotify.Library.getSavedTracks(limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
-    override fun convert(savedNetworkType: SpotifySavedTrack): Pair<String, Instant?> {
+    override fun convertToDB(savedNetworkType: SpotifySavedTrack, fetchTime: Instant): Pair<String, Instant?> {
         val track = savedNetworkType.track
-        TrackRepository.convertToDB(networkModel = track)
-        return track.id to null
+        TrackRepository.convertToDB(networkModel = track, fetchTime = fetchTime)
+        return track.id to parseInstantOrNull(savedNetworkType.addedAt)
     }
 
     companion object : SavedTrackRepository(scope = Repository.userSessionScope)

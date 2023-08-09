@@ -15,7 +15,7 @@ abstract class SpotifyEntityTable(name: String = "") : StringIdTable(name = name
     val uri: Column<String?> = text("uri").nullable()
 
     val createdTime: Column<Instant> = timestamp("created_time").clientDefault { Instant.now() }
-    val updatedTime: Column<Instant> = timestamp("updated_time").clientDefault { Instant.now() }
+    val updatedTime: Column<Instant> = timestamp("updated_time")
     val fullUpdatedTime: Column<Instant?> = timestamp("full_updated_time").nullable()
 }
 
