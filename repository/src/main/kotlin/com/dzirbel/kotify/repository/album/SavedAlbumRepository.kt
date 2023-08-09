@@ -6,8 +6,8 @@ import com.dzirbel.kotify.network.model.SpotifySavedAlbum
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository.DatabaseSavedRepository
 import com.dzirbel.kotify.repository.Repository
-import com.dzirbel.kotify.util.flatMapParallel
-import com.dzirbel.kotify.util.parseInstantOrNull
+import com.dzirbel.kotify.util.coroutines.flatMapParallel
+import com.dzirbel.kotify.util.time.parseInstantOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import java.time.Instant

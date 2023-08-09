@@ -8,8 +8,8 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.dzirbel.kotify.util.collections.zipEach
 import com.dzirbel.kotify.util.containsExactlyElementsOfInAnyOrder
-import com.dzirbel.kotify.util.zipEach
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach

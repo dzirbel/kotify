@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.db
 
-import com.dzirbel.kotify.util.zipLazy
+import com.dzirbel.kotify.util.collections.zipLazy
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and

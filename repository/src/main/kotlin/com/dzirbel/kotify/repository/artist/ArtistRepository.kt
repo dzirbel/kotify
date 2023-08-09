@@ -10,7 +10,7 @@ import com.dzirbel.kotify.network.model.SpotifyArtist
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.util.updateOrInsert
-import com.dzirbel.kotify.util.flatMapParallel
+import com.dzirbel.kotify.util.coroutines.flatMapParallel
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 

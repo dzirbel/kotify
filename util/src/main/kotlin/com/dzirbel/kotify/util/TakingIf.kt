@@ -6,7 +6,8 @@ import kotlin.contracts.contract
 /**
  * Returns the result of [block] if [condition] is true, otherwise null.
  *
- * A simple alternative to [takeIf] which only executes block when the condition is true.
+ * A simple alternative to [takeIf] which only computes the desired value when the condition is true. Unfortunately, it
+ * cannot statically guarantee that [condition] is true within [block].
  */
 inline fun <T> takingIf(condition: Boolean, block: () -> T): T? {
     contract {

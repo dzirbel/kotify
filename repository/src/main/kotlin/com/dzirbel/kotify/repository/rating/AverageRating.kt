@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.repository.rating
 
 import androidx.compose.runtime.Stable
-import com.dzirbel.kotify.util.averageOrNull
+import com.dzirbel.kotify.util.collections.averageBy
 
 /**
  * Represents a set of associated [ratings] (by their ID) which can be queried for the [averagePercent] rating of the
@@ -12,7 +12,7 @@ import com.dzirbel.kotify.util.averageOrNull
 @Stable
 class AverageRating(val ratings: Iterable<Rating?>) {
     val averagePercent by lazy {
-        ratings.averageOrNull { it.ratingPercent }
+        ratings.averageBy { it.ratingPercent }
     }
 
     val numRatings by lazy {

@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.util
+package com.dzirbel.kotify.util.collections
 
 /**
  * Maps this [Array] to a [List] via [transform], short-circuiting and returning null if any transformed values are

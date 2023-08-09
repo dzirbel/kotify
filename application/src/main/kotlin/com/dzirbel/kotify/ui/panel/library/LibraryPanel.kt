@@ -34,7 +34,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.zipEach
+import com.dzirbel.kotify.util.collections.zipEach
 
 @Composable
 fun LibraryPanel() {

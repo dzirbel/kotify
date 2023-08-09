@@ -1,5 +1,7 @@
-package com.dzirbel.kotify.util
+package com.dzirbel.kotify.util.time
 
+import com.dzirbel.kotify.util.formattedWithUnit
+import com.dzirbel.kotify.util.takingIf
 import kotlin.time.Duration
 
 /**

@@ -4,7 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
 
-class NumberExtensionsTest {
+class FormatWithUnitTest {
     @Test
     fun formattedWithUnit() {
         assertThat(0.formattedWithUnit("unit")).isEqualTo("0 units")

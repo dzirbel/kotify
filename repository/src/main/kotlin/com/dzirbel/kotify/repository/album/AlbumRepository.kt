@@ -14,7 +14,7 @@ import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.track.TrackRepository
 import com.dzirbel.kotify.repository.util.updateOrInsert
-import com.dzirbel.kotify.util.flatMapParallel
+import com.dzirbel.kotify.util.coroutines.flatMapParallel
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 

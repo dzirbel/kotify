@@ -16,7 +16,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.util.coerceAtLeastNullable
-import com.dzirbel.kotify.util.sumOfNullable
+import com.dzirbel.kotify.util.collections.sumOf
 import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.roundToInt
 
@@ -169,7 +169,7 @@ fun <E> Table(
             }
 
             // 3: finally measure the weighted columns with the remaining space
-            val totalWeight = columns.sumOfNullable { (it.width as? ColumnWidth.Weighted)?.weight }
+            val totalWeight = columns.sumOf { (it.width as? ColumnWidth.Weighted)?.weight }
             if (totalWeight > 0) {
                 val remainingWidth = constraints.maxWidth - usedWidth
                 columns.forEachIndexed { colIndex, column ->

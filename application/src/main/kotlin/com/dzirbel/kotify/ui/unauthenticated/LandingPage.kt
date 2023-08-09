@@ -30,7 +30,7 @@ import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.immutable.plusOrMinus
+import com.dzirbel.kotify.util.collections.plusOrMinus
 import kotlinx.collections.immutable.toPersistentSet
 
 @Composable

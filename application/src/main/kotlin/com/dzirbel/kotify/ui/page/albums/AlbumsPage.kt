@@ -25,8 +25,8 @@ import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.combinedStateWhenAllNotNull
-import com.dzirbel.kotify.util.flatMapLatestIn
+import com.dzirbel.kotify.util.coroutines.combinedStateWhenAllNotNull
+import com.dzirbel.kotify.util.coroutines.flatMapLatestIn
 import kotlinx.coroutines.flow.MutableStateFlow
 
 object AlbumsPage : Page<Unit>() {

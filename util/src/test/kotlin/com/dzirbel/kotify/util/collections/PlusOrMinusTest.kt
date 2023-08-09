@@ -1,10 +1,10 @@
-package com.dzirbel.kotify.util
+package com.dzirbel.kotify.util.collections
 
 import assertk.assertThat
 import assertk.assertions.containsExactlyInAnyOrder
 import org.junit.jupiter.api.Test
 
-class SetExtensionsTest {
+class PlusOrMinusTest {
     @Test
     fun plusSingleElement() {
         var set = setOf("a", "b", "c")

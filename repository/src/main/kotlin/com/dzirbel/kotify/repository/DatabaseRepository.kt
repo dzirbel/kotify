@@ -3,9 +3,9 @@ package com.dzirbel.kotify.repository
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.repository.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.repository.util.midpointInstantToNow
+import com.dzirbel.kotify.util.collections.zipEach
+import com.dzirbel.kotify.util.coroutines.mapParallel
 import com.dzirbel.kotify.util.mapFirst
-import com.dzirbel.kotify.util.mapParallel
-import com.dzirbel.kotify.util.zipEach
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

@@ -15,7 +15,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
-import com.dzirbel.kotify.util.immutable.plusOrMinus
+import com.dzirbel.kotify.util.collections.plusOrMinus
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentSet
 

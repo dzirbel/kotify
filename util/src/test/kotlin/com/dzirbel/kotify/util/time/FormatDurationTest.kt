@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.util
+package com.dzirbel.kotify.util.time
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -9,7 +9,7 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-class DurationExtensionsTest {
+class FormatDurationTest {
     data class DurationFormatData(val duration: Duration, val formatted: String)
 
     @ParameterizedTest

@@ -3,6 +3,11 @@ package com.dzirbel.kotify.util.immutable
 import kotlinx.collections.immutable.ImmutableList
 
 /**
+ * Creates an [ImmutableList] wrapping this [Array].
+ */
+fun <E> Array<E>.toImmutableList(): ImmutableList<E> = ImmutableArray(this)
+
+/**
  * A simple implementation of [ImmutableList] backed by an [Array], which requires it to have a known size.
  */
 internal class ImmutableArray<E>(private val array: Array<E>) : ImmutableList<E> {

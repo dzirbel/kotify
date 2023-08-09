@@ -163,7 +163,7 @@ private fun PageStackContent() {
             val pageStack = pageStack.value
             lateinit var titles: ImmutableList<String?>
             Box {
-                titles = pageStack.pages.mapIndexedToImmutableList { index, page ->
+                titles = pageStack.pages.mapIndexedToImmutableList { (index, page) ->
                     page.bindAndGetTitle(scope = this, visible = index == pageStack.currentIndex)
                 }
             }

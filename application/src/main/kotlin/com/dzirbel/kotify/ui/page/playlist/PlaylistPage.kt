@@ -55,11 +55,11 @@ import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.rememberRatingStates
 import com.dzirbel.kotify.ui.util.rememberSavedStates
-import com.dzirbel.kotify.util.formatMediumDuration
+import com.dzirbel.kotify.util.coroutines.mapIn
 import com.dzirbel.kotify.util.immutable.orEmpty
 import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
-import com.dzirbel.kotify.util.mapIn
 import com.dzirbel.kotify.util.takingIf
+import com.dzirbel.kotify.util.time.formatMediumDuration
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf

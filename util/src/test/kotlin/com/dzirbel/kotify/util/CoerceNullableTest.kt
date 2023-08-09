@@ -4,7 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
 
-class ComparableExtensionsTest {
+class CoerceNullableTest {
     @Test
     fun coerceAtMostNullable() {
         assertThat(2.coerceAtMostNullable(3)).isEqualTo(2)

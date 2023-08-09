@@ -65,7 +65,7 @@ import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.combineState
+import com.dzirbel.kotify.util.coroutines.combineState
 import com.dzirbel.kotify.util.formatDuration
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow

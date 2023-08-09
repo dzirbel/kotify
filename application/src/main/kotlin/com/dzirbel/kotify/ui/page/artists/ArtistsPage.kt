@@ -69,11 +69,11 @@ import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.rememberArtistTracksStates
-import com.dzirbel.kotify.util.combinedStateWhenAllNotNull
-import com.dzirbel.kotify.util.flatMapLatestIn
+import com.dzirbel.kotify.util.coroutines.combinedStateWhenAllNotNull
+import com.dzirbel.kotify.util.coroutines.flatMapLatestIn
+import com.dzirbel.kotify.util.coroutines.mapIn
+import com.dzirbel.kotify.util.coroutines.onEachIn
 import com.dzirbel.kotify.util.immutable.orEmpty
-import com.dzirbel.kotify.util.mapIn
-import com.dzirbel.kotify.util.onEachIn
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow

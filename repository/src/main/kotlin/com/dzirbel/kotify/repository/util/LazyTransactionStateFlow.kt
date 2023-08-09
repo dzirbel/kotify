@@ -3,7 +3,7 @@ package com.dzirbel.kotify.repository.util
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
-import com.dzirbel.kotify.util.zipEach
+import com.dzirbel.kotify.util.collections.zipEach
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -7,9 +7,9 @@ import com.dzirbel.kotify.repository.album.AlbumTracksRepository
 import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.util.SynchronizedWeakStateFlowMap
-import com.dzirbel.kotify.util.combineState
-import com.dzirbel.kotify.util.flatMapLatestIn
-import com.dzirbel.kotify.util.zipEach
+import com.dzirbel.kotify.util.collections.zipEach
+import com.dzirbel.kotify.util.coroutines.combineState
+import com.dzirbel.kotify.util.coroutines.flatMapLatestIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

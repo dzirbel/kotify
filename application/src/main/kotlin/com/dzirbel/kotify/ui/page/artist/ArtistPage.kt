@@ -51,9 +51,9 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.rememberSavedStates
-import com.dzirbel.kotify.util.countsBy
+import com.dzirbel.kotify.util.coroutines.mapIn
+import com.dzirbel.kotify.util.immutable.countBy
 import com.dzirbel.kotify.util.immutable.orEmpty
-import com.dzirbel.kotify.util.mapIn
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
@@ -183,7 +183,7 @@ private fun ArtistPageHeader(
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-            val albumTypeCounts = albums.derived { it.countsBy { artistAlbum -> artistAlbum.albumGroup } }.value
+            val albumTypeCounts = albums.derived { it.countBy { artistAlbum -> artistAlbum.albumGroup } }.value
             AlbumTypePicker(
                 albumTypeCounts = albumTypeCounts,
                 albumTypes = displayedAlbumTypes,

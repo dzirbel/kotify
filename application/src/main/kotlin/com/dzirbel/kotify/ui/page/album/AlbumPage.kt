@@ -47,11 +47,11 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.rememberRatingStates
-import com.dzirbel.kotify.util.formatMediumDuration
+import com.dzirbel.kotify.util.coroutines.mapIn
+import com.dzirbel.kotify.util.coroutines.onEachIn
 import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
-import com.dzirbel.kotify.util.mapIn
-import com.dzirbel.kotify.util.onEachIn
 import com.dzirbel.kotify.util.takingIf
+import com.dzirbel.kotify.util.time.formatMediumDuration
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.flatMapLatest

@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.util
+package com.dzirbel.kotify.util.time
 
 import java.time.Instant
 import java.time.format.DateTimeParseException
