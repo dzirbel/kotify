@@ -11,12 +11,12 @@ import com.dzirbel.kotify.repository.mockLibrary
 import com.dzirbel.kotify.repository.mockStates
 import com.dzirbel.kotify.ui.framework.render
 import com.dzirbel.kotify.ui.screenshotTest
-import com.dzirbel.kotify.ui.util.RelativeTimeInfo
+import com.dzirbel.kotify.util.MockedTimeExtension
 import com.dzirbel.kotify.util.withMockedObjects
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(DatabaseExtension::class)
+@ExtendWith(DatabaseExtension::class, MockedTimeExtension::class)
 internal class ArtistsPageScreenshotTest {
     @Test
     fun empty() {
@@ -34,15 +34,13 @@ internal class ArtistsPageScreenshotTest {
         val artists = ArtistList(count = 10).map { ArtistViewModel(it) }
         val ids = artists.map { it.id }
 
-        RelativeTimeInfo.withMockedTime { now ->
-            withMockedObjects(ArtistRepository, SavedArtistRepository, ArtistTracksRepository) {
-                SavedArtistRepository.mockLibrary(ids = ids.toSet(), cacheTime = now)
-                ArtistRepository.mockStates(ids = ids, values = artists, cacheTime = now)
-                ArtistTracksRepository.mockArtistTracksNull()
+        withMockedObjects(ArtistRepository, SavedArtistRepository, ArtistTracksRepository) {
+            SavedArtistRepository.mockLibrary(ids = ids.toSet())
+            ArtistRepository.mockStates(ids = ids, values = artists)
+            ArtistTracksRepository.mockArtistTracksNull()
 
-                screenshotTest(filename = "full") {
-                    ArtistsPage.render()
-                }
+            screenshotTest(filename = "full") {
+                ArtistsPage.render()
             }
         }
     }

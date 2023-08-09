@@ -27,16 +27,16 @@ import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.user.UserViewModel
 import com.dzirbel.kotify.ui.framework.render
 import com.dzirbel.kotify.ui.screenshotTest
-import com.dzirbel.kotify.ui.util.RelativeTimeInfo
+import com.dzirbel.kotify.util.CurrentTime
+import com.dzirbel.kotify.util.MockedTimeExtension
 import com.dzirbel.kotify.util.withMockedObjects
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.time.Instant
 import java.util.GregorianCalendar
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.minutes
 
-@ExtendWith(DatabaseExtension::class)
+@ExtendWith(DatabaseExtension::class, MockedTimeExtension::class)
 internal class PlaylistPageScreenshotTest {
     @Test
     fun empty() {
@@ -86,44 +86,42 @@ internal class PlaylistPageScreenshotTest {
         val owner: User
         val tracks: List<PlaylistTrackViewModel>
         KotifyDatabase.blockingTransaction {
-            playlist = PlaylistRepository.convertToDB(playlistId, networkPlaylist, fetchTime = Instant.now())
+            playlist = PlaylistRepository.convertToDB(playlistId, networkPlaylist, fetchTime = CurrentTime.instant)
             owner = playlist.owner
             tracks = PlaylistTrack.tracksInOrder(playlistId).map { PlaylistTrackViewModel(it) }
         }
 
-        RelativeTimeInfo.withMockedTime { now ->
-            withMockedObjects(
-                PlaylistRepository,
-                PlaylistTracksRepository,
-                SavedPlaylistRepository,
-                TrackRatingRepository,
-                SavedTrackRepository,
-                UserRepository,
-            ) {
-                PlaylistRepository.mockStateCached(playlistId, PlaylistViewModel(playlist), now)
-                PlaylistTracksRepository.mockStateCached(playlistId, tracks, now)
-                SavedPlaylistRepository.mockSaveState(playlistId, saved = true)
+        withMockedObjects(
+            PlaylistRepository,
+            PlaylistTracksRepository,
+            SavedPlaylistRepository,
+            TrackRatingRepository,
+            SavedTrackRepository,
+            UserRepository,
+        ) {
+            PlaylistRepository.mockStateCached(playlistId, PlaylistViewModel(playlist))
+            PlaylistTracksRepository.mockStateCached(playlistId, tracks)
+            SavedPlaylistRepository.mockSaveState(playlistId, saved = true)
 
-                val trackIds = tracks.mapNotNull { it.track?.id }
-                val ratings = tracks.map { track ->
-                    track.indexOnPlaylist.takeIf { it % 2 != 0 }?.let { it % 10 }
-                }
+            val trackIds = tracks.mapNotNull { it.track?.id }
+            val ratings = tracks.map { track ->
+                track.indexOnPlaylist.takeIf { it % 2 != 0 }?.let { it % 10 }
+            }
 
-                TrackRatingRepository.mockRatings(
-                    ids = trackIds,
-                    ratings = ratings.map { rating -> rating?.let { Rating(rating, maxRating = 10) } },
-                )
+            TrackRatingRepository.mockRatings(
+                ids = trackIds,
+                ratings = ratings.map { rating -> rating?.let { Rating(rating, maxRating = 10) } },
+            )
 
-                SavedTrackRepository.mockSaveStates(
-                    ids = trackIds,
-                    saved = ratings.map { rating -> rating?.let { it > 5 } },
-                )
+            SavedTrackRepository.mockSaveStates(
+                ids = trackIds,
+                saved = ratings.map { rating -> rating?.let { it > 5 } },
+            )
 
-                UserRepository.mockStateCached(id = owner.id.value, value = UserViewModel(owner), cacheTime = now)
+            UserRepository.mockStateCached(id = owner.id.value, value = UserViewModel(owner))
 
-                screenshotTest(filename = "full", windowWidth = 1500) {
-                    PlaylistPage(playlistId = playlistId).render()
-                }
+            screenshotTest(filename = "full", windowWidth = 1500) {
+                PlaylistPage(playlistId = playlistId).render()
             }
         }
     }

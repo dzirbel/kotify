@@ -9,6 +9,7 @@ import com.dzirbel.kotify.network.FullSpotifyTrack
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlayback
+import com.dzirbel.kotify.util.MockedTimeExtension
 import com.dzirbel.kotify.util.collectingToList
 import com.dzirbel.kotify.util.delayed
 import io.mockk.coEvery
@@ -18,12 +19,14 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Tests for [PlayerRepository.refreshPlayback], see [BasePlayerRepositoryTest].
  */
+@ExtendWith(MockedTimeExtension::class)
 class PlayerRepositoryRefreshPlaybackTest : BasePlayerRepositoryTest() {
     @Test
     fun refreshPlayback() {

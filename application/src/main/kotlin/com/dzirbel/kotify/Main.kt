@@ -15,11 +15,13 @@ import com.dzirbel.kotify.ui.IconCache
 import com.dzirbel.kotify.ui.KeyboardShortcuts
 import com.dzirbel.kotify.ui.Root
 import com.dzirbel.kotify.ui.SpotifyImageCache
+import com.dzirbel.kotify.util.CurrentTime
 import okhttp3.OkHttpClient
 import kotlin.time.Duration
 import kotlin.time.measureTime
 
 fun main(args: Array<String>) {
+    CurrentTime.enabled = true
     val initTimes = mutableListOf<Pair<String, Duration>>()
 
     fun measureInitTime(name: String, block: () -> Unit) {

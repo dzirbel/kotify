@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.ui.util
 
-import java.time.Instant
+import com.dzirbel.kotify.util.CurrentTime
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
@@ -38,27 +38,11 @@ data class RelativeTimeInfo(
     }
 
     companion object {
-        private var mockedTime: Instant? = null
-
         /**
-         * Uses [time] as the current time for computing relative time [of] within [block]. Used for mocking how
-         * relative time appears in tests.
-         */
-        fun withMockedTime(time: Instant = Instant.now(), block: (Instant) -> Unit) {
-            require(mockedTime == null)
-            mockedTime = time
-            try {
-                block(time)
-            } finally {
-                mockedTime = null
-            }
-        }
-
-        /**
-         * Creates a [RelativeTimeInfo] from the given [timestamp], relative to the current time (or [withMockedTime]).
+         * Creates a [RelativeTimeInfo] from the given [timestamp].
          */
         internal fun of(timestamp: Long): RelativeTimeInfo {
-            val now: Long = mockedTime?.toEpochMilli() ?: System.currentTimeMillis()
+            val now: Long = CurrentTime.millis
             val differenceMs = timestamp - now
             val absDifferenceMs = abs(timestamp - now)
             for (unit in listOf(TimeUnit.DAYS, TimeUnit.HOURS, TimeUnit.MINUTES, TimeUnit.SECONDS)) {

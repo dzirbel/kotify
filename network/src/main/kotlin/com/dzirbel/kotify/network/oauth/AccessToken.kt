@@ -3,6 +3,7 @@ package com.dzirbel.kotify.network.oauth
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.util.await
 import com.dzirbel.kotify.network.util.bodyFromJson
+import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -51,10 +52,10 @@ data class AccessToken(
     val scope: String? = null,
     @SerialName("expires_in") val expiresIn: Long,
     @SerialName("refresh_token") val refreshToken: String? = null,
-    val received: Long = System.currentTimeMillis(),
+    val received: Long = CurrentTime.millis,
 ) {
     val isExpired
-        get() = System.currentTimeMillis() >= received + TimeUnit.SECONDS.toMillis(expiresIn)
+        get() = CurrentTime.millis >= received + TimeUnit.SECONDS.toMillis(expiresIn)
 
     /**
      * A parsed list of the scopes granted by this [AccessToken], or null if it was not granted with [scope].

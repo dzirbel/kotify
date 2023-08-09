@@ -3,7 +3,6 @@ package com.dzirbel.kotify.network.oauth
 import assertk.Assert
 import assertk.assertThat
 import assertk.assertions.hasSize
-import assertk.assertions.isBetween
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
@@ -14,6 +13,7 @@ import assertk.assertions.isNull
 import assertk.assertions.isSameAs
 import assertk.assertions.isTrue
 import com.dzirbel.kotify.network.MockOkHttpClient
+import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -41,14 +41,16 @@ internal class AccessTokenTest {
     @Test
     fun testIsExpired() {
         fun assertIsExpired(receivedDeltaMs: Long, expiresInS: Long): Assert<Boolean> {
-            return assertThat(
-                AccessToken(
-                    accessToken = "",
-                    tokenType = "",
-                    received = System.currentTimeMillis() + receivedDeltaMs,
-                    expiresIn = expiresInS,
-                ).isExpired,
-            )
+            return CurrentTime.mocked {
+                assertThat(
+                    AccessToken(
+                        accessToken = "",
+                        tokenType = "",
+                        received = CurrentTime.millis + receivedDeltaMs,
+                        expiresIn = expiresInS,
+                    ).isExpired,
+                )
+            }
         }
 
         // received now, expires immediately -> expired
@@ -69,12 +71,14 @@ internal class AccessTokenTest {
 
     @Test
     fun testScopes() {
-        val token = AccessToken(
-            accessToken = "",
-            tokenType = "",
-            expiresIn = 0,
-            scope = "scope1 SCOPE2",
-        )
+        val token = CurrentTime.mocked {
+            AccessToken(
+                accessToken = "",
+                tokenType = "",
+                expiresIn = 0,
+                scope = "scope1 SCOPE2",
+            )
+        }
 
         assertThat(token.hasScope("scope1")).isTrue()
         assertThat(token.hasScope("Scope1")).isTrue()
@@ -86,64 +90,68 @@ internal class AccessTokenTest {
 
     @Test
     fun testGetPutClear() {
-        val client = MockOkHttpClient()
+        CurrentTime.mocked {
+            val client = MockOkHttpClient()
 
-        assertNoToken(client = client)
+            assertNoToken(client = client)
 
-        val token1 = AccessToken(accessToken = "token1", tokenType = "", expiresIn = 0)
-        AccessToken.Cache.put(token1)
+            val token1 = AccessToken(accessToken = "token1", tokenType = "", expiresIn = 0)
+            AccessToken.Cache.put(token1)
 
-        assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
-        assertThat(runBlocking { AccessToken.Cache.get(client = client) }).isSameAs(token1)
-        assertThat(runBlocking { AccessToken.Cache.getOrThrow(client = client) }).isSameAs(token1)
+            assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
+            assertThat(runBlocking { AccessToken.Cache.get(client = client) }).isSameAs(token1)
+            assertThat(runBlocking { AccessToken.Cache.getOrThrow(client = client) }).isSameAs(token1)
 
-        val token2 = AccessToken(accessToken = "token2", tokenType = "", expiresIn = 0)
-        AccessToken.Cache.put(token2)
+            val token2 = AccessToken(accessToken = "token2", tokenType = "", expiresIn = 0)
+            AccessToken.Cache.put(token2)
 
-        assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
-        assertThat(runBlocking { AccessToken.Cache.get(client = client) }).isSameAs(token2)
-        assertThat(runBlocking { AccessToken.Cache.getOrThrow(client = client) }).isSameAs(token2)
+            assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
+            assertThat(runBlocking { AccessToken.Cache.get(client = client) }).isSameAs(token2)
+            assertThat(runBlocking { AccessToken.Cache.getOrThrow(client = client) }).isSameAs(token2)
 
-        AccessToken.Cache.clear()
-        assertNoToken(client = client)
+            AccessToken.Cache.clear()
+            assertNoToken(client = client)
+        }
     }
 
     @RepeatedTest(5)
     fun testSaveLoad() {
         val client = MockOkHttpClient()
 
-        val token1 = AccessToken(accessToken = "token1", tokenType = "", expiresIn = 0)
-        assertThat(token1.received).isGreaterThan(0)
-        AccessToken.Cache.put(token1)
+        CurrentTime.mocked {
+            val token1 = AccessToken(accessToken = "token1", tokenType = "", expiresIn = 0)
+            assertThat(token1.received).isGreaterThan(0)
+            AccessToken.Cache.put(token1)
 
-        AccessToken.Cache.reset()
-        Thread.sleep(5)
+            AccessToken.Cache.reset()
+            Thread.sleep(5)
 
-        val loadedToken = runBlocking { AccessToken.Cache.get(client = client) }
-        assertThat(loadedToken).isEqualTo(token1)
-        assertThat(loadedToken).isNotSameAs(token1)
+            val loadedToken = runBlocking { AccessToken.Cache.get(client = client) }
+            assertThat(loadedToken).isEqualTo(token1)
+            assertThat(loadedToken).isNotSameAs(token1)
+        }
     }
 
     @Test
     fun testFromJsonNoReceived() {
-        val before = System.currentTimeMillis()
+        val time = 123_456L
 
-        val accessToken = Json.decodeFromString<AccessToken>(
-            """
-                {
-                    "access_token": "abc",
-                    "token_type": "def",
-                    "expires_in": 30
-                }
-            """.trimIndent(),
-        )
-
-        val after = System.currentTimeMillis()
+        val accessToken = CurrentTime.mocked(time) {
+            Json.decodeFromString<AccessToken>(
+                """
+                    {
+                        "access_token": "abc",
+                        "token_type": "def",
+                        "expires_in": 30
+                    }
+                """.trimIndent(),
+            )
+        }
 
         assertThat(accessToken.accessToken).isEqualTo("abc")
         assertThat(accessToken.tokenType).isEqualTo("def")
         assertThat(accessToken.expiresIn).isEqualTo(30)
-        assertThat(accessToken.received).isBetween(before, after)
+        assertThat(accessToken.received).isEqualTo(time)
     }
 
     @Test
@@ -176,51 +184,59 @@ internal class AccessTokenTest {
         """.trimIndent()
 
         val client = MockOkHttpClient(responseBody = tokenBody.toResponseBody("text/plain".toMediaType()))
+        val tokenReceivedTime = 123_456L
 
-        runTest {
-            val expiredToken = AccessToken(
-                accessToken = "",
-                tokenType = "",
-                expiresIn = 10,
-                received = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(15),
-                refreshToken = "refresh",
-            )
+        val expiredToken = AccessToken(
+            accessToken = "",
+            tokenType = "",
+            expiresIn = 10,
+            received = tokenReceivedTime,
+            refreshToken = "refresh",
+        )
+
+        CurrentTime.mocked(tokenReceivedTime + TimeUnit.SECONDS.toMillis(15)) {
             assertThat(expiredToken.isExpired).isTrue()
 
             AccessToken.Cache.put(expiredToken)
 
-            val newToken = requireNotNull(AccessToken.Cache.get(client = client))
+            runTest {
+                val newToken = requireNotNull(AccessToken.Cache.get(client = client))
 
-            assertThat(newToken).isNotEqualTo(expiredToken)
-            assertThat(newToken.isExpired).isFalse()
-            assertThat(newToken.accessToken).isEqualTo("abc")
-            assertThat(newToken.tokenType).isEqualTo("def")
-            assertThat(newToken.expiresIn).isEqualTo(30)
+                assertThat(newToken).isNotEqualTo(expiredToken)
+                assertThat(newToken.isExpired).isFalse()
+                assertThat(newToken.accessToken).isEqualTo("abc")
+                assertThat(newToken.tokenType).isEqualTo("def")
+                assertThat(newToken.expiresIn).isEqualTo(30)
 
-            assertThat(AccessToken.Cache.get(client = client)).isEqualTo(newToken)
+                assertThat(AccessToken.Cache.get(client = client)).isEqualTo(newToken)
+            }
         }
     }
 
     @Test
     fun testRefreshError() {
         val client = MockOkHttpClient(responseCode = 500, responseMessage = "Internal server error")
+        val tokenReceivedTime = 123_456L
 
-        runTest {
-            val expiredToken = AccessToken(
-                accessToken = "",
-                tokenType = "",
-                expiresIn = 10,
-                received = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(15),
-                refreshToken = "refresh",
-            )
+        val expiredToken = AccessToken(
+            accessToken = "",
+            tokenType = "",
+            expiresIn = 10,
+            received = tokenReceivedTime,
+            refreshToken = "refresh",
+        )
+
+        CurrentTime.mocked(tokenReceivedTime + TimeUnit.SECONDS.toMillis(15)) {
             assertThat(expiredToken.isExpired).isTrue()
 
             AccessToken.Cache.put(expiredToken)
 
-            val newToken = AccessToken.Cache.get(client = client)
+            runTest {
+                val newToken = AccessToken.Cache.get(client = client)
 
-            assertThat(newToken).isNull()
-            assertNoToken(client = client)
+                assertThat(newToken).isNull()
+                assertNoToken(client = client)
+            }
         }
     }
 
@@ -239,31 +255,36 @@ internal class AccessTokenTest {
             delayMs = 100,
         )
 
-        runTest {
-            val expiredToken = AccessToken(
-                accessToken = "",
-                tokenType = "",
-                expiresIn = 10,
-                received = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(15),
-                refreshToken = "refresh",
-            )
+        val tokenReceivedTime = 123_456L
+
+        val expiredToken = AccessToken(
+            accessToken = "",
+            tokenType = "",
+            expiresIn = 10,
+            received = tokenReceivedTime,
+            refreshToken = "refresh",
+        )
+
+        CurrentTime.mocked(tokenReceivedTime + TimeUnit.SECONDS.toMillis(15)) {
             assertThat(expiredToken.isExpired).isTrue()
 
             AccessToken.Cache.put(expiredToken)
 
-            val request1 = async { AccessToken.Cache.get(client = client) }
-            val request2 = async {
-                delay(50)
-                AccessToken.Cache.get(client = client)
+            runTest {
+                val request1 = async { AccessToken.Cache.get(client = client) }
+                val request2 = async {
+                    delay(50)
+                    AccessToken.Cache.get(client = client)
+                }
+
+                val token1 = request1.await()
+                val token2 = request2.await()
+
+                runCurrent()
+
+                assertThat(token1).isSameAs(token2)
+                assertThat(client.requests).hasSize(1)
             }
-
-            val token1 = request1.await()
-            val token2 = request2.await()
-
-            runCurrent()
-
-            assertThat(token1).isSameAs(token2)
-            assertThat(client.requests).hasSize(1)
         }
     }
 
@@ -271,30 +292,32 @@ internal class AccessTokenTest {
     fun testRequireRefreshable() {
         val client = MockOkHttpClient()
 
-        val notRefreshable = AccessToken(accessToken = "token", tokenType = "type", expiresIn = 10)
-        assertThat(notRefreshable.refreshToken).isNull()
+        CurrentTime.mocked {
+            val notRefreshable = AccessToken(accessToken = "token", tokenType = "type", expiresIn = 10)
+            assertThat(notRefreshable.refreshToken).isNull()
 
-        AccessToken.Cache.put(notRefreshable)
-        assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
+            AccessToken.Cache.put(notRefreshable)
+            assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
 
-        AccessToken.Cache.requireRefreshable()
+            AccessToken.Cache.requireRefreshable()
 
-        assertNoToken(client = client)
+            assertNoToken(client = client)
 
-        val refreshable = AccessToken(
-            accessToken = "token2",
-            tokenType = "type",
-            expiresIn = 10,
-            refreshToken = "refresh",
-        )
-        assertThat(refreshable.refreshToken).isNotNull()
+            val refreshable = AccessToken(
+                accessToken = "token2",
+                tokenType = "type",
+                expiresIn = 10,
+                refreshToken = "refresh",
+            )
+            assertThat(refreshable.refreshToken).isNotNull()
 
-        AccessToken.Cache.put(refreshable)
-        assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
+            AccessToken.Cache.put(refreshable)
+            assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
 
-        AccessToken.Cache.requireRefreshable()
+            AccessToken.Cache.requireRefreshable()
 
-        assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
+            assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
+        }
     }
 
     private fun assertNoToken(client: OkHttpClient) {

@@ -47,7 +47,7 @@ open class PlaylistRepository internal constructor(
 
                 totalTracks = networkModel.tracks.total
 
-                tracksFetched = Instant.now()
+                tracksFetched = fetchTime
                 networkModel.tracks.items.mapIndexedNotNull { index, track ->
                     playlistTracksRepository.convertTrack(
                         spotifyPlaylistTrack = track,

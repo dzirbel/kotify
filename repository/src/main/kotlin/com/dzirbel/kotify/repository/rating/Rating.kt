@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.repository.rating
 
 import androidx.compose.runtime.Stable
+import com.dzirbel.kotify.util.CurrentTime
 import java.time.Instant
 
 /**
@@ -11,7 +12,7 @@ import java.time.Instant
 data class Rating(
     val rating: Int,
     val maxRating: Int = DEFAULT_MAX_RATING,
-    val rateTime: Instant = Instant.now(),
+    val rateTime: Instant = CurrentTime.instant,
 ) {
     val ratingPercent: Double
         get() = rating.toDouble() / maxRating

@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.repository
 
 import com.dzirbel.kotify.repository.util.ToggleableState
+import com.dzirbel.kotify.util.CurrentTime
 import io.mockk.every
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.Instant
@@ -29,7 +30,7 @@ fun SavedRepository.mockSaveStates(ids: List<String>, saved: List<Boolean?>) {
     }
 }
 
-fun SavedRepository.mockLibrary(ids: Set<String>?, cacheTime: Instant = Instant.now()) {
+fun SavedRepository.mockLibrary(ids: Set<String>?, cacheTime: Instant = CurrentTime.instant) {
     val flows = mutableMapOf<String, MutableStateFlow<ToggleableState<Boolean>?>>()
     val libraryFlow = MutableStateFlow(ids?.let { SavedRepository.Library(ids, cacheTime) })
 

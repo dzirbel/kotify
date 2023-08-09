@@ -2,9 +2,9 @@ package com.dzirbel.kotify.ui.util
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import com.dzirbel.kotify.util.CurrentTime
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 internal class RelativeTimeInfoTest {
@@ -14,7 +14,7 @@ internal class RelativeTimeInfoTest {
     @ParameterizedTest
     @MethodSource
     fun testRelative(case: RelativeTestCase) {
-        RelativeTimeInfo.withMockedTime(Instant.ofEpochMilli(case.now)) {
+        CurrentTime.mocked(case.now) {
             val info = RelativeTimeInfo.of(timestamp = case.timestamp)
             assertThat(info).isEqualTo(case.expected)
         }

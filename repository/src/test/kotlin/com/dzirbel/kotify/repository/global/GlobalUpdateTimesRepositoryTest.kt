@@ -1,18 +1,18 @@
 package com.dzirbel.kotify.repository.global
 
 import assertk.assertThat
-import assertk.assertions.isBetween
+import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.dzirbel.kotify.db.DatabaseExtension
 import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.db.blockingTransaction
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 
 @ExtendWith(DatabaseExtension::class)
 internal class GlobalUpdateTimesRepositoryTest {
@@ -32,61 +32,52 @@ internal class GlobalUpdateTimesRepositoryTest {
     @Test
     fun testSetAndGet() {
         val key = "set-and-get-key"
+        val updateTime1 = Instant.ofEpochMilli(50)
+        val updateTime2 = Instant.ofEpochMilli(100)
 
-        runBlocking {
-            val start = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-            KotifyDatabase.transaction(name = null) {
-                GlobalUpdateTimesRepository.setUpdated(key = key, updateTime = Instant.now())
-            }
-            val end = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-
-            assertThat(KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.updated(key = key) })
-                .isNotNull()
-                .isBetween(start, end)
-            assertThat(
-                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) },
-            ).isTrue()
-
-            val start2 = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-            KotifyDatabase.transaction(name = null) {
-                GlobalUpdateTimesRepository.setUpdated(key = key, updateTime = Instant.now())
-            }
-            val end2 = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-
-            assertThat(KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.updated(key = key) })
-                .isNotNull()
-                .isBetween(start2, end2)
-            assertThat(
-                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) },
-            ).isTrue()
+        KotifyDatabase.blockingTransaction {
+            GlobalUpdateTimesRepository.setUpdated(key = key, updateTime = updateTime1)
         }
+
+        assertThat(KotifyDatabase.blockingTransaction { GlobalUpdateTimesRepository.updated(key = key) })
+            .isNotNull()
+            .isEqualTo(updateTime1)
+        assertThat(KotifyDatabase.blockingTransaction { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) })
+            .isTrue()
+
+        KotifyDatabase.blockingTransaction {
+            GlobalUpdateTimesRepository.setUpdated(key = key, updateTime = updateTime2)
+        }
+
+        assertThat(KotifyDatabase.blockingTransaction { GlobalUpdateTimesRepository.updated(key = key) })
+            .isNotNull()
+            .isEqualTo(updateTime2)
+        assertThat(KotifyDatabase.blockingTransaction { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) })
+            .isTrue()
     }
 
     @Test
     fun testInvalidate() {
         val key = "invalidate-key"
+        val updateTime = Instant.ofEpochMilli(50)
 
-        runBlocking {
-            val start = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-            KotifyDatabase.transaction(name = null) {
-                GlobalUpdateTimesRepository.setUpdated(key = key, updateTime = Instant.now())
-            }
-            val end = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-
-            assertThat(KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.updated(key = key) })
-                .isNotNull()
-                .isBetween(start, end)
-            assertThat(
-                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) },
-            ).isTrue()
-
-            KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.invalidate(key = key) }
-
-            assertThat(KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.updated(key = key) })
-                .isNull()
-            assertThat(
-                KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) },
-            ).isFalse()
+        KotifyDatabase.blockingTransaction {
+            GlobalUpdateTimesRepository.setUpdated(key = key, updateTime = updateTime)
         }
+
+        assertThat(KotifyDatabase.blockingTransaction { GlobalUpdateTimesRepository.updated(key = key) })
+            .isNotNull()
+            .isEqualTo(updateTime)
+        assertThat(KotifyDatabase.blockingTransaction { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) })
+            .isTrue()
+
+        KotifyDatabase.blockingTransaction {
+            GlobalUpdateTimesRepository.invalidate(key = key)
+        }
+
+        assertThat(KotifyDatabase.blockingTransaction { GlobalUpdateTimesRepository.updated(key = key) })
+            .isNull()
+        assertThat(KotifyDatabase.blockingTransaction { GlobalUpdateTimesRepository.hasBeenUpdated(key = key) })
+            .isFalse()
     }
 }

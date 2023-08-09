@@ -11,19 +11,20 @@ import com.dzirbel.kotify.network.FullSpotifyArtist
 import com.dzirbel.kotify.network.FullSpotifyArtistList
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.util.CurrentTime
 import java.time.Instant
 
 @Suppress("FunctionNaming")
 fun ArtistList(count: Int): List<Artist> {
     val networkArtists = FullSpotifyArtistList(count = count)
-    val fetchTime = Instant.now()
+    val fetchTime = CurrentTime.instant
     return KotifyDatabase.blockingTransaction {
         networkArtists.map { requireNotNull(ArtistRepository.convertToDB(it, fetchTime)) }
     }
 }
 
-fun Artist(fullUpdateTime: Instant? = null, albumsFetched: Instant? = null): Artist {
-    val fetchTime = Instant.now()
+fun Artist(fullUpdateTime: Instant? = CurrentTime.instant, albumsFetched: Instant? = CurrentTime.instant): Artist {
+    val fetchTime = CurrentTime.instant
     return KotifyDatabase.blockingTransaction {
         val artist = requireNotNull(ArtistRepository.convertToDB(FullSpotifyArtist(), fetchTime))
         fullUpdateTime?.let { artist.fullUpdatedTime = it }
@@ -50,7 +51,7 @@ fun ArtistAlbumList(artistId: String, count: Int, fullUpdateTime: Instant? = nul
 @Suppress("FunctionNaming")
 fun AlbumList(count: Int, fullUpdateTime: Instant? = null): List<Album> {
     val networkAlbums = List(count) { FullSpotifyAlbum(id = "album-$it", name = "Album $it") }
-    val fetchTime = Instant.now()
+    val fetchTime = CurrentTime.instant
     return KotifyDatabase.blockingTransaction {
         networkAlbums.map { networkAlbum ->
             val album = requireNotNull(AlbumRepository.convertToDB(networkAlbum, fetchTime))

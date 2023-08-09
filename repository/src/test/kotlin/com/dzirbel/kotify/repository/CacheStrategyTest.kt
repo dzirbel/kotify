@@ -2,11 +2,7 @@ package com.dzirbel.kotify.repository
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import io.mockk.every
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
+import com.dzirbel.kotify.util.CurrentTime
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.time.Instant
@@ -25,30 +21,18 @@ class CacheStrategyTest {
     @ParameterizedTest
     @MethodSource
     fun ttl(case: TTLCase) {
-        every { Instant.now() } returns case.currentTime
+        CurrentTime.mocked(case.currentTime.toEpochMilli()) {
+            val ttl = CacheStrategy.TTL<Instant>(
+                transientTTL = case.transientTTL,
+                invalidTTL = case.invalidTTL,
+                getUpdateTime = { it },
+            )
 
-        val ttl = CacheStrategy.TTL<Instant>(
-            transientTTL = case.transientTTL,
-            invalidTTL = case.invalidTTL,
-            getUpdateTime = { it },
-        )
-
-        assertThat(ttl.validity(case.updateTime)).isEqualTo(case.validity)
+            assertThat(ttl.validity(case.updateTime)).isEqualTo(case.validity)
+        }
     }
 
     companion object {
-        @BeforeAll
-        @JvmStatic
-        fun setup() {
-            mockkStatic(Instant::class)
-        }
-
-        @AfterAll
-        @JvmStatic
-        fun cleanup() {
-            unmockkStatic(Instant::class)
-        }
-
         @JvmStatic
         fun ttl(): List<TTLCase> {
             return listOf(

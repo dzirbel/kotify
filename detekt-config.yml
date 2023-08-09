@@ -781,7 +781,17 @@ style:
     forbiddenPatterns: ''
   ForbiddenMethodCall:
     active: true
-    methods: ['kotlin.io.print', 'kotlin.io.println']
+    methods:
+      # do not write directly to stdout
+      - 'kotlin.io.print'
+      - 'kotlin.io.println'
+      # do not access system time (except through mockable CurrentTime)
+      - 'java.lang.System.currentTimeMillis'
+      - 'java.time.Instant.now'
+      - 'java.util.Date.<init>'
+      - 'java.util.Calendar.getInstance'
+      - 'java.time.Clock.systemUTC'
+      - 'java.time.Clock.system'
   ForbiddenSuppress:
     active: false
     rules: []

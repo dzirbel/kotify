@@ -8,6 +8,7 @@ import com.dzirbel.kotify.repository.util.CachedResource
 import com.dzirbel.kotify.repository.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.repository.util.ToggleableState
 import com.dzirbel.kotify.repository.util.midpointInstantToNow
+import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.collections.plusOrMinus
 import com.dzirbel.kotify.util.collections.zipEach
 import kotlinx.coroutines.CoroutineScope
@@ -242,7 +243,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     final override fun setSaved(id: String, saved: Boolean) {
         Repository.checkEnabled()
-        val saveTime = Instant.now()
+        val saveTime = CurrentTime.instant
 
         // TODO prevent concurrent updates to saved state for the same id
         scope.launch {

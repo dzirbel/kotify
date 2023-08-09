@@ -17,6 +17,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
 
     testFixturesImplementation(libs.assertk)
+    testFixturesImplementation(libs.junit5.api)
     testFixturesImplementation(libs.kotlinx.coroutines.core)
     testFixturesImplementation(libs.kotlinx.coroutines.test)
     testFixturesImplementation(libs.mockk)

@@ -55,6 +55,7 @@ fun Any.screenshotTest(
             window.setUpComposeScene()
 
             window.render().encodeToData()
+                .also { window.close() }
         }
 
         requireNotNull(screenshotData) { "failed to encode screenshot to data" }

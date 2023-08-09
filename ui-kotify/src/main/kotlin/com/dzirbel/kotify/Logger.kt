@@ -6,6 +6,7 @@ import com.dzirbel.kotify.Logger.Network.intercept
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.ImageCacheEvent
+import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -40,7 +41,7 @@ sealed class Logger<T> {
         val content: String? = null,
         val data: T,
         val type: Type = Type.INFO,
-        val time: Long = System.currentTimeMillis(),
+        val time: Long = CurrentTime.millis,
     ) {
         enum class Type {
             INFO, SUCCESS, WARNING, ERROR
@@ -64,7 +65,7 @@ sealed class Logger<T> {
         content: String? = null,
         data: T,
         type: Event.Type = Event.Type.INFO,
-        time: Long = System.currentTimeMillis(),
+        time: Long = CurrentTime.millis,
     ) {
         val event = Event(title = title, content = content, data = data, type = type, time = time)
         synchronized(events) {

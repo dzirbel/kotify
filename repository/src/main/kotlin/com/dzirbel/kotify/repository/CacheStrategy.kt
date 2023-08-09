@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository
 
+import com.dzirbel.kotify.util.CurrentTime
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -79,7 +80,7 @@ fun interface CacheStrategy<T> {
     ) : CacheStrategy<T> {
         override fun validity(value: T): CacheValidity {
             val updateTime = getUpdateTime(value)
-            val now = Instant.now()
+            val now = CurrentTime.instant
 
             return when {
                 invalidTTL != null && updateTime.plus(invalidTTL.toJavaDuration()) < now -> CacheValidity.INVALID

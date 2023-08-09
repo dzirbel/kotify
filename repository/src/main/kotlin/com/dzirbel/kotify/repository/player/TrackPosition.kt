@@ -1,5 +1,7 @@
 package com.dzirbel.kotify.repository.player
 
+import com.dzirbel.kotify.util.CurrentTime
+
 /**
  * Represents the state of the playing position in a currently playing track.
  */
@@ -27,7 +29,7 @@ sealed interface TrackPosition {
      */
     data class Fetched(val fetchedTimestamp: Long, val fetchedPositionMs: Int, val playing: Boolean?) : TrackPosition {
         override val currentPositionMs: Int
-            get() = positionRelativeTo(currentTime())
+            get() = positionRelativeTo(CurrentTime.millis)
 
         private fun positionRelativeTo(timestamp: Long): Int {
             return if (playing == true) {
@@ -52,12 +54,5 @@ sealed interface TrackPosition {
                 playing = false,
             )
         }
-    }
-
-    companion object {
-        /**
-         * Simple wrapper on [System.currentTimeMillis] to allow mocking in tests.
-         */
-        fun currentTime(): Long = System.currentTimeMillis()
     }
 }

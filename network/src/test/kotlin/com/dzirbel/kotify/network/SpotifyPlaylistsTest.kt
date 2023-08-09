@@ -21,6 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
 @Tag(TAG_NETWORK)
@@ -52,7 +53,7 @@ class SpotifyPlaylistsTest {
 
     @Test
     fun createAndEditPlaylist() {
-        val name = "Test Playlist ${System.currentTimeMillis()}"
+        val name = "Test Playlist ${UUID.randomUUID()}"
         val playlist = runBlocking {
             Spotify.Playlists.createPlaylist(userId = NetworkFixtures.userId, name = name, public = false)
         }
@@ -62,7 +63,7 @@ class SpotifyPlaylistsTest {
         assertThat(playlist.public).isNotNull().isFalse()
         assertThat(playlist.owner.id).isEqualTo(NetworkFixtures.userId)
 
-        val updatedName = "Test Playlist v2 ${System.currentTimeMillis()}"
+        val updatedName = "$name v2"
         val updatedDescription = "test description"
         runBlocking {
             Spotify.Playlists.changePlaylistDetails(
@@ -165,7 +166,7 @@ class SpotifyPlaylistsTest {
 
     @Test
     fun uploadPlaylistCoverImage() {
-        val name = "Custom Image Playlist ${System.currentTimeMillis()}"
+        val name = "Custom Image Playlist ${UUID.randomUUID()}"
         val playlist = runBlocking {
             Spotify.Playlists.createPlaylist(userId = NetworkFixtures.userId, name = name, public = false)
         }

@@ -8,6 +8,7 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.SpotifyTrackPlayback
 import com.dzirbel.kotify.repository.util.ToggleableState
+import com.dzirbel.kotify.util.MockedTimeExtension
 import com.dzirbel.kotify.util.collectingToList
 import com.dzirbel.kotify.util.delayed
 import io.mockk.Runs
@@ -18,10 +19,12 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
 /**
  * Tests for [PlayerRepository.play], see [BasePlayerRepositoryTest].
  */
+@ExtendWith(MockedTimeExtension::class)
 class PlayerRepositoryPlayTest : BasePlayerRepositoryTest() {
     @Test
     fun playNullContext() {

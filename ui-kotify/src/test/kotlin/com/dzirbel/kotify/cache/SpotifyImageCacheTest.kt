@@ -10,6 +10,7 @@ import assertk.assertions.isNull
 import assertk.assertions.isSameAs
 import com.dzirbel.kotify.network.MockOkHttpClient
 import com.dzirbel.kotify.ui.SpotifyImageCache
+import com.dzirbel.kotify.util.MockedTimeExtension
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -20,10 +21,12 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
+@ExtendWith(MockedTimeExtension::class)
 internal class SpotifyImageCacheTest {
     @AfterEach
     fun cleanup() {

@@ -16,12 +16,12 @@ import com.dzirbel.kotify.repository.mockStateCached
 import com.dzirbel.kotify.repository.mockStateNull
 import com.dzirbel.kotify.ui.framework.render
 import com.dzirbel.kotify.ui.screenshotTest
-import com.dzirbel.kotify.ui.util.RelativeTimeInfo
+import com.dzirbel.kotify.util.MockedTimeExtension
 import com.dzirbel.kotify.util.withMockedObjects
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(DatabaseExtension::class)
+@ExtendWith(DatabaseExtension::class, MockedTimeExtension::class)
 internal class ArtistPageScreenshotTest {
     @Test
     fun empty() {
@@ -39,25 +39,23 @@ internal class ArtistPageScreenshotTest {
 
     @Test
     fun full() {
-        RelativeTimeInfo.withMockedTime { now ->
-            val artist = ArtistViewModel(Artist(fullUpdateTime = now, albumsFetched = now))
-            val artistAlbums = ArtistAlbumList(artistId = artist.id, count = 20)
-            val artistAlbumViewModels = KotifyDatabase.blockingTransaction {
-                artistAlbums.map { ArtistAlbumViewModel(it) }
+        val artist = ArtistViewModel(Artist())
+        val artistAlbums = ArtistAlbumList(artistId = artist.id, count = 20)
+        val artistAlbumViewModels = KotifyDatabase.blockingTransaction {
+            artistAlbums.map { ArtistAlbumViewModel(it) }
+        }
+
+        withMockedObjects(AlbumTracksRepository, ArtistAlbumsRepository, ArtistRepository, SavedAlbumRepository) {
+            ArtistRepository.mockStateCached(id = artist.id, value = artist)
+            ArtistAlbumsRepository.mockStateCached(id = artist.id, value = artistAlbumViewModels)
+            SavedAlbumRepository.mockLibrary(ids = null)
+
+            for (artistAlbum in artistAlbumViewModels) {
+                AlbumTracksRepository.mockStateNull(artistAlbum.album.id)
             }
 
-            withMockedObjects(AlbumTracksRepository, ArtistAlbumsRepository, ArtistRepository, SavedAlbumRepository) {
-                ArtistRepository.mockStateCached(id = artist.id, value = artist, cacheTime = now)
-                ArtistAlbumsRepository.mockStateCached(id = artist.id, value = artistAlbumViewModels, cacheTime = now)
-                SavedAlbumRepository.mockLibrary(ids = null)
-
-                for (artistAlbum in artistAlbumViewModels) {
-                    AlbumTracksRepository.mockStateNull(artistAlbum.album.id)
-                }
-
-                screenshotTest(filename = "full", windowWidth = 1500) {
-                    ArtistPage(artistId = artist.id).render()
-                }
+            screenshotTest(filename = "full", windowWidth = 1500) {
+                ArtistPage(artistId = artist.id).render()
             }
         }
     }

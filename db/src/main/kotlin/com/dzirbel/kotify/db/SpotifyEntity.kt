@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.db
 
+import com.dzirbel.kotify.util.CurrentTime
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -14,7 +15,7 @@ abstract class SpotifyEntityTable(name: String = "") : StringIdTable(name = name
     val name: Column<String> = text("name")
     val uri: Column<String?> = text("uri").nullable()
 
-    val createdTime: Column<Instant> = timestamp("created_time").clientDefault { Instant.now() }
+    val createdTime: Column<Instant> = timestamp("created_time").clientDefault { CurrentTime.instant }
     val updatedTime: Column<Instant> = timestamp("updated_time")
     val fullUpdatedTime: Column<Instant?> = timestamp("full_updated_time").nullable()
 }
