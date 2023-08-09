@@ -11,7 +11,7 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
 import java.time.Instant
 
-object ArtistTable : SpotifyEntityTable(name = "artists") {
+object ArtistTable : SpotifyEntityTable(entityName = "artist") {
     val popularity: Column<Int?> = integer("popularity").nullable()
     val followersTotal: Column<Int?> = integer("followers_total").nullable()
     val albumsFetched: Column<Instant?> = timestamp("albums_fetched_time").nullable()

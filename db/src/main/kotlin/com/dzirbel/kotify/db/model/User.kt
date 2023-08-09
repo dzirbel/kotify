@@ -11,7 +11,7 @@ import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 
-object UserTable : SpotifyEntityTable(name = "users") {
+object UserTable : SpotifyEntityTable(entityName = "user") {
     val followersTotal: Column<Int?> = integer("followers_total").nullable()
     val email: Column<String?> = text("email").nullable()
 

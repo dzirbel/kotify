@@ -146,7 +146,7 @@ private fun PlaylistHeader(
             horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            LoadedImage(playlist?.largestImageUrl)
+            LoadedImage(key = playlist?.id) { size -> playlist?.imageUrlFor(size) }
 
             if (playlist != null) {
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {

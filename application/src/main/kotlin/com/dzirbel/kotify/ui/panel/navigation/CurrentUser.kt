@@ -40,7 +40,9 @@ fun CurrentUser() {
     SimpleTextButton(onClick = { expandedState.value = !expandedState.value }) {
         val currentUser = currentUserCacheState?.cachedValue
 
-        LoadedImage(currentUser?.thumbnailImageUrl, modifier = Modifier.size(Dimens.iconMedium))
+        LoadedImage(modifier = Modifier.size(Dimens.iconMedium), key = currentUser?.id) { size ->
+            currentUser?.imageUrlFor(size)
+        }
 
         HorizontalSpacer(Dimens.space2)
 

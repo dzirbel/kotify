@@ -192,6 +192,7 @@ fun PlayerPanel() {
     }
 }
 
+// TODO use view models
 @Composable
 private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?) {
     Row(

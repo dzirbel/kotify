@@ -7,7 +7,7 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.Table
 
-object EpisodeTable : SpotifyEntityTable(name = "episodes") {
+object EpisodeTable : SpotifyEntityTable(entityName = "episode") {
     val durationMs: Column<Long> = long("duration_ms")
     val description: Column<String> = text("description")
     val releaseDate: Column<String?> = text("release_date").nullable()

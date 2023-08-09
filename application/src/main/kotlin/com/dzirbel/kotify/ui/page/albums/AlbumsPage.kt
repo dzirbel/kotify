@@ -60,6 +60,7 @@ object AlbumsPage : Page<Unit>() {
             content = {
                 if (albumsAdapter.derived { it.hasElements }.value) {
                     Grid(elements = albumsAdapter.value) { _, album ->
+                        // TODO batch load images
                         AlbumCell(
                             album = album,
                             onClick = { pageStack.mutate { to(AlbumPage(albumId = album.id)) } },

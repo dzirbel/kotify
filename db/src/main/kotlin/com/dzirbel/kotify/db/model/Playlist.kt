@@ -12,7 +12,7 @@ import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
 import java.time.Instant
 
-object PlaylistTable : SpotifyEntityTable(name = "playlists") {
+object PlaylistTable : SpotifyEntityTable(entityName = "playlist") {
     private const val SNAPSHOT_ID_LENGTH = 128
 
     val collaborative: Column<Boolean> = bool("collaborative")

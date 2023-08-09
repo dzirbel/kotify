@@ -18,7 +18,7 @@ enum class AlbumType(val displayName: String, val iconName: String) {
     APPEARS_ON(displayName = "Appears On", iconName = "audio-file"),
 }
 
-object AlbumTable : SpotifyEntityTable(name = "albums") {
+object AlbumTable : SpotifyEntityTable(entityName = "album") {
     val albumType: Column<AlbumType?> = enumeration("album_type", AlbumType::class).nullable()
     val releaseDate: Column<String?> = text("release_date").nullable()
     val releaseDatePrecision: Column<String?> = text("release_date_precision").nullable()

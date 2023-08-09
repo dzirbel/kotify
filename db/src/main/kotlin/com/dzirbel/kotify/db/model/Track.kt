@@ -15,7 +15,7 @@ import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 
-object TrackTable : SpotifyEntityTable(name = "tracks") {
+object TrackTable : SpotifyEntityTable(entityName = "track") {
     val discNumber: Column<Int> = integer("disc_number")
     val durationMs: Column<Long> = long("duration_ms")
     val explicit: Column<Boolean> = bool("explicit")

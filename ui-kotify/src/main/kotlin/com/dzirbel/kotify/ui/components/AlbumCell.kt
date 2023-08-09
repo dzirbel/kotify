@@ -24,7 +24,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.player.Player
-import com.dzirbel.kotify.repository.rating.AverageRating
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
@@ -32,70 +31,6 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
-
-@Composable
-fun AlbumCell(
-    album: AlbumViewModel,
-    isSaved: Boolean?,
-    onToggleSave: (Boolean) -> Unit,
-    showRating: Boolean = false,
-    averageRating: AverageRating? = null,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .instrument()
-            .clip(RoundedCornerShape(Dimens.cornerSize))
-            .clickable(onClick = onClick)
-            .padding(Dimens.space3),
-        verticalArrangement = Arrangement.spacedBy(Dimens.space2),
-    ) {
-        LoadedImage(album.largestImageUrl, modifier = Modifier.align(Alignment.CenterHorizontally))
-
-        Row(
-            modifier = Modifier.widthIn(max = Dimens.contentImage),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
-        ) {
-            Text(text = album.name, modifier = Modifier.weight(1f))
-
-            ToggleSaveButton(isSaved = isSaved) { onToggleSave(it) }
-
-            PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)
-        }
-
-        Row(
-            modifier = Modifier.widthIn(max = Dimens.contentImage),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                album.albumType?.let { albumType ->
-                    CachedIcon(
-                        name = albumType.iconName,
-                        size = Dimens.iconSmall,
-                        contentDescription = albumType.displayName,
-                    )
-                }
-
-                album.parsedReleaseDate?.let { releaseDate ->
-                    Text(text = releaseDate.year.toString())
-                }
-
-                if (album.parsedReleaseDate != null && album.totalTracks != null) {
-                    Interpunct()
-                }
-
-                album.totalTracks?.let { totalTracks ->
-                    Text("$totalTracks tracks")
-                }
-            }
-        }
-
-        if (showRating) {
-            AverageStarRating(averageRating = averageRating)
-        }
-    }
-}
 
 @Composable
 fun AlbumCell(album: AlbumViewModel, showRating: Boolean = true, onClick: () -> Unit) {
@@ -107,7 +42,9 @@ fun AlbumCell(album: AlbumViewModel, showRating: Boolean = true, onClick: () -> 
             .padding(Dimens.space3),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {
-        LoadedImage(album.largestImageUrl, modifier = Modifier.align(Alignment.CenterHorizontally))
+        LoadedImage(modifier = Modifier.align(Alignment.CenterHorizontally), key = album.id) { size ->
+            album.imageUrlFor(size)
+        }
 
         Row(
             modifier = Modifier.widthIn(max = Dimens.contentImage),
@@ -172,11 +109,10 @@ fun SmallAlbumCell(album: AlbumViewModel, onClick: () -> Unit) {
     ) {
         Box {
             LoadedImage(
-                // TODO use thumbnail image instead
-                urlFlow = album.largestImageUrl,
-                size = Dimens.contentImageSmall,
                 modifier = Modifier.align(Alignment.Center),
-            )
+                size = Dimens.contentImageSmall,
+                key = album.id,
+            ) { size -> album.imageUrlFor(size) }
 
             Row(
                 modifier = Modifier

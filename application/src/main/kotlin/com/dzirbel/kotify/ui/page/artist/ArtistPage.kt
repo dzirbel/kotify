@@ -117,6 +117,7 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
                             bottom = Dimens.space3,
                         ),
                     ) { _, artistAlbum ->
+                        // TODO batch load images
                         AlbumCell(
                             album = artistAlbum.album,
                             onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.album.id)) } },

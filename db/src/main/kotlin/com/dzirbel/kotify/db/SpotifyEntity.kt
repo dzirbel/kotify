@@ -11,7 +11,7 @@ import java.time.Instant
 /**
  * Base class for tables which contain a [SpotifyEntity], and provides common columns like [name].
  */
-abstract class SpotifyEntityTable(name: String = "") : StringIdTable(name = name) {
+abstract class SpotifyEntityTable(val entityName: String) : StringIdTable(name = "${entityName}s") {
     val name: Column<String> = text("name")
     val uri: Column<String?> = text("uri").nullable()
 

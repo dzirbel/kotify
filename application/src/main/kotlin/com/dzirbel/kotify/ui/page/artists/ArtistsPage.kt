@@ -55,6 +55,7 @@ import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.components.star.RatingHistogram
+import com.dzirbel.kotify.ui.components.toImageSize
 import com.dzirbel.kotify.ui.framework.Page
 import com.dzirbel.kotify.ui.framework.VerticalScrollPage
 import com.dzirbel.kotify.ui.page.album.AlbumPage
@@ -81,6 +82,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.runningReduce
 import kotlinx.coroutines.flow.stateIn
 
+val artistCellImageSize = Dimens.contentImage
+
 object ArtistsPage : Page<Unit>() {
     @Composable
     override fun BoxScope.bind(visible: Boolean) {
@@ -103,6 +106,7 @@ object ArtistsPage : Page<Unit>() {
                 .stateIn(scope, SharingStarted.Eagerly, libraryFlow.value)
         }
 
+        val imageSize = artistCellImageSize.toImageSize()
         val artistsAdapter = rememberListAdapterState(defaultSort = ArtistNameProperty, scope = scope) {
             displayedLibraryFlow.flatMapLatestIn(scope) { library ->
                 if (library == null) {
@@ -112,8 +116,8 @@ object ArtistsPage : Page<Unit>() {
                         .combinedStateWhenAllNotNull { it?.cachedValue }
                         .onEachIn(scope) { artists ->
                             artists?.requestBatched(
-                                transactionName = { "load $it artist largest images" },
-                                extractor = { it.largestImageUrl },
+                                transactionName = { "load $it artist images for $artistCellImageSize" },
+                                extractor = { it.imageUrlFor(imageSize) },
                             )
                         }
                 }
@@ -234,7 +238,12 @@ private fun ArtistCell(artist: ArtistViewModel, onRightClick: () -> Unit) {
             .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = onRightClick)
             .padding(Dimens.space3),
     ) {
-        LoadedImage(artist.largestImageUrl, modifier = Modifier.align(Alignment.CenterHorizontally))
+        LoadedImage(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            size = artistCellImageSize,
+            key = artist.id,
+            urlFlowForSize = { size -> artist.imageUrlFor(size) },
+        )
 
         VerticalSpacer(Dimens.space3)
 
@@ -266,7 +275,7 @@ private const val DETAILS_ALBUMS_WEIGHT = 0.7f
 @Composable
 private fun ArtistDetailInsert(artist: ArtistViewModel) {
     Row(modifier = Modifier.padding(Dimens.space4), horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-        LoadedImage(artist.largestImageUrl)
+        LoadedImage(key = artist.id) { size -> artist.imageUrlFor(size) }
 
         Column(
             modifier = Modifier.weight(weight = DETAILS_COLUMN_WEIGHT),
@@ -309,6 +318,7 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
             modifier = Modifier.weight(DETAILS_ALBUMS_WEIGHT),
             elements = adapter.value,
         ) { _, artistAlbum ->
+            // TODO batch load images?
             SmallAlbumCell(
                 album = artistAlbum.album,
                 onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.album.id)) } },
