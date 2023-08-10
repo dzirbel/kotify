@@ -29,11 +29,23 @@ object ImageTable : UUIDTable(name = "images") {
      * the image and a foreign key to the entity that owns the image, and selecting where the entity ID matches [id].
      */
     fun smallestLargerThan(joinColumn: Column<EntityID<String>>, id: String, size: ImageSize): String? {
-        return joinColumn.table
+        joinColumn.table
             .innerJoin(ImageTable)
             .slice(url)
             .select { joinColumn eq id }
             .andWhere { (width greaterEq size.width) and (height greaterEq size.height) }
+            .orderBy(width * height to SortOrder.ASC)
+            .limit(1)
+            .firstOrNull()
+            ?.get(url)
+            ?.let { return it }
+
+        // if no image is larger than the given dimensions, return the largest image
+        // TODO do this in a single SQL query?
+        return joinColumn.table
+            .innerJoin(ImageTable)
+            .slice(url)
+            .select { joinColumn eq id }
             .orderBy(width * height to SortOrder.ASC)
             .limit(1)
             .firstOrNull()
