@@ -9,7 +9,6 @@ import assertk.assertions.isTrue
 import com.dzirbel.kotify.db.DatabaseExtension
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.blockingTransaction
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Instant
@@ -18,15 +17,8 @@ import java.time.Instant
 internal class GlobalUpdateTimesRepositoryTest {
     @Test
     fun testUnset() {
-        runBlocking {
-            val updated = KotifyDatabase.transaction(name = null) { GlobalUpdateTimesRepository.updated(key = "dne") }
-            assertThat(updated).isNull()
-
-            val hasBeenUpdated = KotifyDatabase.transaction(name = null) {
-                GlobalUpdateTimesRepository.hasBeenUpdated(key = "dne")
-            }
-            assertThat(hasBeenUpdated).isFalse()
-        }
+        assertThat(KotifyDatabase.blockingTransaction { GlobalUpdateTimesRepository.updated("dne") }).isNull()
+        assertThat(KotifyDatabase.blockingTransaction { GlobalUpdateTimesRepository.hasBeenUpdated("dne") }).isFalse()
     }
 
     @Test

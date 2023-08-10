@@ -3,9 +3,8 @@ package com.dzirbel.kotify.repository.global
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.upsert
 import java.time.Instant
 
 /**
@@ -22,9 +21,9 @@ internal object GlobalUpdateTimesRepository {
      * Must be called from within a transaction.
      */
     fun hasBeenUpdated(key: String): Boolean {
-        return GlobalUpdateTimesTable
+        return !GlobalUpdateTimesTable
             .select { GlobalUpdateTimesTable.key eq key }
-            .any()
+            .empty()
     }
 
     /**
@@ -34,6 +33,7 @@ internal object GlobalUpdateTimesRepository {
      */
     fun updated(key: String): Instant? {
         return GlobalUpdateTimesTable
+            .slice(GlobalUpdateTimesTable.updateTime)
             .select { GlobalUpdateTimesTable.key eq key }
             .firstOrNull()
             ?.get(GlobalUpdateTimesTable.updateTime)
@@ -46,16 +46,9 @@ internal object GlobalUpdateTimesRepository {
      * Must be called from within a transaction.
      */
     fun setUpdated(key: String, updateTime: Instant) {
-        // TODO upsert
-        if (GlobalUpdateTimesTable.select { GlobalUpdateTimesTable.key eq key }.any()) {
-            GlobalUpdateTimesTable.update(where = { GlobalUpdateTimesTable.key eq key }) {
-                it[GlobalUpdateTimesTable.updateTime] = updateTime
-            }
-        } else {
-            GlobalUpdateTimesTable.insert { statement ->
-                statement[GlobalUpdateTimesTable.key] = key
-                statement[GlobalUpdateTimesTable.updateTime] = updateTime
-            }
+        GlobalUpdateTimesTable.upsert { statement ->
+            statement[GlobalUpdateTimesTable.key] = key
+            statement[GlobalUpdateTimesTable.updateTime] = updateTime
         }
     }
 
