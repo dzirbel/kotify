@@ -162,7 +162,7 @@ object ArtistsPage : Page<Unit>() {
                         cellContent = { index, artist ->
                             ArtistCell(
                                 artist = artist,
-                                onRightClick = {
+                                onMiddleClick = {
                                     selectedArtistIndex = index.takeIf { it != selectedArtistIndex }
                                 },
                             )
@@ -227,14 +227,14 @@ private fun ArtistsPageHeader(
 }
 
 @Composable
-private fun ArtistCell(artist: ArtistViewModel, onRightClick: () -> Unit) {
+private fun ArtistCell(artist: ArtistViewModel, onMiddleClick: () -> Unit) {
     Column(
         Modifier
             .instrument()
             .onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
                 pageStack.mutate { to(ArtistPage(artistId = artist.id)) }
             }
-            .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary), onClick = onRightClick)
+            .onClick(matcher = PointerMatcher.mouse(PointerButton.Tertiary), onClick = onMiddleClick)
             .padding(Dimens.space3),
     ) {
         LoadedImage(
