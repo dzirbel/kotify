@@ -101,20 +101,26 @@ fun LoadedImage(
     val imageSize = size.toImageSize()
     val urlFlow = remember(size, key) { urlFlowForSize(imageSize) }
 
-    val initialValue = remember(size, key) {
-        urlFlow?.value?.let { SpotifyImageCache.getFromMemory(it) }
-    }
-
-    val imageState = if (initialValue == null) {
-        produceState<ImageBitmap?>(initialValue = null, key1 = size, key2 = key) {
-            // only collect the first non-null value from the urlFlow; it is assumed to never emit again
-            urlFlow?.firstOrNull { it != null }?.let { url ->
-                // only collect the first non-null value from the SpotifyImageCache; it will never emit again
-                SpotifyImageCache.get(url).firstOrNull { it != null }?.let { value = it }
-            }
-        }
+    val imageState = if (urlFlow == null) {
+        // no need to produceState if there is no flow
+        remember { mutableStateOf(null) }
     } else {
-        remember(size, key) { mutableStateOf(initialValue) }
+        val initialValue = remember(size, key) {
+            urlFlow.value?.let { SpotifyImageCache.getFromMemory(it) }
+        }
+
+        if (initialValue == null) {
+            produceState<ImageBitmap?>(initialValue = null, key1 = size, key2 = key) {
+                // only collect the first non-null value from the urlFlow; it is assumed to never emit again
+                urlFlow.firstOrNull { it != null }?.let { url ->
+                    // only collect the first non-null value from the SpotifyImageCache; it will never emit again
+                    SpotifyImageCache.get(url).firstOrNull { it != null }?.let { value = it }
+                }
+            }
+        } else {
+            // no need to produceState if we already have an image from memory
+            remember(size, key) { mutableStateOf(initialValue) }
+        }
     }
 
     LoadedImage(image = { imageState.value }, modifier = modifier, size = size, shape = shape)
