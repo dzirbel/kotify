@@ -1,14 +1,14 @@
 package com.dzirbel.kotify.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.loadSvgPainter
@@ -16,12 +16,15 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
-import com.dzirbel.kotify.ui.util.collectAsState
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
+import com.dzirbel.kotify.ui.util.firstAsState
+import com.dzirbel.kotify.ui.util.imageSemantics
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
+import com.dzirbel.kotify.ui.util.paintLazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -38,33 +41,29 @@ fun CachedIcon(
     contentDescription: String? = null,
     tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
 ) {
-    val params = IconCache.IconParams(name = name, density = LocalDensity.current, size = size)
-    Icon(
-        painter = IconCache.load(params)
-            .collectAsState(initial = EmptyPainter, key = params, context = Dispatchers.IO)
-            .value,
-        modifier = modifier.size(size),
-        contentDescription = contentDescription,
-        tint = tint,
-    )
-}
+    val density = LocalDensity.current
+    val painterState = remember(name, density) {
+        IconCache.load(IconCache.IconParams(name = name, density = density))
+    }
+        .firstAsState()
 
-/**
- * A [Painter] with no content, as a placeholder for loading icons.
- */
-private object EmptyPainter : Painter() {
-    override val intrinsicSize = Size.Unspecified
-    override fun DrawScope.onDraw() {}
+    Box(
+        modifier = modifier
+            .instrument()
+            .size(size)
+            .paintLazy(tint = tint) { painterState.value }
+            .imageSemantics(contentDescription),
+    )
 }
 
 /**
  * A global in-memory cache of loaded icon resources.
  */
 object IconCache {
-    data class IconParams(val name: String, val density: Density, val size: Dp)
+    data class IconParams(val name: String, val density: Density)
 
     private val classLoader = Thread.currentThread().contextClassLoader
-    private val jobs: ConcurrentMap<IconParams, Deferred<Painter>> = ConcurrentHashMap()
+    private val jobs: ConcurrentMap<IconParams, StateFlow<Painter?>> = ConcurrentHashMap()
 
     /**
      * Toggles the [IconCache]'s blocking mode, in which calls to [load] are always done synchronously.
@@ -83,25 +82,18 @@ object IconCache {
      * This [Painter] behaves incorrectly when drawing the same icon at different sizes, so we simply use a different
      * key in the cache for each icon-size combination.
      */
-    fun load(params: IconParams): Deferred<Painter> {
-        // happy path: icon is already loaded
-        jobs[params]
-            ?.takeIf { it.isCompleted }
-            ?.getCompleted()
-            ?.let { return CompletableDeferred(it) }
-
-        return if (loadBlocking) {
-            readIcon(params.name, params.density)
-                .also { jobs[params] = CompletableDeferred(it) }
-                .let { CompletableDeferred(it) }
-        } else {
-            jobs.computeIfAbsent(params) {
-                // cannot use scope local to the composition in case it is removed from the composition before
-                // finishing, but then the same icon is requested again
-                GlobalScope.async(Dispatchers.IO) {
-                    readIcon(params.name, params.density)
+    fun load(params: IconParams): StateFlow<Painter?> {
+        return jobs.computeIfAbsent(params) {
+            val flow = MutableStateFlow<Painter?>(null)
+            if (loadBlocking) {
+                flow.value = readIcon(params.name, params.density)
+            } else {
+                GlobalScope.launch(Dispatchers.IO) {
+                    flow.value = readIcon(params.name, params.density)
                 }
             }
+
+            flow
         }
     }
 
