@@ -62,7 +62,6 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
-import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.coroutines.combineState
@@ -91,7 +90,7 @@ fun PlayerPanel() {
     val itemId = item?.id
 
     val trackRating = remember(itemId) { itemId?.let { TrackRatingRepository.ratingStateOf(id = it) } }
-        ?.collectAsStateSwitchable(key = itemId)
+        ?.collectAsState()
         ?.value
 
     Column(Modifier.instrument().fillMaxWidth().wrapContentHeight()) {

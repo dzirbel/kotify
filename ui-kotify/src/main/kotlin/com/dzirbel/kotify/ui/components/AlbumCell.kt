@@ -15,6 +15,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -29,7 +30,6 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 @Composable
@@ -90,7 +90,7 @@ fun AlbumCell(album: AlbumViewModel, showRating: Boolean = true, onClick: () -> 
             val averageRating = remember(album.id) {
                 TrackRatingRepository.averageRatingStateOfAlbum(albumId = album.id, scope = scope)
             }
-                .collectAsStateSwitchable(key = album.id)
+                .collectAsState()
                 .value
 
             AverageStarRating(averageRating = averageRating)

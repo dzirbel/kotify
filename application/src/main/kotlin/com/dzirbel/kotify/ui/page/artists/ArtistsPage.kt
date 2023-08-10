@@ -65,7 +65,6 @@ import com.dzirbel.kotify.ui.properties.ArtistNameProperty
 import com.dzirbel.kotify.ui.properties.ArtistPopularityProperty
 import com.dzirbel.kotify.ui.properties.ArtistRatingProperty
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
@@ -262,7 +261,7 @@ private fun ArtistCell(artist: ArtistViewModel, onRightClick: () -> Unit) {
         val averageRating = remember(artist.id) {
             TrackRatingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
         }
-            .collectAsStateSwitchable(key = artist.id)
+            .collectAsState()
             .value
 
         AverageStarRating(averageRating = averageRating)
@@ -303,7 +302,7 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
             val averageRating = remember(artist.id) {
                 TrackRatingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
             }
-                .collectAsStateSwitchable(key = artist.id)
+                .collectAsState()
                 .value
 
             RatingHistogram(averageRating)

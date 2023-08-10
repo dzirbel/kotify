@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,7 +38,6 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyTypography
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.applyIf
-import com.dzirbel.kotify.ui.util.collectAsStateSwitchable
 import com.dzirbel.kotify.ui.util.setClipboard
 import com.dzirbel.kotify.util.formatDateTime
 import kotlinx.coroutines.flow.SharedFlow
@@ -53,13 +53,11 @@ fun <T> EventList(
     filter: (Logger.Event<T>) -> Boolean = { true },
 ) {
     VerticalScroll(scrollState = scrollState) {
-        val flow: SharedFlow<List<Logger.Event<T>>> = remember(key) { log.eventsFlow }
+        val flow: SharedFlow<List<Logger.Event<T>>> = remember(key, filter) { log.eventsFlow }
+        val initial = remember(key, filter) { flow.replayCache.firstOrNull().orEmpty().filter(filter).take(MAX_EVENTS) }
         val events: List<Logger.Event<T>> = flow
             .map { it.filter(filter).take(MAX_EVENTS) }
-            .collectAsStateSwitchable(
-                initial = { flow.replayCache.firstOrNull().orEmpty().filter(filter).take(MAX_EVENTS) },
-                key = key,
-            )
+            .collectAsState(initial = initial)
             .value
 
         events.asReversed().forEachIndexed { index, event ->
