@@ -1,8 +1,10 @@
 package com.dzirbel.kotify.ui
 
+import androidx.compose.foundation.LocalContextMenuRepresentation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import com.dzirbel.kotify.Settings
+import com.dzirbel.kotify.ui.contextmenu.AugmentedContextMenuRepresentation
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.LocalInstrumentationCompositionHighlightEnabled
@@ -20,6 +22,7 @@ object Theme {
                     LocalInstrumentationCompositionHighlightEnabled provides
                         Settings.instrumentationHighlightCompositions,
                     LocalInstrumentationMetricsPanelsEnabled provides Settings.instrumentationMetricsPanels,
+                    LocalContextMenuRepresentation provides AugmentedContextMenuRepresentation(colors = colors),
                     content = content,
                 )
             }

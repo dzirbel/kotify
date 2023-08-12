@@ -118,6 +118,9 @@ enum class Colors(
     val primary: Color
         get() = materialColors.primary
 
+    val popupBackground: Color
+        get() = surfaces[POPUP_HEIGHT]
+
     /**
      * Gets a highlight-aware color, i.e. [primary] if [highlight] is true and [otherwise] if not.
      *
@@ -156,8 +159,7 @@ enum class Colors(
     @Composable
     fun WithSurface(increment: Int = INCREMENT_SMALL, content: @Composable () -> Unit) {
         val height = LocalSurfaceHeight.current + increment
-        val background = surfaces.getOrNull(height)
-            ?: error("no surface background for height $height")
+        val background = requireNotNull(surfaces.getOrNull(height)) { "no surface background for height $height" }
         CompositionLocalProvider(
             LocalSurfaceHeight provides height,
             LocalSurfaceBackground provides background,
@@ -168,5 +170,6 @@ enum class Colors(
     companion object {
         const val INCREMENT_SMALL = 1
         const val INCREMENT_LARGE = 2
+        const val POPUP_HEIGHT = 1
     }
 }

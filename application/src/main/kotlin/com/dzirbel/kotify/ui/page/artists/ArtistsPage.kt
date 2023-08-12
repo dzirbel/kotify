@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.page.artists
 
+import androidx.compose.foundation.ContextMenuArea
 import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
@@ -56,6 +57,7 @@ import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.components.star.RatingHistogram
 import com.dzirbel.kotify.ui.components.toImageSize
+import com.dzirbel.kotify.ui.contextmenu.artistContextMenuItems
 import com.dzirbel.kotify.ui.framework.Page
 import com.dzirbel.kotify.ui.framework.VerticalScrollPage
 import com.dzirbel.kotify.ui.page.album.AlbumPage
@@ -228,43 +230,45 @@ private fun ArtistsPageHeader(
 
 @Composable
 private fun ArtistCell(artist: ArtistViewModel, onMiddleClick: () -> Unit) {
-    Column(
-        Modifier
-            .instrument()
-            .onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
-                pageStack.mutate { to(ArtistPage(artistId = artist.id)) }
-            }
-            .onClick(matcher = PointerMatcher.mouse(PointerButton.Tertiary), onClick = onMiddleClick)
-            .padding(Dimens.space3),
-    ) {
-        LoadedImage(
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            size = artistCellImageSize,
-            key = artist.id,
-            urlFlowForSize = { size -> artist.imageUrlFor(size) },
-        )
-
-        VerticalSpacer(Dimens.space3)
-
-        Row(
-            modifier = Modifier.widthIn(max = Dimens.contentImage),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+    ContextMenuArea(items = { artistContextMenuItems(artist) }) {
+        Column(
+            Modifier
+                .instrument()
+                .onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
+                    pageStack.mutate { to(ArtistPage(artistId = artist.id)) }
+                }
+                .onClick(matcher = PointerMatcher.mouse(PointerButton.Tertiary), onClick = onMiddleClick)
+                .padding(Dimens.space3),
         ) {
-            Text(text = artist.name, modifier = Modifier.weight(1f))
+            LoadedImage(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                size = artistCellImageSize,
+                key = artist.id,
+                urlFlowForSize = { size -> artist.imageUrlFor(size) },
+            )
 
-            ToggleSaveButton(repository = SavedArtistRepository, id = artist.id)
+            VerticalSpacer(Dimens.space3)
 
-            PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
+            Row(
+                modifier = Modifier.widthIn(max = Dimens.contentImage),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+            ) {
+                Text(text = artist.name, modifier = Modifier.weight(1f))
+
+                ToggleSaveButton(repository = SavedArtistRepository, id = artist.id)
+
+                PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
+            }
+
+            val scope = rememberCoroutineScope()
+            val averageRating = remember(artist.id) {
+                TrackRatingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
+            }
+                .collectAsState()
+                .value
+
+            AverageStarRating(averageRating = averageRating)
         }
-
-        val scope = rememberCoroutineScope()
-        val averageRating = remember(artist.id) {
-            TrackRatingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
-        }
-            .collectAsState()
-            .value
-
-        AverageStarRating(averageRating = averageRating)
     }
 }
 

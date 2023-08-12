@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui.panel.library
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -39,7 +40,7 @@ import com.dzirbel.kotify.util.collections.zipEach
 @Composable
 fun LibraryPanel() {
     LocalColors.current.WithSurface {
-        VerticalScroll(Modifier.surfaceBackground()) {
+        VerticalScroll(Modifier.fillMaxHeight().surfaceBackground()) {
             Text(
                 text = "Library",
                 style = MaterialTheme.typography.h5,

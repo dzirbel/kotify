@@ -42,6 +42,11 @@ object Dimens {
     val contentImage = 200.dp
     val contentImageSmall = 80.dp
 
+    val contextMenuElevation = 8.dp
+    val contextMenuMinWidth = 112.dp
+    val contextMenuMaxWidth = 360.dp
+    val contextMenuItemHeight = 40.dp
+
     private val scrollbarWidth = 12.dp
 
     @Composable

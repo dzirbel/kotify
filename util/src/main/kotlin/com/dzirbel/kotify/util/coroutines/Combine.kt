@@ -1,10 +1,17 @@
 package com.dzirbel.kotify.util.coroutines
 
 import com.dzirbel.kotify.util.collections.mapIfAllNotNull
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import java.util.concurrent.CancellationException
+
+/**
+ * Convenience wrapper around [combine] with the flows as a receiver parameter.
+ */
+inline fun <reified T, R> List<Flow<T>>.combine(crossinline transform: suspend (Array<T>) -> R) =
+    combine(this, transform)
 
 /**
  * Combines these [StateFlow]s into a single [StateFlow] whose value reflects [transform] applied to the latest set of
