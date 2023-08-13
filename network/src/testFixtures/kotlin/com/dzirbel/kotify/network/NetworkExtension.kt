@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.network
 
 import com.dzirbel.kotify.network.oauth.AccessToken
+import com.dzirbel.kotify.util.CurrentTime
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -15,11 +16,13 @@ class NetworkExtension : BeforeEachCallback, AfterEachCallback {
         if (context.tags.contains(TAG_NETWORK)) {
             // TODO deduplicate references to access token location
             AccessToken.Cache.cacheFile = File("../.kotify/test-cache/access_token.json")
+            CurrentTime.enabled = true
             Spotify.enabled = true
         }
     }
 
     override fun afterEach(context: ExtensionContext) {
         Spotify.enabled = false
+        CurrentTime.enabled = false
     }
 }
