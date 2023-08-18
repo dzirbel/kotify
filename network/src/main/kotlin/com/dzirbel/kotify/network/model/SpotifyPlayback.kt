@@ -94,6 +94,8 @@ data class SpotifyPlaybackDevice(
      */
     @SerialName("is_private_session") val isPrivateSession: Boolean?,
 
+    @SerialName("supports_volume") val supportsVolume: Boolean?,
+
     /**
      * A human-readable name for the device. Some devices have a name that the user can configure (e.g. "Loudest
      * speaker") and some devices have a generic name associated with the manufacturer or device model.
