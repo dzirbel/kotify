@@ -31,12 +31,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 @Composable
-fun ArtistCell(
-    artist: ArtistViewModel,
-    imageSize: Dp,
-    onClick: () -> Unit,
-    onMiddleClick: () -> Unit,
-) {
+fun ArtistCell(artist: ArtistViewModel, imageSize: Dp, onClick: () -> Unit, onMiddleClick: () -> Unit) {
     ContextMenuArea(items = { artistContextMenuItems(artist) }) {
         Column(
             Modifier
