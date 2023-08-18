@@ -3,3 +3,4 @@
 /.kotify/
 **/build/
 b2.properties
+*.db
