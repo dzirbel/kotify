@@ -26,8 +26,8 @@ import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
-import com.dzirbel.kotify.ui.components.AlbumCell
-import com.dzirbel.kotify.ui.components.AlbumTypePicker
+import com.dzirbel.kotify.ui.album.AlbumCell
+import com.dzirbel.kotify.ui.album.AlbumTypePicker
 import com.dzirbel.kotify.ui.components.DividerSelector
 import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.InvalidateButton

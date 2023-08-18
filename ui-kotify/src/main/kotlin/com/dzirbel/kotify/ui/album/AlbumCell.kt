@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.components
+package com.dzirbel.kotify.ui.album
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,6 +27,10 @@ import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.components.Interpunct
+import com.dzirbel.kotify.ui.components.LoadedImage
+import com.dzirbel.kotify.ui.components.PlayButton
+import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors

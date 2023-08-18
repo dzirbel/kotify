@@ -1,7 +1,5 @@
 package com.dzirbel.kotify.ui.page.artists
 
-import androidx.compose.foundation.ContextMenuArea
-import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -9,8 +7,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.onClick
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
@@ -25,16 +21,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.PointerButton
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.artist.SavedArtistRepository
-import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
+import com.dzirbel.kotify.ui.album.SmallAlbumCell
+import com.dzirbel.kotify.ui.artist.ArtistCell
 import com.dzirbel.kotify.ui.components.DividerSelector
 import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Interpunct
@@ -42,11 +38,7 @@ import com.dzirbel.kotify.ui.components.LibraryInvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner
 import com.dzirbel.kotify.ui.components.Pill
-import com.dzirbel.kotify.ui.components.PlayButton
-import com.dzirbel.kotify.ui.components.SmallAlbumCell
 import com.dzirbel.kotify.ui.components.SortSelector
-import com.dzirbel.kotify.ui.components.ToggleSaveButton
-import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
 import com.dzirbel.kotify.ui.components.adapter.ListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.dividableProperties
@@ -54,10 +46,8 @@ import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
-import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.components.star.RatingHistogram
 import com.dzirbel.kotify.ui.components.toImageSize
-import com.dzirbel.kotify.ui.contextmenu.artistContextMenuItems
 import com.dzirbel.kotify.ui.framework.Page
 import com.dzirbel.kotify.ui.framework.VerticalScrollPage
 import com.dzirbel.kotify.ui.page.album.AlbumPage
@@ -68,7 +58,6 @@ import com.dzirbel.kotify.ui.properties.ArtistPopularityProperty
 import com.dzirbel.kotify.ui.properties.ArtistRatingProperty
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.derived
-import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.rememberArtistTracksStates
 import com.dzirbel.kotify.util.coroutines.combinedStateWhenAllNotNull
@@ -164,6 +153,10 @@ object ArtistsPage : Page<Unit>() {
                         cellContent = { index, artist ->
                             ArtistCell(
                                 artist = artist,
+                                imageSize = artistCellImageSize,
+                                onClick = {
+                                    pageStack.mutate { to(ArtistPage(artistId = artist.id)) }
+                                },
                                 onMiddleClick = {
                                     selectedArtistIndex = index.takeIf { it != selectedArtistIndex }
                                 },
@@ -224,50 +217,6 @@ private fun ArtistsPageHeader(
                 sorts = artistsAdapter.derived { it.sorts.orEmpty() }.value,
                 onSetSort = artistsAdapter::withSort,
             )
-        }
-    }
-}
-
-@Composable
-private fun ArtistCell(artist: ArtistViewModel, onMiddleClick: () -> Unit) {
-    ContextMenuArea(items = { artistContextMenuItems(artist) }) {
-        Column(
-            Modifier
-                .instrument()
-                .onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
-                    pageStack.mutate { to(ArtistPage(artistId = artist.id)) }
-                }
-                .onClick(matcher = PointerMatcher.mouse(PointerButton.Tertiary), onClick = onMiddleClick)
-                .padding(Dimens.space3),
-        ) {
-            LoadedImage(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                size = artistCellImageSize,
-                key = artist.id,
-                urlFlowForSize = { size -> artist.imageUrlFor(size) },
-            )
-
-            VerticalSpacer(Dimens.space3)
-
-            Row(
-                modifier = Modifier.widthIn(max = Dimens.contentImage),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
-            ) {
-                Text(text = artist.name, modifier = Modifier.weight(1f))
-
-                ToggleSaveButton(repository = SavedArtistRepository, id = artist.id)
-
-                PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
-            }
-
-            val scope = rememberCoroutineScope()
-            val averageRating = remember(artist.id) {
-                TrackRatingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
-            }
-                .collectAsState()
-                .value
-
-            AverageStarRating(averageRating = averageRating)
         }
     }
 }

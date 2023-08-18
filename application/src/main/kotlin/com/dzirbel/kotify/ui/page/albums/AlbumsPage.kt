@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
-import com.dzirbel.kotify.ui.components.AlbumCell
+import com.dzirbel.kotify.ui.album.AlbumCell
 import com.dzirbel.kotify.ui.components.LibraryInvalidateButton
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner
 import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
