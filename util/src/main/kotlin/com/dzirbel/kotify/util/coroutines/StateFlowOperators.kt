@@ -31,10 +31,22 @@ fun <T, R> StateFlow<T>.mapIn(scope: CoroutineScope, transform: (T) -> R): State
  */
 fun <T, R> StateFlow<T>.flatMapLatestIn(scope: CoroutineScope, transform: (T) -> StateFlow<R>): StateFlow<R> {
     val initialValue = value
+    val initialTransform = transform(initialValue)
+
+    // hack: avoid calling transform until a value different from the initial one is emitted to avoid transform being
+    // called with the initial value twice
+    var dropping = true
+
     return this
-        .dropWhile { it == initialValue } // hack: ensure flatMapLatest is not called with the initial value
-        .flatMapLatest(transform)
-        .stateIn(scope, SharingStarted.Eagerly, transform(initialValue).value)
+        .flatMapLatest { value ->
+            if (dropping && value == initialValue) {
+                initialTransform
+            } else {
+                dropping = false
+                transform(value)
+            }
+        }
+        .stateIn(scope, SharingStarted.Eagerly, initialTransform.value)
 }
 
 /**

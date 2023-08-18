@@ -218,6 +218,34 @@ class StateFlowOperatorsTest {
     }
 
     @Test
+    fun `flatMapLatestIn initial updated downstream flow value is reflected`() {
+        val base = MutableStateFlow(1)
+        runTest {
+            val mappedValues = mutableListOf<Int>()
+            var downstreamStateFlow: MutableStateFlow<Int>? = null
+            val mapped = base.flatMapLatestIn(scope = this) { x ->
+                mappedValues.add(x)
+                MutableStateFlow(x * 2).also { downstreamStateFlow = it }
+            }
+
+            runCurrent()
+
+            assertThat(mappedValues).containsExactly(1)
+            assertThat(mapped.value).isEqualTo(2)
+
+            // updating the latest downstream flow affects the flatMapped flow
+            downstreamStateFlow!!.value = 5
+            assertThat(mappedValues).containsExactly(1)
+            assertThat(mapped.value).isEqualTo(2)
+            runCurrent()
+            assertThat(mappedValues).containsExactly(1)
+            assertThat(mapped.value).isEqualTo(5)
+
+            coroutineContext.cancelChildren() // cancel to stop flatMapLatestIn collection
+        }
+    }
+
+    @Test
     fun `flatMapLatestIn with two collectors`() {
         val base = MutableStateFlow(1)
         runTest {
