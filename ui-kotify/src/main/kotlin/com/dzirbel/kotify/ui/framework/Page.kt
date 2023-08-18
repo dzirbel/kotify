@@ -18,6 +18,8 @@ abstract class Page<T> {
      * screen. When true the title will be shown in the navigation header, when false it will not be. Each [Page]
      * retains its own state so that navigating in the page stack does not start a new animation for each new page -
      * transitions between pages should be instant.
+     *
+     * TODO refactor as callback to bind()
      */
     val navigationTitleState = MutableTransitionState(false)
 
@@ -31,6 +33,8 @@ abstract class Page<T> {
      * both attach data to the composition and render its contents in this call. Ideally these functions might be
      * separated, but given that the data bound to the composition is used to drive the rendered content it is
      * convenient to keep them together and allow the page to determine how they interact.
+     *
+     * TODO refactor to avoid returning [T]
      */
     @Composable
     abstract fun BoxScope.bind(visible: Boolean): T
