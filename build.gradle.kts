@@ -91,9 +91,9 @@ fun Project.configureKotlin() {
             // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
             freeCompilerArgs.add("-Xcontext-receivers")
 
-            if (project.extensions.findByType<ComposeExtension>() != null) {
+            if (extensions.findByType<ComposeExtension>() != null) {
                 // hack: exclude repository project because it only has the runtime dependency
-                if (!project.name.contains("repository")) {
+                if (!name.contains("repository")) {
                     freeCompilerArgs.add("-opt-in=androidx.compose.ui.ExperimentalComposeUiApi")
                     freeCompilerArgs.add("-opt-in=androidx.compose.foundation.ExperimentalFoundationApi")
                     freeCompilerArgs.add("-opt-in=androidx.compose.material.ExperimentalMaterialApi")
@@ -101,7 +101,7 @@ fun Project.configureKotlin() {
 
                 // enable Compose compiler metrics and reports:
                 // https://github.com/androidx/androidx/blob/androidx-main/compose/compiler/design/compiler-metrics.md
-                val composeCompilerReportsDir = project.buildDir.resolve("compose")
+                val composeCompilerReportsDir = layout.buildDirectory.dir("compose").get()
                 freeCompilerArgs.addAll(
                     "-P",
                     "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=$composeCompilerReportsDir"
