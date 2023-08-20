@@ -14,6 +14,7 @@ import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.mockLibrary
 import com.dzirbel.kotify.repository.mockStateCached
 import com.dzirbel.kotify.repository.mockStateNull
+import com.dzirbel.kotify.repository.mockStates
 import com.dzirbel.kotify.ui.framework.render
 import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.util.MockedTimeExtension
@@ -49,6 +50,10 @@ internal class ArtistPageScreenshotTest {
             ArtistRepository.mockStateCached(id = artist.id, value = artist)
             ArtistAlbumsRepository.mockStateCached(id = artist.id, value = artistAlbumViewModels)
             SavedAlbumRepository.mockLibrary(ids = null)
+            AlbumTracksRepository.mockStates(
+                ids = artistAlbums.map { it.albumId.value },
+                values = artistAlbums.map { emptyList() },
+            )
 
             for (artistAlbum in artistAlbumViewModels) {
                 AlbumTracksRepository.mockStateNull(artistAlbum.album.id)

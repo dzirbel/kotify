@@ -20,12 +20,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.AlbumType
+import com.dzirbel.kotify.repository.album.AlbumTracksRepository
 import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistAlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.rating.TrackRatingRepository
+import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.ui.album.AlbumCell
 import com.dzirbel.kotify.ui.album.AlbumTypePicker
 import com.dzirbel.kotify.ui.components.DividerSelector
@@ -39,6 +41,7 @@ import com.dzirbel.kotify.ui.components.adapter.dividableProperties
 import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
+import com.dzirbel.kotify.ui.components.toImageSize
 import com.dzirbel.kotify.ui.framework.Page
 import com.dzirbel.kotify.ui.framework.VerticalScrollPage
 import com.dzirbel.kotify.ui.page.album.AlbumPage
@@ -52,7 +55,9 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.rememberSavedStates
+import com.dzirbel.kotify.ui.util.rememberStates
 import com.dzirbel.kotify.util.coroutines.mapIn
+import com.dzirbel.kotify.util.coroutines.onEachIn
 import com.dzirbel.kotify.util.immutable.countBy
 import com.dzirbel.kotify.util.immutable.orEmpty
 import kotlinx.collections.immutable.PersistentList
@@ -67,16 +72,25 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
 
         val displayedAlbumTypes = remember { mutableStateOf(persistentSetOf(AlbumType.ALBUM)) }
 
+        val imageSize = Dimens.contentImage.toImageSize()
         val artistAlbums = rememberListAdapterState(
             key = artistId,
             defaultSort = AlbumReleaseDateProperty.ForArtistAlbum,
             defaultFilter = filterFor(displayedAlbumTypes.value),
             source = { scope ->
-                ArtistAlbumsRepository.stateOf(id = artistId).mapIn(scope) { it?.cachedValue }
+                ArtistAlbumsRepository.stateOf(id = artistId)
+                    .mapIn(scope) { it?.cachedValue }
+                    .onEachIn(scope) { artistAlbum ->
+                        artistAlbum?.requestBatched(
+                            transactionName = { "load $it artist album images for $imageSize" },
+                            extractor = { it.album.imageUrlFor(imageSize) },
+                        )
+                    }
             },
         )
 
         SavedAlbumRepository.rememberSavedStates(artistAlbums.value) { it.album.id }
+        AlbumTracksRepository.rememberStates(ids = artistAlbums.value.map { it.album.id })
 
         val scope = rememberCoroutineScope()
         val artistAlbumProperties = remember(artistAlbums.value) {
@@ -119,7 +133,6 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
                             bottom = Dimens.space3,
                         ),
                     ) { _, artistAlbum ->
-                        // TODO batch load images
                         AlbumCell(
                             album = artistAlbum.album,
                             onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.album.id)) } },
