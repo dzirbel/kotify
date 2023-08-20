@@ -21,7 +21,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
@@ -64,13 +63,11 @@ import com.dzirbel.kotify.util.coroutines.combinedStateWhenAllNotNull
 import com.dzirbel.kotify.util.coroutines.flatMapLatestIn
 import com.dzirbel.kotify.util.coroutines.mapIn
 import com.dzirbel.kotify.util.coroutines.onEachIn
+import com.dzirbel.kotify.util.coroutines.runningFoldIn
 import com.dzirbel.kotify.util.immutable.orEmpty
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.runningReduce
-import kotlinx.coroutines.flow.stateIn
 
 val artistCellImageSize = Dimens.contentImage
 
@@ -82,18 +79,8 @@ object ArtistsPage : Page<Unit>() {
         // accumulate saved artist IDs, never removing them from the library so that the artist does not disappear from
         // the grid when removed (to make it easy to add them back if it was an accident)
         val displayedLibraryFlow = remember {
-            val libraryFlow = SavedArtistRepository.library
-
-            libraryFlow
-                .runningReduce { accumulator, value ->
-                    value?.let {
-                        SavedRepository.Library(
-                            ids = accumulator?.ids?.let { ids -> ids + value.ids } ?: value.ids,
-                            cacheTime = value.cacheTime,
-                        )
-                    }
-                }
-                .stateIn(scope, SharingStarted.Eagerly, libraryFlow.value)
+            SavedArtistRepository.library
+                .runningFoldIn(scope) { accumulator, value -> value?.plus(accumulator?.ids) }
         }
 
         val imageSize = artistCellImageSize.toImageSize()

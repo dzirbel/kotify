@@ -41,7 +41,6 @@ fun AlbumCell(album: AlbumViewModel, showRating: Boolean = true, onClick: () -> 
     Column(
         modifier = Modifier
             .instrument()
-            .clip(RoundedCornerShape(Dimens.cornerSize))
             .clickable(onClick = onClick)
             .padding(Dimens.space3),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2),

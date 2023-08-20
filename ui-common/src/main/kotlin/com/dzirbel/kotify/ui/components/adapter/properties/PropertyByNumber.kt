@@ -25,7 +25,7 @@ abstract class PropertyByNumber<E>(override val title: String, private val divis
 
     override fun divisionTitle(division: Any?): String? {
         val number = requireNotNull(division) as Int
-        return "$number - ${number + divisionRange}"
+        return if (divisionRange == 1) number.toString() else "$number - ${number + divisionRange - 1}"
     }
 
     override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {

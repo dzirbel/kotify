@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
 
 /**
@@ -61,4 +62,18 @@ fun <T> StateFlow<T>.onEachIn(scope: CoroutineScope, action: (T) -> Unit): State
         .dropWhile { it == initialValue } // hack: ensure action is not called with the initial value twice
         .onEach(action)
         .stateIn(scope, SharingStarted.Eagerly, value.also(action))
+}
+
+/**
+ * Returns a [StateFlow] with by iteratively apply [operation] to the values of this [StateFlow] and emitted each
+ * result, where collection of the mapped flow is done in the given [scope].
+ *
+ * See https://github.com/Kotlin/kotlinx.coroutines/issues/2514 (among others)
+ */
+fun <T> StateFlow<T>.runningFoldIn(scope: CoroutineScope, operation: (accumulator: T, value: T) -> T): StateFlow<T> {
+    val initialValue = value
+    return this
+        .dropWhile { it == initialValue } // hack: ensure action is not called with the initial value twice
+        .runningFold(initial = initialValue, operation = operation)
+        .stateIn(scope, SharingStarted.Eagerly, initialValue)
 }

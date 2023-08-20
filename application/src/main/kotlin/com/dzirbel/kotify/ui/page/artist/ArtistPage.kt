@@ -46,6 +46,7 @@ import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.properties.AlbumNameProperty
 import com.dzirbel.kotify.ui.properties.AlbumRatingProperty
 import com.dzirbel.kotify.ui.properties.AlbumReleaseDateProperty
+import com.dzirbel.kotify.ui.properties.AlbumTotalTracksProperty
 import com.dzirbel.kotify.ui.properties.AlbumTypeDividableProperty
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.derived
@@ -89,6 +90,7 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
                         albumId to TrackRatingRepository.averageRatingStateOfAlbum(albumId = albumId, scope = scope)
                     },
                 ),
+                AlbumTotalTracksProperty.ForArtistAlbum,
             )
         }
 

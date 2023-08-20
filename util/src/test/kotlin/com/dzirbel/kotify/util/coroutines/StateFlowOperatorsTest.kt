@@ -2,6 +2,7 @@ package com.dzirbel.kotify.util.coroutines
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -234,7 +235,7 @@ class StateFlowOperatorsTest {
             assertThat(mapped.value).isEqualTo(2)
 
             // updating the latest downstream flow affects the flatMapped flow
-            downstreamStateFlow!!.value = 5
+            requireNotNull(downstreamStateFlow).value = 5
             assertThat(mappedValues).containsExactly(1)
             assertThat(mapped.value).isEqualTo(2)
             runCurrent()
@@ -376,6 +377,109 @@ class StateFlowOperatorsTest {
             assertThat(flow2.value).isEqualTo(2)
 
             coroutineContext.cancelChildren() // cancel to stop onEachIn collection
+        }
+    }
+
+    @Test
+    fun `runningFoldIn initial value`() {
+        runTest {
+            val seenValues = mutableListOf<Int>()
+            val flow = MutableStateFlow(1).runningFoldIn(scope = this) { acc, value ->
+                seenValues.add(value)
+                acc + value
+            }
+
+            assertThat(seenValues).isEmpty()
+            assertThat(flow.value).isEqualTo(1)
+
+            runCurrent()
+
+            // initial value does not trigger fold
+            assertThat(seenValues).isEmpty()
+            assertThat(flow.value).isEqualTo(1)
+
+            coroutineContext.cancelChildren() // cancel to stop runningFoldIn collection
+        }
+    }
+
+    @Test
+    fun `runningFoldIn updated value is reflected`() {
+        val base = MutableStateFlow(0)
+        runTest {
+            base.value = 1 // emitted values before collection are ignored
+
+            val seenValues = mutableListOf<Int>()
+            val flow = base.runningFoldIn(scope = this) { acc, value ->
+                seenValues.add(value)
+                acc + value
+            }
+
+            base.value = 2
+
+            // reduction does not occur until collection is resumed
+            assertThat(seenValues).isEmpty()
+            assertThat(flow.value).isEqualTo(1)
+
+            runCurrent()
+
+            assertThat(seenValues).containsExactly(2)
+            assertThat(flow.value).isEqualTo(3)
+
+            // assigning the same value does not trigger a new reduction
+            base.value = 2
+            runCurrent()
+
+            assertThat(seenValues).containsExactly(2)
+            assertThat(flow.value).isEqualTo(3)
+
+            // multiple updates before collection skips any prior values; this is not ideal but perhaps unavoidable
+            base.value = 3
+            base.value = 4
+
+            runCurrent()
+
+            assertThat(seenValues).containsExactly(2, 4)
+            assertThat(flow.value).isEqualTo(7)
+
+            coroutineContext.cancelChildren() // cancel to stop runningFoldIn collection
+        }
+    }
+
+    @Test
+    fun `runningFoldIn with two collectors`() {
+        val base = MutableStateFlow(1)
+        runTest {
+            val seenValues1 = mutableListOf<Int>()
+            val seenValues2 = mutableListOf<Int>()
+            val flow1 = base.runningFoldIn(scope = this) { acc, value ->
+                seenValues1.add(value)
+                acc + value
+            }
+            val flow2 = base.runningFoldIn(scope = this) { acc, value ->
+                seenValues2.add(value)
+                acc + value
+            }
+
+            assertThat(seenValues1).isEmpty()
+            assertThat(seenValues2).isEmpty()
+            assertThat(flow1.value).isEqualTo(1)
+            assertThat(flow2.value).isEqualTo(1)
+
+            base.value = 2
+
+            assertThat(seenValues1).isEmpty()
+            assertThat(seenValues2).isEmpty()
+            assertThat(flow1.value).isEqualTo(1)
+            assertThat(flow2.value).isEqualTo(1)
+
+            runCurrent()
+
+            assertThat(seenValues1).containsExactly(2)
+            assertThat(seenValues2).containsExactly(2)
+            assertThat(flow1.value).isEqualTo(3)
+            assertThat(flow2.value).isEqualTo(3)
+
+            coroutineContext.cancelChildren() // cancel to stop runningFoldIn collection
         }
     }
 }

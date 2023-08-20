@@ -2,7 +2,6 @@ package com.dzirbel.kotify.ui.properties
 
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
-import com.dzirbel.kotify.db.model.Album
 import com.dzirbel.kotify.db.model.AlbumType
 import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistAlbumViewModel
@@ -11,6 +10,7 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.adapter.DividableProperty
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.compareNullable
+import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByNumber
 import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByString
 import com.dzirbel.kotify.ui.theme.Dimens
 import kotlinx.coroutines.flow.StateFlow
@@ -55,11 +55,22 @@ open class AlbumTypeDividableProperty<A>(private val toAlbumType: (A) -> AlbumTy
     object ForArtistAlbum : AlbumTypeDividableProperty<ArtistAlbumViewModel>(toAlbumType = { it.albumGroup })
 }
 
-class AlbumRatingProperty(ratings: Map<String, StateFlow<AverageRating>>?) : PropertyByAverageRating<Album>(ratings) {
-    override fun idOf(element: Album) = element.id.value
+class AlbumRatingProperty(ratings: Map<String, StateFlow<AverageRating>>?) :
+    PropertyByAverageRating<AlbumViewModel>(ratings) {
+
+    override fun idOf(element: AlbumViewModel) = element.id
 
     class ForArtistAlbum(ratings: Map<String, StateFlow<AverageRating>>?) :
         PropertyByAverageRating<ArtistAlbumViewModel>(ratings) {
         override fun idOf(element: ArtistAlbumViewModel) = element.album.id
     }
+}
+
+open class AlbumTotalTracksProperty<A>(private val toAlbum: (A) -> AlbumViewModel) :
+    PropertyByNumber<A>(title = "Total tracks", divisionRange = 0) {
+
+    override fun toNumber(item: A) = toAlbum(item).totalTracks
+
+    companion object : AlbumTotalTracksProperty<AlbumViewModel>(toAlbum = { it })
+    object ForArtistAlbum : AlbumTotalTracksProperty<ArtistAlbumViewModel>(toAlbum = { it.album })
 }

@@ -21,7 +21,14 @@ interface SavedRepository {
     data class Library(
         val ids: Set<String>,
         val cacheTime: Instant,
-    )
+    ) {
+        /**
+         * Returns a [Library] adding the given [ids], and this [Library]'s [cacheTime].
+         */
+        fun plus(ids: Set<String>?): Library {
+            return if (ids.isNullOrEmpty()) this else copy(ids = this.ids + ids)
+        }
+    }
 
     /**
      * Reflects the current state of the entity library of saved entities, if it is available.

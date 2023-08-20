@@ -2,6 +2,7 @@ package com.dzirbel.kotify.ui.artist
 
 import androidx.compose.foundation.ContextMenuArea
 import androidx.compose.foundation.PointerMatcher
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,7 +37,7 @@ fun ArtistCell(artist: ArtistViewModel, imageSize: Dp, onClick: () -> Unit, onMi
         Column(
             Modifier
                 .instrument()
-                .onClick(matcher = PointerMatcher.mouse(PointerButton.Primary), onClick = onClick)
+                .clickable(onClick = onClick)
                 .onClick(matcher = PointerMatcher.mouse(PointerButton.Tertiary), onClick = onMiddleClick)
                 .padding(Dimens.space3),
         ) {
