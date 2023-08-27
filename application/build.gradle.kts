@@ -15,6 +15,7 @@ val appProperties = file("src/main/resources/app.properties").inputStream().use 
 version = appProperties["version"] as String
 
 dependencies {
+    implementation(project(":log"))
     implementation(project(":repository"))
     implementation(project(":ui-common"))
     implementation(project(":ui-kotify"))

@@ -27,11 +27,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerButton
 import com.dzirbel.kotify.Logger
+import com.dzirbel.kotify.log.FlowView
+import com.dzirbel.kotify.log.Log
+import com.dzirbel.kotify.log.viewState
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -44,6 +48,112 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.map
 
 private const val MAX_EVENTS = 500
+
+@Composable
+fun <E : Log.Event> LogList(log: Log<E>, view: FlowView<E>) {
+    VerticalScroll {
+        val scope = rememberCoroutineScope()
+        val events = remember(view) { view.viewState(log = log, scope = scope) }.collectAsState().value
+
+        events.forEachIndexed { index, event ->
+            key(event) {
+                EventItem(event)
+            }
+
+            if (index != events.lastIndex) {
+                HorizontalDivider()
+            }
+        }
+    }
+}
+
+// TODO add optional custom content based on E
+@Composable
+private fun <E : Log.Event> EventItem(event: E) {
+    val canExpand = !event.content.isNullOrBlank()
+
+    val expandedState = if (canExpand) remember { mutableStateOf(false) } else null
+    val expanded = expandedState?.value == true
+
+    val rightClickMenuExpanded = remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .applyIf(canExpand) {
+                onClick(matcher = PointerMatcher.mouse(PointerButton.Primary)) {
+                    expandedState?.value = !expanded
+                }
+                    .onClick(matcher = PointerMatcher.mouse(PointerButton.Secondary)) {
+                        rightClickMenuExpanded.value = true
+                    }
+            }
+            .padding(Dimens.space2)
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Dimens.space1),
+    ) {
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            DropdownMenu(
+                expanded = rightClickMenuExpanded.value,
+                onDismissRequest = { rightClickMenuExpanded.value = false },
+            ) {
+                DropdownMenuItem(
+                    onClick = {
+                        setClipboard(contents = event.content.orEmpty())
+                        rightClickMenuExpanded.value = false
+                    },
+                ) {
+                    Text("Copy contents to clipboard")
+                }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space1), modifier = Modifier.weight(1f)) {
+                Icon(
+                    imageVector = when (event.type) {
+                        Log.Event.Type.INFO -> Icons.Default.Info
+                        Log.Event.Type.SUCCESS -> Icons.Default.Check
+                        Log.Event.Type.WARNING -> Icons.Default.Warning
+                        Log.Event.Type.ERROR -> Icons.Default.Close
+                    },
+                    contentDescription = null,
+                    modifier = Modifier.size(Dimens.iconSmall).align(Alignment.Top),
+                    tint = when (event.type) {
+                        Log.Event.Type.INFO -> LocalColors.current.text
+                        Log.Event.Type.SUCCESS -> Color.Green
+                        Log.Event.Type.WARNING -> Color.Yellow
+                        Log.Event.Type.ERROR -> LocalColors.current.error
+                    },
+                )
+
+                Text(
+                    text = event.title,
+                    fontFamily = KotifyTypography.Monospace,
+                )
+            }
+
+            if (canExpand) {
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                    contentDescription = null,
+                    modifier = Modifier.size(Dimens.iconSmall),
+                )
+            }
+        }
+
+        if (expanded) {
+            Text(
+                text = event.content.orEmpty(),
+                fontFamily = KotifyTypography.Monospace,
+                modifier = Modifier.padding(start = Dimens.space3),
+            )
+        }
+
+        Text(
+            text = remember(event.time) { formatDateTime(event.time, includeMillis = true) },
+            style = MaterialTheme.typography.overline.copy(fontFamily = KotifyTypography.Monospace),
+            modifier = Modifier.padding(Dimens.space2).align(Alignment.End),
+        )
+    }
+}
 
 @Composable
 fun <T> EventList(

@@ -6,6 +6,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import assertk.assertions.support.expected
 import java.util.SortedMap
 
 /**
@@ -43,6 +44,21 @@ inline fun <reified T> Assert<Iterable<T>>.containsExactlyElementsOfInAnyOrder(e
  */
 inline fun <reified T> Assert<Iterable<T>>.containsAllElementsOf(elements: Iterable<T>) {
     containsAll(*elements.toList().toTypedArray())
+}
+
+/**
+ * Asserts the [List] is sorted according to the given [comparator].
+ */
+fun <T> Assert<List<T>>.isSorted(comparator: Comparator<T>) {
+    given { actual ->
+        if (actual.size <= 1) return
+
+        for (i in 1 until actual.size) {
+            if (comparator.compare(actual[i - 1], actual[i]) > 0) {
+                expected("elements ${i - 1} and $i to be in order but was ${actual[i - 1]} and ${actual[i]}")
+            }
+        }
+    }
 }
 
 /**

@@ -10,8 +10,10 @@ import kotlinx.coroutines.test.runCurrent
  *
  * This is convenient to monitor the emissions of a [Flow] while running some test logic in [block] when the collection
  * of [flow] would be blocking (or never complete). Scoped to [TestScope] to ensure it is not used in other scopes.
+ *
+ * Inline to allow [block] to be a suspending function from a suspending context.
  */
-fun <T> TestScope.collectingToList(flow: Flow<T>, block: (List<T>) -> Unit) {
+inline fun <T> TestScope.collectingToList(flow: Flow<T>, block: (List<T>) -> Unit) {
     val list = mutableListOf<T>()
     val job = launch { flow.collect(list::add) }
     runCurrent() // start collection immediately

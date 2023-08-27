@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
     api(project(":db"))
+    api(project(":log"))
     api(project(":network"))
     implementation(project(":util"))
 
