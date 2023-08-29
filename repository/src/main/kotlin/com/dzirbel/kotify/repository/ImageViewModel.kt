@@ -43,7 +43,7 @@ class EntityImageViewModel(
 
     override fun imageUrlFor(size: ImageSize): LazyTransactionStateFlow<String> {
         return imageFlowsBySize.getOrPut(size) {
-            LazyTransactionStateFlow("$$entityName $entityId image for $size") {
+            LazyTransactionStateFlow("$entityName $entityId image for $size") {
                 ImageTable.smallestLargerThan(joinColumn = imageJoinColumn, id = entityId, size = size)
             }
         }
