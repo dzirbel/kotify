@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.log
 
 import com.dzirbel.kotify.util.CurrentTime
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -31,9 +30,14 @@ interface Log<E : Log.Event> {
     }
 
     /**
+     * The user-readable name of this log.
+     */
+    val name: String
+
+    /**
      * Returns a snapshot of the current events in this log.
      */
-    val events: ImmutableList<E>
+    val events: List<E>
 
     /**
      * Returns a [Flow] of new events emitted by this log.

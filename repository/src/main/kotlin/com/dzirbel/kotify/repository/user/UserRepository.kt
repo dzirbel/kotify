@@ -5,6 +5,9 @@ import com.dzirbel.kotify.db.model.Image
 import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.db.model.UserTable
 import com.dzirbel.kotify.db.util.sized
+import com.dzirbel.kotify.log.error
+import com.dzirbel.kotify.log.success
+import com.dzirbel.kotify.log.warn
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.PrivateSpotifyUser
 import com.dzirbel.kotify.network.model.SpotifyUser
@@ -79,25 +82,32 @@ open class UserRepository internal constructor(
         if (currentUser.value?.cachedValue != null) return
 
         userSessionScope.launch {
+            val dbStart = TimeSource.Monotonic.markNow()
             val cachedUser = currentUserId.value?.let { userId ->
                 KotifyDatabase.transaction("load current user") { fetchFromDatabase(userId)?.first }
             }
 
             val cachedUpdateTime = cachedUser?.fullUpdatedTime
             if (cachedUpdateTime != null) {
+                // TODO use cache strategy for current user
                 _currentUser.value = CacheState.Loaded(
                     cachedValue = UserViewModel(cachedUser),
                     cacheTime = cachedUpdateTime,
                 )
+                mutableLog.success("loaded current user from cache in ${dbStart.elapsedNow()}")
             } else {
+                mutableLog.warn("current user missing from cache in ${dbStart.elapsedNow()}, loading from remote")
+
                 _currentUser.value = CacheState.Refreshing()
 
+                val remoteStart = TimeSource.Monotonic.markNow()
                 val remoteUser = try {
                     getCurrentUserRemote()
                 } catch (cancellationException: CancellationException) {
                     _currentUser.value = CacheState.Error(cancellationException)
                     throw cancellationException
                 } catch (throwable: Throwable) {
+                    mutableLog.error(throwable = throwable, title = "error loading current user from remote")
                     _currentUser.value = CacheState.Error(throwable)
                     @Suppress("LabeledExpression")
                     return@launch
@@ -109,6 +119,8 @@ open class UserRepository internal constructor(
                     cachedValue = UserViewModel(remoteUser),
                     cacheTime = remoteUser.updatedTime,
                 )
+
+                mutableLog.success("loaded current user from remote in ${remoteStart.elapsedNow()}")
             }
         }
     }

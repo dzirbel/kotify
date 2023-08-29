@@ -33,10 +33,11 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 
-enum class DebugTab(val tabName: String, val log: Logger<*>) {
+enum class DebugTab(val tabName: String, val log: Logger<*>?) {
     EVENTS("Events", Logger.Events),
     NETWORK("Network", Logger.Network),
     DATABASE("Database", Logger.Database),
+    REPOSITORY("Repository", null),
     IMAGE_CACHE("Images", Logger.ImageCache),
     UI("UI", Logger.UI),
 }
@@ -123,18 +124,21 @@ private fun DebugPanelContent(tab: DebugTab, scrollState: ScrollState, onClickTa
                 DebugTab.EVENTS -> EventsTab(scrollState)
                 DebugTab.NETWORK -> NetworkTab(scrollState)
                 DebugTab.DATABASE -> DatabaseTab(scrollState)
+                DebugTab.REPOSITORY -> RepositoryTab(scrollState)
                 DebugTab.IMAGE_CACHE -> ImageCacheTab(scrollState)
                 DebugTab.UI -> UITab()
             }
         }
 
-        HorizontalDivider()
+        if (tab.log != null) {
+            HorizontalDivider()
 
-        SimpleTextButton(
-            onClick = { tab.log.clear() },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Clear log")
+            SimpleTextButton(
+                onClick = { tab.log.clear() },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Clear log")
+            }
         }
     }
 }

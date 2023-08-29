@@ -17,6 +17,8 @@ import java.util.Collections
  * This class exposes a minimal and convenient API for repository operations rather than directly implementing [Map].
  * In particular, it hides the implementation details of wrapping values in [WeakReference] and [MutableStateFlow] and
  * exposes an API that interacts with the values [V] directly when possible.
+ *
+ * TODO unit test onExisting
  */
 class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
     // TODO tends to accumulate empty WeakReference: this could be improved by creating a standalone WeakValueHashMap
@@ -40,7 +42,12 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
      *
      * If a new [StateFlow] was created, [onCreate] is invoked with the default value used.
      */
-    fun getOrCreateStateFlow(key: K, defaultValue: () -> V? = { null }, onCreate: (V?) -> Unit = {}): StateFlow<V?> {
+    fun getOrCreateStateFlow(
+        key: K,
+        defaultValue: () -> V? = { null },
+        onExisting: (V?) -> Unit = {},
+        onCreate: (V?) -> Unit = {},
+    ): StateFlow<V?> {
         var created = false
         var default: V? = null
         return synchronized(stateFlowMap) {
@@ -52,9 +59,11 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
                         .also { created = true }
                 }
         }
-            .also {
+            .also { stateFlow ->
                 if (created) {
                     onCreate(default)
+                } else {
+                    onExisting(stateFlow.value)
                 }
             }
     }
@@ -72,6 +81,7 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
     fun getOrCreateStateFlows(
         keys: Iterable<K>,
         defaultValue: (K) -> V? = { null },
+        onExisting: (Int) -> Unit = {},
         onCreate: (Map<K, V?>) -> Unit = {},
     ): List<StateFlow<V?>> {
         val created = mutableMapOf<K, V?>()
@@ -89,6 +99,11 @@ class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
             .also {
                 if (created.isNotEmpty()) {
                     onCreate(created)
+                }
+
+                val numExisting = keys.count() - created.size
+                if (numExisting > 0) {
+                    onExisting(numExisting)
                 }
             }
     }

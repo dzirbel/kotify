@@ -2,6 +2,9 @@ package com.dzirbel.kotify.repository.rating
 
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.TrackRatingTable
+import com.dzirbel.kotify.log.Log
+import com.dzirbel.kotify.log.MutableLog
+import com.dzirbel.kotify.log.asLog
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.album.AlbumTracksRepository
 import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
@@ -30,6 +33,13 @@ open class TrackRatingRepository internal constructor(
 ) : RatingRepository {
 
     private val states = SynchronizedWeakStateFlowMap<String, Rating>()
+
+    // TODO use log
+    private val mutableLog = MutableLog<Log.Event>(
+        name = requireNotNull(this::class.qualifiedName).removeSuffix(".Companion").substringAfterLast('.'),
+    )
+
+    override val log = mutableLog.asLog()
 
     override fun ratingStateOf(id: String): StateFlow<Rating?> {
         Repository.checkEnabled()

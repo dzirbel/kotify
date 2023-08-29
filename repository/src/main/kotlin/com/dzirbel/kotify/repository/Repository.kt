@@ -1,6 +1,8 @@
 package com.dzirbel.kotify.repository
 
 import androidx.compose.runtime.Stable
+import com.dzirbel.kotify.log.Log
+import com.dzirbel.kotify.log.Logging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -13,7 +15,8 @@ import kotlinx.coroutines.flow.StateFlow
  * [stateOf] which returns a [StateFlow] to which the UI can bind for a live view of the data.
  */
 @Stable
-interface Repository<T> {
+interface Repository<T> : Logging<Log.Event> {
+
     /**
      * The [CacheStrategy] applied by default determine the validity of locally cached data.
      */

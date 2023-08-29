@@ -1,6 +1,8 @@
 package com.dzirbel.kotify.repository
 
 import androidx.compose.runtime.Stable
+import com.dzirbel.kotify.log.Log
+import com.dzirbel.kotify.log.Logging
 import com.dzirbel.kotify.repository.util.ToggleableState
 import kotlinx.coroutines.flow.StateFlow
 import java.time.Instant
@@ -12,7 +14,7 @@ import java.time.Instant
  * TODO use CacheStrategy
  */
 @Stable
-interface SavedRepository {
+interface SavedRepository : Logging<Log.Event> {
     /**
      * Wraps the state of a saved library; a set of [ids] and an [Instant] at the last time it was fetched from the
      * remote data source.

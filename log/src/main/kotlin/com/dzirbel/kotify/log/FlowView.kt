@@ -14,9 +14,9 @@ import kotlinx.coroutines.launch
  * Wraps [filter] and [sort] operations which can be applied to a [Flow] to produce a [StateFlow] which accumulates the
  * filtered and sorted emissions of the [Flow].
  */
-data class FlowView<E>(
-    val filter: ((E) -> Boolean)? = null,
-    val sort: Comparator<E>? = null,
+data class FlowView<T>(
+    val filter: ((T) -> Boolean)? = null,
+    val sort: Comparator<T>? = null,
 ) {
     /**
      * Returns a [StateFlow] which reflects the filtered and sorted emissions of the [flow].
@@ -25,7 +25,7 @@ data class FlowView<E>(
      * @param initial the initial list of events to start with
      * @param scope the [CoroutineScope] in which the [flow] is collected
      */
-    fun viewState(flow: Flow<E>, initial: List<E>, scope: CoroutineScope): StateFlow<ImmutableList<E>> {
+    fun viewState(flow: Flow<T>, initial: Iterable<T>, scope: CoroutineScope): StateFlow<ImmutableList<T>> {
         val stateFlow = MutableStateFlow(
             value = initial
                 .let { if (filter == null) it else it.filter(filter) }
@@ -34,10 +34,11 @@ data class FlowView<E>(
         )
 
         // use an undispatched start to attempt to start collection immediately and avoid missing any events emitted
-        // between the read of the initial list and the start of collection; this is not airtight but reasonable
+        // between the read of the initial list and the start of collection; this is not quite airtight but unlikely to
+        // be an issue in practice
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             flow.collect { event ->
-                if (filter?.invoke(event) != false) {
+                if (filter == null || filter.invoke(event)) {
                     stateFlow.value =
                         if (sort == null) stateFlow.value.add(event) else stateFlow.value.addSorted(event, sort)
                 }
@@ -46,12 +47,15 @@ data class FlowView<E>(
 
         return stateFlow
     }
-}
 
-/**
- * Convenience wrapper on [FlowView.viewState] which observes the events of the given [log] and returns a [StateFlow]
- * which reflects the filtered and sorted events of the [log].
- */
-fun <E : Log.Event> FlowView<E>.viewState(log: Log<E>, scope: CoroutineScope): StateFlow<ImmutableList<E>> {
-    return viewState(flow = log.eventsFlow, initial = log.events, scope = scope)
+    /**
+     * Returns a [FlowView] for values of type [R] applies this [FlowView]'s [filter] and [sort] on the values of type
+     * [R] by transforming them via [transform].
+     */
+    fun <R> transformed(transform: (R) -> T): FlowView<R> {
+        return FlowView(
+            filter = filter?.let { filter -> { event: R -> filter(transform(event)) } },
+            sort = sort?.let { sort -> Comparator.comparing(transform, sort) },
+        )
+    }
 }
