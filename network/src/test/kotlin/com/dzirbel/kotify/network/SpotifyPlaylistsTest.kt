@@ -73,10 +73,12 @@ class SpotifyPlaylistsTest {
             )
         }
 
-        val updatedPlaylist = runBlocking { Spotify.Playlists.getPlaylist(playlistId = playlist.id) }
-        assertThat(updatedPlaylist.id).isEqualTo(playlist.id)
-        assertThat(updatedPlaylist.name).isEqualTo(updatedName)
-        assertThat(updatedPlaylist.description).isEqualTo(updatedDescription)
+        retryForResult(attempts = 3, delayBetweenAttempts = 250.milliseconds) {
+            val updatedPlaylist = runBlocking { Spotify.Playlists.getPlaylist(playlistId = playlist.id) }
+            assertThat(updatedPlaylist.id).isEqualTo(playlist.id)
+            assertThat(updatedPlaylist.name).isEqualTo(updatedName)
+            assertThat(updatedPlaylist.description).isEqualTo(updatedDescription)
+        }
 
         runBlocking {
             Spotify.Playlists.addItemsToPlaylist(
