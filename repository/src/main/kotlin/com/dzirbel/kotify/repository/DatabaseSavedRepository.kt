@@ -2,13 +2,8 @@ package com.dzirbel.kotify.repository
 
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.SavedEntityTable
-import com.dzirbel.kotify.log.Log
 import com.dzirbel.kotify.log.MutableLog
 import com.dzirbel.kotify.log.asLog
-import com.dzirbel.kotify.log.error
-import com.dzirbel.kotify.log.info
-import com.dzirbel.kotify.log.success
-import com.dzirbel.kotify.log.warn
 import com.dzirbel.kotify.repository.global.GlobalUpdateTimesRepository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.util.CachedResource
@@ -19,7 +14,6 @@ import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.collections.plusOrMinus
 import com.dzirbel.kotify.util.collections.zipEach
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -62,8 +56,9 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     private val savedStates = SynchronizedWeakStateFlowMap<String, ToggleableState<Boolean>>()
 
-    private val mutableLog = MutableLog<Log.Event>(
+    private val mutableLog = MutableLog<Repository.LogData>(
         name = requireNotNull(this::class.qualifiedName).removeSuffix(".Companion").substringAfterLast('.'),
+        scope = scope,
     )
 
     override val log = mutableLog.asLog()
@@ -121,13 +116,15 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     final override fun savedStateOf(id: String): StateFlow<ToggleableState<Boolean>?> {
         Repository.checkEnabled()
+
+        val requestLog = RequestLog(log = mutableLog)
         return savedStates.getOrCreateStateFlow(
             key = id,
             defaultValue = {
                 libraryResource.flow.value?.ids?.contains(id)?.let { ToggleableState.Set(it) }
             },
             onExisting = {
-                scope.launch { mutableLog.info("save state for $entityName $id in memory") }
+                requestLog.info("save state for $entityName $id in memory", DataSource.MEMORY)
             },
             onCreate = { default ->
                 if (default == null) {
@@ -141,19 +138,24 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                         } catch (cancellationException: CancellationException) {
                             throw cancellationException
                         } catch (throwable: Throwable) {
-                            mutableLog.error(
-                                throwable = throwable,
-                                title = "error loading save state of $entityName $id from database" +
-                                    " in ${dbStart.elapsedNow()}",
-                            )
+                            requestLog
+                                .addDbTime(dbStart.elapsedNow())
+                                .error(
+                                    throwable = throwable,
+                                    title = "error loading save state of $entityName $id from database",
+                                    source = DataSource.DATABASE,
+                                )
                             null
                         }
 
+                        requestLog.addDbTime(dbStart.elapsedNow())
+
                         if (cached != null) {
-                            mutableLog.success(
-                                "loaded save state of $entityName $id from database in ${dbStart.elapsedNow()}",
-                            )
                             savedStates.updateValue(id, ToggleableState.Set(cached))
+                            requestLog.success(
+                                title = "loaded save state of $entityName $id from database",
+                                source = DataSource.DATABASE,
+                            )
                         } else {
                             val remoteStart = TimeSource.Monotonic.markNow()
                             val remote: Boolean? = try {
@@ -161,27 +163,32 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                             } catch (cancellationException: CancellationException) {
                                 throw cancellationException
                             } catch (throwable: Throwable) {
-                                mutableLog.error(
-                                    throwable = throwable,
-                                    title = "error loading save state of $entityName $id from remote" +
-                                        " in ${dbStart.elapsedNow()}",
-                                )
+                                requestLog
+                                    .addRemoteTime(remoteStart.elapsedNow())
+                                    .error(
+                                        throwable = throwable,
+                                        title = "error loading save state of $entityName $id from remote",
+                                        source = DataSource.REMOTE,
+                                    )
                                 null
                             }
+
+                            requestLog.addRemoteTime(remoteStart.elapsedNow())
 
                             if (remote == null) {
                                 // TODO expose error state instead of null?
                                 savedStates.updateValue(id, null)
-                                mutableLog.error(
-                                    title = "save state of $entityName $id not found from remote" +
-                                        " in ${remoteStart.elapsedNow()}",
+                                requestLog.warn(
+                                    title = "save state of $entityName $id not found from remote",
+                                    source = DataSource.REMOTE,
                                 )
                             } else {
                                 val saveTime = remoteStart.midpointInstantToNow()
 
                                 savedStates.updateValue(id, ToggleableState.Set(remote))
-                                mutableLog.success(
-                                    "loaded save state of $entityName $id from remote in ${remoteStart.elapsedNow()}",
+                                requestLog.success(
+                                    title = "loaded save state of $entityName $id from remote",
+                                    source = DataSource.REMOTE,
                                 )
 
                                 try {
@@ -197,9 +204,11 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                 } catch (cancellationException: CancellationException) {
                                     throw cancellationException
                                 } catch (throwable: Throwable) {
-                                    mutableLog.warn(
+                                    // TODO use manual time in DB?
+                                    requestLog.warn(
                                         throwable = throwable,
                                         title = "error saving remote save state of $entityName $id in database",
+                                        source = DataSource.DATABASE,
                                     )
                                 }
                             }
@@ -212,13 +221,15 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     final override fun savedStatesOf(ids: Iterable<String>): List<StateFlow<ToggleableState<Boolean>?>> {
         Repository.checkEnabled()
+
+        val requestLog = RequestLog(log = mutableLog)
         return savedStates.getOrCreateStateFlows(
             keys = ids,
             defaultValue = { id ->
                 libraryResource.flow.value?.ids?.contains(id)?.let { ToggleableState.Set(it) }
             },
             onExisting = { numExisting ->
-                scope.launch { mutableLog.info("$numExisting $entityName save states in memory") }
+                requestLog.info("$numExisting/${ids.count()} $entityName save states in memory", DataSource.MEMORY)
             },
             onCreate = { creations ->
                 // only load state if it could not be initialized from the library
@@ -236,13 +247,17 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                         } catch (cancellationException: CancellationException) {
                             throw cancellationException
                         } catch (throwable: Throwable) {
-                            mutableLog.error(
-                                throwable = throwable,
-                                title = "error loading save states of ${missingIds.size} ${entityName}s" +
-                                    " from database in ${dbStart.elapsedNow()}",
-                            )
+                            requestLog
+                                .addDbTime(dbStart.elapsedNow())
+                                .error(
+                                    throwable = throwable,
+                                    title = "error loading save states of ${missingIds.size} ${entityName}s",
+                                    source = DataSource.DATABASE,
+                                )
                             null
                         }
+
+                        requestLog.addDbTime(dbStart.elapsedNow())
 
                         val idsToLoadFromRemote = mutableListOf<String>()
                         if (cached == null) {
@@ -259,8 +274,9 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
                         val numFromDb = missingIds.size - idsToLoadFromRemote.size
                         if (numFromDb > 0) {
-                            mutableLog.success(
-                                "loaded $numFromDb $entityName save states from database in ${dbStart.elapsedNow()}",
+                            requestLog.success(
+                                title = "loaded $numFromDb/${missingIds.size} $entityName save states from database",
+                                source = DataSource.DATABASE,
                             )
                         }
 
@@ -271,20 +287,26 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                             } catch (cancellationException: CancellationException) {
                                 throw cancellationException
                             } catch (throwable: Throwable) {
-                                mutableLog.error(
-                                    throwable = throwable,
-                                    title = "error loading save states of ${idsToLoadFromRemote.size} ${entityName}s" +
-                                        " from remote in ${remoteStart.elapsedNow()}",
-                                )
+                                requestLog
+                                    .addRemoteTime(remoteStart.elapsedNow())
+                                    .error(
+                                        throwable = throwable,
+                                        title = "error loading save states of " +
+                                            "${idsToLoadFromRemote.size} ${entityName}s from remote",
+                                        source = DataSource.REMOTE,
+                                    )
                                 null
                             }
+
+                            requestLog.addRemoteTime(remoteStart.elapsedNow())
 
                             if (remote == null) {
                                 // TODO expose error state instead of null?
                                 idsToLoadFromRemote.forEach { id -> savedStates.updateValue(id, null) }
-                                mutableLog.error(
-                                    title = "save state of ${idsToLoadFromRemote.size} ${entityName}s not found from " +
-                                        "remote in ${remoteStart.elapsedNow()}",
+                                requestLog.warn(
+                                    title = "save states of ${idsToLoadFromRemote.size} ${entityName}s not found " +
+                                        "from remote",
+                                    source = DataSource.REMOTE,
                                 )
                             } else {
                                 val saveTime = remoteStart.midpointInstantToNow()
@@ -293,9 +315,10 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                     savedStates.updateValue(id, ToggleableState.Set(saved))
                                 }
 
-                                mutableLog.success(
-                                    "loaded save states of ${idsToLoadFromRemote.size} ${entityName}s from remote " +
-                                        "in ${remoteStart.elapsedNow()}",
+                                requestLog.success(
+                                    title = "loaded save states of ${idsToLoadFromRemote.size} ${entityName}s " +
+                                        "from remote",
+                                    source = DataSource.REMOTE,
                                 )
 
                                 try {
@@ -313,10 +336,12 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                 } catch (cancellationException: CancellationException) {
                                     throw cancellationException
                                 } catch (throwable: Throwable) {
-                                    mutableLog.warn(
+                                    // TODO use manual time in DB?
+                                    requestLog.warn(
                                         throwable = throwable,
                                         title = "error saving remote save states of ${idsToLoadFromRemote.size} " +
                                             "${entityName}s in database",
+                                        source = DataSource.DATABASE,
                                     )
                                 }
                             }
@@ -332,17 +357,28 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         val saveTime = CurrentTime.instant
 
         // TODO prevent concurrent updates to saved state for the same id
+        val requestLog = RequestLog(log = mutableLog)
         scope.launch {
             savedStates.updateValue(id, ToggleableState.TogglingTo(saved))
 
+            val remoteStart = TimeSource.Monotonic.markNow()
             try {
                 pushSaved(ids = listOf(id), saved = saved)
             } catch (throwable: Throwable) {
-                mutableLog.error(throwable, "error setting saved state of $entityName $id to $saved in remote")
                 savedStates.updateValue(id, null) // TODO expose error state?
+                requestLog
+                    .addRemoteTime(remoteStart.elapsedNow())
+                    .error(
+                        title = "error setting saved state of $entityName $id to $saved in remote",
+                        source = DataSource.REMOTE,
+                        throwable = throwable,
+                    )
                 throw throwable
             }
 
+            requestLog.addRemoteTime(remoteStart.elapsedNow())
+
+            val dbStart = TimeSource.Monotonic.markNow()
             try {
                 KotifyDatabase.transaction("set saved state for $entityName $id") {
                     savedEntityTable.setSaved(
@@ -356,12 +392,18 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             } catch (cancellationException: CancellationException) {
                 throw cancellationException
             } catch (throwable: Throwable) {
-                mutableLog.error(throwable, "error setting save state of $entityName $id in database")
+                requestLog
+                    .addDbTime(dbStart.elapsedNow())
+                    .error(
+                        title = "error saving saved state of $entityName $id to $saved in database",
+                        source = DataSource.DATABASE,
+                        throwable = throwable,
+                    )
                 @Suppress("LabeledExpression")
                 return@launch
             }
 
-            ensureActive()
+            requestLog.addDbTime(dbStart.elapsedNow())
 
             savedStates.updateValue(id, ToggleableState.Set(saved))
 
@@ -369,7 +411,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                 library.copy(ids = library.ids.plusOrMinus(value = id, condition = saved))
             }
 
-            mutableLog.success("set saved state of $entityName $id to $saved")
+            requestLog.success("set saved state of $entityName $id to $saved", DataSource.REMOTE)
         }
     }
 
@@ -382,7 +424,8 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     private suspend fun getLibraryCached(): SavedRepository.Library? {
         if (!UserRepository.hasCurrentUserId) return null
 
-        val start = TimeSource.Monotonic.markNow()
+        val requestLog = RequestLog(log = mutableLog)
+        val dbStart = TimeSource.Monotonic.markNow()
         return try {
             KotifyDatabase.transaction("load $entityName saved library") {
                 GlobalUpdateTimesRepository.updated(currentUserLibraryUpdateKey)?.let { updatedTime ->
@@ -392,32 +435,40 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (throwable: Throwable) {
-            mutableLog.error(throwable, "error loading $entityName saved library from database")
+            requestLog
+                .addDbTime(dbStart.elapsedNow())
+                .error("error loading $entityName saved library from database", DataSource.DATABASE, throwable)
             return null
         }
             ?.let { (updatedTime, ids) ->
+                requestLog.addDbTime(dbStart.elapsedNow())
                 savedStates.computeAll { id -> ToggleableState.Set(id in ids) }
-                mutableLog.success("loaded $entityName saved library from database in ${start.elapsedNow()}")
+                requestLog.success("loaded $entityName saved library from database", DataSource.DATABASE)
                 SavedRepository.Library(ids, updatedTime)
             }
     }
 
     private suspend fun getLibraryRemote(): SavedRepository.Library {
+        val requestLog = RequestLog(log = mutableLog)
         val userId = UserRepository.requireCurrentUserId
 
-        val start = TimeSource.Monotonic.markNow()
+        val remoteStart = TimeSource.Monotonic.markNow()
 
         val savedNetworkModels = try {
             fetchLibrary()
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (throwable: Throwable) {
-            mutableLog.error(throwable, "error loading $entityName saved library from remote")
+            requestLog
+                .addRemoteTime(remoteStart.elapsedNow())
+                .error("error loading $entityName saved library from remote", DataSource.REMOTE, throwable)
             throw throwable
         }
 
-        val fetchTime = start.midpointInstantToNow()
+        requestLog.addRemoteTime(remoteStart.elapsedNow())
+        val fetchTime = remoteStart.midpointInstantToNow()
 
+        val dbStart = TimeSource.Monotonic.markNow()
         val remoteLibrary = try {
             KotifyDatabase.transaction("save $entityName saved library") {
                 GlobalUpdateTimesRepository.setUpdated(key = currentUserLibraryUpdateKey, updateTime = fetchTime)
@@ -459,13 +510,21 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (throwable: Throwable) {
-            mutableLog.error(throwable, "error updating database for $entityName saved library from remote")
+            requestLog
+                .addDbTime(dbStart.elapsedNow())
+                .error(
+                    title = "error updating database for $entityName saved library from remote",
+                    source = DataSource.DATABASE,
+                    throwable = throwable,
+                )
             throw throwable
         }
 
+        requestLog.addDbTime(dbStart.elapsedNow())
+
         savedStates.computeAll { id -> ToggleableState.Set(id in remoteLibrary) }
 
-        mutableLog.success("loaded $entityName saved library from remote in ${start.elapsedNow()}")
+        requestLog.success("loaded $entityName saved library from remote", DataSource.REMOTE)
 
         return SavedRepository.Library(remoteLibrary, fetchTime)
     }

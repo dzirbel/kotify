@@ -5,16 +5,15 @@ import com.dzirbel.kotify.db.model.Image
 import com.dzirbel.kotify.db.model.User
 import com.dzirbel.kotify.db.model.UserTable
 import com.dzirbel.kotify.db.util.sized
-import com.dzirbel.kotify.log.error
-import com.dzirbel.kotify.log.success
-import com.dzirbel.kotify.log.warn
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.PrivateSpotifyUser
 import com.dzirbel.kotify.network.model.SpotifyUser
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.repository.CacheState
+import com.dzirbel.kotify.repository.DataSource
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.RequestLog
 import com.dzirbel.kotify.repository.savedRepositories
 import com.dzirbel.kotify.repository.util.midpointInstantToNow
 import com.dzirbel.kotify.repository.util.updateOrInsert
@@ -81,11 +80,13 @@ open class UserRepository internal constructor(
     fun ensureCurrentUserLoaded() {
         if (currentUser.value?.cachedValue != null) return
 
+        val requestLog = RequestLog(log = mutableLog)
         userSessionScope.launch {
             val dbStart = TimeSource.Monotonic.markNow()
             val cachedUser = currentUserId.value?.let { userId ->
                 KotifyDatabase.transaction("load current user") { fetchFromDatabase(userId)?.first }
             }
+            requestLog.addDbTime(dbStart.elapsedNow())
 
             val cachedUpdateTime = cachedUser?.fullUpdatedTime
             if (cachedUpdateTime != null) {
@@ -94,10 +95,8 @@ open class UserRepository internal constructor(
                     cachedValue = UserViewModel(cachedUser),
                     cacheTime = cachedUpdateTime,
                 )
-                mutableLog.success("loaded current user from cache in ${dbStart.elapsedNow()}")
+                requestLog.success("loaded current user from database", DataSource.DATABASE)
             } else {
-                mutableLog.warn("current user missing from cache in ${dbStart.elapsedNow()}, loading from remote")
-
                 _currentUser.value = CacheState.Refreshing()
 
                 val remoteStart = TimeSource.Monotonic.markNow()
@@ -107,11 +106,15 @@ open class UserRepository internal constructor(
                     _currentUser.value = CacheState.Error(cancellationException)
                     throw cancellationException
                 } catch (throwable: Throwable) {
-                    mutableLog.error(throwable = throwable, title = "error loading current user from remote")
                     _currentUser.value = CacheState.Error(throwable)
+                    requestLog
+                        .addRemoteTime(remoteStart.elapsedNow())
+                        .error("error loading current user from remote", DataSource.REMOTE, throwable)
                     @Suppress("LabeledExpression")
                     return@launch
                 }
+
+                requestLog.addRemoteTime(remoteStart.elapsedNow())
 
                 _currentUserId.value = remoteUser.id.value
 
@@ -120,7 +123,7 @@ open class UserRepository internal constructor(
                     cacheTime = remoteUser.updatedTime,
                 )
 
-                mutableLog.success("loaded current user from remote in ${remoteStart.elapsedNow()}")
+                requestLog.success("loaded current user from remote", DataSource.REMOTE)
             }
         }
     }

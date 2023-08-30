@@ -50,6 +50,7 @@ val ratingRepositories: Array<RatingRepository> = arrayOf(
 /**
  * A list of the [Log]s of all repositories (including saved and rating repositories), sorted by name.
  */
-val repositoryLogs: List<Log<Log.Event>> = repositories.toList().plus(savedRepositories).plus(ratingRepositories)
-    .map { it.log }
-    .sortedBy { it.name }
+val repositoryLogs: List<Log<Repository.LogData>> =
+    repositories.toList().plus(savedRepositories).plus(ratingRepositories)
+        .map { it.log }
+        .sortedBy { it.name }

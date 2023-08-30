@@ -1,12 +1,12 @@
 package com.dzirbel.kotify.repository
 
 import androidx.compose.runtime.Stable
-import com.dzirbel.kotify.log.Log
 import com.dzirbel.kotify.log.Logging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.time.Duration
 
 /**
  * Handles logic to load, cache, and update a key-value repository with String (ID) keys and values of type [T].
@@ -15,7 +15,16 @@ import kotlinx.coroutines.flow.StateFlow
  * [stateOf] which returns a [StateFlow] to which the UI can bind for a live view of the data.
  */
 @Stable
-interface Repository<T> : Logging<Log.Event> {
+interface Repository<T> : Logging<Repository.LogData> {
+
+    /**
+     * Wraps common data attached to events logged by [Repository]s.
+     */
+    data class LogData(
+        val source: DataSource,
+        val timeInDb: Duration? = null,
+        val timeInRemote: Duration? = null,
+    )
 
     /**
      * The [CacheStrategy] applied by default determine the validity of locally cached data.

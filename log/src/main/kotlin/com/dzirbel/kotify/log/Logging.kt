@@ -1,5 +1,5 @@
 package com.dzirbel.kotify.log
 
-interface Logging<E : Log.Event> {
-    val log: Log<E>
+interface Logging<T> {
+    val log: Log<T>
 }

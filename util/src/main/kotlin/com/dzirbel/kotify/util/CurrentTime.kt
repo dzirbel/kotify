@@ -9,6 +9,8 @@ import java.time.Instant
  * This is preferred over direct calls to [System.currentTimeMillis] et al. to centralize access (thus making it more
  * clear where the system time is being used) and to allow the time to be easily (and without reflection) mocked in
  * tests.
+ *
+ * TODO add support for generating TimeMarks rather than using TimeSource.Monotonic
  */
 @Suppress("ForbiddenMethodCall") // allow calls to system time
 object CurrentTime {

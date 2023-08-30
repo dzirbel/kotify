@@ -46,10 +46,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 
 @Composable
-fun <E : Log.Event> LogList(
-    logs: Iterable<Log<E>>,
+fun <T> LogList(
+    logs: Iterable<Log<T>>,
     modifier: Modifier = Modifier,
-    view: FlowView<E> = FlowView(),
+    view: FlowView<Log.Event<T>> = FlowView(),
     annotateTitlesByLog: Boolean = logs.count() > 1,
     scrollState: ScrollState = rememberScrollState(0),
 ) {
@@ -57,10 +57,10 @@ fun <E : Log.Event> LogList(
     VerticalScroll(modifier = modifier, scrollState = scrollState) {
         val scope = rememberCoroutineScope()
 
-        val events: ImmutableList<Pair<Log<E>, E>> = remember(logs, view) {
+        val events: ImmutableList<Pair<Log<T>, Log.Event<T>>> = remember(logs, view) {
             // annotate each event with the log it came from
             view
-                .transformed<Pair<Log<E>, E>> { (_, event) -> event }
+                .transformed<Pair<Log<T>, Log.Event<T>>> { (_, event) -> event }
                 .viewState(
                     flow = logs
                         .mapLazy { log -> log.eventsFlow.map { event -> Pair(log, event) } }
@@ -87,9 +87,9 @@ fun <E : Log.Event> LogList(
     }
 }
 
-// TODO add optional custom content based on E
+// TODO add optional custom content based on T
 @Composable
-private fun <E : Log.Event> EventItem(event: E, eventTitle: String = event.title) {
+private fun <T> EventItem(event: Log.Event<T>, eventTitle: String = event.title) {
     val canExpand = !event.content.isNullOrBlank()
 
     val expandedState = if (canExpand) remember { mutableStateOf(false) } else null

@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.repository.rating
 
 import androidx.compose.runtime.Stable
-import com.dzirbel.kotify.log.Log
 import com.dzirbel.kotify.log.Logging
+import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.user.UserRepository
 import kotlinx.coroutines.flow.StateFlow
 
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
  * kept separate to decouple it from the implementation.
  */
 @Stable
-interface RatingRepository : Logging<Log.Event> {
+interface RatingRepository : Logging<Repository.LogData> {
     /**
      * Returns a live [StateFlow] reflecting the current [Rating] (for the current user) of the entity with the given
      * [id]; null if the current user has not rated it.

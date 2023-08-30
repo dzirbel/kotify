@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.log.FlowView
 import com.dzirbel.kotify.log.Log
+import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.ratingRepositories
 import com.dzirbel.kotify.repository.repositories
 import com.dzirbel.kotify.repository.repositoryLogs
@@ -32,7 +33,7 @@ fun RepositoryTab(scrollState: ScrollState) {
     Column {
         // TODO persist filter (and sort?) even if tab is not in UI
         val view = remember {
-            mutableStateOf(FlowView<Log.Event>(sort = Comparator.comparing { it.time }))
+            mutableStateOf(FlowView<Log.Event<Repository.LogData>>(sort = Comparator.comparing { it.time }))
         }
 
         val enabledLogs = remember { mutableStateOf(repositoryLogs.toSet()) }
@@ -78,7 +79,7 @@ fun RepositoryTab(scrollState: ScrollState) {
 
 @Suppress("MutableParams") // allow use of MutableState - hacky, but very convenient
 @Composable
-private fun LogToggle(log: Log<Log.Event>, enabledLogs: MutableState<Set<Log<Log.Event>>>) {
+private fun <T> LogToggle(log: Log<T>, enabledLogs: MutableState<Set<Log<T>>>) {
     CheckboxWithLabel(
         checked = log in enabledLogs.value,
         onCheckedChange = { checked -> enabledLogs.mutate { plusOrMinus(log, checked) } },

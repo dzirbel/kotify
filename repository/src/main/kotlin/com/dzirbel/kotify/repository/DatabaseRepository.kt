@@ -1,13 +1,8 @@
 package com.dzirbel.kotify.repository
 
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.log.Log
 import com.dzirbel.kotify.log.MutableLog
 import com.dzirbel.kotify.log.asLog
-import com.dzirbel.kotify.log.error
-import com.dzirbel.kotify.log.info
-import com.dzirbel.kotify.log.success
-import com.dzirbel.kotify.log.warn
 import com.dzirbel.kotify.repository.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.repository.util.midpointInstantToNow
 import com.dzirbel.kotify.util.collections.zipEach
@@ -29,8 +24,9 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
 
     private val states = SynchronizedWeakStateFlowMap<String, CacheState<ViewModel>>()
 
-    protected val mutableLog = MutableLog<Log.Event>(
+    protected val mutableLog = MutableLog<Repository.LogData>(
         name = requireNotNull(this::class.qualifiedName).removeSuffix(".Companion").substringAfterLast('.'),
+        scope = scope,
     )
 
     override val log = mutableLog.asLog()
@@ -82,13 +78,13 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         cacheStrategy: CacheStrategy<ViewModel>,
     ): StateFlow<CacheState<ViewModel>?> {
         Repository.checkEnabled()
+
+        val requestLog = RequestLog(log = mutableLog)
         return states.getOrCreateStateFlow(
             key = id,
-            onExisting = {
-                scope.launch { mutableLog.info("state for $entityName $id in memory") }
-            },
+            onExisting = { requestLog.info("state for $entityName $id in memory", DataSource.MEMORY) },
             onCreate = {
-                scope.launch { load(id = id, cacheStrategy = cacheStrategy) }
+                scope.launch { load(id = id, cacheStrategy = cacheStrategy, requestLog = requestLog) }
             },
         )
     }
@@ -98,20 +94,24 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         cacheStrategy: CacheStrategy<ViewModel>,
     ): List<StateFlow<CacheState<ViewModel>?>> {
         Repository.checkEnabled()
+
+        val requestLog = RequestLog(log = mutableLog)
         return states.getOrCreateStateFlows(
             keys = ids,
             onExisting = { numExisting ->
-                scope.launch { mutableLog.info("$numExisting $entityName states in memory") }
+                requestLog.info("$numExisting/${ids.count()} $entityName states in memory", DataSource.MEMORY)
             },
             onCreate = { creations ->
-                scope.launch { load(ids = creations.keys, cacheStrategy = cacheStrategy) }
+                scope.launch { load(ids = creations.keys, cacheStrategy = cacheStrategy, requestLog = requestLog) }
             },
         )
     }
 
     final override fun refreshFromRemote(id: String): Job {
         Repository.checkEnabled()
-        return scope.launch { load(id = id, cacheStrategy = CacheStrategy.NeverValid()) }
+
+        val requestLog = RequestLog(log = mutableLog)
+        return scope.launch { load(id = id, cacheStrategy = CacheStrategy.NeverValid(), requestLog = requestLog) }
     }
 
     /**
@@ -120,14 +120,16 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
      *
      * If [cacheStrategy] is [CacheStrategy.NeverValid] then the call to the cache is skipped entirely.
      */
-    private suspend fun load(id: String, cacheStrategy: CacheStrategy<ViewModel>) {
+    private suspend fun load(id: String, cacheStrategy: CacheStrategy<ViewModel>, requestLog: RequestLog) {
         // TODO need this check? should not be true when either creating a new state or refreshing from remote
         if (states.getValue(id).needsLoad(cacheStrategy)) {
             val allowCache = cacheStrategy !is CacheStrategy.NeverValid
-            val loadedFromCache = allowCache && loadFromCache(id = id, cacheStrategy = cacheStrategy)
+
+            val loadedFromCache = allowCache &&
+                loadFromCache(id = id, cacheStrategy = cacheStrategy, requestLog = requestLog)
 
             if (!loadedFromCache) {
-                loadFromRemote(id = id)
+                loadFromRemote(id = id, requestLog = requestLog)
             }
         }
     }
@@ -138,7 +140,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
      *
      * If [cacheStrategy] is [CacheStrategy.NeverValid] then the call to the cache is skipped entirely.
      */
-    private suspend fun load(ids: Iterable<String>, cacheStrategy: CacheStrategy<ViewModel>) {
+    private suspend fun load(ids: Iterable<String>, cacheStrategy: CacheStrategy<ViewModel>, requestLog: RequestLog) {
         val idsToLoad = ids.filter { id ->
             states.getValue(id).needsLoad(cacheStrategy)
         }
@@ -146,13 +148,13 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         if (idsToLoad.isNotEmpty()) {
             val allowCache = cacheStrategy !is CacheStrategy.NeverValid
             val idsToLoadFromRemote = if (allowCache) {
-                loadFromCache(ids = idsToLoad, cacheStrategy = cacheStrategy)
+                loadFromCache(ids = idsToLoad, cacheStrategy = cacheStrategy, requestLog = requestLog)
             } else {
                 idsToLoad
             }
 
             if (idsToLoadFromRemote.isNotEmpty()) {
-                loadFromRemote(idsToLoadFromRemote)
+                loadFromRemote(ids = idsToLoadFromRemote, requestLog = requestLog)
             }
         }
     }
@@ -161,46 +163,48 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
      * Loads data for the given [id] from the cache and applies it to [states], returning true if the value was present
      * and does NOT need to be refreshed according to [cacheStrategy] or false otherwise.
      */
-    private suspend fun loadFromCache(id: String, cacheStrategy: CacheStrategy<ViewModel>): Boolean {
-        val start = TimeSource.Monotonic.markNow()
+    private suspend fun loadFromCache(
+        id: String,
+        cacheStrategy: CacheStrategy<ViewModel>,
+        requestLog: RequestLog,
+    ): Boolean {
+        val dbStart = TimeSource.Monotonic.markNow()
 
-        val viewModel: ViewModel?
-        val lastUpdated: Instant?
-
-        try {
+        val (viewModel, lastUpdated) = try {
             KotifyDatabase.transaction(name = "load $entityName $id") {
-                val pair = fetchFromDatabase(id = id)
-                viewModel = pair?.first?.let { convertToVM(it) }
-                lastUpdated = pair?.second
+                fetchFromDatabase(id = id)?.mapFirst(::convertToVM)
             }
+                ?: return false
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (throwable: Throwable) {
-            mutableLog.error(
-                throwable = throwable,
-                title = "error loading $entityName $id from database in ${start.elapsedNow()}",
-            )
+            requestLog
+                .addDbTime(dbStart.elapsedNow())
+                .error("error loading $entityName $id from database", DataSource.DATABASE, throwable)
+
             return false
         }
 
-        return if (viewModel != null && lastUpdated != null) {
-            val cacheValidity = cacheStrategy.validity(viewModel)
-            if (cacheValidity.canBeUsed) {
-                states.updateValue(id, CacheState.Loaded(viewModel, lastUpdated))
-                mutableLog.success(title = "loaded $entityName $id from database in ${start.elapsedNow()}")
-            }
-            !cacheValidity.shouldBeRefreshed
-        } else {
-            false
+        requestLog.addDbTime(dbStart.elapsedNow())
+
+        val cacheValidity = cacheStrategy.validity(viewModel)
+        if (cacheValidity.canBeUsed) {
+            states.updateValue(id, CacheState.Loaded(viewModel, lastUpdated))
+            requestLog.success("loaded $entityName $id from database", DataSource.DATABASE)
         }
+        return !cacheValidity.shouldBeRefreshed
     }
 
     /**
      * Loads data for the given [ids] from the cache and applies them to [states], returning a list of IDs which were
      * NOT successfully loaded (i.e. not present in the cache or need to be refreshed according to [cacheStrategy]).
      */
-    private suspend fun loadFromCache(ids: List<String>, cacheStrategy: CacheStrategy<ViewModel>): List<String> {
-        val start = TimeSource.Monotonic.markNow()
+    private suspend fun loadFromCache(
+        ids: List<String>,
+        cacheStrategy: CacheStrategy<ViewModel>,
+        requestLog: RequestLog,
+    ): List<String> {
+        val dbStart = TimeSource.Monotonic.markNow()
 
         val cachedEntities = try {
             KotifyDatabase.transaction(name = "load ${ids.size} $entityNamePlural") {
@@ -209,22 +213,24 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (throwable: Throwable) {
-            mutableLog.error(
-                throwable = throwable,
-                title = "error loading ${ids.size} $entityNamePlural from database in ${start.elapsedNow()}",
-            )
+            requestLog
+                .addDbTime(dbStart.elapsedNow())
+                .error("error loading ${ids.size} $entityNamePlural from database", DataSource.DATABASE, throwable)
+
             return ids
         }
+
+        requestLog.addDbTime(dbStart.elapsedNow())
 
         val missingIds = mutableListOf<String>()
         var numUsable = 0
 
         ids.zipEach(cachedEntities) { id, pair ->
-            val viewModel = pair?.first
-            if (viewModel != null) {
+            if (pair != null) {
+                val (viewModel, lastUpdated) = pair
                 val cacheValidity = cacheStrategy.validity(viewModel)
                 if (cacheValidity.canBeUsed) {
-                    states.updateValue(id, CacheState.Loaded(viewModel, pair.second))
+                    states.updateValue(id, CacheState.Loaded(viewModel, lastUpdated))
                     numUsable++
                 }
                 if (cacheValidity.shouldBeRefreshed) {
@@ -236,7 +242,11 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         }
 
         if (numUsable > 0) {
-            mutableLog.success(title = "loaded $numUsable $entityNamePlural from database in ${start.elapsedNow()}")
+            requestLog.success("loaded $numUsable/${ids.size} $entityNamePlural from database", DataSource.DATABASE)
+        }
+
+        if (missingIds.isNotEmpty()) {
+            requestLog.info("missing ${missingIds.size}/${ids.size} $entityNamePlural in database", DataSource.DATABASE)
         }
 
         return missingIds
@@ -245,28 +255,27 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
     /**
      * Loads data for the given [id] from the remote data source and applies it to [states].
      */
-    private suspend fun loadFromRemote(id: String) {
-        val start = TimeSource.Monotonic.markNow()
-
+    private suspend fun loadFromRemote(id: String, requestLog: RequestLog) {
+        // TODO do not set to refreshing if existing value is valid?
         states.updateValue(id) { CacheState.Refreshing.of(it) }
+
+        val remoteStart = TimeSource.Monotonic.markNow()
 
         val networkModel = try {
             fetchFromRemote(id)
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (throwable: Throwable) {
-            // TODO do not update to error if existing values are valid?
+            requestLog.addRemoteTime(remoteStart.elapsedNow())
             states.updateValue(id, CacheState.Error(throwable))
-            mutableLog.error(
-                throwable = throwable,
-                title = "error loading $entityName $id from remote in ${start.elapsedNow()}",
-            )
+            requestLog.error("error loading $entityName $id from remote", DataSource.REMOTE, throwable)
             return
         }
 
+        requestLog.addRemoteTime(remoteStart.elapsedNow())
+
         if (networkModel != null) {
-            val fetchTime = start.midpointInstantToNow()
-            val fetchDuration = start.elapsedNow()
+            val fetchTime = remoteStart.midpointInstantToNow()
 
             val dbStart = TimeSource.Monotonic.markNow()
             val viewModel = try {
@@ -277,63 +286,62 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
             } catch (cancellationException: CancellationException) {
                 throw cancellationException
             } catch (throwable: Throwable) {
-                mutableLog.error(
-                    throwable = throwable,
-                    title = "error saving $entityName $id in database in ${dbStart.elapsedNow()}",
-                )
+                requestLog.addDbTime(dbStart.elapsedNow())
                 states.updateValue(id, CacheState.Error(throwable))
+                requestLog.error("error saving $entityName $id in database", DataSource.DATABASE, throwable)
                 return
             }
 
+            requestLog.addDbTime(dbStart.elapsedNow())
+
             if (viewModel == null) {
                 states.updateValue(id, CacheState.NotFound())
-                mutableLog.warn("failed to convert remote $entityName $id to view model")
+                requestLog.warn("failed to convert remote $entityName $id to view model", DataSource.REMOTE)
             } else {
                 states.updateValue(id, CacheState.Loaded(viewModel, fetchTime))
-                mutableLog.success(
-                    "loaded $entityName $id from remote in ${start.elapsedNow()} " +
-                        "($fetchDuration remote; ${dbStart.elapsedNow()} in database)",
-                )
+                requestLog.success("loaded $entityName $id from remote", DataSource.REMOTE)
             }
         } else {
-            // TODO update state to 404?
+            states.updateValue(id, CacheState.NotFound())
+            requestLog.warn("no remote model for $entityName $id", DataSource.REMOTE)
         }
     }
 
     /**
      * Loads data for the given [ids] from the remote data source and applies them to [states].
      */
-    private suspend fun loadFromRemote(ids: List<String>) {
-        val start = TimeSource.Monotonic.markNow()
-
+    private suspend fun loadFromRemote(ids: List<String>, requestLog: RequestLog) {
+        // TODO do not set to refreshing if existing values are valid?
         for (id in ids) {
             states.updateValue(id) { CacheState.Refreshing.of(it) }
         }
+
+        val remoteStart = TimeSource.Monotonic.markNow()
 
         val networkModels = try {
             fetchFromRemote(ids)
         } catch (cancellationException: CancellationException) {
             throw cancellationException
         } catch (throwable: Throwable) {
+            requestLog.addRemoteTime(remoteStart.elapsedNow())
             for (id in ids) {
                 states.updateValue(id, CacheState.Error(throwable))
             }
-            mutableLog.error(
-                throwable = throwable,
-                title = "error loading ${ids.size} $entityNamePlural from remote in ${start.elapsedNow()}",
-            )
+            requestLog.error("error loading ${ids.size} $entityNamePlural from remote", DataSource.REMOTE, throwable)
             return
         }
 
-        val notNullNetworkModels = networkModels.count { it != null }
-        if (notNullNetworkModels > 0) {
-            val fetchTime = start.midpointInstantToNow()
-            val fetchDuration = start.elapsedNow()
+        requestLog.addRemoteTime(remoteStart.elapsedNow())
+        val fetchTime = remoteStart.midpointInstantToNow()
 
+        val numNotNullNetworkModels = networkModels.count { it != null }
+        val numNullNetworkModels = networkModels.size - numNotNullNetworkModels
+
+        if (numNotNullNetworkModels > 0) {
             val dbStart = TimeSource.Monotonic.markNow()
             var numNonNullViewModels = 0
             val viewModels = try {
-                KotifyDatabase.transaction("save $notNullNetworkModels $entityNamePlural") {
+                KotifyDatabase.transaction("save $numNotNullNetworkModels $entityNamePlural") {
                     networkModels.zip(ids) { networkModel, id ->
                         networkModel?.let {
                             val databaseModel = convertToDB(id = id, networkModel = networkModel, fetchTime = fetchTime)
@@ -345,31 +353,49 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
             } catch (cancellationException: CancellationException) {
                 throw cancellationException
             } catch (throwable: Throwable) {
+                requestLog.addDbTime(dbStart.elapsedNow())
                 for (id in ids) {
                     states.updateValue(id, CacheState.Error(throwable))
                 }
-                mutableLog.error(
+                requestLog.error(
+                    title = "error saving $numNotNullNetworkModels $entityNamePlural in database",
+                    source = DataSource.DATABASE,
                     throwable = throwable,
-                    title = "error saving ${ids.size} $entityNamePlural in database in ${dbStart.elapsedNow()}",
                 )
                 return
             }
+
+            requestLog.addDbTime(dbStart.elapsedNow())
 
             ids.zipEach(viewModels) { id, viewModel ->
                 states.updateValue(id, viewModel?.let { CacheState.Loaded(it, fetchTime) } ?: CacheState.NotFound())
             }
 
             if (numNonNullViewModels > 0) {
-                mutableLog.success(
-                    "loaded $numNonNullViewModels $entityNamePlural from remote in ${start.elapsedNow()} " +
-                        "($fetchDuration remote; ${dbStart.elapsedNow()} in database)",
+                requestLog.success(
+                    title = "loaded $numNonNullViewModels/${ids.size} $entityNamePlural from remote",
+                    source = DataSource.REMOTE,
                 )
             }
 
-            val missingViewModels = ids.size - numNonNullViewModels
-            if (missingViewModels > 0) {
-                mutableLog.warn("failed to convert $missingViewModels remote $entityNamePlural to view models")
+            val numNullViewModels = ids.size - numNonNullViewModels
+            if (numNullViewModels > 0) {
+                requestLog.warn(
+                    title = "failed to convert $numNullViewModels/${ids.size} remote $entityNamePlural to view models",
+                    source = DataSource.REMOTE,
+                )
             }
+        } else {
+            for (id in ids) {
+                states.updateValue(id, CacheState.NotFound())
+            }
+        }
+
+        if (numNullNetworkModels > 0) {
+            requestLog.warn(
+                title = "no remote model for $numNullNetworkModels/${ids.size} $entityNamePlural",
+                source = DataSource.REMOTE,
+            )
         }
     }
 
