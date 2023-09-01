@@ -32,7 +32,9 @@ import com.dzirbel.contextmenu.ContextMenuIcon
 import com.dzirbel.contextmenu.MaterialContextMenuItem
 import com.dzirbel.kotify.log.FlowView
 import com.dzirbel.kotify.log.Log
+import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalDivider
+import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LazyVerticalScroll
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.SortSelector
@@ -211,8 +213,18 @@ fun <T> LogList(
                             onSetSort = { sorts.value = it },
                         )
 
-                        SimpleTextButton(onClick = { clearTime.value = CurrentTime.millis }) {
-                            Text("Clear")
+                        Row {
+                            SimpleTextButton(onClick = { clearTime.value = CurrentTime.millis }) {
+                                CachedIcon("delete", size = Dimens.iconSmall)
+                                HorizontalSpacer(Dimens.space1)
+                                Text("Clear")
+                            }
+
+                            SimpleTextButton(onClick = { clearTime.value = null }, enabled = clearTime.value != null) {
+                                CachedIcon("restore-from-trash", size = Dimens.iconSmall)
+                                HorizontalSpacer(Dimens.space1)
+                                Text("Reset")
+                            }
                         }
                     }
                 }
