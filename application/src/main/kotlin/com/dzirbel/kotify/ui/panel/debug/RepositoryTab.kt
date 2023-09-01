@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +36,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.capitalize
 import com.dzirbel.kotify.util.collections.plusOrMinus
+import com.dzirbel.kotify.util.coroutines.mapIn
 import com.dzirbel.kotify.util.time.formatShortDuration
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -47,41 +50,9 @@ fun RepositoryTab() {
     val enabledLogs = remember { mutableStateOf(repositoryLogs.toSet()) }
     val selectedDataSources = remember { mutableStateOf(persistentSetOf<DataSource>()) }
 
-    val display = object : LogEventDisplay<Repository.LogData> {
-        override fun hasContent(event: Log.Event<Repository.LogData>): Boolean {
-            return super.hasContent(event) || event.data.timeInDb != null || event.data.timeInRemote != null
-        }
-
-        @Suppress("MagicNumber")
-        override fun content(event: Log.Event<Repository.LogData>): String {
-            return buildString {
-                event.data.timeInDb?.let {
-                    appendLine("In database: ${it.formatShortDuration(decimals = 3)}")
-                }
-
-                event.data.timeInRemote?.let {
-                    appendLine("In remote: ${it.formatShortDuration(decimals = 3)}")
-                }
-
-                val duration = event.duration
-                if (duration != null && (event.data.timeInDb != null || event.data.timeInRemote != null)) {
-                    val total = (event.data.timeInDb ?: Duration.ZERO) + (event.data.timeInRemote ?: Duration.ZERO)
-                    appendLine("Overhead: ${(duration - total).formatShortDuration(decimals = 3)}")
-                }
-
-                event.content?.let { append(it) }
-            }
-        }
-
-        @Composable
-        override fun Icon(event: Log.Event<Repository.LogData>, modifier: Modifier) {
-            CachedIcon(name = event.data.source.iconName, modifier = modifier, tint = event.type.color)
-        }
-    }
-
     LogList(
         logs = repositoryLogs,
-        display = display,
+        display = RepositoryLogEventDisplay,
         sortProperties = persistentListOf(
             RepositoryEventDatabaseTimeProperty,
             RepositoryEventRemoteTimeProperty,
@@ -98,12 +69,28 @@ fun RepositoryTab() {
                 }
             }
         },
-    ) {
-        // TODO add event counts to repository names and data sources
+    ) { eventsFlow ->
+        val scope = rememberCoroutineScope()
+        val (countsByLog, countsByDataSource) = remember(eventsFlow) {
+            eventsFlow.mapIn(scope) { events ->
+                val countsByLog = mutableMapOf<Log<*>, Int>()
+                val countsByDataSource = IntArray(DataSource.entries.size)
+                for (logAndEvent in events) {
+                    countsByDataSource[logAndEvent.event.data.source.ordinal]++
+                    countsByLog.compute(logAndEvent.log) { _, count -> (count ?: 0) + 1 }
+                }
+
+                countsByLog to countsByDataSource
+            }
+        }
+            .collectAsState()
+            .value
+
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.space2), modifier = Modifier.padding(Dimens.space2)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dimens.space1)) {
                 LogListToggle(
                     logs = remember { repositories.map { it.log }.toImmutableList() },
+                    countsByLog = countsByLog,
                     enabledLogs = enabledLogs,
                     title = "Repositories",
                     modifier = Modifier.weight(1f),
@@ -112,12 +99,14 @@ fun RepositoryTab() {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimens.space4)) {
                     LogListToggle(
                         logs = remember { savedRepositories.map { it.log }.toImmutableList() },
+                        countsByLog = countsByLog,
                         enabledLogs = enabledLogs,
                         title = "Saved",
                     )
 
                     LogListToggle(
                         logs = remember { ratingRepositories.map { it.log }.toImmutableList() },
+                        countsByLog = countsByLog,
                         enabledLogs = enabledLogs,
                         title = "Rating",
                     )
@@ -131,7 +120,10 @@ fun RepositoryTab() {
                 content = { dataSource ->
                     CachedIcon(name = dataSource.iconName, size = Dimens.iconSmall)
                     HorizontalSpacer(Dimens.space2)
-                    Text(dataSource.name.lowercase().capitalize())
+
+                    val name = dataSource.name.lowercase().capitalize()
+                    val count = countsByDataSource[dataSource.ordinal]
+                    Text("$name [$count]")
                 },
             )
         }
@@ -142,6 +134,7 @@ fun RepositoryTab() {
 @Composable
 private fun <T> LogListToggle(
     logs: ImmutableList<Log<T>>,
+    countsByLog: Map<Log<*>, Int>,
     enabledLogs: MutableState<Set<Log<T>>>,
     title: String,
     modifier: Modifier = Modifier,
@@ -168,7 +161,11 @@ private fun <T> LogListToggle(
             CheckboxWithLabel(
                 checked = log in enabledLogs.value,
                 onCheckedChange = { checked -> enabledLogs.mutate { plusOrMinus(log, checked) } },
-                label = { Text(log.name.removeSuffix("Repository")) },
+                label = {
+                    val name = log.name.removeSuffix("Repository")
+                    val count = countsByLog[log] ?: 0
+                    Text("$name [$count]")
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -200,6 +197,38 @@ private val DataSource.iconName: String
             DataSource.REMOTE -> "cloud-download"
         }
     }
+
+private object RepositoryLogEventDisplay : LogEventDisplay<Repository.LogData> {
+    override fun hasContent(event: Log.Event<Repository.LogData>): Boolean {
+        return super.hasContent(event) || event.data.timeInDb != null || event.data.timeInRemote != null
+    }
+
+    @Suppress("MagicNumber")
+    override fun content(event: Log.Event<Repository.LogData>): String {
+        return buildString {
+            event.data.timeInDb?.let {
+                appendLine("In database: ${it.formatShortDuration(decimals = 3)}")
+            }
+
+            event.data.timeInRemote?.let {
+                appendLine("In remote: ${it.formatShortDuration(decimals = 3)}")
+            }
+
+            val duration = event.duration
+            if (duration != null && (event.data.timeInDb != null || event.data.timeInRemote != null)) {
+                val total = (event.data.timeInDb ?: Duration.ZERO) + (event.data.timeInRemote ?: Duration.ZERO)
+                appendLine("Overhead: ${(duration - total).formatShortDuration(decimals = 3)}")
+            }
+
+            event.content?.let { append(it) }
+        }
+    }
+
+    @Composable
+    override fun Icon(event: Log.Event<Repository.LogData>, modifier: Modifier) {
+        CachedIcon(name = event.data.source.iconName, modifier = modifier, tint = event.type.color)
+    }
+}
 
 private object RepositoryEventDatabaseTimeProperty : SortableProperty<Log.Event<Repository.LogData>> {
     override val title = "Time in database"

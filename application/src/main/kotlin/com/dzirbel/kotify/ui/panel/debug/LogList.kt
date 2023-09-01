@@ -58,6 +58,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import java.time.Instant
@@ -109,7 +110,7 @@ fun <T> LogList(
     sortProperties: ImmutableList<SortableProperty<Log.Event<T>>> = persistentListOf(),
     filter: ((LogAndEvent<T>) -> Boolean)? = null,
     annotateTitlesByLog: Boolean = logs.count() > 1,
-    headerContent: @Composable (events: List<LogAndEvent<T>>) -> Unit,
+    headerContent: @Composable (eventsFlow: StateFlow<ImmutableList<LogAndEvent<T>>>) -> Unit,
 ) {
     LocalColors.current.WithSurface {
         Column {
@@ -175,7 +176,7 @@ fun <T> LogList(
             }
 
             Column(Modifier.surfaceBackground()) {
-                headerContent(visibleEvents)
+                headerContent(eventsFlow)
 
                 HorizontalDivider()
 
