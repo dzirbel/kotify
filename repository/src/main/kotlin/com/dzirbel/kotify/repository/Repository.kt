@@ -24,7 +24,17 @@ interface Repository<T> : Logging<Repository.LogData> {
         val source: DataSource,
         val timeInDb: Duration? = null,
         val timeInRemote: Duration? = null,
-    )
+    ) {
+        /**
+         * Returns overhead time for the given [totalDuration] by subtracting [timeInDb] and [timeInRemote].
+         */
+        fun overhead(totalDuration: Duration): Duration {
+            var overhead = totalDuration
+            timeInDb?.let { overhead -= it }
+            timeInRemote?.let { overhead -= it }
+            return overhead
+        }
+    }
 
     /**
      * The [CacheStrategy] applied by default determine the validity of locally cached data.
