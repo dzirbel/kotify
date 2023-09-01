@@ -50,7 +50,7 @@ fun <T> ToggleButtonGroup(
     elements: ImmutableList<T>,
     selectedElements: PersistentSet<T>,
     onSelectElements: (PersistentSet<T>) -> Unit,
-    content: @Composable (T) -> Unit,
+    content: @Composable RowScope.(T) -> Unit,
 ) {
     Row(
         modifier = Modifier.instrument(),

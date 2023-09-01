@@ -26,7 +26,7 @@ val SortOrder?.icon: ImageVector
 
 /**
  * Returns the comparison of [first] and [second] relative to this [SortOrder] (i.e. their natural order if it is
- * [SortOrder.ASCENDING] or their reversed order if it is [SortOrder.DESCENDING].
+ * [SortOrder.ASCENDING] or their reversed order if it is [SortOrder.DESCENDING]).
  */
 fun <T : Comparable<T>> SortOrder.compare(first: T, second: T): Int {
     val comparison = first.compareTo(second)
@@ -34,6 +34,14 @@ fun <T : Comparable<T>> SortOrder.compare(first: T, second: T): Int {
         SortOrder.ASCENDING -> comparison
         SortOrder.DESCENDING -> -comparison
     }
+}
+
+/**
+ * Returns the comparison of [first] and [second] relative to this [SortOrder], using [extractor] to extract the
+ * [Comparable] value from each.
+ */
+fun <B, T : Comparable<T>> SortOrder.compareBy(first: B, second: B, extractor: (B) -> T): Int {
+    return compare(extractor(first), extractor(second))
 }
 
 /**
@@ -59,4 +67,17 @@ fun <T : Comparable<T>> SortOrder.compareNullable(first: T?, second: T?, nullsFi
         second != null -> if (nullsFirst) -1 else 1 // this is null
         else -> 0 // both null -> equal
     }
+}
+
+/**
+ * Returns the comparison of [first] and [second] relative to this [SortOrder] for non-null elements, using [extractor]
+ * to extract the [Comparable] value from each, and placing nulls either first or last depending on [nullsFirst].
+ */
+fun <B, T : Comparable<T>> SortOrder.compareByNullable(
+    first: B?,
+    second: B?,
+    nullsFirst: Boolean = false,
+    extractor: (B) -> T?,
+): Int {
+    return compareNullable(first = first?.let(extractor), second = second?.let(extractor), nullsFirst = nullsFirst)
 }

@@ -20,3 +20,25 @@ fun Duration.formatMediumDuration(): String {
         ).joinToString()
     }
 }
+
+/**
+ * Formats this [Duration] as a technical duration of "short" length, i.e. as seconds (if >= 1second) milliseconds.
+ *
+ * @param decimals number of decimal places to include for milliseconds
+ */
+@Suppress("MagicNumber")
+fun Duration.formatShortDuration(decimals: Int = 0): String {
+    return toComponents { seconds, nanoseconds ->
+        buildString {
+            if (seconds != 0L) {
+                append("${seconds}s ")
+            }
+
+            if (decimals == 0) {
+                append("${nanoseconds / 1_000_000}ms")
+            } else {
+                append("%.${decimals}fms".format(nanoseconds.toDouble() / 1_000_000))
+            }
+        }
+    }
+}

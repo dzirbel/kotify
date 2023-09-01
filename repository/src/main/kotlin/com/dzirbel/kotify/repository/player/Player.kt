@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.StateFlow
  * Defines the public API for repository-level operations controlling the Spotify player state. In practice this is
  * always [PlayerRepository] and is only separated as in interface to make the API more clear and separate from the
  * implementation.
+ *
+ * TODO add logging
  */
 @Stable
 interface Player {

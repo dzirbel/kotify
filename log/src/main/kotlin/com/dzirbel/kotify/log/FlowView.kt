@@ -47,15 +47,4 @@ data class FlowView<T>(
 
         return stateFlow
     }
-
-    /**
-     * Returns a [FlowView] for values of type [R] applies this [FlowView]'s [filter] and [sort] on the values of type
-     * [R] by transforming them via [transform].
-     */
-    fun <R> transformed(transform: (R) -> T): FlowView<R> {
-        return FlowView(
-            filter = filter?.let { filter -> { event: R -> filter(transform(event)) } },
-            sort = sort?.let { sort -> Comparator.comparing(transform, sort) },
-        )
-    }
 }
