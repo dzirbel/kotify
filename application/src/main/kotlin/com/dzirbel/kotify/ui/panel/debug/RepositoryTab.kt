@@ -35,21 +35,23 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.groupToggleState
 import com.dzirbel.kotify.util.capitalize
 import com.dzirbel.kotify.util.collections.plusOrMinus
-import com.dzirbel.kotify.util.coroutines.mapIn
+import com.dzirbel.kotify.util.coroutines.MergedMutex
+import com.dzirbel.kotify.util.coroutines.lockedState
+import com.dzirbel.kotify.util.coroutines.mergeFlows
 import com.dzirbel.kotify.util.time.formatShortDuration
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.collections.immutable.toPersistentSet
+import kotlinx.coroutines.flow.runningFold
 
 // TODO persist filter/sort/scroll even if tab is not in UI
 @Composable
 fun RepositoryTab() {
-    val enabledLogs = remember { mutableStateOf(repositoryLogs.toSet().toPersistentSet()) }
+    val logMutex = remember { MergedMutex(repositoryLogs.map { it.writeLock }) }
+    val enabledLogs = remember { mutableStateOf(repositoryLogs.toPersistentSet()) }
     val selectedDataSources = remember { mutableStateOf(persistentSetOf<DataSource>()) }
 
     // do not filter if all or none are selected (no-op filter)
@@ -57,6 +59,7 @@ fun RepositoryTab() {
 
     LogList(
         logs = repositoryLogs,
+        logMutex = logMutex,
         display = RepositoryLogEventDisplay,
         sortProperties = persistentListOf(
             RepositoryEventDatabaseTimeProperty,
@@ -73,30 +76,19 @@ fun RepositoryTab() {
                 }
             }
         },
-    ) { eventsFlow ->
-        val scope = rememberCoroutineScope()
-        val (countsByLog, countsByDataSource) = remember(eventsFlow) {
-            eventsFlow.mapIn(scope) { events ->
-                val countsByLog = mutableMapOf<Log<*>, Int>()
-                val countsByDataSource = IntArray(DataSource.entries.size)
-                for (logAndEvent in events) {
-                    countsByDataSource[logAndEvent.event.data.source.ordinal]++
-                    countsByLog.compute(logAndEvent.log) { _, count -> (count ?: 0) + 1 }
-                }
-
-                countsByLog.toImmutableMap() to countsByDataSource
-            }
-        }
-            .collectAsState()
-            .value
-
+        onResetFilter = {
+            enabledLogs.value = repositoryLogs.toPersistentSet()
+            selectedDataSources.value = persistentSetOf()
+        },
+        canResetFilter = enabledLogs.value.size < repositoryLogs.size || selectedDataSources.value.isNotEmpty(),
+    ) { eventCleared ->
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.space2), modifier = Modifier.padding(Dimens.space2)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dimens.space1)) {
                 LogListToggle(
                     logs = remember { repositories.map { it.log }.toImmutableList() },
-                    countsByLog = countsByLog,
                     enabledLogs = enabledLogs.value,
                     onSetEnabledLogs = { enabledLogs.value = it },
+                    eventCleared = eventCleared,
                     title = "Repositories",
                     modifier = Modifier.weight(1f),
                 )
@@ -104,17 +96,17 @@ fun RepositoryTab() {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimens.space4)) {
                     LogListToggle(
                         logs = remember { savedRepositories.map { it.log }.toImmutableList() },
-                        countsByLog = countsByLog,
                         enabledLogs = enabledLogs.value,
                         onSetEnabledLogs = { enabledLogs.value = it },
+                        eventCleared = eventCleared,
                         title = "Saved",
                     )
 
                     LogListToggle(
                         logs = remember { ratingRepositories.map { it.log }.toImmutableList() },
-                        countsByLog = countsByLog,
                         enabledLogs = enabledLogs.value,
                         onSetEnabledLogs = { enabledLogs.value = it },
+                        eventCleared = eventCleared,
                         title = "Other",
                     )
                 }
@@ -126,10 +118,31 @@ fun RepositoryTab() {
                 onSelectElements = { selectedDataSources.value = it },
                 content = { dataSource ->
                     CachedIcon(name = dataSource.iconName, size = Dimens.iconSmall)
+
                     HorizontalSpacer(Dimens.space2)
 
+                    val scope = rememberCoroutineScope()
                     val name = dataSource.name.lowercase().capitalize()
-                    val count = countsByDataSource[dataSource.ordinal]
+                    val count: Int? = remember(eventCleared) {
+                        logMutex.lockedState(
+                            scope = scope,
+                            initializeWithLock = {
+                                repositoryLogs.sumOf { log ->
+                                    log.events.count { event ->
+                                        !eventCleared(event) && event.data.source == dataSource
+                                    }
+                                }
+                            },
+                        ) { initial ->
+                            repositoryLogs.mergeFlows { it.eventsFlow }
+                                .runningFold(initial) { count, event ->
+                                    if (!eventCleared(event) && event.data.source == dataSource) count + 1 else count
+                                }
+                        }
+                    }
+                        .collectAsState()
+                        .value
+
                     Text("$name [$count]")
                 },
             )
@@ -140,9 +153,9 @@ fun RepositoryTab() {
 @Composable
 private fun <T> LogListToggle(
     logs: ImmutableList<Log<T>>,
-    countsByLog: ImmutableMap<Log<*>, Int>,
     enabledLogs: PersistentSet<Log<T>>,
     onSetEnabledLogs: (PersistentSet<Log<T>>) -> Unit,
+    eventCleared: (Log.Event<T>) -> Boolean,
     title: String,
     modifier: Modifier = Modifier,
 ) {
@@ -165,12 +178,27 @@ private fun <T> LogListToggle(
         VerticalSpacer(Dimens.space3)
 
         for (log in logs) {
+            val scope = rememberCoroutineScope()
+            val count: Int? = remember(log, eventCleared) {
+                log.writeLock.lockedState(
+                    scope = scope,
+                    initializeWithLock = {
+                        log.events.count { !eventCleared(it) }
+                    },
+                ) { initial ->
+                    log.eventsFlow.runningFold(initial) { count, event ->
+                        if (eventCleared(event)) count else count + 1
+                    }
+                }
+            }
+                .collectAsState()
+                .value
+
             CheckboxWithLabel(
                 checked = log in enabledLogs,
                 onCheckedChange = { checked -> onSetEnabledLogs(enabledLogs.plusOrMinus(log, checked)) },
                 label = {
                     val name = log.name.removeSuffix("Repository")
-                    val count = countsByLog[log] ?: 0
                     Text("$name [$count]")
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -189,18 +217,18 @@ private val DataSource.iconName: String
     }
 
 private object RepositoryLogEventDisplay : LogEventDisplay<Repository.LogData> {
-    override fun hasContent(event: Log.Event<Repository.LogData>): Boolean {
-        return super.hasContent(event) || event.data.timeInDb != null || event.data.timeInRemote != null
-    }
-
     @Suppress("MagicNumber")
     override fun content(event: Log.Event<Repository.LogData>): String {
         return buildString {
             event.data.timeInDb?.let { appendLine("In database: ${it.formatShortDuration(decimals = 3)}") }
             event.data.timeInRemote?.let { appendLine("In remote: ${it.formatShortDuration(decimals = 3)}") }
-            event.duration
-                ?.let { event.data.overhead(totalDuration = it) }
-                ?.let { appendLine("Overhead: ${it.formatShortDuration(decimals = 3)}") }
+
+            // do not show overhead if it is just equal to the event duration
+            if (event.data.timeInDb != null || event.data.timeInRemote != null) {
+                event.duration
+                    ?.let { event.data.overhead(totalDuration = it) }
+                    ?.let { appendLine("Overhead: ${it.formatShortDuration(decimals = 3)}") }
+            }
 
             event.content?.let { append(it) }
         }
@@ -208,7 +236,7 @@ private object RepositoryLogEventDisplay : LogEventDisplay<Repository.LogData> {
 
     @Composable
     override fun Icon(event: Log.Event<Repository.LogData>, modifier: Modifier) {
-        CachedIcon(name = event.data.source.iconName, modifier = modifier, tint = event.type.color)
+        CachedIcon(name = event.data.source.iconName, modifier = modifier, tint = event.type.iconColor)
     }
 }
 

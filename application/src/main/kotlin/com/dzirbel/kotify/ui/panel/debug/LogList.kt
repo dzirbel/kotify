@@ -14,12 +14,9 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -27,10 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import com.dzirbel.contextmenu.ContextMenuIcon
 import com.dzirbel.contextmenu.MaterialContextMenuItem
-import com.dzirbel.kotify.log.FlowView
 import com.dzirbel.kotify.log.Log
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.HorizontalDivider
@@ -54,53 +49,22 @@ import com.dzirbel.kotify.ui.util.setClipboard
 import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.capitalize
 import com.dzirbel.kotify.util.collections.mapLazy
-import com.dzirbel.kotify.util.coroutines.mapIn
+import com.dzirbel.kotify.util.coroutines.MergedMutex
+import com.dzirbel.kotify.util.coroutines.lockedListState
+import com.dzirbel.kotify.util.coroutines.lockedState
+import com.dzirbel.kotify.util.coroutines.mergeFlows
 import com.dzirbel.kotify.util.time.formatShortDuration
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.sync.Mutex
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-
-interface LogEventDisplay<T> {
-    val Log.Event.Type.color: Color
-        @Composable
-        get() {
-            return when (this) {
-                Log.Event.Type.INFO -> LocalColors.current.text
-                Log.Event.Type.SUCCESS -> Color.Green
-                Log.Event.Type.WARNING -> Color.Yellow
-                Log.Event.Type.ERROR -> LocalColors.current.error
-            }
-        }
-
-    fun title(log: Log<T>, event: Log.Event<T>): String = event.title
-
-    fun hasContent(event: Log.Event<T>): Boolean = !event.content.isNullOrBlank()
-
-    fun content(event: Log.Event<T>): String? = event.content
-
-    @Composable
-    fun Icon(event: Log.Event<T>, modifier: Modifier) {
-        Icon(
-            imageVector = when (event.type) {
-                Log.Event.Type.INFO -> Icons.Default.Info
-                Log.Event.Type.SUCCESS -> Icons.Default.Check
-                Log.Event.Type.WARNING -> Icons.Default.Warning
-                Log.Event.Type.ERROR -> Icons.Default.Close
-            },
-            contentDescription = null,
-            modifier = modifier,
-            tint = event.type.color,
-        )
-    }
-}
 
 data class LogAndEvent<T>(val log: Log<T>, val event: Log.Event<T>)
 
@@ -108,79 +72,118 @@ data class LogAndEvent<T>(val log: Log<T>, val event: Log.Event<T>)
 @Composable
 fun <T> LogList(
     logs: Iterable<Log<T>>,
+    logMutex: Mutex = remember(logs) { MergedMutex(logs.map { it.writeLock }) },
     display: LogEventDisplay<T> = object : LogEventDisplay<T> {},
     sortProperties: ImmutableList<SortableProperty<Log.Event<T>>> = persistentListOf(),
     filter: ((LogAndEvent<T>) -> Boolean)? = null,
+    onResetFilter: () -> Unit = {},
+    canResetFilter: Boolean = false,
     annotateTitlesByLog: Boolean = logs.count() > 1,
-    headerContent: @Composable (eventsFlow: StateFlow<ImmutableList<LogAndEvent<T>>>) -> Unit,
+    headerContent: @Composable ((eventCleared: (Log.Event<T>) -> Boolean) -> Unit)? = null,
 ) {
+    val selectedEventTypes = remember { mutableStateOf(persistentSetOf<Log.Event.Type>()) }
+
+    val sortableProperties = remember(sortProperties) {
+        persistentListOf<SortableProperty<Log.Event<T>>>(EventTimeProperty(), EventDurationProperty())
+            .addAll(sortProperties)
+    }
+    val sorts = remember { mutableStateOf(persistentListOf(Sort(sortableProperties.first()))) }
+
+    val clearTimeState = remember { mutableStateOf<Long?>(null) }
+    val clearTime = clearTimeState.value
+
+    val eventCleared: (Log.Event<T>) -> Boolean = remember(clearTime) {
+        if (clearTime == null) {
+            { false }
+        } else {
+            { event -> event.time <= clearTime }
+        }
+    }
+
+    val scope = rememberCoroutineScope()
+
+    val numEvents: Int? = remember(logs, clearTime) {
+        logMutex.lockedState(
+            scope = scope,
+            initializeWithLock = {
+                if (clearTime == null) {
+                    logs.sumOf { it.events.size }
+                } else {
+                    logs.sumOf { log -> log.events.count { event -> event.time > clearTime } }
+                }
+            },
+        ) { initial ->
+            logs.mergeFlows { it.eventsFlow }
+                .runningFold(initial = initial) { count, event ->
+                    if (eventCleared(event)) count else count + 1
+                }
+        }
+    }
+        .collectAsState()
+        .value
+
+    val countsByType: IntArray? = remember(logs, clearTime) {
+        val countsByType = IntArray(Log.Event.Type.entries.size)
+        logMutex.lockedState(
+            scope = scope,
+            initializeWithLock = {
+                for (log in logs) {
+                    for (event in log.events) {
+                        if (!eventCleared(event)) countsByType[event.type.ordinal]++
+                    }
+                }
+                countsByType
+            },
+        ) { initial ->
+            logs.mergeFlows { it.eventsFlow }
+                .runningFold(initial) { counts, event ->
+                    if (!eventCleared(event)) counts[event.type.ordinal]++
+                    counts
+                }
+        }
+    }
+        .collectAsState()
+        .value
+
+    val visibleEvents: List<LogAndEvent<T>> = remember(logs, selectedEventTypes.value, filter, sorts.value, clearTime) {
+        // do not filter if all or none are selected (no-op filter)
+        val filterEventType = selectedEventTypes.value.size in 1 until Log.Event.Type.entries.size
+
+        logMutex.lockedListState(
+            scope = scope,
+            initializeWithLock = {
+                logs.flatMap { log -> log.events.mapLazy { event -> LogAndEvent(log, event) } }
+            },
+            sort = Comparator.comparing({ logAndEvent -> logAndEvent.event }, sorts.value.asComparator()),
+            filter = { logAndEvent ->
+                val event = logAndEvent.event
+                (!filterEventType || selectedEventTypes.value.contains(event.type)) &&
+                    !eventCleared(event) &&
+                    filter?.invoke(logAndEvent) != false
+            },
+        ) {
+            logs.mergeFlows { log -> log.eventsFlow.map { event -> LogAndEvent(log, event) } }
+        }
+    }
+        .collectAsState()
+        .value
+
+    val annotatedDisplay = if (annotateTitlesByLog) {
+        object : LogEventDisplay<T> by display {
+            override fun title(log: Log<T>, event: Log.Event<T>) = "[${log.name}] ${display.title(log, event)}"
+        }
+    } else {
+        display
+    }
+
     LocalColors.current.WithSurface {
         Column {
-            val selectedEventTypes = remember { mutableStateOf(persistentSetOf<Log.Event.Type>()) }
-
-            val sortableProperties = remember(sortProperties) {
-                persistentListOf<SortableProperty<Log.Event<T>>>(EventTimeProperty(), EventDurationProperty())
-                    .addAll(sortProperties)
-            }
-            val sorts = remember { mutableStateOf(persistentListOf(Sort(sortableProperties.first()))) }
-            val clearTime = remember { mutableStateOf<Long?>(null) }
-
-            val scope = rememberCoroutineScope()
-
-            // TODO atrocious
-            val eventsFlow = remember(logs, clearTime.value, sorts.value) {
-                FlowView<LogAndEvent<T>>(
-                    sort = Comparator.comparing({ it.event }, sorts.value.asComparator()),
-                    filter = clearTime.value?.let { clearTime -> { (_, event) -> event.time > clearTime } },
-                )
-                    .viewState(
-                        flow = logs
-                            .mapLazy { log ->
-                                log.eventsFlow.map { event -> LogAndEvent(log, event) }
-                            }
-                            .merge(),
-                        initial = logs.flatMap { log ->
-                            log.events.mapLazy { event -> LogAndEvent(log, event) }
-                        },
-                        scope = scope,
-                    )
-            }
-
-            val (countsByType, visibleEvents, numEvents) = remember(eventsFlow, selectedEventTypes.value, filter) {
-                // do not filter if all or none are selected (no-op filter)
-                val filterEventType = selectedEventTypes.value.size in 1 until Log.Event.Type.entries.size
-
-                eventsFlow.mapIn(scope) { events ->
-                    val countsByType = IntArray(Log.Event.Type.entries.size)
-                    val visibleEvents = mutableListOf<LogAndEvent<T>>()
-                    for (logAndEvent in events) {
-                        val event = logAndEvent.event
-                        countsByType[event.type.ordinal]++
-                        if ((!filterEventType || selectedEventTypes.value.contains(event.type)) &&
-                            filter?.invoke(logAndEvent) != false
-                        ) {
-                            visibleEvents.add(logAndEvent)
-                        }
-                    }
-
-                    Triple(countsByType, visibleEvents, events.size)
-                }
-            }
-                .collectAsState()
-                .value
-
-            val annotatedDisplay = if (annotateTitlesByLog) {
-                object : LogEventDisplay<T> by display {
-                    override fun title(log: Log<T>, event: Log.Event<T>) = "[${log.name}] ${display.title(log, event)}"
-                }
-            } else {
-                display
-            }
-
             Column(Modifier.surfaceBackground()) {
-                headerContent(eventsFlow)
+                if (headerContent != null) {
+                    headerContent(eventCleared)
 
-                HorizontalDivider()
+                    HorizontalDivider()
+                }
 
                 Column(Modifier.padding(Dimens.space2), verticalArrangement = Arrangement.spacedBy(Dimens.space2)) {
                     Row(
@@ -193,13 +196,33 @@ fun <T> LogList(
                             selectedElements = selectedEventTypes.value,
                             onSelectElements = { selectedEventTypes.value = it },
                             content = { type ->
-                                val count = countsByType[type.ordinal]
+                                val count = countsByType?.get(type.ordinal)
                                 val name = type.name.lowercase().capitalize()
                                 Text("$name [$count]")
                             },
                         )
 
-                        Text("${visibleEvents.size}/$numEvents visible")
+                        // include both internal and external filters
+                        val canResetFilterFinal = canResetFilter || selectedEventTypes.value.isNotEmpty()
+                        SimpleTextButton(
+                            enabled = canResetFilterFinal,
+                            onClick = {
+                                selectedEventTypes.value = persistentSetOf()
+                                onResetFilter()
+                            },
+                        ) {
+                            if (canResetFilterFinal) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(Dimens.iconSmall),
+                                )
+
+                                HorizontalSpacer(Dimens.space1)
+                            }
+
+                            Text("${visibleEvents.size}/$numEvents visible")
+                        }
                     }
 
                     Row(
@@ -214,16 +237,16 @@ fun <T> LogList(
                         )
 
                         Row {
-                            SimpleTextButton(onClick = { clearTime.value = CurrentTime.millis }) {
+                            SimpleTextButton(onClick = { clearTimeState.value = CurrentTime.millis }) {
                                 CachedIcon("delete", size = Dimens.iconSmall)
                                 HorizontalSpacer(Dimens.space1)
                                 Text("Clear")
                             }
 
-                            SimpleTextButton(onClick = { clearTime.value = null }, enabled = clearTime.value != null) {
+                            SimpleTextButton(onClick = { clearTimeState.value = null }, enabled = clearTime != null) {
                                 CachedIcon("restore-from-trash", size = Dimens.iconSmall)
                                 HorizontalSpacer(Dimens.space1)
-                                Text("Reset")
+                                Text("Restore")
                             }
                         }
                     }
@@ -248,7 +271,8 @@ fun <T> LogList(
 
 @Composable
 private fun <T> EventItem(log: Log<T>, event: Log.Event<T>, display: LogEventDisplay<T>) {
-    val hasContent = display.hasContent(event)
+    val content = display.content(event)
+    val hasContent = !content.isNullOrBlank()
 
     val expandedState = if (hasContent) remember { mutableStateOf(false) } else null
     val expanded = expandedState?.value == true
@@ -293,7 +317,7 @@ private fun <T> EventItem(log: Log<T>, event: Log.Event<T>, display: LogEventDis
 
             if (expanded) {
                 Text(
-                    text = display.content(event).orEmpty(),
+                    text = requireNotNull(content),
                     fontFamily = KotifyTypography.Monospace,
                     modifier = Modifier.padding(start = Dimens.space3),
                 )

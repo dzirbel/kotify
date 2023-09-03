@@ -35,7 +35,7 @@ private class MutableLogImpl<T>(override val name: String, private val scope: Co
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-    private val writeLock = Mutex()
+    override val writeLock = Mutex()
 
     override val events: List<Log.Event<T>>
         get() = _events // do not create a copy of the list for performance, assumes callers will not mutate

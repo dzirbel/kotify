@@ -2,6 +2,7 @@ package com.dzirbel.kotify.log
 
 import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
 import kotlin.time.Duration
 
 /**
@@ -34,6 +35,14 @@ interface Log<T> {
      * The user-readable name of this log.
      */
     val name: String
+
+    /**
+     * A [Mutex] which can be used to lock new events from being added to this log.
+     *
+     * This can be used to safely read [events] and start collection of [eventsFlow] with a guarantee that new events
+     * will not be emitted until the lock is released.
+     */
+    val writeLock: Mutex
 
     /**
      * Returns a snapshot of the current events in this log.
