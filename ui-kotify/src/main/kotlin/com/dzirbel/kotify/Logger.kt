@@ -2,7 +2,6 @@ package com.dzirbel.kotify
 
 import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.Logger.Event
-import com.dzirbel.kotify.ui.ImageCacheEvent
 import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -64,32 +63,6 @@ sealed class Logger<T> {
         }
 
         mutableEventsFlow.tryEmit(emptyList())
-    }
-
-    /**
-     * A global [Logger] which logs events from the [com.dzirbel.kotify.cache.SpotifyImageCache].
-     */
-    object ImageCache : Logger<Unit>() {
-        fun handleImageCacheEvent(imageCacheEvent: ImageCacheEvent) {
-            val title = when (imageCacheEvent) {
-                is ImageCacheEvent.InMemory -> "IN-MEMORY ${imageCacheEvent.url}"
-                is ImageCacheEvent.OnDisk ->
-                    "ON-DISK ${imageCacheEvent.url} as ${imageCacheEvent.cacheFile} " +
-                        "(loaded file in ${imageCacheEvent.duration})"
-
-                is ImageCacheEvent.Fetch ->
-                    "MISS ${imageCacheEvent.url} in ${imageCacheEvent.duration}" +
-                        imageCacheEvent.cacheFile?.let { " (saved to $it)" }
-            }
-
-            val type = when (imageCacheEvent) {
-                is ImageCacheEvent.InMemory -> Event.Type.SUCCESS
-                is ImageCacheEvent.OnDisk -> Event.Type.INFO
-                is ImageCacheEvent.Fetch -> Event.Type.WARNING
-            }
-
-            log(title = title, type = type, data = Unit)
-        }
     }
 
     object UI : Logger<Unit>()

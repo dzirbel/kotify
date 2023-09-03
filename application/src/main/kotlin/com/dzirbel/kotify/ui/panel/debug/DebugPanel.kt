@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui.panel.debug
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -39,7 +38,7 @@ enum class DebugTab(val tabName: String, val log: Logger<*>?) {
     NETWORK("Network", null),
     DATABASE("Database", null),
     REPOSITORY("Repository", null),
-    IMAGE_CACHE("Images", Logger.ImageCache),
+    IMAGE_CACHE("Images", null),
 }
 
 private val debugPanelSize = PanelSize(
@@ -55,15 +54,13 @@ private val debugPanelSize = PanelSize(
 @Composable
 fun DebugPanel(content: @Composable () -> Unit) {
     val tab = remember { mutableStateOf(DebugTab.entries.first()) }
-    val scrollStates = remember { DebugTab.entries.associateWith { ScrollState(0) } }
-    val scrollState = scrollStates.getValue(tab.value)
 
     SidePanel(
         direction = PanelDirection.RIGHT,
         panelSize = debugPanelSize,
         panelEnabled = Settings.debugPanelOpen && !Settings.debugPanelDetached,
         panelContent = {
-            DebugPanelContent(tab = tab.value, scrollState = scrollState, onClickTab = { tab.value = it })
+            DebugPanelContent(tab = tab.value, onClickTab = { tab.value = it })
         },
         mainContent = content,
     )
@@ -77,14 +74,14 @@ fun DebugPanel(content: @Composable () -> Unit) {
             },
         ) {
             Theme.Apply {
-                DebugPanelContent(tab = tab.value, scrollState = scrollState, onClickTab = { tab.value = it })
+                DebugPanelContent(tab = tab.value, onClickTab = { tab.value = it })
             }
         }
     }
 }
 
 @Composable
-private fun DebugPanelContent(tab: DebugTab, scrollState: ScrollState, onClickTab: (DebugTab) -> Unit) {
+private fun DebugPanelContent(tab: DebugTab, onClickTab: (DebugTab) -> Unit) {
     Column(modifier = Modifier.surfaceBackground()) {
         Column(Modifier.fillMaxHeight().weight(1f)) {
             Row(Modifier.fillMaxWidth()) {
@@ -126,7 +123,7 @@ private fun DebugPanelContent(tab: DebugTab, scrollState: ScrollState, onClickTa
                 DebugTab.NETWORK -> NetworkTab()
                 DebugTab.DATABASE -> DatabaseTab()
                 DebugTab.REPOSITORY -> RepositoryTab()
-                DebugTab.IMAGE_CACHE -> ImageCacheTab(scrollState)
+                DebugTab.IMAGE_CACHE -> ImageCacheTab()
             }
         }
 

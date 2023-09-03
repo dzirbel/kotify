@@ -3,9 +3,13 @@ package com.dzirbel.kotify.ui
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
-import com.dzirbel.kotify.Logger
+import com.dzirbel.kotify.log.Logging
+import com.dzirbel.kotify.log.MutableLog
+import com.dzirbel.kotify.log.asLog
+import com.dzirbel.kotify.log.info
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.util.await
+import com.dzirbel.kotify.repository.DataSource
 import com.dzirbel.kotify.repository.Repository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
@@ -26,6 +30,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.TimeSource
+import kotlin.time.measureTime
 
 @Stable
 sealed class ImageCacheEvent {
@@ -51,7 +56,7 @@ open class SpotifyImageCache internal constructor(
      * coroutines, so providing a TestDispatcher will not advance an asynchronous call as expected.
      */
     private val synchronousCalls: Boolean,
-) {
+) : Logging<DataSource> {
     private var imagesDir: File? = null
 
     // TODO use a LRU or similar cache to avoid keeping all loaded images in memory indefinitely
@@ -60,6 +65,10 @@ open class SpotifyImageCache internal constructor(
     private val totalCompleted = AtomicInteger()
 
     private val _metricsFlow = MutableStateFlow<Metrics?>(null)
+
+    private val mutableLog = MutableLog<DataSource>("Image Cache", scope)
+
+    override val log = mutableLog.asLog()
 
     /**
      * The current [Metrics] of the cache.
@@ -102,14 +111,16 @@ open class SpotifyImageCache internal constructor(
      * Returns the [ImageBitmap] from the given [url] if it is immediately available in memory.
      */
     fun getFromMemory(url: String): ImageBitmap? {
+        val start = TimeSource.Monotonic.markNow()
         return images[url]?.value
-            ?.also { Logger.ImageCache.handleImageCacheEvent(ImageCacheEvent.InMemory(url = url)) }
+            ?.also { mutableLog.info("$url in memory", data = DataSource.MEMORY, duration = start.elapsedNow()) }
     }
 
     /**
      * Returns a [StateFlow] reflecting the live state of the image fetched from the given [url].
      */
     fun get(url: String, client: OkHttpClient = Spotify.configuration.okHttpClient): StateFlow<ImageBitmap?> {
+        val start = TimeSource.Monotonic.markNow()
         return images.compute(url) { _, existingFlow ->
             if (existingFlow == null) {
                 val flow = MutableStateFlow<ImageBitmap?>(null)
@@ -126,7 +137,7 @@ open class SpotifyImageCache internal constructor(
 
                 flow
             } else {
-                Logger.ImageCache.handleImageCacheEvent(ImageCacheEvent.InMemory(url = url))
+                mutableLog.info("$url in memory", data = DataSource.MEMORY, duration = start.elapsedNow())
                 existingFlow
             }
         }
@@ -149,9 +160,7 @@ open class SpotifyImageCache internal constructor(
                 yield()
 
                 totalCompleted.incrementAndGet()
-                Logger.ImageCache.handleImageCacheEvent(
-                    ImageCacheEvent.OnDisk(url = url, duration = start.elapsedNow(), cacheFile = cacheFile),
-                )
+                mutableLog.info("$url on disk as $cacheFile", data = DataSource.DATABASE, duration = start.elapsedNow())
 
                 return Pair(cacheFile, imageBitmap)
             }
@@ -163,10 +172,12 @@ open class SpotifyImageCache internal constructor(
     private suspend fun fromRemote(url: String, cacheFile: File?, client: OkHttpClient): ImageBitmap? {
         val start = TimeSource.Monotonic.markNow()
         val request = Request.Builder().url(url).build()
+        var remoteTime: Duration? = null
 
         return client.newCall(request)
             .run { if (synchronousCalls) execute() else await() }
             .use { response ->
+                remoteTime = start.elapsedNow()
                 response.body?.bytes()
             }
             ?.takeIf { bytes -> bytes.isNotEmpty() }
@@ -175,14 +186,18 @@ open class SpotifyImageCache internal constructor(
                 val image = Image.makeFromEncoded(bytes).toComposeImageBitmap()
                 yield()
 
+                var writeTime: Duration? = null
                 if (cacheFile != null) {
-                    imagesDir?.mkdirs()
-                    cacheFile.writeBytes(bytes)
+                    writeTime = measureTime {
+                        imagesDir?.mkdirs()
+                        cacheFile.writeBytes(bytes)
+                    }
                 }
 
                 totalCompleted.incrementAndGet()
-                Logger.ImageCache.handleImageCacheEvent(
-                    ImageCacheEvent.Fetch(url = url, duration = start.elapsedNow(), cacheFile = cacheFile),
+                mutableLog.info(
+                    title = "$url from remote in $remoteTime" + cacheFile?.let { " (saved to $it in $writeTime)" },
+                    data = DataSource.REMOTE,
                 )
 
                 image
@@ -212,7 +227,7 @@ open class SpotifyImageCache internal constructor(
     )
 
     companion object : SpotifyImageCache(
-        // use a custom dispatcher rather than the default IO dispatcher as it ca easily be exhausted, which appears to
+        // use a custom dispatcher rather than the default IO dispatcher as it can easily be exhausted, which appears to
         // cause blocking UI interference, perhaps due to internal Compose usage
         scope = Repository.applicationScope.plus(Executors.newCachedThreadPool().asCoroutineDispatcher()),
         synchronousCalls = false,

@@ -203,7 +203,7 @@ private fun <T> LogListToggle(
     }
 }
 
-private val DataSource.iconName: String
+val DataSource.iconName: String
     get() {
         return when (this) {
             DataSource.MEMORY -> "data-table"

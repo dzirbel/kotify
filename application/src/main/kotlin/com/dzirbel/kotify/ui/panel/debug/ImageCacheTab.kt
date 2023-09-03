@@ -1,6 +1,6 @@
 package com.dzirbel.kotify.ui.panel.debug
 
-import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,81 +10,105 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.Logger
+import com.dzirbel.kotify.log.Log
+import com.dzirbel.kotify.repository.DataSource
+import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.SpotifyImageCache
-import com.dzirbel.kotify.ui.components.CheckboxWithLabel
+import com.dzirbel.kotify.ui.components.HorizontalSpacer
+import com.dzirbel.kotify.ui.components.ToggleButtonGroup
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.capitalize
+import com.dzirbel.kotify.util.coroutines.lockedState
 import com.dzirbel.kotify.util.formatByteSize
-
-private data class ImageCacheSettings(
-    val includeInMemory: Boolean = true,
-    val includeOnDisk: Boolean = true,
-    val includeMiss: Boolean = true,
-)
-
-private val imageCacheSettings = mutableStateOf(ImageCacheSettings())
+import com.dzirbel.kotify.util.takingIf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.flow.runningFold
 
 @Composable
-fun ImageCacheTab(scrollState: ScrollState) {
-    Column(Modifier.fillMaxWidth().padding(Dimens.space3)) {
-        val metrics = SpotifyImageCache.metricsFlow.collectAsState().value
-        if (metrics != null) {
-            val totalSizeFormatted = remember(metrics.totalDiskSize) { formatByteSize(metrics.totalDiskSize) }
+fun ImageCacheTab() {
+    val selectedDataSources = remember { mutableStateOf(persistentSetOf<DataSource>()) }
 
-            Text(
-                "${metrics.inMemoryCount} images cached in memory; " +
-                    "${metrics.diskCount} cached on disk for a total of $totalSizeFormatted on disk",
-            )
-        } else {
-            Text("Image cache metrics loading...")
-        }
+    // do not filter if all or none are selected (no-op filter)
+    val filterDataSource = selectedDataSources.value.size in 1 until DataSource.entries.size
 
-        VerticalSpacer(Dimens.space2)
-
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { SpotifyImageCache.clear() },
+    LogList(
+        log = SpotifyImageCache.log,
+        display = ImageCacheLogEventDisplay,
+        filter = takingIf(filterDataSource) {
+            @Suppress("Wrapping") // ktlint false positive; fixed by https://github.com/pinterest/ktlint/pull/2127
+            { it.event.data in selectedDataSources.value }
+        },
+        filterKey = selectedDataSources.value,
+        onResetFilter = { selectedDataSources.value = persistentSetOf() },
+        canResetFilter = selectedDataSources.value.isNotEmpty(),
+    ) { eventCleared ->
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(Dimens.space3),
+            verticalArrangement = Arrangement.spacedBy(Dimens.space2),
         ) {
-            Text("Clear image cache")
+            val metrics = SpotifyImageCache.metricsFlow.collectAsState().value
+            if (metrics != null) {
+                val totalSizeFormatted = remember(metrics.totalDiskSize) { formatByteSize(metrics.totalDiskSize) }
+
+                Text(
+                    "${metrics.inMemoryCount} images cached in memory; " +
+                        "${metrics.diskCount} cached on disk for a total of $totalSizeFormatted on disk",
+                )
+            } else {
+                Text("Image cache metrics loading...")
+            }
+
+            VerticalSpacer(Dimens.space2)
+
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { SpotifyImageCache.clear() },
+            ) {
+                Text("Clear image cache")
+            }
+
+            VerticalSpacer(Dimens.space2)
+
+            ToggleButtonGroup(
+                elements = DataSource.entries.toImmutableList(),
+                selectedElements = selectedDataSources.value,
+                onSelectElements = { selectedDataSources.value = it },
+                content = { dataSource ->
+                    CachedIcon(name = dataSource.iconName, size = Dimens.iconSmall)
+
+                    HorizontalSpacer(Dimens.space2)
+
+                    val scope = rememberCoroutineScope()
+                    val name = dataSource.name.lowercase().capitalize()
+                    val count: Int? = remember(eventCleared) {
+                        SpotifyImageCache.log.writeLock.lockedState(
+                            scope = scope,
+                            initializeWithLock = {
+                                SpotifyImageCache.log.events.count { !eventCleared(it) && it.data == dataSource }
+                            },
+                        ) { initial ->
+                            SpotifyImageCache.log.eventsFlow.runningFold(initial) { count, event ->
+                                if (!eventCleared(event) && event.data == dataSource) count + 1 else count
+                            }
+                        }
+                    }
+                        .collectAsState()
+                        .value
+
+                    Text("$name [$count]", maxLines = 1)
+                },
+            )
         }
-
-        VerticalSpacer(Dimens.space2)
-
-        CheckboxWithLabel(
-            modifier = Modifier.fillMaxWidth(),
-            checked = imageCacheSettings.value.includeInMemory,
-            onCheckedChange = { imageCacheSettings.mutate { copy(includeInMemory = it) } },
-            label = { Text("Include IN-MEMORY events") },
-        )
-
-        VerticalSpacer(Dimens.space2)
-
-        CheckboxWithLabel(
-            modifier = Modifier.fillMaxWidth(),
-            checked = imageCacheSettings.value.includeOnDisk,
-            onCheckedChange = { imageCacheSettings.mutate { copy(includeOnDisk = it) } },
-            label = { Text("Include ON-DISK events") },
-        )
-
-        VerticalSpacer(Dimens.space2)
-
-        CheckboxWithLabel(
-            modifier = Modifier.fillMaxWidth(),
-            checked = imageCacheSettings.value.includeMiss,
-            onCheckedChange = { imageCacheSettings.mutate { copy(includeMiss = it) } },
-            label = { Text("Include MISS events") },
-        )
     }
+}
 
-    EventList(log = Logger.ImageCache, key = imageCacheSettings.value, scrollState = scrollState) { event ->
-        when (event.type) {
-            Logger.Event.Type.SUCCESS -> imageCacheSettings.value.includeInMemory
-            Logger.Event.Type.INFO -> imageCacheSettings.value.includeOnDisk
-            Logger.Event.Type.WARNING -> imageCacheSettings.value.includeMiss
-            else -> true
-        }
+private object ImageCacheLogEventDisplay : LogEventDisplay<DataSource> {
+    @Composable
+    override fun Icon(event: Log.Event<DataSource>, modifier: Modifier) {
+        CachedIcon(name = event.data.iconName, modifier = modifier, tint = event.type.iconColor)
     }
 }
