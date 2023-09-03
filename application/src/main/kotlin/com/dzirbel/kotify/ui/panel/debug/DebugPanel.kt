@@ -37,7 +37,7 @@ import com.dzirbel.kotify.ui.theme.surfaceBackground
 enum class DebugTab(val tabName: String, val log: Logger<*>?) {
     EVENTS("Events", null),
     NETWORK("Network", null),
-    DATABASE("Database", Logger.Database),
+    DATABASE("Database", null),
     REPOSITORY("Repository", null),
     IMAGE_CACHE("Images", Logger.ImageCache),
 }
@@ -124,7 +124,7 @@ private fun DebugPanelContent(tab: DebugTab, scrollState: ScrollState, onClickTa
             when (tab) {
                 DebugTab.EVENTS -> EventsTab()
                 DebugTab.NETWORK -> NetworkTab()
-                DebugTab.DATABASE -> DatabaseTab(scrollState)
+                DebugTab.DATABASE -> DatabaseTab()
                 DebugTab.REPOSITORY -> RepositoryTab()
                 DebugTab.IMAGE_CACHE -> ImageCacheTab(scrollState)
             }

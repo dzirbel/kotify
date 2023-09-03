@@ -46,11 +46,11 @@ fun main(args: Array<String>) {
 
             KotifyDatabase.init(
                 dbFile = Application.cacheDir.resolve("cache.db"),
-                sqlLogger = Logger.Database,
+                sqlLogger = DatabaseLogger,
                 onConnect = { UserRepository.onConnectToDatabase() },
             )
 
-            KotifyDatabase.addTransactionListener(Logger.Database)
+            KotifyDatabase.addTransactionListener(DatabaseLogger)
         }
 
         measureInitTime("network") {

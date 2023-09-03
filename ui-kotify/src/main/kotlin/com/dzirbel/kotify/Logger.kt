@@ -2,18 +2,12 @@ package com.dzirbel.kotify
 
 import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.Logger.Event
-import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.ui.ImageCacheEvent
 import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import org.jetbrains.exposed.sql.SqlLogger
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.statements.StatementContext
-import org.jetbrains.exposed.sql.statements.StatementInterceptor
-import org.jetbrains.exposed.sql.statements.expandArgs
 
 /**
  * A simple in-memory log of [Event]s storing arbitrary data of type [T], which can be [log]ed variously throughout the
@@ -70,58 +64,6 @@ sealed class Logger<T> {
         }
 
         mutableEventsFlow.tryEmit(emptyList())
-    }
-
-    object Database :
-        Logger<Database.EventType>(),
-        KotifyDatabase.TransactionListener,
-        SqlLogger,
-        StatementInterceptor {
-
-        enum class EventType {
-            STATEMENT, TRANSACTION
-        }
-
-        // map from transaction id to (name, statements)
-        private val transactionMap = mutableMapOf<String, Pair<String?, MutableList<StatementContext>>>()
-        private val closedTransactions = mutableSetOf<String>()
-        private var transactionCount: Int = 0
-
-        override fun onTransactionStart(transaction: Transaction, name: String?) {
-            transaction.registerInterceptor(this)
-            transactionMap[transaction.id] = Pair(name, mutableListOf())
-        }
-
-        override fun beforeCommit(transaction: Transaction) {
-            closedTransactions.add(transaction.id)
-            transactionCount++
-            transactionMap.remove(transaction.id)?.let { (name, statements) ->
-                val transactionTitle = name ?: transaction.id
-                val transactionData = "Transaction #$transactionCount : $transactionTitle"
-                log(
-                    title = "$transactionData (${statements.size}) [${transaction.duration}ms]",
-                    content = statements.joinToString(separator = "\n\n") { it.expandArgs(transaction) },
-                    data = EventType.TRANSACTION,
-                )
-            }
-        }
-
-        override fun log(context: StatementContext, transaction: Transaction) {
-            require(transaction.id !in closedTransactions) { "transaction ${transaction.id} was already closed" }
-
-            val data = transactionMap[transaction.id]
-            data?.second?.add(context)
-
-            val tables = context.statement.targets.joinToString { it.tableName }
-            val transactionTitle = data?.first ?: transaction.id
-            val transactionData = "#${transaction.statementCount} in $transactionTitle"
-
-            log(
-                title = "$transactionData : ${context.statement.type} $tables [${transaction.duration}ms]",
-                content = context.expandArgs(transaction),
-                data = EventType.STATEMENT,
-            )
-        }
     }
 
     /**
