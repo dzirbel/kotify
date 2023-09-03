@@ -66,7 +66,7 @@ open class SpotifyImageCache internal constructor(
 
     private val _metricsFlow = MutableStateFlow<Metrics?>(null)
 
-    private val mutableLog = MutableLog<DataSource>("Image Cache", scope)
+    private val mutableLog = MutableLog<DataSource>("ImageCache", scope)
 
     override val log = mutableLog.asLog()
 

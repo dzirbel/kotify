@@ -20,8 +20,16 @@ object DatabaseLogger : KotifyDatabase.TransactionListener, SqlLogger, Statement
     private val closedTransactions = mutableSetOf<String>()
     private var transactionCount: Int = 0
 
-    private val mutableTransactionLog = MutableLog<Unit>("Database Transactions", GlobalScope)
-    private val mutableStatementLog = MutableLog<Unit>("Database Statements", GlobalScope)
+    private val mutableTransactionLog = MutableLog<Unit>(
+        name = "DatabaseTransactions",
+        scope = GlobalScope,
+        writeContentToLogFile = false,
+    )
+    private val mutableStatementLog = MutableLog<Unit>(
+        name = "DatabaseStatements",
+        scope = GlobalScope,
+        writeToLogFile = false,
+    )
 
     val transactionLog: Log<Unit> = mutableTransactionLog.asLog()
     val statementLog: Log<Unit> = mutableStatementLog.asLog()

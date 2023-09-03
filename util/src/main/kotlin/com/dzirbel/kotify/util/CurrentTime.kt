@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.util
 
 import java.time.Instant
+import java.time.ZoneId
 
 /**
  * A wrapper providing access to a system wall-clock as either a timestamp via [CurrentTime.millis] or [Instant] via
@@ -23,7 +24,10 @@ object CurrentTime {
     var enabled = false
 
     private var mockedTime: Long? = null
-    private const val DEFAULT_MOCKED_TIME = 1_681_977_723L
+    private const val DEFAULT_MOCKED_TIME = 1_681_977_723_000L
+
+    private var mockedZoneId: ZoneId? = null
+    private val DEFAULT_MOCKED_ZONE_ID = ZoneId.of("America/New_York")
 
     /**
      * The current system time as a timestamp.
@@ -43,16 +47,24 @@ object CurrentTime {
             return mockedTime?.let { Instant.ofEpochMilli(it) } ?: Instant.now()
         }
 
+    val zoneId: ZoneId
+        get() {
+            check(enabled) { "access to system time is disabled" }
+            return mockedZoneId ?: ZoneId.systemDefault()
+        }
+
     /**
      * Mocks calls to [CurrentTime] within block, returning its result.
      *
      * Should only be used in tests.
      */
-    fun <T> mocked(millis: Long = DEFAULT_MOCKED_TIME, block: () -> T): T {
-        startMock(millis = millis)
-        val result = block()
-        closeMock()
-        return result
+    fun <T> mocked(millis: Long = DEFAULT_MOCKED_TIME, zoneId: ZoneId? = DEFAULT_MOCKED_ZONE_ID, block: () -> T): T {
+        startMock(millis = millis, zoneId = zoneId)
+        return try {
+            block()
+        } finally {
+            closeMock()
+        }
     }
 
     /**
@@ -60,10 +72,11 @@ object CurrentTime {
      *
      * [mocked] is generally preferred for safety, but this can be used in a test setup callback.
      */
-    fun startMock(millis: Long = DEFAULT_MOCKED_TIME) {
+    fun startMock(millis: Long = DEFAULT_MOCKED_TIME, zoneId: ZoneId? = DEFAULT_MOCKED_ZONE_ID) {
         check(!enabled) { "system time is already enabled or mocked" }
         enabled = true
         mockedTime = millis
+        mockedZoneId = zoneId
     }
 
     /**
@@ -73,5 +86,6 @@ object CurrentTime {
         check(enabled) { "system time was not being mocked" }
         enabled = false
         mockedTime = null
+        mockedZoneId = null
     }
 }

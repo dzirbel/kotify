@@ -30,6 +30,7 @@ object Application {
     // use nullable backing properties so that we can use test values if setup() is not called
     private var _cacheDir: File? = null
     private var _settingsDir: File? = null
+    private var _logDir: File? = null
 
     /**
      * The directory under which cache files should be stored.
@@ -49,6 +50,12 @@ object Application {
             .also { EventLog.info("Using test settings directory ${it.absolutePath}") }
     }
 
+    val logDir: File by lazy {
+        _logDir ?: File("../.kotify/test-logs")
+            .also { it.mkdirs() }
+            .also { EventLog.info("Using test log directory ${it.absolutePath}") }
+    }
+
     private val userHome by lazy { File(System.getProperty("user.home")) }
     private val appData by lazy { File(System.getenv("APPDATA")) }
 
@@ -66,7 +73,7 @@ object Application {
     /**
      * Initializes the application-level properties and prints their status to the console.
      */
-    fun setup(cachePath: String? = null, settingsPath: String? = null) {
+    fun setup(cachePath: String? = null, settingsPath: String? = null, logPath: String? = null) {
         val classLoader = Thread.currentThread().contextClassLoader
         val inputStream = requireNotNull(classLoader.getResourceAsStream(PROPERTIES_FILENAME)) {
             "$PROPERTIES_FILENAME not found"
@@ -92,6 +99,7 @@ object Application {
 
         _cacheDir = cacheDirFor(os = os, override = cachePath)
         _settingsDir = settingsDirFor(os = os, override = settingsPath)
+        _logDir = logDirFor(os = os, override = logPath)
     }
 
     /**
@@ -185,6 +193,54 @@ object Application {
             ?: File(".").resolve("settings")
                 .also { it.mkdirs() }
                 .also { EventLog.info("Using backup settings directory ${it.absolutePath}") }
+    }
+
+    /**
+     * Resolves the directory to use for log files; this is similar to [cacheDirFor].
+     *
+     * If [override] is provided, the file it resolves to will be used if it can be created and is writeable. Otherwise,
+     * a system directory will be returned if a Kotify-specific subdirectory can be created and is writeable:
+     * - Windows: %APPDATA%/Kotify/logs
+     * - MacOS:   ~/Library/Application Support/Kotify/logs
+     * - Linux:   ~/.kotify/logs
+     * If [os] is null or this path cannot be created or is not writeable, a default directory "logs" relative to
+     * the working directory will be used.
+     */
+    private fun logDirFor(os: OperatingSystem?, override: String?): File {
+        if (override != null) {
+            // first, attempt to return the override directory if given
+            File(override)
+                .also { it.mkdirs() }
+                .takeIfIsWriteableDirectory(directoryName = "given log")
+                ?.also { EventLog.info("Using given log directory ${it.absolutePath}") }
+                ?.let { return it }
+        }
+
+        // the base directory where application settings are stored for os
+        val systemSettingsDir = when (os) {
+            OperatingSystem.WINDOWS -> appData
+            OperatingSystem.MAC -> userHome.resolve("Library").resolve("Application Support")
+            OperatingSystem.LINUX -> userHome
+            null -> null
+        }
+
+        return systemSettingsDir
+            ?.takeIfIsWriteableDirectory(directoryName = "system settings")
+            ?.let {
+                // resolve a kotify-specific subdirectory
+                when (os) {
+                    OperatingSystem.WINDOWS -> it.resolve(name).resolve("logs")
+                    OperatingSystem.MAC -> it.resolve(name).resolve("logs")
+                    OperatingSystem.LINUX -> it.resolve(".$nameLower").resolve("logs")
+                    null -> error("impossible")
+                }
+            }
+            ?.also { it.mkdirs() }
+            ?.takeIfIsWriteableDirectory(directoryName = "resolved log")
+            ?.also { EventLog.info("Using system log directory ${it.absolutePath}") }
+            ?: File(".").resolve("logs")
+                .also { it.mkdirs() }
+                .also { EventLog.info("Using backup log directory ${it.absolutePath}") }
     }
 
     /**

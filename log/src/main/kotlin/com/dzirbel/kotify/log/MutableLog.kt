@@ -9,12 +9,11 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.yield
 import kotlin.time.Duration
 
 /**
  * A [Log] which allows logging new events.
- *
- * TODO add logging to disk
  */
 interface MutableLog<T> : Log<T> {
     /**
@@ -29,16 +28,39 @@ interface MutableLog<T> : Log<T> {
  * @param T type of data associated with each [Log.Event]
  * @param name user-readable name used to identify the log in the debug UI and log files
  * @param scope [CoroutineScope] used to emit events
+ * @param writeToLogFile whether to write events to the log file
+ * @param writeDataToLogFile whether to write the [Log.Event.data] of each event to the log file
+ * @param writeContentToLogFile whether to write the [Log.Event.content] of each event to the log file
  * @param bufferCapacity number of events to buffer in the [Log.eventsFlow], may be increased for logs which are
  *  "bursty" and likely to emit many events in a short period of time
  */
 @Suppress("FunctionNaming")
-fun <T> MutableLog(name: String, scope: CoroutineScope, bufferCapacity: Int = 16): MutableLog<T> {
-    return MutableLogImpl(name = name, scope = scope, bufferCapacity = bufferCapacity)
+fun <T> MutableLog(
+    name: String,
+    scope: CoroutineScope,
+    writeToLogFile: Boolean = true,
+    writeDataToLogFile: Boolean = true,
+    writeContentToLogFile: Boolean = true,
+    bufferCapacity: Int = 16,
+): MutableLog<T> {
+    return MutableLogImpl(
+        name = name,
+        scope = scope,
+        writeToLogFile = writeToLogFile,
+        writeDataToLogFile = writeDataToLogFile,
+        writeContentToLogFile = writeContentToLogFile,
+        bufferCapacity = bufferCapacity,
+    )
 }
 
-private class MutableLogImpl<T>(override val name: String, private val scope: CoroutineScope, bufferCapacity: Int) :
-    MutableLog<T> {
+private class MutableLogImpl<T>(
+    override val name: String,
+    private val scope: CoroutineScope,
+    private val writeToLogFile: Boolean,
+    private val writeDataToLogFile: Boolean,
+    private val writeContentToLogFile: Boolean,
+    bufferCapacity: Int,
+) : MutableLog<T> {
 
     private val _events = mutableListOf<Log.Event<T>>()
 
@@ -57,6 +79,16 @@ private class MutableLogImpl<T>(override val name: String, private val scope: Co
             writeLock.withLock {
                 _events.add(event)
                 _eventsFlow.emit(event)
+            }
+
+            if (writeToLogFile) {
+                yield() // ensure writing to log is not done undispatched
+                LogFile.writeEvent(
+                    log = this@MutableLogImpl,
+                    event = event,
+                    includeData = writeDataToLogFile,
+                    includeContent = writeContentToLogFile,
+                )
             }
         }
 

@@ -6,6 +6,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.log.LogFile
 import com.dzirbel.kotify.log.success
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
@@ -34,7 +35,12 @@ fun main(args: Array<String>) {
             Application.setup(
                 cachePath = args.getOrNull(0),
                 settingsPath = args.getOrNull(1),
+                logPath = args.getOrNull(2),
             )
+        }
+
+        measureInitTime("logs") {
+            LogFile.initialize(directory = Application.logDir)
         }
 
         measureInitTime("settings") {

@@ -21,7 +21,7 @@ object NetworkLogger : Logging<NetworkLogger.LogData> {
             get() = !isRequest
     }
 
-    private val mutableLog = MutableLog<LogData>("Network", GlobalScope)
+    private val mutableLog = MutableLog<LogData>("Network", GlobalScope, writeContentToLogFile = false)
 
     private val SPOTIFY_URL_HOST = Spotify.API_URL.toHttpUrl().host
 

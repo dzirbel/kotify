@@ -72,6 +72,6 @@ compose.desktop {
 // application
 project.afterEvaluate {
     tasks.withType<JavaExec> {
-        args = listOf("../.kotify/cache", "../.kotify/settings")
+        args = listOf("../.kotify/cache", "../.kotify/settings", "../.kotify/logs")
     }
 }
