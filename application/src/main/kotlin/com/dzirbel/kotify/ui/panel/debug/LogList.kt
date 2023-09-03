@@ -68,6 +68,29 @@ import java.time.format.DateTimeFormatter
 
 data class LogAndEvent<T>(val log: Log<T>, val event: Log.Event<T>)
 
+@Composable
+fun <T> LogList(
+    log: Log<T>,
+    display: LogEventDisplay<T> = object : LogEventDisplay<T> {},
+    sortProperties: ImmutableList<SortableProperty<Log.Event<T>>> = persistentListOf(),
+    filter: ((LogAndEvent<T>) -> Boolean)? = null,
+    onResetFilter: () -> Unit = {},
+    canResetFilter: Boolean = false,
+    headerContent: @Composable ((eventCleared: (Log.Event<T>) -> Boolean) -> Unit)? = null,
+) {
+    LogList(
+        logs = listOf(log),
+        logMutex = log.writeLock,
+        display = display,
+        sortProperties = sortProperties,
+        filter = filter,
+        onResetFilter = onResetFilter,
+        canResetFilter = canResetFilter,
+        annotateTitlesByLog = false,
+        headerContent = headerContent,
+    )
+}
+
 // TODO add separators for page changes
 @Composable
 fun <T> LogList(

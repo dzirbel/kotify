@@ -6,6 +6,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.dzirbel.kotify.db.KotifyDatabase
+import com.dzirbel.kotify.log.success
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.oauth.AccessToken
@@ -80,9 +81,10 @@ fun main(args: Array<String>) {
         Repository.enabled = true
     }
 
-    Logger.Events.info(
-        title = "Application initialized in $totalDuration",
+    EventLog.success(
+        title = "Application initialized",
         content = initTimes.joinToString(separator = "\n") { (name, duration) -> "$name : $duration" },
+        duration = totalDuration,
     )
 
     application {

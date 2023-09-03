@@ -4,15 +4,12 @@ import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.Logger.Event
 import com.dzirbel.kotify.Logger.Network.intercept
 import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.ImageCacheEvent
 import com.dzirbel.kotify.util.CurrentTime
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Request
@@ -80,27 +77,6 @@ sealed class Logger<T> {
         }
 
         mutableEventsFlow.tryEmit(emptyList())
-    }
-
-    object Events : Logger<Unit>() {
-        init {
-            GlobalScope.launch {
-                AccessToken.Cache.logEvents.collect { logEvent ->
-                    when (logEvent) {
-                        is AccessToken.Cache.LogEvent.Info -> info(logEvent.message)
-                        is AccessToken.Cache.LogEvent.Warning -> warn(logEvent.message)
-                    }
-                }
-            }
-        }
-
-        fun info(title: String, content: String? = null) {
-            log(title = title, content = content, type = Event.Type.INFO, data = Unit)
-        }
-
-        fun warn(title: String, content: String? = null) {
-            log(title = title, content = content, type = Event.Type.WARNING, data = Unit)
-        }
     }
 
     /**

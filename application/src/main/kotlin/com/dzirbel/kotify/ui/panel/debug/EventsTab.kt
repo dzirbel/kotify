@@ -1,10 +1,9 @@
 package com.dzirbel.kotify.ui.panel.debug
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.Composable
-import com.dzirbel.kotify.Logger
+import com.dzirbel.kotify.EventLog
 
 @Composable
-fun EventsTab(scrollState: ScrollState) {
-    EventList(log = Logger.Events, key = Unit, scrollState = scrollState)
+fun EventsTab() {
+    LogList(EventLog)
 }
