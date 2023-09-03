@@ -2,7 +2,6 @@ package com.dzirbel.kotify
 
 import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.Logger.Event
-import com.dzirbel.kotify.Logger.Network.intercept
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.ui.ImageCacheEvent
 import com.dzirbel.kotify.util.CurrentTime
@@ -10,17 +9,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import okhttp3.Headers
-import okhttp3.Interceptor
-import okhttp3.Request
-import okhttp3.Response
 import org.jetbrains.exposed.sql.SqlLogger
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.statements.StatementContext
 import org.jetbrains.exposed.sql.statements.StatementInterceptor
 import org.jetbrains.exposed.sql.statements.expandArgs
-import kotlin.time.Duration
-import kotlin.time.measureTimedValue
 
 /**
  * A simple in-memory log of [Event]s storing arbitrary data of type [T], which can be [log]ed variously throughout the
@@ -77,65 +70,6 @@ sealed class Logger<T> {
         }
 
         mutableEventsFlow.tryEmit(emptyList())
-    }
-
-    /**
-     * A global [Logger] which can [intercept] OkHttp requests and log events for each of them.
-     */
-    object Network : Logger<Network.EventData>() {
-        data class EventData(val isSpotifyApi: Boolean, val isRequest: Boolean, val isResponse: Boolean)
-
-        private fun Headers.toContentString(): String {
-            val headers = this
-            return buildString {
-                headers.forEach { (name, value) ->
-                    append("$name : $value")
-                    appendLine()
-                }
-            }
-        }
-
-        fun intercept(chain: Interceptor.Chain): Response {
-            val request = chain.request()
-            httpRequest(request)
-
-            val (response, duration) = measureTimedValue { chain.proceed(request) }
-            httpResponse(response, duration)
-
-            return response
-        }
-
-        private fun httpRequest(request: Request) {
-            log(
-                title = ">> ${request.method} ${request.url}",
-                content = request.headers.toContentString(),
-                data = EventData(
-                    isSpotifyApi = request.url.host == "api.spotify.com",
-                    isRequest = true,
-                    isResponse = false,
-                ),
-            )
-        }
-
-        private fun httpResponse(response: Response, duration: Duration) {
-            log(
-                title = "<< ${response.code} ${response.request.method} ${response.request.url} in $duration",
-                content = buildString {
-                    append("Message: ${response.message}")
-                    if (response.headers.any()) {
-                        appendLine()
-                        appendLine()
-
-                        append(response.headers.toContentString())
-                    }
-                },
-                data = EventData(
-                    isSpotifyApi = response.request.url.host == "api.spotify.com",
-                    isRequest = false,
-                    isResponse = true,
-                ),
-            )
-        }
     }
 
     object Database :

@@ -74,6 +74,7 @@ fun <T> LogList(
     display: LogEventDisplay<T> = object : LogEventDisplay<T> {},
     sortProperties: ImmutableList<SortableProperty<Log.Event<T>>> = persistentListOf(),
     filter: ((LogAndEvent<T>) -> Boolean)? = null,
+    filterKey: Any? = filter,
     onResetFilter: () -> Unit = {},
     canResetFilter: Boolean = false,
     headerContent: @Composable ((eventCleared: (Log.Event<T>) -> Boolean) -> Unit)? = null,
@@ -84,6 +85,7 @@ fun <T> LogList(
         display = display,
         sortProperties = sortProperties,
         filter = filter,
+        filterKey = filterKey,
         onResetFilter = onResetFilter,
         canResetFilter = canResetFilter,
         annotateTitlesByLog = false,
@@ -99,6 +101,7 @@ fun <T> LogList(
     display: LogEventDisplay<T> = object : LogEventDisplay<T> {},
     sortProperties: ImmutableList<SortableProperty<Log.Event<T>>> = persistentListOf(),
     filter: ((LogAndEvent<T>) -> Boolean)? = null,
+    filterKey: Any? = filter,
     onResetFilter: () -> Unit = {},
     canResetFilter: Boolean = false,
     annotateTitlesByLog: Boolean = logs.count() > 1,
@@ -168,7 +171,13 @@ fun <T> LogList(
         .collectAsState()
         .value
 
-    val visibleEvents: List<LogAndEvent<T>> = remember(logs, selectedEventTypes.value, filter, sorts.value, clearTime) {
+    val visibleEvents: List<LogAndEvent<T>> = remember(
+        logs,
+        selectedEventTypes.value,
+        filterKey,
+        sorts.value,
+        clearTime,
+    ) {
         // do not filter if all or none are selected (no-op filter)
         val filterEventType = selectedEventTypes.value.size in 1 until Log.Event.Type.entries.size
 

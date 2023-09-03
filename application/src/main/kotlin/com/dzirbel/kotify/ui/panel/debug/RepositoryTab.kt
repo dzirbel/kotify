@@ -66,16 +66,12 @@ fun RepositoryTab() {
             RepositoryEventRemoteTimeProperty,
             RepositoryEventOverheadTimeProperty,
         ),
-        // hack: use let{} to ensure a new lambda object is produced on change
-        filter = enabledLogs.value.let { logs ->
-            selectedDataSources.value.let { dataSources ->
-                if (filterDataSource) {
-                    { it.log in logs && it.event.data.source in dataSources }
-                } else {
-                    { it.log in logs }
-                }
-            }
+        filter = if (filterDataSource) {
+            { it.log in enabledLogs.value && it.event.data.source in selectedDataSources.value }
+        } else {
+            { it.log in enabledLogs.value }
         },
+        filterKey = Pair(enabledLogs.value, selectedDataSources.value),
         onResetFilter = {
             enabledLogs.value = repositoryLogs.toPersistentSet()
             selectedDataSources.value = persistentSetOf()

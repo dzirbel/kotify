@@ -55,7 +55,7 @@ fun main(args: Array<String>) {
 
         measureInitTime("network") {
             val okHttpClient = OkHttpClient.Builder()
-                .addInterceptor(Logger.Network::intercept)
+                .addInterceptor(NetworkLogger::intercept)
                 .addInterceptor(DelayInterceptor)
                 .build()
 
