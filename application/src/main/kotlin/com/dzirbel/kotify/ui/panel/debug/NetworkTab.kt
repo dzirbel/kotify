@@ -1,11 +1,13 @@
 package com.dzirbel.kotify.ui.panel.debug
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.NetworkLogger
 import com.dzirbel.kotify.log.Log
@@ -13,34 +15,36 @@ import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.AppliedTextField
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
-import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
-import com.dzirbel.kotify.ui.util.mutate
-
-private data class NetworkSettings(
-    val filterApi: Boolean = false,
-    val filterIncoming: Boolean = false,
-    val filterOutgoing: Boolean = false,
-)
-
-private val networkSettings = mutableStateOf(NetworkSettings())
 
 @Composable
 fun NetworkTab() {
+    val filterApi = remember { mutableStateOf(false) }
+    val filterIncoming = remember { mutableStateOf(false) }
+    val filterOutgoing = remember { mutableStateOf(false) }
+
     LogList(
         log = NetworkLogger.log,
         display = NetworkLogEventDisplay,
         filter = { (_, event) ->
-            (!networkSettings.value.filterApi || event.data.isSpotifyApi) &&
-                (!networkSettings.value.filterIncoming || event.data.isResponse) &&
-                (!networkSettings.value.filterOutgoing || event.data.isRequest)
+            (!filterApi.value || event.data.isSpotifyApi) &&
+                (!filterIncoming.value || event.data.isResponse) &&
+                (!filterOutgoing.value || event.data.isRequest)
         },
-        filterKey = networkSettings.value,
-        onResetFilter = { networkSettings.value = NetworkSettings() },
-        canResetFilter = networkSettings.value != NetworkSettings(),
+        filterKey = Triple(filterApi.value, filterIncoming.value, filterOutgoing.value),
+        onResetFilter = {
+            filterApi.value = false
+            filterIncoming.value = false
+            filterOutgoing.value = false
+        },
+        canResetFilter = filterApi.value || filterIncoming.value || filterOutgoing.value,
     ) {
-        Column(Modifier.fillMaxWidth().padding(Dimens.space3)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(Dimens.space3),
+            verticalArrangement = Arrangement.spacedBy(Dimens.space2),
+        ) {
             AppliedTextField(
                 value = DelayInterceptor.delayMs.toString(),
                 label = "Network delay (ms)",
@@ -52,31 +56,39 @@ fun NetworkTab() {
                 },
             )
 
-            VerticalSpacer(Dimens.space2)
-
             CheckboxWithLabel(
                 modifier = Modifier.fillMaxWidth(),
-                checked = networkSettings.value.filterApi,
-                onCheckedChange = { networkSettings.mutate { copy(filterApi = it) } },
+                checked = filterApi.value,
+                onCheckedChange = { filterApi.value = it },
                 label = { Text("Spotify API calls only") },
             )
 
-            VerticalSpacer(Dimens.space2)
-
             CheckboxWithLabel(
                 modifier = Modifier.fillMaxWidth(),
-                checked = networkSettings.value.filterIncoming,
-                onCheckedChange = { networkSettings.mutate { copy(filterIncoming = it) } },
-                label = { Text("Incoming responses only") },
+                checked = filterIncoming.value,
+                onCheckedChange = { checked ->
+                    filterIncoming.value = checked
+                    if (checked) filterOutgoing.value = false
+                },
+                label = {
+                    CachedIcon(name = "download", size = Dimens.iconTiny)
+                    HorizontalSpacer(Dimens.space1)
+                    Text("Incoming responses only")
+                },
             )
 
-            VerticalSpacer(Dimens.space2)
-
             CheckboxWithLabel(
                 modifier = Modifier.fillMaxWidth(),
-                checked = networkSettings.value.filterOutgoing,
-                onCheckedChange = { networkSettings.mutate { copy(filterOutgoing = it) } },
-                label = { Text("Outgoing requests only") },
+                checked = filterOutgoing.value,
+                onCheckedChange = { checked ->
+                    filterOutgoing.value = checked
+                    if (checked) filterIncoming.value = false
+                },
+                label = {
+                    CachedIcon(name = "upload", size = Dimens.iconTiny)
+                    HorizontalSpacer(Dimens.space1)
+                    Text("Outgoing requests only")
+                },
             )
         }
     }

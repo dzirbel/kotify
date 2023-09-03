@@ -18,7 +18,6 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.ToggleButtonGroup
-import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.util.capitalize
 import com.dzirbel.kotify.util.coroutines.lockedState
@@ -62,16 +61,12 @@ fun ImageCacheTab() {
                 Text("Image cache metrics loading...")
             }
 
-            VerticalSpacer(Dimens.space2)
-
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { SpotifyImageCache.clear() },
             ) {
                 Text("Clear image cache")
             }
-
-            VerticalSpacer(Dimens.space2)
 
             ToggleButtonGroup(
                 elements = DataSource.entries.toImmutableList(),

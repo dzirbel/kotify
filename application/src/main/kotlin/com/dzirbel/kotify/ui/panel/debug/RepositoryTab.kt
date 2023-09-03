@@ -47,7 +47,6 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.flow.runningFold
 
-// TODO persist filter/sort/scroll even if tab is not in UI
 @Composable
 fun RepositoryTab() {
     val logMutex = remember { MergedMutex(repositoryLogs.map { it.writeLock }) }
