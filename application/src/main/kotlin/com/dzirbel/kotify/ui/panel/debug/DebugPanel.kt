@@ -19,7 +19,6 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.rememberWindowState
 import com.dzirbel.kotify.Application
-import com.dzirbel.kotify.Logger
 import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.Theme
@@ -33,12 +32,12 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 
-enum class DebugTab(val tabName: String, val log: Logger<*>?) {
-    EVENTS("Events", null),
-    NETWORK("Network", null),
-    DATABASE("Database", null),
-    REPOSITORY("Repository", null),
-    IMAGE_CACHE("Images", null),
+private enum class DebugTab(val tabName: String) {
+    EVENTS("Events"),
+    NETWORK("Network"),
+    DATABASE("Database"),
+    REPOSITORY("Repository"),
+    IMAGE_CACHE("Images"),
 }
 
 private val debugPanelSize = PanelSize(
@@ -124,17 +123,6 @@ private fun DebugPanelContent(tab: DebugTab, onClickTab: (DebugTab) -> Unit) {
                 DebugTab.DATABASE -> DatabaseTab()
                 DebugTab.REPOSITORY -> RepositoryTab()
                 DebugTab.IMAGE_CACHE -> ImageCacheTab()
-            }
-        }
-
-        if (tab.log != null) {
-            HorizontalDivider()
-
-            SimpleTextButton(
-                onClick = { tab.log.clear() },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Clear log")
             }
         }
     }
