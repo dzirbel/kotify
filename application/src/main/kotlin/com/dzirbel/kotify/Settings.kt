@@ -114,6 +114,7 @@ object Settings {
             EventLog.warn(
                 title = "Error loading settings from ${settingsFile.absolutePath}; reverting to defaults",
                 content = ex.stackTraceToString(),
+                duration = start.elapsedNow(),
             )
             null
         }
@@ -122,17 +123,19 @@ object Settings {
     @OptIn(ExperimentalSerializationApi::class)
     private fun save(data: SettingsData) {
         GlobalScope.launch(context = ioCoroutineContext) {
+            val start = TimeSource.Monotonic.markNow()
             assertNotOnUIThread()
 
             try {
                 settingsFile.outputStream().use { outputStream ->
                     json.encodeToStream(data, outputStream)
                 }
-                EventLog.info("Saved settings to ${settingsFile.absolutePath}")
+                EventLog.info("Saved settings to ${settingsFile.absolutePath}", duration = start.elapsedNow())
             } catch (ex: Throwable) {
                 EventLog.warn(
                     title = "Error saving settings to ${settingsFile.absolutePath}",
                     content = ex.stackTraceToString(),
+                    duration = start.elapsedNow(),
                 )
             }
         }
