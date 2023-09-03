@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui
 
-import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.dzirbel.kotify.log.Logging
@@ -31,13 +30,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
-
-@Stable
-sealed class ImageCacheEvent {
-    data class InMemory(val url: String) : ImageCacheEvent()
-    data class OnDisk(val url: String, val duration: Duration, val cacheFile: File) : ImageCacheEvent()
-    data class Fetch(val url: String, val duration: Duration, val cacheFile: File?) : ImageCacheEvent()
-}
 
 // TODO support mosaic (playlist cover image) urls e.g. https://mosaic.scdn.co/640/<id>
 private const val SPOTIFY_IMAGE_URL_PREFIX = "https://i.scdn.co/image/"
