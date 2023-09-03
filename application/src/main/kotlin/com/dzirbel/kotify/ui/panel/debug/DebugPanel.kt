@@ -2,6 +2,7 @@ package com.dzirbel.kotify.ui.panel.debug
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,11 +40,10 @@ enum class DebugTab(val tabName: String, val log: Logger<*>?) {
     DATABASE("Database", Logger.Database),
     REPOSITORY("Repository", null),
     IMAGE_CACHE("Images", Logger.ImageCache),
-    UI("UI", Logger.UI),
 }
 
 private val debugPanelSize = PanelSize(
-    initialSize = FixedOrPercent.Fixed(500.dp),
+    initialSize = FixedOrPercent.Fixed(600.dp),
     minPanelSizeDp = 300.dp,
     minContentSizePercent = 0.5f,
 )
@@ -106,14 +106,15 @@ private fun DebugPanelContent(tab: DebugTab, scrollState: ScrollState, onClickTa
                 DebugTab.entries.forEach { buttonTab ->
                     SimpleTextButton(
                         onClick = { onClickTab(buttonTab) },
-                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(vertical = Dimens.space3, horizontal = Dimens.space1),
                         backgroundColor = if (tab == buttonTab) {
                             LocalColors.current.primary
                         } else {
                             Color.Transparent
                         },
                     ) {
-                        Text(buttonTab.tabName)
+                        Text(buttonTab.tabName, maxLines = 1)
                     }
                 }
             }
@@ -126,7 +127,6 @@ private fun DebugPanelContent(tab: DebugTab, scrollState: ScrollState, onClickTa
                 DebugTab.DATABASE -> DatabaseTab(scrollState)
                 DebugTab.REPOSITORY -> RepositoryTab()
                 DebugTab.IMAGE_CACHE -> ImageCacheTab(scrollState)
-                DebugTab.UI -> UITab()
             }
         }
 

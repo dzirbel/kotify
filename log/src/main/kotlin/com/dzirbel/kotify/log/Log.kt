@@ -27,7 +27,7 @@ interface Log<T> {
         val duration: Duration? = null,
     ) {
         enum class Type {
-            INFO, SUCCESS, WARNING, ERROR
+            SUCCESS, INFO, WARNING, ERROR
         }
     }
 

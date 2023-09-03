@@ -139,7 +139,7 @@ fun RepositoryTab() {
                         .collectAsState()
                         .value
 
-                    Text("$name [$count]")
+                    Text("$name [$count]", maxLines = 1)
                 },
             )
         }
@@ -195,7 +195,7 @@ private fun <T> LogListToggle(
                 onCheckedChange = { checked -> onSetEnabledLogs(enabledLogs.plusOrMinus(log, checked)) },
                 label = {
                     val name = log.name.removeSuffix("Repository")
-                    Text("$name [$count]")
+                    Text("$name [$count]", maxLines = 1)
                 },
                 modifier = Modifier.fillMaxWidth(),
             )

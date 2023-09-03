@@ -45,6 +45,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyTypography
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.util.ProvidingDisabledContentAlpha
 import com.dzirbel.kotify.ui.util.setClipboard
 import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.capitalize
@@ -230,7 +231,7 @@ fun <T> LogList(
                             content = { type ->
                                 val count = countsByType?.get(type.ordinal)
                                 val name = type.name.lowercase().capitalize()
-                                Text("$name [$count]")
+                                Text("$name [$count]", maxLines = 1)
                             },
                         )
 
@@ -247,13 +248,13 @@ fun <T> LogList(
                                 Icon(
                                     imageVector = Icons.Default.Refresh,
                                     contentDescription = null,
-                                    modifier = Modifier.size(Dimens.iconSmall),
+                                    modifier = Modifier.size(Dimens.iconTiny),
                                 )
 
                                 HorizontalSpacer(Dimens.space1)
                             }
 
-                            Text("${visibleEvents.size}/$numEvents visible")
+                            Text("${visibleEvents.size}/$numEvents visible", maxLines = 1)
                         }
                     }
 
@@ -272,13 +273,16 @@ fun <T> LogList(
                             SimpleTextButton(onClick = { clearTimeState.value = CurrentTime.millis }) {
                                 CachedIcon("delete", size = Dimens.iconSmall)
                                 HorizontalSpacer(Dimens.space1)
-                                Text("Clear")
+                                Text("Clear", maxLines = 1)
                             }
 
-                            SimpleTextButton(onClick = { clearTimeState.value = null }, enabled = clearTime != null) {
-                                CachedIcon("restore-from-trash", size = Dimens.iconSmall)
-                                HorizontalSpacer(Dimens.space1)
-                                Text("Restore")
+                            val canRestore = clearTime != null
+                            ProvidingDisabledContentAlpha(disabled = !canRestore) {
+                                SimpleTextButton(onClick = { clearTimeState.value = null }, enabled = canRestore) {
+                                    CachedIcon("restore-from-trash", size = Dimens.iconSmall)
+                                    HorizontalSpacer(Dimens.space1)
+                                    Text("Restore", maxLines = 1)
+                                }
                             }
                         }
                     }
@@ -366,10 +370,10 @@ private fun <T> EventItem(log: Log<T>, event: Log.Event<T>, display: LogEventDis
                 if (duration == null) {
                     Box(Modifier) // empty element to keep time aligned right
                 } else {
-                    Text(text = duration.formatShortDuration(decimals = 1), style = textStyle)
+                    Text(text = duration.formatShortDuration(decimals = 1), style = textStyle, maxLines = 1)
                 }
 
-                Text(text = liveEventTimeText(event.time), style = textStyle)
+                Text(text = liveEventTimeText(event.time), style = textStyle, maxLines = 1)
             }
         }
     }
