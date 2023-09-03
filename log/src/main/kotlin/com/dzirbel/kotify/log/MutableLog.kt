@@ -3,7 +3,6 @@ package com.dzirbel.kotify.log
 import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -24,16 +23,26 @@ interface MutableLog<T> : Log<T> {
     fun log(event: Log.Event<T>): Log.Event<T>
 }
 
+/**
+ * Creates a new [MutableLog] with the given [name] and [scope].
+ *
+ * @param T type of data associated with each [Log.Event]
+ * @param name user-readable name used to identify the log in the debug UI and log files
+ * @param scope [CoroutineScope] used to emit events
+ * @param bufferCapacity number of events to buffer in the [Log.eventsFlow], may be increased for logs which are
+ *  "bursty" and likely to emit many events in a short period of time
+ */
 @Suppress("FunctionNaming")
-fun <T> MutableLog(name: String, scope: CoroutineScope): MutableLog<T> = MutableLogImpl(name, scope)
+fun <T> MutableLog(name: String, scope: CoroutineScope, bufferCapacity: Int = 16): MutableLog<T> {
+    return MutableLogImpl(name = name, scope = scope, bufferCapacity = bufferCapacity)
+}
 
-private class MutableLogImpl<T>(override val name: String, private val scope: CoroutineScope) : MutableLog<T> {
+private class MutableLogImpl<T>(override val name: String, private val scope: CoroutineScope, bufferCapacity: Int) :
+    MutableLog<T> {
+
     private val _events = mutableListOf<Log.Event<T>>()
 
-    private val _eventsFlow = MutableSharedFlow<Log.Event<T>>(
-        extraBufferCapacity = 16,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _eventsFlow = MutableSharedFlow<Log.Event<T>>(extraBufferCapacity = bufferCapacity)
 
     override val writeLock = Mutex()
 
@@ -47,15 +56,11 @@ private class MutableLogImpl<T>(override val name: String, private val scope: Co
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             writeLock.withLock {
                 _events.add(event)
-                _eventsFlow.forceEmit(event)
+                _eventsFlow.emit(event)
             }
         }
 
         return event
-    }
-
-    private fun <T> MutableSharedFlow<T>.forceEmit(value: T) {
-        check(tryEmit(value)) { "failed to emit $value" }
     }
 }
 
