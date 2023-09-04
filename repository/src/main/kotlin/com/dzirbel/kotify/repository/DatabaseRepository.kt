@@ -103,7 +103,9 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
                 requestLog.info("$numExisting/${ids.count()} $entityName states in memory", DataSource.MEMORY)
             },
             onCreate = { creations ->
-                scope.launch { load(ids = creations.keys, cacheStrategy = cacheStrategy, requestLog = requestLog) }
+                scope.launch {
+                    load(ids = creations.keys.toList(), cacheStrategy = cacheStrategy, requestLog = requestLog)
+                }
             },
         )
     }
@@ -122,16 +124,13 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
      * If [cacheStrategy] is [CacheStrategy.NeverValid] then the call to the cache is skipped entirely.
      */
     private suspend fun load(id: String, cacheStrategy: CacheStrategy<ViewModel>, requestLog: RequestLog) {
-        // TODO need this check? should not be true when either creating a new state or refreshing from remote
-        if (states.getValue(id).needsLoad(cacheStrategy)) {
-            val allowCache = cacheStrategy !is CacheStrategy.NeverValid
+        val allowCache = cacheStrategy !is CacheStrategy.NeverValid
 
-            val loadedFromCache = allowCache &&
-                loadFromCache(id = id, cacheStrategy = cacheStrategy, requestLog = requestLog)
+        val loadedFromCache = allowCache &&
+            loadFromCache(id = id, cacheStrategy = cacheStrategy, requestLog = requestLog)
 
-            if (!loadedFromCache) {
-                loadFromRemote(id = id, requestLog = requestLog)
-            }
+        if (!loadedFromCache) {
+            loadFromRemote(id = id, requestLog = requestLog)
         }
     }
 
@@ -141,22 +140,16 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
      *
      * If [cacheStrategy] is [CacheStrategy.NeverValid] then the call to the cache is skipped entirely.
      */
-    private suspend fun load(ids: Iterable<String>, cacheStrategy: CacheStrategy<ViewModel>, requestLog: RequestLog) {
-        val idsToLoad = ids.filter { id ->
-            states.getValue(id).needsLoad(cacheStrategy)
+    private suspend fun load(ids: List<String>, cacheStrategy: CacheStrategy<ViewModel>, requestLog: RequestLog) {
+        val allowCache = cacheStrategy !is CacheStrategy.NeverValid
+        val idsToLoadFromRemote = if (allowCache) {
+            loadFromCache(ids = ids, cacheStrategy = cacheStrategy, requestLog = requestLog)
+        } else {
+            ids
         }
 
-        if (idsToLoad.isNotEmpty()) {
-            val allowCache = cacheStrategy !is CacheStrategy.NeverValid
-            val idsToLoadFromRemote = if (allowCache) {
-                loadFromCache(ids = idsToLoad, cacheStrategy = cacheStrategy, requestLog = requestLog)
-            } else {
-                idsToLoad
-            }
-
-            if (idsToLoadFromRemote.isNotEmpty()) {
-                loadFromRemote(ids = idsToLoadFromRemote, requestLog = requestLog)
-            }
+        if (idsToLoadFromRemote.isNotEmpty()) {
+            loadFromRemote(ids = idsToLoadFromRemote, requestLog = requestLog)
         }
     }
 
@@ -397,19 +390,6 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
                 title = "no remote model for $numNullNetworkModels/${ids.size} $entityNamePlural",
                 source = DataSource.REMOTE,
             )
-        }
-    }
-
-    /**
-     * Determines whether this [CacheState] should be refreshed according to [cacheStrategy].
-     */
-    private fun CacheState<ViewModel>?.needsLoad(cacheStrategy: CacheStrategy<ViewModel>): Boolean {
-        return when (this) {
-            is CacheState.Loaded -> cacheStrategy.validity(cachedValue).shouldBeRefreshed
-            is CacheState.Refreshing -> false
-            is CacheState.NotFound -> false // do not retry on 404s
-            is CacheState.Error -> true // always retry on errors
-            null -> true
         }
     }
 }
