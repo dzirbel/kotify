@@ -36,18 +36,18 @@ import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
-fun NavigationPanel(headerVisibleState: MutableTransitionState<Boolean>, titles: ImmutableList<String?>) {
-    LocalColors.current.WithSurface(increment = if (headerVisibleState.targetState) Colors.INCREMENT_SMALL else 0) {
+fun NavigationPanel(titleVisibilityState: MutableTransitionState<Boolean>, titles: ImmutableList<() -> String?>) {
+    LocalColors.current.WithSurface(increment = if (titleVisibilityState.targetState) Colors.INCREMENT_SMALL else 0) {
         Row(
-            modifier = Modifier.fillMaxWidth().animatedSurfaceBackground(key = headerVisibleState),
+            modifier = Modifier.fillMaxWidth().animatedSurfaceBackground(key = titleVisibilityState),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             NavigationButtons(titles = titles)
 
-            titles[pageStack.value.currentIndex]?.let { title ->
-                AnimatedVisibility(visibleState = headerVisibleState, enter = fadeIn(), exit = fadeOut()) {
-                    Text(title)
+            titles[pageStack.value.currentIndex].invoke()?.let { currentTitle ->
+                AnimatedVisibility(visibleState = titleVisibilityState, enter = fadeIn(), exit = fadeOut()) {
+                    Text(currentTitle)
                 }
             }
 
@@ -66,7 +66,7 @@ fun NavigationPanel(headerVisibleState: MutableTransitionState<Boolean>, titles:
 }
 
 @Composable
-private fun NavigationButtons(titles: ImmutableList<String?>) {
+private fun NavigationButtons(titles: ImmutableList<() -> String?>) {
     Row(Modifier.padding(Dimens.space2)) {
         IconButton(
             enabled = pageStack.value.hasPrevious,
@@ -102,7 +102,7 @@ private fun NavigationButtons(titles: ImmutableList<String?>) {
                         },
                         enabled = index != pageStack.value.currentIndex,
                     ) {
-                        Text(titles[index] ?: page.toString())
+                        Text(titles[index].invoke() ?: page.toString())
                     }
                 }
             }

@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui.framework
+package com.dzirbel.kotify.ui.page
 
 import androidx.compose.runtime.Stable
 
@@ -13,7 +13,7 @@ import androidx.compose.runtime.Stable
  */
 @Stable
 class PageStack private constructor(
-    val pages: List<Page<*>>,
+    val pages: List<Page>,
     val currentIndex: Int,
 ) {
     init {
@@ -23,14 +23,14 @@ class PageStack private constructor(
     /**
      * The currently visible [Page] on the stack.
      */
-    val current: Page<*>
+    val current: Page
         get() = pages[currentIndex]
 
     /**
      * The [Page] immediately before the [current] page on the stack, or null if there is no such page (the back-stack
      * is empty).
      */
-    val previous: Page<*>?
+    val previous: Page?
         get() = pages.getOrNull(currentIndex - 1)
 
     /**
@@ -43,7 +43,7 @@ class PageStack private constructor(
      * The [Page] immediately after the [current] page on the stack, or null if there is no such page (the forward-stack
      * is empty).
      */
-    val next: Page<*>?
+    val next: Page?
         get() = pages.getOrNull(currentIndex + 1)
 
     /**
@@ -52,7 +52,7 @@ class PageStack private constructor(
     val hasNext: Boolean
         get() = currentIndex < pages.lastIndex
 
-    constructor(page: Page<*>) : this(pages = listOf(page), currentIndex = 0)
+    constructor(page: Page) : this(pages = listOf(page), currentIndex = 0)
 
     /**
      * Returns a copy of this [PageStack] which represents the stack navigated to the [previous] page.
@@ -89,7 +89,7 @@ class PageStack private constructor(
      *
      * If [allowDuplicate] is false (the default), [page] will only be added if it is different than the [current] page.
      */
-    fun to(page: Page<*>, allowDuplicate: Boolean = false): PageStack {
+    fun to(page: Page, allowDuplicate: Boolean = false): PageStack {
         if (!allowDuplicate && current == page) return this
 
         return PageStack(

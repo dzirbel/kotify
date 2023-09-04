@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.page.artist
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -42,8 +41,8 @@ import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.toImageSize
-import com.dzirbel.kotify.ui.framework.Page
-import com.dzirbel.kotify.ui.framework.VerticalScrollPage
+import com.dzirbel.kotify.ui.page.Page
+import com.dzirbel.kotify.ui.page.PageScope
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.properties.AlbumNameProperty
@@ -65,9 +64,9 @@ import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 
-data class ArtistPage(val artistId: String) : Page<String?>() {
+data class ArtistPage(val artistId: String) : Page {
     @Composable
-    override fun BoxScope.bind(visible: Boolean): String? {
+    override fun PageScope.bind() {
         val artist = ArtistRepository.stateOf(artistId).collectAsState().value?.cachedValue
 
         val displayedAlbumTypes = remember { mutableStateOf(persistentSetOf(AlbumType.ALBUM)) }
@@ -108,9 +107,8 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
             )
         }
 
-        VerticalScrollPage(
-            visible = visible,
-            onHeaderVisibilityChanged = { headerVisible -> navigationTitleState.targetState = !headerVisible },
+        DisplayVerticalScrollPage(
+            title = artist?.name,
             header = {
                 ArtistPageHeader(
                     artist = artist,
@@ -123,31 +121,26 @@ data class ArtistPage(val artistId: String) : Page<String?>() {
                     },
                 )
             },
-            content = {
-                if (artistAlbums.derived { it.hasElements }.value) {
-                    Grid(
-                        elements = artistAlbums.value,
-                        edgePadding = PaddingValues(
-                            start = Dimens.space5 - Dimens.space3,
-                            end = Dimens.space5 - Dimens.space3,
-                            bottom = Dimens.space3,
-                        ),
-                    ) { _, artistAlbum ->
-                        AlbumCell(
-                            album = artistAlbum.album,
-                            onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.album.id)) } },
-                        )
-                    }
-                } else {
-                    PageLoadingSpinner()
+        ) {
+            if (artistAlbums.derived { it.hasElements }.value) {
+                Grid(
+                    elements = artistAlbums.value,
+                    edgePadding = PaddingValues(
+                        start = Dimens.space5 - Dimens.space3,
+                        end = Dimens.space5 - Dimens.space3,
+                        bottom = Dimens.space3,
+                    ),
+                ) { _, artistAlbum ->
+                    AlbumCell(
+                        album = artistAlbum.album,
+                        onClick = { pageStack.mutate { to(AlbumPage(albumId = artistAlbum.album.id)) } },
+                    )
                 }
-            },
-        )
-
-        return artist?.name
+            } else {
+                PageLoadingSpinner()
+            }
+        }
     }
-
-    override fun titleFor(data: String?) = data
 }
 
 @Composable

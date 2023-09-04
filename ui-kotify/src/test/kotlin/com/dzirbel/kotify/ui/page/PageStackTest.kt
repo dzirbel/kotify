@@ -1,6 +1,5 @@
-package com.dzirbel.kotify.ui.framework
+package com.dzirbel.kotify.ui.page
 
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.Composable
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -12,11 +11,9 @@ import assertk.assertions.isTrue
 import org.junit.jupiter.api.Test
 
 internal class PageStackTest {
-    private data class TestPage(val id: Int) : Page<Unit>() {
+    private data class TestPage(val id: Int) : Page {
         @Composable
-        override fun BoxScope.bind(visible: Boolean) {}
-
-        override fun titleFor(data: Unit) = null
+        override fun PageScope.bind() {}
     }
 
     @Test

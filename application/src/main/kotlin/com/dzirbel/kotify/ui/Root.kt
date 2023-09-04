@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material.Text
@@ -14,7 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.repository.player.PlayerRepository
@@ -24,8 +22,8 @@ import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
 import com.dzirbel.kotify.ui.components.panel.PanelSize
 import com.dzirbel.kotify.ui.components.panel.SidePanel
-import com.dzirbel.kotify.ui.framework.Page
-import com.dzirbel.kotify.ui.framework.PageStack
+import com.dzirbel.kotify.ui.page.PageStack
+import com.dzirbel.kotify.ui.page.PageStackContent
 import com.dzirbel.kotify.ui.page.artists.ArtistsPage
 import com.dzirbel.kotify.ui.panel.debug.DebugPanel
 import com.dzirbel.kotify.ui.panel.library.LibraryPanel
@@ -33,8 +31,7 @@ import com.dzirbel.kotify.ui.panel.navigation.NavigationPanel
 import com.dzirbel.kotify.ui.player.PlayerPanel
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.unauthenticated.Unauthenticated
-import com.dzirbel.kotify.util.immutable.mapIndexedToImmutableList
-import kotlinx.collections.immutable.ImmutableList
+import com.dzirbel.kotify.util.immutable.mapToImmutableList
 
 /**
  * State of the [PageStack], available globally for convenience, rather than passing it into each function which
@@ -104,7 +101,7 @@ fun Root() {
                             direction = PanelDirection.LEFT,
                             panelSize = libraryPanelSize,
                             panelContent = { LibraryPanel() },
-                            mainContent = { PageStackContent() },
+                            mainContent = { PageStackAndNavigationPanel() },
                         )
 
                         PlayerPanel()
@@ -141,46 +138,33 @@ private fun InvalidatingRootContent(content: @Composable () -> Unit) {
  * titles rendered in the [NavigationPanel].
  */
 @Composable
-private fun PageStackContent() {
-    // use a custom Layout in order to render the page stack first, but place it below the navigation panel (which
-    // depends on the page stack for its titles)
-    Layout(
-        modifier = Modifier.surfaceBackground(),
-        content = {
-            /**
-             * Extension function to allow proper parameterization of [Page] on [T]; retrieves the page state from
-             * [Page.bind] and passes it into [Page.titleFor], returning the resulting value.
-             */
-            @Composable
-            fun <T> Page<T>.bindAndGetTitle(scope: BoxScope, visible: Boolean): String? {
-                val data: T = with(scope) {
-                    bind(visible = visible)
-                }
+private fun PageStackAndNavigationPanel() {
+    val pageStack = pageStack.value
 
-                return titleFor(data)
-            }
+    // hacky, but create (and remember) individual states for the title and header visibility of each page
+    val titles = List(pageStack.pages.size) { pageIndex ->
+        remember(pageIndex) { mutableStateOf<String?>(null) }
+    }
+    val navigationTitleVisibilityStates = List(pageStack.pages.size) { pageIndex ->
+        remember(pageIndex) { MutableTransitionState(false) }
+    }
+    val currentNavigationTitleVisibilityState = navigationTitleVisibilityStates[pageStack.currentIndex]
 
-            val pageStack = pageStack.value
-            lateinit var titles: ImmutableList<String?>
-            Box {
-                titles = pageStack.pages.mapIndexedToImmutableList { (index, page) ->
-                    page.bindAndGetTitle(scope = this, visible = index == pageStack.currentIndex)
-                }
-            }
-
-            NavigationPanel(headerVisibleState = pageStack.current.navigationTitleState, titles = titles)
-        },
-    ) { measurables, constraints ->
-        assert(measurables.size == 2)
-
-        val headerPlaceable = measurables[1].measure(constraints)
-        val contentPlaceable = measurables[0].measure(
-            constraints.copy(maxHeight = constraints.maxHeight - headerPlaceable.height),
+    Column(modifier = Modifier.surfaceBackground()) {
+        NavigationPanel(
+            titleVisibilityState = currentNavigationTitleVisibilityState,
+            titles = titles.mapToImmutableList { { it.value } },
         )
 
-        layout(width = constraints.maxWidth, height = constraints.maxHeight) {
-            headerPlaceable.place(0, 0)
-            contentPlaceable.place(x = 0, y = headerPlaceable.height)
-        }
+        PageStackContent(
+            pageStack = pageStack,
+            setTitle = { index, title ->
+                titles[index].value = title
+            },
+            setNavigationTitleVisible = { visible ->
+                currentNavigationTitleVisibilityState.targetState = visible
+            },
+            modifier = Modifier.weight(1f),
+        )
     }
 }

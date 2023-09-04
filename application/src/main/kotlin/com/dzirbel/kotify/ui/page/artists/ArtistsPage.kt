@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.page.artists
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -47,8 +46,8 @@ import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.components.star.RatingHistogram
 import com.dzirbel.kotify.ui.components.toImageSize
-import com.dzirbel.kotify.ui.framework.Page
-import com.dzirbel.kotify.ui.framework.VerticalScrollPage
+import com.dzirbel.kotify.ui.page.Page
+import com.dzirbel.kotify.ui.page.PageScope
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
@@ -71,9 +70,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 val artistCellImageSize = Dimens.contentImage
 
-object ArtistsPage : Page<Unit>() {
+data object ArtistsPage : Page {
     @Composable
-    override fun BoxScope.bind(visible: Boolean) {
+    override fun PageScope.bind() {
         val scope = rememberCoroutineScope()
 
         // accumulate saved artist IDs, never removing them from the library so that the artist does not disappear from
@@ -116,48 +115,44 @@ object ArtistsPage : Page<Unit>() {
             )
         }
 
-        VerticalScrollPage(
-            visible = visible,
-            onHeaderVisibilityChanged = { headerVisible -> navigationTitleState.targetState = !headerVisible },
+        DisplayVerticalScrollPage(
+            title = "Saved Artists",
             header = {
                 ArtistsPageHeader(artistsAdapter = artistsAdapter, artistProperties = artistProperties)
             },
-            content = {
-                if (artistsAdapter.derived { it.hasElements }.value) {
-                    var selectedArtistIndex by remember { mutableStateOf<Int?>(null) }
+        ) {
+            if (artistsAdapter.derived { it.hasElements }.value) {
+                var selectedArtistIndex by remember { mutableStateOf<Int?>(null) }
 
-                    Grid(
-                        elements = artistsAdapter.value,
-                        edgePadding = PaddingValues(
-                            start = Dimens.space5 - Dimens.space3,
-                            end = Dimens.space5 - Dimens.space3,
-                            bottom = Dimens.space3,
-                        ),
-                        selectedElementIndex = selectedArtistIndex,
-                        detailInsertContent = { _, artist ->
-                            ArtistDetailInsert(artist = artist)
-                        },
-                        cellContent = { index, artist ->
-                            ArtistCell(
-                                artist = artist,
-                                imageSize = artistCellImageSize,
-                                onClick = {
-                                    pageStack.mutate { to(ArtistPage(artistId = artist.id)) }
-                                },
-                                onMiddleClick = {
-                                    selectedArtistIndex = index.takeIf { it != selectedArtistIndex }
-                                },
-                            )
-                        },
-                    )
-                } else {
-                    PageLoadingSpinner()
-                }
-            },
-        )
+                Grid(
+                    elements = artistsAdapter.value,
+                    edgePadding = PaddingValues(
+                        start = Dimens.space5 - Dimens.space3,
+                        end = Dimens.space5 - Dimens.space3,
+                        bottom = Dimens.space3,
+                    ),
+                    selectedElementIndex = selectedArtistIndex,
+                    detailInsertContent = { _, artist ->
+                        ArtistDetailInsert(artist = artist)
+                    },
+                    cellContent = { index, artist ->
+                        ArtistCell(
+                            artist = artist,
+                            imageSize = artistCellImageSize,
+                            onClick = {
+                                pageStack.mutate { to(ArtistPage(artistId = artist.id)) }
+                            },
+                            onMiddleClick = {
+                                selectedArtistIndex = index.takeIf { it != selectedArtistIndex }
+                            },
+                        )
+                    },
+                )
+            } else {
+                PageLoadingSpinner()
+            }
+        }
     }
-
-    override fun titleFor(data: Unit) = "Saved Artists"
 }
 
 @Composable

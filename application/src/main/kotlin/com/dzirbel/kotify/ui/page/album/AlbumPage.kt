@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.page.album
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,8 +30,8 @@ import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.Table
-import com.dzirbel.kotify.ui.framework.Page
-import com.dzirbel.kotify.ui.framework.VerticalScrollPage
+import com.dzirbel.kotify.ui.page.Page
+import com.dzirbel.kotify.ui.page.PageScope
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.properties.TrackAlbumIndexProperty
@@ -58,9 +57,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlin.time.Duration.Companion.milliseconds
 
-data class AlbumPage(val albumId: String) : Page<String?>() {
+data class AlbumPage(val albumId: String) : Page {
     @Composable
-    override fun BoxScope.bind(visible: Boolean): String? {
+    override fun PageScope.bind() {
         val album = AlbumRepository.stateOf(id = albumId).collectAsState().value?.cachedValue
 
         val tracksAdapterState = rememberListAdapterState(
@@ -97,29 +96,23 @@ data class AlbumPage(val albumId: String) : Page<String?>() {
             )
         }
 
-        VerticalScrollPage(
-            visible = visible,
-            onHeaderVisibilityChanged = { headerVisible -> navigationTitleState.targetState = !headerVisible },
+        DisplayVerticalScrollPage(
+            title = album?.name,
             header = {
                 AlbumHeader(albumId = albumId, adapter = tracksAdapterState)
             },
-            content = {
-                if (tracksAdapterState.derived { it.hasElements }.value) {
-                    Table(
-                        columns = trackProperties,
-                        items = tracksAdapterState.value,
-                        onSetSort = { tracksAdapterState.withSort(persistentListOfNotNull(it)) },
-                    )
-                } else {
-                    PageLoadingSpinner()
-                }
-            },
-        )
-
-        return album?.name
+        ) {
+            if (tracksAdapterState.derived { it.hasElements }.value) {
+                Table(
+                    columns = trackProperties,
+                    items = tracksAdapterState.value,
+                    onSetSort = { tracksAdapterState.withSort(persistentListOfNotNull(it)) },
+                )
+            } else {
+                PageLoadingSpinner()
+            }
+        }
     }
-
-    override fun titleFor(data: String?) = data
 }
 
 @Composable

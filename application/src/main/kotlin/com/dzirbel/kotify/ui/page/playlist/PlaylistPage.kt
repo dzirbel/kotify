@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.page.playlist
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,8 +39,8 @@ import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.Table
-import com.dzirbel.kotify.ui.framework.Page
-import com.dzirbel.kotify.ui.framework.VerticalScrollPage
+import com.dzirbel.kotify.ui.page.Page
+import com.dzirbel.kotify.ui.page.PageScope
 import com.dzirbel.kotify.ui.properties.PlaylistTrackAddedAtProperty
 import com.dzirbel.kotify.ui.properties.PlaylistTrackIndexProperty
 import com.dzirbel.kotify.ui.properties.TrackAlbumProperty
@@ -68,9 +67,9 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-data class PlaylistPage(private val playlistId: String) : Page<String?>() {
+data class PlaylistPage(private val playlistId: String) : Page {
     @Composable
-    override fun BoxScope.bind(visible: Boolean): String? {
+    override fun PageScope.bind() {
         val playlist = PlaylistRepository.stateOf(id = playlistId).collectAsState().value?.cachedValue
 
         val playlistTracksAdapter = rememberListAdapterState(
@@ -99,9 +98,8 @@ data class PlaylistPage(private val playlistId: String) : Page<String?>() {
         SavedTrackRepository.rememberSavedStates(playlistTracksAdapter.value) { it.track?.id }
         TrackRatingRepository.rememberRatingStates(playlistTracksAdapter.value) { it.track?.id }
 
-        VerticalScrollPage(
-            visible = visible,
-            onHeaderVisibilityChanged = { headerVisible -> navigationTitleState.targetState = !headerVisible },
+        DisplayVerticalScrollPage(
+            title = playlist?.name,
             header = {
                 PlaylistHeader(
                     playlistId = playlistId,
@@ -111,23 +109,18 @@ data class PlaylistPage(private val playlistId: String) : Page<String?>() {
                     onSetSort = { playlistTracksAdapter.mutate { withSort(it) } },
                 )
             },
-            content = {
-                if (playlistTracksAdapter.value.hasElements) {
-                    Table(
-                        columns = columns,
-                        items = playlistTracksAdapter.value,
-                        onSetSort = { playlistTracksAdapter.mutate { withSort(persistentListOfNotNull(it)) } },
-                    )
-                } else {
-                    PageLoadingSpinner()
-                }
-            },
-        )
-
-        return playlist?.name
+        ) {
+            if (playlistTracksAdapter.value.hasElements) {
+                Table(
+                    columns = columns,
+                    items = playlistTracksAdapter.value,
+                    onSetSort = { playlistTracksAdapter.mutate { withSort(persistentListOfNotNull(it)) } },
+                )
+            } else {
+                PageLoadingSpinner()
+            }
+        }
     }
-
-    override fun titleFor(data: String?) = data
 }
 
 @Composable

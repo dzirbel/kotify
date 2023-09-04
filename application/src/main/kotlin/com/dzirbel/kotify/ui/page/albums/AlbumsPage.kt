@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.ui.page.albums
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,8 +36,8 @@ import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
 import com.dzirbel.kotify.ui.components.toImageSize
-import com.dzirbel.kotify.ui.framework.Page
-import com.dzirbel.kotify.ui.framework.VerticalScrollPage
+import com.dzirbel.kotify.ui.page.Page
+import com.dzirbel.kotify.ui.page.PageScope
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.properties.AlbumNameProperty
@@ -61,9 +60,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 val albumCellImageSize = Dimens.contentImage
 
-object AlbumsPage : Page<Unit>() {
+data object AlbumsPage : Page {
     @Composable
-    override fun BoxScope.bind(visible: Boolean) {
+    override fun PageScope.bind() {
         val scope = rememberCoroutineScope()
         val displayedLibraryFlow = remember {
             SavedAlbumRepository.library
@@ -105,36 +104,32 @@ object AlbumsPage : Page<Unit>() {
             )
         }
 
-        VerticalScrollPage(
-            visible = visible,
-            onHeaderVisibilityChanged = { headerVisible -> navigationTitleState.targetState = !headerVisible },
+        DisplayVerticalScrollPage(
+            title = "Saved Albums",
             header = {
                 AlbumsPageHeader(albumsAdapter = albumsAdapter, albumProperties = albumProperties)
             },
-            content = {
-                if (albumsAdapter.derived { it.hasElements }.value) {
-                    Grid(
-                        elements = albumsAdapter.value,
-                        edgePadding = PaddingValues(
-                            start = Dimens.space5 - Dimens.space3,
-                            end = Dimens.space5 - Dimens.space3,
-                            bottom = Dimens.space3,
-                        ),
-                        cellContent = { _, album ->
-                            AlbumCell(
-                                album = album,
-                                onClick = { pageStack.mutate { to(AlbumPage(albumId = album.id)) } },
-                            )
-                        },
-                    )
-                } else {
-                    PageLoadingSpinner()
-                }
-            },
-        )
+        ) {
+            if (albumsAdapter.derived { it.hasElements }.value) {
+                Grid(
+                    elements = albumsAdapter.value,
+                    edgePadding = PaddingValues(
+                        start = Dimens.space5 - Dimens.space3,
+                        end = Dimens.space5 - Dimens.space3,
+                        bottom = Dimens.space3,
+                    ),
+                    cellContent = { _, album ->
+                        AlbumCell(
+                            album = album,
+                            onClick = { pageStack.mutate { to(AlbumPage(albumId = album.id)) } },
+                        )
+                    },
+                )
+            } else {
+                PageLoadingSpinner()
+            }
+        }
     }
-
-    override fun titleFor(data: Unit) = "Saved Albums"
 }
 
 @Composable
