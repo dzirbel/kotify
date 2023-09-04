@@ -1,5 +1,11 @@
 package com.dzirbel.kotify.network.oauth
 
+import com.dzirbel.kotify.log.Log
+import com.dzirbel.kotify.log.MutableLog
+import com.dzirbel.kotify.log.asLog
+import com.dzirbel.kotify.log.info
+import com.dzirbel.kotify.log.success
+import com.dzirbel.kotify.log.warn
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.util.await
 import com.dzirbel.kotify.network.util.bodyFromJson
@@ -7,12 +13,8 @@ import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
@@ -29,6 +31,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.time.Instant
 import java.util.concurrent.TimeUnit
+import kotlin.time.TimeSource
 
 /**
  * Represents an access token which may be used to access the Spotify API.
@@ -100,15 +103,13 @@ data class AccessToken(
             prettyPrint = true
         }
 
+        private val scope = GlobalScope
+
         private var refreshJob: Job? = null
 
-        private val _logEvents = MutableSharedFlow<LogEvent>(replay = 16, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        private val mutableLog = MutableLog<Unit>("AccessToken", scope)
 
-        /**
-         * A [Flow] of [LogEvent]s recorded whenever a notable change happens in the [Cache].
-         */
-        val logEvents: Flow<LogEvent>
-            get() = _logEvents.asSharedFlow()
+        val log: Log<Unit> = mutableLog.asLog()
 
         private val _tokenFlow = MutableStateFlow<AccessToken?>(null)
 
@@ -125,7 +126,7 @@ data class AccessToken(
         fun requireRefreshable() {
             val token = _tokenFlow.value ?: load()
             if (token != null && token.refreshToken == null) {
-                warn("Current access token is not refreshable, clearing")
+                mutableLog.warn("Current access token is not refreshable, clearing")
                 clear()
             }
         }
@@ -166,7 +167,7 @@ data class AccessToken(
          * Puts the given [AccessToken] in the cache, immediately writing it to disk.
          */
         internal fun put(accessToken: AccessToken) {
-            info("Putting new access token in cache")
+            mutableLog.info("Putting new access token in cache")
             _tokenFlow.value = accessToken
             save(accessToken)
         }
@@ -180,10 +181,10 @@ data class AccessToken(
                 try {
                     Files.deleteIfExists(cacheFile.toPath())
                 } catch (ioException: IOException) {
-                    warn("Error deleting access token cache file: ${ioException.message}")
+                    mutableLog.warn(ioException, "Error deleting access token cache file")
                 }
             }
-            info("Cleared access token from cache")
+            mutableLog.info("Cleared access token from cache")
         }
 
         /**
@@ -201,12 +202,13 @@ data class AccessToken(
         private fun save(token: AccessToken) {
             val file = cacheFile
             if (file != null) {
+                val start = TimeSource.Monotonic.markNow()
                 file.outputStream().use { outputStream ->
                     json.encodeToStream(token, outputStream)
                 }
-                info("Saved access token to $file")
+                mutableLog.success("Saved access token to $file", duration = start.elapsedNow())
             } else {
-                warn("No cache file provided; did not save access token to disk")
+                mutableLog.warn("No cache file provided; did not save access token to disk")
             }
         }
 
@@ -217,17 +219,18 @@ data class AccessToken(
         private fun load(): AccessToken? {
             val file = cacheFile
             if (file == null) {
-                warn("No cache file provided; cannot load access token from disk")
+                mutableLog.warn("No cache file provided; cannot load access token from disk")
                 return null
             }
 
+            val start = TimeSource.Monotonic.markNow()
             return try {
                 file.inputStream()
                     .use { json.decodeFromStream<AccessToken>(it) }
                     .also { _tokenFlow.value = it }
-                    .also { info("Loaded access token from $cacheFile") }
+                    .also { mutableLog.success("Loaded access token from $cacheFile", duration = start.elapsedNow()) }
             } catch (_: FileNotFoundException) {
-                null.also { info("No saved access token at $cacheFile") }
+                null.also { mutableLog.info("No saved access token at $cacheFile", duration = start.elapsedNow()) }
             }
         }
 
@@ -239,6 +242,8 @@ data class AccessToken(
          */
         private suspend fun refresh(clientId: String, client: OkHttpClient) {
             suspend fun fetchRefresh(refreshToken: String, clientId: String) {
+                val start = TimeSource.Monotonic.markNow()
+
                 val body = FormBody.Builder()
                     .add("grant_type", "refresh_token")
                     .add("refresh_token", refreshToken)
@@ -253,13 +258,14 @@ data class AccessToken(
                 val token = try {
                     client.newCall(request).await()
                         .use { response -> response.bodyFromJson<AccessToken>() }
-                } catch (_: Throwable) {
+                } catch (throwable: Throwable) {
+                    mutableLog.warn(throwable, "Error refreshing access token", duration = start.elapsedNow())
                     clear()
                     null
                 }
 
                 if (token != null) {
-                    info("Got refreshed access token")
+                    mutableLog.success("Got refreshed access token", duration = start.elapsedNow())
                     _tokenFlow.value = token
                     save(token)
                 }
@@ -267,8 +273,8 @@ data class AccessToken(
 
             _tokenFlow.value?.refreshToken?.let { refreshToken ->
                 val job = synchronized(this) {
-                    refreshJob ?: GlobalScope.async {
-                        info("Current access token is expired; refreshing")
+                    refreshJob ?: scope.async {
+                        mutableLog.info("Current access token is expired; refreshing")
                         fetchRefresh(refreshToken = refreshToken, clientId = clientId)
                         refreshJob = null
                     }.also { refreshJob = it }
@@ -278,24 +284,6 @@ data class AccessToken(
             }
         }
 
-        private fun info(message: String) {
-            check(_logEvents.tryEmit(LogEvent.Info(message)))
-        }
-
-        private fun warn(message: String) {
-            check(_logEvents.tryEmit(LogEvent.Warning(message)))
-        }
-
         class NoAccessTokenError : Throwable()
-
-        /**
-         * A simple wrapper on events logged by the [Cache] which may be either at info or warning levels.
-         */
-        sealed interface LogEvent {
-            val message: String
-
-            data class Info(override val message: String) : LogEvent
-            data class Warning(override val message: String) : LogEvent
-        }
     }
 }

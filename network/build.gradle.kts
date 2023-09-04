@@ -7,6 +7,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":log"))
     implementation(project(":util"))
 
     testImplementation(testFixtures(project(":util")))

@@ -10,13 +10,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.EventLog
 import com.dzirbel.kotify.Settings
+import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
 import com.dzirbel.kotify.ui.invalidateRootComposable
 import com.dzirbel.kotify.ui.theme.Dimens
 
 @Composable
 fun EventsTab() {
-    LogList(EventLog) {
+    LogList(listOf(EventLog, AccessToken.Cache.log), annotateTitlesByLog = false) {
         Column(Modifier.padding(Dimens.space3), verticalArrangement = Arrangement.spacedBy(Dimens.space2)) {
             Text("UI Instrumentation")
 

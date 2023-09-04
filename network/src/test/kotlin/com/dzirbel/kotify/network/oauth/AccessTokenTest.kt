@@ -35,7 +35,9 @@ import java.util.concurrent.TimeUnit
 internal class AccessTokenTest {
     @BeforeEach
     fun beforeEach() {
-        AccessToken.Cache.clear()
+        CurrentTime.mocked {
+            AccessToken.Cache.clear()
+        }
     }
 
     @Test
