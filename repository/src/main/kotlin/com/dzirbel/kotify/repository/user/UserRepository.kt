@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository.user
 
+import com.dzirbel.kotify.db.DB
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.Image
 import com.dzirbel.kotify.db.model.User
@@ -84,7 +85,7 @@ open class UserRepository internal constructor(
         userSessionScope.launch {
             val dbStart = TimeSource.Monotonic.markNow()
             val cachedUser = currentUserId.value?.let { userId ->
-                KotifyDatabase.transaction("load current user") { fetchFromDatabase(userId)?.first }
+                KotifyDatabase[DB.CACHE].transaction("load current user") { fetchFromDatabase(userId)?.first }
             }
             requestLog.addDbTime(dbStart.elapsedNow())
 
@@ -142,7 +143,7 @@ open class UserRepository internal constructor(
 
             // TODO also reset Player state
 
-            KotifyDatabase.transaction("clear current user id") {
+            KotifyDatabase[DB.CACHE].transaction("clear current user id") {
                 UserTable.CurrentUserTable.clear()
             }
         }
@@ -152,7 +153,7 @@ open class UserRepository internal constructor(
         val start = TimeSource.Monotonic.markNow()
         val user = Spotify.UsersProfile.getCurrentUser()
         val fetchTime = start.midpointInstantToNow()
-        return KotifyDatabase.transaction("set current user") {
+        return KotifyDatabase[DB.CACHE].transaction("set current user") {
             UserTable.CurrentUserTable.set(user.id)
 
             convertToDB(networkModel = user, fetchTime = fetchTime)

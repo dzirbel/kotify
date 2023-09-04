@@ -5,6 +5,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.dzirbel.kotify.db.DB
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.log.LogFile
 import com.dzirbel.kotify.log.success
@@ -18,6 +19,7 @@ import com.dzirbel.kotify.ui.KeyboardShortcuts
 import com.dzirbel.kotify.ui.Root
 import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.util.CurrentTime
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import kotlin.time.Duration
 import kotlin.time.measureTime
@@ -50,13 +52,14 @@ fun main(args: Array<String>) {
         measureInitTime("database") {
             KotifyDatabase.enabled = true
 
-            KotifyDatabase.init(
-                dbFile = Application.cacheDir.resolve("cache.db"),
-                sqlLogger = DatabaseLogger,
-                onConnect = { UserRepository.onConnectToDatabase() },
-            )
-
+            KotifyDatabase.init(dbDir = Application.cacheDir, sqlLogger = DatabaseLogger)
             KotifyDatabase.addTransactionListener(DatabaseLogger)
+
+            runBlocking {
+                KotifyDatabase[DB.CACHE].transaction("load current user") {
+                    UserRepository.onConnectToDatabase()
+                }
+            }
         }
 
         measureInitTime("network") {

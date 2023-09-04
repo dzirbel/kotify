@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.repository.artist
 
 import androidx.compose.runtime.Stable
+import com.dzirbel.kotify.db.DB
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.TrackTable
 import com.dzirbel.kotify.repository.Repository
@@ -43,7 +44,7 @@ open class ArtistTracksRepository internal constructor(private val scope: Corout
         Repository.checkEnabled()
         return artistTrackStates.getOrCreateStateFlow(artistId) {
             scope.launch {
-                val trackIds = KotifyDatabase.transaction(name = "load artist $artistId tracks") {
+                val trackIds = KotifyDatabase[DB.CACHE].transaction(name = "load artist $artistId tracks") {
                     TrackTable.TrackArtistTable.trackIdsForArtist(artistId = artistId)
                 }
 
@@ -60,7 +61,9 @@ open class ArtistTracksRepository internal constructor(private val scope: Corout
         Repository.checkEnabled()
         return artistTrackStates.getOrCreateStateFlows(keys = artistIds) { createdIds ->
             scope.launch {
-                val tracksByArtist = KotifyDatabase.transaction(name = "load tracks for ${createdIds.size} artists") {
+                val tracksByArtist = KotifyDatabase[DB.CACHE].transaction(
+                    name = "load tracks for ${createdIds.size} artists",
+                ) {
                     createdIds.mapValues { (artistId, _) ->
                         TrackTable.TrackArtistTable.trackIdsForArtist(artistId = artistId)
                     }

@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository.rating
 
+import com.dzirbel.kotify.db.DB
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.TrackRatingTable
 import com.dzirbel.kotify.log.MutableLog
@@ -45,7 +46,9 @@ open class TrackRatingRepository internal constructor(
         Repository.checkEnabled()
         return states.getOrCreateStateFlow(key = id) {
             userSessionScope.launch {
-                val rating = KotifyDatabase.transaction("load last rating of track id $id") { lastRatingOf(id = id) }
+                val rating = KotifyDatabase[DB.RATINGS].transaction("load last rating of track id $id") {
+                    lastRatingOf(id = id)
+                }
                 states.updateValue(id, rating)
             }
         }
@@ -56,7 +59,7 @@ open class TrackRatingRepository internal constructor(
         return states.getOrCreateStateFlows(keys = ids) { creations ->
             userSessionScope.launch {
                 val createdIds = creations.keys.toList() // convert to list to ensure consistent order
-                val ratings = KotifyDatabase.transaction("load last ratings of ${createdIds.size} tracks") {
+                val ratings = KotifyDatabase[DB.RATINGS].transaction("load last ratings of ${createdIds.size} tracks") {
                     createdIds.map { lastRatingOf(id = it) }
                 }
                 createdIds.zipEach(ratings) { id, rating ->
@@ -108,11 +111,11 @@ open class TrackRatingRepository internal constructor(
 
             if (rating == null) {
                 // TODO just add a null rating on top rather than clearing history?
-                KotifyDatabase.transaction("clear rating for track id $id") {
+                KotifyDatabase[DB.RATINGS].transaction("clear rating for track id $id") {
                     TrackRatingTable.deleteWhere { (track eq id) and (TrackRatingTable.userId eq userId) }
                 }
             } else {
-                KotifyDatabase.transaction("add rating for track id $id") {
+                KotifyDatabase[DB.RATINGS].transaction("add rating for track id $id") {
                     TrackRatingTable.insert { statement ->
                         statement[track] = id
                         statement[TrackRatingTable.rating] = rating.rating
@@ -127,19 +130,21 @@ open class TrackRatingRepository internal constructor(
 
     override suspend fun ratedEntities(userId: String): Set<String> {
         Repository.checkEnabled()
-        return KotifyDatabase.transaction("load rated track ids for user $userId") {
+        return KotifyDatabase[DB.RATINGS].transaction("load rated track ids for user $userId") {
             TrackRatingTable
                 .slice(TrackRatingTable.track)
                 .select { TrackRatingTable.userId eq userId }
                 .distinct()
-                .mapTo(mutableSetOf()) { it[TrackRatingTable.track].value }
+                .mapTo(mutableSetOf()) { it[TrackRatingTable.track] }
         }
     }
 
     override fun clearAllRatings(userId: String?) {
         Repository.checkEnabled()
         applicationScope.launch {
-            KotifyDatabase.transaction(userId?.let { "clear ratings for user $userId" } ?: "clear all ratings") {
+            KotifyDatabase[DB.RATINGS].transaction(
+                name = userId?.let { "clear ratings for user $userId" } ?: "clear all ratings",
+            ) {
                 if (userId == null) {
                     TrackRatingTable.deleteAll()
                 } else {

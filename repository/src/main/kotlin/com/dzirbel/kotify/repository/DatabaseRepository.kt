@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository
 
+import com.dzirbel.kotify.db.DB
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.log.MutableLog
 import com.dzirbel.kotify.log.asLog
@@ -171,7 +172,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         val dbStart = TimeSource.Monotonic.markNow()
 
         val (viewModel, lastUpdated) = try {
-            KotifyDatabase.transaction(name = "load $entityName $id") {
+            KotifyDatabase[DB.CACHE].transaction(name = "load $entityName $id") {
                 fetchFromDatabase(id = id)?.mapFirst(::convertToVM)
             }
                 ?: return false
@@ -207,7 +208,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         val dbStart = TimeSource.Monotonic.markNow()
 
         val cachedEntities = try {
-            KotifyDatabase.transaction(name = "load ${ids.size} $entityNamePlural") {
+            KotifyDatabase[DB.CACHE].transaction(name = "load ${ids.size} $entityNamePlural") {
                 fetchFromDatabase(ids = ids).map { it?.mapFirst(::convertToVM) }
             }
         } catch (cancellationException: CancellationException) {
@@ -279,7 +280,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
 
             val dbStart = TimeSource.Monotonic.markNow()
             val viewModel = try {
-                KotifyDatabase.transaction("save $entityName $id") {
+                KotifyDatabase[DB.CACHE].transaction("save $entityName $id") {
                     val databaseModel = convertToDB(id = id, networkModel = networkModel, fetchTime = fetchTime)
                     convertToVM(databaseModel = databaseModel)
                 }
@@ -341,7 +342,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
             val dbStart = TimeSource.Monotonic.markNow()
             var numNonNullViewModels = 0
             val viewModels = try {
-                KotifyDatabase.transaction("save $numNotNullNetworkModels $entityNamePlural") {
+                KotifyDatabase[DB.CACHE].transaction("save $numNotNullNetworkModels $entityNamePlural") {
                     networkModels.zip(ids) { networkModel, id ->
                         networkModel?.let {
                             val databaseModel = convertToDB(id = id, networkModel = networkModel, fetchTime = fetchTime)

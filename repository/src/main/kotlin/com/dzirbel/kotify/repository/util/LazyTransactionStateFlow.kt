@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository.util
 
+import com.dzirbel.kotify.db.DB
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
@@ -23,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class LazyTransactionStateFlow<T>(
     private val transactionName: String,
     initialValue: T? = null,
+    private val db: DB = DB.CACHE,
     private val scope: CoroutineScope = Repository.applicationScope,
     private val getter: () -> T?,
 ) : StateFlow<T?> {
@@ -38,7 +40,7 @@ class LazyTransactionStateFlow<T>(
     override suspend fun collect(collector: FlowCollector<T?>): Nothing {
         if (!requested.getAndSet(true)) {
             scope.launch {
-                flow.value = KotifyDatabase.transaction(name = transactionName) { getter() }
+                flow.value = KotifyDatabase[db].transaction(name = transactionName) { getter() }
             }
         }
 
@@ -52,6 +54,7 @@ class LazyTransactionStateFlow<T>(
          */
         fun <T, R : Any> Iterable<T>.requestBatched(
             transactionName: (Int) -> String,
+            db: DB = DB.CACHE,
             scope: CoroutineScope = Repository.applicationScope,
             extractor: (T) -> LazyTransactionStateFlow<R>,
         ) {
@@ -61,7 +64,7 @@ class LazyTransactionStateFlow<T>(
 
             if (unrequestedProperties.isNotEmpty()) {
                 scope.launch {
-                    val values = KotifyDatabase.transaction(name = transactionName(unrequestedProperties.size)) {
+                    val values = KotifyDatabase[db].transaction(name = transactionName(unrequestedProperties.size)) {
                         unrequestedProperties.map { property ->
                             // use with{} to include both property and transaction as receiver params
                             with(property) { getter() }

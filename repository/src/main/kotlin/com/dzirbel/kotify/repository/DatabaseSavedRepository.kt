@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository
 
+import com.dzirbel.kotify.db.DB
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.log.MutableLog
@@ -132,7 +133,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                     scope.launch {
                         val dbStart = TimeSource.Monotonic.markNow()
                         val cached: Boolean? = try {
-                            KotifyDatabase.transaction("load save state of $entityName $id") {
+                            KotifyDatabase[DB.CACHE].transaction("load save state of $entityName $id") {
                                 savedEntityTable.isSaved(entityId = id, userId = userId)
                             }
                         } catch (cancellationException: CancellationException) {
@@ -192,7 +193,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                 )
 
                                 try {
-                                    KotifyDatabase.transaction("set save state of $entityName $id") {
+                                    KotifyDatabase[DB.CACHE].transaction("set save state of $entityName $id") {
                                         savedEntityTable.setSaved(
                                             entityId = id,
                                             userId = userId,
@@ -239,7 +240,9 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                     scope.launch {
                         val dbStart = TimeSource.Monotonic.markNow()
                         val cached = try {
-                            KotifyDatabase.transaction("load save states of ${missingIds.size} ${entityName}s") {
+                            KotifyDatabase[DB.CACHE].transaction(
+                                name = "load save states of ${missingIds.size} ${entityName}s",
+                            ) {
                                 missingIds.map { id ->
                                     savedEntityTable.isSaved(entityId = id, userId = userId)
                                 }
@@ -322,7 +325,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                 )
 
                                 try {
-                                    KotifyDatabase.transaction(
+                                    KotifyDatabase[DB.CACHE].transaction(
                                         "set save state of ${idsToLoadFromRemote.size} ${entityName}s",
                                     ) {
                                         savedEntityTable.setSaved(
@@ -380,7 +383,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
             val dbStart = TimeSource.Monotonic.markNow()
             try {
-                KotifyDatabase.transaction("set saved state for $entityName $id") {
+                KotifyDatabase[DB.CACHE].transaction("set saved state for $entityName $id") {
                     savedEntityTable.setSaved(
                         entityId = id,
                         userId = UserRepository.requireCurrentUserId,
@@ -427,7 +430,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         val requestLog = RequestLog(log = mutableLog)
         val dbStart = TimeSource.Monotonic.markNow()
         return try {
-            KotifyDatabase.transaction("load $entityName saved library") {
+            KotifyDatabase[DB.CACHE].transaction("load $entityName saved library") {
                 GlobalUpdateTimesRepository.updated(currentUserLibraryUpdateKey)?.let { updatedTime ->
                     updatedTime to savedEntityTable.savedEntityIds(userId = UserRepository.requireCurrentUserId)
                 }
@@ -470,7 +473,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
         val dbStart = TimeSource.Monotonic.markNow()
         val remoteLibrary = try {
-            KotifyDatabase.transaction("save $entityName saved library") {
+            KotifyDatabase[DB.CACHE].transaction("save $entityName saved library") {
                 GlobalUpdateTimesRepository.setUpdated(key = currentUserLibraryUpdateKey, updateTime = fetchTime)
 
                 val cachedLibrary: Set<String> = libraryResource.flow.value?.ids

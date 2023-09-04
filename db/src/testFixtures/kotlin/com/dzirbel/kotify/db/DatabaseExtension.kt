@@ -16,7 +16,7 @@ class DatabaseExtension : BeforeAllCallback, BeforeEachCallback, AfterEachCallba
         // only initialize the DB once per test suite (whereas beforeAll is called once per test class)
         if (!initializedDb.getAndSet(true)) {
             // use database file relative to the module to avoid interference with parallel test suites
-            KotifyDatabase.init(dbFile = File("test.db").also(File::deleteOnExit))
+            KotifyDatabase.init(dbDir = File("."), deleteOnExit = true)
         }
     }
 
