@@ -30,6 +30,7 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.Files
 import java.time.Instant
+import java.util.EnumSet
 import java.util.concurrent.TimeUnit
 import kotlin.time.TimeSource
 
@@ -63,7 +64,11 @@ data class AccessToken(
     /**
      * A parsed list of the scopes granted by this [AccessToken], or null if it was not granted with [scope].
      */
-    val scopes: List<String>? by lazy { scope?.split(' ') }
+    val scopes: Set<OAuth.Scope>? by lazy {
+        scope
+            ?.split(' ')
+            ?.mapNotNullTo(EnumSet.noneOf(OAuth.Scope::class.java)) { OAuth.Scope.of(it) }
+    }
 
     /**
      * The [Instant] at which this [AccessToken] was received.
@@ -78,7 +83,7 @@ data class AccessToken(
     /**
      * Determines whether [scope] is granted by this [AccessToken].
      */
-    fun hasScope(scope: String): Boolean = scopes?.any { it.equals(scope, ignoreCase = true) } == true
+    fun hasScope(scope: OAuth.Scope): Boolean = scopes?.contains(scope) == true
 
     /**
      * A simple in-memory and filesystem cache for a single [AccessToken].
@@ -157,10 +162,59 @@ data class AccessToken(
             val token = _tokenFlow.value ?: load() ?: return null
 
             if (token.isExpired) {
-                refresh(clientId = clientId, client = client)
+                refresh(clientId = clientId, client = client)?.join()
             }
 
             return _tokenFlow.value
+        }
+
+        /**
+         * Attempts to refresh the in-memory token via its [AccessToken.refreshToken] (or does nothing if it has no
+         * refresh token) to get a fresh [AccessToken].
+         *
+         * If successful, the new access token is immediately available in-memory and written to disk.
+         */
+        fun refresh(
+            clientId: String = OAuth.DEFAULT_CLIENT_ID,
+            client: OkHttpClient = Spotify.configuration.oauthOkHttpClient,
+        ): Job? {
+            val refreshToken: String = _tokenFlow.value?.refreshToken ?: return null
+
+            return synchronized(this) {
+                refreshJob ?: scope.async {
+                    mutableLog.info("Current access token is expired; refreshing")
+
+                    val start = TimeSource.Monotonic.markNow()
+
+                    val body = FormBody.Builder()
+                        .add("grant_type", "refresh_token")
+                        .add("refresh_token", refreshToken)
+                        .add("client_id", clientId)
+                        .build()
+
+                    val request = Request.Builder()
+                        .post(body)
+                        .url("https://accounts.spotify.com/api/token")
+                        .build()
+
+                    val token = try {
+                        client.newCall(request).await()
+                            .use { response -> response.bodyFromJson<AccessToken>() }
+                    } catch (throwable: Throwable) {
+                        mutableLog.warn(throwable, "Error refreshing access token", duration = start.elapsedNow())
+                        clear()
+                        null
+                    }
+
+                    if (token != null) {
+                        mutableLog.success("Got refreshed access token", duration = start.elapsedNow())
+                        _tokenFlow.value = token
+                        save(token)
+                    }
+
+                    refreshJob = null
+                }.also { refreshJob = it }
+            }
         }
 
         /**
@@ -231,56 +285,6 @@ data class AccessToken(
                     .also { mutableLog.success("Loaded access token from $cacheFile", duration = start.elapsedNow()) }
             } catch (_: FileNotFoundException) {
                 null.also { mutableLog.info("No saved access token at $cacheFile", duration = start.elapsedNow()) }
-            }
-        }
-
-        /**
-         * Attempts to refresh the in-memory token via its [AccessToken.refreshToken] (or does nothing if it has no
-         * refresh token) to get a fresh [AccessToken].
-         *
-         * If successful, the new access token is immediately available in-memory and written to disk.
-         */
-        private suspend fun refresh(clientId: String, client: OkHttpClient) {
-            suspend fun fetchRefresh(refreshToken: String, clientId: String) {
-                val start = TimeSource.Monotonic.markNow()
-
-                val body = FormBody.Builder()
-                    .add("grant_type", "refresh_token")
-                    .add("refresh_token", refreshToken)
-                    .add("client_id", clientId)
-                    .build()
-
-                val request = Request.Builder()
-                    .post(body)
-                    .url("https://accounts.spotify.com/api/token")
-                    .build()
-
-                val token = try {
-                    client.newCall(request).await()
-                        .use { response -> response.bodyFromJson<AccessToken>() }
-                } catch (throwable: Throwable) {
-                    mutableLog.warn(throwable, "Error refreshing access token", duration = start.elapsedNow())
-                    clear()
-                    null
-                }
-
-                if (token != null) {
-                    mutableLog.success("Got refreshed access token", duration = start.elapsedNow())
-                    _tokenFlow.value = token
-                    save(token)
-                }
-            }
-
-            _tokenFlow.value?.refreshToken?.let { refreshToken ->
-                val job = synchronized(this) {
-                    refreshJob ?: scope.async {
-                        mutableLog.info("Current access token is expired; refreshing")
-                        fetchRefresh(refreshToken = refreshToken, clientId = clientId)
-                        refreshJob = null
-                    }.also { refreshJob = it }
-                }
-
-                job.join()
             }
         }
 

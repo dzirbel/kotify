@@ -2,10 +2,14 @@ package com.dzirbel.kotify.ui.components
 
 import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -13,8 +17,10 @@ import com.dzirbel.kotify.ui.util.setClipboard
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
-private const val DEFAULT_ICON_RESET_MS = 5_000L
+private val DEFAULT_ICON_RESET = 3.seconds
 
 /**
  * A simple icon button which sets [contents] as the clipboard contents on click and changes its icon to a check for
@@ -25,26 +31,28 @@ fun CopyButton(
     contents: String,
     modifier: Modifier = Modifier,
     iconSize: Dp = Dimens.iconMedium,
-    iconResetMs: Long = DEFAULT_ICON_RESET_MS,
+    iconResetMs: Duration = DEFAULT_ICON_RESET,
 ) {
-    val copied = remember { mutableStateOf(false) }
+    var copied by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    var resetIconJob: Job? = null
+    var resetIconJob: Job? by remember { mutableStateOf(null) }
 
     IconButton(
-        modifier = modifier,
+        // override the to use the default in case this is used within a text field
+        modifier = modifier.pointerHoverIcon(PointerIcon.Default),
+        enabled = !copied,
         onClick = {
             if (setClipboard(contents)) {
-                copied.value = true
+                copied = true
                 resetIconJob?.cancel()
                 resetIconJob = scope.launch {
                     resetIconJob = null
                     delay(iconResetMs)
-                    copied.value = false
+                    copied = false
                 }
             }
         },
     ) {
-        CachedIcon(name = if (copied.value) "task" else "content-copy", contentDescription = "Copy", size = iconSize)
+        CachedIcon(name = if (copied) "task" else "content-copy", contentDescription = "Copy", size = iconSize)
     }
 }

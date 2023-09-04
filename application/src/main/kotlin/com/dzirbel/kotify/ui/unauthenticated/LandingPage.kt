@@ -136,8 +136,8 @@ fun ColumnScope.LandingPage(
             Text("Scopes", style = MaterialTheme.typography.h5)
 
             IconButton(
-                enabled = params.scopes != OAuth.DEFAULT_SCOPES,
-                onClick = { onSetParams(params.copy(scopes = OAuth.DEFAULT_SCOPES.toPersistentSet())) },
+                enabled = params.scopes != OAuth.Scope.DEFAULT_SCOPES,
+                onClick = { onSetParams(params.copy(scopes = OAuth.Scope.DEFAULT_SCOPES.toPersistentSet())) },
             ) {
                 Icon(imageVector = Icons.Filled.Refresh, contentDescription = null)
             }
@@ -152,13 +152,13 @@ fun ColumnScope.LandingPage(
             text(" for details.")
         }
 
-        for (scope in OAuth.ALL_SCOPES) {
+        for (scope in OAuth.Scope.entries) {
             val checked = scope in params.scopes
             CheckboxWithLabel(
                 checked = checked,
                 onCheckedChange = { onSetParams(params.copy(scopes = params.scopes.plusOrMinus(scope, !checked))) },
                 label = {
-                    Text(scope)
+                    Text(scope.scope)
                 },
             )
         }

@@ -78,16 +78,13 @@ internal class AccessTokenTest {
                 accessToken = "",
                 tokenType = "",
                 expiresIn = 0,
-                scope = "scope1 SCOPE2",
+                scope = "user-library-read USER-LIBRARY-MODIFY",
             )
         }
 
-        assertThat(token.hasScope("scope1")).isTrue()
-        assertThat(token.hasScope("Scope1")).isTrue()
-        assertThat(token.hasScope("SCOPE2")).isTrue()
-        assertThat(token.hasScope("")).isFalse()
-        assertThat(token.hasScope("abcv")).isFalse()
-        assertThat(token.hasScope("scope3")).isFalse()
+        assertThat(token.hasScope(OAuth.Scope.USER_LIBRARY_READ)).isTrue()
+        assertThat(token.hasScope(OAuth.Scope.USER_LIBRARY_MODIFY)).isTrue()
+        assertThat(token.hasScope(OAuth.Scope.APP_REMOTE_CONTROL)).isFalse()
     }
 
     @Test

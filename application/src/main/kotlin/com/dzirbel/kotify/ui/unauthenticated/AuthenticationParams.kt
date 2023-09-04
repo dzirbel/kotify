@@ -8,6 +8,6 @@ import kotlinx.collections.immutable.toPersistentSet
 data class AuthenticationParams(
     val clientId: String = OAuth.DEFAULT_CLIENT_ID,
     val port: Int = LocalOAuthServer.DEFAULT_PORT,
-    val scopes: PersistentSet<String> = OAuth.DEFAULT_SCOPES.toPersistentSet(),
+    val scopes: PersistentSet<OAuth.Scope> = OAuth.Scope.DEFAULT_SCOPES.toPersistentSet(),
     val manualRedirectUrl: String = "",
 )
