@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class CachedResource<T : Any>(
     private val scope: CoroutineScope,
     private val getFromCache: suspend () -> T?,
-    private val getFromRemote: suspend () -> T,
+    private val getFromRemote: suspend () -> T?,
 ) {
     private val _flow: MutableStateFlow<T?> = MutableStateFlow(null)
     private val _refreshingFlow = MutableStateFlow(false)

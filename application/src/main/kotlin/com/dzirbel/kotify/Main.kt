@@ -1,10 +1,6 @@
 package com.dzirbel.kotify
 
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
-import androidx.compose.ui.window.rememberWindowState
 import com.dzirbel.kotify.db.DB
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.log.LogFile
@@ -15,8 +11,6 @@ import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.ui.IconCache
-import com.dzirbel.kotify.ui.KeyboardShortcuts
-import com.dzirbel.kotify.ui.Root
 import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.runBlocking
@@ -78,7 +72,7 @@ fun main(args: Array<String>) {
 
         measureInitTime("access token") {
             AccessToken.Cache.cacheFile = Application.cacheDir.resolve("access_token.json")
-            AccessToken.Cache.requireRefreshable() // clear non-refreshable tokens from tests
+            AccessToken.Cache.requireRefreshable() // load access toke and clear non-refreshable tokens from tests
         }
 
         measureInitTime("image cache") {
@@ -96,13 +90,5 @@ fun main(args: Array<String>) {
         duration = totalDuration,
     )
 
-    application {
-        Window(
-            onCloseRequest = ::exitApplication,
-            title = "${Application.name} ${Application.version}",
-            state = rememberWindowState(placement = WindowPlacement.Maximized, size = DpSize.Unspecified),
-            onKeyEvent = KeyboardShortcuts::handle,
-            content = { Root() },
-        )
-    }
+    application { KotifyWindow() }
 }

@@ -451,9 +451,9 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             }
     }
 
-    private suspend fun getLibraryRemote(): SavedRepository.Library {
+    private suspend fun getLibraryRemote(): SavedRepository.Library? {
         val requestLog = RequestLog(log = mutableLog)
-        val userId = UserRepository.requireCurrentUserId
+        val userId = UserRepository.currentUserId.value ?: return null
 
         val remoteStart = TimeSource.Monotonic.markNow()
 
