@@ -7,7 +7,7 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
-import okhttp3.HttpUrl
+import java.net.URI
 
 /**
  * Wraps a simple [ApplicationEngine] ktor server which responds to GET requests on the given [port] to capture
@@ -54,10 +54,18 @@ class LocalOAuthServer(
         return this
     }
 
-    suspend fun manualRedirectUrl(url: HttpUrl): Result {
-        val state = url.queryParameter("state")
-        val error = url.queryParameter("error")
-        val code = url.queryParameter("code")
+    suspend fun manualRedirectUri(uri: URI): Result {
+        val queryParams = uri.query.split('&')
+            .mapNotNull { param ->
+                param.split('=')
+                    .takeIf { it.size == 2 }
+                    ?.let { it[0] to it[1] }
+            }
+            .toMap()
+
+        val state = queryParams["state"]
+        val error = queryParams["error"]
+        val code = queryParams["code"]
 
         return handle(state = state, error = error, code = code)
     }

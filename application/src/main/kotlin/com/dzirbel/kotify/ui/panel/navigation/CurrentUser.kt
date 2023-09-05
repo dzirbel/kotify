@@ -279,9 +279,7 @@ private fun AccessTokenDetails(token: AccessToken?) {
 
             VerticalSpacer(Dimens.space4)
 
-            SimpleTextButton(
-                onClick = { openInBrowser("https://www.spotify.com/us/account/apps/") },
-            ) {
+            SimpleTextButton(onClick = { openInBrowser(OAuth.SPOTIFY_APPS_URL) }) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dimens.space2)) {
                     CachedIcon("open-in-new", size = Dimens.iconSmall)
                     Text("Manage apps in Spotify")

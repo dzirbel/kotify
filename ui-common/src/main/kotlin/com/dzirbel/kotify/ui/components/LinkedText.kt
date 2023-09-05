@@ -1,11 +1,19 @@
 package com.dzirbel.kotify.ui.components
 
+import androidx.compose.foundation.ContextMenuArea
+import androidx.compose.foundation.ContextMenuItem
+import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisallowComposableCalls
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.mutableStateOf
@@ -13,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.onPointerEvent
@@ -23,8 +32,14 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
+import com.dzirbel.contextmenu.ContextMenuDivider
+import com.dzirbel.contextmenu.ContextMenuIcon
+import com.dzirbel.contextmenu.ContextMenuParams
+import com.dzirbel.contextmenu.GenericContextMenuItem
+import com.dzirbel.contextmenu.MaterialContextMenuItem
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.openInBrowser
+import com.dzirbel.kotify.ui.util.setClipboard
 
 private const val ANNOTATION_TAG_LINK = "link"
 
@@ -68,27 +83,69 @@ interface LinkElementScope {
 @ReadOnlyComposable
 fun HyperlinkSpanStyle() = SpanStyle(color = LocalColors.current.primary, textDecoration = TextDecoration.Underline)
 
+@Composable
+fun UrlLinkedText(
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalTextStyle.current,
+    elements: @DisallowComposableCalls LinkElementScope.() -> Unit,
+) {
+    LinkedText(
+        modifier = modifier,
+        key = null,
+        style = style,
+        unhoveredSpanStyle = HyperlinkSpanStyle(),
+        hoveredSpanStyle = HyperlinkSpanStyle(),
+        linkContextMenu = { link ->
+            listOf(
+                MaterialContextMenuItem(
+                    label = "Copy",
+                    onClick = { setClipboard(link) },
+                    leadingIcon = ContextMenuIcon.OfPainterResource("content-copy.svg"),
+                ),
+                MaterialContextMenuItem(
+                    label = "Open in browser",
+                    onClick = { openInBrowser(link) },
+                    leadingIcon = ContextMenuIcon.OfPainterResource("open-in-new.svg"),
+                ),
+                ContextMenuDivider,
+                UrlContextMenuItem(link),
+            )
+        },
+        onClickLink = { openInBrowser(it) },
+        elements = elements,
+    )
+}
+
+private class UrlContextMenuItem(private val url: String) : GenericContextMenuItem() {
+    @Composable
+    override fun Content(onDismissRequest: () -> Unit, params: ContextMenuParams, modifier: Modifier) {
+        CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+            Text(url, modifier = modifier.padding(params.measurements.itemPadding))
+        }
+    }
+}
+
 /**
  * Displays text build by [elements] with embedded links, allowing styling the links based on the hover state of the
  * link and handling link clicks.
  *
- * TODO right click to open menu with copying the url as an option
  * TODO consider optimizing when the entire text is a link
  */
 @Composable
 fun LinkedText(
+    onClickLink: (String) -> Unit,
     modifier: Modifier = Modifier,
     key: Any? = null,
     style: TextStyle = LocalTextStyle.current,
     unhoveredSpanStyle: SpanStyle = SpanStyle(),
     hoveredSpanStyle: SpanStyle = SpanStyle(textDecoration = TextDecoration.Underline),
-    onClickLink: (String) -> Unit = { openInBrowser(it) },
+    linkContextMenu: ((String) -> List<ContextMenuItem>)? = null,
     elements: @DisallowComposableCalls LinkElementScope.() -> Unit,
 ) {
     val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
 
     val hoveredOffset = remember { mutableStateOf<Int?>(null) }
-    val hoveringLink = remember { mutableStateOf(false) }
+    val hoveredLink = remember { mutableStateOf<String?>(null) }
 
     val text = remember(hoveredOffset.value, key) {
         LinkElementBuilder(
@@ -101,7 +158,7 @@ fun LinkedText(
     }
 
     val clickModifier = Modifier.pointerInput(text) {
-        detectTapGestures { offset ->
+        detectTapGestures(matcher = PointerMatcher.mouse(PointerButton.Primary)) { offset ->
             text.characterOffset(offset, layoutResult.value)
                 ?.let { text.linkAnnotationAtOffset(it) }
                 ?.let(onClickLink)
@@ -113,24 +170,33 @@ fun LinkedText(
             val characterOffset = text.characterOffset(event.changes.first().position, layoutResult.value)
             val link = characterOffset?.let { text.linkAnnotationAtOffset(it) }
             hoveredOffset.value = characterOffset
-            hoveringLink.value = link != null
+            hoveredLink.value = link
         }
         .onPointerEvent(PointerEventType.Exit) {
             hoveredOffset.value = null
-            hoveringLink.value = false
+            hoveredLink.value = null
         }
-        .pointerHoverIcon(if (hoveringLink.value) PointerIcon.Hand else PointerIcon.Default)
 
     val textColor = style.color.takeOrElse {
         LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
     }
 
-    BasicText(
-        text = text,
-        modifier = modifier.then(clickModifier).then(hoverModifier),
-        style = style.copy(color = textColor),
-        onTextLayout = { layoutResult.value = it },
-    )
+    // hack: apply pointer icon outside ContextMenuArea so it is cleared in the context menu
+    Box(Modifier.pointerHoverIcon(if (hoveredLink.value != null) PointerIcon.Hand else PointerIcon.Default)) {
+        ContextMenuArea(
+            enabled = linkContextMenu != null && hoveredLink.value != null,
+            items = {
+                hoveredLink.value?.let { linkContextMenu?.invoke(it) }.orEmpty()
+            },
+        ) {
+            BasicText(
+                text = text,
+                modifier = modifier.then(clickModifier).then(hoverModifier),
+                style = style.copy(color = textColor),
+                onTextLayout = { layoutResult.value = it },
+            )
+        }
+    }
 }
 
 /**

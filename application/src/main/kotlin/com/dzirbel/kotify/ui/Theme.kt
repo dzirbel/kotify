@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui
 
 import androidx.compose.foundation.LocalContextMenuRepresentation
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.LocalTextContextMenu
 import androidx.compose.runtime.Composable
@@ -33,6 +34,8 @@ object Theme {
                             menuBottomPadding = 0.dp,
                             iconSize = Dimens.iconSmall,
                             popupShape = RoundedCornerShape(Dimens.cornerSize),
+                            itemPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
+                            dividerHeight = 1.dp,
                         ),
                     ),
                     LocalTextContextMenu provides MaterialTextContextMenu,

@@ -1,6 +1,5 @@
 package com.dzirbel.kotify.ui.unauthenticated
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +33,6 @@ import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.openInBrowser
 import kotlinx.coroutines.launch
-import okhttp3.HttpUrl.Companion.toHttpUrl
 
 private val MIN_WIDTH = 500.dp
 private const val WIDTH_FRACTION = 0.5f
@@ -46,7 +44,7 @@ private const val WIDTH_FRACTION = 0.5f
 fun Unauthenticated() {
     LocalColors.current.WithSurface {
         Box(Modifier.fillMaxSize().surfaceBackground()) {
-            val scrollState: ScrollState = rememberScrollState(0)
+            val scrollState = rememberScrollState()
             Box(Modifier.verticalScroll(scrollState).fillMaxSize()) {
                 Column(
                     modifier = Modifier
@@ -55,54 +53,17 @@ fun Unauthenticated() {
                         .fillMaxWidth(fraction = WIDTH_FRACTION)
                         .fillMaxHeight()
                         .align(Alignment.TopCenter),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.space3, Alignment.Top),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.space4),
                 ) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.space3, Alignment.End),
+                    ) {
                         ThemeSwitcher(onSetColors = { Settings.colors = it })
                         ProjectGithubIcon(githubUrl = Application.github)
                     }
 
-                    var authenticationParams by remember { mutableStateOf(AuthenticationParams()) }
-                    val oauthState = remember { mutableStateOf<OAuth?>(null) }
-                    val oauth = oauthState.value
-                    if (oauth == null) {
-                        LandingPage(
-                            params = authenticationParams,
-                            onSetParams = { authenticationParams = it },
-                            onStartOAuth = {
-                                oauthState.value = OAuth.start(
-                                    clientId = authenticationParams.clientId,
-                                    port = authenticationParams.port,
-                                    scopes = authenticationParams.scopes,
-                                    openAuthorizationUrl = { openInBrowser(it.toUri()) },
-                                )
-                            },
-                        )
-                    } else {
-                        var manualRedirectLoading by remember { mutableStateOf(false) }
-                        val scope = rememberCoroutineScope()
-                        FlowInProgress(
-                            oauthErrorState = oauth.errorFlow.collectAsState(),
-                            oauthResultState = oauth.resultFlow.collectAsState(),
-                            authorizationUrl = oauth.authorizationUrl.toString(),
-                            manualRedirectUrl = authenticationParams.manualRedirectUrl,
-                            manualRedirectLoading = manualRedirectLoading,
-                            setManualRedirectUrl = {
-                                authenticationParams = authenticationParams.copy(manualRedirectUrl = it)
-                            },
-                            onCancel = {
-                                oauth.cancel()
-                                oauthState.value = null
-                            },
-                            onManualRedirect = {
-                                manualRedirectLoading = true
-                                scope.launch {
-                                    oauth.onManualRedirect(authenticationParams.manualRedirectUrl.toHttpUrl())
-                                    manualRedirectLoading = false
-                                }
-                            },
-                        )
-                    }
+                    UnauthenticatedContent()
                 }
             }
 
@@ -111,5 +72,47 @@ fun Unauthenticated() {
                 adapter = rememberScrollbarAdapter(scrollState),
             )
         }
+    }
+}
+
+@Composable
+private fun UnauthenticatedContent() {
+    var authenticationParams by remember { mutableStateOf(AuthenticationParams()) }
+    val oauthState = remember { mutableStateOf<OAuth?>(null) }
+    val oauth = oauthState.value
+    if (oauth == null) {
+        LandingPage(
+            params = authenticationParams,
+            onSetParams = { authenticationParams = it },
+            onStartOAuth = {
+                oauthState.value = OAuth.start(
+                    clientId = authenticationParams.clientId,
+                    port = authenticationParams.port,
+                    runLocalServer = authenticationParams.runLocalServer,
+                    scopes = authenticationParams.scopes,
+                    openAuthorizationUrl = { openInBrowser(it.toUri()) },
+                )
+            },
+        )
+    } else {
+        var manualRedirectLoading by remember { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
+        FlowInProgress(
+            oauthError = oauth.errorFlow.collectAsState().value,
+            oauthResult = oauth.resultFlow.collectAsState().value,
+            authorizationUrl = oauth.authorizationUrl.toString(),
+            manualRedirectLoading = manualRedirectLoading,
+            onCancel = {
+                oauth.cancel()
+                oauthState.value = null
+            },
+            onManualRedirect = { uri ->
+                manualRedirectLoading = true
+                scope.launch {
+                    oauth.onManualRedirect(uri)
+                    manualRedirectLoading = false
+                }
+            },
+        )
     }
 }

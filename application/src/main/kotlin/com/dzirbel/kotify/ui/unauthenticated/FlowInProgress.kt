@@ -3,42 +3,65 @@ package com.dzirbel.kotify.ui.unauthenticated
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import com.dzirbel.kotify.network.oauth.LocalOAuthServer
+import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.CopyButton
+import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyTypography
 import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.getClipboard
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import com.dzirbel.kotify.util.takingIf
+import java.net.URI
 
 @Composable
 fun FlowInProgress(
-    oauthErrorState: State<Throwable?>,
-    oauthResultState: State<LocalOAuthServer.Result?>,
+    oauthError: Throwable?,
+    oauthResult: LocalOAuthServer.Result?,
     authorizationUrl: String,
-    manualRedirectUrl: String,
     manualRedirectLoading: Boolean,
-    setManualRedirectUrl: (String) -> Unit,
+    onManualRedirect: (uri: URI) -> Unit,
     onCancel: () -> Unit,
-    onManualRedirect: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3, Alignment.Top)) {
-        val oauthError = oauthErrorState.value
+    Column {
         if (oauthError == null) {
-            Text("Authentication in progress. Accept the OAuth request from Spotify in your browser to continue.")
+            if (oauthResult != null) {
+                val errorMessage = when (oauthResult) {
+                    is LocalOAuthServer.Result.Error -> "Error: ${oauthResult.error}"
+
+                    is LocalOAuthServer.Result.MismatchedState ->
+                        "Mismatched state: expected `${oauthResult.expectedState}` but was `${oauthResult.actualState}`"
+
+                    is LocalOAuthServer.Result.Success -> null
+                }
+
+                if (errorMessage == null) {
+                    Text("Authentication complete...")
+                } else {
+                    Text(errorMessage, color = LocalColors.current.error)
+                }
+            } else {
+                Text("Authentication in progress. Accept the OAuth request from Spotify in your browser to continue.")
+            }
         } else {
             Text("Error during authentication!", color = LocalColors.current.error, style = MaterialTheme.typography.h5)
 
@@ -49,86 +72,81 @@ fun FlowInProgress(
             )
         }
 
-        VerticalSpacer(Dimens.space3)
+        VerticalSpacer(Dimens.space4)
 
-        Button(onClick = onCancel) {
-            Text("Cancel flow")
+        Button(onClick = onCancel, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            CachedIcon("cancel", size = Dimens.iconSmall)
+            HorizontalSpacer(Dimens.space3)
+            Text("Cancel")
         }
 
-        VerticalSpacer(Dimens.space3)
+        VerticalSpacer(Dimens.space5)
 
-        Text("If your browser was not opened automatically, copy this URL:")
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+            Text("If your browser was not opened automatically, copy this URL:")
 
-        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-            TextField(
+            OutlinedTextField(
                 value = authorizationUrl,
-                modifier = Modifier.weight(1f).consumeKeyEvents(),
+                onValueChange = {},
+                modifier = Modifier.consumeKeyEvents().fillMaxWidth(),
                 singleLine = true,
                 readOnly = true,
-                onValueChange = { },
-                label = {
-                    Text("Authorization URL")
-                },
-                trailingIcon = {
-                    CopyButton(
-                        // override text pointer from TextField
-                        modifier = Modifier.pointerHoverIcon(PointerIcon.Hand),
-                        contents = authorizationUrl,
-                    )
-                },
+                label = { Text("Authorization URL") },
+                trailingIcon = { CopyButton(authorizationUrl) },
             )
         }
 
-        VerticalSpacer(Dimens.space3)
+        VerticalSpacer(Dimens.space4)
 
-        @Suppress("StringShouldBeRawString")
-        Text(
-            "If you've accepted the authorization request in Spotify but it wasn't automatically captured (the " +
-                "browser may be showing a \"site can't be reached\" error), copy the entire URL here (should start " +
-                "with \"localhost\"):",
-        )
-
-        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-            TextField(
-                value = manualRedirectUrl,
-                modifier = Modifier.weight(1f).consumeKeyEvents(),
-                singleLine = true,
-                onValueChange = setManualRedirectUrl,
-                label = {
-                    Text("Redirect URL")
-                },
+        Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+            @Suppress("StringShouldBeRawString")
+            Text(
+                "If you've accepted the authorization request in Spotify but it wasn't automatically captured (the " +
+                    "browser may be showing a \"site can't be reached\" error), copy the entire URL here (it should " +
+                    "start with \"localhost:\"):",
             )
 
-            Button(onClick = { setManualRedirectUrl(getClipboard()) }) {
-                Text("Paste")
-            }
-        }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                var manualRedirectUrlString by remember { mutableStateOf("") }
+                val manualRedirectUri = takingIf(manualRedirectUrlString.isNotBlank()) {
+                    runCatching { URI(manualRedirectUrlString) }.getOrNull()
+                }
 
-        Button(
-            enabled = !manualRedirectLoading && manualRedirectUrl.toHttpUrlOrNull() != null,
-            onClick = onManualRedirect,
-        ) {
-            if (manualRedirectLoading) {
-                CircularProgressIndicator()
-            } else {
-                Text("Submit")
-            }
-        }
+                OutlinedTextField(
+                    value = manualRedirectUrlString,
+                    modifier = Modifier.weight(1f).consumeKeyEvents(),
+                    singleLine = true,
+                    onValueChange = { manualRedirectUrlString = it },
+                    label = {
+                        Text("Redirect URL")
+                    },
+                    trailingIcon = {
+                        IconButton(
+                            modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+                            onClick = { manualRedirectUrlString = getClipboard() },
+                        ) {
+                            CachedIcon(name = "content-paste", contentDescription = "Paste")
+                        }
+                    },
+                )
 
-        val oauthResult = oauthResultState.value
-        if (oauthResult != null) {
-            val message = when (oauthResult) {
-                is LocalOAuthServer.Result.Error -> "Error: ${oauthResult.error}"
-                is LocalOAuthServer.Result.MismatchedState ->
-                    "Mismatched state: expected `${oauthResult.expectedState}` but was `${oauthResult.actualState}`"
+                Button(
+                    enabled = !manualRedirectLoading && manualRedirectUri != null,
+                    onClick = { manualRedirectUri?.let(onManualRedirect) },
+                ) {
+                    if (manualRedirectLoading) {
+                        CircularProgressIndicator(Modifier.size(Dimens.iconSmall))
+                    } else {
+                        CachedIcon("check-circle", size = Dimens.iconSmall)
+                    }
 
-                is LocalOAuthServer.Result.Success -> null
-            }
+                    HorizontalSpacer(Dimens.space2)
 
-            if (message != null) {
-                VerticalSpacer(Dimens.space3)
-
-                Text(message, color = LocalColors.current.error)
+                    Text("Submit")
+                }
             }
         }
     }

@@ -12,6 +12,7 @@ import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
+import java.net.URI
 import java.security.SecureRandom
 import java.util.Base64
 import java.util.Locale
@@ -28,6 +29,7 @@ class OAuth private constructor(
     private val clientId: String,
     private val codeVerifier: String,
     private val redirectUri: String,
+    runLocalServer: Boolean,
     val authorizationUrl: HttpUrl,
 ) {
     enum class Scope(val officialDescription: String, val requestByDefault: Boolean = true) {
@@ -89,7 +91,9 @@ class OAuth private constructor(
                 }
             }
         },
-    ).start()
+    ).apply {
+        if (runLocalServer) start()
+    }
 
     /**
      * Marks this [OAuth] flow as complete and stops its [server], throwing an [IllegalStateException] if it was already
@@ -111,8 +115,8 @@ class OAuth private constructor(
         finish()
     }
 
-    suspend fun onManualRedirect(url: HttpUrl): LocalOAuthServer.Result {
-        return server.manualRedirectUrl(url = url)
+    suspend fun onManualRedirect(uri: URI): LocalOAuthServer.Result {
+        return server.manualRedirectUri(uri = uri)
     }
 
     /**
@@ -144,6 +148,8 @@ class OAuth private constructor(
          */
         const val DEFAULT_CLIENT_ID = "0c303117a0624fb0adc4832dd286cf39"
 
+        const val SPOTIFY_APPS_URL = "https://www.spotify.com/us/account/apps/"
+
         // number of bytes in the state buffer; 16 bytes -> 22 characters
         private const val STATE_BUFFER_SIZE = 16
         private val stateEncoder = Base64.getUrlEncoder().withoutPadding()
@@ -160,6 +166,7 @@ class OAuth private constructor(
             clientId: String = DEFAULT_CLIENT_ID,
             scopes: Set<Scope> = Scope.DEFAULT_SCOPES,
             port: Int = LocalOAuthServer.DEFAULT_PORT,
+            runLocalServer: Boolean = true,
             openAuthorizationUrl: (HttpUrl) -> Unit,
         ): OAuth {
             val state = generateState()
@@ -182,6 +189,7 @@ class OAuth private constructor(
                 codeVerifier = codeChallenge.verifier,
                 clientId = clientId,
                 redirectUri = redirectUri,
+                runLocalServer = runLocalServer,
                 authorizationUrl = authorizationUrl,
             )
         }

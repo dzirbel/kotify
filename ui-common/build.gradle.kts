@@ -15,6 +15,7 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.immutable.collections)
+    implementation(libs.material.context.menu)
 
     testImplementation(libs.junit5.api)
     testImplementation(libs.junit5.params)
