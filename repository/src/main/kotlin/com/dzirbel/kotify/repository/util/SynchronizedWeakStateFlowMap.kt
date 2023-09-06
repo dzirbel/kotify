@@ -17,8 +17,6 @@ import java.util.Collections
  * This class exposes a minimal and convenient API for repository operations rather than directly implementing [Map].
  * In particular, it hides the implementation details of wrapping values in [WeakReference] and [MutableStateFlow] and
  * exposes an API that interacts with the values [V] directly when possible.
- *
- * TODO unit test onExisting
  */
 class SynchronizedWeakStateFlowMap<K : Any, V : Any> {
     // TODO tends to accumulate empty WeakReference: this could be improved by creating a standalone WeakValueHashMap

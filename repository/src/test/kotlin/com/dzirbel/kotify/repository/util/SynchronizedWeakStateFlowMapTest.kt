@@ -1,14 +1,18 @@
 package com.dzirbel.kotify.repository.util
 
 import assertk.assertThat
+import assertk.assertions.containsExactly
 import assertk.assertions.hasSameSizeAs
 import assertk.assertions.hasSize
 import assertk.assertions.index
+import assertk.assertions.isBetween
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isLessThan
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isSameAs
+import com.dzirbel.kotify.util.containsExactlyElementsOf
 import com.dzirbel.kotify.util.containsExactlyElementsOfInAnyOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -19,17 +23,25 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicInteger
 
 class SynchronizedWeakStateFlowMapTest {
     @Test
     fun `create new flow with null default`() {
         val map = SynchronizedWeakStateFlowMap<String, Int>()
-        var onCreateCalls = 0
+        val onCreateValues = mutableListOf<Int?>()
+        val onExistingValues = mutableListOf<Int?>()
 
-        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = { null }, onCreate = { onCreateCalls++ })
+        val stateFlow = map.getOrCreateStateFlow(
+            key = "key",
+            defaultValue = { null },
+            onCreate = onCreateValues::add,
+            onExisting = onExistingValues::add,
+        )
 
         assertThat(stateFlow.value).isNull()
-        assertThat(onCreateCalls).isEqualTo(1)
+        assertThat(onCreateValues).containsExactly(null)
+        assertThat(onExistingValues).isEmpty()
         assertThat(map.getValue("key")).isNull()
     }
 
@@ -37,38 +49,59 @@ class SynchronizedWeakStateFlowMapTest {
     fun `create new flow with non-null default`() {
         val default = 123
         val map = SynchronizedWeakStateFlowMap<String, Int>()
-        var onCreateCalls = 0
+        val onCreateValues = mutableListOf<Int?>()
+        val onExistingValues = mutableListOf<Int?>()
 
-        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = { default }, onCreate = { onCreateCalls++ })
+        val stateFlow = map.getOrCreateStateFlow(
+            key = "key",
+            defaultValue = { default },
+            onCreate = onCreateValues::add,
+            onExisting = onExistingValues::add,
+        )
 
         assertThat(stateFlow.value).isEqualTo(default)
-        assertThat(onCreateCalls).isEqualTo(1)
+        assertThat(onCreateValues).containsExactly(default)
+        assertThat(onExistingValues).isEmpty()
         assertThat(map.getValue("key")).isEqualTo(default)
     }
 
     @Test
     fun `subsequent calls to create new flow return existing instance`() {
         val map = SynchronizedWeakStateFlowMap<String, Int>()
-        var onCreateCalls = 0
+        val onCreateValues = mutableListOf<Int?>()
+        val onExistingValues = mutableListOf<Int?>()
 
-        val stateFlow = map.getOrCreateStateFlow("key", defaultValue = { null }, onCreate = { onCreateCalls++ })
+        val stateFlow = map.getOrCreateStateFlow(
+            key = "key",
+            defaultValue = { null },
+            onCreate = onCreateValues::add,
+            onExisting = onExistingValues::add,
+        )
 
         assertThat(stateFlow.value).isNull()
-        assertThat(onCreateCalls).isEqualTo(1)
+        assertThat(onCreateValues).containsExactly(null)
+        assertThat(onExistingValues).isEmpty()
         assertThat(map.getValue("key")).isNull()
 
-        val stateFlow2 = map.getOrCreateStateFlow("key", defaultValue = { 123 }, onCreate = { onCreateCalls++ })
+        val stateFlow2 = map.getOrCreateStateFlow(
+            key = "key",
+            defaultValue = { 123 },
+            onCreate = onCreateValues::add,
+            onExisting = onExistingValues::add,
+        )
 
         assertThat(stateFlow2).isSameAs(stateFlow)
-        assertThat(onCreateCalls).isEqualTo(1)
+        assertThat(onCreateValues).containsExactly(null)
+        assertThat(onExistingValues).containsExactly(null)
         assertThat(map.getValue("key")).isNull() // new default value is not used
     }
 
-    @Test
+    @RepeatedTest(10)
     fun `creating flows in parallel only results in a single creation`() {
         val concurrency = 100 // number of parallel calls to make
         val map = SynchronizedWeakStateFlowMap<String, Int>()
-        var onCreateCalls = 0
+        val onCreateValues = mutableListOf<Int?>()
+        val onExistingValues = mutableListOf<Int?>()
         val stateFlows = mutableSetOf<StateFlow<Int?>>()
         var sequentialLaunches = 0 // fuzzy count of launches which were sequential
 
@@ -79,7 +112,8 @@ class SynchronizedWeakStateFlowMapTest {
                     val stateFlow = map.getOrCreateStateFlow(
                         key = "key",
                         defaultValue = { i },
-                        onCreate = { onCreateCalls++ },
+                        onCreate = { synchronized(onCreateValues) { onCreateValues.add(it) } },
+                        onExisting = { synchronized(onExistingValues) { onExistingValues.add(it) } },
                     )
 
                     delay(1) // delay to ensure calls are made concurrently
@@ -93,7 +127,12 @@ class SynchronizedWeakStateFlowMapTest {
         }
 
         assertThat(stateFlows).hasSize(1) // all StateFlows should be the same instance
-        assertThat(onCreateCalls).isEqualTo(1)
+
+        val createdValue = stateFlows.first().value // created value is chosen arbitrarily from the launched jobs
+        assertThat(createdValue).isNotNull().isBetween(0, concurrency)
+
+        assertThat(onCreateValues).containsExactly(createdValue)
+        assertThat(onExistingValues).containsExactlyElementsOf(List(concurrency - 1) { createdValue })
         assertThat(map.getValue("key")).isEqualTo(stateFlows.first().value)
         assertThat(sequentialLaunches).isLessThan(concurrency) // verify that launches did not happen concurrently
     }
@@ -104,30 +143,43 @@ class SynchronizedWeakStateFlowMapTest {
 
         val keys1 = listOf("a", "b", "c")
         val createdKeys1 = mutableSetOf<String>()
+        val existingCounts1 = mutableListOf<Int>()
 
-        val flows1 = map.getOrCreateStateFlows(keys1, onCreate = { createdKeys1.addAll(it.keys) })
+        val flows1 = map.getOrCreateStateFlows(
+            keys = keys1,
+            onCreate = { createdKeys1.addAll(it.keys) },
+            onExisting = { existingCounts1.add(it) },
+        )
 
         assertThat(flows1).hasSameSizeAs(keys1)
         assertThat(createdKeys1).containsExactlyElementsOfInAnyOrder(keys1)
+        assertThat(existingCounts1).isEmpty()
 
         val keys2 = listOf("b", "d", "e", "c", "e")
         val createdKeys2 = mutableSetOf<String>()
+        val existingCounts2 = mutableListOf<Int>()
 
-        val flows2 = map.getOrCreateStateFlows(keys2, onCreate = { createdKeys2.addAll(it.keys) })
+        val flows2 = map.getOrCreateStateFlows(
+            keys = keys2,
+            onCreate = { createdKeys2.addAll(it.keys) },
+            onExisting = { existingCounts2.add(it) },
+        )
 
         assertThat(flows2).hasSameSizeAs(keys2)
         assertThat(createdKeys2).containsExactlyElementsOfInAnyOrder(keys2.minus(keys1).toSet())
+        assertThat(existingCounts2).containsExactly(keys2.minus(keys1).size)
         assertThat(flows2).index(0).isSameAs(flows1[1]) // same flows for "b"
         assertThat(flows2).index(3).isSameAs(flows1[2]) // same flows for "c"
         assertThat(flows2).index(2).isSameAs(flows2[4]) // same flows for first and second "e"
     }
 
-    @Test
+    @RepeatedTest(10)
     fun `batch creating flows in parallel only results in a single creation`() {
         val concurrency = 100 // number of parallel calls to make
         val keys = listOf("a", "b", "c")
         val map = SynchronizedWeakStateFlowMap<String, Int>()
-        var onCreateCalls = 0
+        val onCreateCalls = AtomicInteger(0)
+        val onExistingCalls = AtomicInteger(0)
         val stateFlows = mutableSetOf<StateFlow<Int?>>()
         var sequentialLaunches = 0 // fuzzy count of launches which were sequential
 
@@ -135,7 +187,11 @@ class SynchronizedWeakStateFlowMapTest {
             val jobs = List(concurrency) {
                 launch {
                     val launchesInit = sequentialLaunches
-                    val createdStateFlows = map.getOrCreateStateFlows(keys, onCreate = { onCreateCalls += it.size })
+                    val createdStateFlows = map.getOrCreateStateFlows(
+                        keys = keys,
+                        onCreate = { onCreateCalls.addAndGet(it.size) },
+                        onExisting = { onExistingCalls.addAndGet(it) },
+                    )
 
                     delay(1) // delay to ensure calls are made concurrently
 
@@ -148,7 +204,8 @@ class SynchronizedWeakStateFlowMapTest {
         }
 
         assertThat(stateFlows).hasSameSizeAs(keys) // all StateFlows should be the same instance per key
-        assertThat(onCreateCalls).isEqualTo(keys.size)
+        assertThat(onCreateCalls.get()).isEqualTo(keys.size)
+        assertThat(onExistingCalls.get()).isEqualTo((concurrency - 1) * keys.size)
         assertThat(sequentialLaunches).isLessThan(concurrency) // verify that launches did not happen concurrently
     }
 
