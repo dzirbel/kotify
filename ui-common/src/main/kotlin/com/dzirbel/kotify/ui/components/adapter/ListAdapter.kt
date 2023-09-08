@@ -351,11 +351,13 @@ class ListAdapter<E> private constructor(
                     ElementData(element = element, filtered = true, division = null)
                 },
                 sortIndexes = null,
-                sorts = defaultSort?.let { persistentListOf(Sort(it)) },
+                sorts = null,
                 divider = null,
-                filter = defaultFilter,
+                filter = null,
                 filterString = null,
             )
+                .let { if (defaultSort != null) it.withSort(persistentListOf(Sort(defaultSort))) else it }
+                .let { if (defaultFilter != null) it.withFilter(filter = defaultFilter) else it }
         }
     }
 }

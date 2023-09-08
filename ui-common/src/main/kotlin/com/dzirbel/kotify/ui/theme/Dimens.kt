@@ -34,29 +34,20 @@ object Dimens {
     // divider size - all dividers between elements must use this width/height
     val divider = 1.dp
 
-    private var fontDpInitialized = false
-    var fontBodyDp: Dp = 0.dp
-        private set
+    val fontBodyDp: Dp
+        @Composable
+        get() = with(LocalDensity.current) { MaterialTheme.typography.body2.fontSize.toDp() }
 
     // size of common images - album art, artist image, etc
     val contentImage = 200.dp
     val contentImageSmall = 80.dp
 
     val contextMenuElevation = 8.dp
-    val contextMenuMinWidth = 112.dp
-    val contextMenuMaxWidth = 360.dp
-    val contextMenuItemHeight = 40.dp
 
     private val scrollbarWidth = 12.dp
 
     @Composable
     fun ApplyDimens(content: @Composable () -> Unit) {
-        // convenience calculation of dp sizes of fonts, for easy of use outside of composable context
-        if (!fontDpInitialized) {
-            fontDpInitialized = true
-            fontBodyDp = with(LocalDensity.current) { MaterialTheme.typography.body2.fontSize.toDp() }
-        }
-
         CompositionLocalProvider(
             LocalTextStyle provides MaterialTheme.typography.body2,
             LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(thickness = scrollbarWidth),

@@ -50,6 +50,7 @@ fun Modifier.paintLazy(
             onDrawWithContent {
                 translate(dx, dy) {
                     with(painter) {
+                        // TODO scaling is very poor quality
                         draw(size = scaledSize, alpha = alpha, colorFilter = colorFilter)
                     }
                 }

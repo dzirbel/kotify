@@ -15,8 +15,17 @@ fun <T> Repository<T>.mockStateCached(id: String, value: T, cacheTime: Instant =
 }
 
 fun <T> Repository<T>.mockStates(ids: List<String>, values: List<T>, cacheTime: Instant = CurrentTime.instant) {
-    every { statesOf(ids = match { it.toList() == ids }, cacheStrategy = any()) } returns
-        values.map { MutableStateFlow(CacheState.Loaded(it, cacheTime)) }
+    require(ids.size == values.size)
+
+    every { statesOf(ids = match { it.toSet() == ids.toSet() }, cacheStrategy = any()) } answers {
+        // re-order values in the order they were requested
+        val givenIds = firstArg<Iterable<String>>()
+        givenIds.map { id ->
+            val index = ids.indexOf(id).takeIf { it != -1 }
+            requireNotNull(index) { "no value provided for $id" }
+            MutableStateFlow(CacheState.Loaded(values[index], cacheTime))
+        }
+    }
 }
 
 /**

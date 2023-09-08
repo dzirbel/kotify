@@ -37,6 +37,16 @@ class LazyTransactionStateFlow<T>(
     override val value: T?
         get() = flow.value
 
+    /**
+     * Creates a [LazyTransactionStateFlow] from a given [value], which will prevent it from ever being retrieved from
+     * the database.
+     */
+    constructor(value: T) : this(
+        transactionName = "should not be used",
+        initialValue = value,
+        getter = { error("should not be called") },
+    )
+
     override suspend fun collect(collector: FlowCollector<T?>): Nothing {
         if (!requested.getAndSet(true)) {
             scope.launch {

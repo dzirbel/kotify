@@ -136,6 +136,13 @@ open class SpotifyImageCache internal constructor(
             .let { requireNotNull(it) }
     }
 
+    /**
+     * Loads the image at the given [file] into the cache for the given [url], for use in tests.
+     */
+    fun set(url: String, file: File) {
+        images[url] = MutableStateFlow(Image.makeFromEncoded(file.readBytes()).toComposeImageBitmap())
+    }
+
     private suspend fun fromFileCache(url: String): Pair<File?, ImageBitmap?> {
         val start = TimeSource.Monotonic.markNow()
         var cacheFile: File? = null

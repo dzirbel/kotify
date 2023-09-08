@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Density
 import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.surfaceBackground
@@ -31,24 +32,33 @@ fun Any.screenshotTest(
     filename: String,
     windowWidth: Int = 1024,
     windowHeight: Int = 768,
+    windowDensity: Density = Density(1f),
     record: Boolean = false,
+    applyTheme: Boolean = true,
     colorsSet: Set<Colors> = Colors.entries.toSet(),
     setUpComposeScene: ImageComposeScene.() -> Unit = {},
+    onConfiguration: (colors: Colors) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val multipleColorSets = colorsSet.size > 1
     var recordedScreenshots = false
     for (colors in colorsSet) {
+        onConfiguration(colors)
+
         // run in AWT thread as a workaround to https://github.com/JetBrains/compose-jb/issues/1691
         val screenshotData = runBlocking(Dispatchers.Swing) {
-            val window = ImageComposeScene(width = windowWidth, height = windowHeight)
+            val window = ImageComposeScene(width = windowWidth, height = windowHeight, density = windowDensity)
             window.setContent {
-                colors.ApplyColors {
-                    Dimens.ApplyDimens {
-                        Box(Modifier.surfaceBackground()) {
-                            content()
+                if (applyTheme) {
+                    colors.ApplyColors {
+                        Dimens.ApplyDimens {
+                            Box(Modifier.surfaceBackground()) {
+                                content()
+                            }
                         }
                     }
+                } else {
+                    content()
                 }
             }
 
