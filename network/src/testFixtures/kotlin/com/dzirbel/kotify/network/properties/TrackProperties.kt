@@ -33,7 +33,7 @@ data class TrackProperties(
     }
 
     fun check(playlistTrack: SpotifyPlaylistTrack) {
-        check(playlistTrack.track)
+        check(requireNotNull(playlistTrack.track))
 
         assertThat(playlistTrack.isLocal).isEqualTo(isLocal)
         addedBy?.let { assertThat(playlistTrack.addedBy?.id).isEqualTo(it) }

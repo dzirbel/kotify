@@ -138,6 +138,10 @@ open class PlaylistTracksRepository internal constructor(
                 PlaylistTrack.findOrCreateFromEpisode(episodeId = episode.id.value, playlistId = playlistId)
             }
 
+            null -> {
+                null
+            }
+
             else -> {
                 error("unknown track type: $track")
             }

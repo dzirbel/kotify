@@ -22,7 +22,7 @@ data class SpotifyPlaylistTrack(
     @SerialName("is_local") val isLocal: Boolean,
 
     /** Information about the track or episode. */
-    @SerialName("track") val track: SimplifiedSpotifyTrackOrEpisode,
+    @SerialName("track") val track: SimplifiedSpotifyTrackOrEpisode?,
 
     /** Undocumented field. */
     @SerialName("primary_color") val primaryColor: String? = null,
