@@ -28,7 +28,10 @@ internal fun <EntityType : SpotifyEntity, NetworkType : SpotifyObject> EntityCla
         ?: new(id = id) {
             // note: no need to set updateTime, as it is initialized to the current time
             updatedTime = fetchTime
-            networkModel.name?.let { name = it }
+
+            // always initialize name since the column has no default value
+            name = networkModel.name.orEmpty()
+
             uri = networkModel.uri
             update()
         }
