@@ -31,6 +31,7 @@ import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.user.UserViewModel
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow
 import com.dzirbel.kotify.repository.util.ToggleableState
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.collections.zipEach
 import com.dzirbel.kotify.util.withMockedObjects
@@ -71,7 +72,7 @@ class ApplicationScreenshotTest {
 
                 screenshotTest(
                     filename = "application",
-                    applyTheme = false,
+                    configurations = listOf(KotifyColors.DARK, KotifyColors.LIGHT),
                     windowWidth = 1920,
                     windowHeight = 1080,
                     windowDensity = Density(density = 0.65f, fontScale = 1.25f),

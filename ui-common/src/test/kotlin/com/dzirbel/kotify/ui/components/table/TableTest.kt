@@ -39,7 +39,13 @@ internal class TableTest {
         screenshotTest(filename = testCase.filename, windowHeight = testCase.windowHeight) {
             @Composable
             fun <T> ScreenshotTestCase<T>.Table() {
-                Table(columns = columns, items = ListAdapter.of(items), onSetSort = {})
+                Table(
+                    columns = columns,
+                    items = ListAdapter.of(items),
+                    onSetSort = {},
+                    modifier = Modifier.background(Color.White),
+                    dividerColor = Color.DarkGray,
+                )
             }
 
             testCase.Table()

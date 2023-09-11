@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui.panel.debug
 
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -10,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.dzirbel.kotify.log.Log
-import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.KotifyColors
 
 /**
  * Specifies how [Log.Event] items are rendered in [LogList]; functions may be overridden to customize the display.
@@ -23,10 +24,10 @@ interface LogEventDisplay<T> {
         @Composable
         get() {
             return when (this) {
-                Log.Event.Type.INFO -> LocalColors.current.text
-                Log.Event.Type.SUCCESS -> Color.Green
-                Log.Event.Type.WARNING -> Color.Yellow
-                Log.Event.Type.ERROR -> LocalColors.current.error
+                Log.Event.Type.INFO -> MaterialTheme.colors.onBackground
+                Log.Event.Type.SUCCESS -> KotifyColors.current.success
+                Log.Event.Type.WARNING -> KotifyColors.current.warning
+                Log.Event.Type.ERROR -> MaterialTheme.colors.error
             }
         }
 

@@ -1,12 +1,12 @@
 package com.dzirbel.kotify.ui
 
-import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.AuthenticationState
+import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
@@ -32,7 +33,7 @@ import com.dzirbel.kotify.ui.panel.library.LibraryPanel
 import com.dzirbel.kotify.ui.panel.navigation.NavigationPanel
 import com.dzirbel.kotify.ui.player.PlayerPanel
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.theme.KotifyTheme
 import com.dzirbel.kotify.ui.unauthenticated.Unauthenticated
 import com.dzirbel.kotify.util.immutable.mapToImmutableList
 
@@ -58,7 +59,7 @@ private val libraryPanelSize = PanelSize(
 @Composable
 fun Root(authenticationState: AuthenticationState) {
     InvalidatingRootContent {
-        Theme.Apply {
+        KotifyTheme.Apply(colors = Settings.colors) {
             when (authenticationState) {
                 AuthenticationState.UNAUTHENTICATED -> Unauthenticated()
 
@@ -123,25 +124,27 @@ private fun PageStackAndNavigationPanel() {
         remember(pageIndex) { mutableStateOf<String?>(null) }
     }
     val navigationTitleVisibilityStates = List(pageStack.pages.size) { pageIndex ->
-        remember(pageIndex) { MutableTransitionState(false) }
+        remember(pageIndex) { mutableStateOf(false) }
     }
     val currentNavigationTitleVisibilityState = navigationTitleVisibilityStates[pageStack.currentIndex]
 
-    Column(modifier = Modifier.surfaceBackground()) {
-        NavigationPanel(
-            titleVisibilityState = currentNavigationTitleVisibilityState,
-            titles = titles.mapToImmutableList { { it.value } },
-        )
+    Surface {
+        Column {
+            NavigationPanel(
+                titleVisible = currentNavigationTitleVisibilityState.value,
+                titles = titles.mapToImmutableList { { it.value } },
+            )
 
-        PageStackContent(
-            pageStack = pageStack,
-            setTitle = { index, title ->
-                titles[index].value = title
-            },
-            setNavigationTitleVisible = { visible ->
-                currentNavigationTitleVisibilityState.targetState = visible
-            },
-            modifier = Modifier.weight(1f),
-        )
+            PageStackContent(
+                pageStack = pageStack,
+                setTitle = { index, title ->
+                    titles[index].value = title
+                },
+                setNavigationTitleVisible = { visible ->
+                    currentNavigationTitleVisibilityState.value = visible
+                },
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }

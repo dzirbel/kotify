@@ -4,15 +4,14 @@ import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.CachedIcon
-import com.dzirbel.kotify.ui.theme.Colors
-import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.KotifyColors
 
 @Composable
-fun ThemeSwitcher(modifier: Modifier = Modifier, onSetColors: (Colors) -> Unit) {
-    val isLight = LocalColors.current == Colors.LIGHT
+fun ThemeSwitcher(modifier: Modifier = Modifier, onSetColors: (KotifyColors) -> Unit) {
+    val isLight = KotifyColors.current == KotifyColors.LIGHT
     IconButton(
         modifier = modifier,
-        onClick = { onSetColors(if (isLight) Colors.DARK else Colors.LIGHT) },
+        onClick = { onSetColors(if (isLight) KotifyColors.DARK else KotifyColors.LIGHT) },
     ) {
         CachedIcon(
             name = if (isLight) "wb-sunny" else "nightlight-round",

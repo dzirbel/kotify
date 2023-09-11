@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.LocalContentColor
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -32,8 +35,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlin.math.roundToInt
 
@@ -119,9 +121,11 @@ fun SeekableSlider(
             val roundedCornerShape = RoundedCornerShape(sliderHeight / 2)
 
             // the background of the slider bar, representing the maximum progress
-            LocalColors.current.WithSurface {
-                Box(Modifier.fillMaxSize().surfaceBackground(roundedCornerShape))
-            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(LocalContentColor.current.copy(alpha = ContentAlpha.disabled), roundedCornerShape),
+            )
 
             if (progress != null) {
                 Layout(
@@ -133,7 +137,7 @@ fun SeekableSlider(
                             Modifier
                                 .fillMaxWidth(fraction = progress)
                                 .clip(roundedCornerShape)
-                                .background(LocalColors.current.highlighted(highlight = hovering)),
+                                .background(KotifyColors.highlighted(highlight = hovering)),
                         )
 
                         if (hovering) {
@@ -142,7 +146,7 @@ fun SeekableSlider(
                                 Modifier
                                     .size(seekTargetSize)
                                     .clip(CircleShape)
-                                    .background(LocalColors.current.text)
+                                    .background(MaterialTheme.colors.onBackground)
                                     .draggable(
                                         state = rememberDraggableState { drag.value += it },
                                         orientation = Orientation.Horizontal,

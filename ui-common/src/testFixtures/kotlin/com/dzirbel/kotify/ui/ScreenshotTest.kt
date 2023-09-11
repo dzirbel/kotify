@@ -1,13 +1,11 @@
 package com.dzirbel.kotify.ui
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ImageComposeScene
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
-import com.dzirbel.kotify.ui.theme.Colors
-import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.theme.KotifyColors
+import com.dzirbel.kotify.ui.theme.KotifyTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.swing.Swing
@@ -15,6 +13,56 @@ import java.io.File
 
 private val resourcesDir = File("src/test/resources")
 private val screenshotsDir = resourcesDir.resolve("screenshots")
+
+fun Any.themedScreenshotTest(
+    filename: String,
+    windowWidth: Int = 1024,
+    windowHeight: Int = 768,
+    windowDensity: Density = Density(1f),
+    record: Boolean = false,
+    colors: List<KotifyColors> = listOf(KotifyColors.DARK, KotifyColors.LIGHT),
+    setUpComposeScene: ImageComposeScene.() -> Unit = {},
+    onColors: (colors: KotifyColors) -> Unit = {},
+    content: @Composable () -> Unit,
+) {
+    screenshotTest(
+        filename = filename,
+        configurations = colors,
+        windowWidth = windowWidth,
+        windowHeight = windowHeight,
+        windowDensity = windowDensity,
+        record = record,
+        setUpComposeScene = setUpComposeScene,
+        configurationName = { it.name.lowercase() },
+        onConfiguration = onColors,
+    ) { runColors ->
+        KotifyTheme.Apply(colors = runColors) {
+            Surface(content = content)
+        }
+    }
+}
+
+fun Any.screenshotTest(
+    filename: String,
+    windowWidth: Int = 1024,
+    windowHeight: Int = 768,
+    windowDensity: Density = Density(1f),
+    record: Boolean = false,
+    setUpComposeScene: ImageComposeScene.() -> Unit = {},
+    content: @Composable () -> Unit,
+) {
+    screenshotTest(
+        filename = filename,
+        configurations = listOf(Unit),
+        windowWidth = windowWidth,
+        windowHeight = windowHeight,
+        windowDensity = windowDensity,
+        record = record,
+        setUpComposeScene = setUpComposeScene,
+    ) {
+        content()
+    }
+}
 
 /**
  * Runs a basic screenshot test for [content].
@@ -28,38 +76,29 @@ private val screenshotsDir = resourcesDir.resolve("screenshots")
  * fully qualified class name of the receiving object (i.e. the test class), and finally in a file with the given
  * [filename] (to allow multiple screenshots from the same test class).
  */
-fun Any.screenshotTest(
+fun <T> Any.screenshotTest(
     filename: String,
+    configurations: List<T>,
     windowWidth: Int = 1024,
     windowHeight: Int = 768,
     windowDensity: Density = Density(1f),
     record: Boolean = false,
-    applyTheme: Boolean = true,
-    colorsSet: Set<Colors> = Colors.entries.toSet(),
     setUpComposeScene: ImageComposeScene.() -> Unit = {},
-    onConfiguration: (colors: Colors) -> Unit = {},
-    content: @Composable () -> Unit,
+    configurationName: (T) -> String = { it.toString() },
+    onConfiguration: (T) -> Unit = {},
+    content: @Composable (T) -> Unit,
 ) {
-    val multipleColorSets = colorsSet.size > 1
+    val multipleConfigurations = configurations.size > 1
+    val mismatches = mutableListOf<Pair<File, File>>()
     var recordedScreenshots = false
-    for (colors in colorsSet) {
-        onConfiguration(colors)
+    for (configuration in configurations) {
+        onConfiguration(configuration)
 
         // run in AWT thread as a workaround to https://github.com/JetBrains/compose-jb/issues/1691
         val screenshotData = runBlocking(Dispatchers.Swing) {
             val window = ImageComposeScene(width = windowWidth, height = windowHeight, density = windowDensity)
             window.setContent {
-                if (applyTheme) {
-                    colors.ApplyColors {
-                        Dimens.ApplyDimens {
-                            Box(Modifier.surfaceBackground()) {
-                                content()
-                            }
-                        }
-                    }
-                } else {
-                    content()
-                }
+                content(configuration)
             }
 
             window.setUpComposeScene()
@@ -75,8 +114,9 @@ fun Any.screenshotTest(
             "no class qualified name: screenshotTest() may not be called from local/anonymous classes"
         }
         val classScreenshotsDir = screenshotsDir.resolve(className)
-        val filenameWithColors = if (multipleColorSets) "$filename-${colors.name.lowercase()}" else filename
-        val screenshotFile = classScreenshotsDir.resolve("$filenameWithColors.png")
+        val filenameWithConfiguration =
+            if (multipleConfigurations) "$filename-${configurationName(configuration)}" else filename
+        val screenshotFile = classScreenshotsDir.resolve("$filenameWithConfiguration.png")
 
         if (record || !screenshotFile.exists()) {
             recordedScreenshots = true
@@ -87,17 +127,32 @@ fun Any.screenshotTest(
             println("Wrote screenshot $filename to $screenshotFile")
         } else {
             val recordedBytes = screenshotFile.readBytes()
-            val mismatchFile = classScreenshotsDir.resolve("$filenameWithColors-MISMATCH.png")
+            val mismatchFile = classScreenshotsDir.resolve("$filenameWithConfiguration-MISMATCH.png")
             if (!screenshotBytes.contentEquals(recordedBytes)) {
                 mismatchFile.writeBytes(screenshotBytes)
-                throw AssertionError(
-                    "Screenshot mismatch for $screenshotFile. The image generated in the test has been written to " +
-                        "$mismatchFile for comparison (but then should be deleted).",
-                )
+                mismatches.add(screenshotFile to mismatchFile)
             } else {
                 mismatchFile.delete()
             }
         }
+    }
+
+    if (mismatches.isNotEmpty()) {
+        if (mismatches.size == 1) {
+            val (screenshotFile, mismatchFile) = mismatches.first()
+            throw AssertionError(
+                "Screenshot mismatch for $screenshotFile. The image generated in the test has been written to " +
+                    "$mismatchFile for comparison (but then should be deleted).",
+            )
+        }
+
+        val message = buildString {
+            appendLine("${mismatches.size} / ${configurations.size} mismatching screenshots:")
+            for ((screenshotFile, mismatchFile) in mismatches) {
+                appendLine("    $screenshotFile (the generated image has been written to $mismatchFile for comparison)")
+            }
+        }
+        throw AssertionError(message)
     }
 
     if (recordedScreenshots) {

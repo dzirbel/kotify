@@ -33,7 +33,7 @@ import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 @Composable
@@ -121,7 +121,7 @@ fun SmallAlbumCell(album: AlbumViewModel, onClick: () -> Unit) {
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .background(
-                        color = LocalColors.current.overlay,
+                        color = MaterialTheme.colors.background.copy(alpha = KotifyColors.OVERLAY_ALPHA),
                         shape = RoundedCornerShape(size = Dimens.cornerSize),
                     )
                     .padding(Dimens.space1),

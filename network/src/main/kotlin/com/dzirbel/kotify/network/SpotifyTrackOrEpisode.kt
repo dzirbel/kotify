@@ -91,7 +91,7 @@ interface FullSpotifyTrackOrEpisode : SpotifyObject {
 }
 
 private fun JsonObject.getPrimitiveContent(key: String): String? {
-    val content = this[key] ?: return null
-    val primitive = content as? JsonPrimitive ?: throw SerializationException("expected primitive, was ${this[key]}")
+    val value = this[key] ?: return null
+    val primitive = value as? JsonPrimitive ?: throw SerializationException("expected primitive, was $value")
     return primitive.content
 }

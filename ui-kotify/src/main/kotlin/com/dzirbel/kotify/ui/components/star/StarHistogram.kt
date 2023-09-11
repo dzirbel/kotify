@@ -26,7 +26,7 @@ import com.dzirbel.kotify.repository.rating.AverageRating
 import com.dzirbel.kotify.repository.rating.Rating
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -69,14 +69,14 @@ fun RatingHistogram(
                         modifier = Modifier
                             .fillMaxHeight(height)
                             .fillMaxWidth(BAR_WIDTH_PERCENT)
-                            .background(LocalColors.current.star),
+                            .background(KotifyColors.current.star),
                     ) {
                         val hovering = hoverInteractionSource.collectIsHoveredAsState().value
                         if (hovering && numRatings > 0) {
                             Text(
                                 text = numRatings.toString(),
                                 style = MaterialTheme.typography.overline,
-                                color = LocalColors.current.textOnSurface,
+                                color = MaterialTheme.colors.onPrimary,
                                 modifier = Modifier.align(Alignment.TopCenter),
                                 maxLines = 1,
                                 overflow = TextOverflow.Visible,

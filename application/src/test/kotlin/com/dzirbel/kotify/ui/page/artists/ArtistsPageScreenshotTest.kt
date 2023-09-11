@@ -10,7 +10,7 @@ import com.dzirbel.kotify.repository.mockArtistTracksNull
 import com.dzirbel.kotify.repository.mockLibrary
 import com.dzirbel.kotify.repository.mockStates
 import com.dzirbel.kotify.ui.framework.render
-import com.dzirbel.kotify.ui.screenshotTest
+import com.dzirbel.kotify.ui.themedScreenshotTest
 import com.dzirbel.kotify.util.MockedTimeExtension
 import com.dzirbel.kotify.util.withMockedObjects
 import org.junit.jupiter.api.Test
@@ -23,7 +23,7 @@ internal class ArtistsPageScreenshotTest {
         withMockedObjects(SavedArtistRepository) {
             SavedArtistRepository.mockLibrary(ids = null)
 
-            screenshotTest(filename = "empty") {
+            themedScreenshotTest(filename = "empty") {
                 ArtistsPage.render()
             }
         }
@@ -39,7 +39,7 @@ internal class ArtistsPageScreenshotTest {
             ArtistRepository.mockStates(ids = ids, values = artists)
             ArtistTracksRepository.mockArtistTracksNull()
 
-            screenshotTest(filename = "full") {
+            themedScreenshotTest(filename = "full") {
                 ArtistsPage.render()
             }
         }

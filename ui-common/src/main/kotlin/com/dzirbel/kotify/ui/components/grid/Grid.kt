@@ -8,18 +8,18 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -36,11 +36,8 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
-import com.dzirbel.kotify.ui.util.applyIf
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlin.math.ceil
 import kotlin.math.max
@@ -116,11 +113,8 @@ fun <E> Grid(
     edgePadding: PaddingValues = PaddingValues(horizontal = horizontalSpacing, vertical = verticalSpacing),
     cellAlignment: Alignment = Alignment.TopCenter,
     columns: Int? = null,
-    cellParams: GridCellParams = GridCellParams(backgroundSurfaceIncrement = 0),
-    detailInsertCellParams: GridCellParams = GridCellParams(
-        backgroundSurfaceIncrement = Colors.INCREMENT_SMALL,
-        cornerSize = Dimens.cornerSize * 2,
-    ),
+    cellParams: GridCellParams = GridCellParams(),
+    detailInsertCellParams: GridCellParams = GridCellParams(cornerSize = Dimens.cornerSize * 2),
     detailInsertAnimationDurationMs: Int = AnimationConstants.DefaultDurationMillis,
     detailInsertContent: @Composable ((elementIndex: Int, element: E) -> Unit)? = null,
     cellContent: @Composable (elementIndex: Int, element: E) -> Unit,
@@ -144,19 +138,10 @@ fun <E> Grid(
 
     Layout(
         content = {
-            val colors = LocalColors.current
             elements.forEachIndexed { index, element ->
                 val params = if (index == selectedElementIndex) detailInsertCellParams else cellParams
-                colors.WithSurface(increment = params.backgroundSurfaceIncrement) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(params.cornerSize))
-                            .applyIf(params.backgroundSurfaceIncrement != 0 && index != selectedElementIndex) {
-                                surfaceBackground()
-                            },
-                    ) {
-                        cellContent(index, element)
-                    }
+                Surface(elevation = params.elevation, shape = RoundedCornerShape(params.cornerSize)) {
+                    cellContent(index, element)
                 }
             }
 
@@ -169,48 +154,38 @@ fun <E> Grid(
             }
 
             if (detailInsertContent != null && lastSelectedElementIndex != null) {
-                colors.WithSurface(increment = detailInsertCellParams.backgroundSurfaceIncrement) {
-                    AnimatedVisibility(
-                        visibleState = insertAnimationState,
-                        enter = fadeIn(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
-                        exit = fadeOut(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .surfaceBackground(
-                                    FlaredBottomRoundedRect(cornerSize = detailInsertCellParams.cornerSize),
-                                )
-                                .border(
-                                    width = Dimens.divider,
-                                    color = LocalColors.current.dividerColor,
-                                    shape = FlaredBottomRoundedRect(
-                                        cornerSize = detailInsertCellParams.cornerSize,
-                                        bottomPadding = Dimens.divider,
-                                    ),
-                                )
-                                .fillMaxSize(),
-                        )
-                    }
+                // TODO colors.WithSurface(increment = detailInsertCellParams.backgroundSurfaceIncrement) {
+                AnimatedVisibility(
+                    visibleState = insertAnimationState,
+                    enter = fadeIn(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
+                ) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        shape = FlaredBottomRoundedRect(cornerSize = detailInsertCellParams.cornerSize),
+                        border = BorderStroke(width = Dimens.divider, color = KotifyColors.current.divider),
+                        elevation = detailInsertCellParams.elevation,
+                        content = {},
+                    )
+                }
 
-                    AnimatedVisibility(
-                        visibleState = insertAnimationState,
-                        enter = expandVertically(
-                            animationSpec = tween(durationMillis = detailInsertAnimationDurationMs),
-                            expandFrom = Alignment.Top,
-                        ) + fadeIn(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
-                        exit = shrinkVertically(
-                            animationSpec = tween(durationMillis = detailInsertAnimationDurationMs),
-                            shrinkTowards = Alignment.Top,
-                        ) + fadeOut(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
+                AnimatedVisibility(
+                    visibleState = insertAnimationState,
+                    enter = expandVertically(
+                        animationSpec = tween(durationMillis = detailInsertAnimationDurationMs),
+                        expandFrom = Alignment.Top,
+                    ) + fadeIn(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
+                    exit = shrinkVertically(
+                        animationSpec = tween(durationMillis = detailInsertAnimationDurationMs),
+                        shrinkTowards = Alignment.Top,
+                    ) + fadeOut(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
+                ) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = detailInsertCellParams.elevation,
+                        border = BorderStroke(width = Dimens.divider, color = KotifyColors.current.divider),
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .surfaceBackground()
-                                .border(width = Dimens.divider, color = LocalColors.current.dividerColor)
-                                .fillMaxWidth(),
-                        ) {
-                            detailInsertContent(lastSelectedElementIndex, elements[lastSelectedElementIndex]!!)
-                        }
+                        detailInsertContent(lastSelectedElementIndex, elements[lastSelectedElementIndex]!!)
                     }
                 }
             }

@@ -6,14 +6,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
@@ -21,16 +23,13 @@ import androidx.compose.ui.window.rememberWindowState
 import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.ui.CachedIcon
-import com.dzirbel.kotify.ui.Theme
-import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
 import com.dzirbel.kotify.ui.components.panel.PanelSize
 import com.dzirbel.kotify.ui.components.panel.SidePanel
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.theme.KotifyTheme
 
 private enum class DebugTab(val tabName: String) {
     EVENTS("Events"),
@@ -72,7 +71,7 @@ fun DebugPanel(content: @Composable () -> Unit) {
                 Settings.debugPanelOpen = false
             },
         ) {
-            Theme.Apply {
+            KotifyTheme.Apply(colors = Settings.colors) {
                 DebugPanelContent(tab = tab.value, onClickTab = { tab.value = it })
             }
         }
@@ -81,41 +80,44 @@ fun DebugPanel(content: @Composable () -> Unit) {
 
 @Composable
 private fun DebugPanelContent(tab: DebugTab, onClickTab: (DebugTab) -> Unit) {
-    Column(modifier = Modifier.surfaceBackground()) {
-        Column(Modifier.fillMaxHeight().weight(1f)) {
-            Row(Modifier.fillMaxWidth()) {
-                IconButton(
-                    modifier = Modifier.align(Alignment.CenterVertically),
-                    onClick = {
-                        Settings.debugPanelDetached = !Settings.debugPanelDetached
-                    },
-                ) {
-                    val detached = Settings.debugPanelDetached
-                    CachedIcon(
-                        name = if (detached) "view-sidebar" else "open-in-new",
-                        modifier = Modifier.padding(horizontal = Dimens.space3),
-                        size = Dimens.iconSmall,
-                        contentDescription = if (detached) "Attach to sidebar" else "Open in new window",
-                    )
-                }
-
-                DebugTab.entries.forEach { buttonTab ->
-                    SimpleTextButton(
-                        onClick = { onClickTab(buttonTab) },
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(vertical = Dimens.space3, horizontal = Dimens.space1),
-                        backgroundColor = if (tab == buttonTab) {
-                            LocalColors.current.primary
-                        } else {
-                            Color.Transparent
+    Surface(elevation = Dimens.panelElevationSmall) {
+        Column(Modifier.fillMaxHeight()) {
+            Surface(elevation = Dimens.componentElevation) {
+                Row(Modifier.fillMaxWidth()) {
+                    IconButton(
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                        onClick = {
+                            Settings.debugPanelDetached = !Settings.debugPanelDetached
                         },
                     ) {
-                        Text(buttonTab.tabName, maxLines = 1)
+                        val detached = Settings.debugPanelDetached
+                        CachedIcon(
+                            name = if (detached) "view-sidebar" else "open-in-new",
+                            modifier = Modifier.padding(horizontal = Dimens.space3),
+                            size = Dimens.iconSmall,
+                            contentDescription = if (detached) "Attach to sidebar" else "Open in new window",
+                        )
+                    }
+
+                    DebugTab.entries.forEach { buttonTab ->
+                        SimpleTextButton(
+                            onClick = { onClickTab(buttonTab) },
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(vertical = Dimens.space3, horizontal = Dimens.space1),
+                            colors = if (tab == buttonTab) {
+                                ButtonDefaults.textButtonColors(
+                                    backgroundColor = MaterialTheme.colors.primary,
+                                    contentColor = MaterialTheme.colors.onPrimary,
+                                )
+                            } else {
+                                ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colors.onBackground)
+                            },
+                        ) {
+                            Text(buttonTab.tabName, maxLines = 1)
+                        }
                     }
                 }
             }
-
-            HorizontalDivider()
 
             when (tab) {
                 DebugTab.EVENTS -> EventsTab()

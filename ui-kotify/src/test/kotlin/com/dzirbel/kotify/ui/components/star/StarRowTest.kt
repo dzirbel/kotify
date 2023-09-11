@@ -6,14 +6,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.unit.dp
-import com.dzirbel.kotify.ui.screenshotTest
+import com.dzirbel.kotify.ui.themedScreenshotTest
 import org.junit.jupiter.api.Test
 
 class StarRowTest {
     @Test
     fun testBase() {
         val rating = 3.5
-        screenshotTest(filename = "stars-base", windowWidth = WINDOW_WIDTH, windowHeight = WINDOW_HEIGHT) {
+        themedScreenshotTest(filename = "stars-base", windowWidth = WINDOW_WIDTH, windowHeight = WINDOW_HEIGHT) {
             StarRow(getStarRating = { rating }, stars = MAX_RATING, starSize = STAR_SIZE.dp)
         }
     }
@@ -22,7 +22,7 @@ class StarRowTest {
     fun testHoverMore() {
         val rating = 1
         val hoverStar = 3.5f // hover the 4th star
-        screenshotTest(
+        themedScreenshotTest(
             filename = "stars-hover-more",
             windowWidth = WINDOW_WIDTH,
             windowHeight = WINDOW_HEIGHT,
@@ -38,7 +38,7 @@ class StarRowTest {
     fun testHoverLess() {
         val rating = 4
         val hoverStar = 1.5f // hover the 2nd star
-        screenshotTest(
+        themedScreenshotTest(
             filename = "stars-hover-less",
             windowWidth = WINDOW_WIDTH,
             windowHeight = WINDOW_HEIGHT,

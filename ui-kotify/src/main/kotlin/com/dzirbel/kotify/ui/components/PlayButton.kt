@@ -12,7 +12,7 @@ import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.player.PlayerRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
@@ -40,7 +40,7 @@ fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
             name = if (playing.value) "pause-circle-outline" else "play-circle-outline",
             size = size,
             contentDescription = "Play",
-            tint = LocalColors.current.highlighted(highlight = matchesContext.value),
+            tint = KotifyColors.highlighted(highlight = matchesContext.value),
         )
     }
 }

@@ -27,7 +27,6 @@ import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyTypography
-import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.ui.util.getClipboard
 import com.dzirbel.kotify.util.takingIf
@@ -57,17 +56,21 @@ fun FlowInProgress(
                 if (errorMessage == null) {
                     Text("Authentication complete...")
                 } else {
-                    Text(errorMessage, color = LocalColors.current.error)
+                    Text(errorMessage, color = MaterialTheme.colors.error)
                 }
             } else {
                 Text("Authentication in progress. Accept the OAuth request from Spotify in your browser to continue.")
             }
         } else {
-            Text("Error during authentication!", color = LocalColors.current.error, style = MaterialTheme.typography.h5)
+            Text(
+                text = "Error during authentication!",
+                color = MaterialTheme.colors.error,
+                style = MaterialTheme.typography.h5,
+            )
 
             Text(
                 text = oauthError.stackTraceToString(),
-                color = LocalColors.current.error,
+                color = MaterialTheme.colors.error,
                 fontFamily = KotifyTypography.Monospace,
             )
         }

@@ -17,7 +17,7 @@ import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.adapter.icon
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.KotifyColors
 
 /**
  * Represents a single column in a [Table].
@@ -87,7 +87,7 @@ interface Column<E> : AdapterProperty<E> {
                     imageVector = sortOrder.icon,
                     contentDescription = null,
                     modifier = Modifier.size(Dimens.iconSmall),
-                    tint = LocalColors.current.highlighted(sortOrder != null, otherwise = Color.Transparent),
+                    tint = KotifyColors.highlighted(sortOrder != null, otherwise = Color.Transparent),
                 )
             }
         } else {

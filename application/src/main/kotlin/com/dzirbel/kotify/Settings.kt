@@ -6,7 +6,7 @@ import com.dzirbel.kotify.Settings.SettingsData
 import com.dzirbel.kotify.log.info
 import com.dzirbel.kotify.log.success
 import com.dzirbel.kotify.log.warn
-import com.dzirbel.kotify.ui.theme.Colors
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -29,7 +29,7 @@ import kotlin.time.TimeSource
 object Settings {
     @Serializable
     data class SettingsData(
-        val colors: Colors = Colors.DARK,
+        val colors: KotifyColors = KotifyColors.DARK,
         val debugPanelOpen: Boolean = false,
         val debugPanelDetached: Boolean = false,
         val instrumentationHighlightCompositions: Boolean = false,
@@ -47,7 +47,7 @@ object Settings {
             }
         }
 
-    var colors: Colors by setting(init = { colors }, mutateSettings = { copy(colors = it) })
+    var colors: KotifyColors by setting(init = { colors }, mutateSettings = { copy(colors = it) })
     var debugPanelOpen: Boolean by setting(init = { debugPanelOpen }, mutateSettings = { copy(debugPanelOpen = it) })
     var debugPanelDetached by setting(init = { debugPanelDetached }, mutateSettings = { copy(debugPanelDetached = it) })
     var instrumentationHighlightCompositions: Boolean by setting(

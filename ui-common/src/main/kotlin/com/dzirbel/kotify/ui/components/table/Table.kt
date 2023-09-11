@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -13,7 +14,7 @@ import androidx.compose.ui.unit.isSpecified
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.Sort
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.util.coerceAtLeastNullable
 import com.dzirbel.kotify.util.collections.sumOf
@@ -36,6 +37,7 @@ fun <E> Table(
     items: ListAdapter<E>,
     modifier: Modifier = Modifier,
     includeHeader: Boolean = true,
+    dividerColor: Color = KotifyColors.current.divider,
     onSetSort: (Sort<E>?) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
@@ -71,7 +73,7 @@ fun <E> Table(
             }
 
             repeat(numDividers) {
-                Box(Modifier.background(LocalColors.current.dividerColor))
+                Box(Modifier.background(dividerColor))
             }
         },
         measurePolicy = { measurables, constraints ->

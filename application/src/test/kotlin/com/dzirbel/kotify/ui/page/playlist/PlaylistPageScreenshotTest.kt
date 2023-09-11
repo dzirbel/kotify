@@ -26,7 +26,7 @@ import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.user.UserViewModel
 import com.dzirbel.kotify.ui.framework.render
-import com.dzirbel.kotify.ui.screenshotTest
+import com.dzirbel.kotify.ui.themedScreenshotTest
 import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.MockedTimeExtension
 import com.dzirbel.kotify.util.withMockedObjects
@@ -47,7 +47,7 @@ internal class PlaylistPageScreenshotTest {
             PlaylistTracksRepository.mockStateNull(playlistId)
             SavedPlaylistRepository.mockSaveState(playlistId, saved = null)
 
-            screenshotTest(filename = "empty") {
+            themedScreenshotTest(filename = "empty") {
                 PlaylistPage(playlistId = playlistId).render()
             }
         }
@@ -120,7 +120,7 @@ internal class PlaylistPageScreenshotTest {
 
             UserRepository.mockStateCached(id = owner.id.value, value = UserViewModel(owner))
 
-            screenshotTest(filename = "full", windowWidth = 1500) {
+            themedScreenshotTest(filename = "full", windowWidth = 1500) {
                 PlaylistPage(playlistId = playlistId).render()
             }
         }

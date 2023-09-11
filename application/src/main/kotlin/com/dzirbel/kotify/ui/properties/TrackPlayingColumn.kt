@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -22,7 +23,6 @@ import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnWidth
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
 
 /**
  * A [Column] which displays the current play state of a track of type [T] (abstract to support both actual tracks and
@@ -62,7 +62,7 @@ class TrackPlayingColumn<T>(
                     name = "volume-up",
                     size = Dimens.fontBodyDp,
                     contentDescription = "Playing",
-                    tint = LocalColors.current.primary,
+                    tint = MaterialTheme.colors.primary,
                 )
             } else {
                 if (hovering.value) {
@@ -75,7 +75,7 @@ class TrackPlayingColumn<T>(
                             name = "play-circle-outline",
                             size = Dimens.fontBodyDp,
                             contentDescription = "Play",
-                            tint = LocalColors.current.primary,
+                            tint = MaterialTheme.colors.primary,
                         )
                     }
                 }

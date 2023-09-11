@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.onClick
 import androidx.compose.material.ContentAlpha
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
@@ -27,7 +28,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.KotifyColors
 
 /**
  * Base Composable which renders a row of stars displaying a rating.
@@ -54,8 +55,8 @@ fun StarRow(
     onClickStar: ((Int) -> Unit)? = null,
     starSpacing: Dp = 0.dp,
     starSize: Dp = Dimens.iconSmall,
-    starColor: Color = LocalColors.current.star,
-    backgroundColor: Color = LocalColors.current.text.copy(alpha = ContentAlpha.disabled),
+    starColor: Color = KotifyColors.current.star,
+    backgroundColor: Color = MaterialTheme.colors.onBackground.copy(alpha = ContentAlpha.disabled),
     starPainter: Painter = rememberVectorPainter(Icons.Filled.Star),
 ) {
     Row(

@@ -10,6 +10,8 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -26,8 +28,6 @@ import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.flipped
 import com.dzirbel.kotify.ui.components.adapter.icon
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlinx.collections.immutable.ImmutableList
 
@@ -41,13 +41,12 @@ fun <E> DividerSelector(
     currentDivider: Divider<E>?,
     onSelectDivider: (Divider<E>?) -> Unit,
 ) {
-    LocalColors.current.WithSurface {
-        Row(
-            modifier = Modifier
-                .instrument()
-                .surfaceBackground(RoundedCornerShape(size = Dimens.cornerSize)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    Surface(
+        modifier = Modifier.instrument(),
+        elevation = Dimens.componentElevation,
+        shape = RoundedCornerShape(size = Dimens.cornerSize),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             val dropdownExpanded = remember { mutableStateOf(false) }
             SimpleTextButton(
                 onClick = {
@@ -106,7 +105,7 @@ fun <E> DividerSelector(
                         imageVector = currentDivider.divisionSortOrder.icon,
                         contentDescription = null,
                         modifier = Modifier.size(Dimens.iconSmall),
-                        tint = LocalColors.current.primary,
+                        tint = MaterialTheme.colors.primary,
                     )
                 }
 

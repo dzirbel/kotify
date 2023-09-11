@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.util.instrumentation
 
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -10,14 +11,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.debugInspectorInfo
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.theme.KotifyTypography
-import com.dzirbel.kotify.ui.theme.LocalColors
 import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -32,7 +32,6 @@ private val panelPadding = 2.dp
  *
  * @param tag an optional name displayed at the top of the panel; by default the name of the function calling this one
  */
-@OptIn(ExperimentalTextApi::class)
 @Stable
 fun Modifier.metricsPanel(tag: String? = null): Modifier {
     return this.composed(inspectorInfo = debugInspectorInfo { name = "metricsPanel" }) {
@@ -54,7 +53,8 @@ fun Modifier.metricsPanel(tag: String? = null): Modifier {
         var totalDraws: Int by remember { Ref(0) }
 
         val textMeasurer = rememberTextMeasurer()
-        val colors = LocalColors.current
+        val backgroundColor = MaterialTheme.colors.background.copy(alpha = KotifyColors.OVERLAY_ALPHA)
+        val textColor = MaterialTheme.colors.onBackground
 
         Modifier
             .layout { measurable, constraints ->
@@ -118,14 +118,13 @@ fun Modifier.metricsPanel(tag: String? = null): Modifier {
                     )
 
                     if (size.width <= this.size.width && size.height <= this.size.height) {
-                        // draw a transparent background
-                        drawRect(brush = SolidColor(colors.overlay), size = size)
+                        drawRect(brush = SolidColor(backgroundColor), size = size)
 
                         // draw the text
                         drawText(
                             textLayoutResult = textLayoutResult,
                             topLeft = Offset(paddingPx, paddingPx),
-                            color = colors.text,
+                            color = textColor,
                         )
                     }
                 }

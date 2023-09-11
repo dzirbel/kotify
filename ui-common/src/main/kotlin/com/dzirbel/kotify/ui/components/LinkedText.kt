@@ -11,6 +11,7 @@ import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -37,7 +38,6 @@ import com.dzirbel.contextmenu.ContextMenuIcon
 import com.dzirbel.contextmenu.ContextMenuParams
 import com.dzirbel.contextmenu.GenericContextMenuItem
 import com.dzirbel.contextmenu.MaterialContextMenuItem
-import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.openInBrowser
 import com.dzirbel.kotify.ui.util.setClipboard
 
@@ -81,7 +81,7 @@ interface LinkElementScope {
  */
 @Composable
 @ReadOnlyComposable
-fun HyperlinkSpanStyle() = SpanStyle(color = LocalColors.current.primary, textDecoration = TextDecoration.Underline)
+fun HyperlinkSpanStyle() = SpanStyle(color = MaterialTheme.colors.primary, textDecoration = TextDecoration.Underline)
 
 @Composable
 fun UrlLinkedText(

@@ -4,19 +4,17 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.applyIf
 
 /**
@@ -31,12 +29,9 @@ fun SimpleTextButton(
     enforceMinWidth: Boolean = true,
     enforceMinHeight: Boolean = false,
     shape: Shape = RectangleShape,
-    backgroundColor: Color = Color.Transparent,
-    textColor: Color = if (backgroundColor == Color.Transparent) {
-        LocalColors.current.text.copy(alpha = LocalContentAlpha.current)
-    } else {
-        LocalColors.current.textOnSurface.copy(alpha = LocalContentAlpha.current)
-    },
+    colors: ButtonColors = ButtonDefaults.textButtonColors(
+        contentColor = MaterialTheme.colors.onBackground,
+    ),
     content: @Composable RowScope.() -> Unit,
 ) {
     TextButton(
@@ -46,11 +41,7 @@ fun SimpleTextButton(
         enabled = enabled,
         contentPadding = contentPadding,
         shape = shape,
-        colors = ButtonDefaults.textButtonColors(
-            backgroundColor = backgroundColor,
-            contentColor = textColor,
-            disabledContentColor = textColor.copy(alpha = LocalContentAlpha.current),
-        ),
+        colors = colors,
         onClick = onClick,
         content = {
             ProvideTextStyle(MaterialTheme.typography.body2) {

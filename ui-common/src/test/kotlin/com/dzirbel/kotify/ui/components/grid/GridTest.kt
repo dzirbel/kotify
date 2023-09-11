@@ -18,7 +18,6 @@ import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.compare
 import com.dzirbel.kotify.ui.screenshotTest
-import com.dzirbel.kotify.ui.theme.Colors
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -33,10 +32,9 @@ internal class GridTest {
     @ParameterizedTest
     @MethodSource("screenshotTestCases")
     fun testScreenshot(case: ScreenshotTestCase) {
-        // no need to test multiple color sets since all the colors are hardcoded anyway
-        screenshotTest(filename = case.filename, windowHeight = 1500, colorsSet = setOf(Colors.LIGHT)) {
+        screenshotTest(filename = case.filename, windowHeight = 1500) {
             Grid(
-                modifier = Modifier.background(Color.Green),
+                modifier = Modifier.background(Color.Black),
                 elements = case.adapter,
                 columns = case.columns,
                 horizontalSpacing = 10.dp,
@@ -46,7 +44,7 @@ internal class GridTest {
             ) { _, index ->
                 Box(
                     modifier = Modifier
-                        .background(Color.Black)
+                        .background(Color.DarkGray)
                         .size((20 + index * 2).dp),
                 ) {
                     Text(

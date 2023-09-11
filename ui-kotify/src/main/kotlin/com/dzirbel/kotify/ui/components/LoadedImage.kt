@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,10 +21,8 @@ import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.db.model.Image
 import com.dzirbel.kotify.db.model.ImageSize
 import com.dzirbel.kotify.ui.SpotifyImageCache
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.paintLazy
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
@@ -52,17 +51,15 @@ fun LoadedImage(
     alignment: Alignment = Alignment.Center,
     contentScale: ContentScale = ContentScale.Fit,
 ) {
-    LocalColors.current.WithSurface(increment = Colors.INCREMENT_LARGE) {
-        Box(
-            modifier = modifier
-                .size(size)
-                .clip(shape)
-                .surfaceBackground()
-                .paintLazy(alignment = alignment, contentScale = contentScale) { size ->
-                    image(size)?.let { BitmapPainter(it) }
-                },
-        )
-    }
+    Box(
+        modifier
+            .size(size)
+            .clip(shape)
+            .background(KotifyColors.current.imagePlaceholder)
+            .paintLazy(alignment = alignment, contentScale = contentScale) { pixelSize ->
+                image(pixelSize)?.let { BitmapPainter(it) }
+            },
+    )
 }
 
 /**

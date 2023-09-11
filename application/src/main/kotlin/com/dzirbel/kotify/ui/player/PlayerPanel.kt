@@ -2,21 +2,19 @@ package com.dzirbel.kotify.ui.player
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -47,6 +45,7 @@ import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.util.ToggleableState
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -60,8 +59,7 @@ import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.coroutines.combineState
@@ -93,101 +91,97 @@ fun PlayerPanel() {
         ?.collectAsState()
         ?.value
 
-    Column(Modifier.instrument().fillMaxWidth().wrapContentHeight()) {
-        Box(Modifier.fillMaxWidth().height(Dimens.divider).background(LocalColors.current.dividerColor))
+    Surface(elevation = Dimens.panelElevationLarge) {
+        val layoutDirection = LocalLayoutDirection.current
 
-        LocalColors.current.WithSurface {
-            val layoutDirection = LocalLayoutDirection.current
+        Layout(
+            modifier = Modifier.padding(Dimens.space3),
+            content = {
+                Column {
+                    CurrentTrack(item = item, trackRating = trackRating)
+                }
 
-            Layout(
-                modifier = Modifier.surfaceBackground().padding(Dimens.space3),
-                content = {
-                    Column {
-                        CurrentTrack(item = item, trackRating = trackRating)
-                    }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    PlayerControls()
+                    TrackProgress()
+                }
 
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        PlayerControls()
-                        TrackProgress()
-                    }
+                Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.End) {
+                    VolumeControls()
+                    DeviceControls()
+                }
+            },
+            measurePolicy = { measurables, constraints ->
+                @Suppress("MagicNumber")
+                check(measurables.size == 3)
 
-                    Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.End) {
-                        VolumeControls()
-                        DeviceControls()
-                    }
-                },
-                measurePolicy = { measurables, constraints ->
-                    @Suppress("MagicNumber")
-                    check(measurables.size == 3)
+                val totalWidth = constraints.maxWidth
 
-                    val totalWidth = constraints.maxWidth
+                val left = measurables[0]
+                val center = measurables[1]
+                val right = measurables[2]
 
-                    val left = measurables[0]
-                    val center = measurables[1]
-                    val right = measurables[2]
+                // base widths according to the weights
+                val sideWidthBase = (totalWidth * SIDE_CONTROLS_WEIGHT).roundToInt()
+                val centerWidthBase = (totalWidth * CENTER_CONTROLS_WEIGHT).roundToInt()
 
-                    // base widths according to the weights
-                    val sideWidthBase = (totalWidth * SIDE_CONTROLS_WEIGHT).roundToInt()
-                    val centerWidthBase = (totalWidth * CENTER_CONTROLS_WEIGHT).roundToInt()
+                // width constraint constants
+                val maxCenterWidth = MAX_TRACK_PROGRESS_WIDTH.roundToPx()
+                val minLeftWidth = MIN_TRACK_PLAYBACK_WIDTH.roundToPx()
 
-                    // width constraint constants
-                    val maxCenterWidth = MAX_TRACK_PROGRESS_WIDTH.roundToPx()
-                    val minLeftWidth = MIN_TRACK_PLAYBACK_WIDTH.roundToPx()
+                // allocate any extra space due to the maxCenterWidth to the sides
+                val sideExtra = ((totalWidth - maxCenterWidth - (sideWidthBase * 2)) / 2)
+                    .coerceAtLeast(0)
 
-                    // allocate any extra space due to the maxCenterWidth to the sides
-                    val sideExtra = ((totalWidth - maxCenterWidth - (sideWidthBase * 2)) / 2)
-                        .coerceAtLeast(0)
+                // left width calculated first with the highest priority
+                val leftWidth = (sideWidthBase + sideExtra).coerceAtLeast(minLeftWidth)
 
-                    // left width calculated first with the highest priority
-                    val leftWidth = (sideWidthBase + sideExtra).coerceAtLeast(minLeftWidth)
+                // right width calculated next with the second priority, giving space to left if necessary
+                val rightWidth = (sideWidthBase + sideExtra).coerceAtMost(totalWidth - leftWidth).coerceAtLeast(0)
 
-                    // right width calculated next with the second priority, giving space to left if necessary
-                    val rightWidth = (sideWidthBase + sideExtra).coerceAtMost(totalWidth - leftWidth).coerceAtLeast(0)
+                // center width calculated last, gives any possible space to left/right
+                val centerWidth = centerWidthBase
+                    .coerceAtMost(maxCenterWidth)
+                    .coerceAtMost(totalWidth - leftWidth - rightWidth)
+                    .coerceAtLeast(0)
 
-                    // center width calculated last, gives any possible space to left/right
-                    val centerWidth = centerWidthBase
-                        .coerceAtMost(maxCenterWidth)
-                        .coerceAtMost(totalWidth - leftWidth - rightWidth)
-                        .coerceAtLeast(0)
+                val leftPlaceable = left.measure(constraints.copy(minWidth = leftWidth, maxWidth = leftWidth))
+                val centerPlaceable = center
+                    .measure(constraints.copy(minWidth = centerWidth, maxWidth = centerWidth))
+                val rightPlaceable = right.measure(constraints.copy(maxWidth = rightWidth))
 
-                    val leftPlaceable = left.measure(constraints.copy(minWidth = leftWidth, maxWidth = leftWidth))
-                    val centerPlaceable = center
-                        .measure(constraints.copy(minWidth = centerWidth, maxWidth = centerWidth))
-                    val rightPlaceable = right.measure(constraints.copy(maxWidth = rightWidth))
+                val maxHeight = maxOf(leftPlaceable.height, centerPlaceable.height, rightPlaceable.height)
 
-                    val maxHeight = maxOf(leftPlaceable.height, centerPlaceable.height, rightPlaceable.height)
+                layout(width = totalWidth, height = maxHeight) {
+                    leftPlaceable.place(
+                        x = Alignment.Start.align(
+                            size = leftPlaceable.width,
+                            space = leftWidth,
+                            layoutDirection = layoutDirection,
+                        ),
+                        y = Alignment.CenterVertically.align(size = leftPlaceable.height, space = maxHeight),
+                    )
 
-                    layout(width = totalWidth, height = maxHeight) {
-                        leftPlaceable.place(
-                            x = Alignment.Start.align(
-                                size = leftPlaceable.width,
-                                space = leftWidth,
-                                layoutDirection = layoutDirection,
-                            ),
-                            y = Alignment.CenterVertically.align(size = leftPlaceable.height, space = maxHeight),
-                        )
+                    centerPlaceable.place(
+                        x = leftWidth + Alignment.CenterHorizontally.align(
+                            size = centerPlaceable.width,
+                            space = centerWidth,
+                            layoutDirection = layoutDirection,
+                        ),
+                        y = Alignment.CenterVertically.align(size = centerPlaceable.height, space = maxHeight),
+                    )
 
-                        centerPlaceable.place(
-                            x = leftWidth + Alignment.CenterHorizontally.align(
-                                size = centerPlaceable.width,
-                                space = centerWidth,
-                                layoutDirection = layoutDirection,
-                            ),
-                            y = Alignment.CenterVertically.align(size = centerPlaceable.height, space = maxHeight),
-                        )
-
-                        rightPlaceable.place(
-                            x = leftWidth + centerWidth + Alignment.End.align(
-                                size = rightPlaceable.width,
-                                space = rightWidth,
-                                layoutDirection = layoutDirection,
-                            ),
-                            y = Alignment.CenterVertically.align(size = rightPlaceable.height, space = maxHeight),
-                        )
-                    }
-                },
-            )
-        }
+                    rightPlaceable.place(
+                        x = leftWidth + centerWidth + Alignment.End.align(
+                            size = rightPlaceable.width,
+                            space = rightWidth,
+                            layoutDirection = layoutDirection,
+                        ),
+                        y = Alignment.CenterVertically.align(size = rightPlaceable.height, space = maxHeight),
+                    )
+                }
+            },
+        )
     }
 }
 
@@ -323,7 +317,7 @@ private fun PlayerControls() {
                 name = "shuffle",
                 size = Dimens.iconSmall,
                 contentDescription = "Shuffle",
-                tint = LocalColors.current.highlighted(highlight = shuffling?.value == true),
+                tint = KotifyColors.highlighted(highlight = shuffling?.value == true),
             )
         }
 
@@ -367,7 +361,7 @@ private fun PlayerControls() {
                 name = if (repeatMode?.value == SpotifyRepeatMode.TRACK) "repeat-one" else "repeat",
                 size = Dimens.iconSmall,
                 contentDescription = "Repeat",
-                tint = LocalColors.current.highlighted(
+                tint = KotifyColors.highlighted(
                     highlight = repeatMode?.value?.let { it != SpotifyRepeatMode.OFF } == true,
                 ),
             )
@@ -506,7 +500,7 @@ private fun VolumeControls() {
                     imageVector = Icons.Filled.Warning,
                     contentDescription = "Refresh",
                     modifier = Modifier.size(Dimens.iconMedium),
-                    tint = LocalColors.current.error,
+                    tint = MaterialTheme.colors.error,
                 )
 
                 DropdownMenu(
@@ -519,12 +513,7 @@ private fun VolumeControls() {
                             text = "${throwable::class.simpleName} | ${throwable.message}",
                         )
 
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(Dimens.divider)
-                                .background(LocalColors.current.dividerColor),
-                        )
+                        HorizontalDivider()
                     }
 
                     SimpleTextButton(
@@ -574,11 +563,11 @@ private fun DeviceControls() {
             // use a custom layout in order to match width with height, which doesn't seem to be possible any other
             // way (e.g. aspectRatio() modifier)
             Layout(
-                modifier = Modifier.background(color = LocalColors.current.primary, shape = CircleShape),
+                modifier = Modifier.background(color = MaterialTheme.colors.primary, shape = CircleShape),
                 content = {
                     Text(
                         text = devices.size.toString(),
-                        color = LocalColors.current.textOnSurface,
+                        color = MaterialTheme.colors.onPrimary,
                         textAlign = TextAlign.Center,
                         letterSpacing = 0.sp, // hack - ideally wouldn't be necessary
                     )

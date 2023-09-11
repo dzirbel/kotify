@@ -1,18 +1,17 @@
 package com.dzirbel.kotify.ui.components
 
-import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
+import com.dzirbel.kotify.ui.theme.KotifyColors
 
 /**
  * A simple pill component with the given [text].
@@ -20,18 +19,15 @@ import com.dzirbel.kotify.ui.theme.surfaceBackground
 @Composable
 fun Pill(
     text: String,
-    borderColor: Color = LocalColors.current.dividerColor,
+    borderColor: Color = KotifyColors.current.divider,
     cornerSize: Dp = Dimens.cornerSize,
     padding: PaddingValues = PaddingValues(horizontal = Dimens.space2, vertical = Dimens.space1),
 ) {
-    LocalColors.current.WithSurface(increment = Colors.INCREMENT_LARGE) {
-        Text(
-            text = text,
-            maxLines = 1,
-            modifier = Modifier
-                .surfaceBackground(shape = RoundedCornerShape(size = cornerSize))
-                .border(width = Dimens.divider, color = borderColor, shape = RoundedCornerShape(size = cornerSize))
-                .padding(padding),
-        )
+    Surface(
+        elevation = Dimens.componentElevation,
+        shape = RoundedCornerShape(size = cornerSize),
+        border = BorderStroke(width = Dimens.divider, color = borderColor),
+    ) {
+        Text(text = text, maxLines = 1, modifier = Modifier.padding(padding))
     }
 }

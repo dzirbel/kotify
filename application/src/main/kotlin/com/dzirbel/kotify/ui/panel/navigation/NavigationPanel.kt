@@ -1,7 +1,11 @@
 package com.dzirbel.kotify.ui.panel.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.TweenSpec
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
@@ -13,40 +17,61 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.List
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.ui.components.ProjectGithubIcon
 import com.dzirbel.kotify.ui.components.ThemeSwitcher
 import com.dzirbel.kotify.ui.pageStack
-import com.dzirbel.kotify.ui.theme.Colors
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.animatedSurfaceBackground
 import com.dzirbel.kotify.ui.util.mutate
 import kotlinx.collections.immutable.ImmutableList
 
+private val titleAnimationSpec = TweenSpec<Float>(easing = LinearEasing)
+
 @Composable
-fun NavigationPanel(titleVisibilityState: MutableTransitionState<Boolean>, titles: ImmutableList<() -> String?>) {
-    LocalColors.current.WithSurface(increment = if (titleVisibilityState.targetState) Colors.INCREMENT_SMALL else 0) {
+fun NavigationPanel(titleVisible: Boolean, titles: ImmutableList<() -> String?>) {
+    val key = pageStack.value.currentIndex
+    val targetElevation = if (titleVisible) Dimens.panelElevationLarge else 0.dp
+
+    val visibilityState = remember(key) { MutableTransitionState(titleVisible) }
+    val elevationAnimatable = remember(key) { Animatable(targetElevation, Dp.VectorConverter) }
+
+    LaunchedEffect(key, titleVisible) {
+        visibilityState.targetState = titleVisible
+        elevationAnimatable.animateTo(targetElevation)
+    }
+
+    // use a high z-index to ensure the surface drop shadow is always on top of the content, even if the content has a
+    // higher elevation
+    Surface(modifier = Modifier.zIndex(100f), elevation = elevationAnimatable.value) {
         Row(
-            modifier = Modifier.fillMaxWidth().animatedSurfaceBackground(key = titleVisibilityState),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             NavigationButtons(titles = titles)
 
             titles[pageStack.value.currentIndex].invoke()?.let { currentTitle ->
-                AnimatedVisibility(visibleState = titleVisibilityState, enter = fadeIn(), exit = fadeOut()) {
+                AnimatedVisibility(
+                    visibleState = visibilityState,
+                    enter = fadeIn(titleAnimationSpec),
+                    exit = fadeOut(titleAnimationSpec),
+                ) {
                     Text(currentTitle)
                 }
             }

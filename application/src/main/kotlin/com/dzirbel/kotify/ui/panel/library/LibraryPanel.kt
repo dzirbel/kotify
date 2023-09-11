@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,15 +33,13 @@ import com.dzirbel.kotify.ui.page.artists.ArtistsPage
 import com.dzirbel.kotify.ui.page.playlist.PlaylistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.collections.zipEach
 
 @Composable
 fun LibraryPanel() {
-    LocalColors.current.WithSurface {
-        VerticalScroll(Modifier.fillMaxHeight().surfaceBackground()) {
+    Surface(elevation = Dimens.panelElevationSmall) {
+        VerticalScroll(Modifier.fillMaxHeight()) {
             Text(
                 text = "Library",
                 style = MaterialTheme.typography.h5,
@@ -124,7 +123,7 @@ private fun PlaylistItem(playlist: PlaylistViewModel) {
                 name = "volume-up",
                 size = Dimens.fontBodyDp,
                 contentDescription = "Volume",
-                tint = LocalColors.current.primary,
+                tint = MaterialTheme.colors.primary,
             )
         }
     }

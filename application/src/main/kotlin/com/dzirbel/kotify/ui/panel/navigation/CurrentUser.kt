@@ -13,6 +13,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -43,7 +44,6 @@ import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
 import com.dzirbel.kotify.ui.util.maxIntrinsicWidth
 import com.dzirbel.kotify.ui.util.openInBrowser
 import java.time.ZoneId
@@ -156,7 +156,7 @@ private fun CurrentUserDropdown(
                             Text("Error loading current user data; ID: $currentUserId")
                             Text(
                                 text = currentUserCacheState.throwable.stackTraceToString(),
-                                color = LocalColors.current.error,
+                                color = MaterialTheme.colors.error,
                             )
                         }
                 }

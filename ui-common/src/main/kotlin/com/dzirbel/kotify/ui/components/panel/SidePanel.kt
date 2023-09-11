@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.util.coerceAtLeastNullable
 import com.dzirbel.kotify.util.coerceAtMostNullable
 
@@ -27,7 +28,7 @@ fun SidePanel(
     panelModifier: Modifier = Modifier.fillMaxSize(),
     contentModifier: Modifier = Modifier.fillMaxSize(),
     panelEnabled: Boolean = true,
-    splitterViewParams: SplitterViewParams = SplitterViewParams(),
+    dragTargetSize: Dp = Dimens.space3,
     mainContent: @Composable () -> Unit,
 ) {
     val splitterOrientation = when (direction) {
@@ -45,7 +46,7 @@ fun SidePanel(
 
                 DraggableSplitter(
                     orientation = splitterOrientation,
-                    params = splitterViewParams,
+                    dragTargetSize = dragTargetSize,
                     onResize = { delta ->
                         // invert delta for right/bottom dragging
                         val adjustedDelta = when (direction) {
@@ -115,23 +116,31 @@ fun SidePanel(
                     },
                 )
 
-                val splitterPlaceable = measurables[1].measure(constraints)
-
-                val (firstPlaceable, secondPlaceable) = when (direction) {
-                    PanelDirection.LEFT, PanelDirection.TOP -> Pair(panelPlaceable, contentPlaceable)
-                    PanelDirection.RIGHT, PanelDirection.BOTTOM -> Pair(contentPlaceable, panelPlaceable)
-                }
+                val splitterPlaceable = measurables[1].measure(constraints.copy(minWidth = 0, minHeight = 0))
 
                 layout(constraints.maxWidth, constraints.maxHeight) {
-                    firstPlaceable.place(0, 0)
-                    when (splitterOrientation) {
-                        Orientation.Horizontal -> {
-                            secondPlaceable.place(0, firstPlaceable.height)
-                            splitterPlaceable.place(0, firstPlaceable.height)
+                    // ensure the content is always placed before the panel to allow shadows from the panel
+                    when (direction) {
+                        PanelDirection.LEFT -> {
+                            contentPlaceable.place(panelPlaceable.width, 0)
+                            panelPlaceable.place(0, 0)
+                            splitterPlaceable.place(panelPlaceable.width - splitterPlaceable.width / 2, 0)
                         }
-                        Orientation.Vertical -> {
-                            secondPlaceable.place(firstPlaceable.width, 0)
-                            splitterPlaceable.place(firstPlaceable.width, 0)
+                        PanelDirection.RIGHT -> {
+                            contentPlaceable.place(0, 0)
+                            panelPlaceable.place(contentPlaceable.width, 0)
+                            // do not center splitter on the panel boundary since it might be on top of a scrollbar
+                            splitterPlaceable.place(contentPlaceable.width, 0)
+                        }
+                        PanelDirection.TOP -> {
+                            contentPlaceable.place(0, panelPlaceable.height)
+                            panelPlaceable.place(0, 0)
+                            splitterPlaceable.place(0, panelPlaceable.height - splitterPlaceable.height / 2)
+                        }
+                        PanelDirection.BOTTOM -> {
+                            contentPlaceable.place(0, 0)
+                            panelPlaceable.place(0, contentPlaceable.height)
+                            splitterPlaceable.place(0, contentPlaceable.height - splitterPlaceable.height / 2)
                         }
                     }
                 }

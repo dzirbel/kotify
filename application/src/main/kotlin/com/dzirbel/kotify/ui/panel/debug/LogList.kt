@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -43,8 +44,6 @@ import com.dzirbel.kotify.ui.components.adapter.compareByNullable
 import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyTypography
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.ProvidingDisabledContentAlpha
 import com.dzirbel.kotify.ui.util.setClipboard
 import com.dzirbel.kotify.util.CurrentTime
@@ -209,86 +208,86 @@ fun <T> LogList(
         display
     }
 
-    LocalColors.current.WithSurface {
+    Surface {
         Column {
-            Column(Modifier.surfaceBackground()) {
-                if (headerContent != null) {
-                    headerContent(eventCleared)
+            Surface(elevation = Dimens.componentElevation) {
+                Column {
+                    if (headerContent != null) {
+                        headerContent(eventCleared)
 
-                    HorizontalDivider()
-                }
-
-                Column(Modifier.padding(Dimens.space2), verticalArrangement = Arrangement.spacedBy(Dimens.space2)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        ToggleButtonGroup(
-                            elements = Log.Event.Type.entries.toImmutableList(),
-                            selectedElements = selectedEventTypes.value,
-                            onSelectElements = { selectedEventTypes.value = it },
-                            content = { type ->
-                                val count = countsByType?.get(type.ordinal)
-                                val name = type.name.lowercase().capitalize()
-                                Text("$name [$count]", maxLines = 1)
-                            },
-                        )
-
-                        // include both internal and external filters
-                        val canResetFilterFinal = canResetFilter || selectedEventTypes.value.isNotEmpty()
-                        SimpleTextButton(
-                            enabled = canResetFilterFinal,
-                            onClick = {
-                                selectedEventTypes.value = persistentSetOf()
-                                onResetFilter()
-                            },
-                        ) {
-                            if (canResetFilterFinal) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(Dimens.iconTiny),
-                                )
-
-                                HorizontalSpacer(Dimens.space1)
-                            }
-
-                            Text("${visibleEvents.size}/$numEvents visible", maxLines = 1)
-                        }
+                        HorizontalDivider()
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        SortSelector(
-                            sortableProperties = sortableProperties,
-                            sorts = sorts.value,
-                            onSetSort = { sorts.value = it },
-                        )
+                    Column(Modifier.padding(Dimens.space2), verticalArrangement = Arrangement.spacedBy(Dimens.space2)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            ToggleButtonGroup(
+                                elements = Log.Event.Type.entries.toImmutableList(),
+                                selectedElements = selectedEventTypes.value,
+                                onSelectElements = { selectedEventTypes.value = it },
+                                content = { type ->
+                                    val count = countsByType?.get(type.ordinal)
+                                    val name = type.name.lowercase().capitalize()
+                                    Text("$name [$count]", maxLines = 1)
+                                },
+                            )
 
-                        Row {
-                            SimpleTextButton(onClick = { clearTimeState.value = CurrentTime.millis }) {
-                                CachedIcon("delete", size = Dimens.iconSmall)
-                                HorizontalSpacer(Dimens.space1)
-                                Text("Clear", maxLines = 1)
-                            }
+                            // include both internal and external filters
+                            val canResetFilterFinal = canResetFilter || selectedEventTypes.value.isNotEmpty()
+                            SimpleTextButton(
+                                enabled = canResetFilterFinal,
+                                onClick = {
+                                    selectedEventTypes.value = persistentSetOf()
+                                    onResetFilter()
+                                },
+                            ) {
+                                if (canResetFilterFinal) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(Dimens.iconTiny),
+                                    )
 
-                            val canRestore = clearTime != null
-                            ProvidingDisabledContentAlpha(disabled = !canRestore) {
-                                SimpleTextButton(onClick = { clearTimeState.value = null }, enabled = canRestore) {
-                                    CachedIcon("restore-from-trash", size = Dimens.iconSmall)
                                     HorizontalSpacer(Dimens.space1)
-                                    Text("Restore", maxLines = 1)
+                                }
+
+                                Text("${visibleEvents.size}/$numEvents visible", maxLines = 1)
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            SortSelector(
+                                sortableProperties = sortableProperties,
+                                sorts = sorts.value,
+                                onSetSort = { sorts.value = it },
+                            )
+
+                            Row {
+                                SimpleTextButton(onClick = { clearTimeState.value = CurrentTime.millis }) {
+                                    CachedIcon("delete", size = Dimens.iconSmall)
+                                    HorizontalSpacer(Dimens.space1)
+                                    Text("Clear", maxLines = 1)
+                                }
+
+                                val canRestore = clearTime != null
+                                ProvidingDisabledContentAlpha(disabled = !canRestore) {
+                                    SimpleTextButton(onClick = { clearTimeState.value = null }, enabled = canRestore) {
+                                        CachedIcon("restore-from-trash", size = Dimens.iconSmall)
+                                        HorizontalSpacer(Dimens.space1)
+                                        Text("Restore", maxLines = 1)
+                                    }
                                 }
                             }
                         }
                     }
                 }
-
-                HorizontalDivider()
             }
 
             LazyVerticalScroll(modifier = Modifier.weight(1f)) {

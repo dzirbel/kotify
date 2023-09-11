@@ -43,6 +43,9 @@ object Dimens {
     val contentImageSmall = 80.dp
 
     val contextMenuElevation = 8.dp
+    val panelElevationSmall = 4.dp
+    val panelElevationLarge = 8.dp
+    val componentElevation = 6.dp
 
     private val scrollbarWidth = 12.dp
 

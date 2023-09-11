@@ -6,13 +6,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
+import com.dzirbel.kotify.ui.theme.KotifyColors
 
 /**
  * A divider which has [Dimens.divider] height, fills the maximum width, and uses [color] background color.
  */
 @Composable
-fun HorizontalDivider(modifier: Modifier = Modifier, color: Color = LocalColors.current.dividerColor) {
+fun HorizontalDivider(modifier: Modifier = Modifier, color: Color = KotifyColors.current.divider) {
     Layout(
         modifier = modifier.background(color),
         content = {},
@@ -26,7 +26,7 @@ fun HorizontalDivider(modifier: Modifier = Modifier, color: Color = LocalColors.
  * A divider which has [Dimens.divider] width, fills the maximum height, and uses [color] background color.
  */
 @Composable
-fun VerticalDivider(modifier: Modifier = Modifier, color: Color = LocalColors.current.dividerColor) {
+fun VerticalDivider(modifier: Modifier = Modifier, color: Color = KotifyColors.current.divider) {
     Layout(
         modifier = modifier.background(color),
         content = {},

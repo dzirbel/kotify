@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -25,8 +27,6 @@ import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.adapter.flipped
 import com.dzirbel.kotify.ui.components.adapter.icon
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentList
@@ -44,13 +44,12 @@ fun <T> SortSelector(
     allowEmpty: Boolean = false,
     onSetSort: (PersistentList<Sort<T>>) -> Unit,
 ) {
-    LocalColors.current.WithSurface {
-        Row(
-            modifier = Modifier
-                .instrument()
-                .surfaceBackground(RoundedCornerShape(size = Dimens.cornerSize)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    Surface(
+        modifier = Modifier.instrument(),
+        elevation = Dimens.componentElevation,
+        shape = RoundedCornerShape(size = Dimens.cornerSize),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             if (sorts.isEmpty()) {
                 CachedIcon(
                     name = "sort",
@@ -108,7 +107,7 @@ fun <T> SortSelector(
                             imageVector = sort.sortOrder.icon,
                             contentDescription = null,
                             modifier = Modifier.size(Dimens.iconSmall),
-                            tint = LocalColors.current.primary,
+                            tint = MaterialTheme.colors.primary,
                         )
                     }
 

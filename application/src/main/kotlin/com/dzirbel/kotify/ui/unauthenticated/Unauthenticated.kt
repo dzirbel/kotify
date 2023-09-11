@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,8 +30,6 @@ import com.dzirbel.kotify.network.oauth.OAuth
 import com.dzirbel.kotify.ui.components.ProjectGithubIcon
 import com.dzirbel.kotify.ui.components.ThemeSwitcher
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.LocalColors
-import com.dzirbel.kotify.ui.theme.surfaceBackground
 import com.dzirbel.kotify.ui.util.openInBrowser
 import kotlinx.coroutines.launch
 
@@ -42,8 +41,8 @@ private const val WIDTH_FRACTION = 0.5f
  */
 @Composable
 fun Unauthenticated() {
-    LocalColors.current.WithSurface {
-        Box(Modifier.fillMaxSize().surfaceBackground()) {
+    Surface {
+        Box(Modifier.fillMaxSize()) {
             val scrollState = rememberScrollState()
             Box(Modifier.verticalScroll(scrollState).fillMaxSize()) {
                 Column(
