@@ -80,6 +80,14 @@ object CurrentTime {
     }
 
     /**
+     * Advances the mocked time by [millis].
+     */
+    fun advanceMock(millis: Long) {
+        check(enabled) { "system time is not enabled" }
+        mockedTime = requireNotNull(mockedTime) { "system time has not been mocked" }.plus(millis)
+    }
+
+    /**
      * Stops mocking calls to [CurrentTime].
      */
     fun closeMock() {

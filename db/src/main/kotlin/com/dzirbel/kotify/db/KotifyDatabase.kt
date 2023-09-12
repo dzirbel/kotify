@@ -204,7 +204,7 @@ object KotifyDatabase {
                 }
             } else {
                 withContext(context) {
-                    transaction(db) {
+                    transaction(db = db) {
                         transactionListeners.forEach {
                             it.onTransactionStart(transaction = this, name = name)
                         }
