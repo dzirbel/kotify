@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -17,7 +18,8 @@ import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.compare
-import com.dzirbel.kotify.ui.screenshotTest
+import com.dzirbel.kotify.ui.theme.KotifyColors
+import com.dzirbel.kotify.ui.themedScreenshotTest
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -27,29 +29,32 @@ internal class GridTest {
         val alignment: Alignment,
         val columns: Int?,
         val adapter: ListAdapter<Int> = ListAdapter.of(List(50) { it }),
+        val selectedElementIndex: Int? = null,
     )
 
     @ParameterizedTest
     @MethodSource("screenshotTestCases")
     fun testScreenshot(case: ScreenshotTestCase) {
-        screenshotTest(filename = case.filename, windowHeight = 1500) {
+        themedScreenshotTest(filename = case.filename, windowHeight = 1500, colors = listOf(KotifyColors.DARK)) {
             Grid(
-                modifier = Modifier.background(Color.Black),
+                modifier = Modifier,
                 elements = case.adapter,
                 columns = case.columns,
                 horizontalSpacing = 10.dp,
                 verticalSpacing = 5.dp,
                 edgePadding = PaddingValues(horizontal = 20.dp, vertical = 5.dp),
                 cellAlignment = case.alignment,
+                selectedElementIndex = case.selectedElementIndex,
+                detailInsertContent = { _, element ->
+                    Text(
+                        text = "Details for $element",
+                        modifier = Modifier.padding(24.dp),
+                    )
+                },
             ) { _, index ->
-                Box(
-                    modifier = Modifier
-                        .background(Color.DarkGray)
-                        .size((20 + index * 2).dp),
-                ) {
+                Box(modifier = Modifier.background(Color.DarkGray).size((20 + index * 2).dp)) {
                     Text(
                         text = (index + 1).toString(),
-                        color = Color.White,
                         modifier = Modifier.align(Alignment.Center),
                     )
                 }
@@ -72,7 +77,7 @@ internal class GridTest {
                 Text(
                     text = division.toString(),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.background(Color.White).fillMaxWidth(),
+                    modifier = Modifier.background(Color.DarkGray).fillMaxWidth(),
                 )
             }
         }
@@ -89,6 +94,12 @@ internal class GridTest {
                     columns = null,
                     adapter = ListAdapter.of(List(50) { it })
                         .withDivider(Divider(dividableProperty = ModDividableProperty(mod = 5))),
+                ),
+                ScreenshotTestCase(
+                    filename = "insert",
+                    alignment = Alignment.Center,
+                    columns = null,
+                    selectedElementIndex = 13,
                 ),
             )
         }

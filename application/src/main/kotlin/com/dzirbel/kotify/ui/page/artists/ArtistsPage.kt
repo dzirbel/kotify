@@ -115,6 +115,8 @@ data object ArtistsPage : Page {
             )
         }
 
+        var selectedArtistIndex: Int? by remember { mutableStateOf(null) }
+
         DisplayVerticalScrollPage(
             title = "Saved Artists",
             header = {
@@ -122,8 +124,6 @@ data object ArtistsPage : Page {
             },
         ) {
             if (artistsAdapter.derived { it.hasElements }.value) {
-                var selectedArtistIndex by remember { mutableStateOf<Int?>(null) }
-
                 Grid(
                     elements = artistsAdapter.value,
                     edgePadding = PaddingValues(

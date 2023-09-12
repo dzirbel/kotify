@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -113,9 +112,9 @@ fun <E> Grid(
     edgePadding: PaddingValues = PaddingValues(horizontal = horizontalSpacing, vertical = verticalSpacing),
     cellAlignment: Alignment = Alignment.TopCenter,
     columns: Int? = null,
-    cellParams: GridCellParams = GridCellParams(),
-    detailInsertCellParams: GridCellParams = GridCellParams(cornerSize = Dimens.cornerSize * 2),
     detailInsertAnimationDurationMs: Int = AnimationConstants.DefaultDurationMillis,
+    detailInsertCornerSize: Dp = Dimens.cornerSize * 2,
+    detailInsertElevation: Dp = Dimens.componentElevation * 2,
     detailInsertContent: @Composable ((elementIndex: Int, element: E) -> Unit)? = null,
     cellContent: @Composable (elementIndex: Int, element: E) -> Unit,
 ) {
@@ -123,7 +122,7 @@ fun <E> Grid(
 
     val layoutDirection = LocalLayoutDirection.current
 
-    val insertAnimationState = remember { MutableTransitionState(false) }
+    val insertAnimationState = remember { MutableTransitionState(selectedElementIndex != null) }
     insertAnimationState.targetState = selectedElementIndex != null
 
     // keeps track of the last selected element (or null if an element has never been selected) - this is used to
@@ -139,10 +138,7 @@ fun <E> Grid(
     Layout(
         content = {
             elements.forEachIndexed { index, element ->
-                val params = if (index == selectedElementIndex) detailInsertCellParams else cellParams
-                Surface(elevation = params.elevation, shape = RoundedCornerShape(params.cornerSize)) {
-                    cellContent(index, element)
-                }
+                cellContent(index, element)
             }
 
             elements.divider?.let { divider ->
@@ -154,7 +150,6 @@ fun <E> Grid(
             }
 
             if (detailInsertContent != null && lastSelectedElementIndex != null) {
-                // TODO colors.WithSurface(increment = detailInsertCellParams.backgroundSurfaceIncrement) {
                 AnimatedVisibility(
                     visibleState = insertAnimationState,
                     enter = fadeIn(animationSpec = tween(durationMillis = detailInsertAnimationDurationMs)),
@@ -162,13 +157,14 @@ fun <E> Grid(
                 ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
-                        shape = FlaredBottomRoundedRect(cornerSize = detailInsertCellParams.cornerSize),
+                        shape = FlaredBottomRoundedRect(cornerSize = detailInsertCornerSize),
                         border = BorderStroke(width = Dimens.divider, color = KotifyColors.current.divider),
-                        elevation = detailInsertCellParams.elevation,
+                        elevation = detailInsertElevation,
                         content = {},
                     )
                 }
 
+                // TODO small shadow on top of the selected item above
                 AnimatedVisibility(
                     visibleState = insertAnimationState,
                     enter = expandVertically(
@@ -182,7 +178,7 @@ fun <E> Grid(
                 ) {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        elevation = detailInsertCellParams.elevation,
+                        elevation = detailInsertElevation,
                         border = BorderStroke(width = Dimens.divider, color = KotifyColors.current.divider),
                     ) {
                         detailInsertContent(lastSelectedElementIndex, elements[lastSelectedElementIndex]!!)
@@ -317,7 +313,7 @@ fun <E> Grid(
                     // - maxHeight increased by divider size to align better with insert top border
                     selectedItemBackgroundPlaceable = insertMeasurables[0].measure(
                         constraints.copy(
-                            maxWidth = maxCellWidth + detailInsertCellParams.cornerSize.roundToPx() * 2,
+                            maxWidth = maxCellWidth + detailInsertCornerSize.roundToPx() * 2,
                             maxHeight = rowHeights[selectedElementDivisionIndex][selectedElementRowIndex] +
                                 (verticalSpacingPx + Dimens.divider.toPx()).roundToInt(),
                         ),
@@ -351,14 +347,6 @@ fun <E> Grid(
                         val insertInRow = divisionIndex == selectedElementDivisionIndex &&
                             rowIndex == selectedElementRowIndex
 
-                        // place the insert before the row so that the selected item background is drawn on top of it
-                        if (insertInRow) {
-                            detailInsertPlaceable!!.place(
-                                x = 0,
-                                y = (y + rowHeight + verticalSpacingPx).roundToInt(),
-                            )
-                        }
-
                         for (colIndex in 0..<cols) {
                             // getOrNull in case the column exceeds the number of elements in the last row
                             division.getOrNull(colIndex + rowIndex * cols)?.index?.let { elementIndex ->
@@ -369,7 +357,7 @@ fun <E> Grid(
                                 if (insertInRow && colIndex == selectedElementColIndex) {
                                     // adjust x to account for flared base
                                     selectedItemBackgroundPlaceable!!.place(
-                                        x = baseX - detailInsertCellParams.cornerSize.roundToPx(),
+                                        x = baseX - detailInsertCornerSize.roundToPx(),
                                         y = y.roundToInt(),
                                     )
                                 }
@@ -383,6 +371,14 @@ fun <E> Grid(
 
                                 placeable.place(x = baseX + alignment.x, y = roundedY + alignment.y)
                             }
+                        }
+
+                        // place the insert after the row so that the selected item background is drawn below it
+                        if (insertInRow) {
+                            detailInsertPlaceable!!.place(
+                                x = 0,
+                                y = (y + rowHeight + verticalSpacingPx).roundToInt(),
+                            )
                         }
 
                         y += rowHeight + verticalSpacingPx
