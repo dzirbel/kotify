@@ -9,7 +9,7 @@ import com.dzirbel.kotify.repository.artist.SavedArtistRepository
 import com.dzirbel.kotify.repository.mockArtistTracksNull
 import com.dzirbel.kotify.repository.mockLibrary
 import com.dzirbel.kotify.repository.mockStates
-import com.dzirbel.kotify.ui.framework.render
+import com.dzirbel.kotify.ui.page.render
 import com.dzirbel.kotify.ui.themedScreenshotTest
 import com.dzirbel.kotify.util.MockedTimeExtension
 import com.dzirbel.kotify.util.withMockedObjects

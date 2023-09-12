@@ -25,7 +25,7 @@ import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.user.UserViewModel
-import com.dzirbel.kotify.ui.framework.render
+import com.dzirbel.kotify.ui.page.render
 import com.dzirbel.kotify.ui.themedScreenshotTest
 import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.MockedTimeExtension

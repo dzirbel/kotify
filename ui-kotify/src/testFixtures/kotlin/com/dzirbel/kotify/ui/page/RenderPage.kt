@@ -1,8 +1,6 @@
-package com.dzirbel.kotify.ui.framework
+package com.dzirbel.kotify.ui.page
 
 import androidx.compose.runtime.Composable
-import com.dzirbel.kotify.ui.page.Page
-import com.dzirbel.kotify.ui.page.PageScope
 
 /**
  * Simple wrapper to render this [Page] via [Page.bind], for use in screenshot tests.
