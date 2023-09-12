@@ -1,9 +1,12 @@
 package com.dzirbel.kotify.util
 
 import assertk.Assert
+import assertk.all
 import assertk.assertions.containsAll
 import assertk.assertions.containsExactly
 import assertk.assertions.containsExactlyInAnyOrder
+import assertk.assertions.hasSize
+import assertk.assertions.index
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.support.expected
@@ -44,6 +47,18 @@ inline fun <reified T> Assert<Iterable<T>>.containsExactlyElementsOfInAnyOrder(e
  */
 inline fun <reified T> Assert<Iterable<T>>.containsAllElementsOf(elements: Iterable<T>) {
     containsAll(*elements.toList().toTypedArray())
+}
+
+/**
+ * Asserts that the [List] contains elements satisfying the given [assertions], in order, with the same size.
+ */
+inline fun <reified T> Assert<List<T>>.elementsSatisfy(vararg assertions: (Assert<T>) -> Unit) {
+    all {
+        hasSize(assertions.size)
+        for ((index, assertion) in assertions.withIndex()) {
+            index(index).all(assertion)
+        }
+    }
 }
 
 /**
