@@ -121,8 +121,9 @@ object KotifyDatabase {
             // no need for transaction isolation since transactions are run with limited parallelism
             defaultIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED
 
+            // TODO disable this again once https://youtrack.jetbrains.com/issue/EXPOSED-169 is resolved
             // do not keep entities in database cache; they are stored by repositories
-            maxEntitiesToStoreInCachePerEntity = 0
+            maxEntitiesToStoreInCachePerEntity = Int.MAX_VALUE
         }
 
         databaseByDB = Array(DB.entries.size) { i ->

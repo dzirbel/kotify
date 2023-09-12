@@ -79,6 +79,10 @@ class SpotifyEntityTest {
             assertThat(entity1.createdTime).isEqualTo(creationTime)
             assertThat(entity1.updatedTime).isEqualTo(CurrentTime.instant)
 
+            KotifyDatabase.blockingTransaction(db) {
+                assertThat(requireNotNull(TestSpotifyEntity.findById(id)).updatedTime).isEqualTo(CurrentTime.instant)
+            }
+
             val count = KotifyDatabase.blockingTransaction(db) { TestSpotifyEntityTable.selectAll().count() }
             assertThat(count).isEqualTo(1)
 
@@ -96,6 +100,10 @@ class SpotifyEntityTest {
             assertThat(entity2.testColumn).isEqualTo(networkModel2.testValue)
             assertThat(entity2.createdTime).isEqualTo(creationTime)
             assertThat(entity2.updatedTime).isEqualTo(CurrentTime.instant)
+
+            KotifyDatabase.blockingTransaction(db) {
+                assertThat(requireNotNull(TestSpotifyEntity.findById(id)).updatedTime).isEqualTo(CurrentTime.instant)
+            }
         }
     }
 }
