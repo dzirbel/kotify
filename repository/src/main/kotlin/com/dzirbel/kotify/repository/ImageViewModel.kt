@@ -32,11 +32,11 @@ class EntityImageViewModel(
     private val imageFlowsBySize = mutableMapOf<ImageSize, LazyTransactionStateFlow<String>>()
 
     constructor(
-        entity: SpotifyEntity,
-        entityTable: SpotifyEntityTable,
+        entityId: String,
         imageJoinColumn: Column<EntityID<String>>,
+        entityTable: SpotifyEntityTable = requireNotNull(imageJoinColumn.referee).table as SpotifyEntityTable,
     ) : this(
-        entityId = entity.id.value,
+        entityId = entityId,
         entityName = entityTable.entityName,
         imageJoinColumn = imageJoinColumn,
     )

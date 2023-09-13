@@ -14,9 +14,9 @@ object EpisodeTable : SpotifyEntityTable(entityName = "episode") {
     val releaseDatePrecision: Column<String?> = text("release_date_precision").nullable()
 
     object EpisodeImageTable : Table() {
-        val album = reference("episode", EpisodeTable)
+        val episode = reference("episode", EpisodeTable)
         val image = reference("image", ImageTable)
-        override val primaryKey = PrimaryKey(album, image)
+        override val primaryKey = PrimaryKey(episode, image)
     }
 }
 
