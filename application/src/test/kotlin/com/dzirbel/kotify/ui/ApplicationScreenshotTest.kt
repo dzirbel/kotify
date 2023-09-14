@@ -12,6 +12,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.repository.FakeAlbumRepository
+import com.dzirbel.kotify.repository.FakeAlbumTracksRepository
 import com.dzirbel.kotify.repository.FakeArtistAlbumsRepository
 import com.dzirbel.kotify.repository.FakeArtistRepository
 import com.dzirbel.kotify.repository.FakePlayer
@@ -29,7 +30,9 @@ import com.dzirbel.kotify.repository.player.TrackPosition
 import com.dzirbel.kotify.repository.put
 import com.dzirbel.kotify.repository.rating.Rating
 import com.dzirbel.kotify.repository.track.TrackViewModel
+import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow
 import com.dzirbel.kotify.ui.page.FakeImageViewModel
+import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.page.artists.ArtistsPage
 import com.dzirbel.kotify.ui.page.playlist.PlaylistPage
@@ -38,6 +41,7 @@ import com.dzirbel.kotify.util.MockedTimeExtension
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -159,6 +163,51 @@ class ApplicationScreenshotTest {
                 savedTrackRepository = savedTrackRepository,
                 artistAlbumsRepository = artistAlbumsRepository,
                 albumRepository = albumRepository,
+                userRepository = FakeUserRepository(currentUser = ApplicationFixtures.user),
+            ) {
+                Root(authenticationState = AuthenticationState.AUTHENTICATED)
+            }
+        }
+    }
+
+    @Test
+    fun album() {
+        val random = Random(0)
+        val album = ApplicationFixtures.bangersOnly
+        val tracks = ApplicationFixtures.Names.transitTracks
+            .take(requireNotNull(album.totalTracks) - 1)
+            .mapIndexed { index, name ->
+                TrackViewModel(
+                    id = name,
+                    name = name,
+                    trackNumber = index + 2,
+                    durationMs = random.nextTrackDurationMs(),
+                    popularity = random.nextGaussian(mean = 80, stddev = 10, max = 100, min = 0).roundToInt(),
+                    album = LazyTransactionStateFlow(album),
+                    artists = LazyTransactionStateFlow(listOf(ApplicationFixtures.pta)),
+                )
+            }
+            .onEach { track ->
+                ratingRepository.rate(track.id, random.nextGaussianRating(mean = 9.3))
+                savedTrackRepository.setSaved(track.id, random.nextInt(10) != 0)
+            }
+            .plus(ApplicationFixtures.streetcarSymphony)
+
+        val albumRepository = FakeAlbumRepository(listOf(album))
+        val albumTracksRepository = FakeAlbumTracksRepository(mapOf(album.id to tracks))
+
+        applicationScreenshotTest("album", AlbumPage(albumId = album.id)) {
+            ProvideFakeRepositories(
+                artistRepository = artistRepository,
+                player = setupPlayer(),
+                playlistRepository = playlistRepository,
+                ratingRepository = ratingRepository,
+                savedAlbumRepository = savedAlbumRepository,
+                savedArtistRepository = savedArtistRepository,
+                savedPlaylistRepository = savedPlaylistRepository,
+                savedTrackRepository = savedTrackRepository,
+                albumRepository = albumRepository,
+                albumTracksRepository = albumTracksRepository,
                 userRepository = FakeUserRepository(currentUser = ApplicationFixtures.user),
             ) {
                 Root(authenticationState = AuthenticationState.AUTHENTICATED)

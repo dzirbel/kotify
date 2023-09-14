@@ -84,8 +84,9 @@ object ApplicationFixtures {
         id = "playing-track",
         name = "Streetcar Symphony",
         uri = "track:playing-track",
-        trackNumber = 0,
+        trackNumber = 1,
         durationMs = (4.minutes + 20.seconds).inWholeMilliseconds,
+        popularity = 100,
         artists = LazyTransactionStateFlow(listOf(pta)),
         album = LazyTransactionStateFlow(bangersOnly),
     )
@@ -172,10 +173,7 @@ object ApplicationFixtures {
                 id = "$index",
                 name = Names.transitTracks[index],
                 trackNumber = 0,
-                durationMs = random
-                    .nextGaussian(mean = 4.minutes.inWholeMilliseconds, stddev = 1.minutes.inWholeMilliseconds)
-                    .coerceAtLeast(0.0)
-                    .toLong(),
+                durationMs = random.nextTrackDurationMs(),
                 album = LazyTransactionStateFlow(transitAlbums.random(random)),
                 artists = LazyTransactionStateFlow(listOf(transitArtists.random(random))),
                 popularity = random.nextGaussian(mean = 70, stddev = 20, min = 0, max = 100).roundToInt(),
