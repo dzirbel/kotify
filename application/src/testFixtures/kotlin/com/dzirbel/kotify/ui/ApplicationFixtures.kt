@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui
 
+import com.dzirbel.kotify.db.model.AlbumType
 import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.playlist.PlaylistTrackViewModel
@@ -69,6 +70,16 @@ object ApplicationFixtures {
         images = FakeImageViewModel.fromFile("underground_jams.png"),
     )
 
+    val bangersOnly = AlbumViewModel(
+        id = "playing-album",
+        name = "Bangers Only",
+        uri = "album:playing-album",
+        totalTracks = 13,
+        images = FakeImageViewModel.fromFile("pta1.png"),
+        artists = LazyTransactionStateFlow(listOf(pta)),
+        albumType = AlbumType.ALBUM,
+    )
+
     val streetcarSymphony = TrackViewModel(
         id = "playing-track",
         name = "Streetcar Symphony",
@@ -76,15 +87,7 @@ object ApplicationFixtures {
         trackNumber = 0,
         durationMs = (4.minutes + 20.seconds).inWholeMilliseconds,
         artists = LazyTransactionStateFlow(listOf(pta)),
-        album = LazyTransactionStateFlow(
-            AlbumViewModel(
-                id = "playing-album",
-                name = "Bangers Only",
-                uri = "album:playing-album",
-                images = FakeImageViewModel.fromFile("pta1.png"),
-                artists = LazyTransactionStateFlow(listOf(pta)),
-            ),
-        ),
+        album = LazyTransactionStateFlow(bangersOnly),
     )
 
     val savedPlaylists: List<PlaylistViewModel> = Names.genericPlaylists.mapIndexed { index, name ->
@@ -114,28 +117,50 @@ object ApplicationFixtures {
             name = name,
             uri = "album:$index",
             images = FakeImageViewModel(),
+            albumType = AlbumType.ALBUM,
         )
     }
 
     fun ratingForArtist(artistId: String, random: Random): AverageRating {
         val ratings = when (artistId) {
-            "pta" -> {
+            pta.id -> {
                 List(18) { random.nextGaussianRating(mean = 9.7) }
             }
+
             "bigphil" -> {
                 List(3) { random.nextGaussianRating(mean = 8.2) }
             }
+
             "badghost" -> {
                 List(1) { random.nextGaussianRating(mean = 1.0) }
             }
+
             "among-thieves" -> {
                 emptyList()
             }
+
             else -> {
                 val numRatings = random.nextGaussian(mean = 10.0, stddev = 7.5, min = 0).roundToInt()
                 val averageRating = random.nextGaussian(mean = 6.5, stddev = 2.0, min = 2.0, max = 9.0)
                 List(numRatings) { random.nextGaussianRating(mean = averageRating) }
             }
+        }
+
+        return AverageRating(ratings)
+    }
+
+    fun ratingForAlbum(album: AlbumViewModel, random: Random): AverageRating {
+        val ratings = if (album == bangersOnly) {
+            List(requireNotNull(bangersOnly.totalTracks)) { random.nextGaussianRating(mean = 9.7) }
+        } else {
+            val numRatings = random.nextGaussian(
+                mean = album.totalTracks?.let { it / 2 } ?: 10,
+                stddev = 7.5,
+                min = 0,
+                max = album.totalTracks,
+            )
+            val averageRating = random.nextGaussian(mean = 6.5, stddev = 2.0, min = 2.0, max = 9.0)
+            List(numRatings.roundToInt()) { random.nextGaussianRating(mean = averageRating) }
         }
 
         return AverageRating(ratings)

@@ -46,10 +46,6 @@ class FakeRatingRepository(
         artistRatings[artistId] = averageRating
     }
 
-    fun setArtistAverageRating(artistId: String, ratings: Iterable<Rating>) {
-        setArtistAverageRating(artistId, AverageRating(ratings))
-    }
-
     fun setAlbumAverageRating(albumId: String, averageRating: AverageRating) {
         albumRatings[albumId] = averageRating
     }

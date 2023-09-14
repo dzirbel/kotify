@@ -11,6 +11,8 @@ import com.dzirbel.kotify.network.model.SpotifyImage
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
+import com.dzirbel.kotify.repository.FakeAlbumRepository
+import com.dzirbel.kotify.repository.FakeArtistAlbumsRepository
 import com.dzirbel.kotify.repository.FakeArtistRepository
 import com.dzirbel.kotify.repository.FakePlayer
 import com.dzirbel.kotify.repository.FakePlaylistRepository
@@ -21,12 +23,14 @@ import com.dzirbel.kotify.repository.FakeSavedArtistRepository
 import com.dzirbel.kotify.repository.FakeSavedPlaylistRepository
 import com.dzirbel.kotify.repository.FakeSavedTrackRepository
 import com.dzirbel.kotify.repository.FakeUserRepository
+import com.dzirbel.kotify.repository.artist.ArtistAlbumViewModel
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.player.TrackPosition
 import com.dzirbel.kotify.repository.put
 import com.dzirbel.kotify.repository.rating.Rating
 import com.dzirbel.kotify.repository.track.TrackViewModel
 import com.dzirbel.kotify.ui.page.FakeImageViewModel
+import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.page.artists.ArtistsPage
 import com.dzirbel.kotify.ui.page.playlist.PlaylistPage
 import com.dzirbel.kotify.util.CurrentTime
@@ -111,6 +115,50 @@ class ApplicationScreenshotTest {
                 savedPlaylistRepository = savedPlaylistRepository,
                 savedTrackRepository = savedTrackRepository,
                 playlistTracksRepository = playlistTracksRepository,
+                userRepository = FakeUserRepository(currentUser = ApplicationFixtures.user),
+            ) {
+                Root(authenticationState = AuthenticationState.AUTHENTICATED)
+            }
+        }
+    }
+
+    @Test
+    fun artist() {
+        val random = Random(0)
+        val artist = ApplicationFixtures.pta
+        val albums = ApplicationFixtures.transitAlbums
+            .take(15)
+            .onEach { album ->
+                savedAlbumRepository.setSaved(album.id, random.nextInt(10) != 0)
+            }
+            .mapIndexed { index, album ->
+                album.copy(
+                    images = FakeImageViewModel.fromFile("generic/${index + 1}.png"),
+                    totalTracks = random.nextGaussian(mean = 10, stddev = 2, min = 1, max = 20).toInt(),
+                )
+            }
+            .plus(ApplicationFixtures.bangersOnly)
+            .onEach { album ->
+                ratingRepository.setAlbumAverageRating(album.id, ApplicationFixtures.ratingForAlbum(album, random))
+            }
+        val artistAlbums = albums.map { ArtistAlbumViewModel(album = it, artist = artist) }
+
+        artistRepository.put(artist)
+        val artistAlbumsRepository = FakeArtistAlbumsRepository(mapOf(artist.id to artistAlbums))
+        val albumRepository = FakeAlbumRepository(albums)
+
+        applicationScreenshotTest("artist", ArtistPage(artistId = artist.id)) {
+            ProvideFakeRepositories(
+                artistRepository = artistRepository,
+                player = setupPlayer(),
+                playlistRepository = playlistRepository,
+                ratingRepository = ratingRepository,
+                savedAlbumRepository = savedAlbumRepository,
+                savedArtistRepository = savedArtistRepository,
+                savedPlaylistRepository = savedPlaylistRepository,
+                savedTrackRepository = savedTrackRepository,
+                artistAlbumsRepository = artistAlbumsRepository,
+                albumRepository = albumRepository,
                 userRepository = FakeUserRepository(currentUser = ApplicationFixtures.user),
             ) {
                 Root(authenticationState = AuthenticationState.AUTHENTICATED)

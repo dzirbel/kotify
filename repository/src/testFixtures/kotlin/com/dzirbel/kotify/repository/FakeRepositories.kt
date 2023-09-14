@@ -46,8 +46,8 @@ class FakeArtistRepository(artists: Iterable<ArtistViewModel> = emptyList()) :
     FakeEntityRepository<ArtistViewModel, Artist, SpotifyArtist>(artists),
     ArtistRepository
 
-class FakeArtistTracksRepository : ArtistTracksRepository {
-    private val artistTracksStates = mutableMapOf<String, Set<String>?>()
+class FakeArtistTracksRepository(artistTracksStates: Map<String, Set<String>?> = emptyMap()) : ArtistTracksRepository {
+    private val artistTracksStates: MutableMap<String, Set<String>?> = artistTracksStates.toMutableMap()
 
     override fun setTrackArtists(trackId: String, artistIds: Iterable<String>) {
         artistTracksStates[trackId] = artistIds.toSet()
