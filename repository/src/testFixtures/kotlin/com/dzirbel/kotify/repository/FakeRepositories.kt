@@ -107,7 +107,7 @@ class FakeUserRepository(
     currentUser: UserViewModel = UserViewModel(id = "kotify", name = "Kotify"),
     currentUserId: String = currentUser.id,
     users: Iterable<UserViewModel> = emptyList(),
-) : FakeEntityRepository<UserViewModel, User, SpotifyUser>(users),
+) : FakeEntityRepository<UserViewModel, User, SpotifyUser>(users.plus(currentUser)),
     UserRepository {
 
     override val currentUserId = MutableStateFlow(currentUserId)

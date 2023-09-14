@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Density
 import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.AuthenticationState
@@ -16,25 +17,34 @@ import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.repository.FakeArtistRepository
 import com.dzirbel.kotify.repository.FakePlayer
 import com.dzirbel.kotify.repository.FakePlaylistRepository
+import com.dzirbel.kotify.repository.FakePlaylistTracksRepository
 import com.dzirbel.kotify.repository.FakeRatingRepository
 import com.dzirbel.kotify.repository.FakeSavedAlbumRepository
 import com.dzirbel.kotify.repository.FakeSavedArtistRepository
 import com.dzirbel.kotify.repository.FakeSavedPlaylistRepository
 import com.dzirbel.kotify.repository.FakeSavedTrackRepository
 import com.dzirbel.kotify.repository.FakeUserRepository
+import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.player.TrackPosition
+import com.dzirbel.kotify.repository.playlist.PlaylistTrackViewModel
 import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
 import com.dzirbel.kotify.repository.put
 import com.dzirbel.kotify.repository.rating.Rating
+import com.dzirbel.kotify.repository.track.TrackViewModel
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.user.UserViewModel
+import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow
 import com.dzirbel.kotify.ui.page.FakeImageViewModel
+import com.dzirbel.kotify.ui.page.Page
+import com.dzirbel.kotify.ui.page.PageStack
+import com.dzirbel.kotify.ui.page.artists.ArtistsPage
+import com.dzirbel.kotify.ui.page.playlist.PlaylistPage
 import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.MockedTimeExtension
-import com.dzirbel.kotify.util.collections.zipEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.io.File
@@ -42,69 +52,36 @@ import java.time.Instant
 import kotlin.math.roundToInt
 import kotlin.random.Random
 import kotlin.random.asJavaRandom
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 @ExtendWith(MockedTimeExtension::class)
 class ApplicationScreenshotTest {
-    @Test
-    fun test() {
+    private val artistRepository = FakeArtistRepository()
+    private val savedArtistRepository = FakeSavedArtistRepository()
+
+    private val playlistRepository = FakePlaylistRepository()
+    private val savedPlaylistRepository = FakeSavedPlaylistRepository()
+
+    private val savedTrackRepository = FakeSavedTrackRepository()
+    private val savedAlbumRepository = FakeSavedAlbumRepository()
+
+    private val ratingRepository = FakeRatingRepository()
+
+    @BeforeEach
+    fun setup() {
         Application.setup()
 
-        val artistRepository = FakeArtistRepository()
-        val savedArtistRepository = FakeSavedArtistRepository()
-
-        val playlistRepository = FakePlaylistRepository()
-        val savedPlaylistRepository = FakeSavedPlaylistRepository()
-
-        val savedTrackRepository = FakeSavedTrackRepository()
-        val savedAlbumRepository = FakeSavedAlbumRepository()
-
-        val ratingRepository = FakeRatingRepository()
-
-        setupPlaylists(playlistRepository, savedPlaylistRepository)
-        setupArtists(artistRepository, savedArtistRepository, ratingRepository)
-
-        screenshotTest(
-            filename = "application",
-            configurations = listOf(KotifyColors.DARK, KotifyColors.LIGHT),
-            windowWidth = 1920,
-            windowHeight = 1080,
-            windowDensity = Density(density = 0.65f, fontScale = 1.25f),
-            onConfiguration = { colors -> Settings.colors = colors },
-        ) {
-            ProvideFakeRepositories(
-                artistRepository = artistRepository,
-                player = setupPlayer(ratingRepository, savedTrackRepository, savedAlbumRepository),
-                playlistRepository = playlistRepository,
-                ratingRepository = ratingRepository,
-                savedAlbumRepository = savedAlbumRepository,
-                savedArtistRepository = savedArtistRepository,
-                savedPlaylistRepository = savedPlaylistRepository,
-                savedTrackRepository = savedTrackRepository,
-                userRepository = setupCurrentUser(),
-            ) {
-                Root(authenticationState = AuthenticationState.AUTHENTICATED)
-            }
+        savedPlaylistRepository.setSaved(playlistNames)
+        for (name in playlistNames) {
+            playlistRepository.put(PlaylistViewModel(id = name, name = name, ownerId = "owner"))
         }
     }
 
-    private fun setupPlaylists(
-        playlistRepository: FakePlaylistRepository,
-        savedPlaylistRepository: FakeSavedPlaylistRepository,
-    ) {
-        val playlistIds = List(playlistNames.size) { "$it" }
-        savedPlaylistRepository.setSaved(playlistIds)
-        playlistIds.zipEach(playlistNames) { id, name ->
-            playlistRepository.put(PlaylistViewModel(id = id, name = name, ownerId = "owner"))
-        }
-    }
-
-    private fun setupArtists(
-        artistRepository: FakeArtistRepository,
-        savedArtistRepository: FakeSavedArtistRepository,
-        ratingRepository: FakeRatingRepository,
-    ) {
+    @Test
+    fun artists() {
         var genericImageCount = 1
         artists.forEachIndexed { index, artist ->
             val id = artist.id ?: "$index"
@@ -121,6 +98,114 @@ class ApplicationScreenshotTest {
             )
 
             ratingRepository.setArtistAverageRating(id, artist.ratings ?: ArtistInfo.generateRatings(id = id))
+        }
+
+        applicationScreenshotTest("artists", ArtistsPage) {
+            ProvideFakeRepositories(
+                artistRepository = artistRepository,
+                player = setupPlayer(ratingRepository, savedTrackRepository, savedAlbumRepository),
+                playlistRepository = playlistRepository,
+                ratingRepository = ratingRepository,
+                savedAlbumRepository = savedAlbumRepository,
+                savedArtistRepository = savedArtistRepository,
+                savedPlaylistRepository = savedPlaylistRepository,
+                savedTrackRepository = savedTrackRepository,
+                userRepository = setupCurrentUser(),
+            ) {
+                Root(authenticationState = AuthenticationState.AUTHENTICATED)
+            }
+        }
+    }
+
+    private fun Random.nextGaussian(mean: Number, stddev: Number): Double {
+        return asJavaRandom().nextGaussian(mean.toDouble(), stddev.toDouble())
+    }
+
+    @Test
+    fun playlist() {
+        val random = Random(0)
+
+        val artists = playlistArtists.map { name -> ArtistViewModel(id = name, name = name) }
+        val albums = albumNames.map { name -> AlbumViewModel(id = name, name = name) }
+
+        val tracks = List(42) { index ->
+            val track = TrackViewModel(
+                id = "$index",
+                name = trackNames[index],
+                trackNumber = 0,
+                durationMs = random
+                    .nextGaussian(mean = 4.minutes.inWholeMilliseconds, stddev = 1.minutes.inWholeMilliseconds)
+                    .coerceAtLeast(0.0)
+                    .toLong(),
+                album = LazyTransactionStateFlow(albums.random(random)),
+                artists = LazyTransactionStateFlow(listOf(artists.random(random))),
+                popularity = random.nextGaussian(mean = 70, stddev = 20).roundToInt().coerceIn(0..100),
+            )
+
+            if (random.nextInt(10) != 0) {
+                ratingRepository.rate(
+                    track.id,
+                    Rating(random.nextGaussian(mean = 7.5, stddev = 1.5).roundToInt().coerceIn(0..10)),
+                )
+            }
+
+            savedTrackRepository.setSaved(track.id, random.nextInt(5) != 0)
+
+            PlaylistTrackViewModel(
+                track = track,
+                indexOnPlaylist = index,
+                addedAt = random
+                    .nextGaussian(mean = 50, stddev = 30)
+                    .coerceAtLeast(0.0)
+                    .let { daysAgo -> CurrentTime.instant.minus(daysAgo.days.toJavaDuration()) }
+                    .toString(),
+            )
+        }
+
+        val playlist = PlaylistViewModel(
+            id = "Underground Jams",
+            name = "Underground Jams",
+            uri = "playlist",
+            ownerId = "kotify",
+            followersTotal = 48954,
+            totalTracks = tracks.size,
+            images = FakeImageViewModel.fromFile("underground_jams.png"),
+        )
+
+        playlistRepository.put(playlist)
+        savedPlaylistRepository.save(playlist.id)
+
+        val playlistTracksRepository = FakePlaylistTracksRepository(mapOf(playlist.id to tracks))
+
+        applicationScreenshotTest("playlist", PlaylistPage(playlistId = playlist.id)) {
+            ProvideFakeRepositories(
+                artistRepository = artistRepository,
+                player = setupPlayer(ratingRepository, savedTrackRepository, savedAlbumRepository),
+                playlistRepository = playlistRepository,
+                ratingRepository = ratingRepository,
+                savedAlbumRepository = savedAlbumRepository,
+                savedArtistRepository = savedArtistRepository,
+                savedPlaylistRepository = savedPlaylistRepository,
+                savedTrackRepository = savedTrackRepository,
+                playlistTracksRepository = playlistTracksRepository,
+                userRepository = setupCurrentUser(),
+            ) {
+                Root(authenticationState = AuthenticationState.AUTHENTICATED)
+            }
+        }
+    }
+
+    private fun applicationScreenshotTest(filename: String, page: Page, content: @Composable () -> Unit) {
+        screenshotTest(
+            filename = filename,
+            configurations = listOf(KotifyColors.DARK, KotifyColors.LIGHT),
+            windowWidth = 1920,
+            windowHeight = 1080,
+            windowDensity = Density(density = 0.65f, fontScale = 1.25f),
+            onConfiguration = { colors -> Settings.colors = colors },
+        ) {
+            pageStack.value = PageStack(page)
+            content()
         }
     }
 
@@ -186,6 +271,7 @@ class ApplicationScreenshotTest {
         ratingRepository.rate(track.id, Rating(Rating.DEFAULT_MAX_RATING))
         savedTrackRepository.save(track.id)
         savedAlbumRepository.save("playing-album-id")
+        playingArtist.id?.let { savedArtistRepository.save(it) }
 
         SpotifyImageCache.set("kotify://playing-album", File("src/test/resources/pta1.png"))
 
@@ -308,10 +394,106 @@ class ApplicationScreenshotTest {
             ArtistInfo(name = "Cosmic Caravan Conjurers"),
         )
 
+        private val playlistArtists = listOf(
+            "Echo Chamber Collective",
+            "Velvet Undergroundvibes",
+            "Subterranean Soundscapes",
+            "Neon Street Syndicate",
+            "Urban Echoes Project",
+            "Secret Tunnel Troubadours",
+            "Midnight Metro Muses",
+            "Tunnel Visionaries",
+            "Hidden Gem Harmonics",
+            "Subway Serenaders",
+            "Labyrinthine Beats",
+            "Shadow City Soundtrack",
+            "Cobblestone Crooners",
+            "Subterranea Sensations",
+            "Urban Jungle Groovers",
+            "Mole People Melodies",
+            "Rooftop Revolutionaries",
+            "Forgotten Underground Icons",
+            "Alleyway Artisans",
+            "Concrete Jungle Rhythms",
+            "Transit Tracks Collective",
+            "Metro Melodic Masters",
+            "Train Car Troubadours",
+            "Bus Stop Balladeers",
+            "Subway Symphony Society",
+            "Tramline Tunesmiths",
+            "Commute Cadence Crew",
+            "Transit Groove Ensemble",
+            "Streetcar Serenaders",
+            "Ticket to Groovetown",
+            "Platform Performers",
+            "City Transit Trouvères",
+            "Transit Beatcrafters",
+            "Commuter's Chorus",
+            "Route Rhythm Revival",
+            "Station Serenade Set",
+            "Cityscape Sound Sailors",
+            "Underground Rhapsodists",
+            "Sidewalk Syncopators",
+            "Transit Harmony Collective",
+        )
+
+        private val albumNames = listOf(
+            "Urban Chronicles",
+            "City Stories",
+            "Downtown Diaries",
+            "Street-Level Melodies",
+            "Metropolis Memoirs",
+            "Soundtrack of the Streets",
+            "Cityscape Serenades",
+            "Neon Nights",
+            "Echoes of the Sidewalk",
+            "Nocturnal Notes",
+            "Concrete Dreams",
+            "City Lights and Shadows",
+            "The Commuter's Playlist",
+            "Tales of the Night City",
+            "Pavement Poetry",
+            "Urban Echoes",
+            "Soul of the City",
+            "Metropolitan Melodies",
+            "Street Songs and Stories",
+            "Rhythms of the Asphalt",
+            "City Soundscape",
+            "In the Heart of the City",
+            "Urban Groove Collective",
+            "The City After Dark",
+            "Metropolitan Musings",
+            "Nights in Neon",
+            "City Life Chronicles",
+            "Avenue Anthems",
+            "Sidewalk Serenades",
+            "Late-Night Lullabies",
+            "Concrete Jungle Jams",
+            "City Sights and Sounds",
+            "Streetside Stories",
+            "Urbane Rhythms",
+            "Urban Legends in Music",
+            "City Beat Chronicles",
+            "Soundtrack of the Urban Jungle",
+            "Echoes of the Night City",
+            "City Pulse",
+            "Metropolis Reflections",
+            "Streetcar Serenades",
+            "Nightlife Notes",
+            "City Stories in Sound",
+            "Cityscape Chronicles",
+            "Sounds of the Sidewalk",
+            "Metropolitan Memoirs",
+            "Avenue Anthems",
+            "Urban Dreamscape",
+            "The City Unplugged",
+            "Echoes from the Streets",
+        )
+
         private val playlistNames = listOf(
+            "Underground Jams",
             "Classic Hits",
             "New Releases",
-            "Ultimate Mix",
             "Weekend Vibes",
             "Relaxation Station",
             "Workout Beats",
@@ -347,8 +529,60 @@ class ApplicationScreenshotTest {
             "Punk Rock Riot",
             "African Beats Adventure",
             "Chillstep Bliss",
-            "Singer-Songwriter Stories",
             "Vintage Soul and Funk",
+        )
+
+        private val trackNames = listOf(
+            "City Lights",
+            "Neon Nights",
+            "Sidewalk Serenade",
+            "Metropolitan Melody",
+            "Urban Echoes",
+            "Street-Level Symphony",
+            "Nocturnal Notes",
+            "Downtown Diary",
+            "Concrete Dreams",
+            "Nighttime Nostalgia",
+            "Avenue Anthem",
+            "Cityscape Serenade",
+            "Rhythms of the Asphalt",
+            "Echoes of the Sidewalk",
+            "Late-Night Lullaby",
+            "Soul of the City",
+            "Urban Sunrise",
+            "Pavement Poetry",
+            "The Commuter's Chorus",
+            "City Soundtrack",
+            "Metropolis Memoir",
+            "Streetcar Sonata",
+            "Neon Noir",
+            "Dusk Till Dawn",
+            "Urban Reverie",
+            "Nightscape Serenade",
+            "City Pulse",
+            "Streetside Story",
+            "Metropolitan Muse",
+            "Echoes from the Alley",
+            "Urban Legends",
+            "Avenue Amplitude",
+            "Cityscape Chronicles",
+            "Nighttime Sonata",
+            "Late-Night Reverie",
+            "Concrete Jungle Jazz",
+            "Sidewalk Serenade",
+            "Metropolitan Muse",
+            "City Beat",
+            "Urban Poetry",
+            "Neon Dreams",
+            "Streetlight Serenade",
+            "Nocturnal Narrative",
+            "Avenue Alcove",
+            "Cityscape Serenity",
+            "Urban Solitude",
+            "Nightlife Notes",
+            "Downtown Daydream",
+            "Metropolis Memory",
+            "Echoes of the Night City",
         )
     }
 }

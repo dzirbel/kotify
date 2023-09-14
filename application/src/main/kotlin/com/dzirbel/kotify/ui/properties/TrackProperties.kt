@@ -2,6 +2,7 @@ package com.dzirbel.kotify.ui.properties
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -135,13 +135,13 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> TrackViewModel
         val popularity = toNumber(item)
         val color = MaterialTheme.colors.onBackground.copy(alpha = ContentAlpha.disabled)
 
-        Surface(
+        Box(
             modifier = Modifier
                 .padding(Dimens.space3)
                 .height(Dimens.fontBodyDp)
                 .fillMaxWidth()
-                .applyIf(popularity == null) { alpha(ContentAlpha.disabled) },
-            border = BorderStroke(width = Dimens.divider, color = color),
+                .applyIf(popularity == null) { alpha(ContentAlpha.disabled) }
+                .border(BorderStroke(width = Dimens.divider, color = color)),
         ) {
             if (popularity != null) {
                 Box(
