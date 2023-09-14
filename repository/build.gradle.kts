@@ -33,4 +33,6 @@ dependencies {
     testImplementation(libs.assertk)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
+
+    testFixturesImplementation(compose.runtime)
 }
