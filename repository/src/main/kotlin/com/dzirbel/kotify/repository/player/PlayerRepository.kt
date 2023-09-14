@@ -7,7 +7,6 @@ import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
-import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.player.Player.PlayContext
 import com.dzirbel.kotify.repository.util.BackoffStrategy
 import com.dzirbel.kotify.repository.util.JobLock
@@ -25,7 +24,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.TimeSource
 
 // TODO document
-open class PlayerRepository internal constructor(private val scope: CoroutineScope) : Player {
+class PlayerRepository(private val scope: CoroutineScope) : Player {
 
     private val _refreshingPlayback = MutableStateFlow(false)
     override val refreshingPlayback: StateFlow<Boolean>
@@ -511,7 +510,7 @@ open class PlayerRepository internal constructor(private val scope: CoroutineSco
         this.value = if (success) ToggleableState.Set(value) else previousValue
     }
 
-    companion object : PlayerRepository(scope = Repository.userSessionScope) {
+    companion object {
         /**
          * Buffer time in milliseconds to permit when verifying that a seek was applied.
          */

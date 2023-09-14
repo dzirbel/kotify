@@ -5,18 +5,30 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifyPlaylist
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository.DatabaseSavedRepository
-import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.repository.convertToDB
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.util.coroutines.mapParallel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import java.time.Instant
 
-open class SavedPlaylistRepository internal constructor(scope: CoroutineScope) :
-    DatabaseSavedRepository<SpotifyPlaylist>(savedEntityTable = PlaylistTable.SavedPlaylistsTable, scope = scope) {
+interface SavedPlaylistRepository : SavedRepository
+
+class DatabaseSavedPlaylistRepository(
+    scope: CoroutineScope,
+    userRepository: UserRepository,
+    private val playlistRepository: PlaylistRepository,
+) :
+    DatabaseSavedRepository<SpotifyPlaylist>(
+        savedEntityTable = PlaylistTable.SavedPlaylistsTable,
+        scope = scope,
+        userRepository = userRepository,
+    ),
+    SavedPlaylistRepository {
 
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
-        val userId = UserRepository.requireCurrentUserId
+        val userId = userRepository.requireCurrentUserId
 
         return ids.mapParallel { id ->
             Spotify.Follow.isFollowingPlaylist(playlistId = id, userIds = listOf(userId))
@@ -37,9 +49,7 @@ open class SavedPlaylistRepository internal constructor(scope: CoroutineScope) :
     }
 
     override fun convertToDB(savedNetworkType: SpotifyPlaylist, fetchTime: Instant): Pair<String, Instant?> {
-        PlaylistRepository.convertToDB(networkModel = savedNetworkType, fetchTime = fetchTime)
+        playlistRepository.convertToDB(networkModel = savedNetworkType, fetchTime = fetchTime)
         return savedNetworkType.id to null
     }
-
-    companion object : SavedPlaylistRepository(scope = Repository.userSessionScope)
 }

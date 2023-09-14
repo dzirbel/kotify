@@ -8,8 +8,7 @@ import com.dzirbel.kotify.log.success
 import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.repository.Repository
-import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.repository.user.DatabaseUserRepository
 import com.dzirbel.kotify.ui.IconCache
 import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.util.CurrentTime
@@ -51,7 +50,7 @@ fun main(args: Array<String>) {
 
             runBlocking {
                 KotifyDatabase[DB.CACHE].transaction("load current user") {
-                    UserRepository.onConnectToDatabase()
+                    DatabaseUserRepository.onConnectToDatabase()
                 }
             }
         }
@@ -81,7 +80,6 @@ fun main(args: Array<String>) {
 
         // misc actions with negligible expected runtime
         IconCache.loadBlocking = false
-        Repository.enabled = true
     }
 
     EventLog.success(

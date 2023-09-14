@@ -16,15 +16,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.player.Player
-import com.dzirbel.kotify.repository.playlist.PlaylistRepository
 import com.dzirbel.kotify.repository.playlist.PlaylistTrackViewModel
 import com.dzirbel.kotify.repository.playlist.PlaylistTracksRepository
 import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
-import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
-import com.dzirbel.kotify.repository.rating.TrackRatingRepository
+import com.dzirbel.kotify.repository.rating.RatingRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
-import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
+import com.dzirbel.kotify.ui.LocalPlaylistRepository
+import com.dzirbel.kotify.ui.LocalPlaylistTracksRepository
+import com.dzirbel.kotify.ui.LocalRatingRepository
+import com.dzirbel.kotify.ui.LocalSavedPlaylistRepository
+import com.dzirbel.kotify.ui.LocalSavedTrackRepository
+import com.dzirbel.kotify.ui.LocalUserRepository
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner
@@ -70,13 +73,15 @@ import kotlin.time.Duration.Companion.milliseconds
 data class PlaylistPage(private val playlistId: String) : Page {
     @Composable
     override fun PageScope.bind() {
-        val playlist = PlaylistRepository.stateOf(id = playlistId).collectAsState().value?.cachedValue
+        val playlistTracksRepository = LocalPlaylistTracksRepository.current
+
+        val playlist = LocalPlaylistRepository.current.stateOf(id = playlistId).collectAsState().value?.cachedValue
 
         val playlistTracksAdapter = rememberListAdapterState(
             key = playlistId,
             defaultSort = PlaylistTrackIndexProperty,
             source = { scope ->
-                PlaylistTracksRepository.stateOf(id = playlistId).mapIn(scope) { cacheState ->
+                playlistTracksRepository.stateOf(id = playlistId).mapIn(scope) { cacheState ->
                     cacheState?.cachedValue?.also { playlistTracks ->
                         // request albums and artist for tracks (but not episodes)
                         val tracks = playlistTracks.mapNotNull { it.track }
@@ -93,10 +98,12 @@ data class PlaylistPage(private val playlistId: String) : Page {
             },
         )
 
-        val columns = remember(playlist) { playlistTrackColumns(playlist) }
+        val savedTrackRepository = LocalSavedTrackRepository.current
+        val ratingRepository = LocalRatingRepository.current
+        val columns = remember(playlist) { playlistTrackColumns(playlist, savedTrackRepository, ratingRepository) }
 
-        SavedTrackRepository.rememberSavedStates(playlistTracksAdapter.value) { it.track?.id }
-        TrackRatingRepository.rememberRatingStates(playlistTracksAdapter.value) { it.track?.id }
+        savedTrackRepository.rememberSavedStates(playlistTracksAdapter.value) { it.track?.id }
+        ratingRepository.rememberRatingStates(playlistTracksAdapter.value) { it.track?.id }
 
         DisplayVerticalScrollPage(
             title = playlist?.name,
@@ -149,7 +156,10 @@ private fun PlaylistHeader(
                         Text(it)
                     }
 
-                    val owner = UserRepository.stateOf(id = playlist.ownerId).collectAsState().value?.cachedValue
+                    val owner = LocalUserRepository.current.stateOf(id = playlist.ownerId)
+                        .collectAsState()
+                        .value
+                        ?.cachedValue
                     Text("Created by ${owner?.name ?: "..."}; ${playlist.followersTotal} followers")
 
                     val totalDuration = takingIf(adapter.hasElements) {
@@ -168,7 +178,7 @@ private fun PlaylistHeader(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         ToggleSaveButton(
-                            repository = SavedPlaylistRepository,
+                            repository = LocalSavedPlaylistRepository.current,
                             id = playlistId,
                             size = Dimens.iconMedium,
                         )
@@ -183,10 +193,11 @@ private fun PlaylistHeader(
                             onSetSort = onSetSort,
                         )
 
+                        val playlistTracksRepository = LocalPlaylistTracksRepository.current
                         PlaylistReorderButton(
                             enabled = !adapter.sorts.isNullOrEmpty() && adapter.hasElements,
                             reorder = {
-                                PlaylistTracksRepository.reorder(
+                                playlistTracksRepository.reorder(
                                     playlistId = playlistId,
                                     tracks = adapter.toList(),
                                     comparator = requireNotNull(adapter.sorts).asComparator(),
@@ -201,8 +212,8 @@ private fun PlaylistHeader(
         }
 
         Row {
-            InvalidateButton(repository = PlaylistRepository, id = playlistId, entityName = "Playlist")
-            InvalidateButton(repository = PlaylistTracksRepository, id = playlistId, entityName = "Tracks")
+            InvalidateButton(repository = LocalPlaylistRepository.current, id = playlistId, entityName = "Playlist")
+            InvalidateButton(repository = LocalPlaylistTracksRepository.current, id = playlistId, entityName = "Tracks")
         }
     }
 }
@@ -244,7 +255,11 @@ private fun PlaylistReorderButton(
     }
 }
 
-private fun playlistTrackColumns(playlist: PlaylistViewModel?): PersistentList<Column<PlaylistTrackViewModel>> {
+private fun playlistTrackColumns(
+    playlist: PlaylistViewModel?,
+    savedTrackRepository: SavedTrackRepository,
+    ratingRepository: RatingRepository,
+): PersistentList<Column<PlaylistTrackViewModel>> {
     return persistentListOf(
         TrackPlayingColumn(
             trackIdOf = { playlistTrack -> playlistTrack.track?.id },
@@ -256,11 +271,17 @@ private fun playlistTrackColumns(playlist: PlaylistViewModel?): PersistentList<C
             },
         ),
         PlaylistTrackIndexProperty,
-        TrackSavedProperty(trackIdOf = { playlistTrack -> playlistTrack.track?.id }),
+        TrackSavedProperty(
+            savedTrackRepository = savedTrackRepository,
+            trackIdOf = { playlistTrack -> playlistTrack.track?.id },
+        ),
         TrackNameProperty.ForPlaylistTrack,
         TrackArtistsProperty.ForPlaylistTrack,
         TrackAlbumProperty.ForPlaylistTrack,
-        TrackRatingProperty(trackIdOf = { playlistTrack -> playlistTrack.track?.id }),
+        TrackRatingProperty(
+            ratingRepository = ratingRepository,
+            trackIdOf = { playlistTrack -> playlistTrack.track?.id },
+        ),
         PlaylistTrackAddedAtProperty,
         TrackDurationProperty.ForPlaylistTrack,
         TrackPopularityProperty.ForPlaylistTrack,

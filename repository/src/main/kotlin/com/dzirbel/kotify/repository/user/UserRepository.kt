@@ -11,11 +11,12 @@ import com.dzirbel.kotify.network.model.PrivateSpotifyUser
 import com.dzirbel.kotify.network.model.SpotifyUser
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.repository.CacheState
+import com.dzirbel.kotify.repository.ConvertingRepository
 import com.dzirbel.kotify.repository.DataSource
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.RequestLog
-import com.dzirbel.kotify.repository.savedRepositories
+import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.repository.util.midpointInstantToNow
 import com.dzirbel.kotify.repository.util.updateOrInsert
 import kotlinx.coroutines.CancellationException
@@ -27,30 +28,43 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import kotlin.time.TimeSource
 
-open class UserRepository internal constructor(
+interface UserRepository : Repository<UserViewModel>, ConvertingRepository<User, SpotifyUser> {
+    val currentUserId: StateFlow<String?>
+    val currentUser: StateFlow<CacheState<UserViewModel>?>
+    val hasCurrentUserId: Boolean
+    val requireCurrentUserId: String
+
+    fun onConnectToDatabase()
+    fun ensureCurrentUserLoaded()
+    fun signOut()
+}
+
+fun UserRepository.convertToDB(networkModel: SpotifyUser, fetchTime: Instant): User {
+    return convertToDB(id = networkModel.id, networkModel = networkModel, fetchTime = fetchTime)
+}
+
+class DatabaseUserRepository(
     private val applicationScope: CoroutineScope,
     private val userSessionScope: CoroutineScope,
-) : DatabaseEntityRepository<UserViewModel, User, SpotifyUser>(entityClass = User, scope = applicationScope) {
+    private val savedRepositories: Lazy<List<SavedRepository>>,
+) : DatabaseEntityRepository<UserViewModel, User, SpotifyUser>(entityClass = User, scope = applicationScope),
+    UserRepository {
 
-    private val _currentUserId = MutableStateFlow<String?>(null)
-    val currentUserId: StateFlow<String?>
+    private val _currentUserId = MutableStateFlow(preloadedCurrentUserId)
+    override val currentUserId: StateFlow<String?>
         get() = _currentUserId
 
     private val _currentUser = MutableStateFlow<CacheState<UserViewModel>?>(null)
-    val currentUser: StateFlow<CacheState<UserViewModel>?>
+    override val currentUser: StateFlow<CacheState<UserViewModel>?>
         get() = _currentUser
 
-    val hasCurrentUserId: Boolean
+    override val hasCurrentUserId: Boolean
         get() = _currentUserId.value != null
 
-    val requireCurrentUserId: String
+    override val requireCurrentUserId: String
         get() = requireNotNull(_currentUserId.value) { "missing current user ID" }
 
     override suspend fun fetchFromRemote(id: String) = Spotify.UsersProfile.getUser(userId = id)
-
-    override fun convertToDB(networkModel: SpotifyUser, fetchTime: Instant): User {
-        return convertToDB(id = networkModel.id, networkModel = networkModel, fetchTime = fetchTime)
-    }
 
     override fun convertToDB(id: String, networkModel: SpotifyUser, fetchTime: Instant): User {
         return User.updateOrInsert(id = id, networkModel = networkModel, fetchTime = fetchTime) {
@@ -73,12 +87,12 @@ open class UserRepository internal constructor(
 
     override fun convertToVM(databaseModel: User) = UserViewModel(databaseModel)
 
-    fun onConnectToDatabase() {
+    override fun onConnectToDatabase() {
         _currentUserId.value = UserTable.CurrentUserTable.get()
     }
 
     // TODO revisit
-    fun ensureCurrentUserLoaded() {
+    override fun ensureCurrentUserLoaded() {
         if (currentUser.value?.cachedValue != null) return
 
         val requestLog = RequestLog(log = mutableLog)
@@ -129,7 +143,7 @@ open class UserRepository internal constructor(
         }
     }
 
-    fun signOut() {
+    override fun signOut() {
         applicationScope.launch {
             Repository.userSessionScope.coroutineContext.cancelChildren()
 
@@ -139,7 +153,7 @@ open class UserRepository internal constructor(
             _currentUserId.value = null
             _currentUser.value = null
 
-            savedRepositories.forEach { it.invalidateUser() }
+            savedRepositories.value.forEach { it.invalidateUser() }
 
             // TODO also reset Player state
 
@@ -160,8 +174,14 @@ open class UserRepository internal constructor(
         }
     }
 
-    companion object : UserRepository(
-        applicationScope = Repository.applicationScope,
-        userSessionScope = Repository.userSessionScope,
-    )
+    companion object {
+        private var preloadedCurrentUserId: String? = null
+
+        /**
+         * Should be invoked on application startup to load the current user ID from the database.
+         */
+        fun onConnectToDatabase() {
+            preloadedCurrentUserId = UserTable.CurrentUserTable.get()
+        }
+    }
 }

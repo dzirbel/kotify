@@ -18,11 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.repository.CacheStrategy
-import com.dzirbel.kotify.repository.player.PlayerRepository
-import com.dzirbel.kotify.repository.playlist.PlaylistRepository
 import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
-import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.LocalPlayer
+import com.dzirbel.kotify.ui.LocalPlaylistRepository
+import com.dzirbel.kotify.ui.LocalSavedPlaylistRepository
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.LibraryInvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
@@ -68,15 +68,16 @@ fun LibraryPanel() {
                 text = "Playlists",
             )
 
-            LibraryInvalidateButton(SavedPlaylistRepository)
+            LibraryInvalidateButton(LocalSavedPlaylistRepository.current)
 
             HorizontalDivider(Modifier.padding(bottom = Dimens.space3))
 
-            val savedPlaylistIds = SavedPlaylistRepository.library.collectAsState().value?.ids
+            val savedPlaylistIds = LocalSavedPlaylistRepository.current.library.collectAsState().value?.ids
             if (savedPlaylistIds != null) {
+                val playlistRepository = LocalPlaylistRepository.current
                 val playlistStates = remember(savedPlaylistIds) {
                     // do not require a full playlist model
-                    PlaylistRepository.statesOf(ids = savedPlaylistIds, cacheStrategy = CacheStrategy.EntityTTL())
+                    playlistRepository.statesOf(ids = savedPlaylistIds, cacheStrategy = CacheStrategy.EntityTTL())
                 }
 
                 savedPlaylistIds.zipEach(playlistStates) { playlistId, playlistState ->
@@ -113,9 +114,9 @@ private fun PlaylistItem(playlist: PlaylistViewModel) {
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
         )
 
-        val playbackUriState = PlayerRepository.playbackContextUri.collectAsState()
+        val playbackUriState = LocalPlayer.current.playbackContextUri.collectAsState()
         val playingPlaylist = remember(playlist.uri) {
-            derivedStateOf { playbackUriState.value == playlist.uri }
+            derivedStateOf { playlist.uri != null && playbackUriState.value == playlist.uri }
         }
 
         if (playingPlaylist.value) {

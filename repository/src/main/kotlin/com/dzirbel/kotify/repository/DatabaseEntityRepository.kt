@@ -9,34 +9,24 @@ import java.time.Instant
 /**
  * A [DatabaseRepository] with a [SpotifyEntity] as the local database entity.
  */
-@Suppress("TypeParameterListSpacing") // no wrapping option appears to satisfy linting
 abstract class DatabaseEntityRepository<
     ViewModel : EntityViewModel,
-    EntityType : SpotifyEntity,
-    NetworkType : SpotifyObject,
+    Entity : SpotifyEntity,
+    Network : SpotifyObject,
     > internal constructor(
-    private val entityClass: EntityClass<String, EntityType>,
+    private val entityClass: EntityClass<String, Entity>,
     entityName: String = entityClass.table.tableName.removeSuffix("s"),
     scope: CoroutineScope,
-) : DatabaseRepository<ViewModel, EntityType, NetworkType>(entityName = entityName, scope = scope) {
+) : DatabaseRepository<ViewModel, Entity, Network>(entityName = entityName, scope = scope) {
 
     override val defaultCacheStrategy = CacheStrategy.RequiringFullEntity<ViewModel>()
         .then(CacheStrategy.EntityTTL())
 
-    /**
-     * Convenience variant of [convertToDB] which uses the [networkModel]'s ID field, if it is non-null.
-     *
-     * Repositories whose [NetworkType]s always have an ID can override this to provide a non-null return type.
-     */
-    open fun convertToDB(networkModel: NetworkType, fetchTime: Instant): EntityType? {
-        return networkModel.id?.let { convertToDB(id = it, networkModel = networkModel, fetchTime = fetchTime) }
-    }
-
-    final override fun fetchFromDatabase(id: String): Pair<EntityType, Instant>? {
+    final override fun fetchFromDatabase(id: String): Pair<Entity, Instant>? {
         return entityClass.findById(id)?.let { entity -> entity to entity.updatedTime }
     }
 
-    final override fun fetchFromDatabase(ids: List<String>): List<Pair<EntityType, Instant>?> {
+    final override fun fetchFromDatabase(ids: List<String>): List<Pair<Entity, Instant>?> {
         return ids.map { id ->
             entityClass.findById(id)?.let { entity -> entity to entity.updatedTime }
         }

@@ -21,7 +21,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
     protected val entityName: String,
     protected val scope: CoroutineScope,
     private val entityNamePlural: String = entityName + 's', // TODO use pluralize utils
-) : Repository<ViewModel> {
+) : Repository<ViewModel>, ConvertingRepository<DatabaseType, NetworkType> {
 
     private val states = SynchronizedWeakStateFlowMap<String, CacheState<ViewModel>>()
 
@@ -63,13 +63,6 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
     }
 
     /**
-     * Converts the given [networkModel] with the given [id] into a [DatabaseType], saving it in the local database.
-     *
-     * Must be called from within a database transaction.
-     */
-    abstract fun convertToDB(id: String, networkModel: NetworkType, fetchTime: Instant): DatabaseType
-
-    /**
      * Converts the given [databaseModel] into a [ViewModel] suitable for external use.
      */
     abstract fun convertToVM(databaseModel: DatabaseType): ViewModel
@@ -78,8 +71,6 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         id: String,
         cacheStrategy: CacheStrategy<ViewModel>,
     ): StateFlow<CacheState<ViewModel>?> {
-        Repository.checkEnabled()
-
         val requestLog = RequestLog(log = mutableLog)
         return states.getOrCreateStateFlow(
             key = id,
@@ -94,8 +85,6 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         ids: Iterable<String>,
         cacheStrategy: CacheStrategy<ViewModel>,
     ): List<StateFlow<CacheState<ViewModel>?>> {
-        Repository.checkEnabled()
-
         val requestLog = RequestLog(log = mutableLog)
         return states.getOrCreateStateFlows(
             keys = ids,
@@ -111,8 +100,6 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
     }
 
     final override fun refreshFromRemote(id: String): Job {
-        Repository.checkEnabled()
-
         val requestLog = RequestLog(log = mutableLog)
         return scope.launch { load(id = id, cacheStrategy = CacheStrategy.NeverValid(), requestLog = requestLog) }
     }

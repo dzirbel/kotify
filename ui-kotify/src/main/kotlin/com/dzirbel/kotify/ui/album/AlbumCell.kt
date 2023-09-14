@@ -23,10 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import com.dzirbel.kotify.repository.album.AlbumViewModel
-import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.player.Player
-import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.LocalRatingRepository
+import com.dzirbel.kotify.ui.LocalSavedAlbumRepository
 import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PlayButton
@@ -55,7 +55,7 @@ fun AlbumCell(album: AlbumViewModel, showRating: Boolean = true, onClick: () -> 
         ) {
             Text(text = album.name, modifier = Modifier.weight(1f))
 
-            ToggleSaveButton(repository = SavedAlbumRepository, id = album.id)
+            ToggleSaveButton(repository = LocalSavedAlbumRepository.current, id = album.id)
 
             PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)
         }
@@ -90,8 +90,9 @@ fun AlbumCell(album: AlbumViewModel, showRating: Boolean = true, onClick: () -> 
 
         if (showRating) {
             val scope = rememberCoroutineScope()
+            val ratingRepository = LocalRatingRepository.current
             val averageRating = remember(album.id) {
-                TrackRatingRepository.averageRatingStateOfAlbum(albumId = album.id, scope = scope)
+                ratingRepository.averageRatingStateOfAlbum(albumId = album.id, scope = scope)
             }
                 .collectAsState()
                 .value
@@ -127,7 +128,7 @@ fun SmallAlbumCell(album: AlbumViewModel, onClick: () -> Unit) {
                     .padding(Dimens.space1),
                 horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
             ) {
-                ToggleSaveButton(repository = SavedAlbumRepository, id = album.id)
+                ToggleSaveButton(repository = LocalSavedAlbumRepository.current, id = album.id)
 
                 PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconSmall)
             }

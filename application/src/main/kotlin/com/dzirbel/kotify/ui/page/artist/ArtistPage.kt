@@ -19,14 +19,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.AlbumType
-import com.dzirbel.kotify.repository.album.AlbumTracksRepository
-import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistAlbumViewModel
-import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
-import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
-import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
+import com.dzirbel.kotify.ui.LocalAlbumTracksRepository
+import com.dzirbel.kotify.ui.LocalArtistAlbumsRepository
+import com.dzirbel.kotify.ui.LocalArtistRepository
+import com.dzirbel.kotify.ui.LocalRatingRepository
+import com.dzirbel.kotify.ui.LocalSavedAlbumRepository
 import com.dzirbel.kotify.ui.album.AlbumCell
 import com.dzirbel.kotify.ui.album.AlbumTypePicker
 import com.dzirbel.kotify.ui.components.DividerSelector
@@ -67,7 +67,10 @@ import kotlinx.collections.immutable.persistentSetOf
 data class ArtistPage(val artistId: String) : Page {
     @Composable
     override fun PageScope.bind() {
-        val artist = ArtistRepository.stateOf(artistId).collectAsState().value?.cachedValue
+        val artistAlbumsRepository = LocalArtistAlbumsRepository.current
+        val ratingRepository = LocalRatingRepository.current
+
+        val artist = LocalArtistRepository.current.stateOf(artistId).collectAsState().value?.cachedValue
 
         val displayedAlbumTypes = remember { mutableStateOf(persistentSetOf(AlbumType.ALBUM)) }
 
@@ -77,7 +80,7 @@ data class ArtistPage(val artistId: String) : Page {
             defaultSort = AlbumReleaseDateProperty.ForArtistAlbum,
             defaultFilter = filterFor(displayedAlbumTypes.value),
             source = { scope ->
-                ArtistAlbumsRepository.stateOf(id = artistId)
+                artistAlbumsRepository.stateOf(id = artistId)
                     .mapIn(scope) { it?.cachedValue }
                     .onEachIn(scope) { artistAlbum ->
                         artistAlbum?.requestBatched(
@@ -88,8 +91,8 @@ data class ArtistPage(val artistId: String) : Page {
             },
         )
 
-        SavedAlbumRepository.rememberSavedStates(artistAlbums.value) { it.album.id }
-        AlbumTracksRepository.rememberStates(ids = artistAlbums.value.map { it.album.id })
+        LocalSavedAlbumRepository.current.rememberSavedStates(artistAlbums.value) { it.album.id }
+        LocalAlbumTracksRepository.current.rememberStates(ids = artistAlbums.value.map { it.album.id })
 
         val scope = rememberCoroutineScope()
         val artistAlbumProperties = remember(artistAlbums.value) {
@@ -100,7 +103,7 @@ data class ArtistPage(val artistId: String) : Page {
                 AlbumRatingProperty.ForArtistAlbum(
                     ratings = artistAlbums.value.associate { artistAlbum ->
                         val albumId = artistAlbum.album.id
-                        albumId to TrackRatingRepository.averageRatingStateOfAlbum(albumId = albumId, scope = scope)
+                        albumId to ratingRepository.averageRatingStateOfAlbum(albumId = albumId, scope = scope)
                     },
                 ),
                 AlbumTotalTracksProperty.ForArtistAlbum,
@@ -172,7 +175,7 @@ private fun ArtistPageHeader(
 
                     if (artist != null) {
                         InvalidateButton(
-                            repository = ArtistRepository,
+                            repository = LocalArtistRepository.current,
                             id = artist.id,
                             entityName = "Artist",
                             contentPadding = PaddingValues(all = Dimens.space2),
@@ -181,7 +184,7 @@ private fun ArtistPageHeader(
                         Interpunct()
 
                         InvalidateButton(
-                            repository = ArtistAlbumsRepository,
+                            repository = LocalArtistAlbumsRepository.current,
                             id = artist.id,
                             entityName = "Albums",
                             contentPadding = PaddingValues(all = Dimens.space2),

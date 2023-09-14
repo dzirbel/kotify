@@ -83,7 +83,7 @@ internal class KotifyDatabaseTest {
             jobs.awaitAll()
 
             val rows: List<Pair<String, Int>> = KotifyDatabase[db]
-                .transaction(name = null, readOnly = true) { TestTable.selectAll().toList() }
+                .transaction(name = null) { TestTable.selectAll().toList() }
                 .map { Pair(it[TestTable.name], it[TestTable.count]) }
 
             assertThat(rows).containsExactlyElementsOfInAnyOrder(

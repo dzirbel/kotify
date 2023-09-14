@@ -10,6 +10,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+interface ArtistTracksRepository {
+    /**
+     * Sets the artist [artistIds] for the track with the given [trackId].
+     */
+    fun setTrackArtists(trackId: String, artistIds: Iterable<String>)
+
+    /**
+     * Returns a [StateFlow] representing the live state of the tracks for the artist with the given [artistId].
+     */
+    fun artistTracksStateOf(artistId: String): StateFlow<Set<String>?>
+
+    /**
+     * Returns a batch of [StateFlow]s representing the live states of the tracks for the artists with the given
+     * [artistIds].
+     */
+    fun artistTracksStatesOf(artistIds: Iterable<String>): List<StateFlow<Set<String>?>>
+}
+
 /**
  * A local-only repository mapping artist IDs to the set of track IDs for that artist.
  *
@@ -19,15 +37,12 @@ import kotlinx.coroutines.launch
  * TODO make it regular Repository to allow reuse of extensions
  */
 @Stable
-open class ArtistTracksRepository internal constructor(private val scope: CoroutineScope) {
+class DatabaseArtistTracksRepository(private val scope: CoroutineScope) : ArtistTracksRepository {
 
     // map from artist ID to the set of track IDs for that artist
     private val artistTrackStates = SynchronizedWeakStateFlowMap<String, Set<String>>()
 
-    /**
-     * Sets the artist [artistIds] for the track with the given [trackId].
-     */
-    fun setTrackArtists(trackId: String, artistIds: Iterable<String>) {
+    override fun setTrackArtists(trackId: String, artistIds: Iterable<String>) {
         TrackTable.TrackArtistTable.setTrackArtists(trackId, artistIds)
 
         // note: does not remove trackId from other artists which may have had it previously, but transferring a track
@@ -37,11 +52,7 @@ open class ArtistTracksRepository internal constructor(private val scope: Corout
         }
     }
 
-    /**
-     * Returns a [StateFlow] representing the live state of the tracks for the artist with the given [artistId].
-     */
-    fun artistTracksStateOf(artistId: String): StateFlow<Set<String>?> {
-        Repository.checkEnabled()
+    override fun artistTracksStateOf(artistId: String): StateFlow<Set<String>?> {
         return artistTrackStates.getOrCreateStateFlow(artistId) {
             scope.launch {
                 val trackIds = KotifyDatabase[DB.CACHE].transaction(name = "load artist $artistId tracks") {
@@ -53,12 +64,7 @@ open class ArtistTracksRepository internal constructor(private val scope: Corout
         }
     }
 
-    /**
-     * Returns a batch of [StateFlow]s representing the live states of the tracks for the artists with the given
-     * [artistIds].
-     */
-    fun artistTracksStatesOf(artistIds: Iterable<String>): List<StateFlow<Set<String>?>> {
-        Repository.checkEnabled()
+    override fun artistTracksStatesOf(artistIds: Iterable<String>): List<StateFlow<Set<String>?>> {
         return artistTrackStates.getOrCreateStateFlows(keys = artistIds) { createdIds ->
             scope.launch {
                 val tracksByArtist = KotifyDatabase[DB.CACHE].transaction(
@@ -73,6 +79,4 @@ open class ArtistTracksRepository internal constructor(private val scope: Corout
             }
         }
     }
-
-    companion object : ArtistTracksRepository(scope = Repository.applicationScope)
 }

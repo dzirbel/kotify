@@ -81,7 +81,7 @@ object KotifyDatabase {
     }
 
     interface DatabaseContext {
-        suspend fun <T> transaction(name: String?, readOnly: Boolean = false, statement: Transaction.() -> T): T
+        suspend fun <T> transaction(name: String?, statement: Transaction.() -> T): T
     }
 
     private lateinit var databaseByDB: Array<Database>
@@ -186,7 +186,7 @@ object KotifyDatabase {
         private val db: Database,
         private val context: CoroutineContext,
     ) : DatabaseContext {
-        override suspend fun <T> transaction(name: String?, readOnly: Boolean, statement: Transaction.() -> T): T {
+        override suspend fun <T> transaction(name: String?, statement: Transaction.() -> T): T {
             check(enabled)
             check(initialized.get()) { "database not initialized" }
             check(db.transactionManager.currentOrNull() == null) { "transaction already in progress" }

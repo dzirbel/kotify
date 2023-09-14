@@ -5,22 +5,29 @@ import com.dzirbel.kotify.db.model.ArtistAlbum
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
 import com.dzirbel.kotify.network.model.asFlow
+import com.dzirbel.kotify.repository.ConvertingRepository
 import com.dzirbel.kotify.repository.DatabaseRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.album.toAlbumType
+import com.dzirbel.kotify.repository.convertToDB
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import java.time.Instant
 
+interface ArtistAlbumsRepository :
+    Repository<List<ArtistAlbumViewModel>>,
+    ConvertingRepository<List<ArtistAlbum>, List<SimplifiedSpotifyAlbum>>
+
 // TODO add CacheStrategy
-open class ArtistAlbumsRepository internal constructor(
-    scope: CoroutineScope,
-    private val albumRepository: AlbumRepository,
-) : DatabaseRepository<List<ArtistAlbumViewModel>, List<ArtistAlbum>, List<SimplifiedSpotifyAlbum>>(
-    entityName = "artist albums",
-    scope = scope,
-) {
+class DatabaseArtistAlbumsRepository(scope: CoroutineScope, private val albumRepository: AlbumRepository) :
+    DatabaseRepository<List<ArtistAlbumViewModel>, List<ArtistAlbum>, List<SimplifiedSpotifyAlbum>>(
+        entityName = "artist albums",
+        entityNamePlural = "artists albums",
+        scope = scope,
+    ),
+    ArtistAlbumsRepository {
+
     override suspend fun fetchFromRemote(id: String): List<SimplifiedSpotifyAlbum> {
         return Spotify.Artists.getArtistAlbums(id = id).asFlow().toList()
     }
@@ -58,6 +65,4 @@ open class ArtistAlbumsRepository internal constructor(
     }
 
     override fun convertToVM(databaseModel: List<ArtistAlbum>) = databaseModel.map(::ArtistAlbumViewModel)
-
-    companion object : ArtistAlbumsRepository(scope = Repository.applicationScope, albumRepository = AlbumRepository)
 }

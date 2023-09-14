@@ -1,29 +1,22 @@
 package com.dzirbel.kotify.ui.page.artists
 
-import com.dzirbel.kotify.db.DatabaseExtension
-import com.dzirbel.kotify.repository.ArtistList
-import com.dzirbel.kotify.repository.artist.ArtistRepository
-import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
+import com.dzirbel.kotify.repository.FakeArtistRepository
+import com.dzirbel.kotify.repository.FakeSavedArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
-import com.dzirbel.kotify.repository.artist.SavedArtistRepository
-import com.dzirbel.kotify.repository.mockArtistTracksNull
-import com.dzirbel.kotify.repository.mockLibrary
-import com.dzirbel.kotify.repository.mockStates
+import com.dzirbel.kotify.ui.ProvideFakeRepositories
+import com.dzirbel.kotify.ui.page.FakeImageViewModel
 import com.dzirbel.kotify.ui.page.render
 import com.dzirbel.kotify.ui.themedScreenshotTest
 import com.dzirbel.kotify.util.MockedTimeExtension
-import com.dzirbel.kotify.util.withMockedObjects
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(DatabaseExtension::class, MockedTimeExtension::class)
+@ExtendWith(MockedTimeExtension::class)
 internal class ArtistsPageScreenshotTest {
     @Test
     fun empty() {
-        withMockedObjects(SavedArtistRepository) {
-            SavedArtistRepository.mockLibrary(ids = null)
-
-            themedScreenshotTest(filename = "empty") {
+        themedScreenshotTest(filename = "empty") {
+            ProvideFakeRepositories {
                 ArtistsPage.render()
             }
         }
@@ -31,15 +24,15 @@ internal class ArtistsPageScreenshotTest {
 
     @Test
     fun full() {
-        val artists = ArtistList(count = 10).map { ArtistViewModel(it) }
-        val ids = artists.map { it.id }
+        val artists = List(10) {
+            ArtistViewModel(id = "$it", name = "Artist $it", uri = "artist-$it", images = FakeImageViewModel())
+        }
 
-        withMockedObjects(ArtistRepository, SavedArtistRepository, ArtistTracksRepository) {
-            SavedArtistRepository.mockLibrary(ids = ids.toSet())
-            ArtistRepository.mockStates(ids = ids, values = artists)
-            ArtistTracksRepository.mockArtistTracksNull()
-
-            themedScreenshotTest(filename = "full") {
+        themedScreenshotTest(filename = "full") {
+            ProvideFakeRepositories(
+                artistRepository = FakeArtistRepository(artists),
+                savedArtistRepository = FakeSavedArtistRepository(artists.associate { it.id to true }),
+            ) {
                 ArtistsPage.render()
             }
         }

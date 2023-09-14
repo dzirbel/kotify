@@ -9,7 +9,7 @@ import com.dzirbel.kotify.repository.album.AlbumViewModel
 data class ArtistAlbumViewModel(
     val album: AlbumViewModel,
     val artist: ArtistViewModel,
-    val albumGroup: AlbumType? = null,
+    val albumGroup: AlbumType? = album.albumType,
 ) {
     constructor(artistAlbum: ArtistAlbum) : this(
         album = AlbumViewModel(artistAlbum.album),

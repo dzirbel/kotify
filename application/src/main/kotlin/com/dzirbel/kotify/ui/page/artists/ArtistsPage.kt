@@ -20,13 +20,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
-import com.dzirbel.kotify.repository.artist.ArtistRepository
-import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
-import com.dzirbel.kotify.repository.artist.SavedArtistRepository
-import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
+import com.dzirbel.kotify.ui.LocalArtistAlbumsRepository
+import com.dzirbel.kotify.ui.LocalArtistRepository
+import com.dzirbel.kotify.ui.LocalArtistTracksRepository
+import com.dzirbel.kotify.ui.LocalRatingRepository
+import com.dzirbel.kotify.ui.LocalSavedArtistRepository
 import com.dzirbel.kotify.ui.album.SmallAlbumCell
 import com.dzirbel.kotify.ui.artist.ArtistCell
 import com.dzirbel.kotify.ui.components.DividerSelector
@@ -75,10 +75,14 @@ data object ArtistsPage : Page {
     override fun PageScope.bind() {
         val scope = rememberCoroutineScope()
 
+        val savedArtistRepository = LocalSavedArtistRepository.current
+        val artistRepository = LocalArtistRepository.current
+        val ratingRepository = LocalRatingRepository.current
+
         // accumulate saved artist IDs, never removing them from the library so that the artist does not disappear from
         // the grid when removed (to make it easy to add them back if it was an accident)
         val displayedLibraryFlow = remember {
-            SavedArtistRepository.library
+            savedArtistRepository.library
                 .runningFoldIn(scope) { accumulator, value -> value?.plus(accumulator?.ids) }
         }
 
@@ -88,7 +92,7 @@ data object ArtistsPage : Page {
                 if (library == null) {
                     MutableStateFlow(null)
                 } else {
-                    ArtistRepository.statesOf(library.ids)
+                    artistRepository.statesOf(library.ids)
                         .combinedStateWhenAllNotNull { it?.cachedValue }
                         .onEachIn(scope) { artists ->
                             artists?.requestBatched(
@@ -101,7 +105,7 @@ data object ArtistsPage : Page {
         }
 
         val artistIds = displayedLibraryFlow.collectAsState().value?.ids
-        ArtistTracksRepository.rememberArtistTracksStates(artistIds)
+        LocalArtistTracksRepository.current.rememberArtistTracksStates(artistIds)
 
         val artistProperties = remember(artistIds) {
             persistentListOf(
@@ -109,7 +113,7 @@ data object ArtistsPage : Page {
                 ArtistPopularityProperty,
                 ArtistRatingProperty(
                     ratings = artistIds?.associateWith { artistId ->
-                        TrackRatingRepository.averageRatingStateOfArtist(artistId = artistId, scope = scope)
+                        ratingRepository.averageRatingStateOfArtist(artistId = artistId, scope = scope)
                     },
                 ),
             )
@@ -179,7 +183,7 @@ private fun ArtistsPageHeader(
                         Interpunct()
 
                         LibraryInvalidateButton(
-                            savedRepository = SavedArtistRepository,
+                            savedRepository = LocalSavedArtistRepository.current,
                             contentPadding = PaddingValues(all = Dimens.space2),
                         )
                     }
@@ -217,7 +221,7 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
         ) {
             Text(text = artist.name, style = MaterialTheme.typography.h5)
 
-            ArtistRepository.stateOf(id = artist.id)
+            LocalArtistRepository.current.stateOf(id = artist.id)
                 .collectAsState()
                 .derived { it?.cacheTime?.toEpochMilli() }
                 .value
@@ -234,8 +238,9 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
             }
 
             val scope = rememberCoroutineScope()
+            val ratingRepository = LocalRatingRepository.current
             val averageRating = remember(artist.id) {
-                TrackRatingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
+                ratingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
             }
                 .collectAsState()
                 .value
@@ -244,8 +249,9 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
         }
 
         // TODO add loading state
+        val artistAlbumsRepository = LocalArtistAlbumsRepository.current
         val adapter = rememberListAdapterState(key = artist.id) { scope ->
-            ArtistAlbumsRepository.stateOf(artist.id).mapIn(scope) { it?.cachedValue }
+            artistAlbumsRepository.stateOf(artist.id).mapIn(scope) { it?.cachedValue }
         }
 
         Grid(

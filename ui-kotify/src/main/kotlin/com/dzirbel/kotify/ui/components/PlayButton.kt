@@ -9,8 +9,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.repository.player.Player
-import com.dzirbel.kotify.repository.player.PlayerRepository
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.LocalPlayer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.derived
@@ -18,9 +18,11 @@ import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 @Composable
 fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
-    val currentContextState = PlayerRepository.playbackContextUri.collectAsState()
-    val playingState = PlayerRepository.playing.collectAsState()
-    val playable = PlayerRepository.playable.collectAsState().derived { it == true }.value
+    val player = LocalPlayer.current
+
+    val currentContextState = player.playbackContextUri.collectAsState()
+    val playingState = player.playing.collectAsState()
+    val playable = player.playable.collectAsState().derived { it == true }.value
 
     val matchesContext = remember(context?.contextUri) {
         derivedStateOf { currentContextState.value == context?.contextUri }
@@ -33,7 +35,7 @@ fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
         enabled = playable && context != null,
         modifier = Modifier.instrument().size(size),
         onClick = {
-            if (playing.value) PlayerRepository.pause() else PlayerRepository.play(context = context)
+            if (playing.value) player.pause() else player.play(context = context)
         },
     ) {
         CachedIcon(

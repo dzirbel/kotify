@@ -5,15 +5,28 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifySavedAlbum
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository.DatabaseSavedRepository
-import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.repository.convertToDB
+import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.util.coroutines.flatMapParallel
 import com.dzirbel.kotify.util.time.parseInstantOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import java.time.Instant
 
-open class SavedAlbumRepository internal constructor(scope: CoroutineScope) :
-    DatabaseSavedRepository<SpotifySavedAlbum>(savedEntityTable = AlbumTable.SavedAlbumsTable, scope = scope) {
+interface SavedAlbumRepository : SavedRepository
+
+class DatabaseSavedAlbumRepository(
+    scope: CoroutineScope,
+    userRepository: UserRepository,
+    private val albumRepository: AlbumRepository,
+) :
+    DatabaseSavedRepository<SpotifySavedAlbum>(
+        savedEntityTable = AlbumTable.SavedAlbumsTable,
+        scope = scope,
+        userRepository = userRepository,
+    ),
+    SavedAlbumRepository {
 
     override suspend fun fetchIsSaved(ids: List<String>): List<Boolean> {
         return ids.chunked(size = Spotify.MAX_LIMIT).flatMapParallel { chunk ->
@@ -31,9 +44,7 @@ open class SavedAlbumRepository internal constructor(scope: CoroutineScope) :
 
     override fun convertToDB(savedNetworkType: SpotifySavedAlbum, fetchTime: Instant): Pair<String, Instant?> {
         val album = savedNetworkType.album
-        AlbumRepository.convertToDB(networkModel = album, fetchTime = fetchTime)
+        albumRepository.convertToDB(networkModel = album, fetchTime = fetchTime)
         return album.id to parseInstantOrNull(savedNetworkType.addedAt)
     }
-
-    companion object : SavedAlbumRepository(scope = Repository.userSessionScope)
 }

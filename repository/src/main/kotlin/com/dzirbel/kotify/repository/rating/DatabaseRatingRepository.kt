@@ -21,15 +21,17 @@ import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 
 // TODO unit test
-open class TrackRatingRepository internal constructor(
+class DatabaseRatingRepository(
+    private val userRepository: UserRepository,
     private val applicationScope: CoroutineScope,
     private val userSessionScope: CoroutineScope,
+    private val artistTracksRepository: ArtistTracksRepository,
+    private val albumTracksRepository: AlbumTracksRepository,
 ) : RatingRepository {
 
     private val states = SynchronizedWeakStateFlowMap<String, Rating>()
@@ -43,7 +45,6 @@ open class TrackRatingRepository internal constructor(
     override val log = mutableLog.asLog()
 
     override fun ratingStateOf(id: String): StateFlow<Rating?> {
-        Repository.checkEnabled()
         return states.getOrCreateStateFlow(key = id) {
             userSessionScope.launch {
                 val rating = KotifyDatabase[DB.RATINGS].transaction("load last rating of track id $id") {
@@ -55,7 +56,6 @@ open class TrackRatingRepository internal constructor(
     }
 
     override fun ratingStatesOf(ids: Iterable<String>): List<StateFlow<Rating?>> {
-        Repository.checkEnabled()
         return states.getOrCreateStateFlows(keys = ids) { creations ->
             userSessionScope.launch {
                 val createdIds = creations.keys.toList() // convert to list to ensure consistent order
@@ -70,7 +70,6 @@ open class TrackRatingRepository internal constructor(
     }
 
     override fun averageRatingStateOf(ids: Iterable<String>): StateFlow<AverageRating> {
-        Repository.checkEnabled()
         // could theoretically be optimized by skipping the ordering of the rating list by the order of ids, since that
         // is irrelevant to the average
         return ratingStatesOf(ids = ids).combineState { AverageRating(it.asIterable()) }
@@ -80,8 +79,8 @@ open class TrackRatingRepository internal constructor(
      * Combines the [ArtistTracksRepository.artistTracksStatesOf] with [averageRatingStateOf] to produce a [StateFlow]
      * of the average rating of the tracks by the artist, with collection in [scope].
      */
-    fun averageRatingStateOfArtist(artistId: String, scope: CoroutineScope): StateFlow<AverageRating> {
-        return ArtistTracksRepository.artistTracksStateOf(artistId = artistId)
+    override fun averageRatingStateOfArtist(artistId: String, scope: CoroutineScope): StateFlow<AverageRating> {
+        return artistTracksRepository.artistTracksStateOf(artistId = artistId)
             .flatMapLatestIn(scope) { trackIds ->
                 trackIds?.let { averageRatingStateOf(ids = it) }
                     ?: MutableStateFlow(AverageRating.empty)
@@ -92,8 +91,8 @@ open class TrackRatingRepository internal constructor(
      * Combines the [AlbumTracksRepository] states with [averageRatingStateOf] to produce a [StateFlow] of the average
      * rating of the tracks on the album, with collection in [scope].
      */
-    fun averageRatingStateOfAlbum(albumId: String, scope: CoroutineScope): StateFlow<AverageRating> {
-        return AlbumTracksRepository.stateOf(id = albumId)
+    override fun averageRatingStateOfAlbum(albumId: String, scope: CoroutineScope): StateFlow<AverageRating> {
+        return albumTracksRepository.stateOf(id = albumId)
             .flatMapLatestIn(scope) { tracks ->
                 tracks?.cachedValue
                     ?.map { it.id }
@@ -103,8 +102,7 @@ open class TrackRatingRepository internal constructor(
     }
 
     override fun rate(id: String, rating: Rating?) {
-        Repository.checkEnabled()
-        val userId = UserRepository.requireCurrentUserId
+        val userId = userRepository.requireCurrentUserId
         applicationScope.launch {
             // assumes the new rating is always newer than the most recent one in the DB (unlike old implementation)
             states.updateValue(id, rating)
@@ -128,42 +126,7 @@ open class TrackRatingRepository internal constructor(
         }
     }
 
-    override suspend fun ratedEntities(userId: String): Set<String> {
-        Repository.checkEnabled()
-        return KotifyDatabase[DB.RATINGS].transaction("load rated track ids for user $userId") {
-            TrackRatingTable
-                .slice(TrackRatingTable.track)
-                .select { TrackRatingTable.userId eq userId }
-                .distinct()
-                .mapTo(mutableSetOf()) { it[TrackRatingTable.track] }
-        }
-    }
-
-    override fun clearAllRatings(userId: String?) {
-        Repository.checkEnabled()
-        applicationScope.launch {
-            KotifyDatabase[DB.RATINGS].transaction(
-                name = userId?.let { "clear ratings for user $userId" } ?: "clear all ratings",
-            ) {
-                if (userId == null) {
-                    TrackRatingTable.deleteAll()
-                } else {
-                    TrackRatingTable.deleteWhere { TrackRatingTable.userId eq userId }
-                }
-            }
-
-            if (userId == null || userId == UserRepository.requireCurrentUserId) {
-                // clear values from StateFlows (necessary even with the clear() to update external references to the
-                // StateFlows)
-                states.computeAll { null }
-
-                // not strictly necessary, but might as well clear the map
-                states.clear()
-            }
-        }
-    }
-
-    private fun lastRatingOf(id: String, userId: String = UserRepository.requireCurrentUserId): Rating? {
+    private fun lastRatingOf(id: String, userId: String = userRepository.requireCurrentUserId): Rating? {
         return TrackRatingTable
             .slice(TrackRatingTable.rating, TrackRatingTable.maxRating, TrackRatingTable.rateTime)
             .select { TrackRatingTable.track eq id }
@@ -179,9 +142,4 @@ open class TrackRatingRepository internal constructor(
                 )
             }
     }
-
-    companion object : TrackRatingRepository(
-        applicationScope = Repository.applicationScope,
-        userSessionScope = Repository.userSessionScope,
-    )
 }

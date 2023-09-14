@@ -5,15 +5,28 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifySavedTrack
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.repository.DatabaseSavedRepository
-import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.repository.convertToDB
+import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.util.coroutines.flatMapParallel
 import com.dzirbel.kotify.util.time.parseInstantOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import java.time.Instant
 
-open class SavedTrackRepository(scope: CoroutineScope) :
-    DatabaseSavedRepository<SpotifySavedTrack>(savedEntityTable = TrackTable.SavedTracksTable, scope = scope) {
+interface SavedTrackRepository : SavedRepository
+
+class DatabaseSavedTrackRepository(
+    scope: CoroutineScope,
+    userRepository: UserRepository,
+    private val trackRepository: TrackRepository,
+) :
+    DatabaseSavedRepository<SpotifySavedTrack>(
+        savedEntityTable = TrackTable.SavedTracksTable,
+        scope = scope,
+        userRepository = userRepository,
+    ),
+    SavedTrackRepository {
 
     override suspend fun fetchIsSaved(id: String): Boolean {
         return Spotify.Library.checkTracks(ids = listOf(id)).first()
@@ -35,9 +48,7 @@ open class SavedTrackRepository(scope: CoroutineScope) :
 
     override fun convertToDB(savedNetworkType: SpotifySavedTrack, fetchTime: Instant): Pair<String, Instant?> {
         val track = savedNetworkType.track
-        TrackRepository.convertToDB(networkModel = track, fetchTime = fetchTime)
+        trackRepository.convertToDB(networkModel = track, fetchTime = fetchTime)
         return track.id to parseInstantOrNull(savedNetworkType.addedAt)
     }
-
-    companion object : SavedTrackRepository(scope = Repository.userSessionScope)
 }

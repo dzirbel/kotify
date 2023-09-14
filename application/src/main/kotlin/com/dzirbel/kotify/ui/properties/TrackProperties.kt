@@ -16,7 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import com.dzirbel.kotify.repository.playlist.PlaylistTrackViewModel
-import com.dzirbel.kotify.repository.rating.TrackRatingRepository
+import com.dzirbel.kotify.repository.rating.RatingRepository
 import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.track.TrackViewModel
 import com.dzirbel.kotify.ui.components.LinkedText
@@ -160,6 +160,7 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> TrackViewModel
 }
 
 class TrackSavedProperty<T>(
+    private val savedTrackRepository: SavedTrackRepository,
     private val trackIdOf: (T) -> String?,
 ) : SortableProperty<T>, DividableProperty<T>, Column<T> {
     override val title = "Saved"
@@ -169,14 +170,14 @@ class TrackSavedProperty<T>(
         // TODO state here is awkward
         val firstId = trackIdOf(first)
         val secondId = trackIdOf(second)
-        val firstSaved = firstId?.let { SavedTrackRepository.savedStateOf(it).value?.value }
-        val secondSaved = secondId?.let { SavedTrackRepository.savedStateOf(it).value?.value }
+        val firstSaved = firstId?.let { savedTrackRepository.savedStateOf(it).value?.value }
+        val secondSaved = secondId?.let { savedTrackRepository.savedStateOf(it).value?.value }
         return sortOrder.compareNullable(firstSaved, secondSaved)
     }
 
     override fun divisionFor(element: T): Boolean? {
         // TODO state here is awkward
-        return trackIdOf(element)?.let { SavedTrackRepository.savedStateOf(it).value?.value }
+        return trackIdOf(element)?.let { savedTrackRepository.savedStateOf(it).value?.value }
     }
 
     override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {
@@ -195,7 +196,7 @@ class TrackSavedProperty<T>(
     override fun Item(item: T) {
         trackIdOf(item)?.let { trackId ->
             ToggleSaveButton(
-                repository = SavedTrackRepository,
+                repository = savedTrackRepository,
                 id = trackId,
                 modifier = Modifier.padding(Dimens.space2),
             )
@@ -204,6 +205,7 @@ class TrackSavedProperty<T>(
 }
 
 class TrackRatingProperty<T>(
+    private val ratingRepository: RatingRepository,
     private val trackIdOf: (T) -> String?,
 ) : SortableProperty<T>, RatingDividableProperty<T>, Column<T> {
     override val title = "Rating"
@@ -220,15 +222,15 @@ class TrackRatingProperty<T>(
 
     override fun ratingOf(element: T): Double? {
         // TODO state here is awkward
-        return trackIdOf(element)?.let { TrackRatingRepository.ratingStateOf(id = it).value?.ratingPercent }
+        return trackIdOf(element)?.let { ratingRepository.ratingStateOf(id = it).value?.ratingPercent }
     }
 
     @Composable
     override fun Item(item: T) {
         trackIdOf(item)?.let { trackId ->
             StarRating(
-                rating = TrackRatingRepository.ratingStateOf(id = trackId).collectAsState().value,
-                onRate = { rating -> TrackRatingRepository.rate(id = trackId, rating = rating) },
+                rating = ratingRepository.ratingStateOf(id = trackId).collectAsState().value,
+                onRate = { rating -> ratingRepository.rate(id = trackId, rating = rating) },
             )
         }
     }

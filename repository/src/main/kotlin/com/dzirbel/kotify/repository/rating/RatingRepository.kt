@@ -3,14 +3,11 @@ package com.dzirbel.kotify.repository.rating
 import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.log.Logging
 import com.dzirbel.kotify.repository.Repository
-import com.dzirbel.kotify.repository.user.UserRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * Specifies the public API for repositories which manage [Rating] states.
- *
- * In practice this is always [TrackRatingRepository] since no other entities can be rated individually, but the API is
- * kept separate to decouple it from the implementation.
+ * Specifies the public API for repositories which manage [Rating] states (of tracks).
  */
 @Stable
 interface RatingRepository : Logging<Repository.LogData> {
@@ -34,20 +31,12 @@ interface RatingRepository : Logging<Repository.LogData> {
      */
     fun averageRatingStateOf(ids: Iterable<String>): StateFlow<AverageRating>
 
+    fun averageRatingStateOfArtist(artistId: String, scope: CoroutineScope): StateFlow<AverageRating>
+
+    fun averageRatingStateOfAlbum(albumId: String, scope: CoroutineScope): StateFlow<AverageRating>
+
     /**
      * Asynchronously applies the given [rating] to the entity with the given [id].
      */
     fun rate(id: String, rating: Rating?)
-
-    /**
-     * Gets a snapshot (not live state) of the set of IDs of rated entities by the given [userId].
-     *
-     * This is mostly for debugging and exposing internal state of the repository.
-     */
-    suspend fun ratedEntities(userId: String = UserRepository.requireCurrentUserId): Set<String>
-
-    /**
-     * Clears all ratings (and their rating histories) for the user with the given [userId], or all users if null.
-     */
-    fun clearAllRatings(userId: String? = UserRepository.requireCurrentUserId)
 }

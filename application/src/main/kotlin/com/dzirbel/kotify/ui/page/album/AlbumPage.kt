@@ -12,13 +12,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.repository.album.AlbumRepository
-import com.dzirbel.kotify.repository.album.AlbumTracksRepository
-import com.dzirbel.kotify.repository.album.SavedAlbumRepository
 import com.dzirbel.kotify.repository.player.Player
-import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.track.TrackViewModel
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
+import com.dzirbel.kotify.ui.LocalAlbumRepository
+import com.dzirbel.kotify.ui.LocalAlbumTracksRepository
+import com.dzirbel.kotify.ui.LocalRatingRepository
+import com.dzirbel.kotify.ui.LocalSavedAlbumRepository
+import com.dzirbel.kotify.ui.LocalSavedTrackRepository
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -60,22 +61,25 @@ import kotlin.time.Duration.Companion.milliseconds
 data class AlbumPage(val albumId: String) : Page {
     @Composable
     override fun PageScope.bind() {
-        val album = AlbumRepository.stateOf(id = albumId).collectAsState().value?.cachedValue
+        val album = LocalAlbumRepository.current.stateOf(id = albumId).collectAsState().value?.cachedValue
 
+        val albumTracksRepository = LocalAlbumTracksRepository.current
         val tracksAdapterState = rememberListAdapterState(
             key = albumId,
             defaultSort = TrackAlbumIndexProperty,
         ) { scope ->
             // TODO load full track objects
-            AlbumTracksRepository.stateOf(id = albumId)
+            albumTracksRepository.stateOf(id = albumId)
                 .mapIn(scope) { it?.cachedValue }
                 .onEachIn(scope) { tracks ->
                     tracks?.requestBatched(transactionName = { "album $albumId $it track artists" }) { it.artists }
                 }
         }
 
-        TrackRatingRepository.rememberRatingStates(tracksAdapterState.value) { it.id }
+        LocalRatingRepository.current.rememberRatingStates(tracksAdapterState.value) { it.id }
 
+        val savedTrackRepository = LocalSavedTrackRepository.current
+        val ratingRepository = LocalRatingRepository.current
         val trackProperties: PersistentList<Column<TrackViewModel>> = remember(album) {
             persistentListOf(
                 TrackPlayingColumn(
@@ -87,10 +91,10 @@ data class AlbumPage(val albumId: String) : Page {
                     },
                 ),
                 TrackAlbumIndexProperty,
-                TrackSavedProperty(trackIdOf = { track -> track.id }),
+                TrackSavedProperty(savedTrackRepository = savedTrackRepository, trackIdOf = { track -> track.id }),
                 TrackNameProperty,
                 TrackArtistsProperty,
-                TrackRatingProperty(trackIdOf = { track -> track.id }),
+                TrackRatingProperty(ratingRepository = ratingRepository, trackIdOf = { track -> track.id }),
                 TrackDurationProperty,
                 TrackPopularityProperty,
             )
@@ -117,7 +121,7 @@ data class AlbumPage(val albumId: String) : Page {
 
 @Composable
 private fun AlbumHeader(albumId: String, adapter: ListAdapterState<TrackViewModel>) {
-    val albumCacheState = AlbumRepository.stateOf(albumId).collectAsState().value
+    val albumCacheState = LocalAlbumRepository.current.stateOf(albumId).collectAsState().value
     val album = albumCacheState?.cachedValue
 
     Row(
@@ -157,15 +161,17 @@ private fun AlbumHeader(albumId: String, adapter: ListAdapterState<TrackViewMode
                         horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        ToggleSaveButton(repository = SavedAlbumRepository, id = albumId)
+                        ToggleSaveButton(repository = LocalSavedAlbumRepository.current, id = albumId)
 
                         PlayButton(context = Player.PlayContext.album(album))
                     }
 
+                    val albumTracksRepository = LocalAlbumTracksRepository.current
+                    val ratingRepository = LocalRatingRepository.current
                     val averageRating = remember(albumId) {
-                        AlbumTracksRepository.stateOf(id = albumId)
+                        albumTracksRepository.stateOf(id = albumId)
                             .mapNotNull { it?.cachedValue?.map { track -> track.id } }
-                            .flatMapLatest { tracks -> TrackRatingRepository.averageRatingStateOf(ids = tracks) }
+                            .flatMapLatest { tracks -> ratingRepository.averageRatingStateOf(ids = tracks) }
                     }
                         .collectAsState(initial = null)
                         .value
@@ -176,8 +182,8 @@ private fun AlbumHeader(albumId: String, adapter: ListAdapterState<TrackViewMode
         }
 
         Column {
-            InvalidateButton(repository = AlbumRepository, id = albumId, entityName = "Album")
-            InvalidateButton(repository = AlbumTracksRepository, id = albumId, entityName = "Tracks")
+            InvalidateButton(repository = LocalAlbumRepository.current, id = albumId, entityName = "Album")
+            InvalidateButton(repository = LocalAlbumTracksRepository.current, id = albumId, entityName = "Tracks")
         }
     }
 }

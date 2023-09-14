@@ -17,8 +17,8 @@ import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.Track
 import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.repository.player.Player
-import com.dzirbel.kotify.repository.player.PlayerRepository
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.LocalPlayer
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.ColumnWidth
@@ -51,7 +51,8 @@ class TrackPlayingColumn<T>(
         val hoverInteractionSource = remember { MutableInteractionSource() }
         val hovering = hoverInteractionSource.collectIsHoveredAsState()
 
-        val currentTrackState = PlayerRepository.currentItem.collectAsState()
+        val player = LocalPlayer.current
+        val currentTrackState = player.currentItem.collectAsState()
         val playing = remember(trackId) {
             derivedStateOf { currentTrackState.value?.id == trackId }
         }
@@ -68,7 +69,7 @@ class TrackPlayingColumn<T>(
                 if (hovering.value) {
                     val context = playContextFromTrack(item)
                     IconButton(
-                        onClick = { PlayerRepository.play(context = context) },
+                        onClick = { player.play(context = context) },
                         enabled = context != null,
                     ) {
                         CachedIcon(

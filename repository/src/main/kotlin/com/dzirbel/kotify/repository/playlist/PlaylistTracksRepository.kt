@@ -7,11 +7,15 @@ import com.dzirbel.kotify.network.model.SimplifiedSpotifyEpisode
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlaylistTrack
 import com.dzirbel.kotify.network.model.asFlow
+import com.dzirbel.kotify.repository.ConvertingRepository
 import com.dzirbel.kotify.repository.DatabaseRepository
 import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.repository.convertToDB
 import com.dzirbel.kotify.repository.episode.EpisodeRepository
+import com.dzirbel.kotify.repository.episode.convertToDB
 import com.dzirbel.kotify.repository.track.TrackRepository
 import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.repository.user.convertToDB
 import com.dzirbel.kotify.repository.util.ReorderCalculator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -20,21 +24,15 @@ import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.sql.update
 import java.time.Instant
 
-// TODO add CacheStrategy
-open class PlaylistTracksRepository internal constructor(
-    scope: CoroutineScope,
-    private val trackRepository: TrackRepository,
-    private val userRepository: UserRepository,
-) : DatabaseRepository<List<PlaylistTrackViewModel>, List<PlaylistTrack>, List<SpotifyPlaylistTrack>>(
-    entityName = "playlist tracks",
-    scope = scope,
-) {
+interface PlaylistTracksRepository :
+    Repository<List<PlaylistTrackViewModel>>,
+    ConvertingRepository<List<PlaylistTrack>, List<SpotifyPlaylistTrack>> {
 
     sealed interface PlaylistReorderState {
         /**
          * The first phase in which the set of operations to apply is being calculated.
          */
-        object Calculating : PlaylistReorderState
+        data object Calculating : PlaylistReorderState
 
         /**
          * The second phase in which the reorder operations are being applied to the remote source.
@@ -44,8 +42,44 @@ open class PlaylistTracksRepository internal constructor(
         /**
          * The third phase in which the track list is being re-fetched to verify the order is correct.
          */
-        object Verifying : PlaylistReorderState
+        data object Verifying : PlaylistReorderState
     }
+
+    /**
+     * Reorders the given [tracks] for the playlist with the given [playlistId] according to the given [comparator].
+     *
+     * Reordering only takes place when the returned [Flow] is collected. TODO this is awkward
+     */
+    fun reorder(
+        playlistId: String,
+        tracks: List<PlaylistTrackViewModel>,
+        comparator: Comparator<PlaylistTrackViewModel>,
+    ): Flow<PlaylistReorderState>
+
+    /**
+     * Converts the given network model [spotifyPlaylistTrack] to a database model [PlaylistTrack] for the playlist with
+     * the given [playlistId] and at the given [index] on the playlist.
+     */
+    fun convertTrack(
+        spotifyPlaylistTrack: SpotifyPlaylistTrack,
+        playlistId: String,
+        index: Int,
+        fetchTime: Instant,
+    ): PlaylistTrack?
+}
+
+// TODO add CacheStrategy
+class DatabasePlaylistTracksRepository(
+    scope: CoroutineScope,
+    private val trackRepository: TrackRepository,
+    private val userRepository: UserRepository,
+) :
+    DatabaseRepository<List<PlaylistTrackViewModel>, List<PlaylistTrack>, List<SpotifyPlaylistTrack>>(
+        entityName = "playlist tracks",
+        entityNamePlural = "playlists tracks",
+        scope = scope,
+    ),
+    PlaylistTracksRepository {
 
     override suspend fun fetchFromRemote(id: String): List<SpotifyPlaylistTrack> {
         return Spotify.Playlists.getPlaylistTracks(playlistId = id).asFlow().toList()
@@ -79,23 +113,18 @@ open class PlaylistTracksRepository internal constructor(
 
     override fun convertToVM(databaseModel: List<PlaylistTrack>) = databaseModel.map(::PlaylistTrackViewModel)
 
-    /**
-     * Reorders the given [tracks] for the playlist with the given [playlistId] according to the given [comparator].
-     *
-     * Reordering only takes place when the returned [Flow] is collected. TODO this is awkward
-     */
-    fun reorder(
+    override fun reorder(
         playlistId: String,
         tracks: List<PlaylistTrackViewModel>,
         comparator: Comparator<PlaylistTrackViewModel>,
-    ): Flow<PlaylistReorderState> {
+    ): Flow<PlaylistTracksRepository.PlaylistReorderState> {
         // TODO prevent concurrent reorders of the same playlist
         return flow {
-            emit(PlaylistReorderState.Calculating)
+            emit(PlaylistTracksRepository.PlaylistReorderState.Calculating)
             val ops = ReorderCalculator.calculateReorderOperations(list = tracks, comparator = comparator)
 
             if (ops.isNotEmpty()) {
-                emit(PlaylistReorderState.Reordering(completedOps = 0, totalOps = ops.size))
+                emit(PlaylistTracksRepository.PlaylistReorderState.Reordering(completedOps = 0, totalOps = ops.size))
 
                 for ((index, op) in ops.withIndex()) {
                     Spotify.Playlists.reorderPlaylistItems(
@@ -105,10 +134,15 @@ open class PlaylistTracksRepository internal constructor(
                         insertBefore = op.insertBefore,
                     )
 
-                    emit(PlaylistReorderState.Reordering(completedOps = index + 1, totalOps = ops.size))
+                    emit(
+                        PlaylistTracksRepository.PlaylistReorderState.Reordering(
+                            completedOps = index + 1,
+                            totalOps = ops.size,
+                        ),
+                    )
                 }
 
-                emit(PlaylistReorderState.Verifying)
+                emit(PlaylistTracksRepository.PlaylistReorderState.Verifying)
 
                 refreshFromRemote(id = playlistId)
                     .join()
@@ -116,11 +150,7 @@ open class PlaylistTracksRepository internal constructor(
         }
     }
 
-    /**
-     * Converts the given network model [spotifyPlaylistTrack] to a database model [PlaylistTrack] for the playlist with
-     * the given [playlistId] and at the given [index] on the playlist.
-     */
-    fun convertTrack(
+    override fun convertTrack(
         spotifyPlaylistTrack: SpotifyPlaylistTrack,
         playlistId: String,
         index: Int,
@@ -134,7 +164,7 @@ open class PlaylistTracksRepository internal constructor(
             }
 
             is SimplifiedSpotifyEpisode -> {
-                val episode = EpisodeRepository.convertToDB(episode = track, fetchTime = fetchTime)
+                val episode = EpisodeRepository.convertToDB(networkModel = track, fetchTime = fetchTime)
                 PlaylistTrack.findOrCreateFromEpisode(episodeId = episode.id.value, playlistId = playlistId)
             }
 
@@ -154,10 +184,4 @@ open class PlaylistTracksRepository internal constructor(
             indexOnPlaylist = index
         }
     }
-
-    companion object : PlaylistTracksRepository(
-        scope = Repository.applicationScope,
-        trackRepository = TrackRepository,
-        userRepository = UserRepository,
-    )
 }

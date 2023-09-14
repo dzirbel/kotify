@@ -10,6 +10,8 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import com.dzirbel.kotify.ui.KeyboardShortcuts
+import com.dzirbel.kotify.ui.LocalPlayer
+import com.dzirbel.kotify.ui.ProvideRepositories
 import com.dzirbel.kotify.ui.Root
 
 /**
@@ -17,34 +19,38 @@ import com.dzirbel.kotify.ui.Root
  */
 @Composable
 fun ApplicationScope.KotifyWindow() {
-    WithAuthentication { authenticationState ->
-        // TODO on linux, un-maximizing from the maximized state does not return to the original size when the window
-        //  was first initialized as maximized; see https://github.com/JetBrains/compose-multiplatform/issues/3620
-        val windowState = if (authenticationState == AuthenticationState.AUTHENTICATED) {
-            WindowState(
-                placement = WindowPlacement.Maximized,
+    ProvideRepositories {
+        WithAuthentication { authenticationState ->
+            // TODO on linux, un-maximizing from the maximized state does not return to the original size when the
+            //  window was first initialized as maximized
+            //  see https://github.com/JetBrains/compose-multiplatform/issues/3620
+            val windowState = if (authenticationState == AuthenticationState.AUTHENTICATED) {
+                WindowState(
+                    placement = WindowPlacement.Maximized,
 
-                // set to unspecified to avoid initial composition with unauthenticated size
-                size = DpSize.Unspecified,
+                    // set to unspecified to avoid initial composition with unauthenticated size
+                    size = DpSize.Unspecified,
 
-                // should be a no-op, but appears required to have the floating window align on un-maximize
-                position = WindowPosition.Aligned(Alignment.Center),
-            )
-        } else {
-            WindowState(
-                placement = WindowPlacement.Floating,
-                size = unauthenticatedWindowSize,
-                position = WindowPosition.Aligned(Alignment.Center),
+                    // should be a no-op, but appears required to have the floating window align on un-maximize
+                    position = WindowPosition.Aligned(Alignment.Center),
+                )
+            } else {
+                WindowState(
+                    placement = WindowPlacement.Floating,
+                    size = unauthenticatedWindowSize,
+                    position = WindowPosition.Aligned(Alignment.Center),
+                )
+            }
+
+            val keyboardShortcuts = KeyboardShortcuts(LocalPlayer.current)
+            Window(
+                onCloseRequest = ::exitApplication,
+                title = "${Application.name} ${Application.version}",
+                state = windowState,
+                onKeyEvent = keyboardShortcuts::handle,
+                content = { Root(authenticationState) },
             )
         }
-
-        Window(
-            onCloseRequest = ::exitApplication,
-            title = "${Application.name} ${Application.version}",
-            state = windowState,
-            onKeyEvent = KeyboardShortcuts::handle,
-            content = { Root(authenticationState) },
-        )
     }
 }
 

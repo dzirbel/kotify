@@ -5,41 +5,38 @@ import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.AuthenticationState
 import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
+import com.dzirbel.kotify.network.model.SimplifiedSpotifyArtist
+import com.dzirbel.kotify.network.model.SpotifyExternalId
+import com.dzirbel.kotify.network.model.SpotifyExternalUrl
+import com.dzirbel.kotify.network.model.SpotifyImage
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
-import com.dzirbel.kotify.repository.CacheState
-import com.dzirbel.kotify.repository.album.SavedAlbumRepository
-import com.dzirbel.kotify.repository.artist.ArtistRepository
-import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
-import com.dzirbel.kotify.repository.artist.SavedArtistRepository
-import com.dzirbel.kotify.repository.mockArtistTracksNull
-import com.dzirbel.kotify.repository.mockLibrary
-import com.dzirbel.kotify.repository.mockRating
-import com.dzirbel.kotify.repository.mockSaveState
-import com.dzirbel.kotify.repository.mockStates
-import com.dzirbel.kotify.repository.player.PlayerRepository
-import com.dzirbel.kotify.repository.player.SkippingState
+import com.dzirbel.kotify.repository.FakeArtistRepository
+import com.dzirbel.kotify.repository.FakePlayer
+import com.dzirbel.kotify.repository.FakePlaylistRepository
+import com.dzirbel.kotify.repository.FakeRatingRepository
+import com.dzirbel.kotify.repository.FakeSavedAlbumRepository
+import com.dzirbel.kotify.repository.FakeSavedArtistRepository
+import com.dzirbel.kotify.repository.FakeSavedPlaylistRepository
+import com.dzirbel.kotify.repository.FakeSavedTrackRepository
+import com.dzirbel.kotify.repository.FakeUserRepository
+import com.dzirbel.kotify.repository.artist.ArtistViewModel
+import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.player.TrackPosition
-import com.dzirbel.kotify.repository.playlist.PlaylistRepository
-import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
-import com.dzirbel.kotify.repository.rating.AverageRating
+import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
+import com.dzirbel.kotify.repository.put
 import com.dzirbel.kotify.repository.rating.Rating
-import com.dzirbel.kotify.repository.rating.TrackRatingRepository
-import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.user.UserViewModel
-import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow
-import com.dzirbel.kotify.repository.util.ToggleableState
+import com.dzirbel.kotify.ui.page.FakeImageViewModel
 import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.util.CurrentTime
+import com.dzirbel.kotify.util.MockedTimeExtension
 import com.dzirbel.kotify.util.collections.zipEach
-import com.dzirbel.kotify.util.withMockedObjects
-import io.mockk.every
-import io.mockk.mockk
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import java.io.File
 import java.time.Instant
 import kotlin.math.roundToInt
@@ -48,162 +45,170 @@ import kotlin.random.asJavaRandom
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
+@ExtendWith(MockedTimeExtension::class)
 class ApplicationScreenshotTest {
     @Test
     fun test() {
-        CurrentTime.mocked {
-            Application.setup()
-            withMockedObjects(
-                ArtistRepository,
-                ArtistTracksRepository,
-                PlayerRepository,
-                PlaylistRepository,
-                SavedAlbumRepository,
-                SavedArtistRepository,
-                SavedPlaylistRepository,
-                SavedTrackRepository,
-                TrackRatingRepository,
-                UserRepository,
+        Application.setup()
+
+        val artistRepository = FakeArtistRepository()
+        val savedArtistRepository = FakeSavedArtistRepository()
+
+        val playlistRepository = FakePlaylistRepository()
+        val savedPlaylistRepository = FakeSavedPlaylistRepository()
+
+        val savedTrackRepository = FakeSavedTrackRepository()
+        val savedAlbumRepository = FakeSavedAlbumRepository()
+
+        val ratingRepository = FakeRatingRepository()
+
+        setupPlaylists(playlistRepository, savedPlaylistRepository)
+        setupArtists(artistRepository, savedArtistRepository, ratingRepository)
+
+        screenshotTest(
+            filename = "application",
+            configurations = listOf(KotifyColors.DARK, KotifyColors.LIGHT),
+            windowWidth = 1920,
+            windowHeight = 1080,
+            windowDensity = Density(density = 0.65f, fontScale = 1.25f),
+            onConfiguration = { colors -> Settings.colors = colors },
+        ) {
+            ProvideFakeRepositories(
+                artistRepository = artistRepository,
+                player = setupPlayer(ratingRepository, savedTrackRepository, savedAlbumRepository),
+                playlistRepository = playlistRepository,
+                ratingRepository = ratingRepository,
+                savedAlbumRepository = savedAlbumRepository,
+                savedArtistRepository = savedArtistRepository,
+                savedPlaylistRepository = savedPlaylistRepository,
+                savedTrackRepository = savedTrackRepository,
+                userRepository = setupCurrentUser(),
             ) {
-                mockCurrentUser()
-                mockSavedPlaylists()
-                mockSavedArtists()
-                mockPlayer()
-
-                screenshotTest(
-                    filename = "application",
-                    configurations = listOf(KotifyColors.DARK, KotifyColors.LIGHT),
-                    windowWidth = 1920,
-                    windowHeight = 1080,
-                    windowDensity = Density(density = 0.65f, fontScale = 1.25f),
-                    onConfiguration = { colors ->
-                        Settings.colors = colors
-                    },
-                ) {
-                    Root(authenticationState = AuthenticationState.AUTHENTICATED)
-                }
+                Root(authenticationState = AuthenticationState.AUTHENTICATED)
             }
         }
     }
 
-    private fun mockSavedPlaylists() {
+    private fun setupPlaylists(
+        playlistRepository: FakePlaylistRepository,
+        savedPlaylistRepository: FakeSavedPlaylistRepository,
+    ) {
         val playlistIds = List(playlistNames.size) { "$it" }
-        SavedPlaylistRepository.mockLibrary(ids = playlistIds.toSet())
-        PlaylistRepository.mockStates(
-            ids = playlistIds,
-            values = playlistIds.zip(playlistNames) { id, name ->
-                mockk {
-                    val viewModel = this
-                    every { viewModel.id } returns id
-                    every { viewModel.name } returns name
-                    every { viewModel.uri } returns "uri"
-                }
-            },
-        )
+        savedPlaylistRepository.setSaved(playlistIds)
+        playlistIds.zipEach(playlistNames) { id, name ->
+            playlistRepository.put(PlaylistViewModel(id = id, name = name, ownerId = "owner"))
+        }
     }
 
-    private fun mockSavedArtists() {
-        val artistIds = List(artists.size) { "$it" }
-        SavedArtistRepository.mockLibrary(ids = artistIds.toSet())
-        ArtistRepository.mockStates(
-            ids = artistIds,
-            values = artistIds.zip(artists) { id, artist ->
-                mockk {
-                    val viewModel = this
-                    every { viewModel.id } returns id
-                    every { viewModel.name } returns artist.name
-                    every { viewModel.uri } returns "uri"
-                    every { imageUrlFor(any()) } returns LazyTransactionStateFlow("kotify://artist-$id")
-                }
-            },
-        )
-
+    private fun setupArtists(
+        artistRepository: FakeArtistRepository,
+        savedArtistRepository: FakeSavedArtistRepository,
+        ratingRepository: FakeRatingRepository,
+    ) {
         var genericImageCount = 1
-        artistIds.zipEach(artists) { id, artist ->
-            val imageFilename = artist.imageName ?: "generic/${genericImageCount++}.png"
-            SpotifyImageCache.set("kotify://artist-$id", File("src/test/resources/$imageFilename"))
+        artists.forEachIndexed { index, artist ->
+            val id = artist.id ?: "$index"
 
-            val ratings = artist.ratings ?: ArtistInfo.generateRatings(id = id)
-            every { TrackRatingRepository.averageRatingStateOfArtist(id, any()) } returns
-                MutableStateFlow(AverageRating(ratings))
-        }
+            savedArtistRepository.save(id)
 
-        ArtistTracksRepository.mockArtistTracksNull()
-    }
-
-    private fun mockCurrentUser() {
-        val user: UserViewModel = mockk {
-            every { name } returns "Kotify"
-            every { id } returns "kotify"
-            every { imageUrlFor(any()) } returns LazyTransactionStateFlow("kotify://user")
-        }
-        every { UserRepository.currentUserId } returns MutableStateFlow("kotify")
-        every { UserRepository.currentUser } returns
-            MutableStateFlow(CacheState.Loaded(user, CurrentTime.instant))
-
-        SpotifyImageCache.set("kotify://user", File("src/test/resources/kotify.png"))
-    }
-
-    private fun mockPlayer() {
-        val track: FullSpotifyTrack = mockk {
-            every { id } returns "playing-track-id"
-            every { durationMs } returns (4.minutes + 20.seconds).inWholeMilliseconds
-            every { name } returns "Streetcar Symphony"
-            every { artists } returns listOf(
-                mockk {
-                    every { name } returns "Public Transit Aficionados"
-                    every { id } returns "playing-artist-id"
-                },
+            artistRepository.put(
+                ArtistViewModel(
+                    id = id,
+                    name = artist.name,
+                    uri = "artist-$id",
+                    images = FakeImageViewModel.fromFile(artist.imageName ?: "generic/${genericImageCount++}.png"),
+                ),
             )
-            every { album } returns mockk {
-                every { id } returns "playing-album-id"
-                every { name } returns "Bangers Only"
-                every { images } returns listOf(
-                    mockk {
-                        every { url } returns "kotify://playing-album"
-                    },
-                )
-            }
-        }
-        val positionMs = (1.minutes + 9.seconds).inWholeMilliseconds
-        val device: SpotifyPlaybackDevice = mockk {
-            every { id } returns "device"
-            every { name } returns "BART BeatBox"
-            every { type } returns "smartphone"
-        }
 
-        every { PlayerRepository.refreshingPlayback } returns MutableStateFlow(false)
-        every { PlayerRepository.refreshingTrack } returns MutableStateFlow(false)
-        every { PlayerRepository.refreshingDevices } returns MutableStateFlow(false)
-        every { PlayerRepository.playable } returns MutableStateFlow(true)
-        every { PlayerRepository.playing } returns MutableStateFlow(ToggleableState.Set(true))
-        every { PlayerRepository.playbackContextUri } returns MutableStateFlow(null)
-        every { PlayerRepository.currentlyPlayingType } returns MutableStateFlow(SpotifyPlayingType.TRACK)
-        every { PlayerRepository.skipping } returns MutableStateFlow(SkippingState.NOT_SKIPPING)
-        every { PlayerRepository.repeatMode } returns MutableStateFlow(ToggleableState.Set(SpotifyRepeatMode.OFF))
-        every { PlayerRepository.shuffling } returns MutableStateFlow(ToggleableState.Set(false))
-        every { PlayerRepository.currentItem } returns MutableStateFlow(track)
-        every { PlayerRepository.trackPosition } returns MutableStateFlow(
-            TrackPosition.Fetched(
+            ratingRepository.setArtistAverageRating(id, artist.ratings ?: ArtistInfo.generateRatings(id = id))
+        }
+    }
+
+    private fun setupCurrentUser(): UserRepository {
+        return FakeUserRepository(
+            currentUser = UserViewModel(
+                id = "kotify",
+                name = "Kotify",
+                images = FakeImageViewModel.fromFile("kotify.png"),
+            ),
+        )
+    }
+
+    private fun setupPlayer(
+        ratingRepository: FakeRatingRepository,
+        savedTrackRepository: FakeSavedTrackRepository,
+        savedAlbumRepository: FakeSavedAlbumRepository,
+    ): Player {
+        val track = FullSpotifyTrack(
+            id = "playing-track-id",
+            name = "Streetcar Symphony",
+            popularity = 0,
+            trackNumber = 0,
+            artists = listOf(
+                SimplifiedSpotifyArtist(
+                    id = playingArtist.id,
+                    name = playingArtist.name,
+                    externalUrls = SpotifyExternalUrl(),
+                    type = "artist",
+                ),
+            ),
+            discNumber = 1,
+            durationMs = (4.minutes + 20.seconds).inWholeMilliseconds,
+            explicit = false,
+            externalUrls = SpotifyExternalUrl(),
+            href = "href",
+            isLocal = false,
+            type = "track",
+            uri = "uri",
+            externalIds = SpotifyExternalId(),
+            album = SimplifiedSpotifyAlbum(
+                id = "playing-album-id",
+                name = "Bangers Only",
+                images = listOf(SpotifyImage(url = "kotify://playing-album")),
+                externalUrls = emptyMap(),
+                type = "album",
+                artists = emptyList(),
+            ),
+        )
+
+        val device = SpotifyPlaybackDevice(
+            id = "device",
+            name = "BART BeatBox",
+            type = "smartphone",
+            isActive = true,
+            isRestricted = false,
+            volumePercent = 80,
+            isPrivateSession = false,
+        )
+
+        val positionMs = (1.minutes + 9.seconds).inWholeMilliseconds
+
+        ratingRepository.rate(track.id, Rating(Rating.DEFAULT_MAX_RATING))
+        savedTrackRepository.save(track.id)
+        savedAlbumRepository.save("playing-album-id")
+
+        SpotifyImageCache.set("kotify://playing-album", File("src/test/resources/pta1.png"))
+
+        return FakePlayer(
+            playable = true,
+            playing = true,
+            currentlyPlayingType = SpotifyPlayingType.TRACK,
+            repeatMode = SpotifyRepeatMode.OFF,
+            shuffling = false,
+            currentItem = track,
+            trackPosition = TrackPosition.Fetched(
                 fetchedTimestamp = CurrentTime.millis,
                 fetchedPositionMs = positionMs.toInt(),
                 playing = false,
             ),
+            currentDevice = device,
+            volume = 80,
         )
-        every { PlayerRepository.currentDevice } returns MutableStateFlow(device)
-        every { PlayerRepository.availableDevices } returns MutableStateFlow(listOf(device))
-        every { PlayerRepository.volume } returns MutableStateFlow(ToggleableState.Set(80))
-        every { PlayerRepository.errors } returns MutableSharedFlow()
-
-        TrackRatingRepository.mockRating(id = track.id, rating = Rating(10, rateTime = Instant.EPOCH))
-        SavedTrackRepository.mockSaveState(id = track.id, saved = true)
-        SavedArtistRepository.mockSaveState(id = "playing-artist-id", saved = true)
-        SavedAlbumRepository.mockSaveState(id = "playing-album-id", saved = true)
-        SpotifyImageCache.set("kotify://playing-album", File("src/test/resources/pta1.png"))
     }
 
     private data class ArtistInfo(
         val name: String,
+        val id: String? = null,
         val ratings: List<Rating>? = null,
         val imageName: String? = null,
     ) {
@@ -231,12 +236,15 @@ class ApplicationScreenshotTest {
     }
 
     companion object {
+        private val playingArtist = ArtistInfo(
+            name = "Public Transit Aficionados",
+            id = "pta",
+            ratings = ArtistInfo.generateRatings(numRatings = 18, averageRating = 9.7),
+            imageName = "pta2.png",
+        )
+
         private val artists = listOf(
-            ArtistInfo(
-                name = "Public Transit Aficionados",
-                ratings = ArtistInfo.generateRatings(numRatings = 18, averageRating = 9.7),
-                imageName = "pta2.png",
-            ),
+            playingArtist,
             ArtistInfo(
                 name = "Big Phil and the Boys",
                 ratings = ArtistInfo.generateRatings(numRatings = 3, averageRating = 8.2),

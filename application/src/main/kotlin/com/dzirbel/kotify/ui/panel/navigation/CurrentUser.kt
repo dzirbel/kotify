@@ -33,9 +33,9 @@ import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.network.oauth.OAuth
 import com.dzirbel.kotify.repository.CacheState
-import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.user.UserViewModel
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.LocalUserRepository
 import com.dzirbel.kotify.ui.components.CopyButton
 import com.dzirbel.kotify.ui.components.HelpTooltip
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
@@ -53,7 +53,9 @@ private val CURRENT_USER_DROPDOWN_MAX_WIDTH = 500.dp
 
 @Composable
 fun CurrentUser() {
-    val currentUserCacheState: CacheState<UserViewModel>? = UserRepository.currentUser.collectAsState().value
+    val userRepository = LocalUserRepository.current
+
+    val currentUserCacheState: CacheState<UserViewModel>? = userRepository.currentUser.collectAsState().value
     val currentUser = currentUserCacheState?.cachedValue
 
     val expandedState = remember { mutableStateOf(false) }
@@ -81,7 +83,7 @@ fun CurrentUser() {
             }
 
             is CacheState.NotFound -> {
-                val currentUserId = UserRepository.currentUserId.collectAsState().value
+                val currentUserId = userRepository.currentUserId.collectAsState().value
                 Text(
                     text = currentUserId ?: "<user not found>",
                     maxLines = 1,
@@ -90,7 +92,7 @@ fun CurrentUser() {
             }
 
             is CacheState.Error -> {
-                val currentUserId = UserRepository.currentUserId.collectAsState().value
+                val currentUserId = userRepository.currentUserId.collectAsState().value
                 Text(
                     text = currentUserId ?: "<error>",
                     maxLines = 1,
@@ -131,7 +133,8 @@ private fun CurrentUserDropdown(
                 .widthIn(max = CURRENT_USER_DROPDOWN_MAX_WIDTH),
             verticalArrangement = Arrangement.spacedBy(Dimens.space2),
         ) {
-            val currentUserId = UserRepository.currentUserId.collectAsState().value
+            val userRepository = LocalUserRepository.current
+            val currentUserId = userRepository.currentUserId.collectAsState().value
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -163,7 +166,7 @@ private fun CurrentUserDropdown(
 
                 HorizontalSpacer(Dimens.space5)
 
-                Button(onClick = UserRepository::signOut) {
+                Button(onClick = userRepository::signOut) {
                     Text("Sign out", maxLines = 1)
                 }
             }

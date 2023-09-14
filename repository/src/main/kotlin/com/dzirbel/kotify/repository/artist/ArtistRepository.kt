@@ -7,6 +7,7 @@ import com.dzirbel.kotify.db.util.sized
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
 import com.dzirbel.kotify.network.model.SpotifyArtist
+import com.dzirbel.kotify.repository.ConvertingRepository
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.util.updateOrInsert
@@ -14,8 +15,11 @@ import com.dzirbel.kotify.util.coroutines.flatMapParallel
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
-open class ArtistRepository internal constructor(scope: CoroutineScope) :
-    DatabaseEntityRepository<ArtistViewModel, Artist, SpotifyArtist>(entityClass = Artist, scope = scope) {
+interface ArtistRepository : Repository<ArtistViewModel>, ConvertingRepository<Artist, SpotifyArtist>
+
+class DatabaseArtistRepository(scope: CoroutineScope) :
+    DatabaseEntityRepository<ArtistViewModel, Artist, SpotifyArtist>(entityClass = Artist, scope = scope),
+    ArtistRepository {
 
     override suspend fun fetchFromRemote(id: String) = Spotify.Artists.getArtist(id = id)
     override suspend fun fetchFromRemote(ids: List<String>): List<SpotifyArtist?> {
@@ -40,6 +44,4 @@ open class ArtistRepository internal constructor(scope: CoroutineScope) :
     }
 
     override fun convertToVM(databaseModel: Artist) = ArtistViewModel(databaseModel)
-
-    companion object : ArtistRepository(scope = Repository.applicationScope)
 }

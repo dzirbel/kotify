@@ -23,8 +23,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
@@ -337,18 +335,6 @@ class DatabaseRepositoryTest {
     )
 
     companion object {
-        @BeforeAll
-        @JvmStatic
-        fun setup() {
-            Repository.enabled = true
-        }
-
-        @AfterAll
-        @JvmStatic
-        fun cleanup() {
-            Repository.enabled = false
-        }
-
         @JvmStatic
         fun loadWithTTL(): List<TTLCase> {
             return listOf(

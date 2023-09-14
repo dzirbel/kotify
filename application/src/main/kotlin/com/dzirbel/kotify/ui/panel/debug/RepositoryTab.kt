@@ -17,11 +17,20 @@ import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.log.Log
 import com.dzirbel.kotify.repository.DataSource
 import com.dzirbel.kotify.repository.Repository
-import com.dzirbel.kotify.repository.ratingRepositories
-import com.dzirbel.kotify.repository.repositories
-import com.dzirbel.kotify.repository.repositoryLogs
-import com.dzirbel.kotify.repository.savedRepositories
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.LocalAlbumRepository
+import com.dzirbel.kotify.ui.LocalAlbumTracksRepository
+import com.dzirbel.kotify.ui.LocalArtistAlbumsRepository
+import com.dzirbel.kotify.ui.LocalArtistRepository
+import com.dzirbel.kotify.ui.LocalPlaylistRepository
+import com.dzirbel.kotify.ui.LocalPlaylistTracksRepository
+import com.dzirbel.kotify.ui.LocalRatingRepository
+import com.dzirbel.kotify.ui.LocalSavedAlbumRepository
+import com.dzirbel.kotify.ui.LocalSavedArtistRepository
+import com.dzirbel.kotify.ui.LocalSavedPlaylistRepository
+import com.dzirbel.kotify.ui.LocalSavedTrackRepository
+import com.dzirbel.kotify.ui.LocalTrackRepository
+import com.dzirbel.kotify.ui.LocalUserRepository
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
@@ -49,15 +58,37 @@ import kotlinx.coroutines.flow.runningFold
 
 @Composable
 fun RepositoryTab() {
-    val logMutex = remember { MergedMutex(repositoryLogs.map { it.writeLock }) }
-    val enabledLogs = remember { mutableStateOf(repositoryLogs.toPersistentSet()) }
+    val repositoryLogs = persistentListOf(
+        LocalArtistRepository.current.log,
+        LocalArtistAlbumsRepository.current.log,
+        LocalAlbumRepository.current.log,
+        LocalAlbumTracksRepository.current.log,
+        LocalPlaylistRepository.current.log,
+        LocalPlaylistTracksRepository.current.log,
+        LocalTrackRepository.current.log,
+        LocalUserRepository.current.log,
+    )
+
+    val savedRepositoryLogs = persistentListOf(
+        LocalSavedAlbumRepository.current.log,
+        LocalSavedArtistRepository.current.log,
+        LocalSavedPlaylistRepository.current.log,
+        LocalSavedTrackRepository.current.log,
+    )
+
+    val ratingRepositoryLogs = persistentListOf(LocalRatingRepository.current.log)
+
+    val allLogs = repositoryLogs + savedRepositoryLogs + ratingRepositoryLogs
+
+    val logMutex = remember { MergedMutex(allLogs.map { it.writeLock }) }
+    val enabledLogs = remember { mutableStateOf(allLogs.toPersistentSet()) }
     val selectedDataSources = remember { mutableStateOf(persistentSetOf<DataSource>()) }
 
     // do not filter if all or none are selected (no-op filter)
     val filterDataSource = selectedDataSources.value.size in 1 until DataSource.entries.size
 
     LogList(
-        logs = repositoryLogs,
+        logs = allLogs,
         logMutex = logMutex,
         display = RepositoryLogEventDisplay,
         sortProperties = persistentListOf(
@@ -72,15 +103,15 @@ fun RepositoryTab() {
         },
         filterKey = Pair(enabledLogs.value, selectedDataSources.value),
         onResetFilter = {
-            enabledLogs.value = repositoryLogs.toPersistentSet()
+            enabledLogs.value = allLogs.toPersistentSet()
             selectedDataSources.value = persistentSetOf()
         },
-        canResetFilter = enabledLogs.value.size < repositoryLogs.size || selectedDataSources.value.isNotEmpty(),
+        canResetFilter = enabledLogs.value.size < allLogs.size || selectedDataSources.value.isNotEmpty(),
     ) { eventCleared ->
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.space2), modifier = Modifier.padding(Dimens.space2)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dimens.space1)) {
                 LogListToggle(
-                    logs = remember { repositories.map { it.log }.toImmutableList() },
+                    logs = repositoryLogs,
                     enabledLogs = enabledLogs.value,
                     onSetEnabledLogs = { enabledLogs.value = it },
                     eventCleared = eventCleared,
@@ -90,7 +121,7 @@ fun RepositoryTab() {
 
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Dimens.space4)) {
                     LogListToggle(
-                        logs = remember { savedRepositories.map { it.log }.toImmutableList() },
+                        logs = savedRepositoryLogs,
                         enabledLogs = enabledLogs.value,
                         onSetEnabledLogs = { enabledLogs.value = it },
                         eventCleared = eventCleared,
@@ -98,7 +129,7 @@ fun RepositoryTab() {
                     )
 
                     LogListToggle(
-                        logs = remember { ratingRepositories.map { it.log }.toImmutableList() },
+                        logs = ratingRepositoryLogs,
                         enabledLogs = enabledLogs.value,
                         onSetEnabledLogs = { enabledLogs.value = it },
                         eventCleared = eventCleared,
@@ -122,14 +153,14 @@ fun RepositoryTab() {
                         logMutex.lockedState(
                             scope = scope,
                             initializeWithLock = {
-                                repositoryLogs.sumOf { log ->
+                                allLogs.sumOf { log ->
                                     log.events.count { event ->
                                         !eventCleared(event) && event.data.source == dataSource
                                     }
                                 }
                             },
                         ) { initial ->
-                            repositoryLogs.mergeFlows { it.eventsFlow }
+                            allLogs.mergeFlows { it.eventsFlow }
                                 .runningFold(initial) { count, event ->
                                     if (!eventCleared(event) && event.data.source == dataSource) count + 1 else count
                                 }

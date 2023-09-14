@@ -1,54 +1,37 @@
 package com.dzirbel.kotify.ui.page.playlist
 
-import com.dzirbel.kotify.db.DatabaseExtension
-import com.dzirbel.kotify.db.KotifyDatabase
-import com.dzirbel.kotify.db.blockingTransaction
-import com.dzirbel.kotify.db.model.Playlist
-import com.dzirbel.kotify.db.model.PlaylistTrack
-import com.dzirbel.kotify.db.model.User
-import com.dzirbel.kotify.network.FullSpotifyPlaylist
-import com.dzirbel.kotify.network.SimplifiedSpotifyAlbum
-import com.dzirbel.kotify.network.SimplifiedSpotifyArtist
-import com.dzirbel.kotify.network.SimplifiedSpotifyTrack
-import com.dzirbel.kotify.repository.mockRatings
-import com.dzirbel.kotify.repository.mockSaveState
-import com.dzirbel.kotify.repository.mockSaveStates
-import com.dzirbel.kotify.repository.mockStateCached
-import com.dzirbel.kotify.repository.mockStateNull
-import com.dzirbel.kotify.repository.playlist.PlaylistRepository
+import com.dzirbel.kotify.repository.FakePlaylistRepository
+import com.dzirbel.kotify.repository.FakePlaylistTracksRepository
+import com.dzirbel.kotify.repository.FakeRatingRepository
+import com.dzirbel.kotify.repository.FakeSavedPlaylistRepository
+import com.dzirbel.kotify.repository.FakeSavedTrackRepository
+import com.dzirbel.kotify.repository.FakeUserRepository
+import com.dzirbel.kotify.repository.album.AlbumViewModel
+import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.playlist.PlaylistTrackViewModel
-import com.dzirbel.kotify.repository.playlist.PlaylistTracksRepository
 import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
-import com.dzirbel.kotify.repository.playlist.SavedPlaylistRepository
 import com.dzirbel.kotify.repository.rating.Rating
-import com.dzirbel.kotify.repository.rating.TrackRatingRepository
-import com.dzirbel.kotify.repository.track.SavedTrackRepository
-import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.repository.track.TrackViewModel
 import com.dzirbel.kotify.repository.user.UserViewModel
+import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow
+import com.dzirbel.kotify.ui.ProvideFakeRepositories
+import com.dzirbel.kotify.ui.page.FakeImageViewModel
 import com.dzirbel.kotify.ui.page.render
 import com.dzirbel.kotify.ui.themedScreenshotTest
-import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.MockedTimeExtension
-import com.dzirbel.kotify.util.withMockedObjects
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.GregorianCalendar
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.minutes
 
-@ExtendWith(DatabaseExtension::class, MockedTimeExtension::class)
+@ExtendWith(MockedTimeExtension::class)
 internal class PlaylistPageScreenshotTest {
     @Test
     fun empty() {
-        val playlistId = "playlistId"
-
-        withMockedObjects(PlaylistRepository, PlaylistTracksRepository, SavedPlaylistRepository) {
-            PlaylistRepository.mockStateNull(playlistId)
-            PlaylistTracksRepository.mockStateNull(playlistId)
-            SavedPlaylistRepository.mockSaveState(playlistId, saved = null)
-
-            themedScreenshotTest(filename = "empty") {
-                PlaylistPage(playlistId = playlistId).render()
+        themedScreenshotTest(filename = "empty") {
+            ProvideFakeRepositories {
+                PlaylistPage(playlistId = "playlistId").render()
             }
         }
     }
@@ -58,69 +41,62 @@ internal class PlaylistPageScreenshotTest {
         val random = Random(0)
 
         val playlistId = "playlistId"
+        val numTracks = 25
+        val owner = UserViewModel(id = "user", name = "user")
 
-        val networkPlaylist = FullSpotifyPlaylist(
+        val playlist = PlaylistViewModel(
             id = playlistId,
             name = "Playlist",
-            tracks = List(25) { index ->
-                val artistId = index % 3
-                val albumId = index % 5
-                SimplifiedSpotifyTrack(
-                    id = "track-$index",
-                    name = "Track ${index + 1}",
-                    popularity = random.nextInt(100),
-                    durationMs = random.nextLong(5.minutes.inWholeMilliseconds),
-                    artists = listOf(
-                        SimplifiedSpotifyArtist(id = artistId.toString(), name = "Artist ${artistId + 1}"),
-                    ),
-                    album = SimplifiedSpotifyAlbum(id = albumId.toString(), name = "Album ${albumId + 1}"),
-                )
-            },
-            trackAddedAt = List(25) { index ->
-                GregorianCalendar(2000, 0, index + 1).toInstant().toString()
-            },
-            followers = 10,
+            uri = playlistId,
+            ownerId = owner.id,
+            followersTotal = 10,
+            totalTracks = numTracks,
+            images = FakeImageViewModel(),
         )
 
-        val playlist: Playlist
-        val owner: User
-        val tracks: List<PlaylistTrackViewModel>
-        KotifyDatabase.blockingTransaction {
-            playlist = PlaylistRepository.convertToDB(playlistId, networkPlaylist, fetchTime = CurrentTime.instant)
-            owner = playlist.owner
-            tracks = PlaylistTrack.tracksInOrder(playlistId).map { PlaylistTrackViewModel(it) }
+        val tracks = List(numTracks) { index ->
+            val artistId = index % 3
+            val albumId = index % 5
+            val track = TrackViewModel(
+                id = "track-$index",
+                name = "Track ${index + 1}",
+                trackNumber = 0,
+                durationMs = random.nextLong(5.minutes.inWholeMilliseconds),
+                popularity = random.nextInt(100),
+                artists = LazyTransactionStateFlow(
+                    listOf(ArtistViewModel(id = artistId.toString(), name = "Artist ${artistId + 1}")),
+                ),
+                album = LazyTransactionStateFlow(
+                    AlbumViewModel(id = albumId.toString(), name = "Album ${albumId + 1}"),
+                ),
+            )
+
+            PlaylistTrackViewModel(
+                track = track,
+                indexOnPlaylist = index,
+                addedAt = GregorianCalendar(2000, 0, index + 1).toInstant().toString(),
+            )
         }
 
-        withMockedObjects(
-            PlaylistRepository,
-            PlaylistTracksRepository,
-            SavedPlaylistRepository,
-            TrackRatingRepository,
-            SavedTrackRepository,
-            UserRepository,
-        ) {
-            PlaylistRepository.mockStateCached(playlistId, PlaylistViewModel(playlist))
-            PlaylistTracksRepository.mockStateCached(playlistId, tracks)
-            SavedPlaylistRepository.mockSaveState(playlistId, saved = true)
-
-            val trackIds = tracks.mapNotNull { it.track?.id }
-            val ratings = tracks.map { track ->
-                track.indexOnPlaylist.takeIf { it % 2 != 0 }?.let { it % 10 }
+        val trackRatings = tracks
+            .mapNotNull { playlistTrack ->
+                playlistTrack.indexOnPlaylist.takeIf { it % 2 != 0 }?.let { it % 10 }?.let { rating ->
+                    requireNotNull(playlistTrack.track).id to Rating(rating)
+                }
             }
+            .toMap()
 
-            TrackRatingRepository.mockRatings(
-                ids = trackIds,
-                ratings = ratings.map { rating -> rating?.let { Rating(rating, maxRating = 10) } },
-            )
+        val trackSaveStates = trackRatings.mapValues { it.value.rating > 5 }
 
-            SavedTrackRepository.mockSaveStates(
-                ids = trackIds,
-                saved = ratings.map { rating -> rating?.let { it > 5 } },
-            )
-
-            UserRepository.mockStateCached(id = owner.id.value, value = UserViewModel(owner))
-
-            themedScreenshotTest(filename = "full", windowWidth = 1500) {
+        themedScreenshotTest(filename = "full", windowWidth = 1500) {
+            ProvideFakeRepositories(
+                playlistRepository = FakePlaylistRepository(playlists = listOf(playlist)),
+                playlistTracksRepository = FakePlaylistTracksRepository(playlistTracks = mapOf(playlistId to tracks)),
+                savedPlaylistRepository = FakeSavedPlaylistRepository(savedStates = mapOf(playlistId to true)),
+                savedTrackRepository = FakeSavedTrackRepository(savedStates = trackSaveStates),
+                ratingRepository = FakeRatingRepository(ratings = trackRatings),
+                userRepository = FakeUserRepository(users = listOf(owner)),
+            ) {
                 PlaylistPage(playlistId = playlistId).render()
             }
         }

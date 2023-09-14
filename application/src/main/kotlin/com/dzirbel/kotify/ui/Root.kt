@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.AuthenticationState
 import com.dzirbel.kotify.Settings
-import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.ui.components.panel.FixedOrPercent
 import com.dzirbel.kotify.ui.components.panel.PanelDirection
 import com.dzirbel.kotify.ui.components.panel.PanelSize
@@ -72,7 +71,7 @@ fun Root(authenticationState: AuthenticationState) {
                         // TODO expose errors when loading current user ID
                         CircularProgressIndicator(Modifier.size(Dimens.iconLarge))
 
-                        val userId = UserRepository.currentUserId.collectAsState().value
+                        val userId = LocalUserRepository.current.currentUserId.collectAsState().value
                         Text("Loading user data for $userId")
                     }
 

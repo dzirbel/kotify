@@ -17,12 +17,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.repository.album.AlbumRepository
-import com.dzirbel.kotify.repository.album.AlbumTracksRepository
 import com.dzirbel.kotify.repository.album.AlbumViewModel
-import com.dzirbel.kotify.repository.album.SavedAlbumRepository
-import com.dzirbel.kotify.repository.rating.TrackRatingRepository
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
+import com.dzirbel.kotify.ui.LocalAlbumRepository
+import com.dzirbel.kotify.ui.LocalAlbumTracksRepository
+import com.dzirbel.kotify.ui.LocalRatingRepository
+import com.dzirbel.kotify.ui.LocalSavedAlbumRepository
 import com.dzirbel.kotify.ui.album.AlbumCell
 import com.dzirbel.kotify.ui.components.DividerSelector
 import com.dzirbel.kotify.ui.components.Interpunct
@@ -64,8 +64,13 @@ data object AlbumsPage : Page {
     @Composable
     override fun PageScope.bind() {
         val scope = rememberCoroutineScope()
+
+        val savedAlbumRepository = LocalSavedAlbumRepository.current
+        val albumRepository = LocalAlbumRepository.current
+        val ratingRepository = LocalRatingRepository.current
+
         val displayedLibraryFlow = remember {
-            SavedAlbumRepository.library
+            savedAlbumRepository.library
                 .runningFoldIn(scope) { accumulator, value -> value?.plus(accumulator?.ids) }
         }
 
@@ -75,7 +80,7 @@ data object AlbumsPage : Page {
                 if (library == null) {
                     MutableStateFlow(null)
                 } else {
-                    AlbumRepository.statesOf(library.ids)
+                    albumRepository.statesOf(library.ids)
                         .combinedStateWhenAllNotNull { it?.cachedValue }
                         .onEachIn(scope) { albums ->
                             albums?.requestBatched(
@@ -88,14 +93,14 @@ data object AlbumsPage : Page {
         }
 
         val albumIds = displayedLibraryFlow.collectAsState().value?.ids
-        AlbumTracksRepository.rememberStates(albumIds)
+        LocalAlbumTracksRepository.current.rememberStates(albumIds)
 
         val albumProperties = remember(albumIds) {
             persistentListOf(
                 AlbumNameProperty,
                 AlbumRatingProperty(
                     ratings = albumIds?.associateWith { albumId ->
-                        TrackRatingRepository.averageRatingStateOfAlbum(albumId = albumId, scope = scope)
+                        ratingRepository.averageRatingStateOfAlbum(albumId = albumId, scope = scope)
                     },
                 ),
                 AlbumReleaseDateProperty,
@@ -156,7 +161,7 @@ private fun AlbumsPageHeader(
                         Interpunct()
 
                         LibraryInvalidateButton(
-                            savedRepository = SavedAlbumRepository,
+                            savedRepository = LocalSavedAlbumRepository.current,
                             contentPadding = PaddingValues(all = Dimens.space2),
                         )
                     }

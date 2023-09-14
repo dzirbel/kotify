@@ -5,22 +5,27 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyTrack
+import com.dzirbel.kotify.repository.ConvertingRepository
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
 import com.dzirbel.kotify.repository.artist.ArtistTracksRepository
+import com.dzirbel.kotify.repository.convertToDB
 import com.dzirbel.kotify.repository.util.updateOrInsert
 import com.dzirbel.kotify.util.coroutines.flatMapParallel
 import kotlinx.coroutines.CoroutineScope
 import java.time.Instant
 
-open class TrackRepository internal constructor(
+interface TrackRepository : Repository<TrackViewModel>, ConvertingRepository<Track, SpotifyTrack>
+
+class DatabaseTrackRepository(
     scope: CoroutineScope,
     albumRepository: Lazy<AlbumRepository>, // lazy to avoid circular dependency
     private val artistRepository: ArtistRepository,
     private val artistTracksRepository: ArtistTracksRepository,
-) : DatabaseEntityRepository<TrackViewModel, Track, SpotifyTrack>(entityClass = Track, scope = scope) {
+) : DatabaseEntityRepository<TrackViewModel, Track, SpotifyTrack>(entityClass = Track, scope = scope),
+    TrackRepository {
 
     private val albumRepository by albumRepository
 
@@ -61,11 +66,4 @@ open class TrackRepository internal constructor(
     }
 
     override fun convertToVM(databaseModel: Track) = TrackViewModel(databaseModel)
-
-    companion object : TrackRepository(
-        scope = Repository.applicationScope,
-        albumRepository = lazy { AlbumRepository },
-        artistRepository = ArtistRepository,
-        artistTracksRepository = ArtistTracksRepository,
-    )
 }

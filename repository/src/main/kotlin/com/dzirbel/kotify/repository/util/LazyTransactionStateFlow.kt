@@ -24,11 +24,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 class LazyTransactionStateFlow<T>(
     private val transactionName: String,
     initialValue: T? = null,
+    requested: Boolean = initialValue != null,
     private val db: DB = DB.CACHE,
     private val scope: CoroutineScope = Repository.applicationScope,
     private val getter: () -> T?,
 ) : StateFlow<T?> {
-    private val requested = AtomicBoolean(initialValue != null)
+    private val requested = AtomicBoolean(requested)
     private val flow = MutableStateFlow(initialValue)
 
     override val replayCache: List<T?>
@@ -41,9 +42,10 @@ class LazyTransactionStateFlow<T>(
      * Creates a [LazyTransactionStateFlow] from a given [value], which will prevent it from ever being retrieved from
      * the database.
      */
-    constructor(value: T) : this(
+    constructor(value: T?) : this(
         transactionName = "should not be used",
         initialValue = value,
+        requested = true,
         getter = { error("should not be called") },
     )
 

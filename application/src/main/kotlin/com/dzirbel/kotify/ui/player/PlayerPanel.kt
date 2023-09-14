@@ -35,16 +35,16 @@ import com.dzirbel.kotify.network.model.FullSpotifyEpisode
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
-import com.dzirbel.kotify.repository.album.SavedAlbumRepository
-import com.dzirbel.kotify.repository.artist.SavedArtistRepository
-import com.dzirbel.kotify.repository.player.PlayerRepository
 import com.dzirbel.kotify.repository.player.SkippingState
 import com.dzirbel.kotify.repository.player.TrackPosition
 import com.dzirbel.kotify.repository.rating.Rating
-import com.dzirbel.kotify.repository.rating.TrackRatingRepository
-import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.util.ToggleableState
 import com.dzirbel.kotify.ui.CachedIcon
+import com.dzirbel.kotify.ui.LocalPlayer
+import com.dzirbel.kotify.ui.LocalRatingRepository
+import com.dzirbel.kotify.ui.LocalSavedAlbumRepository
+import com.dzirbel.kotify.ui.LocalSavedArtistRepository
+import com.dzirbel.kotify.ui.LocalSavedTrackRepository
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LinkedText
@@ -84,10 +84,11 @@ private const val PROGRESS_SLIDER_UPDATE_DELAY_MS = 50L
 
 @Composable
 fun PlayerPanel() {
-    val item = PlayerRepository.currentItem.collectAsState().value
+    val item = LocalPlayer.current.currentItem.collectAsState().value
     val itemId = item?.id
 
-    val trackRating = remember(itemId) { itemId?.let { TrackRatingRepository.ratingStateOf(id = it) } }
+    val ratingRepository = LocalRatingRepository.current
+    val trackRating = remember(itemId) { itemId?.let { ratingRepository.ratingStateOf(id = it) } }
         ?.collectAsState()
         ?.value
 
@@ -212,11 +213,12 @@ private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?)
                     Text(item.name.orEmpty())
 
                     if (item is FullSpotifyTrack) {
-                        ToggleSaveButton(repository = SavedTrackRepository, id = item.id)
+                        ToggleSaveButton(repository = LocalSavedTrackRepository.current, id = item.id)
 
+                        val ratingRepository = LocalRatingRepository.current
                         StarRating(
                             rating = trackRating,
-                            onRate = { rating -> TrackRatingRepository.rate(id = item.id, rating = rating) },
+                            onRate = { rating -> ratingRepository.rate(id = item.id, rating = rating) },
                         )
                     }
                 }
@@ -244,7 +246,7 @@ private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?)
                                     }
 
                                     artist.id?.let { artistId ->
-                                        ToggleSaveButton(repository = SavedArtistRepository, id = artistId)
+                                        ToggleSaveButton(repository = LocalSavedArtistRepository.current, id = artistId)
                                     }
                                 }
                             }
@@ -271,7 +273,7 @@ private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?)
                         }
 
                         album.id?.let { albumId ->
-                            ToggleSaveButton(repository = SavedAlbumRepository, id = albumId)
+                            ToggleSaveButton(repository = LocalSavedAlbumRepository.current, id = albumId)
                         }
                     }
                 }
@@ -293,12 +295,14 @@ private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?)
 
 @Composable
 private fun PlayerControls() {
-    val playable = PlayerRepository.playable.collectAsState().value == true
+    val player = LocalPlayer.current
 
-    val playing: ToggleableState<Boolean>? = PlayerRepository.playing.collectAsState().value
-    val shuffling: ToggleableState<Boolean>? = PlayerRepository.shuffling.collectAsState().value
-    val skipping: SkippingState = PlayerRepository.skipping.collectAsState().value
-    val repeatMode: ToggleableState<SpotifyRepeatMode>? = PlayerRepository.repeatMode.collectAsState().value
+    val playable = player.playable.collectAsState().value == true
+
+    val playing: ToggleableState<Boolean>? = player.playing.collectAsState().value
+    val shuffling: ToggleableState<Boolean>? = player.shuffling.collectAsState().value
+    val skipping: SkippingState = player.skipping.collectAsState().value
+    val repeatMode: ToggleableState<SpotifyRepeatMode>? = player.repeatMode.collectAsState().value
 
     Row(
         modifier = Modifier.instrument(),
@@ -309,7 +313,7 @@ private fun PlayerControls() {
             enabled = playable && shuffling is ToggleableState.Set,
             onClick = {
                 if (shuffling is ToggleableState.Set) {
-                    PlayerRepository.setShuffle(!shuffling.value)
+                    player.setShuffle(!shuffling.value)
                 }
             },
         ) {
@@ -323,7 +327,7 @@ private fun PlayerControls() {
 
         IconButton(
             enabled = playable && skipping != SkippingState.SKIPPING_TO_PREVIOUS,
-            onClick = { PlayerRepository.skipToPrevious() },
+            onClick = { player.skipToPrevious() },
         ) {
             CachedIcon(name = "skip-previous", size = Dimens.iconSmall, contentDescription = "Previous")
         }
@@ -332,7 +336,7 @@ private fun PlayerControls() {
             enabled = playable && playing is ToggleableState.Set,
             onClick = {
                 if (playing is ToggleableState.Set) {
-                    if (playing.value) PlayerRepository.pause() else PlayerRepository.play()
+                    if (playing.value) player.pause() else player.play()
                 }
             },
         ) {
@@ -344,7 +348,7 @@ private fun PlayerControls() {
 
         IconButton(
             enabled = playable && skipping != SkippingState.SKIPPING_TO_NEXT,
-            onClick = { PlayerRepository.skipToNext() },
+            onClick = { player.skipToNext() },
         ) {
             CachedIcon(name = "skip-next", size = Dimens.iconSmall, contentDescription = "Next")
         }
@@ -353,7 +357,7 @@ private fun PlayerControls() {
             enabled = playable && repeatMode is ToggleableState.Set,
             onClick = {
                 if (repeatMode is ToggleableState.Set) {
-                    PlayerRepository.setRepeatMode(repeatMode.value.next())
+                    player.setRepeatMode(repeatMode.value.next())
                 }
             },
         ) {
@@ -371,8 +375,9 @@ private fun PlayerControls() {
 
 @Composable
 private fun TrackProgress() {
-    val track = PlayerRepository.currentItem.collectAsState().value
-    val position = PlayerRepository.trackPosition.collectAsState().value
+    val player = LocalPlayer.current
+    val track = player.currentItem.collectAsState().value
+    val position = player.trackPosition.collectAsState().value
 
     if (track == null || position == null) {
         SeekableSlider(progress = null)
@@ -410,7 +415,7 @@ private fun TrackProgress() {
             },
             onSeek = { seekPercent ->
                 val seekPositionMs = (seekPercent * track.durationMs).roundToInt()
-                PlayerRepository.seekToPosition(seekPositionMs)
+                player.seekToPosition(seekPositionMs)
             },
         )
     }
@@ -419,7 +424,8 @@ private fun TrackProgress() {
 @Composable
 private fun VolumeControls() {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        val volume: Int? = PlayerRepository.volume.collectAsState().value?.value
+        val player = LocalPlayer.current
+        val volume: Int? = player.volume.collectAsState().value?.value
 
         // stores the last volume before clicking the mute button, or null if not muted
         val unmutedVolume = remember { Ref<Int>() }
@@ -435,10 +441,10 @@ private fun VolumeControls() {
                         val previousVolume = unmutedVolume.value
                         if (previousVolume == null) {
                             unmutedVolume.value = volume
-                            PlayerRepository.setVolume(volumePercent = 0)
+                            player.setVolume(volumePercent = 0)
                         } else {
                             unmutedVolume.value = null
-                            PlayerRepository.setVolume(volumePercent = previousVolume)
+                            player.setVolume(volumePercent = previousVolume)
                         }
                     },
                 ) {
@@ -454,16 +460,12 @@ private fun VolumeControls() {
                 val volumePercent = (seekPercent * 100).roundToInt()
 
                 // TODO maybe queue new volume requests rather than ignoring them if setting another volume
-                PlayerRepository.setVolume(volumePercent)
+                player.setVolume(volumePercent)
             },
         )
 
         val refreshing = remember {
-            listOf(
-                PlayerRepository.refreshingPlayback,
-                PlayerRepository.refreshingTrack,
-                PlayerRepository.refreshingTrack,
-            )
+            listOf(player.refreshingPlayback, player.refreshingTrack, player.refreshingTrack)
                 .combineState { refreshingStates ->
                     // refreshing button spins when any aspect is being refreshed
                     refreshingStates.any { it }
@@ -475,9 +477,9 @@ private fun VolumeControls() {
         IconButton(
             enabled = !refreshing,
             onClick = {
-                PlayerRepository.refreshPlayback()
-                PlayerRepository.refreshTrack()
-                PlayerRepository.refreshDevices()
+                player.refreshPlayback()
+                player.refreshTrack()
+                player.refreshDevices()
             },
         ) {
             RefreshIcon(refreshing = refreshing)
@@ -485,8 +487,7 @@ private fun VolumeControls() {
 
         val errorResetCounter = remember { mutableStateOf(0) }
         val errorFlow = remember(errorResetCounter.value) {
-            PlayerRepository.errors
-                .runningFold(emptyList<Throwable>()) { list, throwable -> list.plus(throwable) }
+            player.errors.runningFold(emptyList<Throwable>()) { list, throwable -> list.plus(throwable) }
         }
 
         val errors = errorFlow.collectAsState(initial = emptyList()).value
@@ -530,9 +531,11 @@ private fun VolumeControls() {
 
 @Composable
 private fun DeviceControls() {
-    val devices: List<SpotifyPlaybackDevice>? = PlayerRepository.availableDevices.collectAsState().value
-    val loadingDevices = PlayerRepository.refreshingDevices.collectAsState().value
-    val currentDevice = PlayerRepository.currentDevice.collectAsState().value
+    val player = LocalPlayer.current
+
+    val devices: List<SpotifyPlaybackDevice>? = player.availableDevices.collectAsState().value
+    val loadingDevices = player.refreshingDevices.collectAsState().value
+    val currentDevice = player.currentDevice.collectAsState().value
         ?: devices?.firstOrNull()
     val dropdownEnabled = devices != null && devices.size > 1
     val dropdownExpanded = remember { mutableStateOf(false) }
@@ -595,7 +598,7 @@ private fun DeviceControls() {
                 devices.forEach { device ->
                     DropdownMenuItem(
                         onClick = {
-                            PlayerRepository.transferPlayback(deviceId = device.id)
+                            player.transferPlayback(deviceId = device.id)
                             dropdownExpanded.value = false
                         },
                     ) {

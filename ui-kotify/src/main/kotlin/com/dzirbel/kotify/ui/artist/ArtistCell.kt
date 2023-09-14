@@ -19,9 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
-import com.dzirbel.kotify.repository.artist.SavedArtistRepository
 import com.dzirbel.kotify.repository.player.Player
-import com.dzirbel.kotify.repository.rating.TrackRatingRepository
+import com.dzirbel.kotify.ui.LocalRatingRepository
+import com.dzirbel.kotify.ui.LocalSavedArtistRepository
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
@@ -56,14 +56,15 @@ fun ArtistCell(artist: ArtistViewModel, imageSize: Dp, onClick: () -> Unit, onMi
             ) {
                 Text(text = artist.name, modifier = Modifier.weight(1f))
 
-                ToggleSaveButton(repository = SavedArtistRepository, id = artist.id)
+                ToggleSaveButton(repository = LocalSavedArtistRepository.current, id = artist.id)
 
                 PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
             }
 
             val scope = rememberCoroutineScope()
+            val ratingRepository = LocalRatingRepository.current
             val averageRating = remember(artist.id) {
-                TrackRatingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
+                ratingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
             }
                 .collectAsState()
                 .value

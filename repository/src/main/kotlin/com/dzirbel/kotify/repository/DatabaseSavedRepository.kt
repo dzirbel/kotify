@@ -39,6 +39,8 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     private val baseLibraryUpdateKey: String = savedEntityTable.tableName,
 
     private val scope: CoroutineScope,
+
+    protected val userRepository: UserRepository,
 ) : SavedRepository {
     private val libraryResource: CachedResource<SavedRepository.Library> = CachedResource(
         scope = scope,
@@ -47,13 +49,13 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     )
 
     override val library: StateFlow<SavedRepository.Library?>
-        get() = libraryResource.flow.also { Repository.checkEnabled() }.also { libraryResource.ensureLoaded() }
+        get() = libraryResource.flow.also { libraryResource.ensureLoaded() }
 
     override val libraryRefreshing: StateFlow<Boolean>
-        get() = libraryResource.refreshingFlow.also { Repository.checkEnabled() }
+        get() = libraryResource.refreshingFlow
 
     private val currentUserLibraryUpdateKey: String
-        get() = "$baseLibraryUpdateKey-${UserRepository.requireCurrentUserId}".also { Repository.checkEnabled() }
+        get() = "$baseLibraryUpdateKey-${userRepository.requireCurrentUserId}"
 
     private val savedStates = SynchronizedWeakStateFlowMap<String, ToggleableState<Boolean>>()
 
@@ -106,18 +108,14 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     protected abstract fun convertToDB(savedNetworkType: SavedNetworkType, fetchTime: Instant): Pair<String, Instant?>
 
     final override fun init() {
-        Repository.checkEnabled()
         libraryResource.initFromCache()
     }
 
     final override fun refreshLibrary() {
-        Repository.checkEnabled()
         libraryResource.refreshFromRemote()
     }
 
     final override fun savedStateOf(id: String): StateFlow<ToggleableState<Boolean>?> {
-        Repository.checkEnabled()
-
         val requestLog = RequestLog(log = mutableLog)
         return savedStates.getOrCreateStateFlow(
             key = id,
@@ -129,7 +127,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             },
             onCreate = { default ->
                 if (default == null) {
-                    val userId = UserRepository.requireCurrentUserId
+                    val userId = userRepository.requireCurrentUserId
                     scope.launch {
                         val dbStart = TimeSource.Monotonic.markNow()
                         val cached: Boolean? = try {
@@ -221,8 +219,6 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     }
 
     final override fun savedStatesOf(ids: Iterable<String>): List<StateFlow<ToggleableState<Boolean>?>> {
-        Repository.checkEnabled()
-
         val requestLog = RequestLog(log = mutableLog)
         return savedStates.getOrCreateStateFlows(
             keys = ids,
@@ -236,7 +232,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                 // only load state if it could not be initialized from the library
                 val missingIds = creations.mapNotNull { if (it.value == null) it.key else null }
                 if (missingIds.isNotEmpty()) {
-                    val userId = UserRepository.requireCurrentUserId
+                    val userId = userRepository.requireCurrentUserId
                     scope.launch {
                         val dbStart = TimeSource.Monotonic.markNow()
                         val cached = try {
@@ -356,7 +352,6 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     }
 
     final override fun setSaved(id: String, saved: Boolean) {
-        Repository.checkEnabled()
         val saveTime = CurrentTime.instant
 
         // TODO prevent concurrent updates to saved state for the same id
@@ -386,7 +381,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                 KotifyDatabase[DB.CACHE].transaction("set saved state for $entityName $id") {
                     savedEntityTable.setSaved(
                         entityId = id,
-                        userId = UserRepository.requireCurrentUserId,
+                        userId = userRepository.requireCurrentUserId,
                         saved = saved,
                         savedTime = saveTime,
                         savedCheckTime = saveTime,
@@ -419,20 +414,19 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     }
 
     final override fun invalidateUser() {
-        Repository.checkEnabled()
         libraryResource.invalidate()
         savedStates.clear()
     }
 
     private suspend fun getLibraryCached(): SavedRepository.Library? {
-        if (!UserRepository.hasCurrentUserId) return null
+        if (!userRepository.hasCurrentUserId) return null
 
         val requestLog = RequestLog(log = mutableLog)
         val dbStart = TimeSource.Monotonic.markNow()
         return try {
             KotifyDatabase[DB.CACHE].transaction("load $entityName saved library") {
                 GlobalUpdateTimesRepository.updated(currentUserLibraryUpdateKey)?.let { updatedTime ->
-                    updatedTime to savedEntityTable.savedEntityIds(userId = UserRepository.requireCurrentUserId)
+                    updatedTime to savedEntityTable.savedEntityIds(userId = userRepository.requireCurrentUserId)
                 }
             }
         } catch (cancellationException: CancellationException) {
@@ -453,7 +447,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     private suspend fun getLibraryRemote(): SavedRepository.Library? {
         val requestLog = RequestLog(log = mutableLog)
-        val userId = UserRepository.currentUserId.value ?: return null
+        val userId = userRepository.currentUserId.value ?: return null
 
         val remoteStart = TimeSource.Monotonic.markNow()
 

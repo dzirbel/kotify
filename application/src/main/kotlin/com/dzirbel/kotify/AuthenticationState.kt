@@ -6,9 +6,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import com.dzirbel.kotify.network.oauth.AccessToken
-import com.dzirbel.kotify.repository.player.PlayerRepository
-import com.dzirbel.kotify.repository.savedRepositories
-import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.repository.player.Player
+import com.dzirbel.kotify.ui.LocalPlayer
+import com.dzirbel.kotify.ui.LocalSavedRepositories
+import com.dzirbel.kotify.ui.LocalUserRepository
 
 enum class AuthenticationState {
     UNAUTHENTICATED,
@@ -18,8 +20,10 @@ enum class AuthenticationState {
 
 @Composable
 fun WithAuthentication(content: @Composable (AuthenticationState) -> Unit) {
+    val userRepository = LocalUserRepository.current
+
     val tokenState = AccessToken.Cache.tokenFlow.collectAsState()
-    val userIdState = UserRepository.currentUserId.collectAsState()
+    val userIdState = userRepository.currentUserId.collectAsState()
 
     val authenticationState = remember {
         derivedStateOf {
@@ -33,11 +37,13 @@ fun WithAuthentication(content: @Composable (AuthenticationState) -> Unit) {
         .value
 
     if (authenticationState != AuthenticationState.UNAUTHENTICATED) {
-        LaunchedEffect(Unit) { UserRepository.ensureCurrentUserLoaded() }
+        LaunchedEffect(Unit) { userRepository.ensureCurrentUserLoaded() }
     }
 
     if (authenticationState == AuthenticationState.AUTHENTICATED) {
-        LaunchedEffect(Unit) { onSignedIn() }
+        val player = LocalPlayer.current
+        val savedRepositories = LocalSavedRepositories.current
+        LaunchedEffect(Unit) { onSignedIn(player, savedRepositories) }
     }
 
     content(authenticationState)
@@ -51,11 +57,11 @@ fun WithAuthentication(content: @Composable (AuthenticationState) -> Unit) {
  * - on user sign in after application start without a signed-in user
  * - again on any subsequent sign ins (after sign-outs)
  */
-private fun onSignedIn() {
+private fun onSignedIn(player: Player, savedRepositories: List<SavedRepository>) {
     // load initial player state
-    PlayerRepository.refreshPlayback()
-    PlayerRepository.refreshTrack()
-    PlayerRepository.refreshDevices()
+    player.refreshPlayback()
+    player.refreshTrack()
+    player.refreshDevices()
 
     savedRepositories.forEach { it.init() }
 }

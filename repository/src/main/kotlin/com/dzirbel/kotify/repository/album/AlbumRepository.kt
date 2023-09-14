@@ -9,9 +9,11 @@ import com.dzirbel.kotify.db.util.sized
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.SpotifyAlbum
+import com.dzirbel.kotify.repository.ConvertingRepository
 import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.artist.ArtistRepository
+import com.dzirbel.kotify.repository.convertToDB
 import com.dzirbel.kotify.repository.track.TrackRepository
 import com.dzirbel.kotify.repository.util.updateOrInsert
 import com.dzirbel.kotify.util.coroutines.flatMapParallel
@@ -30,11 +32,14 @@ fun SpotifyAlbum.Type.toAlbumType(): AlbumType {
     }
 }
 
-open class AlbumRepository internal constructor(
+interface AlbumRepository : Repository<AlbumViewModel>, ConvertingRepository<Album, SpotifyAlbum>
+
+class DatabaseAlbumRepository(
     scope: CoroutineScope,
     private val artistRepository: ArtistRepository,
     private val trackRepository: TrackRepository,
-) : DatabaseEntityRepository<AlbumViewModel, Album, SpotifyAlbum>(entityClass = Album, scope = scope) {
+) : DatabaseEntityRepository<AlbumViewModel, Album, SpotifyAlbum>(entityClass = Album, scope = scope),
+    AlbumRepository {
 
     override suspend fun fetchFromRemote(id: String) = Spotify.Albums.getAlbum(id = id)
     override suspend fun fetchFromRemote(ids: List<String>): List<SpotifyAlbum?> {
@@ -77,10 +82,4 @@ open class AlbumRepository internal constructor(
     }
 
     override fun convertToVM(databaseModel: Album) = AlbumViewModel(databaseModel)
-
-    companion object : AlbumRepository(
-        scope = Repository.applicationScope,
-        artistRepository = ArtistRepository,
-        trackRepository = TrackRepository,
-    )
 }

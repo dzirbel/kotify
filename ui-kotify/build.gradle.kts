@@ -15,7 +15,7 @@ dependencies {
     testImplementation(testFixtures(project(":ui-common")))
     testImplementation(testFixtures(project(":util")))
 
-    testFixturesImplementation(project(":db"))
+    testFixturesImplementation(project(":repository"))
 
     implementation(compose.desktop.currentOs)
 
