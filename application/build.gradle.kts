@@ -41,7 +41,6 @@ dependencies {
     testRuntimeOnly(libs.junit5.engine)
 
     testImplementation(libs.assertk)
-    testImplementation(libs.mockk)
 }
 
 compose.desktop {
