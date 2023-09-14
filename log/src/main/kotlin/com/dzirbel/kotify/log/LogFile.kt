@@ -7,7 +7,6 @@ import java.io.IOException
 import java.io.Writer
 import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 // TODO capture global errors (UI, etc) and write to the log file
@@ -19,7 +18,7 @@ object LogFile {
     private var writer: Writer? = null
 
     fun initialize(directory: File) {
-        val now = LocalDateTime.ofInstant(CurrentTime.instant, ZoneId.systemDefault())
+        val now = LocalDateTime.ofInstant(CurrentTime.instant, CurrentTime.zoneId)
         val filename = "log-${filenameDateFormat.format(now)}.txt"
         val file = directory.resolve(filename)
 

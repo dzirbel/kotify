@@ -63,7 +63,6 @@ import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.sync.Mutex
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 data class LogAndEvent<T>(val log: Log<T>, val event: Log.Event<T>)
@@ -383,7 +382,7 @@ private val timeFormat = DateTimeFormatter.ofPattern("hh:mm:ss.SSS a")
 
 @Composable
 private fun liveEventTimeText(timestamp: Long): String {
-    val eventDate = remember(timestamp) { Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()) }
+    val eventDate = remember(timestamp) { Instant.ofEpochMilli(timestamp).atZone(CurrentTime.zoneId) }
     val eventDateString = remember(timestamp) { dateFormat.format(eventDate) }
     val eventTimeString = remember(timestamp) { timeFormat.format(eventDate) }
 

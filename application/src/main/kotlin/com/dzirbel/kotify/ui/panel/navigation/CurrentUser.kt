@@ -46,7 +46,7 @@ import com.dzirbel.kotify.ui.components.liveRelativeDateText
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.maxIntrinsicWidth
 import com.dzirbel.kotify.ui.util.openInBrowser
-import java.time.ZoneId
+import com.dzirbel.kotify.util.CurrentTime
 import java.time.format.DateTimeFormatter
 
 private val CURRENT_USER_DROPDOWN_MAX_WIDTH = 500.dp
@@ -214,10 +214,10 @@ private fun AccessTokenDetails(token: AccessToken?) {
             VerticalSpacer(Dimens.space4)
 
             val received = remember(token.receivedInstant) {
-                accessTokenDateFormat.format(token.receivedInstant.atZone(ZoneId.systemDefault()))
+                accessTokenDateFormat.format(token.receivedInstant.atZone(CurrentTime.zoneId))
             }
             val expires = remember(token.expiresInstant) {
-                accessTokenDateFormat.format(token.expiresInstant.atZone(ZoneId.systemDefault()))
+                accessTokenDateFormat.format(token.expiresInstant.atZone(CurrentTime.zoneId))
             }
             val receivedRelative = liveRelativeDateText(timestamp = token.receivedInstant.toEpochMilli())
             val expiresRelative = liveRelativeDateText(timestamp = token.expiresInstant.toEpochMilli())
