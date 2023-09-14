@@ -18,10 +18,10 @@ import com.dzirbel.kotify.ui.ProvideFakeRepositories
 import com.dzirbel.kotify.ui.page.FakeImageViewModel
 import com.dzirbel.kotify.ui.page.render
 import com.dzirbel.kotify.ui.themedScreenshotTest
+import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.MockedTimeExtension
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.GregorianCalendar
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.minutes
 
@@ -74,7 +74,7 @@ internal class PlaylistPageScreenshotTest {
             PlaylistTrackViewModel(
                 track = track,
                 indexOnPlaylist = index,
-                addedAt = GregorianCalendar(2000, 0, index + 1).toInstant().toString(),
+                addedAt = CurrentTime.instant.toString(),
             )
         }
 
