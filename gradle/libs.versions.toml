@@ -1,5 +1,5 @@
 [versions]
-assertk = "0.26.1" # https://github.com/willowtreeapps/assertk
+assertk = "0.27.0" # https://github.com/willowtreeapps/assertk
 compose = "1.5.1" # https://github.com/jetbrains/compose-jb
 detekt = "1.23.1" # https://github.com/detekt/detekt
 exposed = "0.43.0" # https://github.com/JetBrains/Exposed
