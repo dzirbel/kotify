@@ -15,8 +15,7 @@ open class FakeSavedRepository(savedStates: Map<String, Boolean> = emptyMap()) :
         get() {
             return MutableStateFlow(
                 SavedRepository.Library(
-                    // returns ids with a deterministic, sorted order
-                    ids = savedStates.filterValues { it }.toSortedMap().keys,
+                    ids = savedStates.filterValues { it }.keys,
                     cacheTime = CurrentTime.instant,
                 ),
             )

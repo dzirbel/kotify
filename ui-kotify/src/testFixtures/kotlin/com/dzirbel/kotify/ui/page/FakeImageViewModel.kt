@@ -6,7 +6,7 @@ import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow
 import com.dzirbel.kotify.ui.SpotifyImageCache
 import java.io.File
 
-class FakeImageViewModel(private val imageUrl: String? = null) : ImageViewModel {
+class FakeImageViewModel(val imageUrl: String? = null) : ImageViewModel {
     override fun imageUrlFor(size: ImageSize) = LazyTransactionStateFlow(imageUrl)
 
     companion object {
