@@ -91,7 +91,6 @@ class DatabaseUserRepository(
         _currentUserId.value = UserTable.CurrentUserTable.get()
     }
 
-    // TODO revisit
     override fun ensureCurrentUserLoaded() {
         if (currentUser.value?.cachedValue != null) return
 

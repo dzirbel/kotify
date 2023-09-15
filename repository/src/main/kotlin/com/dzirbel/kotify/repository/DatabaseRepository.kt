@@ -237,7 +237,6 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
      * Loads data for the given [id] from the remote data source and applies it to [states].
      */
     private suspend fun loadFromRemote(id: String, requestLog: RequestLog) {
-        // TODO do not set to refreshing if existing value is valid?
         states.updateValue(id) { CacheState.Refreshing.of(it) }
 
         val remoteStart = TimeSource.Monotonic.markNow()
@@ -292,7 +291,6 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
      * Loads data for the given [ids] from the remote data source and applies them to [states].
      */
     private suspend fun loadFromRemote(ids: List<String>, requestLog: RequestLog) {
-        // TODO do not set to refreshing if existing values are valid?
         for (id in ids) {
             states.updateValue(id) { CacheState.Refreshing.of(it) }
         }

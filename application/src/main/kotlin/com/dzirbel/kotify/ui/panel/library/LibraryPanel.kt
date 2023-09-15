@@ -84,7 +84,7 @@ fun LibraryPanel() {
                     key(playlistId) {
                         val playlist = playlistState.collectAsState().value?.cachedValue
 
-                        // TODO ideally handle other cache states: shimmer when loading, show errors, etc
+                        // TODO handle other cache states: shimmer when loading, show errors, etc
                         if (playlist != null) {
                             PlaylistItem(playlist = playlist)
                         }

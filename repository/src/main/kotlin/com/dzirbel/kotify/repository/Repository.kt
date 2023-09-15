@@ -52,8 +52,6 @@ interface Repository<T> : Logging<Repository.LogData> {
      *
      * The returned [StateFlow] may have an initial null value, which is populated with the various [CacheState] states
      * as it is loaded.
-     *
-     * TODO initialize to refreshing state?
      */
     fun stateOf(id: String, cacheStrategy: CacheStrategy<T> = defaultCacheStrategy): StateFlow<CacheState<T>?>
 

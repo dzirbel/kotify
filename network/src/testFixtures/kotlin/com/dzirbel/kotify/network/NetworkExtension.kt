@@ -14,7 +14,6 @@ import java.io.File
 class NetworkExtension : BeforeEachCallback, AfterEachCallback {
     override fun beforeEach(context: ExtensionContext) {
         if (context.tags.contains(TAG_NETWORK)) {
-            // TODO deduplicate references to access token location
             AccessToken.Cache.cacheFile = File("../.kotify/test-cache/access_token.json")
             CurrentTime.enabled = true
             Spotify.enabled = true

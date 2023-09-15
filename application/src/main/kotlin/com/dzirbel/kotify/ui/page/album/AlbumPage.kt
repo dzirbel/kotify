@@ -68,7 +68,6 @@ data class AlbumPage(val albumId: String) : Page {
             key = albumId,
             defaultSort = TrackAlbumIndexProperty,
         ) { scope ->
-            // TODO load full track objects
             albumTracksRepository.stateOf(id = albumId)
                 .mapIn(scope) { it?.cachedValue }
                 .onEachIn(scope) { tracks ->

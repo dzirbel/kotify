@@ -129,7 +129,7 @@ private class UrlContextMenuItem(private val url: String) : GenericContextMenuIt
  * Displays text build by [elements] with embedded links, allowing styling the links based on the hover state of the
  * link and handling link clicks.
  *
- * TODO consider optimizing when the entire text is a link
+ * TODO optimize when the entire text is a link
  */
 @Composable
 fun LinkedText(

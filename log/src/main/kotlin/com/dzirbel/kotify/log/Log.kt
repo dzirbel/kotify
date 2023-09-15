@@ -15,8 +15,6 @@ interface Log<T> {
 
     /**
      * A single event that can be logged, with custom data of type [T].
-     *
-     * TODO should be @Stable?
      */
     data class Event<T>(
         val title: String,

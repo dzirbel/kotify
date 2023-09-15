@@ -64,8 +64,6 @@ fun LoadedImage(
 
 /**
  * Variant of [LoadedImage] which asynchronously loads the image from the given [url] via the [SpotifyImageCache].
- *
- * TODO remove
  */
 @Composable
 fun LoadedImage(

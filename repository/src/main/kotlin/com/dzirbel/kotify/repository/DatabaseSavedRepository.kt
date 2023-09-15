@@ -203,7 +203,6 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                 } catch (cancellationException: CancellationException) {
                                     throw cancellationException
                                 } catch (throwable: Throwable) {
-                                    // TODO use manual time in DB?
                                     requestLog.warn(
                                         throwable = throwable,
                                         title = "error saving remote save state of $entityName $id in database",
@@ -335,7 +334,6 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                 } catch (cancellationException: CancellationException) {
                                     throw cancellationException
                                 } catch (throwable: Throwable) {
-                                    // TODO use manual time in DB?
                                     requestLog.warn(
                                         throwable = throwable,
                                         title = "error saving remote save states of ${idsToLoadFromRemote.size} " +
