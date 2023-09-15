@@ -8,6 +8,7 @@ import com.dzirbel.kotify.log.success
 import com.dzirbel.kotify.log.warn
 import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
+import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
@@ -19,7 +20,6 @@ import kotlinx.serialization.json.encodeToStream
 import java.util.concurrent.Executors
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
-import kotlin.time.TimeSource
 
 /**
  * Saves global settings as [SettingsData] objects in JSON.
@@ -101,7 +101,7 @@ object Settings {
     @OptIn(ExperimentalSerializationApi::class)
     private fun load(): SettingsData? {
         assertNotOnUIThread()
-        val start = TimeSource.Monotonic.markNow()
+        val start = CurrentTime.mark
         return try {
             settingsFile
                 .takeIf { it.isFile }
@@ -123,7 +123,7 @@ object Settings {
     @OptIn(ExperimentalSerializationApi::class)
     private fun save(data: SettingsData) {
         GlobalScope.launch(context = ioCoroutineContext) {
-            val start = TimeSource.Monotonic.markNow()
+            val start = CurrentTime.mark
             assertNotOnUIThread()
 
             try {

@@ -32,7 +32,6 @@ import java.nio.file.Files
 import java.time.Instant
 import java.util.EnumSet
 import java.util.concurrent.TimeUnit
-import kotlin.time.TimeSource
 
 /**
  * Represents an access token which may be used to access the Spotify API.
@@ -184,7 +183,7 @@ data class AccessToken(
                 refreshJob ?: scope.async {
                     mutableLog.info("Current access token is expired; refreshing")
 
-                    val start = TimeSource.Monotonic.markNow()
+                    val start = CurrentTime.mark
 
                     val body = FormBody.Builder()
                         .add("grant_type", "refresh_token")
@@ -256,7 +255,7 @@ data class AccessToken(
         private fun save(token: AccessToken) {
             val file = cacheFile
             if (file != null) {
-                val start = TimeSource.Monotonic.markNow()
+                val start = CurrentTime.mark
                 file.outputStream().use { outputStream ->
                     json.encodeToStream(token, outputStream)
                 }
@@ -277,7 +276,7 @@ data class AccessToken(
                 return null
             }
 
-            val start = TimeSource.Monotonic.markNow()
+            val start = CurrentTime.mark
             return try {
                 file.inputStream()
                     .use { json.decodeFromStream<AccessToken>(it) }

@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.TimeSource
 
 abstract class DatabaseSavedRepository<SavedNetworkType>(
     /**
@@ -129,7 +128,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                 if (default == null) {
                     val userId = userRepository.requireCurrentUserId
                     scope.launch {
-                        val dbStart = TimeSource.Monotonic.markNow()
+                        val dbStart = CurrentTime.mark
                         val cached: Boolean? = try {
                             KotifyDatabase[DB.CACHE].transaction("load save state of $entityName $id") {
                                 savedEntityTable.isSaved(entityId = id, userId = userId)
@@ -156,7 +155,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                 source = DataSource.DATABASE,
                             )
                         } else {
-                            val remoteStart = TimeSource.Monotonic.markNow()
+                            val remoteStart = CurrentTime.mark
                             val remote: Boolean? = try {
                                 fetchIsSaved(id = id)
                             } catch (cancellationException: CancellationException) {
@@ -233,7 +232,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                 if (missingIds.isNotEmpty()) {
                     val userId = userRepository.requireCurrentUserId
                     scope.launch {
-                        val dbStart = TimeSource.Monotonic.markNow()
+                        val dbStart = CurrentTime.mark
                         val cached = try {
                             KotifyDatabase[DB.CACHE].transaction(
                                 name = "load save states of ${missingIds.size} ${entityName}s",
@@ -279,7 +278,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                         }
 
                         if (idsToLoadFromRemote.isNotEmpty()) {
-                            val remoteStart = TimeSource.Monotonic.markNow()
+                            val remoteStart = CurrentTime.mark
                             val remote = try {
                                 fetchIsSaved(ids = idsToLoadFromRemote)
                             } catch (cancellationException: CancellationException) {
@@ -357,7 +356,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         scope.launch {
             savedStates.updateValue(id, ToggleableState.TogglingTo(saved))
 
-            val remoteStart = TimeSource.Monotonic.markNow()
+            val remoteStart = CurrentTime.mark
             try {
                 pushSaved(ids = listOf(id), saved = saved)
             } catch (throwable: Throwable) {
@@ -374,7 +373,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
             requestLog.addRemoteTime(remoteStart.elapsedNow())
 
-            val dbStart = TimeSource.Monotonic.markNow()
+            val dbStart = CurrentTime.mark
             try {
                 KotifyDatabase[DB.CACHE].transaction("set saved state for $entityName $id") {
                     savedEntityTable.setSaved(
@@ -420,7 +419,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         if (!userRepository.hasCurrentUserId) return null
 
         val requestLog = RequestLog(log = mutableLog)
-        val dbStart = TimeSource.Monotonic.markNow()
+        val dbStart = CurrentTime.mark
         return try {
             KotifyDatabase[DB.CACHE].transaction("load $entityName saved library") {
                 GlobalUpdateTimesRepository.updated(currentUserLibraryUpdateKey)?.let { updatedTime ->
@@ -447,7 +446,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         val requestLog = RequestLog(log = mutableLog)
         val userId = userRepository.currentUserId.value ?: return null
 
-        val remoteStart = TimeSource.Monotonic.markNow()
+        val remoteStart = CurrentTime.mark
 
         val savedNetworkModels = try {
             fetchLibrary()
@@ -463,7 +462,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         requestLog.addRemoteTime(remoteStart.elapsedNow())
         val fetchTime = remoteStart.midpointInstantToNow()
 
-        val dbStart = TimeSource.Monotonic.markNow()
+        val dbStart = CurrentTime.mark
         val remoteLibrary = try {
             KotifyDatabase[DB.CACHE].transaction("save $entityName saved library") {
                 GlobalUpdateTimesRepository.setUpdated(key = currentUserLibraryUpdateKey, updateTime = fetchTime)

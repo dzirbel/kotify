@@ -2,6 +2,11 @@ package com.dzirbel.kotify.util
 
 import java.time.Instant
 import java.time.ZoneId
+import kotlin.time.ComparableTimeMark
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * A wrapper providing access to a system wall-clock as either a timestamp via [CurrentTime.millis] or [Instant] via
@@ -10,8 +15,6 @@ import java.time.ZoneId
  * This is preferred over direct calls to [System.currentTimeMillis] et al. to centralize access (thus making it more
  * clear where the system time is being used) and to allow the time to be easily (and without reflection) mocked in
  * tests.
- *
- * TODO add support for generating TimeMarks rather than using TimeSource.Monotonic
  */
 @Suppress("ForbiddenMethodCall") // allow calls to system time
 object CurrentTime {
@@ -47,10 +50,22 @@ object CurrentTime {
             return mockedTime?.let { Instant.ofEpochMilli(it) } ?: Instant.now()
         }
 
+    /**
+     * The current timezone as a [ZoneId].
+     */
     val zoneId: ZoneId
         get() {
             check(enabled) { "access to system time is disabled" }
             return mockedZoneId ?: ZoneId.systemDefault()
+        }
+
+    /**
+     * Retrieves a [TimeMark] of the current time.
+     */
+    val mark: ComparableTimeMark
+        get() {
+            check(enabled) { "access to system time is disabled" }
+            return mockedTime?.let { MockedTimeMark(it) } ?: TimeSource.Monotonic.markNow()
         }
 
     /**
@@ -95,5 +110,25 @@ object CurrentTime {
         enabled = false
         mockedTime = null
         mockedZoneId = null
+    }
+
+    private class MockedTimeMark(private val mockedTime: Long) : ComparableTimeMark {
+        override fun elapsedNow(): Duration {
+            val currentTime = requireNotNull(CurrentTime.mockedTime) { "comparing mocked TimeMark with unmarked time" }
+            return (currentTime - mockedTime).milliseconds
+        }
+
+        override fun minus(other: ComparableTimeMark): Duration {
+            require(other is MockedTimeMark) { "comparing non-mocked TimeMark $other" }
+            return (mockedTime - other.mockedTime).milliseconds
+        }
+
+        override fun plus(duration: Duration): ComparableTimeMark {
+            return MockedTimeMark(mockedTime + duration.inWholeMilliseconds)
+        }
+
+        override fun equals(other: Any?) = other is MockedTimeMark && mockedTime == other.mockedTime
+
+        override fun hashCode() = mockedTime.hashCode()
     }
 }

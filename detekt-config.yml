@@ -787,11 +787,15 @@ style:
       - 'kotlin.io.println'
       # do not access system time (except through mockable CurrentTime)
       - 'java.lang.System.currentTimeMillis'
+      - 'java.lang.System.nanoTime'
       - 'java.time.Instant.now'
       - 'java.util.Date.<init>'
       - 'java.util.Calendar.getInstance'
       - 'java.time.Clock.systemUTC'
       - 'java.time.Clock.system'
+      - 'java.time.ZoneId.systemDefault'
+      - 'kotlin.time.TimeSource.markNow'
+      - 'kotlin.time.TimeSource.Monotonic.markNow'
   ForbiddenSuppress:
     active: false
     rules: []

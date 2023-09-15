@@ -19,6 +19,7 @@ import com.dzirbel.kotify.repository.RequestLog
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.repository.util.midpointInstantToNow
 import com.dzirbel.kotify.repository.util.updateOrInsert
+import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancelChildren
@@ -26,7 +27,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
-import kotlin.time.TimeSource
 
 interface UserRepository : Repository<UserViewModel>, ConvertingRepository<User, SpotifyUser> {
     val currentUserId: StateFlow<String?>
@@ -96,7 +96,7 @@ class DatabaseUserRepository(
 
         val requestLog = RequestLog(log = mutableLog)
         userSessionScope.launch {
-            val dbStart = TimeSource.Monotonic.markNow()
+            val dbStart = CurrentTime.mark
             val cachedUser = currentUserId.value?.let { userId ->
                 KotifyDatabase[DB.CACHE].transaction("load current user") { fetchFromDatabase(userId)?.first }
             }
@@ -113,7 +113,7 @@ class DatabaseUserRepository(
             } else {
                 _currentUser.value = CacheState.Refreshing()
 
-                val remoteStart = TimeSource.Monotonic.markNow()
+                val remoteStart = CurrentTime.mark
                 val remoteUser = try {
                     getCurrentUserRemote()
                 } catch (cancellationException: CancellationException) {
@@ -163,7 +163,7 @@ class DatabaseUserRepository(
     }
 
     private suspend fun getCurrentUserRemote(): User {
-        val start = TimeSource.Monotonic.markNow()
+        val start = CurrentTime.mark
         val user = Spotify.UsersProfile.getCurrentUser()
         val fetchTime = start.midpointInstantToNow()
         return KotifyDatabase[DB.CACHE].transaction("set current user") {

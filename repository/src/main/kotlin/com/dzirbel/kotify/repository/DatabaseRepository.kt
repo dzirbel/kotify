@@ -6,6 +6,7 @@ import com.dzirbel.kotify.log.MutableLog
 import com.dzirbel.kotify.log.asLog
 import com.dzirbel.kotify.repository.util.SynchronizedWeakStateFlowMap
 import com.dzirbel.kotify.repository.util.midpointInstantToNow
+import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.collections.zipEach
 import com.dzirbel.kotify.util.coroutines.mapParallel
 import com.dzirbel.kotify.util.mapFirst
@@ -15,7 +16,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
-import kotlin.time.TimeSource
 
 abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal constructor(
     protected val entityName: String,
@@ -149,7 +149,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         cacheStrategy: CacheStrategy<ViewModel>,
         requestLog: RequestLog,
     ): Boolean {
-        val dbStart = TimeSource.Monotonic.markNow()
+        val dbStart = CurrentTime.mark
 
         val (viewModel, lastUpdated) = try {
             KotifyDatabase[DB.CACHE].transaction(name = "load $entityName $id") {
@@ -185,7 +185,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         cacheStrategy: CacheStrategy<ViewModel>,
         requestLog: RequestLog,
     ): List<String> {
-        val dbStart = TimeSource.Monotonic.markNow()
+        val dbStart = CurrentTime.mark
 
         val cachedEntities = try {
             KotifyDatabase[DB.CACHE].transaction(name = "load ${ids.size} $entityNamePlural") {
@@ -239,7 +239,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
     private suspend fun loadFromRemote(id: String, requestLog: RequestLog) {
         states.updateValue(id) { CacheState.Refreshing.of(it) }
 
-        val remoteStart = TimeSource.Monotonic.markNow()
+        val remoteStart = CurrentTime.mark
 
         val networkModel = try {
             fetchFromRemote(id)
@@ -257,7 +257,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         if (networkModel != null) {
             val fetchTime = remoteStart.midpointInstantToNow()
 
-            val dbStart = TimeSource.Monotonic.markNow()
+            val dbStart = CurrentTime.mark
             val viewModel = try {
                 KotifyDatabase[DB.CACHE].transaction("save $entityName $id") {
                     val databaseModel = convertToDB(id = id, networkModel = networkModel, fetchTime = fetchTime)
@@ -295,7 +295,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
             states.updateValue(id) { CacheState.Refreshing.of(it) }
         }
 
-        val remoteStart = TimeSource.Monotonic.markNow()
+        val remoteStart = CurrentTime.mark
 
         val networkModels = try {
             fetchFromRemote(ids)
@@ -317,7 +317,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
         val numNullNetworkModels = networkModels.size - numNotNullNetworkModels
 
         if (numNotNullNetworkModels > 0) {
-            val dbStart = TimeSource.Monotonic.markNow()
+            val dbStart = CurrentTime.mark
             var numNonNullViewModels = 0
             val viewModels = try {
                 KotifyDatabase[DB.CACHE].transaction("save $numNotNullNetworkModels $entityNamePlural") {

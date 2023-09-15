@@ -10,6 +10,7 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.util.await
 import com.dzirbel.kotify.repository.DataSource
 import com.dzirbel.kotify.repository.Repository
+import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -28,7 +29,6 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
-import kotlin.time.TimeSource
 import kotlin.time.measureTime
 
 // TODO support mosaic (playlist cover image) urls e.g. https://mosaic.scdn.co/640/<id>
@@ -103,7 +103,7 @@ open class SpotifyImageCache internal constructor(
      * Returns the [ImageBitmap] from the given [url] if it is immediately available in memory.
      */
     fun getFromMemory(url: String): ImageBitmap? {
-        val start = TimeSource.Monotonic.markNow()
+        val start = CurrentTime.mark
         return images[url]?.value
             ?.also { mutableLog.info("$url in memory", data = DataSource.MEMORY, duration = start.elapsedNow()) }
     }
@@ -112,7 +112,7 @@ open class SpotifyImageCache internal constructor(
      * Returns a [StateFlow] reflecting the live state of the image fetched from the given [url].
      */
     fun get(url: String, client: OkHttpClient = Spotify.configuration.okHttpClient): StateFlow<ImageBitmap?> {
-        val start = TimeSource.Monotonic.markNow()
+        val start = CurrentTime.mark
         return images.compute(url) { _, existingFlow ->
             if (existingFlow == null) {
                 val flow = MutableStateFlow<ImageBitmap?>(null)
@@ -144,7 +144,7 @@ open class SpotifyImageCache internal constructor(
     }
 
     private suspend fun fromFileCache(url: String): Pair<File?, ImageBitmap?> {
-        val start = TimeSource.Monotonic.markNow()
+        val start = CurrentTime.mark
         var cacheFile: File? = null
         if (url.startsWith(SPOTIFY_IMAGE_URL_PREFIX)) {
             val imageHash = url.substring(SPOTIFY_IMAGE_URL_PREFIX.length)
@@ -169,7 +169,7 @@ open class SpotifyImageCache internal constructor(
     }
 
     private suspend fun fromRemote(url: String, cacheFile: File?, client: OkHttpClient): ImageBitmap? {
-        val start = TimeSource.Monotonic.markNow()
+        val start = CurrentTime.mark
         val request = Request.Builder().url(url).build()
         var remoteTime: Duration? = null
 

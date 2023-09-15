@@ -12,6 +12,7 @@ import com.dzirbel.kotify.repository.util.BackoffStrategy
 import com.dzirbel.kotify.repository.util.JobLock
 import com.dzirbel.kotify.repository.util.ToggleableState
 import com.dzirbel.kotify.repository.util.midpointTimestampToNow
+import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -21,7 +22,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlin.time.TimeSource
 
 // TODO document
 class PlayerRepository(private val scope: CoroutineScope) : Player {
@@ -108,7 +108,7 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
         fetchPlaybackLock.launch(scope = scope) {
             _refreshingPlayback.value = true
 
-            val start = TimeSource.Monotonic.markNow()
+            val start = CurrentTime.mark
             val playback = try {
                 Spotify.Player.getCurrentPlayback()
             } catch (ex: CancellationException) {
@@ -150,7 +150,7 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
         fetchTrackPlaybackLock.launch(scope = scope) {
             _refreshingTrack.value = true
 
-            val start = TimeSource.Monotonic.markNow()
+            val start = CurrentTime.mark
             val trackPlayback = try {
                 Spotify.Player.getCurrentlyPlayingTrack()
             } catch (ex: CancellationException) {
@@ -217,7 +217,7 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
     override fun play(context: PlayContext?) {
         playLock.launch(scope = scope) {
             _playing.toggleTo(true) {
-                val start = TimeSource.Monotonic.markNow()
+                val start = CurrentTime.mark
 
                 // TODO check remote to see if context has changed before resuming from a null context?
 
@@ -243,7 +243,7 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
     override fun pause() {
         playLock.launch(scope = scope) {
             _playing.toggleTo(false) {
-                val start = TimeSource.Monotonic.markNow()
+                val start = CurrentTime.mark
 
                 Spotify.Player.pausePlayback()
 
@@ -316,7 +316,7 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
             val previousProgress = _trackPosition.value
             _trackPosition.value = TrackPosition.Seeking(positionMs = positionMs)
 
-            val start = TimeSource.Monotonic.markNow()
+            val start = CurrentTime.mark
 
             val success = try {
                 Spotify.Player.seekToPosition(positionMs = positionMs)
@@ -330,7 +330,7 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
                 false
             }
 
-            val end = TimeSource.Monotonic.markNow()
+            val end = CurrentTime.mark
 
             if (success) {
                 // optimistically update the track position before refreshing from the remote below
@@ -346,7 +346,7 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
                 // start and end times (including a buffer for a time the remote takes to apply the seek, even after
                 // returning from the endpoint)
                 fun possibleProgressMsRange(): LongRange {
-                    val now = TimeSource.Monotonic.markNow()
+                    val now = CurrentTime.mark
                     val msSinceStart = (now - start).inWholeMilliseconds
                     val msSinceEnd = (now - end).inWholeMilliseconds
                     return (positionMs + msSinceEnd)..(positionMs + msSinceStart + SEEK_TO_POSITION_BUFFER_MS)

@@ -5,16 +5,16 @@ import com.dzirbel.kotify.log.error
 import com.dzirbel.kotify.log.info
 import com.dzirbel.kotify.log.success
 import com.dzirbel.kotify.log.warn
+import com.dzirbel.kotify.util.CurrentTime
 import kotlin.time.Duration
 import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 
 /**
  * A stateful wrapper class which tracks metadata for requests to [Repository]s and logs them to [log].
  */
 internal class RequestLog(
     private val log: MutableLog<Repository.LogData>,
-    private val start: TimeMark = TimeSource.Monotonic.markNow(),
+    private val start: TimeMark = CurrentTime.mark,
     private var timeInDb: Duration? = null,
     private var timeInRemote: Duration? = null,
 ) {
