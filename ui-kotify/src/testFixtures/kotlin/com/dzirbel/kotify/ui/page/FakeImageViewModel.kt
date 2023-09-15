@@ -10,6 +10,11 @@ class FakeImageViewModel(val imageUrl: String? = null) : ImageViewModel {
     override fun imageUrlFor(size: ImageSize) = LazyTransactionStateFlow(imageUrl)
 
     companion object {
+        fun fromLogo(): FakeImageViewModel {
+            SpotifyImageCache.set("kotify://logo", File("src/main/resources/logo.png"))
+            return FakeImageViewModel("kotify://logo")
+        }
+
         fun fromFile(filename: String): FakeImageViewModel {
             SpotifyImageCache.set("kotify://$filename", File("src/test/resources/$filename"))
             return FakeImageViewModel("kotify://$filename")

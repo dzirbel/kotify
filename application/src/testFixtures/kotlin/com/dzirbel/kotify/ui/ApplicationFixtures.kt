@@ -19,7 +19,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 object ApplicationFixtures {
-    val user = UserViewModel(id = "kotify", name = "Kotify", images = FakeImageViewModel.fromFile("kotify.png"))
+    val user = UserViewModel(id = "kotify", name = "Kotify", images = FakeImageViewModel.fromLogo())
 
     val pta = ArtistViewModel(
         id = "pta",

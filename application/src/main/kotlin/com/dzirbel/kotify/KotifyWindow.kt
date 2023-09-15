@@ -1,7 +1,9 @@
 package com.dzirbel.kotify
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
@@ -9,6 +11,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
+import com.dzirbel.kotify.ui.IconCache
 import com.dzirbel.kotify.ui.KeyboardShortcuts
 import com.dzirbel.kotify.ui.LocalPlayer
 import com.dzirbel.kotify.ui.ProvideRepositories
@@ -47,6 +50,9 @@ fun ApplicationScope.KotifyWindow() {
                 onCloseRequest = ::exitApplication,
                 title = "${Application.name} ${Application.version}",
                 state = windowState,
+                icon = IconCache.load(IconCache.IconParams(name = "logo", density = LocalDensity.current))
+                    .collectAsState()
+                    .value,
                 onKeyEvent = keyboardShortcuts::handle,
                 content = { Root(authenticationState) },
             )

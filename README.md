@@ -1,4 +1,8 @@
-# Kotify
+<p align="center">
+  <img src="application/src/main/resources/logo.svg" width="50%" />
+</p>
+
+---
 
 | ![](application/src/test/resources/screenshots/com.dzirbel.kotify.ui.ApplicationScreenshotTest/artists-DARK.png) | ![](application/src/test/resources/screenshots/com.dzirbel.kotify.ui.ApplicationScreenshotTest/playlist-LIGHT.png) |
 |------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
@@ -13,12 +17,14 @@ first alpha release in the coming weeks.
 
 Kotify acts as a replacement for Spotify's official desktop application and can be used to browse and manage your
 library and control playback. In addition to the features offered by Spotify, Kotify adds:
+
 * light and dark theme
 * track ratings on a 10-star scale
 * full-screen grid of saved artists and albums
 * local caching of data for instant page loads
 
 Planned features include:
+
 * organize music by genre, rating, play count, and more
 * tools to maintain your library - see playlists a song is in, newly released albums not yet added, etc
 * edit song metadata or add custom fields
