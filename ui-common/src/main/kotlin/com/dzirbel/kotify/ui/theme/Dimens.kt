@@ -15,10 +15,10 @@ import androidx.compose.ui.unit.dp
 @Stable
 object Dimens {
     // space constants - all spacing between elements must use one of these values
-    val space1 = 2.dp
-    val space2 = 4.dp
-    val space3 = 8.dp
-    val space4 = 16.dp
+    val space1 = 4.dp
+    val space2 = 6.dp
+    val space3 = 10.dp
+    val space4 = 18.dp
     val space5 = 32.dp
 
     // icon sizes - all icons must either use one of these sizes or a size matching a font size
@@ -26,7 +26,6 @@ object Dimens {
     val iconSmall = 20.dp
     val iconMedium = 32.dp
     val iconLarge = 48.dp
-    val iconHuge = 96.dp
 
     // rounded corner size - all rounded corners must either use this size or be a "pill" with maximum rounding
     val cornerSize = 4.dp

@@ -27,6 +27,7 @@ import com.dzirbel.kotify.ui.LocalArtistAlbumsRepository
 import com.dzirbel.kotify.ui.LocalArtistRepository
 import com.dzirbel.kotify.ui.LocalRatingRepository
 import com.dzirbel.kotify.ui.LocalSavedAlbumRepository
+import com.dzirbel.kotify.ui.LocalSavedArtistRepository
 import com.dzirbel.kotify.ui.album.AlbumCell
 import com.dzirbel.kotify.ui.album.AlbumTypePicker
 import com.dzirbel.kotify.ui.components.DividerSelector
@@ -34,6 +35,7 @@ import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner
 import com.dzirbel.kotify.ui.components.SortSelector
+import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
 import com.dzirbel.kotify.ui.components.adapter.ListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.dividableProperties
@@ -114,6 +116,7 @@ data class ArtistPage(val artistId: String) : Page {
             title = artist?.name,
             header = {
                 ArtistPageHeader(
+                    artistId = artistId,
                     artist = artist,
                     albums = artistAlbums,
                     artistAlbumProperties = artistAlbumProperties,
@@ -148,6 +151,7 @@ data class ArtistPage(val artistId: String) : Page {
 
 @Composable
 private fun ArtistPageHeader(
+    artistId: String,
     artist: ArtistViewModel?,
     albums: ListAdapterState<ArtistAlbumViewModel>,
     artistAlbumProperties: PersistentList<AdapterProperty<ArtistAlbumViewModel>>,
@@ -159,7 +163,18 @@ private fun ArtistPageHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column {
-            Text(artist?.name.orEmpty(), style = MaterialTheme.typography.h4)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(artist?.name.orEmpty(), style = MaterialTheme.typography.h4)
+
+                ToggleSaveButton(
+                    repository = LocalSavedArtistRepository.current,
+                    id = artistId,
+                    size = Dimens.iconMedium,
+                )
+            }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {

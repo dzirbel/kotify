@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.applyIf
 
 /**
@@ -25,13 +26,21 @@ fun SimpleTextButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    selected: Boolean = false,
     contentPadding: PaddingValues = PaddingValues(Dimens.space3),
     enforceMinWidth: Boolean = true,
     enforceMinHeight: Boolean = false,
     shape: Shape = RectangleShape,
-    colors: ButtonColors = ButtonDefaults.textButtonColors(
-        contentColor = MaterialTheme.colors.onBackground,
-    ),
+    colors: ButtonColors = if (selected) {
+        ButtonDefaults.textButtonColors(
+            backgroundColor = KotifyColors.current.selectedBackground,
+            contentColor = MaterialTheme.colors.onBackground,
+        )
+    } else {
+        ButtonDefaults.textButtonColors(
+            contentColor = MaterialTheme.colors.onBackground,
+        )
+    },
     content: @Composable RowScope.() -> Unit,
 ) {
     TextButton(

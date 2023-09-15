@@ -165,6 +165,7 @@ class TrackSavedProperty<T>(
 ) : SortableProperty<T>, DividableProperty<T>, Column<T> {
     override val title = "Saved"
     override val width = ColumnWidth.Fill()
+    override val cellAlignment = Alignment.Center
 
     override fun compare(sortOrder: SortOrder, first: T, second: T): Int {
         // TODO state here is awkward
@@ -198,7 +199,7 @@ class TrackSavedProperty<T>(
             ToggleSaveButton(
                 repository = savedTrackRepository,
                 id = trackId,
-                modifier = Modifier.padding(Dimens.space2),
+                modifier = Modifier.padding(Dimens.space1),
             )
         }
     }

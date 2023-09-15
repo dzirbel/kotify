@@ -53,7 +53,7 @@ fun Modifier.metricsPanel(tag: String? = null): Modifier {
         var totalDraws: Int by remember { Ref(0) }
 
         val textMeasurer = rememberTextMeasurer()
-        val backgroundColor = MaterialTheme.colors.background.copy(alpha = KotifyColors.OVERLAY_ALPHA)
+        val backgroundColor = MaterialTheme.colors.background.copy(alpha = KotifyColors.current.overlayAlpha)
         val textColor = MaterialTheme.colors.onBackground
 
         Modifier

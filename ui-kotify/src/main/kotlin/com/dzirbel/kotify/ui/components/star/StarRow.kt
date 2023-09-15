@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.onClick
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
@@ -19,16 +17,17 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyColors
+import com.dzirbel.kotify.ui.theme.StarColors
 
 /**
  * Base Composable which renders a row of stars displaying a rating.
@@ -40,10 +39,10 @@ import com.dzirbel.kotify.ui.theme.KotifyColors
  * @param enabled whether the user can interact with the rating; if true, a hover state is displayed and [onClickStar]
  *  is invoked on clicks
  * @param onClickStar callback invoked when a star is clicked, with its 1-based index
+ * @param starColors colors used to render the stars
  * @param starSpacing optional spacing between the stars in the row
  * @param starSize size of each star
- * @param starColor color of the stars when "filled in"
- * @param backgroundColor background color of the stars when not "filled in"
+ * @param starOutlineWidth width of the outline around each star, if any
  * @param starPainter [Painter] used to render each star icon
  */
 @Composable
@@ -53,10 +52,10 @@ fun StarRow(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onClickStar: ((Int) -> Unit)? = null,
+    starColors: StarColors = KotifyColors.current.star,
     starSpacing: Dp = 0.dp,
     starSize: Dp = Dimens.iconSmall,
-    starColor: Color = KotifyColors.current.star,
-    backgroundColor: Color = MaterialTheme.colors.onBackground.copy(alpha = ContentAlpha.disabled),
+    starOutlineWidth: Dp = 2.dp,
     starPainter: Painter = rememberVectorPainter(Icons.Filled.Star),
 ) {
     Row(
@@ -87,37 +86,73 @@ fun StarRow(
                 modifier = Modifier
                     .size(starSize)
                     .drawWithCache {
-                        @Suppress("MagicNumber")
-                        val addingHoverColor = lerp(backgroundColor, starColor, 0.7f)
+                        val outlineWidthPx = starOutlineWidth.toPx()
 
-                        @Suppress("MagicNumber")
-                        val removingHoverColor = lerp(backgroundColor, starColor, 0.4f)
-
-                        val starFilter = ColorFilter.tint(starColor)
-                        val backgroundFilter = ColorFilter.tint(backgroundColor)
-                        val addingHoverFilter = ColorFilter.tint(addingHoverColor)
-                        val removingHoverFilter = ColorFilter.tint(removingHoverColor)
+                        val starColorFilter = ColorFilter.tint(starColors.foreground)
+                        val backgroundColorFilter = ColorFilter.tint(starColors.background)
+                        val starOutlineColorFilter = starColors.outline?.let { ColorFilter.tint(it) }
 
                         onDrawWithContent {
+                            fun draw(color: ColorFilter, alpha: Float = 1f) {
+                                val outline = starOutlineColorFilter.takeIf { color !== backgroundColorFilter }
+                                if (outline == null) {
+                                    with(starPainter) { draw(size = size, colorFilter = color, alpha = alpha) }
+                                } else {
+                                    with(starPainter) { draw(size = size, colorFilter = outline, alpha = alpha) }
+                                    translate(outlineWidthPx, outlineWidthPx) {
+                                        with(starPainter) {
+                                            draw(
+                                                size = Size(
+                                                    width = size.width - outlineWidthPx * 2,
+                                                    height = size.height - outlineWidthPx * 2,
+                                                ),
+                                                colorFilter = color,
+                                                alpha = alpha,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
                             val hoveredStarValue = hoveredStar.value
                             val hoveringMore = hoveredStarValue != null && hoveredStarValue >= star
                             val hoveringLess = hoveredStarValue != null && hoveredStarValue < star
 
-                            val bg = if (hoveringMore) addingHoverFilter else backgroundFilter
-                            val fg = if (hoveringLess) removingHoverFilter else starFilter
-
                             val rating = getStarRating() ?: 0
 
-                            if (rating.toInt() > star) { // star is full
-                                with(starPainter) { draw(size, colorFilter = fg) }
-                            } else {
-                                if (rating.toFloat() > star) { // star is partially filled
-                                    with(starPainter) { draw(size, colorFilter = bg) }
-                                    clipRect(right = (rating.toFloat() - rating.toInt()) * size.width) {
-                                        with(starPainter) { draw(size, colorFilter = fg) }
+                            when {
+                                // star is fully rated
+                                rating.toInt() > star -> {
+                                    if (hoveringLess) {
+                                        draw(starColorFilter, alpha = starColors.removingAlpha)
+                                    } else {
+                                        draw(starColorFilter)
                                     }
-                                } else { // star is empty
-                                    with(starPainter) { draw(size, colorFilter = bg) }
+                                }
+
+                                // star is partially rated
+                                rating.toFloat() > star -> {
+                                    if (hoveringMore) {
+                                        draw(starColorFilter, alpha = starColors.addingAlpha)
+                                    } else {
+                                        draw(backgroundColorFilter)
+                                    }
+
+                                    clipRect(right = (rating.toFloat() - rating.toInt()) * size.width) {
+                                        if (hoveringLess) {
+                                            draw(starColorFilter, alpha = starColors.removingAlpha)
+                                        } else {
+                                            draw(starColorFilter)
+                                        }
+                                    }
+                                }
+
+                                else -> {
+                                    if (hoveringMore) {
+                                        draw(starColorFilter, alpha = starColors.addingAlpha)
+                                    } else {
+                                        draw(backgroundColorFilter)
+                                    }
                                 }
                             }
                         }

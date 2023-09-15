@@ -161,9 +161,13 @@ private fun AlbumHeader(albumId: String, adapter: ListAdapterState<TrackViewMode
                         horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        ToggleSaveButton(repository = LocalSavedAlbumRepository.current, id = albumId)
+                        ToggleSaveButton(
+                            repository = LocalSavedAlbumRepository.current,
+                            id = albumId,
+                            size = Dimens.iconMedium,
+                        )
 
-                        PlayButton(context = Player.PlayContext.album(album))
+                        PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconMedium)
                     }
 
                     val albumTracksRepository = LocalAlbumTracksRepository.current

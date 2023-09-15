@@ -69,7 +69,7 @@ fun RatingHistogram(
                         modifier = Modifier
                             .fillMaxHeight(height)
                             .fillMaxWidth(BAR_WIDTH_PERCENT)
-                            .background(KotifyColors.current.star),
+                            .background(KotifyColors.current.star.foreground),
                     ) {
                         val hovering = hoverInteractionSource.collectIsHoveredAsState().value
                         if (hovering && numRatings > 0) {

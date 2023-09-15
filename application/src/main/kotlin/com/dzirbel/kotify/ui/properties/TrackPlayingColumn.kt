@@ -57,11 +57,12 @@ class TrackPlayingColumn<T>(
             derivedStateOf { currentTrackState.value?.id == trackId }
         }
 
-        Box(Modifier.padding(Dimens.space2).size(Dimens.fontBodyDp).hoverable(hoverInteractionSource)) {
+        val size = Dimens.iconSmall
+        Box(Modifier.padding(Dimens.space1).size(size).hoverable(hoverInteractionSource)) {
             if (playing.value) {
                 CachedIcon(
                     name = "volume-up",
-                    size = Dimens.fontBodyDp,
+                    size = size,
                     contentDescription = "Playing",
                     tint = MaterialTheme.colors.primary,
                 )
@@ -74,9 +75,8 @@ class TrackPlayingColumn<T>(
                     ) {
                         CachedIcon(
                             name = "play-circle-outline",
-                            size = Dimens.fontBodyDp,
+                            size = size,
                             contentDescription = "Play",
-                            tint = MaterialTheme.colors.primary,
                         )
                     }
                 }

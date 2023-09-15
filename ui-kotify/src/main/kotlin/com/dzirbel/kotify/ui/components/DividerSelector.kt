@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -10,7 +11,6 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -28,6 +28,8 @@ import com.dzirbel.kotify.ui.components.adapter.Divider
 import com.dzirbel.kotify.ui.components.adapter.flipped
 import com.dzirbel.kotify.ui.components.adapter.icon
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.KotifyColors
+import com.dzirbel.kotify.ui.util.applyIf
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import kotlinx.collections.immutable.ImmutableList
 
@@ -46,7 +48,10 @@ fun <E> DividerSelector(
         elevation = Dimens.componentElevation,
         shape = RoundedCornerShape(size = Dimens.cornerSize),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.applyIf(currentDivider != null) { background(KotifyColors.current.selectedBackground) },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             val dropdownExpanded = remember { mutableStateOf(false) }
             SimpleTextButton(
                 onClick = {
@@ -105,7 +110,6 @@ fun <E> DividerSelector(
                         imageVector = currentDivider.divisionSortOrder.icon,
                         contentDescription = null,
                         modifier = Modifier.size(Dimens.iconSmall),
-                        tint = MaterialTheme.colors.primary,
                     )
                 }
 

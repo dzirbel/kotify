@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +31,7 @@ import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner
 import com.dzirbel.kotify.ui.components.PlayButton
+import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.SortSelector
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.adapter.ListAdapter
@@ -226,7 +226,7 @@ private fun PlaylistReorderButton(
 ) {
     val reorderState = remember { mutableStateOf<PlaylistTracksRepository.PlaylistReorderState?>(null) }
 
-    Button(
+    SimpleTextButton(
         enabled = enabled && reorderState.value == null,
         onClick = {
             // TODO prevent sort changes while reordering?

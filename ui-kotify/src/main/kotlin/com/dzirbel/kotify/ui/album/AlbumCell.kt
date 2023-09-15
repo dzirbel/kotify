@@ -122,7 +122,7 @@ fun SmallAlbumCell(album: AlbumViewModel, onClick: () -> Unit) {
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .background(
-                        color = MaterialTheme.colors.background.copy(alpha = KotifyColors.OVERLAY_ALPHA),
+                        color = MaterialTheme.colors.background.copy(alpha = KotifyColors.current.overlayAlpha),
                         shape = RoundedCornerShape(size = Dimens.cornerSize),
                     )
                     .padding(Dimens.space1),

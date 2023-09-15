@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
+import androidx.compose.material.LocalContentAlpha
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -17,7 +19,6 @@ import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.adapter.icon
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.theme.KotifyColors
 
 /**
  * Represents a single column in a [Table].
@@ -87,7 +88,11 @@ interface Column<E> : AdapterProperty<E> {
                     imageVector = sortOrder.icon,
                     contentDescription = null,
                     modifier = Modifier.size(Dimens.iconSmall),
-                    tint = KotifyColors.highlighted(sortOrder != null, otherwise = Color.Transparent),
+                    tint = if (sortOrder == null) {
+                        Color.Transparent
+                    } else {
+                        LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+                    },
                 )
             }
         } else {

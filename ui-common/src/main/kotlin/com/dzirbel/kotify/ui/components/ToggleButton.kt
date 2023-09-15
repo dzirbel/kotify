@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -29,11 +27,7 @@ fun ToggleButton(
     SimpleTextButton(
         modifier = modifier,
         shape = shape,
-        colors = if (toggled) {
-            ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colors.primary)
-        } else {
-            ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colors.onBackground)
-        },
+        selected = toggled,
         onClick = { onToggle(!toggled) },
         content = content,
     )

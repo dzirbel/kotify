@@ -105,6 +105,7 @@ private fun PlaylistItem(playlist: PlaylistViewModel) {
 
     SimpleTextButton(
         modifier = Modifier.fillMaxWidth(),
+        selected = selected,
         contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
         onClick = { pageStack.mutate { to(PlaylistPage(playlistId = playlist.id)) } },
     ) {
@@ -123,7 +124,6 @@ private fun PlaylistItem(playlist: PlaylistViewModel) {
             CachedIcon(
                 name = "volume-up",
                 size = Dimens.fontBodyDp,
-                contentDescription = "Volume",
                 tint = MaterialTheme.colors.primary,
             )
         }
@@ -131,15 +131,11 @@ private fun PlaylistItem(playlist: PlaylistViewModel) {
 }
 
 @Composable
-private fun MaxWidthButton(
-    text: String,
-    selected: Boolean,
-    contentPadding: PaddingValues = PaddingValues(all = Dimens.space3),
-    onClick: () -> Unit,
-) {
+private fun MaxWidthButton(text: String, selected: Boolean, onClick: () -> Unit) {
     SimpleTextButton(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = contentPadding,
+        selected = selected,
+        contentPadding = PaddingValues(horizontal = Dimens.space3, vertical = Dimens.space2),
         onClick = onClick,
     ) {
         Text(

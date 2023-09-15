@@ -21,7 +21,7 @@ fun PageLoadingSpinner() {
         CircularProgressIndicator(
             Modifier
                 .padding(vertical = Dimens.space5)
-                .size(Dimens.iconHuge)
+                .size(Dimens.iconLarge)
                 .align(Alignment.Center),
         )
     }
