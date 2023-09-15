@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository
 
+import com.dzirbel.kotify.log.FakeLog
 import com.dzirbel.kotify.repository.util.ToggleableState
 import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.flow.MutableStateFlow

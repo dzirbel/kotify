@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.detekt)
     id("jacoco")
+    id("java-test-fixtures")
     kotlin("jvm") version libs.versions.kotlin
 }
 
@@ -18,4 +19,6 @@ dependencies {
 
     testImplementation(libs.assertk)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
 }

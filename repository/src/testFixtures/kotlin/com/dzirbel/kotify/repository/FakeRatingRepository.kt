@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository
 
+import com.dzirbel.kotify.log.FakeLog
 import com.dzirbel.kotify.repository.rating.AverageRating
 import com.dzirbel.kotify.repository.rating.Rating
 import com.dzirbel.kotify.repository.rating.RatingRepository

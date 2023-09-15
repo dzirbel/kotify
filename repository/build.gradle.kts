@@ -18,6 +18,7 @@ dependencies {
 
     testFixturesImplementation(project(":util"))
     testFixturesImplementation(testFixtures(project(":db")))
+    testFixturesImplementation(testFixtures(project(":log")))
     testFixturesImplementation(testFixtures(project(":network")))
 
     implementation(compose.runtime)

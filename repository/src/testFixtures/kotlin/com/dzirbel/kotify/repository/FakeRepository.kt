@@ -1,21 +1,11 @@
 package com.dzirbel.kotify.repository
 
-import com.dzirbel.kotify.log.Log
+import com.dzirbel.kotify.log.FakeLog
 import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.sync.Mutex
 import java.time.Instant
-
-// TODO extract
-class FakeLog<T>(override val name: String = "Log") : Log<T> {
-    override val writeLock: Mutex = Mutex()
-    override val events: List<Log.Event<T>> = emptyList()
-    override val eventsFlow: Flow<Log.Event<T>> = emptyFlow()
-}
 
 open class FakeRepository<T>(values: Map<String, T> = emptyMap()) : Repository<T> {
 
