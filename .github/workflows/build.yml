@@ -32,7 +32,7 @@ jobs:
           retention-days: 7
 
       - name: Upload test results to codecov
-        uses: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3
+        uses: codecov/codecov-action@v3
         if: ${{ always() }} # upload even if the build failed, in case it was just test failures
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
