@@ -60,7 +60,7 @@ class ApplicationScreenshotTest {
 
     @BeforeEach
     fun setup() {
-        Application.setup()
+        Application.setupProperties()
 
         savedPlaylistRepository.setSaved(ApplicationFixtures.savedPlaylists.map { it.id })
         playlistRepository.put(ApplicationFixtures.savedPlaylists)

@@ -70,10 +70,7 @@ object Application {
     lateinit var github: String
         private set
 
-    /**
-     * Initializes the application-level properties and prints their status to the console.
-     */
-    fun setup(cachePath: String? = null, settingsPath: String? = null, logPath: String? = null) {
+    fun setupProperties() {
         val classLoader = Thread.currentThread().contextClassLoader
         val inputStream = requireNotNull(classLoader.getResourceAsStream(PROPERTIES_FILENAME)) {
             "$PROPERTIES_FILENAME not found"
@@ -90,6 +87,13 @@ object Application {
         github = requireNotNull(properties["github"] as? String) {
             "could not find github property in $PROPERTIES_FILENAME"
         }
+    }
+
+    /**
+     * Initializes the application-level properties and prints their status to the console.
+     */
+    fun setup(cachePath: String? = null, settingsPath: String? = null, logPath: String? = null) {
+        setupProperties()
 
         val os = currentOs
         EventLog.info(
