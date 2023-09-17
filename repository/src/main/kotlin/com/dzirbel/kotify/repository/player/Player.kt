@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.repository.player
 
 import androidx.compose.runtime.Stable
+import com.dzirbel.kotify.log.Logging
 import com.dzirbel.kotify.network.FullSpotifyTrackOrEpisode
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyAlbum
@@ -10,6 +11,7 @@ import com.dzirbel.kotify.network.model.SpotifyPlaybackOffset
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
+import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
@@ -21,11 +23,9 @@ import kotlinx.coroutines.flow.StateFlow
  * Defines the public API for repository-level operations controlling the Spotify player state. In practice this is
  * always [PlayerRepository] and is only separated as in interface to make the API more clear and separate from the
  * implementation.
- *
- * TODO add logging
  */
 @Stable
-interface Player {
+interface Player : Logging<Repository.LogData> {
     /**
      * Encapsulates options to start playback.
      */

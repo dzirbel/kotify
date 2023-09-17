@@ -1,5 +1,11 @@
 package com.dzirbel.kotify.repository.player
 
+import com.dzirbel.kotify.log.MutableLog
+import com.dzirbel.kotify.log.asLog
+import com.dzirbel.kotify.log.error
+import com.dzirbel.kotify.log.info
+import com.dzirbel.kotify.log.success
+import com.dzirbel.kotify.log.warn
 import com.dzirbel.kotify.network.FullSpotifyTrackOrEpisode
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SpotifyPlayback
@@ -7,6 +13,8 @@ import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
 import com.dzirbel.kotify.network.model.SpotifyRepeatMode
 import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
+import com.dzirbel.kotify.repository.DataSource
+import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.player.Player.PlayContext
 import com.dzirbel.kotify.repository.util.BackoffStrategy
 import com.dzirbel.kotify.repository.util.JobLock
@@ -23,7 +31,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-// TODO document
 class PlayerRepository(private val scope: CoroutineScope) : Player {
 
     private val _refreshingPlayback = MutableStateFlow(false)
@@ -104,23 +111,33 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
 
     private var songEndJob: Job? = null
 
+    private val _log = MutableLog<Unit>(name = "Player", scope = scope)
+
+    override val log = _log.asLog { Repository.LogData(source = DataSource.REMOTE) }
+
     override fun refreshPlayback() {
         fetchPlaybackLock.launch(scope = scope) {
             _refreshingPlayback.value = true
 
             val start = CurrentTime.mark
+            var error = false
             val playback = try {
                 Spotify.Player.getCurrentPlayback()
             } catch (ex: CancellationException) {
                 _refreshingPlayback.value = false
                 throw ex
             } catch (throwable: Throwable) {
+                error = true
                 _errors.emit(throwable)
+                _log.error(throwable, "Error refreshing playback", duration = start.elapsedNow())
                 null
             }
 
             if (playback != null) {
+                _log.success("Refreshed playback", duration = start.elapsedNow())
                 updateWithPlayback(playback, fetchTimestamp = start.midpointTimestampToNow())
+            } else if (!error) {
+                _log.warn("Received null playback", duration = start.elapsedNow())
             }
 
             _refreshingPlayback.value = false
@@ -133,7 +150,9 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
 
     private suspend fun refreshTrackUntilChanged(previousTrack: FullSpotifyTrackOrEpisode?) {
         if (previousTrack == null) {
-            _errors.emit(IllegalStateException("Missing previous track"))
+            val exception = IllegalStateException("Missing previous track")
+            _log.error(exception)
+            _errors.emit(exception)
         } else {
             refreshTrackWithRetries { newTrackPlayback ->
                 // stop refreshing when there is a new track
@@ -166,6 +185,12 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
                 if (condition?.invoke(trackPlayback) == false) {
                     val delay = backoffStrategy.delayFor(attempt = attempt)
                     if (delay != null) {
+                        _log.info(
+                            title = "Expected track playback refresh condition not met after ${attempt + 1} retries, " +
+                                "retrying after $delay",
+                            duration = start.elapsedNow(),
+                        )
+
                         // TODO consider multiple concurrent retry conditions
                         launch {
                             delay(delay)
@@ -177,14 +202,21 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
                         }
                     } else {
                         // retries have failed to meet the condition, now use the provided playback
+                        _log.warn(
+                            title = "Expected track playback refresh condition not met after ${attempt + 1} retries, " +
+                                "using playback anyway",
+                            duration = start.elapsedNow(),
+                        )
                         updateWithTrackPlayback(trackPlayback, fetchTimestamp = fetchTimestamp)
                     }
                 } else {
                     // condition is null or has been met, apply the new playback
+                    _log.success("Refreshed track playback", duration = start.elapsedNow())
                     updateWithTrackPlayback(trackPlayback, fetchTimestamp = fetchTimestamp)
                 }
             } else {
                 // if there is no playback, stop retries regardless
+                _log.warn("Received null track playback", duration = start.elapsedNow())
                 updateWithTrackPlayback(null, fetchTimestamp = fetchTimestamp)
             }
 
@@ -196,6 +228,7 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
         fetchAvailableDevicesLock.launch(scope = scope) {
             _refreshingDevices.value = true
 
+            val start = CurrentTime.mark
             val devices = try {
                 Spotify.Player.getAvailableDevices()
             } catch (ex: CancellationException) {
@@ -203,10 +236,12 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
                 throw ex
             } catch (throwable: Throwable) {
                 _errors.emit(throwable)
+                _log.error(throwable, "Error refreshing devices", duration = start.elapsedNow())
                 null
             }
 
             if (devices != null) {
+                _log.success("Refreshed devices", duration = start.elapsedNow())
                 updateWithDevices(devices)
             }
 
@@ -221,7 +256,17 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
 
                 // TODO check remote to see if context has changed before resuming from a null context?
 
-                Spotify.Player.startPlayback(contextUri = context?.contextUri, offset = context?.offset)
+                try {
+                    Spotify.Player.startPlayback(contextUri = context?.contextUri, offset = context?.offset)
+                } catch (ex: CancellationException) {
+                    throw ex
+                } catch (throwable: Throwable) {
+                    _errors.emit(throwable)
+                    _log.error(throwable, "Error starting playback", duration = start.elapsedNow())
+                    throw throwable
+                }
+
+                _log.success("Started playback", duration = start.elapsedNow())
 
                 val trackPosition = _trackPosition.value
                 if (context == null && trackPosition is TrackPosition.Fetched) {
@@ -245,7 +290,17 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
             _playing.toggleTo(false) {
                 val start = CurrentTime.mark
 
-                Spotify.Player.pausePlayback()
+                try {
+                    Spotify.Player.pausePlayback()
+                } catch (ex: CancellationException) {
+                    throw ex
+                } catch (throwable: Throwable) {
+                    _errors.emit(throwable)
+                    _log.error(throwable, "Error pausing playback", duration = start.elapsedNow())
+                    throw throwable
+                }
+
+                _log.success("Paused playback", duration = start.elapsedNow())
 
                 (_trackPosition.value as? TrackPosition.Fetched)?.let { position ->
                     _trackPosition.value = position.pause(pauseTimestamp = start.midpointTimestampToNow())
@@ -266,6 +321,8 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
 
             val previousTrack = _currentTrack.value
 
+            val start = CurrentTime.mark
+
             val success = try {
                 Spotify.Player.skipToNext()
                 true
@@ -274,10 +331,12 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
                 throw ex
             } catch (throwable: Throwable) {
                 _errors.emit(throwable)
+                _log.error(throwable, "Error skipping to next", duration = start.elapsedNow())
                 false
             }
 
             if (success) {
+                _log.success("Skipped to next", duration = start.elapsedNow())
                 refreshTrackUntilChanged(previousTrack = previousTrack)
             }
 
@@ -292,6 +351,8 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
 
             val previousTrack = _currentTrack.value
 
+            val start = CurrentTime.mark
+
             val success = try {
                 Spotify.Player.skipToPrevious()
                 true
@@ -300,10 +361,12 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
                 throw ex
             } catch (throwable: Throwable) {
                 _errors.emit(throwable)
+                _log.error(throwable, "Error skipping to previous", duration = start.elapsedNow())
                 false
             }
 
             if (success) {
+                _log.success("Skipped to previous", duration = start.elapsedNow())
                 refreshTrackUntilChanged(previousTrack = previousTrack)
             }
 
@@ -325,14 +388,17 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
                 _trackPosition.value = previousProgress
                 throw ex
             } catch (throwable: Throwable) {
-                _errors.emit(throwable)
                 _trackPosition.value = previousProgress
+                _errors.emit(throwable)
+                _log.error(throwable, "Error seeking to position", duration = start.elapsedNow())
                 false
             }
 
             val end = CurrentTime.mark
 
             if (success) {
+                _log.success("Seeked to position", duration = start.elapsedNow())
+
                 // optimistically update the track position before refreshing from the remote below
                 _trackPosition.value = TrackPosition.Fetched(
                     fetchedTimestamp = start.midpointTimestampToNow(),
@@ -362,7 +428,19 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
     override fun setRepeatMode(mode: SpotifyRepeatMode) {
         setRepeatModeLock.launch(scope = scope) {
             _repeatMode.toggleTo(mode) {
-                Spotify.Player.setRepeatMode(mode)
+                val start = CurrentTime.mark
+
+                try {
+                    Spotify.Player.setRepeatMode(mode)
+                } catch (ex: CancellationException) {
+                    throw ex
+                } catch (throwable: Throwable) {
+                    _errors.emit(throwable)
+                    _log.error(throwable, "Error setting repeat mode", duration = start.elapsedNow())
+                    throw throwable
+                }
+
+                _log.success("Set repeat mode", duration = start.elapsedNow())
 
                 // TODO verify applied?
             }
@@ -372,7 +450,19 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
     override fun setShuffle(shuffle: Boolean) {
         toggleShuffleLock.launch(scope = scope) {
             _shuffling.toggleTo(shuffle) {
-                Spotify.Player.toggleShuffle(state = shuffle)
+                val start = CurrentTime.mark
+
+                try {
+                    Spotify.Player.toggleShuffle(state = shuffle)
+                } catch (ex: CancellationException) {
+                    throw ex
+                } catch (throwable: Throwable) {
+                    _errors.emit(throwable)
+                    _log.error(throwable, "Error setting shuffle", duration = start.elapsedNow())
+                    throw throwable
+                }
+
+                _log.success("Set shuffle", duration = start.elapsedNow())
 
                 // TODO verify applied?
             }
@@ -382,7 +472,19 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
     override fun setVolume(volumePercent: Int) {
         setVolumeLock.launch(scope = scope) {
             _volume.toggleTo(volumePercent) {
-                Spotify.Player.setVolume(volumePercent = volumePercent)
+                val start = CurrentTime.mark
+
+                try {
+                    Spotify.Player.setVolume(volumePercent = volumePercent)
+                } catch (ex: CancellationException) {
+                    throw ex
+                } catch (throwable: Throwable) {
+                    _errors.emit(throwable)
+                    _log.error(throwable, "Error setting volume", duration = start.elapsedNow())
+                    throw throwable
+                }
+
+                _log.success("Set volume", duration = start.elapsedNow())
 
                 // TODO verify applied?
             }
@@ -391,25 +493,27 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
 
     override fun transferPlayback(deviceId: String, play: Boolean?) {
         transferPlaybackLock.launch(scope = scope) {
-            val success = try {
+            val start = CurrentTime.mark
+
+            try {
                 Spotify.Player.transferPlayback(deviceIds = listOf(deviceId), play = play)
-                true
             } catch (ex: CancellationException) {
                 throw ex
             } catch (throwable: Throwable) {
                 _errors.emit(throwable)
-                false
+                _log.error(throwable, "Error transferring playback", duration = start.elapsedNow())
+                throw throwable
             }
 
-            if (success) {
-                _availableDevices.value
-                    ?.find { it.id == deviceId }
-                    ?.let { _currentDevice.value = it }
+            _log.success("Transferred playback", duration = start.elapsedNow())
 
-                // TODO often fetches playback before the change has been applied, resetting the current device
-                refreshPlayback()
-                refreshTrack()
-            }
+            _availableDevices.value
+                ?.find { it.id == deviceId }
+                ?.let { _currentDevice.value = it }
+
+            // TODO often fetches playback before the change has been applied, resetting the current device
+            refreshPlayback()
+            refreshTrack()
         }
     }
 

@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository
 
+import com.dzirbel.kotify.log.FakeLog
 import com.dzirbel.kotify.network.FullSpotifyTrackOrEpisode
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
 import com.dzirbel.kotify.network.model.SpotifyPlayingType
@@ -45,6 +46,7 @@ class FakePlayer(
     override val availableDevices = MutableStateFlow(availableDevices)
     override val volume = MutableStateFlow(volume?.let { ToggleableState.Set(it) })
     override val errors = MutableSharedFlow<Throwable>()
+    override val log = FakeLog<Repository.LogData>()
 
     override fun refreshPlayback() { }
     override fun refreshTrack() { }

@@ -22,6 +22,7 @@ import com.dzirbel.kotify.ui.LocalAlbumRepository
 import com.dzirbel.kotify.ui.LocalAlbumTracksRepository
 import com.dzirbel.kotify.ui.LocalArtistAlbumsRepository
 import com.dzirbel.kotify.ui.LocalArtistRepository
+import com.dzirbel.kotify.ui.LocalPlayer
 import com.dzirbel.kotify.ui.LocalPlaylistRepository
 import com.dzirbel.kotify.ui.LocalPlaylistTracksRepository
 import com.dzirbel.kotify.ui.LocalRatingRepository
@@ -76,9 +77,9 @@ fun RepositoryTab() {
         LocalSavedTrackRepository.current.log,
     )
 
-    val ratingRepositoryLogs = persistentListOf(LocalRatingRepository.current.log)
+    val otherRepositoryLogs = persistentListOf(LocalRatingRepository.current.log, LocalPlayer.current.log)
 
-    val allLogs = repositoryLogs + savedRepositoryLogs + ratingRepositoryLogs
+    val allLogs = repositoryLogs + savedRepositoryLogs + otherRepositoryLogs
 
     val logMutex = remember { MergedMutex(allLogs.map { it.writeLock }) }
     val enabledLogs = remember { mutableStateOf(allLogs.toPersistentSet()) }
@@ -129,7 +130,7 @@ fun RepositoryTab() {
                     )
 
                     LogListToggle(
-                        logs = ratingRepositoryLogs,
+                        logs = otherRepositoryLogs,
                         enabledLogs = enabledLogs.value,
                         onSetEnabledLogs = { enabledLogs.value = it },
                         eventCleared = eventCleared,
