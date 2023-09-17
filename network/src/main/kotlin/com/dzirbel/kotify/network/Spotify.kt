@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.network
 
+import com.dzirbel.kotify.Runtime
 import com.dzirbel.kotify.network.model.CursorPaging
 import com.dzirbel.kotify.network.model.FullSpotifyAlbum
 import com.dzirbel.kotify.network.model.FullSpotifyArtist
@@ -35,11 +36,11 @@ import com.dzirbel.kotify.network.model.SpotifyTrackPlayback
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.network.util.await
 import com.dzirbel.kotify.network.util.bodyFromJson
+import com.dzirbel.kotify.network.util.json
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -79,6 +80,8 @@ object Spotify {
      */
     const val MAX_LIMIT = 50
 
+    val json by lazy { Runtime.json }
+
     class SpotifyError(val code: Int, message: String) : Throwable(message = "HTTP $code : $message") {
         @Serializable
         private data class ErrorObject(val error: Details) {
@@ -88,7 +91,7 @@ object Spotify {
 
         companion object {
             fun from(response: Response): SpotifyError {
-                val message = runCatching { response.bodyFromJson<ErrorObject>() }
+                val message = runCatching { response.bodyFromJson<ErrorObject>(json) }
                     .getOrNull()
                     ?.error
                     ?.message
@@ -111,7 +114,7 @@ object Spotify {
             method = "POST",
             path = path,
             queryParams = queryParams,
-            body = Json.encodeToString(jsonBody).toRequestBody(),
+            body = json.encodeToString(jsonBody).toRequestBody(),
         )
     }
 
@@ -124,7 +127,7 @@ object Spotify {
             method = "PUT",
             path = path,
             queryParams = queryParams,
-            body = Json.encodeToString(jsonBody).toRequestBody(),
+            body = json.encodeToString(jsonBody).toRequestBody(),
         )
     }
 
@@ -137,7 +140,7 @@ object Spotify {
             method = "DELETE",
             path = path,
             queryParams = queryParams,
-            body = Json.encodeToString(jsonBody).toRequestBody(),
+            body = json.encodeToString(jsonBody).toRequestBody(),
         )
     }
 
@@ -174,7 +177,7 @@ object Spotify {
                 throw SpotifyError.from(response)
             }
 
-            response.bodyFromJson()
+            response.bodyFromJson(json)
         }
     }
 

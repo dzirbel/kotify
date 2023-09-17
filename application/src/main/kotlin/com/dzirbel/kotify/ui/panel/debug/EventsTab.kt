@@ -9,6 +9,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.EventLog
+import com.dzirbel.kotify.Runtime
 import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.network.oauth.AccessToken
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
@@ -25,6 +26,7 @@ fun EventsTab() {
                 modifier = Modifier.fillMaxWidth(),
                 checked = Settings.instrumentationHighlightCompositions,
                 onCheckedChange = { Settings.instrumentationHighlightCompositions = it },
+                enabled = Runtime.debug,
                 label = { Text("Highlight compositions") },
             )
 
@@ -32,6 +34,7 @@ fun EventsTab() {
                 modifier = Modifier.fillMaxWidth(),
                 checked = Settings.instrumentationMetricsPanels,
                 onCheckedChange = { Settings.instrumentationMetricsPanels = it },
+                enabled = Runtime.debug,
                 label = { Text("Show composition metrics panels") },
             )
 

@@ -11,21 +11,7 @@ import java.util.Properties
  * Global constants and configuration for the application.
  */
 object Application {
-    enum class OperatingSystem {
-        WINDOWS, MAC, LINUX
-    }
-
     private const val PROPERTIES_FILENAME = "app.properties"
-
-    val currentOs: OperatingSystem? by lazy {
-        val os = System.getProperty("os.name").lowercase(Locale.getDefault())
-        when {
-            os.contains("win") -> OperatingSystem.WINDOWS
-            os.contains("mac") || os.contains("darwin") -> OperatingSystem.MAC
-            os.contains("linux") || os.contains("nix") -> OperatingSystem.LINUX
-            else -> null
-        }
-    }
 
     // use nullable backing properties so that we can use test values if setup() is not called
     private var _cacheDir: File? = null
@@ -70,7 +56,13 @@ object Application {
     lateinit var github: String
         private set
 
-    fun setupProperties() {
+    private val File.normalizedAbsolutePath: String
+        get() = absoluteFile.normalize().path
+
+    fun setupProperties(debug: Boolean) {
+        Runtime.debug = debug
+        EventLog.info("Initializing in ${if (debug) "DEBUG" else "RELEASE"} mode")
+
         val classLoader = Thread.currentThread().contextClassLoader
         val inputStream = requireNotNull(classLoader.getResourceAsStream(PROPERTIES_FILENAME)) {
             "$PROPERTIES_FILENAME not found"
@@ -92,18 +84,18 @@ object Application {
     /**
      * Initializes the application-level properties and prints their status to the console.
      */
-    fun setup(cachePath: String? = null, settingsPath: String? = null, logPath: String? = null) {
-        setupProperties()
+    fun setup(args: CLIArguments) {
+        setupProperties(args.debug)
 
-        val os = currentOs
+        val os = Runtime.currentOs
         EventLog.info(
             "Detected operating system: ${os?.name?.lowercase(Locale.getDefault())?.capitalize()} " +
                 "(os.name: ${System.getProperty("os.name")})",
         )
 
-        _cacheDir = cacheDirFor(os = os, override = cachePath)
-        _settingsDir = settingsDirFor(os = os, override = settingsPath)
-        _logDir = logDirFor(os = os, override = logPath)
+        _cacheDir = cacheDirFor(os = os, override = args.cacheDir)
+        _settingsDir = settingsDirFor(os = os, override = args.settingsDir)
+        _logDir = logDirFor(os = os, override = args.logDir)
     }
 
     /**
@@ -122,7 +114,7 @@ object Application {
             File(override)
                 .also { it.mkdirs() }
                 .takeIfIsWriteableDirectory(directoryName = "given cache")
-                ?.also { EventLog.info("Using given cache directory ${it.absolutePath}") }
+                ?.also { EventLog.info("Using given cache directory ${it.normalizedAbsolutePath}") }
                 ?.let { return it }
         }
 
@@ -145,10 +137,10 @@ object Application {
             }
             ?.also { it.mkdirs() }
             ?.takeIfIsWriteableDirectory(directoryName = "resolved cache")
-            ?.also { EventLog.info("Using system cache directory ${it.absolutePath}") }
+            ?.also { EventLog.info("Using system cache directory ${it.normalizedAbsolutePath}") }
             ?: File(".").resolve("cache")
                 .also { it.mkdirs() }
-                .also { EventLog.info("Using backup cache directory ${it.absolutePath}") }
+                .also { EventLog.info("Using backup cache directory ${it.normalizedAbsolutePath}") }
     }
 
     /**
@@ -168,7 +160,7 @@ object Application {
             File(override)
                 .also { it.mkdirs() }
                 .takeIfIsWriteableDirectory(directoryName = "given settings")
-                ?.also { EventLog.info("Using given settings directory ${it.absolutePath}") }
+                ?.also { EventLog.info("Using given settings directory ${it.normalizedAbsolutePath}") }
                 ?.let { return it }
         }
 
@@ -193,10 +185,10 @@ object Application {
             }
             ?.also { it.mkdirs() }
             ?.takeIfIsWriteableDirectory(directoryName = "resolved settings")
-            ?.also { EventLog.info("Using system settings directory ${it.absolutePath}") }
+            ?.also { EventLog.info("Using system settings directory ${it.normalizedAbsolutePath}") }
             ?: File(".").resolve("settings")
                 .also { it.mkdirs() }
-                .also { EventLog.info("Using backup settings directory ${it.absolutePath}") }
+                .also { EventLog.info("Using backup settings directory ${it.normalizedAbsolutePath}") }
     }
 
     /**
@@ -216,7 +208,7 @@ object Application {
             File(override)
                 .also { it.mkdirs() }
                 .takeIfIsWriteableDirectory(directoryName = "given log")
-                ?.also { EventLog.info("Using given log directory ${it.absolutePath}") }
+                ?.also { EventLog.info("Using given log directory ${it.normalizedAbsolutePath}") }
                 ?.let { return it }
         }
 
@@ -241,10 +233,10 @@ object Application {
             }
             ?.also { it.mkdirs() }
             ?.takeIfIsWriteableDirectory(directoryName = "resolved log")
-            ?.also { EventLog.info("Using system log directory ${it.absolutePath}") }
+            ?.also { EventLog.info("Using system log directory ${it.normalizedAbsolutePath}") }
             ?: File(".").resolve("logs")
                 .also { it.mkdirs() }
-                .also { EventLog.info("Using backup log directory ${it.absolutePath}") }
+                .also { EventLog.info("Using backup log directory ${it.normalizedAbsolutePath}") }
     }
 
     /**
@@ -254,11 +246,11 @@ object Application {
     private fun File.takeIfIsWriteableDirectory(directoryName: String): File? {
         return when {
             !isDirectory -> {
-                EventLog.warn("${directoryName.capitalize()} directory $absolutePath does not exist")
+                EventLog.warn("${directoryName.capitalize()} directory $normalizedAbsolutePath does not exist")
                 null
             }
             !canWrite() -> {
-                EventLog.warn("Cannot write to $directoryName directory $absolutePath")
+                EventLog.warn("Cannot write to $directoryName directory $normalizedAbsolutePath")
                 null
             }
             else -> {

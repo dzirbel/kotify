@@ -58,7 +58,11 @@ private val libraryPanelSize = PanelSize(
 @Composable
 fun Root(authenticationState: AuthenticationState) {
     InvalidatingRootContent {
-        KotifyTheme.Apply(colors = Settings.colors) {
+        KotifyTheme.Apply(
+            colors = Settings.colors,
+            instrumentationHighlightCompositions = Settings.instrumentationHighlightCompositions,
+            instrumentationMetricsPanels = Settings.instrumentationMetricsPanels,
+        ) {
             when (authenticationState) {
                 AuthenticationState.UNAUTHENTICATED -> Unauthenticated()
 

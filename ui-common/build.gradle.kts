@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
     implementation(project(":util"))
+    implementation(project(":runtime"))
 
     testImplementation(testFixtures(project(":util")))
 

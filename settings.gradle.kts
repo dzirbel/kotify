@@ -6,6 +6,7 @@ include(
     "log",
     "network",
     "repository",
+    "runtime",
     "ui-common",
     "ui-kotify",
     "util",

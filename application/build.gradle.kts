@@ -18,6 +18,7 @@ version = appProperties["version"] as String
 dependencies {
     implementation(project(":log"))
     implementation(project(":repository"))
+    implementation(project(":runtime"))
     implementation(project(":ui-common"))
     implementation(project(":ui-kotify"))
     implementation(project(":util"))
@@ -95,10 +96,23 @@ compose.desktop {
     }
 }
 
-// override compose configuration of arguments so that they're only applied to :run and not when packaging the
-// application
 project.afterEvaluate {
+    // TODO clean up once https://github.com/JetBrains/compose-multiplatform/issues/3700 is resolved
+
+    // override compose configuration of arguments so that they're only applied to :run and not when packaging the
+    // application
     tasks.withType<JavaExec> {
-        args = listOf("../.kotify/cache", "../.kotify/settings", "../.kotify/logs")
+        addArgs("--cache-dir", "../.kotify/cache")
+        addArgs("--settings-dir", "../.kotify/settings")
+        addArgs("--log-dir", "../.kotify/logs")
     }
+
+    // configure debug run task
+    tasks.named<JavaExec>("run").configure {
+        addArgs("--debug")
+    }
+}
+
+fun JavaExec.addArgs(vararg args: String) {
+    this.args = this.args.orEmpty().plus(args)
 }

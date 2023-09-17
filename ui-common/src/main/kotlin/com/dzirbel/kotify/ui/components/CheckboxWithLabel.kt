@@ -20,15 +20,16 @@ fun CheckboxWithLabel(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     label: @Composable RowScope.() -> Unit,
 ) {
     Row(
         modifier = modifier
-            .clickable { onCheckedChange(!checked) }
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
             .padding(top = Dimens.space1, bottom = Dimens.space1, end = Dimens.space1),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Checkbox(checked = checked, onCheckedChange = null)
+        Checkbox(checked = checked, onCheckedChange = null, enabled = enabled)
 
         HorizontalSpacer(Dimens.space2)
 

@@ -26,12 +26,8 @@ fun main(args: Array<String>) {
     }
 
     val totalDuration = measureTime {
-        measureInitTime("file system") {
-            Application.setup(
-                cachePath = args.getOrNull(0),
-                settingsPath = args.getOrNull(1),
-                logPath = args.getOrNull(2),
-            )
+        measureInitTime("application properties") {
+            Application.setup(CLIArguments.parse(args))
         }
 
         measureInitTime("logs") {

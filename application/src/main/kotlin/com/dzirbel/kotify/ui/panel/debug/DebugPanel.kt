@@ -71,7 +71,11 @@ fun DebugPanel(content: @Composable () -> Unit) {
                 Settings.debugPanelOpen = false
             },
         ) {
-            KotifyTheme.Apply(colors = Settings.colors) {
+            KotifyTheme.Apply(
+                colors = Settings.colors,
+                instrumentationHighlightCompositions = Settings.instrumentationHighlightCompositions,
+                instrumentationMetricsPanels = Settings.instrumentationMetricsPanels,
+            ) {
                 DebugPanelContent(tab = tab.value, onClickTab = { tab.value = it })
             }
         }

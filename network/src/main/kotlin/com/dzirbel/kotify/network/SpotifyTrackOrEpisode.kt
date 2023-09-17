@@ -1,16 +1,17 @@
 package com.dzirbel.kotify.network
 
+import com.dzirbel.kotify.Runtime
 import com.dzirbel.kotify.network.model.FullSpotifyEpisode
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyEpisode
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyObject
+import com.dzirbel.kotify.network.util.json
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -39,19 +40,21 @@ interface SimplifiedSpotifyTrackOrEpisode : SpotifyObject {
             val jsonElement = decoder.decodeSerializableValue(JsonElement.serializer())
             if (jsonElement !is JsonObject) throw SerializationException("expected JsonObject")
 
+            val json = Runtime.json
+
             // hack: in playlists, the spotify API often returns a track object for podcast episodes, with its "type" as
             // "episode" but the fields matching the track model; use these "track"/"episode" fields to override "type"
             // since they appear to be more accurate
             if (jsonElement.getPrimitiveContent("track") == "true") {
-                return Json.decodeFromJsonElement<SimplifiedSpotifyTrack>(jsonElement)
+                return json.decodeFromJsonElement<SimplifiedSpotifyTrack>(jsonElement)
             }
             if (jsonElement.getPrimitiveContent("episode") == "true") {
-                return Json.decodeFromJsonElement<SimplifiedSpotifyEpisode>(jsonElement)
+                return json.decodeFromJsonElement<SimplifiedSpotifyEpisode>(jsonElement)
             }
 
             return when (val type = jsonElement.getPrimitiveContent("type")) {
-                "track" -> Json.decodeFromJsonElement<SimplifiedSpotifyTrack>(jsonElement)
-                "episode" -> Json.decodeFromJsonElement<SimplifiedSpotifyEpisode>(jsonElement)
+                "track" -> json.decodeFromJsonElement<SimplifiedSpotifyTrack>(jsonElement)
+                "episode" -> json.decodeFromJsonElement<SimplifiedSpotifyEpisode>(jsonElement)
                 else -> throw SerializationException("unexpected type $type")
             }
         }
@@ -81,9 +84,11 @@ interface FullSpotifyTrackOrEpisode : SpotifyObject {
             val jsonElement = decoder.decodeSerializableValue(JsonElement.serializer())
             if (jsonElement !is JsonObject) throw SerializationException("expected JsonObject")
 
+            val json = Runtime.json
+
             return when (val type = jsonElement.getPrimitiveContent("type")) {
-                "track" -> Json.decodeFromJsonElement<FullSpotifyTrack>(jsonElement)
-                "episode" -> Json.decodeFromJsonElement<FullSpotifyEpisode>(jsonElement)
+                "track" -> json.decodeFromJsonElement<FullSpotifyTrack>(jsonElement)
+                "episode" -> json.decodeFromJsonElement<FullSpotifyEpisode>(jsonElement)
                 else -> throw SerializationException("unexpected type $type")
             }
         }

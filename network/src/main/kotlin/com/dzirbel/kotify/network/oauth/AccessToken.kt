@@ -100,9 +100,12 @@ data class AccessToken(
         var cacheFile: File? = null
 
         /**
-         * Encode defaults in order to include [AccessToken.received].
+         * [Json] used to serialize the access token to a cache file.
+         *
+         * Enables encoding defaults in order to include [AccessToken.received]. Does not change leniency for release
+         * modes since this should not be necessary.
          */
-        private val json = Json {
+        private val cacheFileJson = Json {
             encodeDefaults = true
             prettyPrint = true
         }
@@ -257,7 +260,7 @@ data class AccessToken(
             if (file != null) {
                 val start = CurrentTime.mark
                 file.outputStream().use { outputStream ->
-                    json.encodeToStream(token, outputStream)
+                    cacheFileJson.encodeToStream(token, outputStream)
                 }
                 mutableLog.success("Saved access token to $file", duration = start.elapsedNow())
             } else {
@@ -279,7 +282,7 @@ data class AccessToken(
             val start = CurrentTime.mark
             return try {
                 file.inputStream()
-                    .use { json.decodeFromStream<AccessToken>(it) }
+                    .use { cacheFileJson.decodeFromStream<AccessToken>(it) }
                     .also { _tokenFlow.value = it }
                     .also { mutableLog.success("Loaded access token from $cacheFile", duration = start.elapsedNow()) }
             } catch (_: FileNotFoundException) {

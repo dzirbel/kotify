@@ -84,9 +84,12 @@ fun Project.configureKotlin() {
             allWarningsAsErrors = true
             jvmTarget.set(libs.versions.jvm.map(JvmTarget::fromTarget))
 
-            freeCompilerArgs.add("-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
-            freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
-            freeCompilerArgs.add("-opt-in=kotlinx.coroutines.DelicateCoroutinesApi") // allow use of GlobalScope
+            // hack: exclude runtime project because it has no coroutines dependency
+            if (!name.contains("runtime")) {
+                freeCompilerArgs.add("-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
+                freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
+                freeCompilerArgs.add("-opt-in=kotlinx.coroutines.DelicateCoroutinesApi") // allow use of GlobalScope
+            }
 
             // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
             freeCompilerArgs.add("-Xcontext-receivers")
