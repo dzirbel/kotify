@@ -11,6 +11,7 @@ import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.util.coroutines.mapParallel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.withIndex
 import java.time.Instant
 
 interface SavedPlaylistRepository : SavedRepository
@@ -20,7 +21,7 @@ class DatabaseSavedPlaylistRepository(
     userRepository: UserRepository,
     private val playlistRepository: PlaylistRepository,
 ) :
-    DatabaseSavedRepository<SpotifyPlaylist>(
+    DatabaseSavedRepository<IndexedValue<SpotifyPlaylist>>(
         savedEntityTable = PlaylistTable.SavedPlaylistsTable,
         scope = scope,
         userRepository = userRepository,
@@ -44,12 +45,20 @@ class DatabaseSavedPlaylistRepository(
         }
     }
 
-    override suspend fun fetchLibrary(): Iterable<SpotifyPlaylist> {
-        return Spotify.Playlists.getPlaylists(limit = Spotify.MAX_LIMIT).asFlow().toList()
+    override suspend fun fetchLibrary(): Iterable<IndexedValue<SpotifyPlaylist>> {
+        return Spotify.Playlists.getPlaylists(limit = Spotify.MAX_LIMIT).asFlow().withIndex().toList()
     }
 
-    override fun convertToDB(savedNetworkType: SpotifyPlaylist, fetchTime: Instant): Pair<String, Instant?> {
-        playlistRepository.convertToDB(networkModel = savedNetworkType, fetchTime = fetchTime)
-        return savedNetworkType.id to null
+    override fun convertToDB(
+        savedNetworkType: IndexedValue<SpotifyPlaylist>,
+        fetchTime: Instant,
+    ): Pair<String, Instant?> {
+        val playlistId = savedNetworkType.value.id
+        playlistRepository.convertToDB(networkModel = savedNetworkType.value, fetchTime = fetchTime)?.let { playlist ->
+            playlist.libraryOrder = savedNetworkType.index
+            playlistRepository.update(id = playlistId, model = playlist, fetchTime = fetchTime)
+        }
+
+        return savedNetworkType.value.id to null
     }
 }

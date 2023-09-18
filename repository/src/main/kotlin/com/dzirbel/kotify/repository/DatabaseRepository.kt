@@ -67,6 +67,10 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
      */
     abstract fun convertToVM(databaseModel: DatabaseType): ViewModel
 
+    override fun update(id: String, model: DatabaseType, fetchTime: Instant) {
+        states.updateValue(id, CacheState.Loaded(convertToVM(model), fetchTime))
+    }
+
     final override fun stateOf(
         id: String,
         cacheStrategy: CacheStrategy<ViewModel>,

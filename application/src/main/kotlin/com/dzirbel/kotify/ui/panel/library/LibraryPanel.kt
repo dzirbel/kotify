@@ -12,7 +12,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,13 +27,17 @@ import com.dzirbel.kotify.ui.components.LibraryInvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.components.VerticalSpacer
+import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
 import com.dzirbel.kotify.ui.page.albums.AlbumsPage
 import com.dzirbel.kotify.ui.page.artists.ArtistsPage
 import com.dzirbel.kotify.ui.page.playlist.PlaylistPage
 import com.dzirbel.kotify.ui.pageStack
+import com.dzirbel.kotify.ui.properties.PlaylistLibraryOrderProperty
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.mutate
-import com.dzirbel.kotify.util.collections.zipEach
+import com.dzirbel.kotify.util.coroutines.combinedStateWhenAllNotNull
+import com.dzirbel.kotify.util.coroutines.flatMapLatestIn
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 fun LibraryPanel() {
@@ -72,23 +75,25 @@ fun LibraryPanel() {
 
             HorizontalDivider(Modifier.padding(bottom = Dimens.space3))
 
-            val savedPlaylistIds = LocalSavedPlaylistRepository.current.library.collectAsState().value?.ids
-            if (savedPlaylistIds != null) {
-                val playlistRepository = LocalPlaylistRepository.current
-                val playlistStates = remember(savedPlaylistIds) {
-                    // do not require a full playlist model
-                    playlistRepository.statesOf(ids = savedPlaylistIds, cacheStrategy = CacheStrategy.EntityTTL())
-                }
-
-                savedPlaylistIds.zipEach(playlistStates) { playlistId, playlistState ->
-                    key(playlistId) {
-                        val playlist = playlistState.collectAsState().value?.cachedValue
-
+            val playlistRepository = LocalPlaylistRepository.current
+            val savedPlaylistRepository = LocalSavedPlaylistRepository.current
+            val playlists = rememberListAdapterState(defaultSort = PlaylistLibraryOrderProperty) { scope ->
+                savedPlaylistRepository.library.flatMapLatestIn(scope) { library ->
+                    if (library == null) {
+                        MutableStateFlow(null)
+                    } else {
                         // TODO handle other cache states: shimmer when loading, show errors, etc
-                        if (playlist != null) {
-                            PlaylistItem(playlist = playlist)
-                        }
+                        playlistRepository.statesOf(
+                            ids = library.ids,
+                            cacheStrategy = CacheStrategy.EntityTTL(), // do not require a full playlist model
+                        ).combinedStateWhenAllNotNull { it?.cachedValue }
                     }
+                }
+            }
+
+            if (playlists.value.hasElements) {
+                for (playlist in playlists.value.sortedElements) {
+                    PlaylistItem(playlist = playlist)
                 }
             } else {
                 CircularProgressIndicator(

@@ -43,8 +43,10 @@ class DatabaseSavedAlbumRepository(
     }
 
     override fun convertToDB(savedNetworkType: SpotifySavedAlbum, fetchTime: Instant): Pair<String, Instant?> {
-        val album = savedNetworkType.album
-        albumRepository.convertToDB(networkModel = album, fetchTime = fetchTime)
-        return album.id to parseInstantOrNull(savedNetworkType.addedAt)
+        val albumId = savedNetworkType.album.id
+        albumRepository.convertToDB(networkModel = savedNetworkType.album, fetchTime = fetchTime)?.let { album ->
+            albumRepository.update(id = albumId, model = album, fetchTime = fetchTime)
+        }
+        return albumId to parseInstantOrNull(savedNetworkType.addedAt)
     }
 }

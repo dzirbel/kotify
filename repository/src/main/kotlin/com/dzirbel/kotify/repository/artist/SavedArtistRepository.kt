@@ -48,7 +48,10 @@ class DatabaseSavedArtistRepository(
     }
 
     override fun convertToDB(savedNetworkType: FullSpotifyArtist, fetchTime: Instant): Pair<String, Instant?> {
-        artistRepository.convertToDB(networkModel = savedNetworkType, fetchTime = fetchTime)
-        return savedNetworkType.id to null
+        val artistId = savedNetworkType.id
+        artistRepository.convertToDB(networkModel = savedNetworkType, fetchTime = fetchTime)?.let { artist ->
+            artistRepository.update(id = artistId, model = artist, fetchTime = fetchTime)
+        }
+        return artistId to null
     }
 }

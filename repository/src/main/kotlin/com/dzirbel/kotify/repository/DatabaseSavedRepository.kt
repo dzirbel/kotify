@@ -98,8 +98,8 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
      * the database.
      *
      * E.g. for saved artists, the attached artist model should be inserted into/used to update the database (typically
-     * via its repository) and its ID returned. Always called from within a transaction.
-     * TODO also update live states when converting
+     * via its [ConvertingRepository], with [ConvertingRepository.convertToDB] and [ConvertingRepository.update]) and
+     * its ID returned. Always called from within a transaction.
      *
      * @return the extracted entity ID and an [Instant] specifying the time the entity was saved, if provided by the
      *  [SavedNetworkType]

@@ -51,4 +51,8 @@ class FakeConvertingRepository<Database, Network> : ConvertingRepository<Databas
     override fun convertToDB(id: String, networkModel: Network, fetchTime: Instant): Database {
         error("not implemented")
     }
+
+    override fun update(id: String, model: Database, fetchTime: Instant) {
+        error("not implemented")
+    }
 }

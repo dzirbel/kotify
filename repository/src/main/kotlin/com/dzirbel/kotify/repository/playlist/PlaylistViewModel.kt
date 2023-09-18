@@ -20,6 +20,7 @@ data class PlaylistViewModel(
     val followersTotal: Int? = null,
     val totalTracks: Int? = null,
     val ownerId: String,
+    val libraryOrder: Int? = null,
     val images: ImageViewModel = EntityImageViewModel(id, PlaylistTable.PlaylistImageTable.playlist),
 ) : EntityViewModel, ImageViewModel by images {
 
@@ -33,5 +34,6 @@ data class PlaylistViewModel(
         followersTotal = playlist.followersTotal,
         totalTracks = playlist.totalTracks,
         ownerId = playlist.ownerId.value,
+        libraryOrder = playlist.libraryOrder,
     )
 }

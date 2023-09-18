@@ -11,6 +11,12 @@ interface ConvertingRepository<Database, Network> {
      * Must be called from within a database transaction.
      */
     fun convertToDB(id: String, networkModel: Network, fetchTime: Instant): Database
+
+    /**
+     * Updates the live state for the given [id] with the given [model] and [fetchTime], typically after it has been
+     * converted via [convertToDB].
+     */
+    fun update(id: String, model: Database, fetchTime: Instant) {}
 }
 
 fun <Database, Network : SpotifyObject> ConvertingRepository<Database, Network>.convertToDB(

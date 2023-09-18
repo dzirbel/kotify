@@ -23,6 +23,7 @@ object PlaylistTable : SpotifyEntityTable(entityName = "playlist") {
     val followersTotal: Column<Int?> = integer("followers_total").nullable()
     val totalTracks: Column<Int?> = integer("total_tracks").nullable()
     val tracksFetched: Column<Instant?> = timestamp("tracks_fetched_time").nullable()
+    val libraryOrder: Column<Int?> = integer("library_order").nullable()
 
     fun tracksFetchTime(playlistId: String): Instant? {
         // TODO also compare totalTracks to number of tracks in DB?
@@ -51,6 +52,7 @@ class Playlist(id: EntityID<String>) : SpotifyEntity(id = id, table = PlaylistTa
     var followersTotal: Int? by PlaylistTable.followersTotal
     var totalTracks: Int? by PlaylistTable.totalTracks
     var tracksFetched: Instant? by PlaylistTable.tracksFetched
+    var libraryOrder: Int? by PlaylistTable.libraryOrder
 
     var owner: User by User referencedOn PlaylistTable.owner
 

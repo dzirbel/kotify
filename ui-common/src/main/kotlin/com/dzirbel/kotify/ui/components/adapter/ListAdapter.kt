@@ -101,6 +101,18 @@ class ListAdapter<E> private constructor(
     val size: Int = elements?.size ?: 0
 
     /**
+     * Lazily computes the external view of elements in this [ListAdapter], as a list of the sorted, filtered elements
+     * among all the divisions.
+     */
+    val sortedElements: List<E> by lazy {
+        val indices = sortIndexes ?: elements?.indices ?: emptyList()
+        indices.mapNotNull { index ->
+            @Suppress("UnsafeCallOnNullableType")
+            elements!![index].takeIf { it.filtered }?.element
+        }
+    }
+
+    /**
      * Lazily computes the external view of elements in this [ListAdapter], as a map from division key to the sorted,
      * filtered elements in that division.
      *
