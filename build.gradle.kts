@@ -129,15 +129,30 @@ fun Project.configureTests() {
     }
 
     tasks.create<Test>("testLocal") {
+        description = "Run non-network tests"
+
         useJUnitPlatform {
             excludeTags("network")
         }
     }
 
     tasks.create<Test>("testIntegration") {
+        description = "Run network tests"
+
         useJUnitPlatform {
             includeTags("network")
         }
+    }
+
+    tasks.create<Test>("regenScreenshots") {
+        description = "Run unit tests and regenerate screenshots"
+
+        // ideally, only screenshot tests would be run, but they do not have their own tag
+        useJUnitPlatform {
+            excludeTags("network")
+        }
+
+        systemProperties("REGEN_SCREENSHOTS" to true)
     }
 
     tasks.withType<Test>().configureEach {

@@ -138,7 +138,7 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> TrackViewModel
         Box(
             modifier = Modifier
                 .padding(Dimens.space3)
-                .height(Dimens.fontBodyDp)
+                .height(Dimens.fontDp)
                 .fillMaxWidth()
                 .applyIf(popularity == null) { alpha(ContentAlpha.disabled) }
                 .border(BorderStroke(width = Dimens.divider, color = color)),

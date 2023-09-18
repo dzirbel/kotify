@@ -13,12 +13,14 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,7 +73,7 @@ import kotlinx.coroutines.flow.runningFold
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-private val ALBUM_ART_SIZE = 75.dp
+private val ALBUM_ART_SIZE = 92.dp
 private val MIN_TRACK_PLAYBACK_WIDTH = ALBUM_ART_SIZE + 75.dp
 private val MAX_TRACK_PROGRESS_WIDTH = 1000.dp
 private val VOLUME_SLIDER_WIDTH = 100.dp
@@ -191,7 +193,7 @@ fun PlayerPanel() {
 private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?) {
     Row(
         modifier = Modifier.instrument(),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
     ) {
         val album = (item as? FullSpotifyTrack)?.album
         val show = (item as? FullSpotifyEpisode)?.show
@@ -208,45 +210,56 @@ private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
                 ) {
-                    Text(item.name.orEmpty())
+                    CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.body1) {
+                        Text(item.name.orEmpty())
 
-                    if (item is FullSpotifyTrack) {
-                        ToggleSaveButton(repository = LocalSavedTrackRepository.current, id = item.id)
+                        if (item is FullSpotifyTrack) {
+                            ToggleSaveButton(
+                                repository = LocalSavedTrackRepository.current,
+                                id = item.id,
+                                size = Dimens.fontDp,
+                            )
 
-                        val ratingRepository = LocalRatingRepository.current
-                        StarRating(
-                            rating = trackRating,
-                            onRate = { rating -> ratingRepository.rate(id = item.id, rating = rating) },
-                        )
+                            val ratingRepository = LocalRatingRepository.current
+                            StarRating(
+                                rating = trackRating,
+                                onRate = { rating -> ratingRepository.rate(id = item.id, rating = rating) },
+                            )
+                        }
                     }
                 }
 
-                VerticalSpacer(Dimens.space3)
+                VerticalSpacer(Dimens.space2)
 
                 if (item is FullSpotifyTrack) {
                     Row(verticalAlignment = Alignment.Top) {
-                        Text("by ", style = MaterialTheme.typography.caption)
+                        CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.body2) {
+                            Text("by ")
 
-                        Column {
-                            item.artists.forEach { artist ->
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
-                                ) {
-                                    LinkedText(
-                                        key = artist.id,
-                                        style = MaterialTheme.typography.caption,
-                                        onClickLink = { artistId ->
-                                            pageStack.mutate { to(ArtistPage(artistId = artistId)) }
-                                        },
+                            Column {
+                                item.artists.forEach { artist ->
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(Dimens.space1),
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
-                                        link(text = artist.name, link = artist.id)
-                                    }
+                                        LinkedText(
+                                            key = artist.id,
+                                            onClickLink = { artistId ->
+                                                pageStack.mutate { to(ArtistPage(artistId = artistId)) }
+                                            },
+                                        ) {
+                                            link(text = artist.name, link = artist.id)
+                                        }
 
-                                    artist.id?.let { artistId ->
-                                        ToggleSaveButton(repository = LocalSavedArtistRepository.current, id = artistId)
+                                        artist.id?.let { artistId ->
+                                            ToggleSaveButton(
+                                                repository = LocalSavedArtistRepository.current,
+                                                id = artistId,
+                                                size = Dimens.fontDp,
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -254,37 +267,36 @@ private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?)
                     }
                 }
 
-                if (album != null) {
-                    VerticalSpacer(Dimens.space2)
+                CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.body2) {
+                    if (album != null) {
+                        VerticalSpacer(Dimens.space1)
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
-                    ) {
-                        LinkedText(
-                            key = album.id,
-                            style = MaterialTheme.typography.caption,
-                            onClickLink = { albumId ->
-                                pageStack.mutate { to(AlbumPage(albumId = albumId)) }
-                            },
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.space1),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            text("on ")
-                            link(text = album.name, link = album.id)
-                        }
+                            LinkedText(
+                                key = album.id,
+                                onClickLink = { albumId ->
+                                    pageStack.mutate { to(AlbumPage(albumId = albumId)) }
+                                },
+                            ) {
+                                text("on ")
+                                link(text = album.name, link = album.id)
+                            }
 
-                        album.id?.let { albumId ->
-                            ToggleSaveButton(repository = LocalSavedAlbumRepository.current, id = albumId)
+                            album.id?.let { albumId ->
+                                ToggleSaveButton(
+                                    repository = LocalSavedAlbumRepository.current,
+                                    id = albumId,
+                                    size = Dimens.fontDp,
+                                )
+                            }
                         }
                     }
-                }
 
-                if (show != null) {
-                    VerticalSpacer(Dimens.space2)
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
-                    ) {
+                    if (show != null) {
+                        VerticalSpacer(Dimens.space1)
                         Text("on ${show.name}")
                     }
                 }

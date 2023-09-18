@@ -123,7 +123,7 @@ private fun PlaylistItem(playlist: PlaylistViewModel) {
         if (playingPlaylist.value) {
             CachedIcon(
                 name = "volume-up",
-                size = Dimens.fontBodyDp,
+                size = Dimens.fontDp,
                 tint = MaterialTheme.colors.primary,
             )
         }

@@ -23,6 +23,7 @@ fun Any.applicationScreenshotTest(
         windowHeight = 1080,
         windowDensity = Density(density = 0.65f, fontScale = 1.25f),
         record = record,
+        configurationName = { it.name.lowercase() },
         onConfiguration = { colors -> Settings.colors = colors },
     ) {
         pageStack.value = PageStack(page)

@@ -14,6 +14,9 @@ import java.io.File
 private val resourcesDir = File("src/test/resources")
 private val screenshotsDir = resourcesDir.resolve("screenshots")
 
+private val regenScreenshots: Boolean
+    get() = System.getProperty("REGEN_SCREENSHOTS")?.toBoolean() == true
+
 fun Any.themedScreenshotTest(
     filename: String,
     windowWidth: Int = 1024,
@@ -118,7 +121,7 @@ fun <T> Any.screenshotTest(
             if (multipleConfigurations) "$filename-${configurationName(configuration)}" else filename
         val screenshotFile = classScreenshotsDir.resolve("$filenameWithConfiguration.png")
 
-        if (record || !screenshotFile.exists()) {
+        if (record || regenScreenshots || !screenshotFile.exists()) {
             recordedScreenshots = true
             classScreenshotsDir.mkdirs()
             screenshotFile.writeBytes(screenshotBytes)
@@ -155,7 +158,7 @@ fun <T> Any.screenshotTest(
         throw AssertionError(message)
     }
 
-    if (recordedScreenshots) {
+    if (recordedScreenshots && !regenScreenshots) {
         throw AssertionError(
             "Failing test because screenshots were recorded. Screenshots were successfully saved; this assertion " +
                 "ensures that all live tests are not in record mode and all screenshots exist.",

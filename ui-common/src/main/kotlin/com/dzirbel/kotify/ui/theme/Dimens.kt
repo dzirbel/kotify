@@ -33,9 +33,12 @@ object Dimens {
     // divider size - all dividers between elements must use this width/height
     val divider = 1.dp
 
-    val fontBodyDp: Dp
+    /**
+     * Returns the [LocalTextStyle]'s font size in [Dp].
+     */
+    val fontDp: Dp
         @Composable
-        get() = with(LocalDensity.current) { MaterialTheme.typography.body2.fontSize.toDp() }
+        get() = iconSizeFor(LocalTextStyle.current.fontSize)
 
     // size of common images - album art, artist image, etc
     val contentImage = 200.dp
