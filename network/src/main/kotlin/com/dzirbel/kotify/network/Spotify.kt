@@ -55,8 +55,6 @@ import kotlin.coroutines.coroutineContext
 
 /**
  * https://developer.spotify.com/documentation/web-api/reference/
- *
- * TODO allow more lenient JSON parsing in release builds
  */
 object Spotify {
     data class Configuration(
