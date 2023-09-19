@@ -17,6 +17,7 @@ import com.dzirbel.kotify.network.model.SpotifyTrack
 import com.dzirbel.kotify.network.model.SpotifyUser
 import com.dzirbel.kotify.repository.album.AlbumRepository
 import com.dzirbel.kotify.repository.album.AlbumTracksRepository
+import com.dzirbel.kotify.repository.album.AlbumTracksViewModel
 import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistAlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistAlbumsRepository
@@ -71,7 +72,9 @@ class FakeArtistAlbumsRepository(artistAlbums: Map<String, List<ArtistAlbumViewM
     ArtistAlbumsRepository
 
 class FakeAlbumTracksRepository(albumTracks: Map<String, List<TrackViewModel>> = emptyMap()) :
-    FakeRepository<List<TrackViewModel>>(values = albumTracks),
+    FakeRepository<AlbumTracksViewModel>(
+        values = albumTracks.mapValues { (_, tracks) -> AlbumTracksViewModel(tracks, CurrentTime.instant) },
+    ),
     ConvertingRepository<List<Track>, List<SimplifiedSpotifyTrack>> by FakeConvertingRepository(),
     AlbumTracksRepository
 

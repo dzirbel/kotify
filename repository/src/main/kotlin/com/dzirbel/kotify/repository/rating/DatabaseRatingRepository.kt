@@ -93,7 +93,7 @@ class DatabaseRatingRepository(
     override fun averageRatingStateOfAlbum(albumId: String, scope: CoroutineScope): StateFlow<AverageRating> {
         return albumTracksRepository.stateOf(id = albumId)
             .flatMapLatestIn(scope) { tracks ->
-                tracks?.cachedValue
+                tracks?.cachedValue?.tracks
                     ?.map { it.id }
                     ?.let { averageRatingStateOf(ids = it) }
                     ?: MutableStateFlow(AverageRating.empty)

@@ -69,7 +69,7 @@ data class AlbumPage(val albumId: String) : Page {
             defaultSort = TrackAlbumIndexProperty,
         ) { scope ->
             albumTracksRepository.stateOf(id = albumId)
-                .mapIn(scope) { it?.cachedValue }
+                .mapIn(scope) { it?.cachedValue?.tracks }
                 .onEachIn(scope) { tracks ->
                     tracks?.requestBatched(transactionName = { "album $albumId $it track artists" }) { it.artists }
                 }
@@ -173,7 +173,7 @@ private fun AlbumHeader(albumId: String, adapter: ListAdapterState<TrackViewMode
                     val ratingRepository = LocalRatingRepository.current
                     val averageRating = remember(albumId) {
                         albumTracksRepository.stateOf(id = albumId)
-                            .mapNotNull { it?.cachedValue?.map { track -> track.id } }
+                            .mapNotNull { it?.cachedValue?.tracks?.map { track -> track.id } }
                             .flatMapLatest { tracks -> ratingRepository.averageRatingStateOf(ids = tracks) }
                     }
                         .collectAsState(initial = null)

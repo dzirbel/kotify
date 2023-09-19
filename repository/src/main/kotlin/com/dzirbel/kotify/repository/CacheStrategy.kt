@@ -92,6 +92,9 @@ fun interface CacheStrategy<T> {
         companion object {
             val defaultTransientDuration = 7.days
             val defaultInvalidDuration = 120.days
+
+            val longTransientDuration = 120.days
+            val longInvalidDuration = 365.days
         }
     }
 

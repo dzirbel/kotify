@@ -18,7 +18,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.sql.update
 import java.time.Instant
-import kotlin.time.Duration.Companion.minutes
 
 interface ArtistAlbumsRepository :
     Repository<ArtistAlbumsViewModel>,
@@ -32,10 +31,7 @@ class DatabaseArtistAlbumsRepository(scope: CoroutineScope, private val albumRep
     ),
     ArtistAlbumsRepository {
 
-    override val defaultCacheStrategy = CacheStrategy.TTL<ArtistAlbumsViewModel>(
-        transientTTL = 1.minutes,
-        getUpdateTime = { it.updateTime },
-    )
+    override val defaultCacheStrategy = CacheStrategy.TTL<ArtistAlbumsViewModel> { it.updateTime }
 
     override suspend fun fetchFromRemote(id: String): List<SimplifiedSpotifyAlbum> {
         return Spotify.Artists.getArtistAlbums(id = id, limit = Spotify.MAX_LIMIT).asFlow().toList()
