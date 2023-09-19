@@ -43,5 +43,5 @@ class DatabaseArtistRepository(scope: CoroutineScope) :
         }
     }
 
-    override fun convertToVM(databaseModel: Artist) = ArtistViewModel(databaseModel)
+    override fun convertToVM(databaseModel: Artist, fetchTime: Instant) = ArtistViewModel(databaseModel)
 }

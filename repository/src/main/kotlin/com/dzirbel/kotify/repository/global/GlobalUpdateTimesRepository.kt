@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.repository.global
 
 import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
+import com.dzirbel.kotify.db.util.single
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
@@ -32,11 +33,7 @@ internal object GlobalUpdateTimesRepository {
      * Must be called from within a transaction.
      */
     fun updated(key: String): Instant? {
-        return GlobalUpdateTimesTable
-            .slice(GlobalUpdateTimesTable.updateTime)
-            .select { GlobalUpdateTimesTable.key eq key }
-            .firstOrNull()
-            ?.get(GlobalUpdateTimesTable.updateTime)
+        return GlobalUpdateTimesTable.single(GlobalUpdateTimesTable.updateTime) { GlobalUpdateTimesTable.key eq key }
     }
 
     /**

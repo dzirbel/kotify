@@ -251,7 +251,7 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
         // TODO add loading state
         val artistAlbumsRepository = LocalArtistAlbumsRepository.current
         val adapter = rememberListAdapterState(key = artist.id) { scope ->
-            artistAlbumsRepository.stateOf(artist.id).mapIn(scope) { it?.cachedValue }
+            artistAlbumsRepository.stateOf(artist.id).mapIn(scope) { it?.cachedValue?.artistAlbums }
         }
 
         Grid(

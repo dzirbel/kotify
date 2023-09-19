@@ -9,7 +9,6 @@ import com.dzirbel.kotify.repository.util.midpointInstantToNow
 import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.collections.zipEach
 import com.dzirbel.kotify.util.coroutines.mapParallel
-import com.dzirbel.kotify.util.mapFirst
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -65,10 +64,10 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
     /**
      * Converts the given [databaseModel] into a [ViewModel] suitable for external use.
      */
-    abstract fun convertToVM(databaseModel: DatabaseType): ViewModel
+    abstract fun convertToVM(databaseModel: DatabaseType, fetchTime: Instant): ViewModel
 
     override fun update(id: String, model: DatabaseType, fetchTime: Instant) {
-        states.updateValue(id, CacheState.Loaded(convertToVM(model), fetchTime))
+        states.updateValue(id, CacheState.Loaded(convertToVM(model, fetchTime), fetchTime))
     }
 
     final override fun stateOf(
@@ -157,7 +156,9 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
 
         val (viewModel, lastUpdated) = try {
             KotifyDatabase[DB.CACHE].transaction(name = "load $entityName $id") {
-                fetchFromDatabase(id = id)?.mapFirst(::convertToVM)
+                fetchFromDatabase(id = id)?.let { (databaseModel, lastUpdated) ->
+                    Pair(convertToVM(databaseModel = databaseModel, fetchTime = lastUpdated), lastUpdated)
+                }
             }
                 ?: return false
         } catch (cancellationException: CancellationException) {
@@ -193,7 +194,11 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
 
         val cachedEntities = try {
             KotifyDatabase[DB.CACHE].transaction(name = "load ${ids.size} $entityNamePlural") {
-                fetchFromDatabase(ids = ids).map { it?.mapFirst(::convertToVM) }
+                fetchFromDatabase(ids = ids).map { pair ->
+                    pair?.let { (databaseModel, lastUpdated) ->
+                        Pair(convertToVM(databaseModel = databaseModel, fetchTime = lastUpdated), lastUpdated)
+                    }
+                }
             }
         } catch (cancellationException: CancellationException) {
             throw cancellationException
@@ -265,7 +270,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
             val viewModel = try {
                 KotifyDatabase[DB.CACHE].transaction("save $entityName $id") {
                     val databaseModel = convertToDB(id = id, networkModel = networkModel, fetchTime = fetchTime)
-                    convertToVM(databaseModel = databaseModel)
+                    convertToVM(databaseModel = databaseModel, fetchTime = fetchTime)
                 }
             } catch (cancellationException: CancellationException) {
                 throw cancellationException
@@ -328,7 +333,7 @@ abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal
                     networkModels.zip(ids) { networkModel, id ->
                         networkModel?.let {
                             val databaseModel = convertToDB(id = id, networkModel = networkModel, fetchTime = fetchTime)
-                            convertToVM(databaseModel = databaseModel)
+                            convertToVM(databaseModel = databaseModel, fetchTime = fetchTime)
                                 ?.also { numNonNullViewModels++ }
                         }
                     }

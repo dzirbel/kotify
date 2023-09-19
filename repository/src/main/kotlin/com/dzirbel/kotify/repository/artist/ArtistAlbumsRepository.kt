@@ -1,10 +1,13 @@
 package com.dzirbel.kotify.repository.artist
 
-import com.dzirbel.kotify.db.model.Artist
 import com.dzirbel.kotify.db.model.ArtistAlbum
+import com.dzirbel.kotify.db.model.ArtistAlbumTable
+import com.dzirbel.kotify.db.model.ArtistTable
+import com.dzirbel.kotify.db.util.single
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.model.SimplifiedSpotifyAlbum
 import com.dzirbel.kotify.network.model.asFlow
+import com.dzirbel.kotify.repository.CacheStrategy
 import com.dzirbel.kotify.repository.ConvertingRepository
 import com.dzirbel.kotify.repository.DatabaseRepository
 import com.dzirbel.kotify.repository.Repository
@@ -13,32 +16,35 @@ import com.dzirbel.kotify.repository.album.toAlbumType
 import com.dzirbel.kotify.repository.convertToDB
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.toList
+import org.jetbrains.exposed.sql.update
 import java.time.Instant
+import kotlin.time.Duration.Companion.minutes
 
 interface ArtistAlbumsRepository :
-    Repository<List<ArtistAlbumViewModel>>,
+    Repository<ArtistAlbumsViewModel>,
     ConvertingRepository<List<ArtistAlbum>, List<SimplifiedSpotifyAlbum>>
 
-// TODO add CacheStrategy
 class DatabaseArtistAlbumsRepository(scope: CoroutineScope, private val albumRepository: AlbumRepository) :
-    DatabaseRepository<List<ArtistAlbumViewModel>, List<ArtistAlbum>, List<SimplifiedSpotifyAlbum>>(
+    DatabaseRepository<ArtistAlbumsViewModel, List<ArtistAlbum>, List<SimplifiedSpotifyAlbum>>(
         entityName = "artist albums",
         entityNamePlural = "artists albums",
         scope = scope,
     ),
     ArtistAlbumsRepository {
 
+    override val defaultCacheStrategy = CacheStrategy.TTL<ArtistAlbumsViewModel>(
+        transientTTL = 1.minutes,
+        getUpdateTime = { it.updateTime },
+    )
+
     override suspend fun fetchFromRemote(id: String): List<SimplifiedSpotifyAlbum> {
-        return Spotify.Artists.getArtistAlbums(id = id).asFlow().toList()
+        return Spotify.Artists.getArtistAlbums(id = id, limit = Spotify.MAX_LIMIT).asFlow().toList()
     }
 
     override fun fetchFromDatabase(id: String): Pair<List<ArtistAlbum>, Instant>? {
-        // TODO use artist repository here?
-        return Artist.findById(id)?.let { artist ->
-            artist.albumsFetched?.let { albumsFetched ->
-                Pair(artist.artistAlbums.toList(), albumsFetched)
-            }
-        }
+        val albumsFetched = ArtistTable.single(ArtistTable.albumsFetched) { ArtistTable.id eq id } ?: return null
+        val artistAlbums = ArtistAlbum.find { ArtistAlbumTable.artist eq id }.toList()
+        return Pair(artistAlbums, albumsFetched)
     }
 
     override fun convertToDB(
@@ -46,23 +52,28 @@ class DatabaseArtistAlbumsRepository(scope: CoroutineScope, private val albumRep
         networkModel: List<SimplifiedSpotifyAlbum>,
         fetchTime: Instant,
     ): List<ArtistAlbum> {
-        // TODO use artist repository here?
         // TODO update album fetch time even when artist is not in DB
-        Artist.findById(id)?.let { artist ->
-            artist.albumsFetched = fetchTime
-        }
+        ArtistTable.update(where = { ArtistTable.id eq id }) { it[albumsFetched] = fetchTime }
 
-        return networkModel.mapNotNull { artistAlbum ->
-            albumRepository.convertToDB(artistAlbum, fetchTime)?.let { album ->
-                // TODO ArtistAlbum may have multiple artists
-                ArtistAlbum.findOrCreate(
-                    artistId = id,
-                    albumId = album.id.value,
-                    albumGroup = artistAlbum.albumGroup?.toAlbumType(),
-                )
-            }
+        return networkModel.mapNotNull { networkAlbum: SimplifiedSpotifyAlbum ->
+            albumRepository.convertToDB(networkAlbum, fetchTime)
+                ?.also { albumRepository.update(id = it.id.value, model = it, fetchTime = fetchTime) }
+                ?.let { album ->
+                    // note: do not add ArtistAlbum for other artists on the album, since the albumGroup is specific to
+                    // the artist being queried
+                    ArtistAlbum.findOrCreate(
+                        artistId = id,
+                        albumId = album.id.value,
+                        albumGroup = networkAlbum.albumGroup?.toAlbumType(),
+                    )
+                }
         }
     }
 
-    override fun convertToVM(databaseModel: List<ArtistAlbum>) = databaseModel.map(::ArtistAlbumViewModel)
+    override fun convertToVM(databaseModel: List<ArtistAlbum>, fetchTime: Instant): ArtistAlbumsViewModel {
+        return ArtistAlbumsViewModel(
+            artistAlbums = databaseModel.map { ArtistAlbumViewModel(it) },
+            updateTime = fetchTime,
+        )
+    }
 }

@@ -85,7 +85,7 @@ class DatabaseUserRepository(
         }
     }
 
-    override fun convertToVM(databaseModel: User) = UserViewModel(databaseModel)
+    override fun convertToVM(databaseModel: User, fetchTime: Instant) = UserViewModel(databaseModel)
 
     override fun onConnectToDatabase() {
         _currentUserId.value = UserTable.CurrentUserTable.get()

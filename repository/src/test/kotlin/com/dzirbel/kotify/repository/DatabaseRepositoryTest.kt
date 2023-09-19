@@ -52,7 +52,7 @@ private class TestRepository<T>(
         return remoteValues[id]
     }
 
-    override fun convertToVM(databaseModel: T) = databaseModel
+    override fun convertToVM(databaseModel: T, fetchTime: Instant) = databaseModel
 
     override fun convertToDB(id: String, networkModel: T, fetchTime: Instant) = networkModel
 }

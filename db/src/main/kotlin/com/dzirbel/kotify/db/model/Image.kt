@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.db.model
 
+import com.dzirbel.kotify.db.util.single
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -8,8 +9,6 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.times
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.select
 import java.util.UUID
 
 /**
@@ -29,27 +28,16 @@ object ImageTable : UUIDTable(name = "images") {
      * the image and a foreign key to the entity that owns the image, and selecting where the entity ID matches [id].
      */
     fun smallestLargerThan(joinColumn: Column<EntityID<String>>, id: String, size: ImageSize): String? {
-        joinColumn.table
-            .innerJoin(ImageTable)
-            .slice(url)
-            .select { joinColumn eq id }
-            .andWhere { (width greaterEq size.width) and (height greaterEq size.height) }
-            .orderBy(width * height to SortOrder.ASC)
-            .limit(1)
-            .firstOrNull()
-            ?.get(url)
+        joinColumn.table.innerJoin(ImageTable)
+            .single(column = url, order = width * height to SortOrder.ASC) {
+                (joinColumn eq id) and (width greaterEq size.width) and (height greaterEq size.height)
+            }
             ?.let { return it }
 
         // if no image is larger than the given dimensions, return the largest image
         // TODO do this in a single SQL query?
-        return joinColumn.table
-            .innerJoin(ImageTable)
-            .slice(url)
-            .select { joinColumn eq id }
-            .orderBy(width * height to SortOrder.ASC)
-            .limit(1)
-            .firstOrNull()
-            ?.get(url)
+        return joinColumn.table.innerJoin(ImageTable)
+            .single(column = url, order = width * height to SortOrder.ASC) { joinColumn eq id }
     }
 }
 

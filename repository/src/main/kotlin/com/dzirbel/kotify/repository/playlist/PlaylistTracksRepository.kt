@@ -111,7 +111,9 @@ class DatabasePlaylistTracksRepository(
         }
     }
 
-    override fun convertToVM(databaseModel: List<PlaylistTrack>) = databaseModel.map(::PlaylistTrackViewModel)
+    override fun convertToVM(databaseModel: List<PlaylistTrack>, fetchTime: Instant): List<PlaylistTrackViewModel> {
+        return databaseModel.map(::PlaylistTrackViewModel)
+    }
 
     override fun reorder(
         playlistId: String,

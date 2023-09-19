@@ -81,5 +81,5 @@ class DatabaseAlbumRepository(
         }
     }
 
-    override fun convertToVM(databaseModel: Album) = AlbumViewModel(databaseModel)
+    override fun convertToVM(databaseModel: Album, fetchTime: Instant) = AlbumViewModel(databaseModel)
 }

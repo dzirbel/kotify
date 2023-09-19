@@ -65,5 +65,5 @@ class DatabasePlaylistRepository(
         }
     }
 
-    override fun convertToVM(databaseModel: Playlist) = PlaylistViewModel(databaseModel)
+    override fun convertToVM(databaseModel: Playlist, fetchTime: Instant) = PlaylistViewModel(databaseModel)
 }

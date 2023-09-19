@@ -4,12 +4,12 @@ import com.dzirbel.kotify.db.SavedEntityTable
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityClass
 import com.dzirbel.kotify.db.SpotifyEntityTable
+import com.dzirbel.kotify.db.util.single
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
-import org.jetbrains.exposed.sql.select
 import java.time.Instant
 
 object PlaylistTable : SpotifyEntityTable(entityName = "playlist") {
@@ -27,11 +27,7 @@ object PlaylistTable : SpotifyEntityTable(entityName = "playlist") {
 
     fun tracksFetchTime(playlistId: String): Instant? {
         // TODO also compare totalTracks to number of tracks in DB?
-        return slice(tracksFetched)
-            .select { PlaylistTable.id eq playlistId }
-            .limit(1)
-            .firstOrNull()
-            ?.get(tracksFetched)
+        return single(tracksFetched) { id eq playlistId }
     }
 
     object PlaylistImageTable : Table() {

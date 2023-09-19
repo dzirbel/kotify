@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.db
 
+import com.dzirbel.kotify.db.util.single
 import com.dzirbel.kotify.util.collections.zipLazy
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
@@ -46,10 +47,7 @@ abstract class SavedEntityTable(name: String) : Table(name = name) {
      * Must be called from within a transaction.
      */
     fun isSaved(entityId: String, userId: String): Boolean? {
-        return slice(savedColumn)
-            .select { (entityIdColumn eq entityId) and (userIdColumn eq userId) }
-            .firstOrNull()
-            ?.get(savedColumn)
+        return single(savedColumn) { (entityIdColumn eq entityId) and (userIdColumn eq userId) }
     }
 
     /**
@@ -57,10 +55,7 @@ abstract class SavedEntityTable(name: String) : Table(name = name) {
      * its save time is unknown.
      */
     fun savedTime(entityId: String, userId: String): Instant? {
-        return slice(savedTimeColumn)
-            .select { (entityIdColumn eq entityId) and (userIdColumn eq userId) }
-            .firstOrNull()
-            ?.get(savedTimeColumn)
+        return single(savedTimeColumn) { (entityIdColumn eq entityId) and (userIdColumn eq userId) }
     }
 
     /**
@@ -69,10 +64,7 @@ abstract class SavedEntityTable(name: String) : Table(name = name) {
      * Must be called from within a transaction.
      */
     fun savedCheckTime(entityId: String, userId: String): Instant? {
-        return slice(savedCheckTimeColumn)
-            .select { (entityIdColumn eq entityId) and (userIdColumn eq userId) }
-            .firstOrNull()
-            ?.get(savedCheckTimeColumn)
+        return single(savedCheckTimeColumn) { (entityIdColumn eq entityId) and (userIdColumn eq userId) }
     }
 
     /**

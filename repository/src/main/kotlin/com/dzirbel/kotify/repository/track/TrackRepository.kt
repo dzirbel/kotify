@@ -65,5 +65,5 @@ class DatabaseTrackRepository(
         }
     }
 
-    override fun convertToVM(databaseModel: Track) = TrackViewModel(databaseModel)
+    override fun convertToVM(databaseModel: Track, fetchTime: Instant) = TrackViewModel(databaseModel)
 }

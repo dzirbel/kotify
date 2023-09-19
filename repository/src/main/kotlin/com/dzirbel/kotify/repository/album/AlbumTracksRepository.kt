@@ -54,5 +54,5 @@ class DatabaseAlbumTracksRepository(scope: CoroutineScope, private val trackRepo
         return tracks
     }
 
-    override fun convertToVM(databaseModel: List<Track>) = databaseModel.map(::TrackViewModel)
+    override fun convertToVM(databaseModel: List<Track>, fetchTime: Instant) = databaseModel.map(::TrackViewModel)
 }

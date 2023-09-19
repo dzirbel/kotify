@@ -3,6 +3,7 @@ package com.dzirbel.kotify.repository.rating
 import com.dzirbel.kotify.db.DB
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.db.model.TrackRatingTable
+import com.dzirbel.kotify.db.util.single
 import com.dzirbel.kotify.log.MutableLog
 import com.dzirbel.kotify.log.asLog
 import com.dzirbel.kotify.repository.Repository
@@ -20,10 +21,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
 
 // TODO unit test
 class DatabaseRatingRepository(
@@ -128,18 +127,13 @@ class DatabaseRatingRepository(
 
     private fun lastRatingOf(id: String, userId: String = userRepository.requireCurrentUserId): Rating? {
         return TrackRatingTable
-            .slice(TrackRatingTable.rating, TrackRatingTable.maxRating, TrackRatingTable.rateTime)
-            .select { TrackRatingTable.track eq id }
-            .andWhere { TrackRatingTable.userId eq userId }
-            .orderBy(TrackRatingTable.rateTime to SortOrder.DESC)
-            .limit(1)
-            .firstOrNull()
-            ?.let {
-                Rating(
-                    rating = it[TrackRatingTable.rating],
-                    maxRating = it[TrackRatingTable.maxRating],
-                    rateTime = it[TrackRatingTable.rateTime],
-                )
-            }
+            .single(
+                column1 = TrackRatingTable.rating,
+                column2 = TrackRatingTable.maxRating,
+                column3 = TrackRatingTable.rateTime,
+                where = { (TrackRatingTable.track eq id) and (TrackRatingTable.userId eq userId) },
+                order = TrackRatingTable.rateTime to SortOrder.DESC,
+            )
+            ?.let { Rating(rating = it.first, maxRating = it.second, rateTime = it.third) }
     }
 }

@@ -83,7 +83,7 @@ data class ArtistPage(val artistId: String) : Page {
             defaultFilter = filterFor(displayedAlbumTypes.value),
             source = { scope ->
                 artistAlbumsRepository.stateOf(id = artistId)
-                    .mapIn(scope) { it?.cachedValue }
+                    .mapIn(scope) { it?.cachedValue?.artistAlbums }
                     .onEachIn(scope) { artistAlbum ->
                         artistAlbum?.requestBatched(
                             transactionName = { "load $it artist album images for $imageSize" },
