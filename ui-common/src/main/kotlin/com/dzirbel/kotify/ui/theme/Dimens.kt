@@ -44,7 +44,9 @@ object Dimens {
     val contentImage = 200.dp
     val contentImageSmall = 80.dp
 
-    val contextMenuElevation = 8.dp
+    val tooltipMaxWidth: Dp = 500.dp
+
+    val tooltipElevation = 8.dp
     val panelElevationSmall = 4.dp
     val panelElevationLarge = 8.dp
     val componentElevation = 6.dp

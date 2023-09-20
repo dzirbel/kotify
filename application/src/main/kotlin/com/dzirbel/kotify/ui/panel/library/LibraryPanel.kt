@@ -1,6 +1,8 @@
 package com.dzirbel.kotify.ui.panel.library
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import com.dzirbel.kotify.Application
 import com.dzirbel.kotify.repository.CacheStrategy
 import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
 import com.dzirbel.kotify.ui.CachedIcon
@@ -25,6 +28,7 @@ import com.dzirbel.kotify.ui.LocalSavedPlaylistRepository
 import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.LibraryInvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
+import com.dzirbel.kotify.ui.components.TooltipArea
 import com.dzirbel.kotify.ui.components.VerticalScroll
 import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
@@ -65,11 +69,29 @@ fun LibraryPanel() {
 
             VerticalSpacer(Dimens.space3)
 
-            Text(
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
                 modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3),
-                style = MaterialTheme.typography.h5,
-                text = "Playlists",
-            )
+            ) {
+                Text(
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.h5,
+                    text = "Playlists",
+                )
+
+                TooltipArea(
+                    tooltip = "${Application.name} cannot access or manage Spotify playlist folders due to API " +
+                        "limitations. In a future version, workarounds via local files created by Spotify's " +
+                        "client may be added.",
+                ) {
+                    CachedIcon(
+                        name = "folder",
+                        modifier = Modifier.padding(Dimens.space2),
+                        size = Dimens.iconSmall,
+                    )
+                }
+            }
 
             LibraryInvalidateButton(LocalSavedPlaylistRepository.current)
 
