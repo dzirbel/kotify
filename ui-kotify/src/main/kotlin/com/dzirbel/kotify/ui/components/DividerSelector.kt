@@ -41,6 +41,7 @@ import kotlinx.collections.immutable.ImmutableList
 fun <E> DividerSelector(
     dividableProperties: ImmutableList<DividableProperty<E>>,
     currentDivider: Divider<E>?,
+    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
     onSelectDivider: (Divider<E>?) -> Unit,
 ) {
     Surface(
@@ -57,7 +58,7 @@ fun <E> DividerSelector(
                 onClick = {
                     dropdownExpanded.value = true
                 },
-                contentPadding = PaddingValues(all = Dimens.space2),
+                contentPadding = contentPadding,
                 enforceMinWidth = false,
                 enforceMinHeight = true,
             ) {
@@ -102,7 +103,7 @@ fun <E> DividerSelector(
                             currentDivider.copy(divisionSortOrder = currentDivider.divisionSortOrder.flipped),
                         )
                     },
-                    contentPadding = PaddingValues(all = Dimens.space2),
+                    contentPadding = contentPadding,
                     enforceMinWidth = false,
                     enforceMinHeight = true,
                 ) {
@@ -115,7 +116,7 @@ fun <E> DividerSelector(
 
                 SimpleTextButton(
                     onClick = { onSelectDivider(null) },
-                    contentPadding = PaddingValues(all = Dimens.space2),
+                    contentPadding = contentPadding,
                     enforceMinWidth = false,
                     enforceMinHeight = true,
                 ) {

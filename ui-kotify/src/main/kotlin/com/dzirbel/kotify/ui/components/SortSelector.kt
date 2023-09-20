@@ -44,6 +44,7 @@ fun <T> SortSelector(
     sortableProperties: ImmutableList<SortableProperty<T>>,
     sorts: PersistentList<Sort<T>>,
     allowEmpty: Boolean = false,
+    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
     onSetSort: (PersistentList<Sort<T>>) -> Unit,
 ) {
     Surface(
@@ -64,7 +65,7 @@ fun <T> SortSelector(
             }
 
             sorts.forEachIndexed { index, sort ->
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     val changeDropdownExpanded = remember { mutableStateOf(false) }
                     SortSelectorButton(
                         onClick = { changeDropdownExpanded.value = true },
@@ -102,6 +103,7 @@ fun <T> SortSelector(
                     }
 
                     SortSelectorButton(
+                        contentPadding = contentPadding,
                         onClick = {
                             // flip the sort at this index
                             val flipped = sort.copy(sortOrder = sort.sortOrder.flipped)
@@ -116,7 +118,10 @@ fun <T> SortSelector(
                     }
 
                     if (allowEmpty || sorts.size > 1) {
-                        SortSelectorButton(onClick = { onSetSort(sorts.mutate { it.removeAt(index) }) }) {
+                        SortSelectorButton(
+                            contentPadding = contentPadding,
+                            onClick = { onSetSort(sorts.mutate { it.removeAt(index) }) },
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = null,
@@ -137,7 +142,7 @@ fun <T> SortSelector(
 
             if (sortableProperties.size > sorts.size && sorts.lastOrNull()?.sortableProperty?.terminalSort != true) {
                 val addDropdownExpanded = remember { mutableStateOf(false) }
-                SortSelectorButton(onClick = { addDropdownExpanded.value = true }) {
+                SortSelectorButton(contentPadding = contentPadding, onClick = { addDropdownExpanded.value = true }) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
@@ -165,7 +170,7 @@ fun <T> SortSelector(
 @Composable
 private fun SortSelectorButton(
     onClick: () -> Unit,
-    contentPadding: PaddingValues = PaddingValues(all = Dimens.space2),
+    contentPadding: PaddingValues,
     content: @Composable RowScope.() -> Unit,
 ) {
     SimpleTextButton(
