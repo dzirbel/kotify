@@ -4,9 +4,9 @@
 
 ---
 
-| ![](application/src/test/resources/screenshots/com.dzirbel.kotify.ui.ApplicationScreenshotTest/artists-DARK.png) | ![](application/src/test/resources/screenshots/com.dzirbel.kotify.ui.ApplicationScreenshotTest/playlist-LIGHT.png) |
+| ![](application/src/test/resources/screenshots/com.dzirbel.kotify.ui.ApplicationScreenshotTest/artists-dark.png) | ![](application/src/test/resources/screenshots/com.dzirbel.kotify.ui.ApplicationScreenshotTest/playlist-light.png) |
 |------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| ![](application/src/test/resources/screenshots/com.dzirbel.kotify.ui.ApplicationScreenshotTest/album-LIGHT.png)  | ![](application/src/test/resources/screenshots/com.dzirbel.kotify.ui.ApplicationScreenshotTest/artist-DARK.png)    |
+| ![](application/src/test/resources/screenshots/com.dzirbel.kotify.ui.ApplicationScreenshotTest/album-light.png)  | ![](application/src/test/resources/screenshots/com.dzirbel.kotify.ui.ApplicationScreenshotTest/artist-dark.png)    |
 
 [![Build status](https://github.com/dzirbel/kotify/workflows/Build/badge.svg)](https://github.com/dzirbel/kotify/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/dzirbel/kotify/branch/master/graph/badge.svg?token=RZU5D35M5E)](https://codecov.io/gh/dzirbel/kotify)
