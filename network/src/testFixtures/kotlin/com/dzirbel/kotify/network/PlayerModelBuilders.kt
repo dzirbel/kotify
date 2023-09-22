@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.network
 
 import com.dzirbel.kotify.network.model.FullSpotifyTrack
+import com.dzirbel.kotify.network.model.SpotifyExternalUrl
 import com.dzirbel.kotify.network.model.SpotifyPlayback
 import com.dzirbel.kotify.network.model.SpotifyPlaybackContext
 import com.dzirbel.kotify.network.model.SpotifyPlaybackDevice
@@ -49,5 +50,14 @@ fun SpotifyPlaybackDevice(id: String = "1", name: String = "Device $id"): Spotif
         name = name,
         type = "type",
         volumePercent = 0,
+    )
+}
+
+fun SpotifyPlaybackContext(uri: String): SpotifyPlaybackContext {
+    return SpotifyPlaybackContext(
+        uri = uri,
+        externalUrls = SpotifyExternalUrl(),
+        href = "href",
+        type = "type",
     )
 }
