@@ -68,7 +68,7 @@ object NetworkFixtures {
      * test general queries of user playlist follows.
      */
     val followingPlaylists = listOf(
-        "5apAth0JL9APnjo62F93RN" to mapOf("djynth" to true, "luckyeights" to false),
+        "12LKE0Or27A1jCFONHXmnC" to mapOf("djynth" to true, "luckyeights" to false),
         "6urDFlFQIDXPwXbfpdGUc0" to mapOf("djynth" to true, "1267916582" to true),
     )
 
@@ -302,6 +302,7 @@ object NetworkFixtures {
                     "Worldless (The FiXT Remixes)",
                     albumType = SpotifyAlbum.Type.COMPILATION,
                 ),
+                AlbumProperties("6BhIVnpvMjoHIwE5wSTwbh", "I Only Remember Falling"),
             ),
         ),
 
