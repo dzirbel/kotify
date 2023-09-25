@@ -34,12 +34,9 @@ object ArtistTable : SpotifyEntityTable(entityName = "artist") {
 class Artist(id: EntityID<String>) : SpotifyEntity(id = id, table = ArtistTable) {
     var popularity: Int? by ArtistTable.popularity
     var followersTotal: Int? by ArtistTable.followersTotal
-    var albumsFetched: Instant? by ArtistTable.albumsFetched
 
     var images: SizedIterable<Image> by Image via ArtistTable.ArtistImageTable
     var genres: SizedIterable<Genre> by Genre via ArtistTable.ArtistGenreTable
-
-    val artistAlbums: SizedIterable<ArtistAlbum> by ArtistAlbum referrersOn ArtistAlbumTable.artist
 
     companion object : SpotifyEntityClass<Artist>(ArtistTable)
 }

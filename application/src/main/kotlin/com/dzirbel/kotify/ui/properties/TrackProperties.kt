@@ -171,14 +171,14 @@ class TrackSavedProperty<T>(
         // TODO state here is awkward
         val firstId = trackIdOf(first)
         val secondId = trackIdOf(second)
-        val firstSaved = firstId?.let { savedTrackRepository.savedStateOf(it).value?.value }
-        val secondSaved = secondId?.let { savedTrackRepository.savedStateOf(it).value?.value }
+        val firstSaved = firstId?.let { savedTrackRepository.savedStateOf(it).value?.saved }
+        val secondSaved = secondId?.let { savedTrackRepository.savedStateOf(it).value?.saved }
         return sortOrder.compareNullable(firstSaved, secondSaved)
     }
 
     override fun divisionFor(element: T): Boolean? {
         // TODO state here is awkward
-        return trackIdOf(element)?.let { savedTrackRepository.savedStateOf(it).value?.value }
+        return trackIdOf(element)?.let { savedTrackRepository.savedStateOf(it).value?.saved }
     }
 
     override fun compareDivisions(sortOrder: SortOrder, first: Any?, second: Any?): Int {

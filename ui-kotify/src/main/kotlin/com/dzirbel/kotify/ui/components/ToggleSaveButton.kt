@@ -7,7 +7,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.repository.SavedRepository
-import com.dzirbel.kotify.repository.util.ToggleableState
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyColors
@@ -26,17 +25,17 @@ fun ToggleSaveButton(
     val savedState = repository.savedStateOf(id = id).collectAsState().value
     IconButton(
         modifier = modifier.instrument().size(size),
-        enabled = savedState is ToggleableState.Set,
+        enabled = savedState is SavedRepository.SaveState.Set,
         onClick = {
-            check(savedState is ToggleableState.Set)
-            repository.setSaved(id = id, saved = !savedState.value)
+            check(savedState is SavedRepository.SaveState.Set)
+            repository.setSaved(id = id, saved = !savedState.saved)
         },
     ) {
         CachedIcon(
-            name = if (savedState?.value == true) "favorite" else "favorite-border",
+            name = if (savedState?.saved == true) "favorite" else "favorite-border",
             size = size,
             contentDescription = "Save",
-            tint = KotifyColors.highlighted(savedState?.value == true),
+            tint = KotifyColors.highlighted(savedState?.saved == true),
         )
     }
 }

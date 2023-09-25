@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.ui.LocalArtistAlbumsRepository
@@ -218,14 +219,32 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
         ) {
             Text(text = artist.name, style = MaterialTheme.typography.h5)
 
-            LocalArtistRepository.current.stateOf(id = artist.id)
+            val saveState = LocalSavedArtistRepository.current.savedStateOf(id = artist.id)
                 .collectAsState()
-                .derived { it?.cacheTime?.toEpochMilli() }
                 .value
-                ?.let { timestamp ->
-                    val relativeTime = liveRelativeTime(timestamp = timestamp)
-                    Text("Saved ${relativeTime.formatLong()}")
+
+            @Suppress("BracesOnWhenStatements")
+            val saveText = when (saveState) {
+                is SavedRepository.SaveState.Set -> {
+                    if (saveState.saved) {
+                        val saveTime = saveState.saveTime?.toEpochMilli()
+                        if (saveTime != null) {
+                            val relativeSaveTime = liveRelativeTime(timestamp = saveTime)
+                            "Saved ${relativeSaveTime.formatLong()}"
+                        } else {
+                            "Saved time unknown"
+                        }
+                    } else {
+                        "Not saved"
+                    }
                 }
+                SavedRepository.SaveState.NotFound -> "Save state not found"
+                is SavedRepository.SaveState.Setting -> if (saveState.saved) "Saving..." else "Removing..."
+                is SavedRepository.SaveState.Error -> "Error loading save state: ${saveState.throwable?.message}}"
+                null -> "..."
+            }
+
+            Text(saveText)
 
             artist.genres.collectAsState().value?.let { genres ->
                 Flow {

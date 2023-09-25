@@ -42,6 +42,11 @@ abstract class SavedEntityTable(name: String) : Table(name = name) {
     private val savedCheckTimeColumn: Column<Instant?> = timestamp("saved_check_time").nullable()
 
     /**
+     * Wraps the [saved] state and the [savedTime] at which it was set, if available.
+     */
+    data class SaveState(val saved: Boolean, val savedTime: Instant?)
+
+    /**
      * Determines whether the entity with the given [entityId] is saved, returning null if its status is unknown.
      *
      * Must be called from within a transaction.
@@ -65,6 +70,14 @@ abstract class SavedEntityTable(name: String) : Table(name = name) {
      */
     fun savedCheckTime(entityId: String, userId: String): Instant? {
         return single(savedCheckTimeColumn) { (entityIdColumn eq entityId) and (userIdColumn eq userId) }
+    }
+
+    /**
+     * Retrieves the [SaveState] of the entity with the given [entityId] for the user with the given [userId].
+     */
+    fun saveState(entityId: String, userId: String): SaveState? {
+        return single(savedColumn, savedTimeColumn) { (entityIdColumn eq entityId) and (userIdColumn eq userId) }
+            ?.let { (saved, savedTime) -> SaveState(saved = saved, savedTime = savedTime) }
     }
 
     /**

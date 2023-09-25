@@ -9,7 +9,6 @@ import com.dzirbel.kotify.repository.global.GlobalUpdateTimesRepository
 import com.dzirbel.kotify.repository.user.UserRepository
 import com.dzirbel.kotify.repository.util.CachedResource
 import com.dzirbel.kotify.repository.util.SynchronizedWeakStateFlowMap
-import com.dzirbel.kotify.repository.util.ToggleableState
 import com.dzirbel.kotify.repository.util.midpointInstantToNow
 import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.collections.plusOrMinus
@@ -58,7 +57,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     private val currentUserLibraryUpdateKey: String
         get() = "$baseLibraryUpdateKey-${userRepository.requireCurrentUserId}"
 
-    private val savedStates = SynchronizedWeakStateFlowMap<String, ToggleableState<Boolean>>()
+    private val savedStates = SynchronizedWeakStateFlowMap<String, SavedRepository.SaveState>()
 
     private val mutableLog = MutableLog<Repository.LogData>(
         name = requireNotNull(this::class.qualifiedName).removeSuffix(".Companion").substringAfterLast('.'),
@@ -116,12 +115,12 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         libraryResource.refreshFromRemote()
     }
 
-    final override fun savedStateOf(id: String): StateFlow<ToggleableState<Boolean>?> {
+    final override fun savedStateOf(id: String): StateFlow<SavedRepository.SaveState?> {
         val requestLog = RequestLog(log = mutableLog)
         return savedStates.getOrCreateStateFlow(
             key = id,
             defaultValue = {
-                libraryResource.flow.value?.ids?.contains(id)?.let { ToggleableState.Set(it) }
+                libraryResource.flow.value?.ids?.contains(id)?.let { SavedRepository.SaveState.Set(it) }
             },
             onExisting = {
                 requestLog.info("save state for $entityName $id in memory", DataSource.MEMORY)
@@ -131,13 +130,14 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                     val userId = userRepository.requireCurrentUserId
                     scope.launch {
                         val dbStart = CurrentTime.mark
-                        val cached: Boolean? = try {
+                        val cached: SavedEntityTable.SaveState? = try {
                             KotifyDatabase[DB.CACHE].transaction("load save state of $entityName $id") {
-                                savedEntityTable.isSaved(entityId = id, userId = userId)
+                                savedEntityTable.saveState(entityId = id, userId = userId)
                             }
                         } catch (cancellationException: CancellationException) {
                             throw cancellationException
                         } catch (throwable: Throwable) {
+                            savedStates.updateValue(id, SavedRepository.SaveState.Error(throwable))
                             requestLog
                                 .addDbTime(dbStart.elapsedNow())
                                 .error(
@@ -151,7 +151,13 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                         requestLog.addDbTime(dbStart.elapsedNow())
 
                         if (cached != null) {
-                            savedStates.updateValue(id, ToggleableState.Set(cached))
+                            savedStates.updateValue(
+                                key = id,
+                                value = SavedRepository.SaveState.Set(
+                                    saved = cached.saved,
+                                    saveTime = cached.savedTime,
+                                ),
+                            )
                             requestLog.success(
                                 title = "loaded save state of $entityName $id from database",
                                 source = DataSource.DATABASE,
@@ -163,6 +169,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                             } catch (cancellationException: CancellationException) {
                                 throw cancellationException
                             } catch (throwable: Throwable) {
+                                savedStates.updateValue(id, SavedRepository.SaveState.Error(throwable))
                                 requestLog
                                     .addRemoteTime(remoteStart.elapsedNow())
                                     .error(
@@ -176,16 +183,15 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                             requestLog.addRemoteTime(remoteStart.elapsedNow())
 
                             if (remote == null) {
-                                // TODO expose error state instead of null?
-                                savedStates.updateValue(id, null)
+                                savedStates.updateValue(id, SavedRepository.SaveState.NotFound)
                                 requestLog.warn(
                                     title = "save state of $entityName $id not found from remote",
                                     source = DataSource.REMOTE,
                                 )
                             } else {
-                                val saveTime = remoteStart.midpointInstantToNow()
+                                val saveCheckTime = remoteStart.midpointInstantToNow()
 
-                                savedStates.updateValue(id, ToggleableState.Set(remote))
+                                savedStates.updateValue(id, SavedRepository.SaveState.Set(saved = remote))
                                 requestLog.success(
                                     title = "loaded save state of $entityName $id from remote",
                                     source = DataSource.REMOTE,
@@ -198,7 +204,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                             userId = userId,
                                             saved = remote,
                                             savedTime = null,
-                                            savedCheckTime = saveTime,
+                                            savedCheckTime = saveCheckTime,
                                         )
                                     }
                                 } catch (cancellationException: CancellationException) {
@@ -218,12 +224,12 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         )
     }
 
-    final override fun savedStatesOf(ids: Iterable<String>): List<StateFlow<ToggleableState<Boolean>?>> {
+    final override fun savedStatesOf(ids: Iterable<String>): List<StateFlow<SavedRepository.SaveState?>> {
         val requestLog = RequestLog(log = mutableLog)
         return savedStates.getOrCreateStateFlows(
             keys = ids,
             defaultValue = { id ->
-                libraryResource.flow.value?.ids?.contains(id)?.let { ToggleableState.Set(it) }
+                libraryResource.flow.value?.ids?.contains(id)?.let { SavedRepository.SaveState.Set(it) }
             },
             onExisting = { numExisting ->
                 requestLog.info("$numExisting/${ids.count()} $entityName save states in memory", DataSource.MEMORY)
@@ -240,12 +246,16 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                 name = "load save states of ${missingIds.size} ${entityName}s",
                             ) {
                                 missingIds.map { id ->
-                                    savedEntityTable.isSaved(entityId = id, userId = userId)
+                                    savedEntityTable.saveState(entityId = id, userId = userId)
                                 }
                             }
                         } catch (cancellationException: CancellationException) {
                             throw cancellationException
                         } catch (throwable: Throwable) {
+                            for (id in missingIds) {
+                                savedStates.updateValue(id, SavedRepository.SaveState.Error(throwable))
+                            }
+
                             requestLog
                                 .addDbTime(dbStart.elapsedNow())
                                 .error(
@@ -262,11 +272,17 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                         if (cached == null) {
                             idsToLoadFromRemote.addAll(missingIds)
                         } else {
-                            missingIds.zipEach(cached) { id, saved ->
-                                if (saved == null) {
+                            missingIds.zipEach(cached) { id, saveState ->
+                                if (saveState == null) {
                                     idsToLoadFromRemote.add(id)
                                 } else {
-                                    savedStates.updateValue(id, ToggleableState.Set(saved))
+                                    savedStates.updateValue(
+                                        key = id,
+                                        value = SavedRepository.SaveState.Set(
+                                            saved = saveState.saved,
+                                            saveTime = saveState.savedTime,
+                                        ),
+                                    )
                                 }
                             }
                         }
@@ -286,6 +302,10 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                             } catch (cancellationException: CancellationException) {
                                 throw cancellationException
                             } catch (throwable: Throwable) {
+                                for (id in idsToLoadFromRemote) {
+                                    savedStates.updateValue(id, SavedRepository.SaveState.Error(throwable))
+                                }
+
                                 requestLog
                                     .addRemoteTime(remoteStart.elapsedNow())
                                     .error(
@@ -299,19 +319,11 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
                             requestLog.addRemoteTime(remoteStart.elapsedNow())
 
-                            if (remote == null) {
-                                // TODO expose error state instead of null?
-                                idsToLoadFromRemote.forEach { id -> savedStates.updateValue(id, null) }
-                                requestLog.warn(
-                                    title = "save states of ${idsToLoadFromRemote.size} ${entityName}s not found " +
-                                        "from remote",
-                                    source = DataSource.REMOTE,
-                                )
-                            } else {
-                                val saveTime = remoteStart.midpointInstantToNow()
+                            if (remote != null) {
+                                val saveCheckTime = remoteStart.midpointInstantToNow()
 
                                 idsToLoadFromRemote.zipEach(remote) { id, saved ->
-                                    savedStates.updateValue(id, ToggleableState.Set(saved))
+                                    savedStates.updateValue(id, SavedRepository.SaveState.Set(saved))
                                 }
 
                                 requestLog.success(
@@ -329,7 +341,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                                             saved = remote,
                                             userId = userId,
                                             savedTime = null,
-                                            savedCheckTime = saveTime,
+                                            savedCheckTime = saveCheckTime,
                                         )
                                     }
                                 } catch (cancellationException: CancellationException) {
@@ -356,13 +368,13 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         // TODO prevent concurrent updates to saved state for the same id
         val requestLog = RequestLog(log = mutableLog)
         scope.launch {
-            savedStates.updateValue(id, ToggleableState.TogglingTo(saved))
+            savedStates.updateValue(id, SavedRepository.SaveState.Setting(saved))
 
             val remoteStart = CurrentTime.mark
             try {
                 pushSaved(ids = listOf(id), saved = saved)
             } catch (throwable: Throwable) {
-                savedStates.updateValue(id, null) // TODO expose error state?
+                savedStates.updateValue(id, SavedRepository.SaveState.Error(throwable))
                 requestLog
                     .addRemoteTime(remoteStart.elapsedNow())
                     .error(
@@ -402,7 +414,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
             requestLog.addDbTime(dbStart.elapsedNow())
 
-            savedStates.updateValue(id, ToggleableState.Set(saved))
+            savedStates.updateValue(id, SavedRepository.SaveState.Set(saved, saveTime))
 
             libraryResource.update { library ->
                 library.copy(ids = library.ids.plusOrMinus(value = id, condition = saved))
@@ -419,13 +431,17 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     private suspend fun getLibraryCached(): SavedRepository.Library? {
         if (!userRepository.hasCurrentUserId) return null
+        val userId = userRepository.requireCurrentUserId
 
         val requestLog = RequestLog(log = mutableLog)
         val dbStart = CurrentTime.mark
         return try {
             KotifyDatabase[DB.CACHE].transaction("load $entityName saved library") {
                 GlobalUpdateTimesRepository.updated(currentUserLibraryUpdateKey)?.let { updatedTime ->
-                    updatedTime to savedEntityTable.savedEntityIds(userId = userRepository.requireCurrentUserId)
+                    val library = savedEntityTable.savedEntityIds(userId = userId)
+                        .map { id -> id to savedEntityTable.savedTime(entityId = id, userId = userId) }
+
+                    updatedTime to library
                 }
             }
         } catch (cancellationException: CancellationException) {
@@ -436,9 +452,15 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                 .error("error loading $entityName saved library from database", DataSource.DATABASE, throwable)
             return null
         }
-            ?.let { (updatedTime, ids) ->
+            ?.let { (updatedTime, library) ->
+                val ids = library.mapTo(mutableSetOf()) { it.first }
+
                 requestLog.addDbTime(dbStart.elapsedNow())
-                savedStates.computeAll { id -> ToggleableState.Set(id in ids) }
+
+                for ((id, saveTime) in library) {
+                    savedStates.updateValue(id, SavedRepository.SaveState.Set(saved = true, saveTime = saveTime))
+                }
+
                 requestLog.success("loaded $entityName saved library from database", DataSource.DATABASE)
                 SavedRepository.Library(ids, updatedTime)
             }
@@ -501,7 +523,9 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                     }
                 }
 
-                remoteLibraryIds
+                remoteLibraryIds.map { id ->
+                    id to savedEntityTable.savedTime(entityId = id, userId = userId)
+                }
             }
         } catch (cancellationException: CancellationException) {
             throw cancellationException
@@ -518,10 +542,12 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
         requestLog.addDbTime(dbStart.elapsedNow())
 
-        savedStates.computeAll { id -> ToggleableState.Set(id in remoteLibrary) }
+        for ((id, saveTime) in remoteLibrary) {
+            savedStates.updateValue(id, SavedRepository.SaveState.Set(saved = true, saveTime = saveTime))
+        }
 
         requestLog.success("loaded $entityName saved library from remote", DataSource.REMOTE)
 
-        return SavedRepository.Library(remoteLibrary, fetchTime)
+        return SavedRepository.Library(remoteLibrary.mapTo(mutableSetOf()) { it.first }, fetchTime)
     }
 }

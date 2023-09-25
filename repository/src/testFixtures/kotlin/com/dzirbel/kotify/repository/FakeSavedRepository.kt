@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.repository
 
 import com.dzirbel.kotify.log.FakeLog
-import com.dzirbel.kotify.repository.util.ToggleableState
 import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,11 +30,11 @@ open class FakeSavedRepository(savedStates: Map<String, Boolean> = emptyMap()) :
 
     override fun refreshLibrary() {}
 
-    override fun savedStateOf(id: String): StateFlow<ToggleableState<Boolean>?> {
-        return MutableStateFlow(savedStates[id]?.let { ToggleableState.Set(it) })
+    override fun savedStateOf(id: String): StateFlow<SavedRepository.SaveState?> {
+        return MutableStateFlow(savedStates[id]?.let { SavedRepository.SaveState.Set(it) })
     }
 
-    override fun savedStatesOf(ids: Iterable<String>): List<StateFlow<ToggleableState<Boolean>?>> {
+    override fun savedStatesOf(ids: Iterable<String>): List<StateFlow<SavedRepository.SaveState?>> {
         return ids.map { savedStateOf(it) }
     }
 
