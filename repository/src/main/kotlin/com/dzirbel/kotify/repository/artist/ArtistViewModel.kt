@@ -22,6 +22,7 @@ data class ArtistViewModel(
     override val updatedTime: Instant = CurrentTime.instant,
     override val fullUpdatedTime: Instant? = null,
     val popularity: Int? = null,
+    val followersTotal: Int? = null,
     val genres: StateFlow<List<GenreViewModel>?> = LazyTransactionStateFlow("artist $id genres") {
         Genre.entitiesFor(id, ArtistTable.ArtistGenreTable.artist).map(::GenreViewModel)
     },
@@ -35,5 +36,6 @@ data class ArtistViewModel(
         updatedTime = artist.updatedTime,
         fullUpdatedTime = artist.fullUpdatedTime,
         popularity = artist.popularity,
+        followersTotal = artist.followersTotal,
     )
 }

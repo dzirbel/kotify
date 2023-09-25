@@ -3,6 +3,7 @@ package com.dzirbel.kotify.ui
 import com.dzirbel.kotify.db.model.AlbumType
 import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
+import com.dzirbel.kotify.repository.genre.GenreViewModel
 import com.dzirbel.kotify.repository.playlist.PlaylistTrackViewModel
 import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
 import com.dzirbel.kotify.repository.rating.AverageRating
@@ -26,6 +27,16 @@ object ApplicationFixtures {
         name = "Public Transit Aficionados",
         uri = "artist:pta",
         images = FakeImageViewModel.fromFile("pta2.png"),
+        popularity = 100,
+        followersTotal = 1_000_000,
+        genres = LazyTransactionStateFlow(
+            listOf(
+                GenreViewModel("public transit"),
+                GenreViewModel("cover band"),
+                GenreViewModel("rock"),
+                GenreViewModel("epic"),
+            ),
+        ),
     )
 
     val savedArtists: List<ArtistViewModel> = listOf(

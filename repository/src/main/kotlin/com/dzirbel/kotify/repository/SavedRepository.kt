@@ -20,6 +20,7 @@ interface SavedRepository : Logging<Repository.LogData> {
     @Stable
     data class Library(
         val ids: Set<String>,
+        val saveTimes: Map<String, Instant>,
         val cacheTime: Instant,
     ) {
         /**

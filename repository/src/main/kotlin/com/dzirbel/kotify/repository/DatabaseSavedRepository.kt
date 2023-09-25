@@ -120,7 +120,11 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         return savedStates.getOrCreateStateFlow(
             key = id,
             defaultValue = {
-                libraryResource.flow.value?.ids?.contains(id)?.let { SavedRepository.SaveState.Set(it) }
+                libraryResource.flow.value?.let { library ->
+                    val saved = library.ids.contains(id)
+                    val saveTime = library.saveTimes[id]
+                    SavedRepository.SaveState.Set(saved, saveTime)
+                }
             },
             onExisting = {
                 requestLog.info("save state for $entityName $id in memory", DataSource.MEMORY)
@@ -229,7 +233,11 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         return savedStates.getOrCreateStateFlows(
             keys = ids,
             defaultValue = { id ->
-                libraryResource.flow.value?.ids?.contains(id)?.let { SavedRepository.SaveState.Set(it) }
+                libraryResource.flow.value?.let { library ->
+                    val saved = library.ids.contains(id)
+                    val saveTime = library.saveTimes[id]
+                    SavedRepository.SaveState.Set(saved, saveTime)
+                }
             },
             onExisting = { numExisting ->
                 requestLog.info("$numExisting/${ids.count()} $entityName save states in memory", DataSource.MEMORY)
@@ -453,16 +461,18 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             return null
         }
             ?.let { (updatedTime, library) ->
-                val ids = library.mapTo(mutableSetOf()) { it.first }
-
                 requestLog.addDbTime(dbStart.elapsedNow())
 
+                val ids = mutableSetOf<String>()
+                val saveTimes = mutableMapOf<String, Instant>()
                 for ((id, saveTime) in library) {
+                    ids.add(id)
+                    saveTime?.let { saveTimes[id] = it }
                     savedStates.updateValue(id, SavedRepository.SaveState.Set(saved = true, saveTime = saveTime))
                 }
 
                 requestLog.success("loaded $entityName saved library from database", DataSource.DATABASE)
-                SavedRepository.Library(ids, updatedTime)
+                SavedRepository.Library(ids = ids, saveTimes = saveTimes, cacheTime = updatedTime)
             }
     }
 
@@ -542,12 +552,16 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
         requestLog.addDbTime(dbStart.elapsedNow())
 
+        val ids = mutableSetOf<String>()
+        val saveTimes = mutableMapOf<String, Instant>()
         for ((id, saveTime) in remoteLibrary) {
+            ids.add(id)
+            saveTime?.let { saveTimes[id] = it }
             savedStates.updateValue(id, SavedRepository.SaveState.Set(saved = true, saveTime = saveTime))
         }
 
         requestLog.success("loaded $entityName saved library from remote", DataSource.REMOTE)
 
-        return SavedRepository.Library(remoteLibrary.mapTo(mutableSetOf()) { it.first }, fetchTime)
+        return SavedRepository.Library(ids = ids, saveTimes = saveTimes, cacheTime = fetchTime)
     }
 }

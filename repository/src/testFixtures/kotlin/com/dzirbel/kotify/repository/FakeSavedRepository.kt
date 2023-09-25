@@ -18,6 +18,7 @@ open class FakeSavedRepository(savedStates: Map<String, Boolean> = emptyMap()) :
             return MutableStateFlow(
                 SavedRepository.Library(
                     ids = savedStates.filterValues { it }.keys,
+                    saveTimes = emptyMap(),
                     cacheTime = CurrentTime.instant,
                 ),
             )

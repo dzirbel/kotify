@@ -6,6 +6,7 @@ import com.dzirbel.kotify.repository.FakeArtistRepository
 import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistAlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
+import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow
 import com.dzirbel.kotify.ui.ProvideFakeRepositories
 import com.dzirbel.kotify.ui.page.FakeImageViewModel
 import com.dzirbel.kotify.ui.page.render
@@ -27,7 +28,12 @@ internal class ArtistPageScreenshotTest {
 
     @Test
     fun full() {
-        val artist = ArtistViewModel(id = "id", name = "Artist")
+        val artist = ArtistViewModel(
+            id = "id",
+            name = "Artist",
+            images = FakeImageViewModel(),
+            genres = LazyTransactionStateFlow(null),
+        )
         val artistAlbums = List(20) {
             ArtistAlbumViewModel(
                 artist = artist,

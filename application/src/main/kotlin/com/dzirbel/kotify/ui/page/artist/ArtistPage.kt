@@ -13,12 +13,14 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.db.model.AlbumType
+import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.repository.artist.ArtistAlbumViewModel
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
@@ -31,9 +33,12 @@ import com.dzirbel.kotify.ui.LocalSavedArtistRepository
 import com.dzirbel.kotify.ui.album.AlbumCell
 import com.dzirbel.kotify.ui.album.AlbumTypePicker
 import com.dzirbel.kotify.ui.components.DividerSelector
+import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.InvalidateButton
+import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner
+import com.dzirbel.kotify.ui.components.Pill
 import com.dzirbel.kotify.ui.components.SortSelector
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.adapter.AdapterProperty
@@ -42,6 +47,7 @@ import com.dzirbel.kotify.ui.components.adapter.dividableProperties
 import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
+import com.dzirbel.kotify.ui.components.liveRelativeTime
 import com.dzirbel.kotify.ui.components.toImageSize
 import com.dzirbel.kotify.ui.page.Page
 import com.dzirbel.kotify.ui.page.PageScope
@@ -72,7 +78,9 @@ data class ArtistPage(val artistId: String) : Page {
         val artistAlbumsRepository = LocalArtistAlbumsRepository.current
         val ratingRepository = LocalRatingRepository.current
 
-        val artist = LocalArtistRepository.current.stateOf(artistId).collectAsState().value?.cachedValue
+        val artist = key(artistId) {
+            LocalArtistRepository.current.stateOf(artistId).collectAsState().value?.cachedValue
+        }
 
         val displayedAlbumTypes = remember { mutableStateOf(persistentSetOf(AlbumType.ALBUM)) }
 
@@ -162,41 +170,80 @@ private fun ArtistPageHeader(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space5, vertical = Dimens.space4),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(artist?.name.orEmpty(), style = MaterialTheme.typography.h4)
+        Row(
+            modifier = Modifier.padding(Dimens.space4),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
+        ) {
+            LoadedImage(key = artistId) { size -> artist?.imageUrlFor(size) }
 
-                ToggleSaveButton(
-                    repository = LocalSavedArtistRepository.current,
-                    id = artistId,
-                    size = Dimens.iconMedium,
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.space2)) {
+                Text(artist?.name.orEmpty(), style = MaterialTheme.typography.h3)
 
-                InvalidateButton(
-                    repository = LocalArtistRepository.current,
-                    id = artistId,
-                    modifier = Modifier.align(Alignment.Bottom),
-                    icon = "account-circle",
-                )
-            }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ToggleSaveButton(
+                        repository = LocalSavedArtistRepository.current,
+                        id = artistId,
+                        size = Dimens.iconMedium,
+                    )
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
-            ) {
-                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                    if (albums.derived { it.hasElements }.value) {
-                        val size = albums.derived { it.size }.value
-                        Text("$size albums")
-
-                        Interpunct()
+                    val saveState = LocalSavedArtistRepository.current.savedStateOf(artistId).collectAsState().value
+                    if (saveState is SavedRepository.SaveState.Set) {
+                        saveState.saveTime.takeIf { saveState.saved }?.let { saveTime ->
+                            Text("Saved ${liveRelativeTime(saveTime.toEpochMilli()).formatLong()}")
+                        }
+                    } else if (saveState is SavedRepository.SaveState.Setting) {
+                        if (saveState.saved) Text("Saving...") else Text("Removing...")
                     }
                 }
 
-                InvalidateButton(LocalArtistAlbumsRepository.current, artistId, icon = "album")
+                artist?.genres?.collectAsState()?.value?.let { genres ->
+                    Flow {
+                        for (genre in genres) {
+                            Pill(text = genre.name)
+                        }
+                    }
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    artist?.followersTotal?.let { followers ->
+                        Text("$followers followers")
+                        Interpunct()
+                    }
+
+                    artist?.popularity?.let { popularity ->
+                        Text("$popularity/100 popularity")
+                        Interpunct()
+                    }
+
+                    InvalidateButton(
+                        repository = LocalArtistRepository.current,
+                        id = artistId,
+                        modifier = Modifier.align(Alignment.Bottom),
+                        icon = "account-circle",
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                ) {
+                    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                        if (albums.derived { it.hasElements }.value) {
+                            val size = albums.derived { it.size }.value
+                            Text("$size albums")
+
+                            Interpunct()
+                        }
+                    }
+
+                    InvalidateButton(LocalArtistAlbumsRepository.current, artistId, icon = "album")
+                }
             }
         }
 
