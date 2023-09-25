@@ -137,13 +137,13 @@ private fun AlbumHeader(albumId: String, adapter: ListAdapterState<TrackViewMode
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
                 ) {
-                    PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconMedium)
-
                     ToggleSaveButton(
                         repository = LocalSavedAlbumRepository.current,
                         id = albumId,
                         size = Dimens.iconMedium,
                     )
+
+                    PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconMedium)
                 }
 
                 Row(
