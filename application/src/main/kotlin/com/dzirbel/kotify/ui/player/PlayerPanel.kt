@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
@@ -18,6 +19,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -51,7 +53,6 @@ import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
-import com.dzirbel.kotify.ui.components.RefreshIcon
 import com.dzirbel.kotify.ui.components.SeekableSlider
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
@@ -494,7 +495,15 @@ private fun VolumeControls() {
                 player.refreshDevices()
             },
         ) {
-            RefreshIcon(refreshing = refreshing)
+            if (refreshing) {
+                CircularProgressIndicator(Modifier.size(Dimens.iconMedium))
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.Refresh,
+                    contentDescription = "Refresh",
+                    modifier = Modifier.size(Dimens.iconMedium),
+                )
+            }
         }
 
         val errorResetCounter = remember { mutableStateOf(0) }

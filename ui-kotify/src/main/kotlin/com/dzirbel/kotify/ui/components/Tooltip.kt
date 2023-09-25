@@ -10,11 +10,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.dzirbel.kotify.ui.theme.Dimens
 
+const val TOOLTIP_DELAY_SHORT = 300
+const val TOOLTIP_DELAY_MEDIUM = 500
+const val TOOLTIP_DELAY_LONG = 800
+
 /**
  * A simplified variant of [TooltipArea] which shows a text [tooltip] on hover of the given [content].
  */
 @Composable
-fun TooltipArea(tooltip: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun TooltipArea(
+    tooltip: String,
+    modifier: Modifier = Modifier,
+    delayMillis: Int = TOOLTIP_DELAY_MEDIUM,
+    content: @Composable () -> Unit,
+) {
     TooltipArea(
         tooltip = {
             Surface(shape = RoundedCornerShape(Dimens.cornerSize), elevation = Dimens.tooltipElevation) {
@@ -25,6 +34,7 @@ fun TooltipArea(tooltip: String, modifier: Modifier = Modifier, content: @Compos
             }
         },
         modifier = modifier,
+        delayMillis = delayMillis,
         content = content,
     )
 }

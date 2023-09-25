@@ -53,7 +53,7 @@ fun LibraryPanel() {
                 modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3),
             )
 
-            HorizontalDivider(Modifier.padding(bottom = Dimens.space3))
+            HorizontalDivider(Modifier.padding(top = Dimens.space2))
 
             MaxWidthButton(
                 text = "Artists",
@@ -71,14 +71,18 @@ fun LibraryPanel() {
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3),
             ) {
-                Text(
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
                     modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.h5,
-                    text = "Playlists",
-                )
+                ) {
+                    Text(text = "Playlists", style = MaterialTheme.typography.h5, maxLines = 1)
+
+                    LibraryInvalidateButton(LocalSavedPlaylistRepository.current)
+                }
 
                 TooltipArea(
                     tooltip = "${Application.name} cannot access or manage Spotify playlist folders due to API " +
@@ -93,9 +97,7 @@ fun LibraryPanel() {
                 }
             }
 
-            LibraryInvalidateButton(LocalSavedPlaylistRepository.current)
-
-            HorizontalDivider(Modifier.padding(bottom = Dimens.space3))
+            HorizontalDivider(Modifier.padding(top = Dimens.space2))
 
             val playlistRepository = LocalPlaylistRepository.current
             val savedPlaylistRepository = LocalSavedPlaylistRepository.current

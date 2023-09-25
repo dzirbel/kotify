@@ -174,38 +174,29 @@ private fun ArtistPageHeader(
                     id = artistId,
                     size = Dimens.iconMedium,
                 )
+
+                InvalidateButton(
+                    repository = LocalArtistRepository.current,
+                    id = artistId,
+                    modifier = Modifier.align(Alignment.Bottom),
+                    icon = "account-circle",
+                )
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+            ) {
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                     if (albums.derived { it.hasElements }.value) {
                         val size = albums.derived { it.size }.value
-                        Text(
-                            text = "$size albums",
-                            modifier = Modifier.padding(end = Dimens.space2),
-                        )
+                        Text("$size albums")
 
                         Interpunct()
-                    }
-
-                    if (artist != null) {
-                        InvalidateButton(
-                            repository = LocalArtistRepository.current,
-                            id = artist.id,
-                            entityName = "Artist",
-                            contentPadding = PaddingValues(all = Dimens.space2),
-                        )
-
-                        Interpunct()
-
-                        InvalidateButton(
-                            repository = LocalArtistAlbumsRepository.current,
-                            id = artist.id,
-                            entityName = "Albums",
-                            contentPadding = PaddingValues(all = Dimens.space2),
-                        )
                     }
                 }
+
+                InvalidateButton(LocalArtistAlbumsRepository.current, artistId, icon = "album")
             }
         }
 

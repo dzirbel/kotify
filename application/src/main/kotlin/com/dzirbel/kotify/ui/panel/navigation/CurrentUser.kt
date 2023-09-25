@@ -42,9 +42,9 @@ import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.VerticalSpacer
-import com.dzirbel.kotify.ui.components.liveRelativeDateText
+import com.dzirbel.kotify.ui.components.liveRelativeTime
 import com.dzirbel.kotify.ui.theme.Dimens
-import com.dzirbel.kotify.ui.util.maxIntrinsicWidth
+import com.dzirbel.kotify.ui.util.intrinsicSize
 import com.dzirbel.kotify.ui.util.openInBrowser
 import com.dzirbel.kotify.util.CurrentTime
 import java.time.format.DateTimeFormatter
@@ -198,7 +198,7 @@ private fun CurrentUserDropdown(
 
 @Composable
 private fun AccessTokenDetails(token: AccessToken?) {
-    Column(Modifier.maxIntrinsicWidth(0.dp)) {
+    Column(Modifier.intrinsicSize(maxWidth = 0.dp)) {
         if (token != null) {
             Text("Access token:")
             VerticalSpacer(Dimens.space2)
@@ -219,11 +219,11 @@ private fun AccessTokenDetails(token: AccessToken?) {
             val expires = remember(token.expiresInstant) {
                 accessTokenDateFormat.format(token.expiresInstant.atZone(CurrentTime.zoneId))
             }
-            val receivedRelative = liveRelativeDateText(timestamp = token.receivedInstant.toEpochMilli())
-            val expiresRelative = liveRelativeDateText(timestamp = token.expiresInstant.toEpochMilli())
-            Text("Received $received ($receivedRelative)")
+            val receivedRelative = liveRelativeTime(timestamp = token.receivedInstant.toEpochMilli())
+            val expiresRelative = liveRelativeTime(timestamp = token.expiresInstant.toEpochMilli())
+            Text("Received $received (${receivedRelative.formatLong()})")
             VerticalSpacer(Dimens.space2)
-            Text("Expires $expires ($expiresRelative)")
+            Text("Expires $expires (${expiresRelative.formatLong()})")
 
             VerticalSpacer(Dimens.space4)
 

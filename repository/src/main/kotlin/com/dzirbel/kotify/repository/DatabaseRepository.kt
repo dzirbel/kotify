@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 
 abstract class DatabaseRepository<ViewModel, DatabaseType, NetworkType> internal constructor(
-    protected val entityName: String,
+    override val entityName: String,
     protected val scope: CoroutineScope,
     private val entityNamePlural: String = entityName + 's', // TODO use pluralize utils
 ) : Repository<ViewModel>, ConvertingRepository<DatabaseType, NetworkType> {

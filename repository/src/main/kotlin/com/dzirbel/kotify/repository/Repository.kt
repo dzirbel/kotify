@@ -43,6 +43,11 @@ interface Repository<T> : Logging<Repository.LogData> {
         get() = CacheStrategy.AlwaysValid()
 
     /**
+     * A user-readable name for the type of entity stored in this repository, e.g. "artist".
+     */
+    val entityName: String
+
+    /**
      * Retrieves a [StateFlow] which reflects the live [CacheState] of the entity with the given [id].
      *
      * The returned [StateFlow] is generally the same instance across calls with the same [id], but if there are no

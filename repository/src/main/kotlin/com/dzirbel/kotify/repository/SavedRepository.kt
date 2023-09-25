@@ -40,10 +40,15 @@ interface SavedRepository : Logging<Repository.LogData> {
     val library: StateFlow<Library?>
 
     /**
-     * Reflects whether the [library] is currently being refreshed, either as a first load or a subsequently via
+     * Reflects whether the [library] is currently being refreshed, either as a first load or subsequently via
      * [refreshLibrary].
      */
     val libraryRefreshing: StateFlow<Boolean>
+
+    /**
+     * A user-readable name for the type of saved entity stored in this repository, e.g. "artist".
+     */
+    val entityName: String
 
     /**
      * Initializes the [SavedRepository], typically loading the library from a local source.

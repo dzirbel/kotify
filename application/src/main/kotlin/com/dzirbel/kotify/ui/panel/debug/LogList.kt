@@ -41,7 +41,7 @@ import com.dzirbel.kotify.ui.components.adapter.SortableProperty
 import com.dzirbel.kotify.ui.components.adapter.asComparator
 import com.dzirbel.kotify.ui.components.adapter.compareBy
 import com.dzirbel.kotify.ui.components.adapter.compareByNullable
-import com.dzirbel.kotify.ui.components.liveRelativeDateText
+import com.dzirbel.kotify.ui.components.liveRelativeTime
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyTypography
 import com.dzirbel.kotify.ui.util.ProvidingDisabledContentAlpha
@@ -386,11 +386,11 @@ private fun liveEventTimeText(timestamp: Long): String {
     val eventDateString = remember(timestamp) { dateFormat.format(eventDate) }
     val eventTimeString = remember(timestamp) { timeFormat.format(eventDate) }
 
-    return liveRelativeDateText(timestamp = timestamp) { relativeString ->
-        buildString {
-            if (eventDate.toLocalDate() != LocalDate.now()) append("$eventDateString ")
-            append("$eventTimeString ($relativeString)")
-        }
+    val relativeTime = liveRelativeTime(timestamp = timestamp)
+
+    return buildString {
+        if (eventDate.toLocalDate() != LocalDate.now()) append("$eventDateString ")
+        append("$eventTimeString (${relativeTime.formatLong()})")
     }
 }
 

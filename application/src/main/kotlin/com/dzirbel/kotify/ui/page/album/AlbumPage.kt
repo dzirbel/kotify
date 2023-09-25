@@ -3,7 +3,6 @@ package com.dzirbel.kotify.ui.page.album
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -20,6 +19,7 @@ import com.dzirbel.kotify.ui.LocalAlbumTracksRepository
 import com.dzirbel.kotify.ui.LocalRatingRepository
 import com.dzirbel.kotify.ui.LocalSavedAlbumRepository
 import com.dzirbel.kotify.ui.LocalSavedTrackRepository
+import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -124,69 +124,89 @@ private fun AlbumHeader(albumId: String, adapter: ListAdapterState<TrackViewMode
     val album = albumCacheState?.cachedValue
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.padding(Dimens.space4),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            LoadedImage(key = album?.id) { size -> album?.imageUrlFor(size) }
+        LoadedImage(key = albumId) { size -> album?.imageUrlFor(size) }
 
-            if (album != null) {
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-                    Text(album.name, style = MaterialTheme.typography.h5)
+        if (album != null) {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+                Text(album.name, style = MaterialTheme.typography.h3)
 
-                    album.artists.collectAsState().value?.let { artists ->
-                        LinkedText(
-                            onClickLink = { artistId -> pageStack.mutate { to(ArtistPage(artistId = artistId)) } },
-                        ) {
-                            text("By ")
-                            list(artists) { artist -> link(text = artist.name, link = artist.id) }
-                        }
-                    }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+                ) {
+                    PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconMedium)
 
-                    album.releaseDate?.let { Text(it) }
-
-                    val totalDuration = remember(adapter.value) {
-                        takingIf(adapter.value.hasElements) {
-                            adapter.value.sumOf { it.durationMs }.milliseconds.formatMediumDuration()
-                        }
-                    }
-
-                    Text("${album.totalTracks} songs" + totalDuration?.let { ", $it" })
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        ToggleSaveButton(
-                            repository = LocalSavedAlbumRepository.current,
-                            id = albumId,
-                            size = Dimens.iconMedium,
-                        )
-
-                        PlayButton(context = Player.PlayContext.album(album), size = Dimens.iconMedium)
-                    }
-
-                    val albumTracksRepository = LocalAlbumTracksRepository.current
-                    val ratingRepository = LocalRatingRepository.current
-                    val averageRating = remember(albumId) {
-                        albumTracksRepository.stateOf(id = albumId)
-                            .mapNotNull { it?.cachedValue?.tracks?.map { track -> track.id } }
-                            .flatMapLatest { tracks -> ratingRepository.averageRatingStateOf(ids = tracks) }
-                    }
-                        .collectAsState(initial = null)
-                        .value
-
-                    AverageStarRating(averageRating = averageRating)
+                    ToggleSaveButton(
+                        repository = LocalSavedAlbumRepository.current,
+                        id = albumId,
+                        size = Dimens.iconMedium,
+                    )
                 }
-            }
-        }
 
-        Column {
-            InvalidateButton(repository = LocalAlbumRepository.current, id = albumId, entityName = "Album")
-            InvalidateButton(repository = LocalAlbumTracksRepository.current, id = albumId, entityName = "Tracks")
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                ) {
+                    val artists = album.artists.collectAsState().value
+                    LinkedText(
+                        onClickLink = { artistId -> pageStack.mutate { to(ArtistPage(artistId = artistId)) } },
+                        key = artists,
+                    ) {
+                        text("By ")
+                        if (artists != null) {
+                            list(artists) { artist -> link(text = artist.name, link = artist.id) }
+                        } else {
+                            text("...")
+                        }
+                    }
+
+                    album.releaseDate?.let { releaseDate ->
+                        Interpunct()
+                        Text(releaseDate)
+                    }
+
+                    Interpunct()
+                    InvalidateButton(repository = LocalAlbumRepository.current, id = albumId, icon = "album")
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                ) {
+                    Text("${album.totalTracks} songs")
+
+                    val totalDuration = adapter.derived { adapter ->
+                        takingIf(adapter.hasElements) {
+                            adapter.sumOf { it.durationMs }.milliseconds.formatMediumDuration()
+                        }
+                    }
+
+                    Interpunct()
+                    Text(totalDuration.value ?: "...")
+
+                    Interpunct()
+                    InvalidateButton(
+                        repository = LocalAlbumTracksRepository.current,
+                        id = albumId,
+                        icon = "queue-music",
+                    )
+                }
+
+                val albumTracksRepository = LocalAlbumTracksRepository.current
+                val ratingRepository = LocalRatingRepository.current
+                val averageRating = remember(albumId) {
+                    albumTracksRepository.stateOf(id = albumId)
+                        .mapNotNull { it?.cachedValue?.tracks?.map { track -> track.id } }
+                        .flatMapLatest { tracks -> ratingRepository.averageRatingStateOf(ids = tracks) }
+                }
+                    .collectAsState(initial = null)
+                    .value
+
+                AverageStarRating(averageRating = averageRating)
+            }
         }
     }
 }

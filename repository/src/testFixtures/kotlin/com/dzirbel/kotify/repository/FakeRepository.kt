@@ -11,6 +11,8 @@ open class FakeRepository<T>(values: Map<String, T> = emptyMap()) : Repository<T
 
     override val log = FakeLog<Repository.LogData>()
 
+    override val entityName = "test entity"
+
     private val cache: MutableMap<String, CacheState<T>> =
         values.mapValues { CacheState.Loaded(it.value, CurrentTime.instant) }.toMutableMap()
 

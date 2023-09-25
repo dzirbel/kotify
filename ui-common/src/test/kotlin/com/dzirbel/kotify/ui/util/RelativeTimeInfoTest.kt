@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 
 internal class RelativeTimeInfoTest {
     data class RelativeTestCase(val timestamp: Long, val now: Long, val expected: RelativeTimeInfo)
-    data class FormatTestCase(val info: RelativeTimeInfo, val format: String)
+    data class FormatTestCase(val info: RelativeTimeInfo, val formatLong: String, val formatShort: String)
 
     @ParameterizedTest
     @MethodSource
@@ -23,7 +23,8 @@ internal class RelativeTimeInfoTest {
     @ParameterizedTest
     @MethodSource
     fun testFormat(case: FormatTestCase) {
-        assertThat(case.info.format()).isEqualTo(case.format)
+        assertThat(case.info.formatLong()).isEqualTo(case.formatLong)
+        assertThat(case.info.formatShort()).isEqualTo(case.formatShort)
     }
 
     companion object {
@@ -105,47 +106,58 @@ internal class RelativeTimeInfoTest {
             return listOf(
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 0, msUntilNextIncrement = 0),
-                    format = "now",
+                    formatLong = "now",
+                    formatShort = "now",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 1, msUntilNextIncrement = 0),
-                    format = "in 1 second",
+                    formatLong = "in 1 second",
+                    formatShort = "1s",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = -1, msUntilNextIncrement = 0),
-                    format = "1 second ago",
+                    formatLong = "1 second ago",
+                    formatShort = "1s",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = 2, msUntilNextIncrement = 0),
-                    format = "in 2 seconds",
+                    formatLong = "in 2 seconds",
+                    formatShort = "2s",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.SECONDS, amount = -2, msUntilNextIncrement = 0),
-                    format = "2 seconds ago",
+                    formatLong = "2 seconds ago",
+                    formatShort = "2s",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.MINUTES, amount = 3, msUntilNextIncrement = 0),
-                    format = "in 3 minutes",
+                    formatLong = "in 3 minutes",
+                    formatShort = "3m",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.MINUTES, amount = -3, msUntilNextIncrement = 0),
-                    format = "3 minutes ago",
+                    formatLong = "3 minutes ago",
+                    formatShort = "3m",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.HOURS, amount = 4, msUntilNextIncrement = 0),
-                    format = "in 4 hours",
+                    formatLong = "in 4 hours",
+                    formatShort = "4h",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.HOURS, amount = -4, msUntilNextIncrement = 0),
-                    format = "4 hours ago",
+                    formatLong = "4 hours ago",
+                    formatShort = "4h",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.DAYS, amount = 5, msUntilNextIncrement = 0),
-                    format = "in 5 days",
+                    formatLong = "in 5 days",
+                    formatShort = "5d",
                 ),
                 FormatTestCase(
                     info = RelativeTimeInfo(unit = TimeUnit.DAYS, amount = -5, msUntilNextIncrement = 0),
-                    format = "5 days ago",
+                    formatLong = "5 days ago",
+                    formatShort = "5d",
                 ),
             )
         }

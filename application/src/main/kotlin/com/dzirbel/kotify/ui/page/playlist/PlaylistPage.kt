@@ -3,7 +3,6 @@ package com.dzirbel.kotify.ui.page.playlist
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -27,6 +26,7 @@ import com.dzirbel.kotify.ui.LocalRatingRepository
 import com.dzirbel.kotify.ui.LocalSavedPlaylistRepository
 import com.dzirbel.kotify.ui.LocalSavedTrackRepository
 import com.dzirbel.kotify.ui.LocalUserRepository
+import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PageLoadingSpinner
@@ -34,9 +34,7 @@ import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.SortSelector
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
-import com.dzirbel.kotify.ui.components.adapter.ListAdapter
-import com.dzirbel.kotify.ui.components.adapter.Sort
-import com.dzirbel.kotify.ui.components.adapter.SortableProperty
+import com.dzirbel.kotify.ui.components.adapter.ListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.asComparator
 import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
@@ -55,6 +53,7 @@ import com.dzirbel.kotify.ui.properties.TrackPopularityProperty
 import com.dzirbel.kotify.ui.properties.TrackRatingProperty
 import com.dzirbel.kotify.ui.properties.TrackSavedProperty
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.rememberRatingStates
 import com.dzirbel.kotify.ui.util.rememberSavedStates
 import com.dzirbel.kotify.util.coroutines.mapIn
@@ -62,7 +61,6 @@ import com.dzirbel.kotify.util.immutable.orEmpty
 import com.dzirbel.kotify.util.immutable.persistentListOfNotNull
 import com.dzirbel.kotify.util.takingIf
 import com.dzirbel.kotify.util.time.formatMediumDuration
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.Flow
@@ -111,18 +109,44 @@ data class PlaylistPage(private val playlistId: String) : Page {
                 PlaylistHeader(
                     playlistId = playlistId,
                     playlist = playlist,
-                    sortableProperties = columns.sortableProperties(),
-                    adapter = playlistTracksAdapter.value,
-                    onSetSort = { playlistTracksAdapter.mutate { withSort(it) } },
+                    adapter = playlistTracksAdapter,
                 )
             },
         ) {
             if (playlistTracksAdapter.value.hasElements) {
-                Table(
-                    columns = columns,
-                    items = playlistTracksAdapter.value,
-                    onSetSort = { playlistTracksAdapter.mutate { withSort(persistentListOfNotNull(it)) } },
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = Dimens.space4),
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                    ) {
+                        val sortableProperties = columns.sortableProperties()
+                        SortSelector(
+                            sortableProperties = sortableProperties,
+                            sorts = playlistTracksAdapter.value.sorts.orEmpty(),
+                            onSetSort = { playlistTracksAdapter.mutate { withSort(it) } },
+                        )
+
+                        PlaylistReorderButton(
+                            enabled = !playlistTracksAdapter.value.sorts.isNullOrEmpty() &&
+                                playlistTracksAdapter.value.hasElements,
+                            reorder = {
+                                playlistTracksRepository.reorder(
+                                    playlistId = playlistId,
+                                    tracks = playlistTracksAdapter.value.toList(),
+                                    comparator = requireNotNull(playlistTracksAdapter.value.sorts).asComparator(),
+                                )
+                            },
+                            // TODO doesn't seem quite right... just revert to order by index on playlist?
+                            onReorderFinish = { playlistTracksAdapter.mutate { withSort(persistentListOf()) } },
+                        )
+                    }
+
+                    Table(
+                        columns = columns,
+                        items = playlistTracksAdapter.value,
+                        onSetSort = { playlistTracksAdapter.mutate { withSort(persistentListOfNotNull(it)) } },
+                    )
+                }
             } else {
                 PageLoadingSpinner()
             }
@@ -134,86 +158,80 @@ data class PlaylistPage(private val playlistId: String) : Page {
 private fun PlaylistHeader(
     playlistId: String,
     playlist: PlaylistViewModel?,
-    sortableProperties: ImmutableList<SortableProperty<PlaylistTrackViewModel>>,
-    adapter: ListAdapter<PlaylistTrackViewModel>,
-    onSetSort: (PersistentList<Sort<PlaylistTrackViewModel>>) -> Unit,
+    adapter: ListAdapterState<PlaylistTrackViewModel>,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(Dimens.space4),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.padding(Dimens.space4),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            LoadedImage(key = playlist?.id) { size -> playlist?.imageUrlFor(size) }
+        LoadedImage(key = playlistId) { size -> playlist?.imageUrlFor(size) }
 
-            if (playlist != null) {
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-                    Text(playlist.name, style = MaterialTheme.typography.h5)
+        if (playlist != null) {
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+                Text(playlist.name, style = MaterialTheme.typography.h3)
 
-                    playlist.description?.takeIf { it.isNotEmpty() }?.let {
-                        Text(it)
-                    }
+                playlist.description?.takeIf { it.isNotEmpty() }?.let {
+                    // TODO format <a> links, which are present in some Spotify-generated playlists
+                    Text(it)
+                }
 
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ToggleSaveButton(
+                        repository = LocalSavedPlaylistRepository.current,
+                        id = playlistId,
+                        size = Dimens.iconMedium,
+                    )
+
+                    PlayButton(context = Player.PlayContext.playlist(playlist))
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                ) {
                     val owner = LocalUserRepository.current.stateOf(id = playlist.ownerId)
                         .collectAsState()
                         .value
                         ?.cachedValue
-                    Text("Created by ${owner?.name ?: "..."}; ${playlist.followersTotal} followers")
+                    Text("Created by ${owner?.name ?: "..."}")
 
-                    val totalDuration = takingIf(adapter.hasElements) {
-                        remember(adapter) {
-                            adapter
-                                .sumOf { it.track?.durationMs ?: it.episode?.durationMs ?: 0 }
-                                .milliseconds
-                                .formatMediumDuration()
+                    Interpunct()
+                    Text("${playlist.followersTotal} followers")
+
+                    Interpunct()
+                    InvalidateButton(
+                        repository = LocalPlaylistRepository.current,
+                        id = playlistId,
+                        icon = "play-lesson",
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                ) {
+                    Text("${playlist.totalTracks} songs")
+
+                    val totalDuration = adapter.derived { adapter ->
+                        takingIf(adapter.hasElements) {
+                            adapter.sumOf { it.duration }.milliseconds.formatMediumDuration()
                         }
                     }
 
-                    Text("${playlist.totalTracks} songs" + totalDuration?.let { ", $it" })
+                    Interpunct()
+                    Text(totalDuration.value ?: "...")
 
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        ToggleSaveButton(
-                            repository = LocalSavedPlaylistRepository.current,
-                            id = playlistId,
-                            size = Dimens.iconMedium,
-                        )
-
-                        PlayButton(context = Player.PlayContext.playlist(playlist))
-                    }
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space2)) {
-                        SortSelector(
-                            sortableProperties = sortableProperties,
-                            sorts = adapter.sorts.orEmpty(),
-                            onSetSort = onSetSort,
-                        )
-
-                        val playlistTracksRepository = LocalPlaylistTracksRepository.current
-                        PlaylistReorderButton(
-                            enabled = !adapter.sorts.isNullOrEmpty() && adapter.hasElements,
-                            reorder = {
-                                playlistTracksRepository.reorder(
-                                    playlistId = playlistId,
-                                    tracks = adapter.toList(),
-                                    comparator = requireNotNull(adapter.sorts).asComparator(),
-                                )
-                            },
-                            // TODO doesn't seem quite right... just revert to order by index on playlist?
-                            onReorderFinish = { onSetSort(persistentListOf()) },
-                        )
-                    }
+                    Interpunct()
+                    InvalidateButton(
+                        repository = LocalPlaylistTracksRepository.current,
+                        id = playlistId,
+                        icon = "queue-music",
+                    )
                 }
             }
-        }
-
-        Row {
-            InvalidateButton(repository = LocalPlaylistRepository.current, id = playlistId, entityName = "Playlist")
-            InvalidateButton(repository = LocalPlaylistTracksRepository.current, id = playlistId, entityName = "Tracks")
         }
     }
 }

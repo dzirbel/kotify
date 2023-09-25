@@ -43,7 +43,7 @@ import com.dzirbel.kotify.ui.components.adapter.dividableProperties
 import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.sortableProperties
 import com.dzirbel.kotify.ui.components.grid.Grid
-import com.dzirbel.kotify.ui.components.liveRelativeDateText
+import com.dzirbel.kotify.ui.components.liveRelativeTime
 import com.dzirbel.kotify.ui.components.star.RatingHistogram
 import com.dzirbel.kotify.ui.components.toImageSize
 import com.dzirbel.kotify.ui.page.Page
@@ -172,21 +172,18 @@ private fun ArtistsPageHeader(
             Text("Artists", style = MaterialTheme.typography.h4)
 
             if (artistsAdapter.derived { it.hasElements }.value) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                ) {
                     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                         val size = artistsAdapter.derived { it.size }.value
-                        Text(
-                            text = "$size saved artists",
-                            modifier = Modifier.padding(end = Dimens.space2),
-                        )
+                        Text("$size saved artists")
 
                         Interpunct()
-
-                        LibraryInvalidateButton(
-                            savedRepository = LocalSavedArtistRepository.current,
-                            contentPadding = PaddingValues(all = Dimens.space2),
-                        )
                     }
+
+                    LibraryInvalidateButton(LocalSavedArtistRepository.current)
                 }
             }
         }
@@ -226,7 +223,8 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
                 .derived { it?.cacheTime?.toEpochMilli() }
                 .value
                 ?.let { timestamp ->
-                    Text(liveRelativeDateText(timestamp = timestamp) { "Saved $it" })
+                    val relativeTime = liveRelativeTime(timestamp = timestamp)
+                    Text("Saved ${relativeTime.formatLong()}")
                 }
 
             artist.genres.collectAsState().value?.let { genres ->

@@ -10,6 +10,8 @@ open class FakeSavedRepository(savedStates: Map<String, Boolean> = emptyMap()) :
 
     override val log = FakeLog<Repository.LogData>()
 
+    override val entityName = "test entity"
+
     private val savedStates: MutableMap<String, Boolean> = savedStates.toMutableMap()
 
     override val library: StateFlow<SavedRepository.Library?>

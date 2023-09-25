@@ -1,116 +1,141 @@
 package com.dzirbel.kotify.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
-import androidx.compose.material.LocalTextStyle
+import androidx.compose.material.LocalContentColor
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.repository.CacheState
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.util.RelativeTimeInfo
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
+import com.dzirbel.kotify.ui.util.intrinsicSize
 
-/**
- * Either an indefinite progress indicator when [refreshing] is true, otherwise a refresh icon.
- */
-@Composable
-fun RefreshIcon(refreshing: Boolean, size: Dp = Dimens.iconMedium) {
-    if (refreshing) {
-        CircularProgressIndicator(Modifier.size(size))
-    } else {
-        Icon(
-            imageVector = Icons.Filled.Refresh,
-            contentDescription = "Refresh",
-            modifier = Modifier.size(size),
-        )
-    }
-}
-
-/**
- * A [SimpleTextButton] which handles the common case of invalidating a cached resource.
- */
-@Composable
-fun InvalidateButton(
-    refreshing: Boolean,
-    updated: Long?,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
-    fontSize: TextUnit = LocalTextStyle.current.fontSize,
-    updatedFormat: (String) -> String = { "Synced $it" },
-    updatedFallback: String = "Never synced",
-    onClick: () -> Unit,
-) {
-    SimpleTextButton(
-        modifier = modifier.instrument(),
-        enabled = !refreshing,
-        contentPadding = contentPadding,
-        onClick = onClick,
-    ) {
-        Text(
-            fontSize = fontSize,
-            text = updated?.let {
-                liveRelativeDateText(timestamp = updated, format = updatedFormat)
-            } ?: updatedFallback,
-        )
-
-        HorizontalSpacer(Dimens.space2)
-
-        RefreshIcon(refreshing = refreshing, size = Dimens.iconSizeFor(fontSize))
-    }
-}
-
-/**
- * A wrapper around [InvalidateButton] which reflects the [CacheState] of the entity with the given [id] in the given
- * [repository]
- */
-@Composable
-fun InvalidateButton(
-    repository: Repository<*>,
-    id: String,
-    entityName: String,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
-    fontSize: TextUnit = LocalTextStyle.current.fontSize,
-) {
-    val cacheState = repository.stateOf(id = id).collectAsState().value
-    InvalidateButton(
-        refreshing = cacheState is CacheState.Refreshing,
-        updated = cacheState?.cacheTime?.toEpochMilli(),
-        updatedFormat = { "$entityName synced $it" },
-        updatedFallback = "$entityName never synced",
-        onClick = { repository.refreshFromRemote(id = id) },
-        modifier = modifier,
-        contentPadding = contentPadding,
-        fontSize = fontSize,
-    )
-}
-
-/**
- * A wrapper around [InvalidateButton] which reflects the state of the library for the given [savedRepository].
- */
+// TODO expose errors syncing library
 @Composable
 fun LibraryInvalidateButton(
     savedRepository: SavedRepository,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
-    fontSize: TextUnit = LocalTextStyle.current.fontSize,
+    icon: String? = null,
+    contentPadding: PaddingValues = PaddingValues(Dimens.space1),
 ) {
     InvalidateButton(
         refreshing = savedRepository.libraryRefreshing.collectAsState().value,
         updated = savedRepository.library.collectAsState().derived { it?.cacheTime?.toEpochMilli() }.value,
         onClick = savedRepository::refreshLibrary,
         modifier = modifier,
+        icon = icon,
+        entityName = "${savedRepository.entityName} library",
         contentPadding = contentPadding,
-        fontSize = fontSize,
     )
+}
+
+@Composable
+fun InvalidateButton(
+    repository: Repository<*>,
+    id: String,
+    modifier: Modifier = Modifier,
+    icon: String? = null,
+    contentPadding: PaddingValues = PaddingValues(Dimens.space1),
+) {
+    val cacheState = repository.stateOf(id = id).collectAsState().value
+    InvalidateButton(
+        refreshing = cacheState is CacheState.Refreshing,
+        updated = cacheState?.cacheTime?.toEpochMilli(),
+        onClick = { repository.refreshFromRemote(id = id) },
+        modifier = modifier,
+        error = cacheState is CacheState.Error,
+        icon = icon,
+        entityName = repository.entityName,
+        contentPadding = contentPadding,
+    )
+}
+
+@Composable
+fun InvalidateButton(
+    refreshing: Boolean,
+    updated: Long?,
+    modifier: Modifier = Modifier,
+    error: Boolean = false,
+    icon: String? = null,
+    contentPadding: PaddingValues = PaddingValues(Dimens.space1),
+    entityName: String? = null,
+    // TODO include TTL(s) in tooltip
+    tooltip: (RelativeTimeInfo?) -> String = { relativeTime ->
+        relativeTime?.let { "Last fetched ${entityName?.plus(' ').orEmpty()}from Spotify ${it.formatLong()}" }
+            ?: "Never fetched ${entityName?.plus(' ').orEmpty()}from Spotify"
+    },
+    onClick: () -> Unit,
+) {
+    val relativeTime = updated?.let { liveRelativeTime(timestamp = updated) }
+
+    TooltipArea(tooltip = tooltip(relativeTime), delayMillis = TOOLTIP_DELAY_LONG, modifier = modifier) {
+        SimpleTextButton(
+            modifier = Modifier.instrument(),
+            enabled = !refreshing,
+            onClick = onClick,
+            contentPadding = contentPadding,
+            enforceMinWidth = false,
+        ) {
+            Row(
+                modifier = Modifier.height(IntrinsicSize.Min),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.space1),
+            ) {
+                if (icon != null) {
+                    CachedIcon(name = icon, size = null, modifier = Modifier.fillMaxHeight().aspectRatio(1f))
+                }
+
+                if (refreshing) {
+                    // hack: CircularProgressIndicator has a hardcoded size() which will prevent its intrinsic size from
+                    // ever being overridden, so we wrap in a Box with a forced intrinsic size of zero and also force
+                    // the width to equal the height (which will be specified by the row to match the minimum intrinsic
+                    // height, i.e. the text height)
+                    Box(
+                        modifier = Modifier
+                            .intrinsicSize(minWidth = 0.dp, minHeight = 0.dp)
+                            .layout { measurable, constraints ->
+                                val placeable = measurable.measure(constraints.copy(maxWidth = constraints.maxHeight))
+                                layout(placeable.width, placeable.height) {
+                                    placeable.place(0, 0)
+                                }
+                            },
+                    ) {
+                        CircularProgressIndicator(strokeWidth = 2.dp, strokeCap = StrokeCap.Round)
+                    }
+                } else {
+                    CachedIcon(
+                        name = when {
+                            error -> "error"
+                            relativeTime == null -> "cloud-off"
+                            else -> "cloud-download"
+                        },
+                        size = null,
+                        modifier = Modifier.fillMaxHeight().aspectRatio(1f),
+                        tint = if (error) MaterialTheme.colors.error else LocalContentColor.current,
+                    )
+                }
+
+                Text(text = relativeTime?.formatShort() ?: "never", maxLines = 1)
+            }
+        }
+    }
 }

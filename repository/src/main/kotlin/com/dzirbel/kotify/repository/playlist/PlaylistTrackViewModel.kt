@@ -16,6 +16,9 @@ data class PlaylistTrackViewModel(
         addedAt?.let { Instant.parse(it) }
     }
 
+    val duration: Long
+        get() = track?.durationMs ?: episode?.durationMs ?: 0
+
     constructor(
         playlistTrack: PlaylistTrack,
         track: TrackViewModel? = playlistTrack.track?.let(::TrackViewModel),

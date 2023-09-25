@@ -18,7 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 internal class ArtistPageScreenshotTest {
     @Test
     fun empty() {
-        themedScreenshotTest(filename = "empty") {
+        themedScreenshotTest(filename = "empty", windowWidth = 1500) {
             ProvideFakeRepositories {
                 ArtistPage(artistId = "artistId").render()
             }

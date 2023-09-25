@@ -9,7 +9,7 @@ import com.dzirbel.contextmenu.ContextMenuParams
 import com.dzirbel.contextmenu.CustomContentContextMenuItem
 import com.dzirbel.contextmenu.MaterialContextMenuItem
 import com.dzirbel.kotify.repository.rating.Rating
-import com.dzirbel.kotify.ui.components.liveRelativeDateText
+import com.dzirbel.kotify.ui.components.liveRelativeTime
 import com.dzirbel.kotify.ui.theme.Dimens
 
 /**
@@ -39,7 +39,8 @@ fun StarRating(
 
                         @Composable
                         override fun Content(onDismissRequest: () -> Unit, params: ContextMenuParams) {
-                            Text("Rated ${liveRelativeDateText(rating.rateTime.toEpochMilli())}")
+                            val relativeTime = liveRelativeTime(rating.rateTime.toEpochMilli())
+                            Text("Rated ${relativeTime.formatLong()}")
                         }
                     },
                     MaterialContextMenuItem(

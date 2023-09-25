@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentMap
 fun CachedIcon(
     name: String,
     modifier: Modifier = Modifier,
-    size: Dp = Dimens.iconMedium,
+    size: Dp? = Dimens.iconMedium,
     contentDescription: String? = null,
     tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
 ) {
@@ -50,7 +50,7 @@ fun CachedIcon(
     Box(
         modifier = modifier
             .instrument()
-            .size(size)
+            .let { if (size == null) it else it.size(size) }
             .paintLazy(tint = tint) { painterState.value }
             .imageSemantics(contentDescription),
     )

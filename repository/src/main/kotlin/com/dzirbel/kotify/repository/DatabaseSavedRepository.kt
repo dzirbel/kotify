@@ -29,7 +29,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     /**
      * The singular name of an entity, used in transaction names; e.g. "artist".
      */
-    private val entityName: String = savedEntityTable.tableName.removePrefix("saved_").removeSuffix("s"),
+    override val entityName: String = savedEntityTable.tableName.removePrefix("saved_").removeSuffix("s"),
 
     /**
      * The base key used in the [GlobalUpdateTimesRepository] to mark when the library as a whole was last updated;
@@ -41,6 +41,8 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     protected val userRepository: UserRepository,
 ) : SavedRepository {
+    // TODO add library TTL
+    // TODO expose errors via CacheState of library
     private val libraryResource: CachedResource<SavedRepository.Library> = CachedResource(
         scope = scope,
         getFromCache = ::getLibraryCached,

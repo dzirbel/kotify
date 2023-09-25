@@ -8,7 +8,7 @@ import kotlin.math.abs
  * Represents a relative duration as an [amount] (which may be negative) and a [unit].
  *
  * This relative duration is meant to be user-friendly, simply truncated to the largest [TimeUnit] of the duration and
- * its [amount]. A user-readable representation can be obtained via [format].
+ * its [amount]. A user-readable representation can be obtained via [formatLong].
  *
  * Also includes the amount of time until the [amount] would change as [msUntilNextIncrement].
  */
@@ -18,9 +18,9 @@ data class RelativeTimeInfo(
     internal val msUntilNextIncrement: Long,
 ) {
     /**
-     * Returns a user-readable format of this [RelativeTimeInfo].
+     * Returns a user-readable format of this [RelativeTimeInfo] in the form of "X seconds ago" or "in X minutes".
      */
-    internal fun format(): String {
+    fun formatLong(): String {
         if (amount == 0L) return "now"
 
         val timeUnitName = when (unit) {
@@ -35,6 +35,23 @@ data class RelativeTimeInfo(
         val unitFormatted = if (absAmount == 1L) timeUnitName else timeUnitName + "s"
 
         return if (amount < 0) "$absAmount $unitFormatted ago" else "in $absAmount $unitFormatted"
+    }
+
+    /**
+     * Returns a user-readable format of this [RelativeTimeInfo] in the form of "Xs" or "Xm".
+     */
+    fun formatShort(): String {
+        if (amount == 0L) return "now"
+
+        val timeUnitName = when (unit) {
+            TimeUnit.SECONDS -> "s"
+            TimeUnit.MINUTES -> "m"
+            TimeUnit.HOURS -> "h"
+            TimeUnit.DAYS -> "d"
+            else -> error("unexpected TimeUnit $unit")
+        }
+
+        return "${abs(amount)}$timeUnitName"
     }
 
     companion object {

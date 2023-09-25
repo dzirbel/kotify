@@ -150,21 +150,18 @@ private fun AlbumsPageHeader(
             Text("Albums", style = MaterialTheme.typography.h4)
 
             if (albumsAdapter.derived { it.hasElements }.value) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                ) {
                     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                         val size = albumsAdapter.derived { it.size }.value
-                        Text(
-                            text = "$size saved albums",
-                            modifier = Modifier.padding(end = Dimens.space2),
-                        )
+                        Text("$size saved albums")
 
                         Interpunct()
-
-                        LibraryInvalidateButton(
-                            savedRepository = LocalSavedAlbumRepository.current,
-                            contentPadding = PaddingValues(all = Dimens.space2),
-                        )
                     }
+
+                    LibraryInvalidateButton(LocalSavedAlbumRepository.current)
                 }
             }
         }
