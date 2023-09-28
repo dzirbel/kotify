@@ -17,14 +17,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
+import java.io.File
 import java.util.concurrent.Executors
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 /**
  * Saves global settings as [SettingsData] objects in JSON.
- *
- * TODO handle deserialization failures properly, especially for changes in the SettingsData class between runs
  */
 object Settings {
     @Serializable
@@ -36,6 +35,8 @@ object Settings {
         val instrumentationMetricsPanels: Boolean = false,
     )
 
+    private val ioCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
     private var nullableSettings: SettingsData? = null
     private var settings: SettingsData
         get() = nullableSettings ?: (load() ?: SettingsData()).also { nullableSettings = it }
@@ -43,7 +44,9 @@ object Settings {
             val changed = nullableSettings != value
             nullableSettings = value
             if (changed) {
-                save(value)
+                GlobalScope.launch(ioCoroutineContext) {
+                    save(value)
+                }
             }
         }
 
@@ -59,12 +62,16 @@ object Settings {
         mutateSettings = { copy(instrumentationMetricsPanels = it) },
     )
 
-    private val ioCoroutineContext = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val settingsFile by lazy { Application.settingsDir.resolve("settings.json") }
+
+    @OptIn(ExperimentalSerializationApi::class)
     private val json = Json {
         prettyPrint = true
         encodeDefaults = true
         ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
+        decodeEnumsCaseInsensitive = true
     }
 
     /**
@@ -100,11 +107,11 @@ object Settings {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    private fun load(): SettingsData? {
+    fun load(file: File = settingsFile): SettingsData? {
         assertNotOnUIThread()
         val start = CurrentTime.mark
         return try {
-            settingsFile
+            file
                 .takeIf { it.isFile }
                 ?.inputStream()
                 ?.use { json.decodeFromStream<SettingsData>(it) }
@@ -122,23 +129,21 @@ object Settings {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    private fun save(data: SettingsData) {
-        GlobalScope.launch(context = ioCoroutineContext) {
-            val start = CurrentTime.mark
-            assertNotOnUIThread()
+    fun save(data: SettingsData, file: File = settingsFile) {
+        val start = CurrentTime.mark
+        assertNotOnUIThread()
 
-            try {
-                settingsFile.outputStream().use { outputStream ->
-                    json.encodeToStream(data, outputStream)
-                }
-                EventLog.info("Saved settings to ${settingsFile.absolutePath}", duration = start.elapsedNow())
-            } catch (ex: Throwable) {
-                EventLog.warn(
-                    title = "Error saving settings to ${settingsFile.absolutePath}",
-                    content = ex.stackTraceToString(),
-                    duration = start.elapsedNow(),
-                )
+        try {
+            file.outputStream().use { outputStream ->
+                json.encodeToStream(data, outputStream)
             }
+            EventLog.info("Saved settings to ${settingsFile.absolutePath}", duration = start.elapsedNow())
+        } catch (ex: Throwable) {
+            EventLog.warn(
+                title = "Error saving settings to ${settingsFile.absolutePath}",
+                content = ex.stackTraceToString(),
+                duration = start.elapsedNow(),
+            )
         }
     }
 }
