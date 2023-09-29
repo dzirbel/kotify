@@ -4,7 +4,6 @@ import com.dzirbel.kotify.repository.CacheState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -50,21 +49,17 @@ class CachedResource<T : Any>(
         if (!init.getAndSet(true)) {
             _flow.value = CacheState.Refreshing.of(_flow.value)
             cacheJob = scope.launch {
-                val cached = try {
-                    getFromCache()
+                _flow.value = try {
+                    getFromCache()?.let { CacheState.Loaded(it.first, it.second) }
                 } catch (_: CancellationException) {
                     null
                 } catch (throwable: Throwable) {
-                    _flow.value = CacheState.Error(throwable)
-                    null
+                    CacheState.Error(throwable)
                 }
 
-                ensureActive() // do not apply cached value if cancelled
-
-                _flow.value = cached?.first?.let { CacheState.Loaded(cached.first, cached.second) }
                 initFinished.set(true)
 
-                if (ensuredLoaded.get() && cached == null) {
+                if (ensuredLoaded.get() && _flow.value == null) {
                     launchRemote()
                 }
             }
@@ -116,24 +111,17 @@ class CachedResource<T : Any>(
     }
 
     private fun launchRemote() {
-        _flow.value = CacheState.Refreshing.of(_flow.value)
+        val previousValue = _flow.value
+        _flow.value = CacheState.Refreshing.of(previousValue)
         remoteJob?.cancel()
         remoteJob = scope.launch {
-            var success = false
-            val remote = try {
-                getFromRemote().also { success = true }
-            } catch (_: CancellationException) {
-                null
-            } catch (throwable: Throwable) {
-                _flow.value = CacheState.Error(throwable)
-                null
-            }
-
-            ensureActive() // do not apply new remote value if cancelled
-
-            if (success) {
-                _flow.value = remote?.first?.let { CacheState.Loaded(remote.first, remote.second) }
+            _flow.value = try {
+                getFromRemote()?.let { CacheState.Loaded(it.first, it.second) }
                     ?: CacheState.NotFound()
+            } catch (_: CancellationException) {
+                previousValue
+            } catch (throwable: Throwable) {
+                CacheState.Error(throwable)
             }
         }
     }
