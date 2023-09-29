@@ -13,19 +13,18 @@ open class FakeSavedRepository(savedStates: Map<String, Boolean> = emptyMap()) :
 
     private val savedStates: MutableMap<String, Boolean> = savedStates.toMutableMap()
 
-    override val library: StateFlow<SavedRepository.Library?>
+    override val library: StateFlow<CacheState<SavedRepository.Library>?>
         get() {
             return MutableStateFlow(
-                SavedRepository.Library(
-                    ids = savedStates.filterValues { it }.keys,
-                    saveTimes = emptyMap(),
+                CacheState.Loaded(
+                    cachedValue = SavedRepository.Library(
+                        ids = savedStates.filterValues { it }.keys,
+                        saveTimes = emptyMap(),
+                    ),
                     cacheTime = CurrentTime.instant,
                 ),
             )
         }
-
-    override val libraryRefreshing: StateFlow<Boolean>
-        get() = MutableStateFlow(false)
 
     override fun init() {}
 

@@ -21,7 +21,6 @@ interface SavedRepository : Logging<Repository.LogData> {
     data class Library(
         val ids: Set<String>,
         val saveTimes: Map<String, Instant>,
-        val cacheTime: Instant,
     ) {
         /**
          * Returns a [Library] adding the given [ids], and this [Library]'s [cacheTime].
@@ -71,13 +70,7 @@ interface SavedRepository : Logging<Repository.LogData> {
      * Only provided when the entire library has been fetched (e.g. the entire set of a user's followed artists) rather
      * than just individual states.
      */
-    val library: StateFlow<Library?>
-
-    /**
-     * Reflects whether the [library] is currently being refreshed, either as a first load or subsequently via
-     * [refreshLibrary].
-     */
-    val libraryRefreshing: StateFlow<Boolean>
+    val library: StateFlow<CacheState<Library>?>
 
     /**
      * A user-readable name for the type of saved entity stored in this repository, e.g. "artist".

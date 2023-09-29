@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import com.dzirbel.kotify.Application
+import com.dzirbel.kotify.repository.CacheState
 import com.dzirbel.kotify.repository.CacheStrategy
 import com.dzirbel.kotify.repository.playlist.PlaylistViewModel
 import com.dzirbel.kotify.ui.CachedIcon
@@ -102,13 +103,14 @@ fun LibraryPanel() {
             val playlistRepository = LocalPlaylistRepository.current
             val savedPlaylistRepository = LocalSavedPlaylistRepository.current
             val playlists = rememberListAdapterState(defaultSort = PlaylistLibraryOrderProperty) { scope ->
-                savedPlaylistRepository.library.flatMapLatestIn(scope) { library ->
-                    if (library == null) {
-                        MutableStateFlow(null)
+                savedPlaylistRepository.library.flatMapLatestIn(scope) { cacheState ->
+                    val ids = cacheState?.cachedValue?.ids
+                    if (ids == null) {
+                        MutableStateFlow(if (cacheState is CacheState.Error) emptyList() else null)
                     } else {
                         // TODO handle other cache states: shimmer when loading, show errors, etc
                         playlistRepository.statesOf(
-                            ids = library.ids,
+                            ids = ids,
                             cacheStrategy = CacheStrategy.EntityTTL(), // do not require a full playlist model
                         ).combinedStateWhenAllNotNull { it?.cachedValue }
                     }

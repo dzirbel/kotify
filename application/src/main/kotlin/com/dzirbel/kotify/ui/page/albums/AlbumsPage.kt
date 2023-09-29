@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.repository.CacheState
 import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
 import com.dzirbel.kotify.ui.LocalAlbumRepository
@@ -70,17 +71,20 @@ data object AlbumsPage : Page {
         val ratingRepository = LocalRatingRepository.current
 
         val displayedLibraryFlow = remember {
-            savedAlbumRepository.library
-                .runningFoldIn(scope) { accumulator, value -> value?.plus(accumulator?.ids) }
+            // TODO do not propagate error/not found states
+            savedAlbumRepository.library.runningFoldIn(scope) { accumulator, value ->
+                value?.map { it.plus(accumulator?.cachedValue?.ids) }
+            }
         }
 
         val imageSize = albumCellImageSize.toImageSize()
         val albumsAdapter = rememberListAdapterState(defaultSort = AlbumNameProperty, scope = scope) {
-            displayedLibraryFlow.flatMapLatestIn(scope) { library ->
-                if (library == null) {
-                    MutableStateFlow(null)
+            displayedLibraryFlow.flatMapLatestIn(scope) { cacheState ->
+                val ids = cacheState?.cachedValue?.ids
+                if (ids == null) {
+                    MutableStateFlow(if (cacheState is CacheState.Error) emptyList() else null)
                 } else {
-                    albumRepository.statesOf(library.ids)
+                    albumRepository.statesOf(ids)
                         .combinedStateWhenAllNotNull { it?.cachedValue }
                         .onEachIn(scope) { albums ->
                             albums?.requestBatched(
@@ -92,7 +96,7 @@ data object AlbumsPage : Page {
             }
         }
 
-        val albumIds = displayedLibraryFlow.collectAsState().value?.ids
+        val albumIds = displayedLibraryFlow.collectAsState().value?.cachedValue?.ids
         LocalAlbumTracksRepository.current.rememberStates(albumIds)
 
         val albumProperties = remember(albumIds) {

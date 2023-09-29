@@ -22,6 +22,19 @@ sealed interface CacheState<T> {
         get() = null
 
     /**
+     * Returns a [CacheState] with the same type as this one, but with the [cachedValue] mapped by [transform], if it
+     * has one.
+     */
+    fun map(transform: (T) -> T): CacheState<T> {
+        return when (this) {
+            is Refreshing -> cachedValue?.let { Refreshing(cachedValue = transform(it), cacheTime = cacheTime) } ?: this
+            is Loaded -> Loaded(cachedValue = transform(cachedValue), cacheTime = cacheTime)
+            is NotFound -> this
+            is Error -> this
+        }
+    }
+
+    /**
      * Indicates that the value is being refreshed from the remote data source.
      *
      * Optionally includes a [cachedValue] and [cacheTime] to be displayed while refreshing, i.e. when refreshing but

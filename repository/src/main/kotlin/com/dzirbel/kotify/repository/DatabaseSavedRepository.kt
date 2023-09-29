@@ -41,18 +41,14 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
     protected val userRepository: UserRepository,
 ) : SavedRepository {
     // TODO add library TTL
-    // TODO expose errors via CacheState of library
     private val libraryResource: CachedResource<SavedRepository.Library> = CachedResource(
         scope = scope,
         getFromCache = ::getLibraryCached,
         getFromRemote = ::getLibraryRemote,
     )
 
-    override val library: StateFlow<SavedRepository.Library?>
+    override val library: StateFlow<CacheState<SavedRepository.Library>?>
         get() = libraryResource.flow.also { libraryResource.ensureLoaded() }
-
-    override val libraryRefreshing: StateFlow<Boolean>
-        get() = libraryResource.refreshingFlow
 
     private val currentUserLibraryUpdateKey: String
         get() = "$baseLibraryUpdateKey-${userRepository.requireCurrentUserId}"
@@ -120,7 +116,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         return savedStates.getOrCreateStateFlow(
             key = id,
             defaultValue = {
-                libraryResource.flow.value?.let { library ->
+                libraryResource.flow.value?.cachedValue?.let { library ->
                     val saved = library.ids.contains(id)
                     val saveTime = library.saveTimes[id]
                     SavedRepository.SaveState.Set(saved, saveTime)
@@ -233,7 +229,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         return savedStates.getOrCreateStateFlows(
             keys = ids,
             defaultValue = { id ->
-                libraryResource.flow.value?.let { library ->
+                libraryResource.flow.value?.cachedValue?.let { library ->
                     val saved = library.ids.contains(id)
                     val saveTime = library.saveTimes[id]
                     SavedRepository.SaveState.Set(saved, saveTime)
@@ -424,7 +420,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
             savedStates.updateValue(id, SavedRepository.SaveState.Set(saved, saveTime))
 
-            libraryResource.update { library ->
+            libraryResource.map { library ->
                 library.copy(ids = library.ids.plusOrMinus(value = id, condition = saved))
             }
 
@@ -437,7 +433,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
         savedStates.clear()
     }
 
-    private suspend fun getLibraryCached(): SavedRepository.Library? {
+    private suspend fun getLibraryCached(): Pair<SavedRepository.Library, Instant>? {
         if (!userRepository.hasCurrentUserId) return null
         val userId = userRepository.requireCurrentUserId
 
@@ -472,11 +468,11 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                 }
 
                 requestLog.success("loaded $entityName saved library from database", DataSource.DATABASE)
-                SavedRepository.Library(ids = ids, saveTimes = saveTimes, cacheTime = updatedTime)
+                SavedRepository.Library(ids = ids, saveTimes = saveTimes) to updatedTime
             }
     }
 
-    private suspend fun getLibraryRemote(): SavedRepository.Library? {
+    private suspend fun getLibraryRemote(): Pair<SavedRepository.Library, Instant>? {
         val requestLog = RequestLog(log = mutableLog)
         val userId = userRepository.currentUserId.value ?: return null
 
@@ -501,7 +497,7 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             KotifyDatabase[DB.CACHE].transaction("save $entityName saved library") {
                 GlobalUpdateTimesRepository.setUpdated(key = currentUserLibraryUpdateKey, updateTime = fetchTime)
 
-                val cachedLibrary: Set<String> = libraryResource.flow.value?.ids
+                val cachedLibrary: Set<String> = libraryResource.flow.value?.cachedValue?.ids
                     ?: savedEntityTable.savedEntityIds(userId = userId)
 
                 val remoteLibrary: List<Pair<String, Instant?>> = savedNetworkModels.map { convertToDB(it, fetchTime) }
@@ -562,6 +558,6 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
         requestLog.success("loaded $entityName saved library from remote", DataSource.REMOTE)
 
-        return SavedRepository.Library(ids = ids, saveTimes = saveTimes, cacheTime = fetchTime)
+        return SavedRepository.Library(ids = ids, saveTimes = saveTimes) to fetchTime
     }
 }

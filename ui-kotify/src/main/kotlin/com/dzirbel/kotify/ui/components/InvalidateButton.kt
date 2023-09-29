@@ -25,11 +25,9 @@ import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.RelativeTimeInfo
-import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.intrinsicSize
 
-// TODO expose errors syncing library
 @Composable
 fun LibraryInvalidateButton(
     savedRepository: SavedRepository,
@@ -38,12 +36,11 @@ fun LibraryInvalidateButton(
     contentPadding: PaddingValues = PaddingValues(Dimens.space1),
 ) {
     InvalidateButton(
-        refreshing = savedRepository.libraryRefreshing.collectAsState().value,
-        updated = savedRepository.library.collectAsState().derived { it?.cacheTime?.toEpochMilli() }.value,
+        cacheState = savedRepository.library.collectAsState().value,
         onClick = savedRepository::refreshLibrary,
+        entityName = "${savedRepository.entityName} library",
         modifier = modifier,
         icon = icon,
-        entityName = "${savedRepository.entityName} library",
         contentPadding = contentPadding,
     )
 }
@@ -56,15 +53,33 @@ fun InvalidateButton(
     icon: String? = null,
     contentPadding: PaddingValues = PaddingValues(Dimens.space1),
 ) {
-    val cacheState = repository.stateOf(id = id).collectAsState().value
+    InvalidateButton(
+        cacheState = repository.stateOf(id = id).collectAsState().value,
+        onClick = { repository.refreshFromRemote(id = id) },
+        entityName = repository.entityName,
+        modifier = modifier,
+        icon = icon,
+        contentPadding = contentPadding,
+    )
+}
+
+@Composable
+fun <T> InvalidateButton(
+    cacheState: CacheState<T>?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: String? = null,
+    entityName: String? = null,
+    contentPadding: PaddingValues = PaddingValues(Dimens.space1),
+) {
     InvalidateButton(
         refreshing = cacheState is CacheState.Refreshing,
         updated = cacheState?.cacheTime?.toEpochMilli(),
-        onClick = { repository.refreshFromRemote(id = id) },
+        onClick = onClick,
         modifier = modifier,
         error = cacheState is CacheState.Error,
         icon = icon,
-        entityName = repository.entityName,
+        entityName = entityName,
         contentPadding = contentPadding,
     )
 }

@@ -3,11 +3,17 @@ package com.dzirbel.kotify.repository.util
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
+import com.dzirbel.kotify.repository.CacheState
+import com.dzirbel.kotify.util.CurrentTime
+import com.dzirbel.kotify.util.MockedTimeExtension
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
+@ExtendWith(MockedTimeExtension::class)
 class CachedResourceTest {
     private class TestCachedResource(
         scope: CoroutineScope,
@@ -19,22 +25,27 @@ class CachedResourceTest {
 
         val resource = CachedResource(
             scope = scope,
-            getFromCache = { cachedValue.also { cacheGets++ } },
-            getFromRemote = { remoteValue.also { remoteGets++ } },
+            getFromCache = { cachedValue.also { cacheGets++ }?.let { it to CurrentTime.instant } },
+            getFromRemote = { remoteValue.also { remoteGets++ } to CurrentTime.instant },
         )
 
-        fun assertNoValue(): TestCachedResource {
+        fun assertNullValue(): TestCachedResource {
             assertThat(resource.flow.value).isNull()
             return this
         }
 
+        fun assertRefreshing(): TestCachedResource {
+            assertThat(resource.flow.value is CacheState.Refreshing).isTrue()
+            return this
+        }
+
         fun assertHasCachedValue(): TestCachedResource {
-            assertThat(resource.flow.value).isEqualTo(cachedValue)
+            assertThat(resource.flow.value?.cachedValue).isEqualTo(cachedValue)
             return this
         }
 
         fun assertHasRemoteValue(): TestCachedResource {
-            assertThat(resource.flow.value).isEqualTo(remoteValue)
+            assertThat(resource.flow.value?.cachedValue).isEqualTo(remoteValue)
             return this
         }
 
@@ -49,10 +60,11 @@ class CachedResourceTest {
     fun `multiple init calls are a no-op`() {
         runTest {
             val testCachedResource = TestCachedResource(scope = this)
+            testCachedResource.assertNullValue().assertGets(cached = 0, remote = 0)
 
             testCachedResource.resource.initFromCache()
 
-            testCachedResource.assertNoValue().assertGets(cached = 0, remote = 0)
+            testCachedResource.assertRefreshing().assertGets(cached = 0, remote = 0)
 
             runCurrent()
 
@@ -76,7 +88,7 @@ class CachedResourceTest {
             testCachedResource.resource.initFromCache()
             testCachedResource.resource.initFromCache()
 
-            testCachedResource.assertNoValue().assertGets(cached = 0, remote = 0)
+            testCachedResource.assertRefreshing().assertGets(cached = 0, remote = 0)
 
             runCurrent()
 
@@ -91,7 +103,7 @@ class CachedResourceTest {
 
             testCachedResource.resource.ensureLoaded()
 
-            testCachedResource.assertNoValue().assertGets(cached = 0, remote = 0)
+            testCachedResource.assertRefreshing().assertGets(cached = 0, remote = 0)
 
             runCurrent()
 
@@ -106,7 +118,7 @@ class CachedResourceTest {
 
             testCachedResource.resource.ensureLoaded()
 
-            testCachedResource.assertNoValue().assertGets(cached = 0, remote = 0)
+            testCachedResource.assertRefreshing().assertGets(cached = 0, remote = 0)
 
             runCurrent()
 
@@ -139,7 +151,7 @@ class CachedResourceTest {
             testCachedResource.resource.initFromCache()
             runCurrent()
 
-            testCachedResource.assertNoValue().assertGets(cached = 1, remote = 0)
+            testCachedResource.assertNullValue().assertGets(cached = 1, remote = 0)
 
             testCachedResource.resource.ensureLoaded()
             runCurrent()

@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.repository.CacheState
 import com.dzirbel.kotify.repository.SavedRepository
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
@@ -83,17 +84,20 @@ data object ArtistsPage : Page {
         // accumulate saved artist IDs, never removing them from the library so that the artist does not disappear from
         // the grid when removed (to make it easy to add them back if it was an accident)
         val displayedLibraryFlow = remember {
-            savedArtistRepository.library
-                .runningFoldIn(scope) { accumulator, value -> value?.plus(accumulator?.ids) }
+            // TODO do not propagate error/not found states
+            savedArtistRepository.library.runningFoldIn(scope) { accumulator, value ->
+                value?.map { it.plus(accumulator?.cachedValue?.ids) }
+            }
         }
 
         val imageSize = artistCellImageSize.toImageSize()
         val artistsAdapter = rememberListAdapterState(defaultSort = ArtistNameProperty, scope = scope) {
-            displayedLibraryFlow.flatMapLatestIn(scope) { library ->
-                if (library == null) {
-                    MutableStateFlow(null)
+            displayedLibraryFlow.flatMapLatestIn(scope) { cacheState ->
+                val ids = cacheState?.cachedValue?.ids
+                if (ids == null) {
+                    MutableStateFlow(if (cacheState is CacheState.Error) emptyList() else null)
                 } else {
-                    artistRepository.statesOf(library.ids)
+                    artistRepository.statesOf(ids)
                         .combinedStateWhenAllNotNull { it?.cachedValue }
                         .onEachIn(scope) { artists ->
                             artists?.requestBatched(
@@ -105,7 +109,7 @@ data object ArtistsPage : Page {
             }
         }
 
-        val artistIds = displayedLibraryFlow.collectAsState().value?.ids
+        val artistIds = displayedLibraryFlow.collectAsState().value?.cachedValue?.ids
         LocalArtistTracksRepository.current.rememberArtistTracksStates(artistIds)
 
         val artistProperties = remember(artistIds) {

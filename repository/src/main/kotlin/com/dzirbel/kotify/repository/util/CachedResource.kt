@@ -1,11 +1,14 @@
 package com.dzirbel.kotify.repository.util
 
+import com.dzirbel.kotify.repository.CacheState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -22,11 +25,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class CachedResource<T : Any>(
     private val scope: CoroutineScope,
-    private val getFromCache: suspend () -> T?,
-    private val getFromRemote: suspend () -> T?,
+    private val getFromCache: suspend () -> Pair<T, Instant>?,
+    private val getFromRemote: suspend () -> Pair<T, Instant>?,
 ) {
-    private val _flow: MutableStateFlow<T?> = MutableStateFlow(null)
-    private val _refreshingFlow = MutableStateFlow(false)
+    private val _flow: MutableStateFlow<CacheState<T>?> = MutableStateFlow(null)
 
     private val init = AtomicBoolean(false)
     private val initFinished = AtomicBoolean(false)
@@ -38,32 +40,32 @@ class CachedResource<T : Any>(
     /**
      * A [StateFlow] reflecting the current value of the [CachedResource]; initially null.
      */
-    val flow: StateFlow<T?>
+    val flow: StateFlow<CacheState<T>?>
         get() = _flow
-
-    /**
-     * A [StateFlow] reflecting whether the [CachedResource] is currently being refreshed (either from the cache or the
-     * remote source of truth).
-     */
-    val refreshingFlow: StateFlow<Boolean>
-        get() = _refreshingFlow
 
     /**
      * Idempotently and asynchronously initializes this [CachedResource] from the local cache.
      */
     fun initFromCache() {
         if (!init.getAndSet(true)) {
-            _refreshingFlow.value = true
+            _flow.value = CacheState.Refreshing.of(_flow.value)
             cacheJob = scope.launch {
-                val cached = getFromCache()
+                val cached = try {
+                    getFromCache()
+                } catch (_: CancellationException) {
+                    null
+                } catch (throwable: Throwable) {
+                    _flow.value = CacheState.Error(throwable)
+                    null
+                }
+
                 ensureActive() // do not apply cached value if cancelled
-                _flow.value = cached
+
+                _flow.value = cached?.first?.let { CacheState.Loaded(cached.first, cached.second) }
                 initFinished.set(true)
 
                 if (ensuredLoaded.get() && cached == null) {
                     launchRemote()
-                } else {
-                    _refreshingFlow.value = false
                 }
             }
         }
@@ -104,24 +106,35 @@ class CachedResource<T : Any>(
         ensuredLoaded.set(false)
 
         _flow.value = null
-        _refreshingFlow.value = false
     }
 
     /**
-     * Updates the value of the [flow] via the given [update] mutation.
+     * Updates the value of the [flow] via the given [transform] mutation.
      */
-    fun update(update: (T) -> T) {
-        _flow.value?.let { value -> _flow.value = update(value) }
+    fun map(transform: (T) -> T) {
+        _flow.value = _flow.value?.map(transform)
     }
 
     private fun launchRemote() {
-        _refreshingFlow.value = true
+        _flow.value = CacheState.Refreshing.of(_flow.value)
         remoteJob?.cancel()
         remoteJob = scope.launch {
-            val remote = getFromRemote()
+            var success = false
+            val remote = try {
+                getFromRemote().also { success = true }
+            } catch (_: CancellationException) {
+                null
+            } catch (throwable: Throwable) {
+                _flow.value = CacheState.Error(throwable)
+                null
+            }
+
             ensureActive() // do not apply new remote value if cancelled
-            _flow.value = remote
-            _refreshingFlow.value = false
+
+            if (success) {
+                _flow.value = remote?.first?.let { CacheState.Loaded(remote.first, remote.second) }
+                    ?: CacheState.NotFound()
+            }
         }
     }
 }
