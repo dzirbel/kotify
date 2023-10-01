@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.days
 
 abstract class DatabaseSavedRepository<SavedNetworkType>(
     /**
@@ -40,11 +41,15 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
 
     protected val userRepository: UserRepository,
 ) : SavedRepository {
-    // TODO add library TTL
     private val libraryResource: CachedResource<SavedRepository.Library> = CachedResource(
         scope = scope,
         getFromCache = ::getLibraryCached,
         getFromRemote = ::getLibraryRemote,
+        cacheStrategy = CacheStrategy.TTL(
+            transientTTL = 1.days,
+            invalidTTL = 90.days,
+            getUpdateTime = { (_, cacheTime) -> cacheTime },
+        ),
     )
 
     override val library: StateFlow<CacheState<SavedRepository.Library>?>

@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.repository.util
 
 import com.dzirbel.kotify.repository.CacheState
+import com.dzirbel.kotify.repository.CacheStrategy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -26,6 +27,7 @@ class CachedResource<T : Any>(
     private val scope: CoroutineScope,
     private val getFromCache: suspend () -> Pair<T, Instant>?,
     private val getFromRemote: suspend () -> Pair<T, Instant>?,
+    private val cacheStrategy: CacheStrategy<Pair<T, Instant>> = CacheStrategy.AlwaysValid(),
 ) {
     private val _flow: MutableStateFlow<CacheState<T>?> = MutableStateFlow(null)
 
@@ -35,6 +37,8 @@ class CachedResource<T : Any>(
 
     private var remoteJob: Job? = null
     private var cacheJob: Job? = null
+
+    private var validity: CacheStrategy.CacheValidity? = null
 
     /**
      * A [StateFlow] reflecting the current value of the [CachedResource]; initially null.
@@ -50,7 +54,14 @@ class CachedResource<T : Any>(
             _flow.value = CacheState.Refreshing.of(_flow.value)
             cacheJob = scope.launch {
                 _flow.value = try {
-                    getFromCache()?.let { CacheState.Loaded(it.first, it.second) }
+                    getFromCache()?.let { (value, cacheTime) ->
+                        validity = cacheStrategy.validity(value to cacheTime)
+                        if (validity?.canBeUsed == true) {
+                            CacheState.Loaded(value, cacheTime)
+                        } else {
+                            null
+                        }
+                    }
                 } catch (_: CancellationException) {
                     null
                 } catch (throwable: Throwable) {
@@ -59,7 +70,7 @@ class CachedResource<T : Any>(
 
                 initFinished.set(true)
 
-                if (ensuredLoaded.get() && _flow.value == null) {
+                if (ensuredLoaded.get() && validity?.shouldBeRefreshed != false) {
                     launchRemote()
                 }
             }
@@ -74,7 +85,7 @@ class CachedResource<T : Any>(
         if (!ensuredLoaded.getAndSet(true)) {
             initFromCache()
 
-            if (initFinished.get() && _flow.value == null) {
+            if (initFinished.get() && validity?.shouldBeRefreshed != false) {
                 launchRemote()
             }
         }
