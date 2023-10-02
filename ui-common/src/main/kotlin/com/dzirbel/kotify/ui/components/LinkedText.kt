@@ -38,8 +38,10 @@ import com.dzirbel.contextmenu.ContextMenuIcon
 import com.dzirbel.contextmenu.ContextMenuParams
 import com.dzirbel.contextmenu.GenericContextMenuItem
 import com.dzirbel.contextmenu.MaterialContextMenuItem
+import com.dzirbel.kotify.ui.util.onPointerEvent
 import com.dzirbel.kotify.ui.util.openInBrowser
 import com.dzirbel.kotify.ui.util.setClipboard
+import kotlinx.collections.immutable.persistentSetOf
 
 private const val ANNOTATION_TAG_LINK = "link"
 
@@ -166,7 +168,7 @@ fun LinkedText(
     }
 
     val hoverModifier = Modifier
-        .onPointerEvent(PointerEventType.Move) { event ->
+        .onPointerEvent(persistentSetOf(PointerEventType.Enter, PointerEventType.Move)) { event ->
             val characterOffset = text.characterOffset(event.changes.first().position, layoutResult.value)
             val link = characterOffset?.let { text.linkAnnotationAtOffset(it) }
             hoveredOffset.value = characterOffset
