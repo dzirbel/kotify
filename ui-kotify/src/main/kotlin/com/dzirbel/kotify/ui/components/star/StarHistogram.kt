@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +25,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dzirbel.kotify.repository.rating.AverageRating
 import com.dzirbel.kotify.repository.rating.Rating
-import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
@@ -85,7 +85,7 @@ fun RatingHistogram(
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.width(barWidth))
+                Divider(Modifier.width(barWidth))
 
                 Text(
                     text = (rating + 1).toString(),

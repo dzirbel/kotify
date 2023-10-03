@@ -4,13 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.theme.Dimens
 
 /**
@@ -74,7 +74,7 @@ interface DividableProperty<E> : AdapterProperty<E> {
                     Text(text = divisionTitle, style = MaterialTheme.typography.h5)
                 }
 
-                HorizontalDivider(modifier = Modifier.align(Alignment.BottomCenter))
+                Divider(Modifier.align(Alignment.BottomCenter))
             }
         }
     }

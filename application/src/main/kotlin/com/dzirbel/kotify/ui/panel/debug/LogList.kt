@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -214,7 +215,7 @@ fun <T> LogList(
                     if (headerContent != null) {
                         headerContent(eventCleared)
 
-                        HorizontalDivider()
+                        Divider()
                     }
 
                     Column(Modifier.padding(Dimens.space2), verticalArrangement = Arrangement.spacedBy(Dimens.space2)) {
@@ -295,7 +296,7 @@ fun <T> LogList(
                     EventItem(log = logAndEvent.log, event = logAndEvent.event, display = annotatedDisplay)
 
                     if (index != visibleEvents.lastIndex) {
-                        HorizontalDivider()
+                        Divider()
                     }
                 }
             }

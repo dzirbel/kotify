@@ -11,6 +11,8 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.times
+import androidx.compose.ui.unit.IntSize
+import kotlin.math.roundToInt
 
 /**
  * A version of [Modifier.paint] which only invokes [lazyPainter] during the drawing phase, to avoid unnecessary
@@ -58,3 +60,5 @@ fun Modifier.paintLazy(
         }
     }
 }
+
+private fun Size.roundToIntSize() = IntSize(width.roundToInt(), height.roundToInt())

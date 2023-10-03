@@ -6,6 +6,8 @@ import androidx.compose.ui.unit.Dp
 
 /**
  * A spacer which takes up [width] horizontal space.
+ *
+ * TODO replace with standard Spacer()
  */
 @Composable
 fun HorizontalSpacer(width: Dp) {
@@ -19,6 +21,8 @@ fun HorizontalSpacer(width: Dp) {
 
 /**
  * A spacer which takes up [height] vertical space.
+ *
+ * TODO replace with standard Spacer()
  */
 @Composable
 fun VerticalSpacer(height: Dp) {

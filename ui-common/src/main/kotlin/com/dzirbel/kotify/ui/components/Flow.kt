@@ -15,6 +15,8 @@ import kotlin.math.min
  *
  * [horizontalSpacing] is placed horizontally between elements; [verticalSpacing] between rows. Content is aligned
  * within each row by [verticalAlignment].
+ *
+ * TODO replace with FlowRow
  */
 @Composable
 fun Flow(

@@ -53,6 +53,8 @@ val DEFAULT_SEEK_TARGET_SIZE = 12.dp
  * @param rightContent optional content placed to the right of the slider
  * @param onSeek invoked when the user seeks, either by clicking or dragging, with the seeked location as a percentage
  *  of the maximum slider width, between 0 and 1
+ *
+ * TODO optimize to avoid recomposing when progress changes
  */
 @Composable
 fun SeekableSlider(

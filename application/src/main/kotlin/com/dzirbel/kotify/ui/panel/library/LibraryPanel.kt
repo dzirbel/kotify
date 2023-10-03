@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -26,7 +27,6 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.LocalPlayer
 import com.dzirbel.kotify.ui.LocalPlaylistRepository
 import com.dzirbel.kotify.ui.LocalSavedPlaylistRepository
-import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.LibraryInvalidateButton
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.TooltipArea
@@ -54,7 +54,7 @@ fun LibraryPanel() {
                 modifier = Modifier.padding(start = Dimens.space3, end = Dimens.space3, top = Dimens.space3),
             )
 
-            HorizontalDivider(Modifier.padding(top = Dimens.space2))
+            Divider(Modifier.padding(top = Dimens.space2))
 
             MaxWidthButton(
                 text = "Artists",
@@ -98,7 +98,7 @@ fun LibraryPanel() {
                 }
             }
 
-            HorizontalDivider(Modifier.padding(top = Dimens.space2))
+            Divider(Modifier.padding(top = Dimens.space2))
 
             val playlistRepository = LocalPlaylistRepository.current
             val savedPlaylistRepository = LocalSavedPlaylistRepository.current

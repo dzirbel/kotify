@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -33,7 +34,6 @@ import com.dzirbel.kotify.ui.LocalSavedTrackRepository
 import com.dzirbel.kotify.ui.LocalTrackRepository
 import com.dzirbel.kotify.ui.LocalUserRepository
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
-import com.dzirbel.kotify.ui.components.HorizontalDivider
 import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.ToggleButtonGroup
 import com.dzirbel.kotify.ui.components.TriStateCheckboxWithLabel
@@ -201,7 +201,7 @@ private fun <T> LogListToggle(
             Text(title, fontWeight = FontWeight.Bold)
         }
 
-        HorizontalDivider()
+        Divider()
         VerticalSpacer(Dimens.space3)
 
         for (log in logs) {

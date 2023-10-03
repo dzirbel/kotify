@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Button
+import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -96,7 +97,7 @@ fun Details(params: AuthenticationParams, onSetParams: (AuthenticationParams) ->
             text(" page.")
         }
 
-        HorizontalDivider()
+        Divider()
 
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
             OutlinedTextField(
@@ -133,7 +134,7 @@ fun Details(params: AuthenticationParams, onSetParams: (AuthenticationParams) ->
             }
         }
 
-        HorizontalDivider()
+        Divider()
 
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
             OutlinedTextField(
@@ -183,7 +184,7 @@ fun Details(params: AuthenticationParams, onSetParams: (AuthenticationParams) ->
             }
         }
 
-        HorizontalDivider()
+        Divider()
 
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
             Row(
