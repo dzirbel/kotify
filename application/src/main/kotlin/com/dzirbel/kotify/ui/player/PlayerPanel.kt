@@ -64,6 +64,7 @@ import com.dzirbel.kotify.ui.page.artist.ArtistPage
 import com.dzirbel.kotify.ui.pageStack
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyColors
+import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.util.coroutines.combineState
@@ -394,13 +395,13 @@ private fun TrackProgress() {
     val position = player.trackPosition.collectAsState().value
 
     if (track == null || position == null) {
-        SeekableSlider(progress = null)
+        SeekableSlider(progress = { null })
     } else {
         val progressFlow = remember(position) {
             if (position is TrackPosition.Fetched && position.playing == true) {
                 flow {
                     while (true) {
-                        emit(position.currentPositionMs)
+                        emit(position.currentPositionMs.coerceAtMost(track.durationMs.toInt()))
                         delay(PROGRESS_SLIDER_UPDATE_DELAY_MS)
                     }
                 }
@@ -409,19 +410,17 @@ private fun TrackProgress() {
             }
         }
 
-        val positionMs: Int = progressFlow.collectAsState(initial = position.currentPositionMs)
-            .value
-            .coerceAtMost(track.durationMs.toInt())
+        val positionState = progressFlow.collectAsState(initial = position.currentPositionMs)
 
         SeekableSlider(
-            progress = positionMs.toFloat() / track.durationMs,
-            leftContent = {
+            progress = { positionState.value.toFloat() / track.durationMs },
+            leftLabel = {
                 Text(
-                    text = remember(positionMs) { formatDuration(positionMs.toLong()) },
+                    text = positionState.derived { positionMs -> formatDuration(positionMs.toLong()) }.value,
                     style = MaterialTheme.typography.overline,
                 )
             },
-            rightContent = {
+            rightLabel = {
                 Text(
                     text = remember(track.durationMs) { formatDuration(track.durationMs) },
                     style = MaterialTheme.typography.overline,
@@ -439,22 +438,22 @@ private fun TrackProgress() {
 private fun VolumeControls() {
     Row(verticalAlignment = Alignment.CenterVertically) {
         val player = LocalPlayer.current
-        val volume: Int? = player.volume.collectAsState().value?.value
+        val volumeState = player.volume.collectAsState()
 
         // stores the last volume before clicking the mute button, or null if not muted
         val unmutedVolume = remember { Ref<Int>() }
 
         SeekableSlider(
-            progress = volume?.let { it.toFloat() / 100 },
+            progress = { volumeState.value?.value?.let { it.toFloat() / 100 } },
             sliderWidth = VOLUME_SLIDER_WIDTH,
-            leftContent = {
+            leftLabel = {
                 IconButton(
                     modifier = Modifier.size(Dimens.iconSmall),
-                    enabled = volume != null,
+                    enabled = volumeState.value != null,
                     onClick = {
                         val previousVolume = unmutedVolume.value
                         if (previousVolume == null) {
-                            unmutedVolume.value = volume
+                            unmutedVolume.value = volumeState.value?.value
                             player.setVolume(volumePercent = 0)
                         } else {
                             unmutedVolume.value = null
@@ -463,7 +462,7 @@ private fun VolumeControls() {
                     },
                 ) {
                     CachedIcon(
-                        name = if (volume == 0) "volume-off" else "volume-up",
+                        name = if (volumeState.value?.value == 0) "volume-off" else "volume-up",
                         contentDescription = "Volume",
                         size = Dimens.iconSmall,
                     )
