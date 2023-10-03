@@ -2,6 +2,8 @@ package com.dzirbel.kotify.ui.page.artists
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,7 +34,6 @@ import com.dzirbel.kotify.ui.LocalSavedArtistRepository
 import com.dzirbel.kotify.ui.album.SmallAlbumCell
 import com.dzirbel.kotify.ui.artist.ArtistCell
 import com.dzirbel.kotify.ui.components.DividerSelector
-import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.LibraryInvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -242,6 +243,7 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
                         "Not saved"
                     }
                 }
+
                 SavedRepository.SaveState.NotFound -> "Save state not found"
                 is SavedRepository.SaveState.Setting -> if (saveState.saved) "Saving..." else "Removing..."
                 is SavedRepository.SaveState.Error -> "Error loading save state: ${saveState.throwable?.message}}"
@@ -251,7 +253,11 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
             Text(saveText)
 
             artist.genres.collectAsState().value?.let { genres ->
-                Flow {
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.space2),
+                ) {
                     for (genre in genres) {
                         Pill(text = genre.name)
                     }

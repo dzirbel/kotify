@@ -2,6 +2,8 @@ package com.dzirbel.kotify.ui.page.artist
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,7 +35,6 @@ import com.dzirbel.kotify.ui.LocalSavedArtistRepository
 import com.dzirbel.kotify.ui.album.AlbumCell
 import com.dzirbel.kotify.ui.album.AlbumTypePicker
 import com.dzirbel.kotify.ui.components.DividerSelector
-import com.dzirbel.kotify.ui.components.Flow
 import com.dzirbel.kotify.ui.components.Interpunct
 import com.dzirbel.kotify.ui.components.InvalidateButton
 import com.dzirbel.kotify.ui.components.LoadedImage
@@ -200,7 +201,11 @@ private fun ArtistPageHeader(
                 }
 
                 artist?.genres?.collectAsState()?.value?.let { genres ->
-                    Flow {
+                    @OptIn(ExperimentalLayoutApi::class)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.space2),
+                    ) {
                         for (genre in genres) {
                             Pill(text = genre.name)
                         }
