@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
@@ -30,8 +32,6 @@ import com.dzirbel.contextmenu.ContextMenuIcon
 import com.dzirbel.contextmenu.MaterialContextMenuItem
 import com.dzirbel.kotify.log.Log
 import com.dzirbel.kotify.ui.CachedIcon
-import com.dzirbel.kotify.ui.components.HorizontalDivider
-import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LazyVerticalScroll
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.SortSelector
@@ -251,7 +251,7 @@ fun <T> LogList(
                                         modifier = Modifier.size(Dimens.iconTiny),
                                     )
 
-                                    HorizontalSpacer(Dimens.space1)
+                                    Spacer(Modifier.width(Dimens.space1))
                                 }
 
                                 Text("${visibleEvents.size}/$numEvents visible", maxLines = 1)
@@ -272,7 +272,7 @@ fun <T> LogList(
                             Row {
                                 SimpleTextButton(onClick = { clearTimeState.value = CurrentTime.millis }) {
                                     CachedIcon("delete", size = Dimens.iconSmall)
-                                    HorizontalSpacer(Dimens.space1)
+                                    Spacer(Modifier.width(Dimens.space1))
                                     Text("Clear", maxLines = 1)
                                 }
 
@@ -280,7 +280,7 @@ fun <T> LogList(
                                 ProvidingDisabledContentAlpha(disabled = !canRestore) {
                                     SimpleTextButton(onClick = { clearTimeState.value = null }, enabled = canRestore) {
                                         CachedIcon("restore-from-trash", size = Dimens.iconSmall)
-                                        HorizontalSpacer(Dimens.space1)
+                                        Spacer(Modifier.width(Dimens.space1))
                                         Text("Restore", maxLines = 1)
                                     }
                                 }

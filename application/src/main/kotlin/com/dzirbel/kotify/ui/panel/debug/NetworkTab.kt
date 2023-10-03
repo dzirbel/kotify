@@ -2,8 +2,10 @@ package com.dzirbel.kotify.ui.panel.debug
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -15,7 +17,6 @@ import com.dzirbel.kotify.network.DelayInterceptor
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.AppliedTextField
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
-import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 
@@ -72,7 +73,7 @@ fun NetworkTab() {
                 },
                 label = {
                     CachedIcon(name = "download", size = Dimens.iconTiny)
-                    HorizontalSpacer(Dimens.space1)
+                    Spacer(Modifier.width(Dimens.space1))
                     Text("Incoming responses only")
                 },
             )
@@ -86,7 +87,7 @@ fun NetworkTab() {
                 },
                 label = {
                     CachedIcon(name = "upload", size = Dimens.iconTiny)
-                    HorizontalSpacer(Dimens.space1)
+                    Spacer(Modifier.width(Dimens.space1))
                     Text("Outgoing requests only")
                 },
             )

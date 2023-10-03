@@ -2,8 +2,10 @@ package com.dzirbel.kotify.ui.panel.debug
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +18,6 @@ import com.dzirbel.kotify.log.Log
 import com.dzirbel.kotify.repository.DataSource
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.SpotifyImageCache
-import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.ToggleButtonGroup
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.util.capitalize
@@ -75,7 +76,7 @@ fun ImageCacheTab() {
                 content = { dataSource ->
                     CachedIcon(name = dataSource.iconName, size = Dimens.iconSmall)
 
-                    HorizontalSpacer(Dimens.space2)
+                    Spacer(Modifier.width(Dimens.space2))
 
                     val scope = rememberCoroutineScope()
                     val name = dataSource.name.lowercase().capitalize()

@@ -1,6 +1,8 @@
 package com.dzirbel.kotify.ui.components.star
 
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.Text
@@ -11,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.repository.rating.AverageRating
 import com.dzirbel.kotify.repository.rating.Rating
-import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
@@ -31,7 +32,7 @@ fun AverageStarRating(
         )
 
         if (stars != null) {
-            HorizontalSpacer(width = Dimens.space1)
+            Spacer(Modifier.width(Dimens.space1))
 
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 Text(text = "%.1f (%d)".format(stars, averageRating.numRatings))

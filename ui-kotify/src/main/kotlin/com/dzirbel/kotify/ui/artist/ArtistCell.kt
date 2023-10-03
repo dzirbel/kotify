@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.onClick
@@ -25,7 +27,6 @@ import com.dzirbel.kotify.ui.LocalSavedArtistRepository
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
-import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.star.AverageStarRating
 import com.dzirbel.kotify.ui.contextmenu.artistContextMenuItems
 import com.dzirbel.kotify.ui.theme.Dimens
@@ -48,7 +49,7 @@ fun ArtistCell(artist: ArtistViewModel, imageSize: Dp, onClick: () -> Unit, onMi
                 urlFlowForSize = { size -> artist.imageUrlFor(size) },
             )
 
-            VerticalSpacer(Dimens.space3)
+            Spacer(Modifier.height(Dimens.space3))
 
             Row(
                 modifier = Modifier.widthIn(max = Dimens.contentImage),

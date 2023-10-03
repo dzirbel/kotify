@@ -3,9 +3,12 @@ package com.dzirbel.kotify.ui.unauthenticated
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
@@ -31,12 +34,9 @@ import com.dzirbel.kotify.network.oauth.LocalOAuthServer
 import com.dzirbel.kotify.network.oauth.OAuth
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
-import com.dzirbel.kotify.ui.components.HorizontalDivider
-import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.TooltipArea
 import com.dzirbel.kotify.ui.components.UrlLinkedText
-import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 import com.dzirbel.kotify.util.collections.plusOrMinus
@@ -47,22 +47,22 @@ fun LandingPage(params: AuthenticationParams, onSetParams: (AuthenticationParams
     Column {
         Text("Welcome to ${Application.name}!", style = MaterialTheme.typography.h5)
 
-        VerticalSpacer(Dimens.space4)
+        Spacer(Modifier.height(Dimens.space4))
 
         Text(
             "To get started, you'll need to authenticate with Spotify. This will open your web browser to request " +
                 "the permissions ${Application.name} needs to function.",
         )
 
-        VerticalSpacer(Dimens.space5)
+        Spacer(Modifier.height(Dimens.space5))
 
         Button(modifier = Modifier.align(Alignment.CenterHorizontally), onClick = onStartOAuth) {
             CachedIcon("open-in-new", size = Dimens.iconSmall)
-            HorizontalSpacer(Dimens.space3)
+            Spacer(Modifier.width(Dimens.space3))
             Text("Authenticate")
         }
 
-        VerticalSpacer(Dimens.space5)
+        Spacer(Modifier.height(Dimens.space5))
 
         var detailsExpanded by remember { mutableStateOf(false) }
         SimpleTextButton(onClick = { detailsExpanded = !detailsExpanded }) {
@@ -77,7 +77,7 @@ fun LandingPage(params: AuthenticationParams, onSetParams: (AuthenticationParams
         }
 
         if (detailsExpanded) {
-            VerticalSpacer(Dimens.space3)
+            Spacer(Modifier.height(Dimens.space3))
             Details(params = params, onSetParams = onSetParams)
         }
     }

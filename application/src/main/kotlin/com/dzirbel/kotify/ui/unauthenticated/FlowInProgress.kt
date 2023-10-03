@@ -3,8 +3,11 @@ package com.dzirbel.kotify.ui.unauthenticated
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.IconButton
@@ -23,8 +26,6 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import com.dzirbel.kotify.network.oauth.LocalOAuthServer
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.CopyButton
-import com.dzirbel.kotify.ui.components.HorizontalSpacer
-import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyTypography
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
@@ -75,15 +76,15 @@ fun FlowInProgress(
             )
         }
 
-        VerticalSpacer(Dimens.space4)
+        Spacer(Modifier.height(Dimens.space4))
 
         Button(onClick = onCancel, modifier = Modifier.align(Alignment.CenterHorizontally)) {
             CachedIcon("cancel", size = Dimens.iconSmall)
-            HorizontalSpacer(Dimens.space3)
+            Spacer(Modifier.width(Dimens.space3))
             Text("Cancel")
         }
 
-        VerticalSpacer(Dimens.space5)
+        Spacer(Modifier.height(Dimens.space5))
 
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
             Text("If your browser was not opened automatically, copy this URL:")
@@ -99,7 +100,7 @@ fun FlowInProgress(
             )
         }
 
-        VerticalSpacer(Dimens.space4)
+        Spacer(Modifier.height(Dimens.space4))
 
         Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
             @Suppress("StringShouldBeRawString")
@@ -146,7 +147,7 @@ fun FlowInProgress(
                         CachedIcon("check-circle", size = Dimens.iconSmall)
                     }
 
-                    HorizontalSpacer(Dimens.space2)
+                    Spacer(Modifier.width(Dimens.space2))
 
                     Text("Submit")
                 }

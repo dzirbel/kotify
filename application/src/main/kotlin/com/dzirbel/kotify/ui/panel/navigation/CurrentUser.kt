@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,10 +40,8 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.LocalUserRepository
 import com.dzirbel.kotify.ui.components.CopyButton
 import com.dzirbel.kotify.ui.components.HelpTooltip
-import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.SimpleTextButton
-import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.liveRelativeTime
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.intrinsicSize
@@ -65,7 +65,7 @@ fun CurrentUser() {
             currentUser?.imageUrlFor(size)
         }
 
-        HorizontalSpacer(Dimens.space2)
+        Spacer(Modifier.width(Dimens.space2))
 
         when (currentUserCacheState) {
             is CacheState.Loaded -> {
@@ -101,7 +101,7 @@ fun CurrentUser() {
             }
         }
 
-        HorizontalSpacer(Dimens.space2)
+        Spacer(Modifier.width(Dimens.space2))
 
         Icon(
             imageVector = Icons.Filled.KeyboardArrowDown,
@@ -164,7 +164,7 @@ private fun CurrentUserDropdown(
                         }
                 }
 
-                HorizontalSpacer(Dimens.space5)
+                Spacer(Modifier.width(Dimens.space5))
 
                 Button(onClick = userRepository::signOut) {
                     Text("Sign out", maxLines = 1)
@@ -201,7 +201,7 @@ private fun AccessTokenDetails(token: AccessToken?) {
     Column(Modifier.intrinsicSize(maxWidth = 0.dp)) {
         if (token != null) {
             Text("Access token:")
-            VerticalSpacer(Dimens.space2)
+            Spacer(Modifier.height(Dimens.space2))
             OutlinedTextField(
                 value = token.accessToken,
                 onValueChange = {},
@@ -211,7 +211,7 @@ private fun AccessTokenDetails(token: AccessToken?) {
                 trailingIcon = { CopyButton(token.accessToken, iconSize = Dimens.iconSmall) },
             )
 
-            VerticalSpacer(Dimens.space4)
+            Spacer(Modifier.height(Dimens.space4))
 
             val received = remember(token.receivedInstant) {
                 accessTokenDateFormat.format(token.receivedInstant.atZone(CurrentTime.zoneId))
@@ -222,10 +222,10 @@ private fun AccessTokenDetails(token: AccessToken?) {
             val receivedRelative = liveRelativeTime(timestamp = token.receivedInstant.toEpochMilli())
             val expiresRelative = liveRelativeTime(timestamp = token.expiresInstant.toEpochMilli())
             Text("Received $received (${receivedRelative.formatLong()})")
-            VerticalSpacer(Dimens.space2)
+            Spacer(Modifier.height(Dimens.space2))
             Text("Expires $expires (${expiresRelative.formatLong()})")
 
-            VerticalSpacer(Dimens.space4)
+            Spacer(Modifier.height(Dimens.space4))
 
             Row(
                 Modifier.fillMaxWidth(),
@@ -259,7 +259,7 @@ private fun AccessTokenDetails(token: AccessToken?) {
 
             val scopes = token.scopes
             if (scopes != null) {
-                VerticalSpacer(Dimens.space4)
+                Spacer(Modifier.height(Dimens.space4))
 
                 Text("${scopes.size} scopes granted:")
 
@@ -280,7 +280,7 @@ private fun AccessTokenDetails(token: AccessToken?) {
                 }
             }
 
-            VerticalSpacer(Dimens.space4)
+            Spacer(Modifier.height(Dimens.space4))
 
             SimpleTextButton(onClick = { openInBrowser(OAuth.SPOTIFY_APPS_URL) }) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dimens.space2)) {

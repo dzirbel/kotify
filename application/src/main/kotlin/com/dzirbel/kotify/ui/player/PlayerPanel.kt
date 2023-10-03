@@ -4,10 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
@@ -50,13 +53,11 @@ import com.dzirbel.kotify.ui.LocalRatingRepository
 import com.dzirbel.kotify.ui.LocalSavedAlbumRepository
 import com.dzirbel.kotify.ui.LocalSavedArtistRepository
 import com.dzirbel.kotify.ui.LocalSavedTrackRepository
-import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.LinkedText
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.SeekableSlider
 import com.dzirbel.kotify.ui.components.SimpleTextButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
-import com.dzirbel.kotify.ui.components.VerticalSpacer
 import com.dzirbel.kotify.ui.components.star.StarRating
 import com.dzirbel.kotify.ui.page.album.AlbumPage
 import com.dzirbel.kotify.ui.page.artist.ArtistPage
@@ -232,7 +233,7 @@ private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?)
                     }
                 }
 
-                VerticalSpacer(Dimens.space2)
+                Spacer(Modifier.height(Dimens.space2))
 
                 if (item is FullSpotifyTrack) {
                     Row(verticalAlignment = Alignment.Top) {
@@ -270,7 +271,7 @@ private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?)
 
                 CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.body2) {
                     if (album != null) {
-                        VerticalSpacer(Dimens.space1)
+                        Spacer(Modifier.height(Dimens.space1))
 
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(Dimens.space1),
@@ -297,7 +298,7 @@ private fun CurrentTrack(item: FullSpotifyTrackOrEpisode?, trackRating: Rating?)
                     }
 
                     if (show != null) {
-                        VerticalSpacer(Dimens.space1)
+                        Spacer(Modifier.height(Dimens.space1))
                         Text("on ${show.name}")
                     }
                 }
@@ -567,7 +568,7 @@ private fun DeviceControls() {
     ) {
         CachedIcon(name = currentDevice.iconName, size = Dimens.iconSmall)
 
-        HorizontalSpacer(Dimens.space3)
+        Spacer(Modifier.width(Dimens.space3))
 
         val text = when {
             devices == null && loadingDevices -> "Loading devices..."
@@ -582,7 +583,7 @@ private fun DeviceControls() {
         if (dropdownEnabled) {
             checkNotNull(devices)
 
-            HorizontalSpacer(Dimens.space3)
+            Spacer(Modifier.width(Dimens.space3))
 
             // use a custom layout in order to match width with height, which doesn't seem to be possible any other
             // way (e.g. aspectRatio() modifier)
@@ -625,7 +626,7 @@ private fun DeviceControls() {
                     ) {
                         CachedIcon(name = device.iconName, size = Dimens.iconSmall)
 
-                        HorizontalSpacer(Dimens.space2)
+                        Spacer(Modifier.width(Dimens.space2))
 
                         Text(device.name)
                     }

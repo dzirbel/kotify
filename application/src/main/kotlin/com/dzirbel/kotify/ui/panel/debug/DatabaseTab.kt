@@ -2,8 +2,10 @@ package com.dzirbel.kotify.ui.panel.debug
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -17,7 +19,6 @@ import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.components.AppliedTextField
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
-import com.dzirbel.kotify.ui.components.HorizontalSpacer
 import com.dzirbel.kotify.ui.components.ToggleButtonGroup
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.util.coroutines.lockedState
@@ -73,7 +74,7 @@ fun DatabaseTab() {
                 content = { db ->
                     CachedIcon(name = "database", size = Dimens.iconSmall)
 
-                    HorizontalSpacer(Dimens.space2)
+                    Spacer(Modifier.width(Dimens.space2))
 
                     val scope = rememberCoroutineScope()
                     val count: Int? = remember(groupByTransaction.value, eventCleared) {

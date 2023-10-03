@@ -9,10 +9,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -93,9 +95,9 @@ fun SeekableSlider(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leftContent != null) {
-            HorizontalSpacer(Dimens.space2)
+            Spacer(Modifier.width(Dimens.space2))
             leftContent()
-            HorizontalSpacer(Dimens.space2)
+            Spacer(Modifier.width(Dimens.space2))
         }
 
         val padding = Dimens.space3
@@ -198,9 +200,9 @@ fun SeekableSlider(
         }
 
         if (rightContent != null) {
-            HorizontalSpacer(Dimens.space2)
+            Spacer(Modifier.width(Dimens.space2))
             rightContent()
-            HorizontalSpacer(Dimens.space2)
+            Spacer(Modifier.width(Dimens.space2))
         }
     }
 }

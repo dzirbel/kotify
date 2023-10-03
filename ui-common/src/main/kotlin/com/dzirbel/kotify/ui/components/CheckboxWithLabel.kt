@@ -3,7 +3,9 @@ package com.dzirbel.kotify.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Checkbox
 import androidx.compose.material.TriStateCheckbox
 import androidx.compose.runtime.Composable
@@ -31,7 +33,7 @@ fun CheckboxWithLabel(
     ) {
         Checkbox(checked = checked, onCheckedChange = null, enabled = enabled)
 
-        HorizontalSpacer(Dimens.space2)
+        Spacer(Modifier.width(Dimens.space2))
 
         label()
     }
@@ -56,7 +58,7 @@ fun TriStateCheckboxWithLabel(
     ) {
         TriStateCheckbox(state = state, onClick = null)
 
-        HorizontalSpacer(Dimens.space2)
+        Spacer(Modifier.width(Dimens.space2))
 
         label()
     }
