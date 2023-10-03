@@ -6,6 +6,7 @@ import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
@@ -38,10 +39,13 @@ import com.dzirbel.contextmenu.ContextMenuIcon
 import com.dzirbel.contextmenu.ContextMenuParams
 import com.dzirbel.contextmenu.GenericContextMenuItem
 import com.dzirbel.contextmenu.MaterialContextMenuItem
+import com.dzirbel.kotify.ui.util.instrumentation.Ref
+import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.onPointerEvent
 import com.dzirbel.kotify.ui.util.openInBrowser
 import com.dzirbel.kotify.ui.util.setClipboard
 import kotlinx.collections.immutable.persistentSetOf
+import java.awt.SystemColor.text
 
 private const val ANNOTATION_TAG_LINK = "link"
 
@@ -78,8 +82,8 @@ interface LinkElementScope {
 }
 
 /**
- * A common [SpanStyle] which corresponds to the common URL hyperlink style, underlined and colored with
- * [Colors.primary].
+ * A common [SpanStyle] which corresponds to the common URL hyperlink style, underlined and colored with the primary
+ * color.
  */
 @Composable
 @ReadOnlyComposable
@@ -100,7 +104,7 @@ fun UrlLinkedText(
         linkContextMenu = { link ->
             listOf(
                 MaterialContextMenuItem(
-                    label = "Copy",
+                    label = "Copy URL",
                     onClick = { setClipboard(link) },
                     leadingIcon = ContextMenuIcon.OfPainterResource("content-copy.svg"),
                 ),
@@ -130,8 +134,6 @@ private class UrlContextMenuItem(private val url: String) : GenericContextMenuIt
 /**
  * Displays text build by [elements] with embedded links, allowing styling the links based on the hover state of the
  * link and handling link clicks.
- *
- * TODO optimize when the entire text is a link
  */
 @Composable
 fun LinkedText(
@@ -144,49 +146,94 @@ fun LinkedText(
     linkContextMenu: ((String) -> List<ContextMenuItem>)? = null,
     elements: @DisallowComposableCalls LinkElementScope.() -> Unit,
 ) {
-    val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
+    // use a Ref to avoid recomposition when the layout result changes since it is only used in callbacks
+    val layoutResult = remember { Ref<TextLayoutResult?>(null) }
 
-    val hoveredOffset = remember { mutableStateOf<Int?>(null) }
-    val hoveredLink = remember { mutableStateOf<String?>(null) }
+    val hoveredRangeStart = remember { mutableStateOf<Int?>(null) }
 
-    val text = remember(hoveredOffset.value, key) {
-        LinkElementBuilder(
-            hoveredOffset = hoveredOffset.value,
-            unhoveredSpanStyle = unhoveredSpanStyle,
-            hoveredSpanStyle = hoveredSpanStyle,
-        )
-            .apply(elements)
-            .build()
-    }
+    val hoveredLink = remember { Ref<String?>(null) }
+    val hoveringLink = remember { mutableStateOf(false) }
 
-    val clickModifier = Modifier.pointerInput(text) {
-        detectTapGestures(matcher = PointerMatcher.mouse(PointerButton.Primary)) { offset ->
-            text.characterOffset(offset, layoutResult.value)
-                ?.let { text.linkAnnotationAtOffset(it) }
-                ?.let(onClickLink)
+    val linkResult = if (hoveredSpanStyle != unhoveredSpanStyle) {
+        // if the styles are different, we need to rebuild the text on hover offset change
+        remember(hoveredRangeStart.value, key) {
+            LinkElementBuilder(
+                hoveredRangeStart = hoveredRangeStart.value,
+                unhoveredSpanStyle = unhoveredSpanStyle,
+                hoveredSpanStyle = hoveredSpanStyle,
+            )
+                .apply(elements)
+                .build()
+        }
+    } else {
+        // if the styles are the same, we do not need to rebuild the text on hover offset change
+        remember(key) {
+            LinkElementBuilder(unhoveredSpanStyle).apply(elements).build()
         }
     }
 
-    val hoverModifier = Modifier
-        .onPointerEvent(persistentSetOf(PointerEventType.Enter, PointerEventType.Move)) { event ->
-            val characterOffset = text.characterOffset(event.changes.first().position, layoutResult.value)
-            val link = characterOffset?.let { text.linkAnnotationAtOffset(it) }
-            hoveredOffset.value = characterOffset
-            hoveredLink.value = link
-        }
-        .onPointerEvent(PointerEventType.Exit) {
-            hoveredOffset.value = null
-            hoveredLink.value = null
-        }
+    val coloredStyle = style.copy(
+        color = style.color.takeOrElse { LocalContentColor.current.copy(alpha = LocalContentAlpha.current) },
+    )
 
-    val textColor = style.color.takeOrElse {
-        LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+    val text = linkResult.annotatedString
+
+    if (linkResult.onlyText) {
+        // if there are no links, just display the text
+        BasicText(text = text, modifier = modifier, style = coloredStyle)
+        return
+    }
+
+    val clickModifier = if (linkResult.singleLink == null) {
+        Modifier.pointerInput(text) {
+            detectTapGestures(matcher = PointerMatcher.mouse(PointerButton.Primary)) { offset ->
+                text.characterOffset(offset, layoutResult.value)
+                    ?.let { text.annotationAtOffset(it)?.item }
+                    ?.let(onClickLink)
+            }
+        }
+    } else {
+        Modifier.onClick { onClickLink(linkResult.singleLink) }
+    }
+
+    val hoverModifier = if (linkResult.singleLink == null) {
+        Modifier
+            .onPointerEvent(persistentSetOf(PointerEventType.Enter, PointerEventType.Move)) { event ->
+                val characterOffset = text.characterOffset(event.changes.first().position, layoutResult.value)
+                val range = characterOffset?.let { text.annotationAtOffset(it) }
+                val link = range?.item
+
+                hoveredRangeStart.value = range?.start
+                hoveredLink.value = link
+                hoveringLink.value = link != null
+            }
+            .onPointerEvent(PointerEventType.Exit) {
+                hoveredRangeStart.value = null
+                hoveredLink.value = null
+                hoveringLink.value = false
+            }
+    } else {
+        Modifier
+            .onPointerEvent(PointerEventType.Enter) {
+                hoveredRangeStart.value = 0
+                hoveredLink.value = linkResult.singleLink
+                hoveringLink.value = true
+            }
+            .onPointerEvent(PointerEventType.Exit) {
+                hoveredRangeStart.value = null
+                hoveredLink.value = null
+                hoveringLink.value = false
+            }
     }
 
     // hack: apply pointer icon outside ContextMenuArea so it is cleared in the context menu
-    Box(Modifier.pointerHoverIcon(if (hoveredLink.value != null) PointerIcon.Hand else PointerIcon.Default)) {
+    Box(
+        modifier = Modifier
+            .instrument()
+            .pointerHoverIcon(if (hoveringLink.value) PointerIcon.Hand else PointerIcon.Default),
+    ) {
         ContextMenuArea(
-            enabled = linkContextMenu != null && hoveredLink.value != null,
+            enabled = linkContextMenu != null && hoveringLink.value,
             items = {
                 hoveredLink.value?.let { linkContextMenu?.invoke(it) }.orEmpty()
             },
@@ -194,7 +241,7 @@ fun LinkedText(
             BasicText(
                 text = text,
                 modifier = modifier.then(clickModifier).then(hoverModifier),
-                style = style.copy(color = textColor),
+                style = coloredStyle,
                 onTextLayout = { layoutResult.value = it },
             )
         }
@@ -206,16 +253,48 @@ fun LinkedText(
  * styles.
  */
 private class LinkElementBuilder(
-    private val hoveredOffset: Int?,
+    private val hoveredRangeStart: Int?,
     private val unhoveredSpanStyle: SpanStyle,
     private val hoveredSpanStyle: SpanStyle,
 ) : LinkElementScope {
+
+    data class Result(
+        /**
+         * The generated [AnnotatedString] including spans for [link]s.
+         */
+        val annotatedString: AnnotatedString,
+
+        /**
+         * Whether the generated [AnnotatedString] contains only plain text (no links).
+         */
+        val onlyText: Boolean,
+
+        /**
+         * The single [link] destination if the [AnnotatedString] contains a single [link] and no other text.
+         */
+        val singleLink: String?,
+    )
+
     private val builder = AnnotatedString.Builder()
     private var currentOffset = 0
+
+    private var numText = 0
+    private var numLinks = 0
+    private var singleLink: String? = null
+
+    /**
+     * Convenience constructor when the style for hovered and unhovered spans are the same.
+     */
+    constructor(spanStyle: SpanStyle) : this(
+        hoveredRangeStart = null,
+        unhoveredSpanStyle = spanStyle,
+        hoveredSpanStyle = spanStyle,
+    )
 
     override fun text(text: String) {
         builder.append(text)
         currentOffset += text.length
+        numText++
     }
 
     override fun link(text: String, link: String?) {
@@ -224,9 +303,10 @@ private class LinkElementBuilder(
             return
         }
 
-        val endOffset = currentOffset + text.length
-        val isHovered = hoveredOffset in currentOffset..<endOffset
-        val spanStyle = if (isHovered) hoveredSpanStyle else unhoveredSpanStyle
+        numLinks++
+        singleLink = if (numLinks == 1) link else null
+
+        val spanStyle = if (hoveredRangeStart == currentOffset) hoveredSpanStyle else unhoveredSpanStyle
 
         builder.append(
             AnnotatedString(
@@ -234,6 +314,8 @@ private class LinkElementBuilder(
                 spanStyles = listOf(AnnotatedString.Range(item = spanStyle, start = 0, end = text.length)),
             ),
         )
+
+        val endOffset = currentOffset + text.length
 
         builder.addStringAnnotation(
             tag = ANNOTATION_TAG_LINK,
@@ -245,7 +327,13 @@ private class LinkElementBuilder(
         currentOffset = endOffset
     }
 
-    fun build() = builder.toAnnotatedString()
+    fun build(): Result {
+        return Result(
+            annotatedString = builder.toAnnotatedString(),
+            onlyText = numLinks == 0,
+            singleLink = singleLink.takeIf { numText == 0 },
+        )
+    }
 }
 
 /**
@@ -269,10 +357,9 @@ private fun AnnotatedString.characterOffset(offset: Offset, layoutResult: TextLa
 }
 
 /**
- * Gets the link annotation at the given [characterOffset], or null if there is none.
+ * Gets the annotation range at the given [characterOffset], or null if there is none.
  */
-private fun AnnotatedString.linkAnnotationAtOffset(characterOffset: Int): String? {
+private fun AnnotatedString.annotationAtOffset(characterOffset: Int): AnnotatedString.Range<String>? {
     return getStringAnnotations(tag = ANNOTATION_TAG_LINK, start = characterOffset, end = characterOffset)
         .firstOrNull()
-        ?.item
 }

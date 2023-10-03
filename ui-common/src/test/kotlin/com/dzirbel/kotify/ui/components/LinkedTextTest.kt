@@ -92,7 +92,7 @@ class LinkedTextTest {
     fun `clicked link`() {
         val clicks = mutableListOf<String>()
         screenshotTest(
-            filename = "clicked",
+            filename = "clicked-link",
             windowWidth = 150,
             windowHeight = 60,
             setUpComposeScene = {
@@ -108,6 +108,148 @@ class LinkedTextTest {
                 text("This is a ")
                 link("link", "https://example.com")
                 text(" and this is not")
+            }
+        }
+
+        assertThat(clicks).containsExactly("https://example.com")
+    }
+
+    @Test
+    fun `clicked text`() {
+        val clicks = mutableListOf<String>()
+        screenshotTest(
+            filename = "clicked-text",
+            windowWidth = 150,
+            windowHeight = 60,
+            setUpComposeScene = {
+                click(x = 20f, y = 10f)
+            },
+        ) {
+            LinkedText(
+                onClickLink = clicks::add,
+                unhoveredSpanStyle = SpanStyle(color = Color.Red),
+                hoveredSpanStyle = SpanStyle(color = Color.Green),
+                modifier = Modifier.background(Color.White),
+            ) {
+                text("This is a ")
+                link("link", "https://example.com")
+                text(" and this is not")
+            }
+        }
+
+        assertThat(clicks).isEmpty()
+    }
+
+    @Test
+    fun `text only, unhovered`() {
+        val clicks = mutableListOf<String>()
+        screenshotTest(
+            filename = "text-only-unhovered",
+            windowWidth = 150,
+            windowHeight = 60,
+        ) {
+            LinkedText(
+                onClickLink = clicks::add,
+                unhoveredSpanStyle = SpanStyle(color = Color.Red),
+                hoveredSpanStyle = SpanStyle(color = Color.Green),
+                modifier = Modifier.background(Color.White),
+            ) {
+                text("Text with ")
+                text("no links")
+            }
+        }
+
+        assertThat(clicks).isEmpty()
+    }
+
+    @Test
+    fun `text only, hovered`() {
+        val clicks = mutableListOf<String>()
+        screenshotTest(
+            filename = "text-only-hovered",
+            windowWidth = 150,
+            windowHeight = 60,
+            setUpComposeScene = {
+                hover(x = 40f, y = 10f)
+            },
+        ) {
+            LinkedText(
+                onClickLink = clicks::add,
+                unhoveredSpanStyle = SpanStyle(color = Color.Red),
+                hoveredSpanStyle = SpanStyle(color = Color.Green),
+                modifier = Modifier.background(Color.White),
+            ) {
+                text("Text with ")
+                text("no links")
+            }
+        }
+
+        assertThat(clicks).isEmpty()
+    }
+
+    @Test
+    fun `link only, unhovered`() {
+        val clicks = mutableListOf<String>()
+        screenshotTest(
+            filename = "link-only-unhovered",
+            windowWidth = 150,
+            windowHeight = 60,
+        ) {
+            LinkedText(
+                onClickLink = clicks::add,
+                unhoveredSpanStyle = SpanStyle(color = Color.Red),
+                hoveredSpanStyle = SpanStyle(color = Color.Green),
+                modifier = Modifier.background(Color.White),
+            ) {
+                link("Link", "https://example.com")
+            }
+        }
+
+        assertThat(clicks).isEmpty()
+    }
+
+    @Test
+    fun `link only, hovered`() {
+        val clicks = mutableListOf<String>()
+        screenshotTest(
+            filename = "link-only-hovered",
+            windowWidth = 150,
+            windowHeight = 60,
+            setUpComposeScene = {
+                hover(x = 20f, y = 10f)
+            },
+        ) {
+            LinkedText(
+                onClickLink = clicks::add,
+                unhoveredSpanStyle = SpanStyle(color = Color.Red),
+                hoveredSpanStyle = SpanStyle(color = Color.Green),
+                modifier = Modifier.background(Color.White),
+            ) {
+                link("Link", "https://example.com")
+            }
+        }
+
+        assertThat(clicks).isEmpty()
+    }
+
+    @Test
+    fun `link only, clicked`() {
+        val clicks = mutableListOf<String>()
+        screenshotTest(
+            filename = "link-only-clicked",
+            windowWidth = 150,
+            windowHeight = 60,
+            setUpComposeScene = {
+                click(x = 20f, y = 10f)
+            },
+        ) {
+            LinkedText(
+                onClickLink = clicks::add,
+                unhoveredSpanStyle = SpanStyle(color = Color.Red),
+                hoveredSpanStyle = SpanStyle(color = Color.Green),
+                modifier = Modifier.background(Color.White),
+            ) {
+                link("Link", "https://example.com")
             }
         }
 
