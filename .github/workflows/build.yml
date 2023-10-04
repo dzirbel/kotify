@@ -35,7 +35,6 @@ jobs:
         uses: codecov/codecov-action@v3
         if: ${{ always() }} # upload even if the build failed, in case it was just test failures
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           verbose: true
-          files: ./build/reports/jacoco/jacocoTestReportLocal/jacocoTestReportLocal.xml
+          directory: ./build/reports
