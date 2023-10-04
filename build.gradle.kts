@@ -82,7 +82,7 @@ fun Project.configureKotlin() {
     kotlin {
         compilerOptions {
             allWarningsAsErrors = true
-            jvmTarget.set(libs.versions.jvm.map(JvmTarget::fromTarget))
+            jvmTarget = libs.versions.jvm.map(JvmTarget::fromTarget)
 
             // hack: exclude runtime project because it has no coroutines dependency
             if (!name.contains("runtime")) {
@@ -202,9 +202,9 @@ fun Project.configureJacoco() {
 
     tasks.withType<JacocoReport> {
         reports {
-            xml.required.set(true)
-            csv.required.set(false)
-            html.required.set(true)
+            xml.required = true
+            csv.required = false
+            html.required = true
         }
     }
 }

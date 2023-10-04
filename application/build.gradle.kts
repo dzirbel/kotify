@@ -79,18 +79,17 @@ compose.desktop {
             linux {
                 menuGroup = "Audio"
                 appCategory = "Audio"
-                iconFile.set(project.file("src/main/resources/logo.png"))
+                iconFile = project.file("src/main/resources/logo.png")
             }
 
             macOS {
                 packageName = "com.dzirbel.kotify"
                 appCategory = "public.app-category.music"
-                iconFile.set(project.file("src/main/resources/logo.icns"))
+                iconFile = project.file("src/main/resources/logo.icns")
             }
 
             windows {
-                console
-                iconFile.set(project.file("src/main/resources/logo.ico"))
+                iconFile = project.file("src/main/resources/logo.ico")
             }
         }
     }
