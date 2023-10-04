@@ -42,6 +42,7 @@ jobs:
         if: ${{ always() }} # upload even if the build failed, in case it was just test failures
         with:
           fail_ci_if_error: true
+          verbose: true
           flags: integration
           directory: ./build/reports
 
