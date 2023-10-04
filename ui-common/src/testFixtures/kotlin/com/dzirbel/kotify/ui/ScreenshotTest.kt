@@ -4,6 +4,7 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.use
 import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.theme.KotifyTheme
 import kotlinx.coroutines.Dispatchers
@@ -91,34 +92,35 @@ fun <T> Any.screenshotTest(
     onConfiguration: (T) -> Unit = {},
     content: @Composable (T) -> Unit,
 ) {
-    val multipleConfigurations = configurations.size > 1
     val mismatches = mutableListOf<Pair<File, File>>()
     var recordedScreenshots = false
+
+    val className = requireNotNull(this::class.qualifiedName) {
+        "no class qualified name: screenshotTest() may not be called from local/anonymous classes"
+    }
+    val classScreenshotsDir = screenshotsDir.resolve(className)
+
     for (configuration in configurations) {
         onConfiguration(configuration)
 
         // run in AWT thread as a workaround to https://github.com/JetBrains/compose-jb/issues/1691
-        val screenshotData = runBlocking(Dispatchers.Swing) {
-            val window = ImageComposeScene(width = windowWidth, height = windowHeight, density = windowDensity)
-            window.setContent {
-                content(configuration)
+        val screenshotImage = runBlocking(Dispatchers.Swing) {
+            ImageComposeScene(width = windowWidth, height = windowHeight, density = windowDensity).use { scene ->
+                scene.setContent {
+                    content(configuration)
+                }
+
+                scene.setUpComposeScene()
+
+                scene.render()
             }
-
-            window.setUpComposeScene()
-
-            window.render().encodeToData()
-                .also { window.close() }
         }
 
-        requireNotNull(screenshotData) { "failed to encode screenshot to data" }
+        val screenshotData = requireNotNull(screenshotImage.encodeToData()) { "failed to encode screenshot to data" }
         val screenshotBytes = screenshotData.bytes
 
-        val className = requireNotNull(this::class.qualifiedName) {
-            "no class qualified name: screenshotTest() may not be called from local/anonymous classes"
-        }
-        val classScreenshotsDir = screenshotsDir.resolve(className)
         val filenameWithConfiguration =
-            if (multipleConfigurations) "$filename-${configurationName(configuration)}" else filename
+            if (configurations.size > 1) "$filename-${configurationName(configuration)}" else filename
         val screenshotFile = classScreenshotsDir.resolve("$filenameWithConfiguration.png")
 
         if (record || regenScreenshots || !screenshotFile.exists()) {
