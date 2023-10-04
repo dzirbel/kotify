@@ -7,8 +7,6 @@ flags:
   unit:
     paths:
       - ".*"
-    carryforward: true
   integration:
     paths:
       - ".*"
-    carryforward: true
