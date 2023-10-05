@@ -44,7 +44,6 @@ jobs:
           fail_ci_if_error: true
           verbose: true
           flags: integration
-          directory: ./build/reports
 
       - name: Upload access_token.json to B2 (in case it was refreshed)
         run: ./b2 upload-file ${B2_BUCKET_NAME} .kotify/test-cache/access_token.json access_token.json
