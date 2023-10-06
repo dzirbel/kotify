@@ -13,21 +13,17 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.onClick
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.repository.artist.ArtistViewModel
 import com.dzirbel.kotify.repository.player.Player
-import com.dzirbel.kotify.ui.LocalRatingRepository
 import com.dzirbel.kotify.ui.LocalSavedArtistRepository
 import com.dzirbel.kotify.ui.components.LoadedImage
 import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
-import com.dzirbel.kotify.ui.components.star.AverageStarRating
+import com.dzirbel.kotify.ui.components.star.AverageArtistRating
 import com.dzirbel.kotify.ui.contextmenu.artistContextMenuItems
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
@@ -62,15 +58,7 @@ fun ArtistCell(artist: ArtistViewModel, imageSize: Dp, onClick: () -> Unit, onMi
                 PlayButton(context = Player.PlayContext.artist(artist), size = Dimens.iconSmall)
             }
 
-            val scope = rememberCoroutineScope()
-            val ratingRepository = LocalRatingRepository.current
-            val averageRating = remember(artist.id) {
-                ratingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)
-            }
-                .collectAsState()
-                .value
-
-            AverageStarRating(averageRating = averageRating)
+            AverageArtistRating(artist.id)
         }
     }
 }

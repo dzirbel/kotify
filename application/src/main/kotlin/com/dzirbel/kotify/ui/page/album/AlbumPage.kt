@@ -28,7 +28,7 @@ import com.dzirbel.kotify.ui.components.PlayButton
 import com.dzirbel.kotify.ui.components.ToggleSaveButton
 import com.dzirbel.kotify.ui.components.adapter.ListAdapterState
 import com.dzirbel.kotify.ui.components.adapter.rememberListAdapterState
-import com.dzirbel.kotify.ui.components.star.AverageStarRating
+import com.dzirbel.kotify.ui.components.star.AverageAlbumRating
 import com.dzirbel.kotify.ui.components.table.Column
 import com.dzirbel.kotify.ui.components.table.Table
 import com.dzirbel.kotify.ui.page.Page
@@ -54,8 +54,6 @@ import com.dzirbel.kotify.util.takingIf
 import com.dzirbel.kotify.util.time.formatMediumDuration
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.mapNotNull
 import kotlin.time.Duration.Companion.milliseconds
 
 data class AlbumPage(val albumId: String) : Page {
@@ -195,17 +193,7 @@ private fun AlbumHeader(albumId: String, adapter: ListAdapterState<TrackViewMode
                     )
                 }
 
-                val albumTracksRepository = LocalAlbumTracksRepository.current
-                val ratingRepository = LocalRatingRepository.current
-                val averageRating = remember(albumId) {
-                    albumTracksRepository.stateOf(id = albumId)
-                        .mapNotNull { it?.cachedValue?.tracks?.map { track -> track.id } }
-                        .flatMapLatest { tracks -> ratingRepository.averageRatingStateOf(ids = tracks) }
-                }
-                    .collectAsState(initial = null)
-                    .value
-
-                AverageStarRating(averageRating = averageRating)
+                AverageAlbumRating(albumId = albumId)
             }
         }
     }

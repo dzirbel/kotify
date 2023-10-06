@@ -10,7 +10,7 @@ import com.dzirbel.kotify.util.collections.averageBy
  * TODO used by RatingHistogram as well - not always treated as just an average
  */
 @Stable
-class AverageRating(val ratings: Iterable<Rating?>) {
+data class AverageRating(val ratings: List<Rating?>) {
     val averagePercent by lazy {
         ratings.averageBy { it.ratingPercent }
     }

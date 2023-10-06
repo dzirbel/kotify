@@ -71,7 +71,7 @@ class DatabaseRatingRepository(
     override fun averageRatingStateOf(ids: Iterable<String>): StateFlow<AverageRating> {
         // could theoretically be optimized by skipping the ordering of the rating list by the order of ids, since that
         // is irrelevant to the average
-        return ratingStatesOf(ids = ids).combineState { AverageRating(it.asIterable()) }
+        return ratingStatesOf(ids = ids).combineState { AverageRating(it.toList()) }
     }
 
     /**

@@ -28,6 +28,7 @@ import com.dzirbel.kotify.repository.artist.ArtistAlbumViewModel
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.player.TrackPosition
 import com.dzirbel.kotify.repository.put
+import com.dzirbel.kotify.repository.rating.AverageRating
 import com.dzirbel.kotify.repository.rating.Rating
 import com.dzirbel.kotify.repository.track.TrackViewModel
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow
@@ -174,6 +175,7 @@ class ApplicationScreenshotTest {
     fun album() {
         val random = Random(0)
         val album = ApplicationFixtures.bangersOnly
+        val ratings = mutableListOf<Rating>()
         val tracks = ApplicationFixtures.Names.transitTracks
             .take(requireNotNull(album.totalTracks) - 1)
             .mapIndexed { index, name ->
@@ -188,10 +190,19 @@ class ApplicationScreenshotTest {
                 )
             }
             .onEach { track ->
-                ratingRepository.rate(track.id, random.nextGaussianRating(mean = 9.3))
+                val rating = random.nextGaussianRating(mean = 9.3)
+                ratingRepository.rate(track.id, rating)
+                ratings.add(rating)
+
                 savedTrackRepository.setSaved(track.id, random.nextInt(10) != 0)
             }
-            .plus(ApplicationFixtures.streetcarSymphony)
+            .plus(
+                ApplicationFixtures.streetcarSymphony.also {
+                    ratings.add(Rating(Rating.DEFAULT_MAX_RATING))
+                },
+            )
+
+        ratingRepository.setAlbumAverageRating(album.id, AverageRating(ratings))
 
         val albumRepository = FakeAlbumRepository(listOf(album))
         val albumTracksRepository = FakeAlbumTracksRepository(mapOf(album.id to tracks))
