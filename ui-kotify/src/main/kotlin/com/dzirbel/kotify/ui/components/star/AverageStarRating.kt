@@ -1,8 +1,7 @@
 package com.dzirbel.kotify.ui.components.star
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.Text
@@ -28,7 +27,11 @@ fun AverageStarRating(
     maxRating: Int = Rating.DEFAULT_MAX_AVERAGE_RATING,
     starSize: Dp = Dimens.iconSmall,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.instrument()) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Dimens.space1),
+        modifier = Modifier.instrument(),
+    ) {
         val stars = averageRating?.averagePercent?.let { it * maxRating }
         StarRow(
             getStarRating = { stars },
@@ -38,8 +41,6 @@ fun AverageStarRating(
         )
 
         if (stars != null) {
-            Spacer(Modifier.width(Dimens.space1))
-
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 Text(text = "%.1f (%d)".format(stars, averageRating.numRatings))
             }
