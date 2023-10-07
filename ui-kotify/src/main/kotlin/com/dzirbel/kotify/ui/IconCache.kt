@@ -75,13 +75,21 @@ object IconCache {
      */
     var loadBlocking = true
 
+    lateinit var logo: Painter
+        private set
+
     /**
-     * Loads the icon with the given [name] from the application resources, using an in-memory cache to avoid reloading
-     * the same icon multiple times.
-     *
-     * Hack: the [size] must be provided, since [loadSvgPainter] returns a [Painter] rather than the SVG data itself.
-     * This [Painter] behaves incorrectly when drawing the same icon at different sizes, so we simply use a different
-     * key in the cache for each icon-size combination.
+     * Initializes the [IconCache] by loading the [logo] into memory, so that it can be immediately provided as the
+     * window icon.
+     */
+    fun init() {
+        val density = Density(1f) // use an arbitrary density since the logo is only used for the window icon
+        logo = readIcon(name = "logo", density = density)
+    }
+
+    /**
+     * Loads the icon with the given [IconParams.name] from the application resources, using an in-memory cache to
+     * avoid reloading the same icon multiple times.
      */
     fun load(params: IconParams): StateFlow<Painter?> {
         return jobs.computeIfAbsent(params) {

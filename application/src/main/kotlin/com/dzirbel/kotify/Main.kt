@@ -74,6 +74,10 @@ fun main(args: Array<String>) {
             SpotifyImageCache.init(imagesDir = Application.cacheDir.resolve("images"))
         }
 
+        measureInitTime("icon cache") {
+            IconCache.init()
+        }
+
         // misc actions with negligible expected runtime
         IconCache.loadBlocking = false
     }
