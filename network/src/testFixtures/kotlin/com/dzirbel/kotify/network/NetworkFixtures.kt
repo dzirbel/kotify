@@ -336,8 +336,8 @@ object NetworkFixtures {
                     albumType = SpotifyAlbum.Type.ALBUM,
                 ),
                 AlbumProperties(
-                    id = "2Ea6nI5gRsy7QXCYFihMEk",
-                    name = "Into The Fire (Acoustic)",
+                    id = "5nU3OZkQWBJnz1SijLLepR",
+                    name = "Into the Fire (Acoustic)",
                     totalTracks = 1,
                     albumType = SpotifyAlbum.Type.SINGLE,
                 ),
