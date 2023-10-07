@@ -10,27 +10,19 @@
 }
 
 # ignore usages of android @SuppressLint annotation
--dontwarn android.annotation.SuppressLint
-
-
-### Compose
--keep class org.jetbrains.skia.** { *; }
--keep class org.jetbrains.skiko.** { *; }
+# -dontwarn android.annotation.SuppressLint
 
 
 ### Exposed
 -keep class org.jetbrains.exposed.** { *; }
 -keep class org.sqlite.** { *; }
--keep class kotlin.reflect.jvm.** { *; }
 
 # keep reflectively-invoked constructors for Entity classes
 -keep class com.dzirbel.kotify.** { <init>(...); }
 
 
 ### Ktor
--keep class io.ktor.** { *; }
 -keep class io.netty.** { *; }
--keep class kotlinx.coroutines.** { *; }
 -dontwarn io.netty.**
 
 # workaround for https://youtrack.jetbrains.com/issue/KTOR-5985
