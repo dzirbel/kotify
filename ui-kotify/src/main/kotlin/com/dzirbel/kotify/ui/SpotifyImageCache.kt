@@ -13,7 +13,6 @@ import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.util.CurrentTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +25,6 @@ import org.jetbrains.skia.Image
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.measureTime
@@ -88,7 +86,7 @@ open class SpotifyImageCache internal constructor(
     /**
      * Clears the in-memory and disk cache.
      */
-    fun clear(scope: CoroutineScope = GlobalScope, deleteFileCache: Boolean = true) {
+    fun clear(scope: CoroutineScope = GlobalScope.plus(this.scope.coroutineContext), deleteFileCache: Boolean = true) {
         scope.launch {
             images.clear()
             totalCompleted.set(0)
@@ -225,10 +223,5 @@ open class SpotifyImageCache internal constructor(
         val totalDiskSize: Long,
     )
 
-    companion object : SpotifyImageCache(
-        // use a custom dispatcher rather than the default IO dispatcher as it can easily be exhausted, which appears to
-        // cause blocking UI interference, perhaps due to internal Compose usage
-        scope = Repository.applicationScope.plus(Executors.newCachedThreadPool().asCoroutineDispatcher()),
-        synchronousCalls = false,
-    )
+    companion object : SpotifyImageCache(scope = Repository.applicationScope, synchronousCalls = false)
 }

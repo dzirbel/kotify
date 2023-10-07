@@ -61,6 +61,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.rememberArtistTracksStates
+import com.dzirbel.kotify.util.coroutines.Computation
 import com.dzirbel.kotify.util.coroutines.combinedStateWhenAllNotNull
 import com.dzirbel.kotify.util.coroutines.flatMapLatestIn
 import com.dzirbel.kotify.util.coroutines.mapIn
@@ -69,6 +70,7 @@ import com.dzirbel.kotify.util.coroutines.runningFoldIn
 import com.dzirbel.kotify.util.immutable.orEmpty
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 
 val artistCellImageSize = Dimens.contentImage
@@ -76,7 +78,7 @@ val artistCellImageSize = Dimens.contentImage
 data object ArtistsPage : Page {
     @Composable
     override fun PageScope.bind() {
-        val scope = rememberCoroutineScope()
+        val scope = rememberCoroutineScope { Dispatchers.Computation }
 
         val savedArtistRepository = LocalSavedArtistRepository.current
         val artistRepository = LocalArtistRepository.current
@@ -264,7 +266,7 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
                 }
             }
 
-            val scope = rememberCoroutineScope()
+            val scope = rememberCoroutineScope { Dispatchers.Computation }
             val ratingRepository = LocalRatingRepository.current
             val averageRating = remember(artist.id) {
                 ratingRepository.averageRatingStateOfArtist(artistId = artist.id, scope = scope)

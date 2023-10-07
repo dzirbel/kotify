@@ -7,7 +7,10 @@ import com.dzirbel.kotify.log.MutableLog
 import com.dzirbel.kotify.log.asLog
 import com.dzirbel.kotify.log.info
 import com.dzirbel.kotify.log.warn
+import com.dzirbel.kotify.util.coroutines.Computation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.plus
 import org.jetbrains.exposed.sql.SqlLogger
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.name
@@ -33,13 +36,13 @@ object DatabaseLogger : KotifyDatabase.TransactionListener, SqlLogger, Statement
 
     private val mutableTransactionLog = MutableLog<LogData>(
         name = "DatabaseTransactions",
-        scope = GlobalScope,
+        scope = GlobalScope.plus(Dispatchers.Computation),
         writeContentToLogFile = false,
     )
 
     private val mutableStatementLog = MutableLog<LogData>(
         name = "DatabaseStatements",
-        scope = GlobalScope,
+        scope = GlobalScope.plus(Dispatchers.Computation),
         writeToLogFile = false,
     )
 

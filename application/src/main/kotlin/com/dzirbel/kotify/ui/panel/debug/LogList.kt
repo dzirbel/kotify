@@ -50,6 +50,7 @@ import com.dzirbel.kotify.ui.util.setClipboard
 import com.dzirbel.kotify.util.CurrentTime
 import com.dzirbel.kotify.util.capitalize
 import com.dzirbel.kotify.util.collections.mapLazy
+import com.dzirbel.kotify.util.coroutines.Computation
 import com.dzirbel.kotify.util.coroutines.MergedMutex
 import com.dzirbel.kotify.util.coroutines.lockedListState
 import com.dzirbel.kotify.util.coroutines.lockedState
@@ -59,6 +60,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.sync.Mutex
@@ -126,7 +128,7 @@ fun <T> LogList(
         }
     }
 
-    val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope { Dispatchers.Computation }
 
     val numEvents: Int? = remember(logs, clearTime) {
         logMutex.lockedState(

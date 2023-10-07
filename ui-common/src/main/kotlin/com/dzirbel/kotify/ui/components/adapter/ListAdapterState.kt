@@ -8,8 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.dzirbel.kotify.ui.util.mutate
+import com.dzirbel.kotify.util.coroutines.Computation
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.dropWhile
@@ -22,7 +24,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun <E> rememberListAdapterState(
     key: Any? = null,
-    scope: CoroutineScope = rememberCoroutineScope(),
+    scope: CoroutineScope = rememberCoroutineScope { Dispatchers.Computation },
     defaultSort: SortableProperty<E>? = null,
     defaultFilter: ((E) -> Boolean)? = null,
     source: (CoroutineScope) -> StateFlow<List<E>?>,

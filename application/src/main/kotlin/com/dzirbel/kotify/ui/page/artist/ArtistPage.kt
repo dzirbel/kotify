@@ -64,6 +64,7 @@ import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.rememberSavedStates
 import com.dzirbel.kotify.ui.util.rememberStates
+import com.dzirbel.kotify.util.coroutines.Computation
 import com.dzirbel.kotify.util.coroutines.mapIn
 import com.dzirbel.kotify.util.coroutines.onEachIn
 import com.dzirbel.kotify.util.immutable.countBy
@@ -72,6 +73,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.coroutines.Dispatchers
 
 data class ArtistPage(val artistId: String) : Page {
     @Composable
@@ -105,7 +107,7 @@ data class ArtistPage(val artistId: String) : Page {
         LocalSavedAlbumRepository.current.rememberSavedStates(artistAlbums.value) { it.album.id }
         LocalAlbumTracksRepository.current.rememberStates(ids = artistAlbums.value.map { it.album.id })
 
-        val scope = rememberCoroutineScope()
+        val scope = rememberCoroutineScope { Dispatchers.Computation }
         val artistAlbumProperties = remember(artistAlbums.value) {
             persistentListOf(
                 AlbumNameProperty.ForArtistAlbum,

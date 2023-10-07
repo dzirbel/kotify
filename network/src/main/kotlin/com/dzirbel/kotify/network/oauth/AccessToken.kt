@@ -10,12 +10,15 @@ import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.util.await
 import com.dzirbel.kotify.network.util.bodyFromJson
 import com.dzirbel.kotify.util.CurrentTime
+import com.dzirbel.kotify.util.coroutines.Computation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.plus
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -110,7 +113,7 @@ data class AccessToken(
             prettyPrint = true
         }
 
-        private val scope = GlobalScope
+        private val scope = GlobalScope.plus(Dispatchers.Computation)
 
         private var refreshJob: Job? = null
 

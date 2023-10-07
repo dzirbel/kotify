@@ -36,6 +36,7 @@ import com.dzirbel.kotify.repository.track.SavedTrackRepository
 import com.dzirbel.kotify.repository.track.TrackRepository
 import com.dzirbel.kotify.repository.user.DatabaseUserRepository
 import com.dzirbel.kotify.repository.user.UserRepository
+import com.dzirbel.kotify.util.coroutines.Computation
 import kotlinx.coroutines.Dispatchers
 
 val LocalArtistRepository = staticCompositionLocalOf<ArtistRepository> { error("not provided") }
@@ -60,7 +61,7 @@ val LocalPlayer = staticCompositionLocalOf<Player> { error("not provided") }
 
 @Composable
 fun ProvideRepositories(content: @Composable () -> Unit) {
-    val scope = rememberCoroutineScope { Dispatchers.IO }
+    val scope = rememberCoroutineScope { Dispatchers.Computation }
 
     val artistRepository = DatabaseArtistRepository(scope)
     val artistTracksRepository = DatabaseArtistTracksRepository(scope)

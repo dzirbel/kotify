@@ -2,6 +2,7 @@ package com.dzirbel.kotify.repository
 
 import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.log.Logging
+import com.dzirbel.kotify.util.coroutines.Computation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -84,7 +85,7 @@ interface Repository<T> : Logging<Repository.LogData> {
          * The default [CoroutineScope] used for repository actions which should persist as long as the application,
          * e.g. fetching a resource which could be used on multiple screens.
          */
-        val applicationScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+        val applicationScope: CoroutineScope = CoroutineScope(Dispatchers.Computation)
 
         /**
          * The default [CoroutineScope] used for repository actions which should be cancelled when the current user is
@@ -92,6 +93,6 @@ interface Repository<T> : Logging<Repository.LogData> {
          *
          * Should not be used when unauthenticated (i.e. the scope is not cancelled on sign in).
          */
-        val userSessionScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+        val userSessionScope: CoroutineScope = CoroutineScope(Dispatchers.Computation)
     }
 }

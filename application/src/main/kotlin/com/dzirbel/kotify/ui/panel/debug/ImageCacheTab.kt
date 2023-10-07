@@ -21,11 +21,13 @@ import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.ui.components.ToggleButtonGroup
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.util.capitalize
+import com.dzirbel.kotify.util.coroutines.Computation
 import com.dzirbel.kotify.util.coroutines.lockedState
 import com.dzirbel.kotify.util.formatByteSize
 import com.dzirbel.kotify.util.takingIf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.runningFold
 
 @Composable
@@ -78,7 +80,7 @@ fun ImageCacheTab() {
 
                     Spacer(Modifier.width(Dimens.space2))
 
-                    val scope = rememberCoroutineScope()
+                    val scope = rememberCoroutineScope { Dispatchers.Computation }
                     val name = dataSource.name.lowercase().capitalize()
                     val count: Int? = remember(eventCleared) {
                         SpotifyImageCache.log.writeLock.lockedState(

@@ -3,6 +3,7 @@ package com.dzirbel.kotify.network.oauth
 import com.dzirbel.kotify.network.Spotify
 import com.dzirbel.kotify.network.util.await
 import com.dzirbel.kotify.network.util.bodyFromJson
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -102,7 +103,7 @@ class OAuth private constructor(
     private fun finish() {
         if (!stopped.getAndSet(true)) {
             // run async to avoid deadlock (since in onSuccess() we're still processing a request)
-            GlobalScope.launch {
+            GlobalScope.launch(Dispatchers.IO) {
                 runCatching { server.stop() }
             }
         }

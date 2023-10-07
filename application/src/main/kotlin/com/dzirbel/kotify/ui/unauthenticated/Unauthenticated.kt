@@ -31,6 +31,8 @@ import com.dzirbel.kotify.ui.components.ProjectGithubIcon
 import com.dzirbel.kotify.ui.components.ThemeSwitcher
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.openInBrowser
+import com.dzirbel.kotify.util.coroutines.Computation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 private val MIN_WIDTH = 500.dp
@@ -95,7 +97,7 @@ private fun UnauthenticatedContent() {
         )
     } else {
         var manualRedirectLoading by remember { mutableStateOf(false) }
-        val scope = rememberCoroutineScope()
+        val scope = rememberCoroutineScope { Dispatchers.Computation }
         FlowInProgress(
             oauthError = oauth.errorFlow.collectAsState().value,
             oauthResult = oauth.resultFlow.collectAsState().value,

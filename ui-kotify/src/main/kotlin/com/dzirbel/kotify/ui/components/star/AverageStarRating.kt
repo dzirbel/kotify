@@ -19,6 +19,8 @@ import com.dzirbel.kotify.repository.rating.Rating
 import com.dzirbel.kotify.ui.LocalRatingRepository
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
+import com.dzirbel.kotify.util.coroutines.Computation
+import kotlinx.coroutines.Dispatchers
 
 @Composable
 fun AverageStarRating(
@@ -51,7 +53,7 @@ fun AverageArtistRating(
     maxRating: Int = Rating.DEFAULT_MAX_AVERAGE_RATING,
     starSize: Dp = Dimens.iconSmall,
 ) {
-    val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope { Dispatchers.Computation }
     val ratingRepository = LocalRatingRepository.current
     val averageRating = remember(artistId) {
         ratingRepository.averageRatingStateOfArtist(artistId = artistId, scope = scope)
@@ -68,7 +70,7 @@ fun AverageAlbumRating(
     maxRating: Int = Rating.DEFAULT_MAX_AVERAGE_RATING,
     starSize: Dp = Dimens.iconSmall,
 ) {
-    val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope { Dispatchers.Computation }
     val ratingRepository = LocalRatingRepository.current
     val averageRating = remember(albumId) {
         ratingRepository.averageRatingStateOfAlbum(albumId = albumId, scope = scope)

@@ -20,6 +20,7 @@ import com.dzirbel.kotify.ui.util.firstAsState
 import com.dzirbel.kotify.ui.util.imageSemantics
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 import com.dzirbel.kotify.ui.util.paintLazy
+import com.dzirbel.kotify.util.coroutines.Computation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,7 +89,7 @@ object IconCache {
             if (loadBlocking) {
                 flow.value = readIcon(params.name, params.density)
             } else {
-                GlobalScope.launch(Dispatchers.IO) {
+                GlobalScope.launch(Dispatchers.Computation) {
                     flow.value = readIcon(params.name, params.density)
                 }
             }

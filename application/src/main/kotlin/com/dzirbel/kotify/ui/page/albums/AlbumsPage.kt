@@ -50,6 +50,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.mutate
 import com.dzirbel.kotify.ui.util.rememberStates
+import com.dzirbel.kotify.util.coroutines.Computation
 import com.dzirbel.kotify.util.coroutines.combinedStateWhenAllNotNull
 import com.dzirbel.kotify.util.coroutines.flatMapLatestIn
 import com.dzirbel.kotify.util.coroutines.onEachIn
@@ -57,6 +58,7 @@ import com.dzirbel.kotify.util.coroutines.runningFoldIn
 import com.dzirbel.kotify.util.immutable.orEmpty
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 
 val albumCellImageSize = Dimens.contentImage
@@ -64,7 +66,7 @@ val albumCellImageSize = Dimens.contentImage
 data object AlbumsPage : Page {
     @Composable
     override fun PageScope.bind() {
-        val scope = rememberCoroutineScope()
+        val scope = rememberCoroutineScope { Dispatchers.Computation }
 
         val savedAlbumRepository = LocalSavedAlbumRepository.current
         val albumRepository = LocalAlbumRepository.current

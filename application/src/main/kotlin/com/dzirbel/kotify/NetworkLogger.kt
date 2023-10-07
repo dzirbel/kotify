@@ -6,7 +6,10 @@ import com.dzirbel.kotify.log.MutableLog
 import com.dzirbel.kotify.log.asLog
 import com.dzirbel.kotify.log.info
 import com.dzirbel.kotify.network.Spotify
+import com.dzirbel.kotify.util.coroutines.Computation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.plus
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
@@ -21,7 +24,11 @@ object NetworkLogger : Logging<NetworkLogger.LogData> {
             get() = !isRequest
     }
 
-    private val mutableLog = MutableLog<LogData>("Network", GlobalScope, writeContentToLogFile = false)
+    private val mutableLog = MutableLog<LogData>(
+        name = "Network",
+        scope = GlobalScope.plus(Dispatchers.Computation),
+        writeContentToLogFile = false,
+    )
 
     private val SPOTIFY_URL_HOST = Spotify.API_URL.toHttpUrl().host
 

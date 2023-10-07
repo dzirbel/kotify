@@ -46,6 +46,7 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.groupToggleState
 import com.dzirbel.kotify.util.capitalize
 import com.dzirbel.kotify.util.collections.plusOrMinus
+import com.dzirbel.kotify.util.coroutines.Computation
 import com.dzirbel.kotify.util.coroutines.MergedMutex
 import com.dzirbel.kotify.util.coroutines.lockedState
 import com.dzirbel.kotify.util.coroutines.mergeFlows
@@ -56,6 +57,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentSet
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.runningFold
 
 @Composable
@@ -149,7 +151,7 @@ fun RepositoryTab() {
 
                     Spacer(Modifier.width(Dimens.space2))
 
-                    val scope = rememberCoroutineScope()
+                    val scope = rememberCoroutineScope { Dispatchers.Computation }
                     val name = dataSource.name.lowercase().capitalize()
                     val count: Int? = remember(eventCleared) {
                         logMutex.lockedState(
@@ -206,7 +208,7 @@ private fun <T> LogListToggle(
         Spacer(Modifier.height(Dimens.space3))
 
         for (log in logs) {
-            val scope = rememberCoroutineScope()
+            val scope = rememberCoroutineScope { Dispatchers.Computation }
             val count: Int? = remember(log, eventCleared) {
                 log.writeLock.lockedState(
                     scope = scope,

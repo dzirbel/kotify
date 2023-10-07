@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.setClipboard
+import com.dzirbel.kotify.util.coroutines.Computation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -34,7 +36,7 @@ fun CopyButton(
     iconResetMs: Duration = DEFAULT_ICON_RESET,
 ) {
     var copied by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope { Dispatchers.Computation }
     var resetIconJob: Job? by remember { mutableStateOf(null) }
 
     IconButton(

@@ -21,10 +21,12 @@ import com.dzirbel.kotify.ui.components.AppliedTextField
 import com.dzirbel.kotify.ui.components.CheckboxWithLabel
 import com.dzirbel.kotify.ui.components.ToggleButtonGroup
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.util.coroutines.Computation
 import com.dzirbel.kotify.util.coroutines.lockedState
 import com.dzirbel.kotify.util.takingIf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.runningFold
 
 @Composable
@@ -76,7 +78,7 @@ fun DatabaseTab() {
 
                     Spacer(Modifier.width(Dimens.space2))
 
-                    val scope = rememberCoroutineScope()
+                    val scope = rememberCoroutineScope { Dispatchers.Computation }
                     val count: Int? = remember(groupByTransaction.value, eventCleared) {
                         log.writeLock.lockedState(
                             scope = scope,
