@@ -224,6 +224,8 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
                             }
                         }
                     }
+                } else {
+                    requestLog.info("save state for $entityName $id from library", DataSource.MEMORY)
                 }
             },
         )
@@ -246,6 +248,15 @@ abstract class DatabaseSavedRepository<SavedNetworkType>(
             onCreate = { creations ->
                 // only load state if it could not be initialized from the library
                 val missingIds = creations.mapNotNull { if (it.value == null) it.key else null }
+
+                val numFromLibrary = creations.size - missingIds.size
+                if (numFromLibrary > 0) {
+                    requestLog.success(
+                        title = "$numFromLibrary/${ids.count()} $entityName save states from library",
+                        source = DataSource.MEMORY,
+                    )
+                }
+
                 if (missingIds.isNotEmpty()) {
                     val userId = userRepository.requireCurrentUserId
                     scope.launch {
