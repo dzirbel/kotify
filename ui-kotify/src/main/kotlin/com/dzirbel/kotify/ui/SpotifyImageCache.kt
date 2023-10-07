@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui
 
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asComposeImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.dzirbel.kotify.log.Logging
 import com.dzirbel.kotify.log.MutableLog
@@ -11,6 +12,7 @@ import com.dzirbel.kotify.network.util.await
 import com.dzirbel.kotify.repository.DataSource
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.util.CurrentTime
+import com.dzirbel.kotify.util.formatFileSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +23,7 @@ import kotlinx.coroutines.plus
 import kotlinx.coroutines.yield
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.Image
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -28,6 +31,7 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 // TODO support mosaic (playlist cover image) urls e.g. https://mosaic.scdn.co/640/<id>
 private const val SPOTIFY_IMAGE_URL_PREFIX = "https://i.scdn.co/image/"
@@ -141,7 +145,7 @@ open class SpotifyImageCache internal constructor(
         images[url] = MutableStateFlow(Image.makeFromEncoded(file.readBytes()).toComposeImageBitmap())
     }
 
-    private suspend fun fromFileCache(url: String): Pair<File?, ImageBitmap?> {
+    private fun fromFileCache(url: String): Pair<File?, ImageBitmap?> {
         val start = CurrentTime.mark
         var cacheFile: File? = null
         if (url.startsWith(SPOTIFY_IMAGE_URL_PREFIX)) {
@@ -149,15 +153,23 @@ open class SpotifyImageCache internal constructor(
             cacheFile = imagesDir?.resolve(imageHash)
 
             if (cacheFile?.isFile == true) {
-                val bytes = cacheFile.readBytes()
-                yield()
-                val image = Image.makeFromEncoded(bytes)
-                yield()
-                val imageBitmap = image.toComposeImageBitmap()
-                yield()
+                val (bytes, filesystemDuration) = measureTimedValue { cacheFile.readBytes() }
+                val (image, decodeDuration) = measureTimedValue { Image.makeFromEncoded(bytes) }
+                val (bitmap, makeDuration) = measureTimedValue { Bitmap.Companion.makeFromImage(image) }
+                val (imageBitmap, convertDuration) = measureTimedValue { bitmap.asComposeImageBitmap() }
 
                 totalCompleted.incrementAndGet()
-                mutableLog.info("$url on disk as $cacheFile", data = DataSource.DATABASE, duration = start.elapsedNow())
+                mutableLog.info(
+                    title = "$url on disk as $cacheFile [${formatFileSize(cacheFile.length())}]",
+                    content = buildString {
+                        appendLine("$filesystemDuration to read file")
+                        appendLine("$decodeDuration to decode")
+                        appendLine("$makeDuration to make")
+                        appendLine("$convertDuration to convert")
+                    },
+                    data = DataSource.DATABASE,
+                    duration = start.elapsedNow(),
+                )
 
                 return Pair(cacheFile, imageBitmap)
             }
