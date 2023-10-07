@@ -237,20 +237,17 @@ fun <E> Grid(
             val extra: Float = (columnSpace - usedWidth) / (cols - 1)
             val columnWidthWithSpacingAndExtra: Float = maxCellWidth + horizontalSpacingPx + extra
 
-            val divisionElements = divisions.values.toList()
-
             var totalHeight = edgeSpacingBottomPx + edgeSpacingTopPx
 
             // division -> [heights of rows in that division]
-            val rowHeights: Array<IntArray> = Array(divisionElements.size) { divisionIndex ->
-                val division = divisionElements[divisionIndex]
-
+            val rowHeights = arrayOfNulls<IntArray>(divisions.size)
+            divisions.onEachIndexed { divisionIndex, (_, division) ->
                 // number of rows is the number of cells in the division divided by number of columns, rounded up
                 val divisionRows = ceil(division.size.toFloat() / cols).toInt()
                 totalHeight += (verticalSpacingPx * (divisionRows - 1)).roundToInt()
 
                 // height of each division row is the maximum height of placeables in that row
-                IntArray(divisionRows) { row ->
+                rowHeights[divisionIndex] = IntArray(divisionRows) { row ->
                     division.subList(
                         fromIndex = row * cols,
                         toIndex = ((row + 1) * cols).coerceAtMost(division.size),
@@ -259,6 +256,9 @@ fun <E> Grid(
                         .also { totalHeight += it }
                 }
             }
+
+            @Suppress("UNCHECKED_CAST")
+            rowHeights as Array<IntArray>
 
             val dividerPlaceables = elements.divider?.dividableProperty
                 ?.let { measurables.subList(fromIndex = elements.size, toIndex = elements.size + divisions.size) }
@@ -334,7 +334,7 @@ fun <E> Grid(
             layout(constraints.maxWidth, totalHeight.roundToInt()) {
                 var y = edgeSpacingTopPx
 
-                divisionElements.forEachIndexed { divisionIndex, division ->
+                divisions.onEachIndexed { divisionIndex, (_, division) ->
                     dividerPlaceables?.get(divisionIndex)?.let { placeable ->
                         placeable.place(x = 0, y = y.roundToInt())
                         y += placeable.height + verticalSpacingPx
