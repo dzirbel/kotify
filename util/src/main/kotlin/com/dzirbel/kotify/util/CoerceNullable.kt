@@ -5,7 +5,7 @@ package com.dzirbel.kotify.util
  * otherwise.
  */
 fun <T : Comparable<T>> T.coerceAtMostNullable(maximumValue: T?): T {
-    return maximumValue?.let { coerceAtMost(it) } ?: this
+    return if (maximumValue == null) this else coerceAtMost(maximumValue)
 }
 
 /**
@@ -13,5 +13,5 @@ fun <T : Comparable<T>> T.coerceAtMostNullable(maximumValue: T?): T {
  * otherwise.
  */
 fun <T : Comparable<T>> T.coerceAtLeastNullable(minimumValue: T?): T {
-    return minimumValue?.let { coerceAtLeast(it) } ?: this
+    return if (minimumValue == null) this else coerceAtLeast(minimumValue)
 }

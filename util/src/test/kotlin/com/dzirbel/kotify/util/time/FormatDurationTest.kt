@@ -2,6 +2,7 @@ package com.dzirbel.kotify.util.time
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.time.Duration
@@ -25,6 +26,11 @@ class FormatDurationTest {
     @MethodSource
     fun formatShortDuration(data: ShortDurationFormatData) {
         assertThat(data.duration.formatShortDuration(decimals = data.decimals)).isEqualTo(data.formatted)
+    }
+
+    @Test
+    fun formatShortDurationDefault() {
+        assertThat((4.seconds + 2.milliseconds + 300.microseconds).formatShortDuration()).isEqualTo("4s 2ms")
     }
 
     companion object {

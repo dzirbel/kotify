@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.util.coroutines
 
 import assertk.assertThat
+import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
@@ -43,6 +44,39 @@ class LockedStateTest {
             assertThat(state.value).isEqualTo("i2 b c")
             runCurrent()
             assertThat(state.value).isEqualTo("i2 b c")
+
+            coroutineContext.cancelChildren() // cancel to stop flow collection
+        }
+    }
+
+    @Test
+    fun `initial value is emitted without initializeWithLock`() {
+        val mutex = Mutex()
+        val base = MutableSharedFlow<String>()
+        runTest {
+            base.emit("a")
+
+            val state = mutex.lockedState(
+                initial = "i1",
+                scope = this,
+                flow = { initial ->
+                    base.runningFold(initial) { acc, value -> "$acc $value" }
+                },
+            )
+
+            assertThat(state.value).isEqualTo("i1")
+            runCurrent()
+            assertThat(state.value).isEqualTo("i1")
+
+            base.emit("b")
+            assertThat(state.value).isEqualTo("i1 b")
+            runCurrent()
+            assertThat(state.value).isEqualTo("i1 b")
+
+            base.emit("c")
+            assertThat(state.value).isEqualTo("i1 b c")
+            runCurrent()
+            assertThat(state.value).isEqualTo("i1 b c")
 
             coroutineContext.cancelChildren() // cancel to stop flow collection
         }
@@ -152,6 +186,92 @@ class LockedStateTest {
             assertThat(state.value).isEqualTo("i2 b")
             runCurrent()
             assertThat(state.value).isEqualTo("i2 b")
+
+            coroutineContext.cancelChildren() // cancel to stop flow collection
+        }
+    }
+
+    @Test
+    fun `required initializeWithLock`() {
+        val mutex = Mutex()
+        val base = MutableSharedFlow<String>()
+        runTest {
+            base.emit("a")
+
+            val state = mutex.lockedState(
+                initializeWithLock = { "i2" },
+                scope = this,
+                flow = { initial ->
+                    base.runningFold(initial) { acc, value -> "$acc $value" }
+                },
+            )
+
+            assertThat(state.value).isEqualTo("i2")
+            runCurrent()
+            assertThat(state.value).isEqualTo("i2")
+
+            base.emit("b")
+            assertThat(state.value).isEqualTo("i2 b")
+            runCurrent()
+            assertThat(state.value).isEqualTo("i2 b")
+
+            base.emit("c")
+            assertThat(state.value).isEqualTo("i2 b c")
+            runCurrent()
+            assertThat(state.value).isEqualTo("i2 b c")
+
+            coroutineContext.cancelChildren() // cancel to stop flow collection
+        }
+    }
+
+    @Test
+    fun `lockedListState without filter or sort`() {
+        val mutex = Mutex()
+        val base = MutableSharedFlow<String>()
+        runTest {
+            base.emit("a")
+
+            val state = mutex.lockedListState(
+                scope = this,
+                initializeWithLock = { listOf("i1", "i2") },
+                flow = { base },
+            )
+
+            assertThat(state.value).containsExactly("i1", "i2")
+            runCurrent()
+            assertThat(state.value).containsExactly("i1", "i2")
+
+            base.emit("b")
+            assertThat(state.value).containsExactly("i1", "i2", "b")
+            runCurrent()
+            assertThat(state.value).containsExactly("i1", "i2", "b")
+
+            coroutineContext.cancelChildren() // cancel to stop flow collection
+        }
+    }
+
+    @Test
+    fun `lockedListState with filter and sort`() {
+        val mutex = Mutex()
+        val base = MutableSharedFlow<String>()
+        runTest {
+            base.emit("a")
+
+            val state = mutex.lockedListState(
+                scope = this,
+                initializeWithLock = { listOf("a1", "a2", "a3", "d2", "b2") },
+                filter = { it.contains("2") },
+                sort = Comparator.reverseOrder(),
+                flow = { base },
+            )
+
+            assertThat(state.value).containsExactly("d2", "b2", "a2")
+
+            base.emit("c1")
+            assertThat(state.value).containsExactly("d2", "b2", "a2")
+
+            base.emit("c2")
+            assertThat(state.value).containsExactly("d2", "c2", "b2", "a2")
 
             coroutineContext.cancelChildren() // cancel to stop flow collection
         }

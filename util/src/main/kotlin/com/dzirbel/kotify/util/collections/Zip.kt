@@ -6,7 +6,7 @@ package com.dzirbel.kotify.util.collections
  *
  * Like [Iterable.zip] but doesn't construct a list of the resulting zipped values.
  */
-inline fun <A, B> Iterable<A>.zipEach(other: Iterable<B>, onEach: (A, B) -> Unit) {
+fun <A, B> Iterable<A>.zipEach(other: Iterable<B>, onEach: (A, B) -> Unit) {
     val first = iterator()
     val second = other.iterator()
     while (first.hasNext() && second.hasNext()) {
@@ -23,8 +23,8 @@ fun <A, B> Iterable<A>.zipLazy(other: Iterable<B>): Iterable<Pair<A, B>> {
         override fun iterator(): Iterator<Pair<A, B>> {
             @Suppress("IteratorNotThrowingNoSuchElementException") // thrown by delegate iterators
             return object : Iterator<Pair<A, B>> {
-                val iteratorA = this@zipLazy.iterator()
-                val iteratorB = other.iterator()
+                private val iteratorA = this@zipLazy.iterator()
+                private val iteratorB = other.iterator()
 
                 override fun hasNext() = iteratorA.hasNext() && iteratorB.hasNext()
                 override fun next() = Pair(iteratorA.next(), iteratorB.next())

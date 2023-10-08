@@ -34,7 +34,7 @@ import com.dzirbel.kotify.ui.player.PlayerPanel
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyTheme
 import com.dzirbel.kotify.ui.unauthenticated.Unauthenticated
-import com.dzirbel.kotify.util.immutable.mapToImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * State of the [PageStack], available globally for convenience, rather than passing it into each function which
@@ -135,7 +135,7 @@ private fun PageStackAndNavigationPanel() {
         Column {
             NavigationPanel(
                 titleVisible = currentNavigationTitleVisibilityState.value,
-                titles = titles.mapToImmutableList { { it.value } },
+                titles = titles.map { { it.value } }.toImmutableList(),
             )
 
             PageStackContent(
