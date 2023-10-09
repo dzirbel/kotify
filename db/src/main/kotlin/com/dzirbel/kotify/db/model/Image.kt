@@ -37,7 +37,7 @@ object ImageTable : UUIDTable(name = "images") {
         // if no image is larger than the given dimensions, return the largest image
         // TODO do this in a single SQL query?
         return joinColumn.table.innerJoin(ImageTable)
-            .single(column = url, order = width * height to SortOrder.ASC) { joinColumn eq id }
+            .single(column = url, order = width * height to SortOrder.DESC) { joinColumn eq id }
     }
 }
 
@@ -48,9 +48,7 @@ class Image(id: EntityID<UUID>) : UUIDEntity(id = id) {
 
     companion object : UUIDEntityClass<Image>(ImageTable) {
         fun findOrCreate(url: String, width: Int?, height: Int?): Image {
-            Image.find { ImageTable.url eq url }
-                .limit(1)
-                .firstOrNull()
+            return Image.single { ImageTable.url eq url }
                 ?.also { image ->
                     if (width != null && width != image.width) {
                         image.width = width
@@ -60,13 +58,11 @@ class Image(id: EntityID<UUID>) : UUIDEntity(id = id) {
                         image.height = height
                     }
                 }
-                ?.let { return it }
-
-            return new(id = UUID.randomUUID()) {
-                this.url = url
-                this.width = width
-                this.height = height
-            }
+                ?: new {
+                    this.url = url
+                    this.width = width
+                    this.height = height
+                }
         }
     }
 }

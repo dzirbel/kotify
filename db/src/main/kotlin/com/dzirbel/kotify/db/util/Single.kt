@@ -1,5 +1,7 @@
 package com.dzirbel.kotify.db.util
 
+import org.jetbrains.exposed.dao.Entity
+import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ColumnSet
 import org.jetbrains.exposed.sql.Expression
@@ -52,4 +54,11 @@ fun <A, B, C> ColumnSet.single(
         .limit(1)
         .firstOrNull()
         ?.let { row -> Triple(row[column1], row[column2], row[column3]) }
+}
+
+/**
+ * Convenience function which selects a single [Entity] from this [EntityClass], matching the given [where] clause.
+ */
+fun <E : Entity<ID>, ID : Comparable<ID>> EntityClass<ID, E>.single(where: SqlExpressionBuilder.() -> Op<Boolean>): E? {
+    return find(where).limit(1).firstOrNull()
 }
