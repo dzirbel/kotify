@@ -17,10 +17,13 @@ jobs:
           distribution: 'adopt'
           java-version: '18'
 
-      - run: ./gradlew --stacktrace packageReleaseDistributionForCurrentOS packageReleaseDistributionForCurrentOS
+      - run: ./gradlew --stacktrace packageReleaseDistributionForCurrentOS packageReleaseUberJarForCurrentOS
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v3
         with:
           name: release ${{ matrix.os }}
-          path: application/build/compose/binaries/main-release/*/*, application/build/compose/jars/*
+          if-no-files-found: error
+          path: |
+            application/build/compose/binaries/main-release/*/*
+            application/build/compose/jars/*
