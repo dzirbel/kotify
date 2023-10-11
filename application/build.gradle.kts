@@ -72,7 +72,21 @@ compose.desktop {
             modules("java.sql")
             modules("jdk.crypto.ec") // required for SSL, see https://github.com/JetBrains/compose-jb/issues/429
 
-            targetFormats(TargetFormat.Deb, TargetFormat.Exe)
+            targetFormats(
+                // Linux
+                TargetFormat.AppImage,
+                TargetFormat.Deb,
+                TargetFormat.Rpm,
+
+                // Windows
+                TargetFormat.Exe,
+                TargetFormat.Msi,
+
+                // macOS; adding both DMG and PKG formats results in an error:
+                // https://github.com/JetBrains/compose-multiplatform/issues/2233
+                TargetFormat.Dmg,
+            )
+
             packageName = appProperties["name"] as String
             packageVersion = project.version.toString()
 
@@ -86,6 +100,8 @@ compose.desktop {
                 packageName = "com.dzirbel.kotify"
                 appCategory = "public.app-category.music"
                 iconFile = project.file("src/main/resources/logo.icns")
+                packageVersion = appProperties["macVersion"] as String
+                packageBuildVersion = appProperties["macVersion"] as String
             }
 
             windows {
