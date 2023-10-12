@@ -218,4 +218,9 @@ interface Player : Logging<Repository.LogData> {
      * ensures the new device starts or resumes playback, otherwise keeps the current playback state.
      */
     fun transferPlayback(deviceId: String, play: Boolean? = null)
+
+    /**
+     * Clears the player state; used on sign-out.
+     */
+    fun reset()
 }

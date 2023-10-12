@@ -79,11 +79,14 @@ fun ProvideRepositories(content: @Composable () -> Unit) {
     val artistAlbumsRepository = DatabaseArtistAlbumsRepository(scope, albumRepository)
     val albumTracksRepository = DatabaseAlbumTracksRepository(scope, trackRepository)
 
+    val player = PlayerRepository(scope)
+
     lateinit var savedRepositories: List<SavedRepository>
     val userRepository = DatabaseUserRepository(
         applicationScope = scope,
         userSessionScope = Repository.userSessionScope,
         savedRepositories = lazy { savedRepositories },
+        player = player,
     )
 
     val playlistTracksRepository = DatabasePlaylistTracksRepository(scope, trackRepository, userRepository)
@@ -124,7 +127,7 @@ fun ProvideRepositories(content: @Composable () -> Unit) {
 
         LocalRatingRepository provides ratingRepository,
 
-        LocalPlayer provides PlayerRepository(scope),
+        LocalPlayer provides player,
 
         content = content,
     )

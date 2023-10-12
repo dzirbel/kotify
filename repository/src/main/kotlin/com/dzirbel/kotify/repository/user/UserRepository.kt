@@ -17,6 +17,7 @@ import com.dzirbel.kotify.repository.DatabaseEntityRepository
 import com.dzirbel.kotify.repository.Repository
 import com.dzirbel.kotify.repository.RequestLog
 import com.dzirbel.kotify.repository.SavedRepository
+import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.util.midpointInstantToNow
 import com.dzirbel.kotify.repository.util.updateOrInsert
 import com.dzirbel.kotify.util.CurrentTime
@@ -47,6 +48,7 @@ class DatabaseUserRepository(
     private val applicationScope: CoroutineScope,
     private val userSessionScope: CoroutineScope,
     private val savedRepositories: Lazy<List<SavedRepository>>,
+    private val player: Player,
 ) : DatabaseEntityRepository<UserViewModel, User, SpotifyUser>(entityClass = User, scope = applicationScope),
     UserRepository {
 
@@ -149,12 +151,12 @@ class DatabaseUserRepository(
             // clear access token first to immediately show unauthenticated screen
             AccessToken.Cache.clear()
 
+            // note: strictly speaking, it is not necessary to reset in-memory repository or player state since they are
+            // scoped to an authenticated point of the composition
             _currentUserId.value = null
             _currentUser.value = null
-
             savedRepositories.value.forEach { it.invalidateUser() }
-
-            // TODO also reset Player state
+            player.reset()
 
             KotifyDatabase[DB.CACHE].transaction("clear current user id") {
                 UserTable.CurrentUserTable.clear()

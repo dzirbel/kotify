@@ -517,6 +517,26 @@ class PlayerRepository(private val scope: CoroutineScope) : Player {
         }
     }
 
+    override fun reset() {
+        _refreshingPlayback.value = false
+        _refreshingTrack.value = false
+        _refreshingDevices.value = false
+        _playable.value = null
+        _playing.value = null
+        _playbackContextUri.value = null
+        _currentlyPlayingType.value = null
+        _skipping.value = SkippingState.NOT_SKIPPING
+        _repeatMode.value = null
+        _shuffling.value = null
+        _currentTrack.value = null
+        _trackPosition.value = null
+        _currentDevice.value = null
+        _availableDevices.value = null
+        _volume.value = null
+        _errors.resetReplayCache()
+        // no need to cancel jobs since they will be cancelled with the [scope]
+    }
+
     private fun updateWithPlayback(playback: SpotifyPlayback, fetchTimestamp: Long) {
         _playable.value = !playback.device.isRestricted
         _currentDevice.value = playback.device

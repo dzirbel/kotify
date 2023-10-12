@@ -60,4 +60,5 @@ class FakePlayer(
     override fun setShuffle(shuffle: Boolean) { }
     override fun setVolume(volumePercent: Int) { }
     override fun transferPlayback(deviceId: String, play: Boolean?) { }
+    override fun reset() { }
 }
