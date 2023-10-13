@@ -125,7 +125,7 @@ private fun AlbumHeader(albumId: String, adapter: ListAdapterState<TrackViewMode
         modifier = Modifier.padding(Dimens.space4),
         horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
     ) {
-        LoadedImage(key = albumId) { size -> album?.imageUrlFor(size) }
+        LoadedImage(key = album) { size -> album?.imageUrlFor(size) }
 
         if (album != null) {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {
