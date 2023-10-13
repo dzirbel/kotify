@@ -36,4 +36,7 @@ data class PlaylistViewModel(
         ownerId = playlist.ownerId.value,
         libraryOrder = playlist.libraryOrder,
     )
+
+    override fun equals(other: Any?) = other is PlaylistViewModel && id == other.id
+    override fun hashCode() = id.hashCode()
 }

@@ -24,4 +24,7 @@ data class UserViewModel(
         updatedTime = user.updatedTime,
         fullUpdatedTime = user.fullUpdatedTime,
     )
+
+    override fun equals(other: Any?) = other is UserViewModel && id == other.id
+    override fun hashCode() = id.hashCode()
 }

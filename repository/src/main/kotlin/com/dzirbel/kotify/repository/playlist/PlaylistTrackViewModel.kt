@@ -30,4 +30,10 @@ data class PlaylistTrackViewModel(
         isLocal = playlistTrack.isLocal,
         indexOnPlaylist = playlistTrack.indexOnPlaylist,
     )
+
+    override fun equals(other: Any?): Boolean {
+        return other is PlaylistTrackViewModel && track?.id == other.track?.id && episode?.id == other.episode?.id
+    }
+
+    override fun hashCode() = track?.id?.hashCode() ?: episode?.id?.hashCode() ?: 0
 }

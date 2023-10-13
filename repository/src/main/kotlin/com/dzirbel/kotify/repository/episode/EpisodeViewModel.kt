@@ -32,4 +32,7 @@ data class EpisodeViewModel(
         description = episode.description,
         releaseDate = episode.releaseDate,
     )
+
+    override fun equals(other: Any?) = other is EpisodeViewModel && id == other.id
+    override fun hashCode() = id.hashCode()
 }

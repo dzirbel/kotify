@@ -43,4 +43,7 @@ data class TrackViewModel(
         albumId = track.albumId?.value,
         popularity = track.popularity,
     )
+
+    override fun equals(other: Any?) = other is TrackViewModel && id == other.id
+    override fun hashCode() = id.hashCode()
 }

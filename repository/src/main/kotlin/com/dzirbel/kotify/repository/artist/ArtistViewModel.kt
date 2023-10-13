@@ -38,4 +38,7 @@ data class ArtistViewModel(
         popularity = artist.popularity,
         followersTotal = artist.followersTotal,
     )
+
+    override fun equals(other: Any?) = other is ArtistViewModel && id == other.id
+    override fun hashCode() = id.hashCode()
 }

@@ -47,4 +47,7 @@ data class AlbumViewModel(
         albumType = album.albumType,
         releaseDate = album.releaseDate,
     )
+
+    override fun equals(other: Any?) = other is AlbumViewModel && id == other.id
+    override fun hashCode() = id.hashCode()
 }
