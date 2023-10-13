@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import com.dzirbel.kotify.db.model.Image
 import com.dzirbel.kotify.db.model.ImageSize
+import com.dzirbel.kotify.repository.ImageViewModel
 import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.theme.KotifyColors
@@ -119,4 +120,23 @@ fun LoadedImage(
     }
 
     LoadedImage(image = { imageState.value }, modifier = modifier, size = size, shape = shape)
+}
+
+/**
+ * Variant of [LoadedImage] which loads images from the given [imageViewModel] via [ImageViewModel.imageUrlFor].
+ */
+@Composable
+fun LoadedImage(
+    imageViewModel: ImageViewModel?,
+    modifier: Modifier = Modifier,
+    size: Dp = Dimens.contentImage,
+    shape: Shape = RoundedCornerShape(Dimens.cornerSize),
+) {
+    LoadedImage(
+        modifier = modifier,
+        key = imageViewModel,
+        size = size,
+        shape = shape,
+        urlFlowForSize = { imageSize -> imageViewModel?.imageUrlFor(imageSize) },
+    )
 }

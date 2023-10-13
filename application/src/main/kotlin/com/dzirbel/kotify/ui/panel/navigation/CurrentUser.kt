@@ -61,9 +61,7 @@ fun CurrentUser() {
     val expandedState = remember { mutableStateOf(false) }
 
     SimpleTextButton(onClick = { expandedState.value = !expandedState.value }) {
-        LoadedImage(modifier = Modifier.size(Dimens.iconMedium), key = currentUser?.id) { size ->
-            currentUser?.imageUrlFor(size)
-        }
+        LoadedImage(currentUser, modifier = Modifier.size(Dimens.iconMedium))
 
         Spacer(Modifier.width(Dimens.space2))
 

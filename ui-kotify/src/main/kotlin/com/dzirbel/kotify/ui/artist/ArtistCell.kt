@@ -38,12 +38,7 @@ fun ArtistCell(artist: ArtistViewModel, imageSize: Dp, onClick: () -> Unit, onMi
                 .onClick(matcher = PointerMatcher.mouse(PointerButton.Tertiary), onClick = onMiddleClick)
                 .padding(Dimens.space3),
         ) {
-            LoadedImage(
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                size = imageSize,
-                key = artist.id,
-                urlFlowForSize = { size -> artist.imageUrlFor(size) },
-            )
+            LoadedImage(artist, modifier = Modifier.align(Alignment.CenterHorizontally), size = imageSize)
 
             Spacer(Modifier.height(Dimens.space3))
 

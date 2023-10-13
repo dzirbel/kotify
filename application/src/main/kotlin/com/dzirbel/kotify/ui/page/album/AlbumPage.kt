@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.dzirbel.kotify.repository.album.AlbumViewModel
 import com.dzirbel.kotify.repository.player.Player
 import com.dzirbel.kotify.repository.track.TrackViewModel
 import com.dzirbel.kotify.repository.util.LazyTransactionStateFlow.Companion.requestBatched
@@ -100,7 +101,7 @@ data class AlbumPage(val albumId: String) : Page {
         DisplayVerticalScrollPage(
             title = album?.name,
             header = {
-                AlbumHeader(albumId = albumId, adapter = tracksAdapterState)
+                AlbumHeader(albumId = albumId, album = album, adapter = tracksAdapterState)
             },
         ) {
             if (tracksAdapterState.derived { it.hasElements }.value) {
@@ -117,15 +118,12 @@ data class AlbumPage(val albumId: String) : Page {
 }
 
 @Composable
-private fun AlbumHeader(albumId: String, adapter: ListAdapterState<TrackViewModel>) {
-    val albumCacheState = LocalAlbumRepository.current.stateOf(albumId).collectAsState().value
-    val album = albumCacheState?.cachedValue
-
+private fun AlbumHeader(albumId: String, album: AlbumViewModel?, adapter: ListAdapterState<TrackViewModel>) {
     Row(
         modifier = Modifier.padding(Dimens.space4),
         horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
     ) {
-        LoadedImage(key = album) { size -> album?.imageUrlFor(size) }
+        LoadedImage(album)
 
         if (album != null) {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {

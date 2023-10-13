@@ -41,9 +41,7 @@ fun AlbumCell(album: AlbumViewModel, showRating: Boolean = true, onClick: () -> 
             .padding(Dimens.space3),
         verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {
-        LoadedImage(modifier = Modifier.align(Alignment.CenterHorizontally), key = album.id) { size ->
-            album.imageUrlFor(size)
-        }
+        LoadedImage(album, modifier = Modifier.align(Alignment.CenterHorizontally))
 
         Row(
             modifier = Modifier.widthIn(max = Dimens.contentImage),
@@ -100,11 +98,7 @@ fun SmallAlbumCell(album: AlbumViewModel, onClick: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {
         Box {
-            LoadedImage(
-                modifier = Modifier.align(Alignment.Center),
-                size = Dimens.contentImageSmall,
-                key = album.id,
-            ) { size -> album.imageUrlFor(size) }
+            LoadedImage(album, modifier = Modifier.align(Alignment.Center), size = Dimens.contentImageSmall)
 
             Row(
                 modifier = Modifier

@@ -177,7 +177,7 @@ private fun ArtistPageHeader(
             modifier = Modifier.padding(Dimens.space4),
             horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
         ) {
-            LoadedImage(key = artistId) { size -> artist?.imageUrlFor(size) }
+            LoadedImage(artist)
 
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.space2)) {
                 Text(artist?.name.orEmpty(), style = MaterialTheme.typography.h3)

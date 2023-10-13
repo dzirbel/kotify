@@ -164,7 +164,7 @@ private fun PlaylistHeader(
         modifier = Modifier.padding(Dimens.space4),
         horizontalArrangement = Arrangement.spacedBy(Dimens.space4),
     ) {
-        LoadedImage(key = playlistId) { size -> playlist?.imageUrlFor(size) }
+        LoadedImage(playlist)
 
         if (playlist != null) {
             Column(verticalArrangement = Arrangement.spacedBy(Dimens.space3)) {

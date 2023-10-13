@@ -218,7 +218,7 @@ private const val DETAILS_ALBUMS_WEIGHT = 0.7f
 @Composable
 private fun ArtistDetailInsert(artist: ArtistViewModel) {
     Row(modifier = Modifier.padding(Dimens.space4), horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
-        LoadedImage(key = artist.id) { size -> artist.imageUrlFor(size) }
+        LoadedImage(artist)
 
         Column(
             modifier = Modifier.weight(weight = DETAILS_COLUMN_WEIGHT),
