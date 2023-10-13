@@ -1,7 +1,9 @@
 name: Release
 
 on:
-  workflow_dispatch: # allow manual trigger
+  push:
+    tags:
+      - 'v*.*.*'
 
 jobs:
   build:
