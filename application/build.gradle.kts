@@ -74,7 +74,8 @@ compose.desktop {
 
             targetFormats(
                 // Linux
-                TargetFormat.AppImage,
+                // TODO AppImage breaks macOS builds: https://github.com/JetBrains/compose-multiplatform/issues/3814
+                //  (and does not appear to be build a single-file AppImage)
                 TargetFormat.Deb,
                 TargetFormat.Rpm,
 
@@ -82,8 +83,9 @@ compose.desktop {
                 TargetFormat.Exe,
                 TargetFormat.Msi,
 
-                // macOS; adding both DMG and PKG formats results in an error:
-                // https://github.com/JetBrains/compose-multiplatform/issues/2233
+                // macOS
+                // TODO adding both DMG and PKG formats results in an error:
+                //  https://github.com/JetBrains/compose-multiplatform/issues/2233
                 TargetFormat.Dmg,
             )
 
