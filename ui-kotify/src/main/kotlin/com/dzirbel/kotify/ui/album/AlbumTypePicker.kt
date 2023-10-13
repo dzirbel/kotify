@@ -30,9 +30,9 @@ fun AlbumTypePicker(
 
             val count = albumTypeCounts?.let { it[albumType] ?: 0 }
             if (count == null) {
-                Text(albumType.displayName)
+                Text(albumType.displayName, maxLines = 1)
             } else {
-                Text("${albumType.displayName} ($count)")
+                Text("${albumType.displayName} ($count)", maxLines = 1)
             }
         },
     )

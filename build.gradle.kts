@@ -98,6 +98,7 @@ fun Project.configureKotlin() {
                 // hack: exclude repository project because it only has the runtime dependency
                 if (!name.contains("repository")) {
                     freeCompilerArgs.add("-opt-in=androidx.compose.ui.ExperimentalComposeUiApi")
+                    freeCompilerArgs.add("-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi") // allow use of FlowRow
                     freeCompilerArgs.add("-opt-in=androidx.compose.foundation.ExperimentalFoundationApi")
                     freeCompilerArgs.add("-opt-in=androidx.compose.material.ExperimentalMaterialApi")
                 }

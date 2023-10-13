@@ -1,8 +1,9 @@
 package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import com.dzirbel.kotify.ui.CachedIcon
@@ -49,9 +49,9 @@ fun <E> DividerSelector(
         elevation = Dimens.componentElevation,
         shape = RoundedCornerShape(size = Dimens.cornerSize),
     ) {
-        Row(
+        FlowRow(
             modifier = Modifier.applyIf(currentDivider != null) { background(KotifyColors.current.selectedBackground) },
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.Center,
         ) {
             val dropdownExpanded = remember { mutableStateOf(false) }
             SimpleTextButton(
@@ -70,13 +70,10 @@ fun <E> DividerSelector(
 
                 if (currentDivider == null) {
                     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                        Text(
-                            text = "Group by...",
-                            fontStyle = FontStyle.Italic,
-                        )
+                        Text(text = "Group by...", fontStyle = FontStyle.Italic, maxLines = 1)
                     }
                 } else {
-                    Text(currentDivider.dividableProperty.dividerTitle)
+                    Text(currentDivider.dividableProperty.dividerTitle, maxLines = 1)
                 }
 
                 DropdownMenu(expanded = dropdownExpanded.value, onDismissRequest = { dropdownExpanded.value = false }) {
@@ -89,7 +86,7 @@ fun <E> DividerSelector(
                                     onSelectDivider(Divider(dividableProperty))
                                 },
                             ) {
-                                Text(dividableProperty.dividerTitle)
+                                Text(dividableProperty.dividerTitle, maxLines = 1)
                             }
                         }
                     }

@@ -1,6 +1,8 @@
 package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -52,9 +54,9 @@ fun <T> SortSelector(
         elevation = Dimens.componentElevation,
         shape = RoundedCornerShape(size = Dimens.cornerSize),
     ) {
-        Row(
+        FlowRow(
             modifier = Modifier.applyIf(sorts.isNotEmpty()) { background(KotifyColors.current.selectedBackground) },
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.Center,
         ) {
             if (sorts.isEmpty()) {
                 CachedIcon(
@@ -79,7 +81,7 @@ fun <T> SortSelector(
                             )
                         }
 
-                        Text(sort.sortableProperty.sortTitle)
+                        Text(sort.sortableProperty.sortTitle, maxLines = 1)
 
                         SortPickerDropdown(
                             expanded = changeDropdownExpanded.value,

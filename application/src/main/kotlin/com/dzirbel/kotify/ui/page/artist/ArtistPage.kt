@@ -2,7 +2,6 @@ package com.dzirbel.kotify.ui.page.artist
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -169,9 +168,10 @@ private fun ArtistPageHeader(
     displayedAlbumTypes: PersistentSet<AlbumType>,
     setDisplayedAlbumTypes: (PersistentSet<AlbumType>) -> Unit,
 ) {
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space5, vertical = Dimens.space4),
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {
         Row(
             modifier = Modifier.padding(Dimens.space4),
@@ -203,7 +203,6 @@ private fun ArtistPageHeader(
                 }
 
                 artist?.genres?.collectAsState()?.value?.let { genres ->
-                    @OptIn(ExperimentalLayoutApi::class)
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
                         verticalArrangement = Arrangement.spacedBy(Dimens.space2),
@@ -254,7 +253,10 @@ private fun ArtistPageHeader(
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+            verticalArrangement = Arrangement.spacedBy(Dimens.space2),
+        ) {
             val albumTypeCounts = albums.derived { it.countBy { artistAlbum -> artistAlbum.albumGroup } }.value
             AlbumTypePicker(
                 albumTypeCounts = albumTypeCounts,

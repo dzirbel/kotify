@@ -234,7 +234,7 @@ fun <E> Grid(
             // start/end padding)
             // finally: create adjusted width variables including the extra
             val usedWidth: Float = (cols * columnWidthWithSpacing) - horizontalSpacingPx
-            val extra: Float = (columnSpace - usedWidth) / (cols - 1)
+            val extra: Float = if (cols == 1) 0f else (columnSpace - usedWidth) / (cols - 1)
             val columnWidthWithSpacingAndExtra: Float = maxCellWidth + horizontalSpacingPx + extra
 
             var totalHeight = edgeSpacingBottomPx + edgeSpacingTopPx

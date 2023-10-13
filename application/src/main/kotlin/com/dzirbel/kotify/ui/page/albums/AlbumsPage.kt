@@ -2,6 +2,7 @@ package com.dzirbel.kotify.ui.page.albums
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -148,12 +149,13 @@ private fun AlbumsPageHeader(
     albumsAdapter: ListAdapterState<AlbumViewModel>,
     albumProperties: PersistentList<AdapterProperty<AlbumViewModel>>,
 ) {
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space5, vertical = Dimens.space4),
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {
         Column {
-            Text("Albums", style = MaterialTheme.typography.h4)
+            Text("Albums", style = MaterialTheme.typography.h4, maxLines = 1)
 
             if (albumsAdapter.derived { it.hasElements }.value) {
                 Row(
@@ -162,7 +164,7 @@ private fun AlbumsPageHeader(
                 ) {
                     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                         val size = albumsAdapter.derived { it.size }.value
-                        Text("$size saved albums")
+                        Text("$size saved albums", maxLines = 1)
 
                         Interpunct()
                     }
@@ -172,7 +174,10 @@ private fun AlbumsPageHeader(
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+            verticalArrangement = Arrangement.spacedBy(Dimens.space2),
+        ) {
             DividerSelector(
                 dividableProperties = albumProperties.dividableProperties(),
                 currentDivider = albumsAdapter.derived { it.divider }.value,

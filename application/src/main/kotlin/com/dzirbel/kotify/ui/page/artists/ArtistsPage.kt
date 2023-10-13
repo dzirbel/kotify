@@ -2,7 +2,6 @@ package com.dzirbel.kotify.ui.page.artists
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -172,12 +171,13 @@ private fun ArtistsPageHeader(
     artistsAdapter: ListAdapterState<ArtistViewModel>,
     artistProperties: PersistentList<AdapterProperty<ArtistViewModel>>,
 ) {
-    Row(
+    FlowRow(
         modifier = Modifier.fillMaxWidth().padding(horizontal = Dimens.space5, vertical = Dimens.space4),
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {
         Column {
-            Text("Artists", style = MaterialTheme.typography.h4)
+            Text("Artists", style = MaterialTheme.typography.h4, maxLines = 1)
 
             if (artistsAdapter.derived { it.hasElements }.value) {
                 Row(
@@ -186,7 +186,7 @@ private fun ArtistsPageHeader(
                 ) {
                     CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                         val size = artistsAdapter.derived { it.size }.value
-                        Text("$size saved artists")
+                        Text("$size saved artists", maxLines = 1)
 
                         Interpunct()
                     }
@@ -196,7 +196,10 @@ private fun ArtistsPageHeader(
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(Dimens.space3),
+            verticalArrangement = Arrangement.spacedBy(Dimens.space2),
+        ) {
             DividerSelector(
                 dividableProperties = artistProperties.dividableProperties(),
                 currentDivider = artistsAdapter.derived { it.divider }.value,
@@ -255,7 +258,6 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
             Text(saveText)
 
             artist.genres.collectAsState().value?.let { genres ->
-                @OptIn(ExperimentalLayoutApi::class)
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
                     verticalArrangement = Arrangement.spacedBy(Dimens.space2),

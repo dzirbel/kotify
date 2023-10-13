@@ -1,7 +1,7 @@
 package com.dzirbel.kotify.ui.components
 
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Surface
@@ -43,7 +43,7 @@ fun <T> ToggleButtonGroup(
     content: @Composable RowScope.(T) -> Unit,
 ) {
     Surface(elevation = Dimens.componentElevation, shape = RoundedCornerShape(Dimens.cornerSize)) {
-        Row(modifier = Modifier.instrument()) {
+        FlowRow(modifier = Modifier.instrument()) {
             for (element in elements) {
                 ToggleButton(
                     toggled = selectedElements.contains(element),
