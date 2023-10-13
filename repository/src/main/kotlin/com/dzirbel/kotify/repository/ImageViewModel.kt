@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.repository
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.SpotifyEntity
 import com.dzirbel.kotify.db.SpotifyEntityTable
 import com.dzirbel.kotify.db.model.ImageSize
@@ -11,6 +12,7 @@ import org.jetbrains.exposed.sql.Column
 /**
  * A simple interface for ViewModels which expose a set of images, typically implemented via [EntityImageViewModel].
  */
+@Stable
 interface ImageViewModel {
     /**
      * Retrieves a [LazyTransactionStateFlow] reflecting the image URL most appropriate for the given [size] (typically

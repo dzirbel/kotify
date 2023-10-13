@@ -1,10 +1,12 @@
 package com.dzirbel.kotify.repository.playlist
 
+import androidx.compose.runtime.Stable
 import com.dzirbel.kotify.db.model.PlaylistTrack
 import com.dzirbel.kotify.repository.episode.EpisodeViewModel
 import com.dzirbel.kotify.repository.track.TrackViewModel
 import java.time.Instant
 
+@Stable
 data class PlaylistTrackViewModel(
     val track: TrackViewModel? = null,
     val episode: EpisodeViewModel? = null,
