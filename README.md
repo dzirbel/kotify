@@ -10,8 +10,7 @@
 [![codecov](https://codecov.io/gh/dzirbel/kotify/branch/master/graph/badge.svg?token=RZU5D35M5E)](https://codecov.io/gh/dzirbel/kotify)
 
 Kotify is a multiplatform desktop client for [Spotify](https://www.spotify.com/) focused on library organization for
-power users. It is free, open source, and does not collect any data. Kotify is in early development and nearing its
-first alpha release in the coming weeks.
+power users. It is free, open source, and does not collect any data.
 
 Kotify acts as a replacement for Spotify's official desktop application and can be used to browse and manage your
 Spotify library and control playback. Kotify adds:
@@ -30,6 +29,23 @@ Planned features include:
 
 For a full list of completed and upcoming features, see the [Roadmap](https://coda.io/@dominic-zirbel/kotify-roadmap).
 
+### Installation
+
+Kotify can be installed as an early **alpha** release. Expect performance issues, bugs, and missing features. In
+particular, basic feature parity is expected in 0.2.0 and performance optimizations in 0.3.0 (see the
+[Roadmap](https://coda.io/@dominic-zirbel/kotify-roadmap) for details). While efforts will be made to migrate data
+(ratings, etc) between releases, this is not guaranteed. Use at your own risk.
+
+Latest release: [0.1.0](https://github.com/dzirbel/kotify/releases/tag/v0.1.0)
+
+#### Downloads
+
+|                                          Windows                                           |                                          macOS                                           |                                          Linux                                           |
+|:------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------:|
+|     [EXE](https://github.com/dzirbel/kotify/releases/download/v0.1.0/Kotify-0.1.0.exe)     |    [DMG](https://github.com/dzirbel/kotify/releases/download/v0.1.0/Kotify-1.0.0.dmg)    |    [DEB](https://github.com/dzirbel/kotify/releases/download/v0.1.0/kotify_0.1.0.deb)    |
+|     [MSI](https://github.com/dzirbel/kotify/releases/download/v0.1.0/Kotify-0.1.0.msi)     |                                                                                          |    [RPM](https://github.com/dzirbel/kotify/releases/download/v0.1.0/kotify-0.1.0.rpm)    |
+| [JAR](https://github.com/dzirbel/kotify/releases/download/v0.1.0/Kotify-windows-0.1.0.jar) | [JAR](https://github.com/dzirbel/kotify/releases/download/v0.1.0/Kotify-macos-1.0.0.jar) | [JAR](https://github.com/dzirbel/kotify/releases/download/v0.1.0/Kotify-linux-0.1.0.jar) |
+
 ### How does it work?
 
 Kotify uses Spotify's [web API](https://developer.spotify.com/documentation/web-api/) to retrieve
@@ -44,16 +60,6 @@ you will never need to provide your Spotify password to Kotify. You may remove K
 Once installed and authorized, Kotify can replace using Spotify's desktop client for browsing and organizing your
 Spotify library. However, Kotify cannot directly play music from Spotify. You'll need to keep Spotify's client (or
 another device, like a phone) running in the background through which Kotify can play music.
-
-### Installation
-
-Kotify isn't ready for general use yet. It can be built from source by running
-
-```
-./gradlew run
-```
-
-in the root directory. JDK 18 is required.
 
 ### Why "Kotify"?
 
