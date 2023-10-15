@@ -23,6 +23,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @Tag(TAG_NETWORK)
 @ExtendWith(NetworkExtension::class)
@@ -73,7 +74,7 @@ class SpotifyPlaylistsTest {
             )
         }
 
-        retryForResult(attempts = 10, delayBetweenAttempts = 500.milliseconds) {
+        retryForResult(attempts = 30, delayBetweenAttempts = 1.seconds) {
             val updatedPlaylist = runBlocking { Spotify.Playlists.getPlaylist(playlistId = playlist.id) }
             assertThat(updatedPlaylist.id).isEqualTo(playlist.id)
             assertThat(updatedPlaylist.name).isEqualTo(updatedName)
