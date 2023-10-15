@@ -22,7 +22,6 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Tag(TAG_NETWORK)
@@ -178,7 +177,7 @@ class SpotifyPlaylistsTest {
 
         runBlocking { Spotify.Playlists.uploadPlaylistCoverImage(playlistId = playlist.id, jpegImage = bytes) }
 
-        val image = retryForResult(attempts = 3, delayBetweenAttempts = 250.milliseconds) {
+        val image = retryForResult(attempts = 30, delayBetweenAttempts = 1.seconds) {
             val images = runBlocking { Spotify.Playlists.getPlaylistCoverImages(playlistId = playlist.id) }
             assertThat(images).hasSize(1)
             images.first()
