@@ -96,7 +96,7 @@ class LinkedTextTest {
             windowWidth = 150,
             windowHeight = 60,
             setUpComposeScene = {
-                click(x = 80f, y = 10f)
+                click(x = 70f, y = 10f)
             },
         ) {
             LinkedText(

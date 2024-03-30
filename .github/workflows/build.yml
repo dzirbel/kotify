@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       # screenshot tests cannot be run across operating systems; see https://github.com/JetBrains/compose-multiplatform/issues/3442
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
