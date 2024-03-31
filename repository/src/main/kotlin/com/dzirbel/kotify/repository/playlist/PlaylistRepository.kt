@@ -37,6 +37,7 @@ class DatabasePlaylistRepository(
             owner = userRepository.convertToDB(networkModel.owner, fetchTime)
 
             images = networkModel.images
+                .orEmpty()
                 .map { Image.findOrCreate(url = it.url, width = it.width, height = it.height) }
                 .sized()
 

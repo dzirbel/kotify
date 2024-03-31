@@ -65,7 +65,7 @@ interface SpotifyAlbum : SpotifyObject {
 
     @Serializable(with = Type.Serializer::class)
     enum class Type {
-        ALBUM, SINGLE, COMPILATION, APPEARS_ON;
+        ALBUM, EP, SINGLE, COMPILATION, APPEARS_ON;
 
         internal object Serializer : CaseInsensitiveEnumSerializer<Type>(Type::class)
     }

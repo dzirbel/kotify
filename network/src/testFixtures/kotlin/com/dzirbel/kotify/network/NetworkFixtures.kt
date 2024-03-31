@@ -293,11 +293,6 @@ object NetworkFixtures {
                 ),
                 AlbumProperties("4TIsfEUceYAfABg01yq0jV", "Around The World", albumType = SpotifyAlbum.Type.SINGLE),
                 AlbumProperties(
-                    "6w1FseZ89KHZY5x8mXH6kJ",
-                    "Debut Remixes Vol. 02",
-                    albumType = SpotifyAlbum.Type.COMPILATION,
-                ),
-                AlbumProperties(
                     "2uXrzdhd7MlzKndZd2DRxk",
                     "Worldless (The FiXT Remixes)",
                     albumType = SpotifyAlbum.Type.COMPILATION,
@@ -360,12 +355,6 @@ object NetworkFixtures {
                     albumType = SpotifyAlbum.Type.SINGLE,
                 ),
                 AlbumProperties(
-                    id = "0NHF6ViRN7Bv55QVwZmfGR",
-                    name = "Rock Chillout",
-                    totalTracks = 31,
-                    albumType = SpotifyAlbum.Type.COMPILATION,
-                ),
-                AlbumProperties(
                     id = "3ZCqORuVBN89Do4oYVDVnt",
                     name = "Chill Rock",
                     totalTracks = 30,
@@ -401,7 +390,8 @@ object NetworkFixtures {
             name = "#1581 - J. Prince",
             description = """
                 J. Prince is the CEO of Rap-A-Lot Records, author of The Art & Science of Respect, and founder of The
-                Loyalty Collection, a limited collection of fine wines."""
+                Loyalty Collection, a limited collection of fine wines. Learn more about your ad choices. Visit
+                podcastchoices.com/adchoices"""
                 .toSingleLine(),
             releaseDate = "2020-12-18",
             releaseDatePrecision = "day",

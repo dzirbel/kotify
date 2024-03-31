@@ -13,6 +13,7 @@ import java.time.Instant
 
 enum class AlbumType(val displayName: String, val iconName: String) {
     ALBUM(displayName = "Album", iconName = "album"),
+    EP(displayName = "EP", iconName = "album"),
     SINGLE(displayName = "Single", iconName = "audiotrack"),
     COMPILATION(displayName = "Compilation", iconName = "library-music"),
     APPEARS_ON(displayName = "Appears On", iconName = "audio-file"),

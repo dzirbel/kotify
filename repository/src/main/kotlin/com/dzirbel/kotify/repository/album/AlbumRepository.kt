@@ -26,6 +26,7 @@ private const val MAX_ALBUM_IDS_LOOKUP = 20
 fun SpotifyAlbum.Type.toAlbumType(): AlbumType {
     return when (this) {
         SpotifyAlbum.Type.ALBUM -> AlbumType.ALBUM
+        SpotifyAlbum.Type.EP -> AlbumType.EP
         SpotifyAlbum.Type.SINGLE -> AlbumType.SINGLE
         SpotifyAlbum.Type.COMPILATION -> AlbumType.COMPILATION
         SpotifyAlbum.Type.APPEARS_ON -> AlbumType.APPEARS_ON

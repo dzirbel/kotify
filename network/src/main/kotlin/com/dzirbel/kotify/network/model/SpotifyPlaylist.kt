@@ -36,7 +36,7 @@ interface SpotifyPlaylist : SpotifyObject {
      * descending order. See Working with Playlists.
      * Note: If returned, the source URL for the image ( url ) is temporary and will expire in less than a day.
      */
-    val images: List<SpotifyImage>
+    val images: List<SpotifyImage>?
 
     /** The user who owns the playlist */
     val owner: PublicSpotifyUser
@@ -67,7 +67,7 @@ data class SimplifiedSpotifyPlaylist(
     override val collaborative: Boolean,
     override val description: String,
     @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
-    override val images: List<SpotifyImage>,
+    override val images: List<SpotifyImage>? = null,
     override val owner: PublicSpotifyUser,
     @SerialName("primary_color") override val primaryColor: String? = null,
     override val public: Boolean? = null,
@@ -87,7 +87,7 @@ data class FullSpotifyPlaylist(
     override val collaborative: Boolean,
     override val description: String?,
     @SerialName("external_urls") override val externalUrls: SpotifyExternalUrl,
-    override val images: List<SpotifyImage>,
+    override val images: List<SpotifyImage>?,
     override val owner: PublicSpotifyUser,
     @SerialName("primary_color") override val primaryColor: String? = null,
     override val public: Boolean? = null,

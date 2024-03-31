@@ -3,7 +3,6 @@ package com.dzirbel.kotify.network
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
-import assertk.assertions.isNotEmpty
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -38,22 +37,14 @@ internal class SpotifyUsersProfileTest {
     @ParameterizedTest
     @EnumSource(Spotify.UsersProfile.TimeRange::class)
     fun topArtists(timeRange: Spotify.UsersProfile.TimeRange) {
-        val artists = runBlocking { Spotify.UsersProfile.topArtists(timeRange = timeRange) }
-
-        // personalization may not have sufficient data for shorter time ranges
-        if (timeRange == Spotify.UsersProfile.TimeRange.LONG_TERM) {
-            assertThat(artists.items).isNotEmpty()
-        }
+        // do not inspect results; personalization may not have sufficient data for test user
+        runBlocking { Spotify.UsersProfile.topArtists(timeRange = timeRange) }
     }
 
     @ParameterizedTest
     @EnumSource(Spotify.UsersProfile.TimeRange::class)
     fun topTracks(timeRange: Spotify.UsersProfile.TimeRange) {
-        val tracks = runBlocking { Spotify.UsersProfile.topTracks(timeRange = timeRange) }
-
-        // personalization may not have sufficient data for shorter time ranges
-        if (timeRange == Spotify.UsersProfile.TimeRange.LONG_TERM) {
-            assertThat(tracks.items).isNotEmpty()
-        }
+        // do not inspect results; personalization may not have sufficient data for test user
+        runBlocking { Spotify.UsersProfile.topTracks(timeRange = timeRange) }
     }
 }

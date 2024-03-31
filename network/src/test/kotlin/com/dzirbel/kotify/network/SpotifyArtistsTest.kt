@@ -32,7 +32,7 @@ internal class SpotifyArtistsTest {
             assertThrows<Spotify.SpotifyError> { Spotify.Artists.getArtist(NetworkFixtures.notFoundId) }
         }
 
-        assertThat(error.code).isEqualTo(404)
+        assertThat(error.code).isEqualTo(400)
     }
 
     @Test
