@@ -5,8 +5,10 @@ import com.dzirbel.kotify.network.util.await
 import com.dzirbel.kotify.network.util.bodyFromJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import okhttp3.FormBody
@@ -39,15 +41,15 @@ class OAuth private constructor(
         PLAYLIST_MODIFY_PUBLIC("Manage your public playlists."),
         PLAYLIST_READ_COLLABORATIVE("Access your collaborative playlists."),
         PLAYLIST_READ_PRIVATE("Access your private playlists."),
+        SOA_CREATE_PARTNER("Create new partners, platform partners only.", requestByDefault = false),
+        SOA_MANAGE_ENTITLEMENTS("Modify entitlements for linked users.", requestByDefault = false),
+        SOA_MANAGE_PARTNER("Update partner information.", requestByDefault = false),
         STREAMING("Play content and control playback on your other devices.", requestByDefault = false),
         UGC_IMAGE_UPLOAD("Upload images to Spotify on your behalf.", requestByDefault = false),
-        USER_CREATE_PARTNER("Create new partners, platform partners only.", requestByDefault = false),
         USER_FOLLOW_MODIFY("Manage who you are following."),
         USER_FOLLOW_READ("Access your followers and who you are following."),
         USER_LIBRARY_MODIFY("Manage your saved content."),
         USER_LIBRARY_READ("Access your saved content."),
-        USER_MANAGE_ENTITLEMENTS("Modify entitlements for linked users.", requestByDefault = false),
-        USER_MANAGE_PARTNER("Update partner information.", requestByDefault = false),
         USER_MODIFY_PLAYBACK_STATE("Control playback on your Spotify clients and Spotify Connect devices."),
         USER_READ_CURRENTLY_PLAYING("Read your currently playing content."),
         USER_READ_EMAIL("Get your real email address.", requestByDefault = false),
@@ -63,7 +65,15 @@ class OAuth private constructor(
         val scope: String by lazy { name.lowercase(Locale.US).replace('_', '-') }
 
         companion object {
+            /**
+             * Scopes requested by default for the main Kotify application.
+             */
             val DEFAULT_SCOPES: Set<Scope> = entries.filterTo(mutableSetOf()) { it.requestByDefault }
+
+            /**
+             * Scopes required for integration tests.
+             */
+            val TEST_SCOPES = DEFAULT_SCOPES.plus(USER_READ_EMAIL).plus(UGC_IMAGE_UPLOAD)
 
             fun of(scope: String): Scope? = entries.find { it.scope.equals(scope, ignoreCase = true) }
         }
@@ -79,6 +89,9 @@ class OAuth private constructor(
 
     private val stopped = AtomicBoolean(false)
 
+    private val _stops = MutableSharedFlow<Unit>(replay = 1)
+    val stops = _stops.asSharedFlow()
+
     private val server: LocalOAuthServer = LocalOAuthServer(
         state = state,
         callback = { result ->
@@ -89,6 +102,7 @@ class OAuth private constructor(
                     finish()
                 } catch (ex: Throwable) {
                     _errorFlow.value = ex
+                    _stops.emit(Unit)
                 }
             }
         },
@@ -105,6 +119,7 @@ class OAuth private constructor(
             // run async to avoid deadlock (since in onSuccess() we're still processing a request)
             GlobalScope.launch(Dispatchers.IO) {
                 runCatching { server.stop() }
+                _stops.emit(Unit)
             }
         }
     }
