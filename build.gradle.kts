@@ -156,7 +156,7 @@ fun Project.configureTests() {
         systemProperties("REGEN_SCREENSHOTS" to true)
     }
 
-    tasks.withType<Test>().configureEach {
+    tasks.withType<Test> {
         systemProperty("junit.jupiter.extensions.autodetection.enabled", true)
         testLogging {
             events = setOf(TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR, TestLogEvent.STANDARD_OUT)
@@ -189,16 +189,16 @@ fun Project.configureJacoco() {
         toolVersion = libs.versions.jacoco.get()
     }
 
-    tasks.findByName("testLocal")?.let { testLocal ->
-        jacocoTestReportLocal.dependsOn(testLocal)
+    tasks.named { it == "testLocal" }.configureEach {
+        jacocoTestReportLocal.dependsOn(this)
         jacocoTestReportLocal.sourceSets(sourceSets.main.get())
-        jacocoTestReportLocal.executionData(testLocal)
+        jacocoTestReportLocal.executionData(this)
     }
 
-    tasks.findByName("testIntegration")?.let { testIntegration ->
-        jacocoTestReportIntegration.dependsOn(testIntegration)
+    tasks.named  { it == "testIntegration" }.configureEach {
+        jacocoTestReportIntegration.dependsOn(this)
         jacocoTestReportIntegration.sourceSets(sourceSets.main.get())
-        jacocoTestReportIntegration.executionData(testIntegration)
+        jacocoTestReportIntegration.executionData(this)
     }
 
     tasks.withType<JacocoReport> {
