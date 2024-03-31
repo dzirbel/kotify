@@ -101,8 +101,8 @@ complexity:
     threshold: 60
   LongParameterList:
     active: false
-    functionThreshold: 10
-    constructorThreshold: 10
+    functionThreshold: 6
+    constructorThreshold: 7
     ignoreDefaultParameters: false
     ignoreDataClasses: true
     ignoreAnnotatedParameter: []
@@ -139,6 +139,7 @@ complexity:
     ignoreDeprecated: false
     ignorePrivate: true
     ignoreOverridden: true
+    ignoreAnnotatedFunctions: []
 
 coroutines:
   active: true
@@ -379,12 +380,15 @@ formatting:
     active: true
     autoCorrect: true
   NoBlankLineInList:
-    active: false # does not spacing between list items with comments (kdoc, etc)
+    active: false # does not add spacing between list items with comments (kdoc, etc)
     autoCorrect: true
   NoBlankLinesInChainedMethodCalls:
     active: true
     autoCorrect: true
   NoConsecutiveBlankLines:
+    active: true
+    autoCorrect: true
+  NoConsecutiveComments:
     active: true
     autoCorrect: true
   NoEmptyClassBody:
@@ -411,6 +415,7 @@ formatting:
   NoSingleLineBlockComment:
     active: true
     autoCorrect: true
+    indentSize: 4
   NoTrailingSpaces:
     active: true
     autoCorrect: true
@@ -423,6 +428,7 @@ formatting:
   NoWildcardImports:
     active: true
     autoCorrect: true
+    packagesToUseImportOnDemandProperty: ''
   NullableTypeSpacing:
     active: true
     autoCorrect: true
@@ -445,6 +451,11 @@ formatting:
   PropertyName:
     active: false # requires "screaming snake case" for `val` fields which are mutable (MutableList, etc)
     autoCorrect: true
+  PropertyWrapping:
+    active: true
+    autoCorrect: true
+    maxLineLength: 120
+    indentSize: 4
   SpacingAroundAngleBrackets:
     active: true
     autoCorrect: true
@@ -662,6 +673,7 @@ potential-bugs:
       - 'CheckReturnValue'
       - '*.CheckReturnValue'
     ignoreReturnValueAnnotations:
+      - 'CanIgnoreReturnValue'
       - '*.CanIgnoreReturnValue'
     returnValueTypes:
       - 'kotlin.sequences.Sequence'
@@ -682,7 +694,6 @@ potential-bugs:
   LateinitUsage:
     active: false
     excludes: ['**/test/**', '**/testFixtures/**']
-    ignoreAnnotated: []
     ignoreOnClassesPattern: ''
   MapGetWithNotNullAssertionOperator:
     active: true
@@ -733,6 +744,7 @@ style:
     active: false # appears to have many dubious warnings and/or false positives
   CascadingCallWrapping:
     active: true
+    includeElvis: true
   ClassOrdering:
     active: true
   CollapsibleIfStatements:
@@ -748,8 +760,14 @@ style:
     maxDestructuringEntries: 3
   DoubleNegativeLambda:
     active: true
-    negativeFunctions: ['takeUnless', 'none']
-    negativeFunctionNameParts: ['not', 'non']
+    negativeFunctions:
+      - reason: 'Use `takeIf` instead.'
+        value: 'takeUnless'
+      - reason: 'Use `all` instead.'
+        value: 'none'
+    negativeFunctionNameParts:
+      - 'not'
+      - 'non'
   EqualsNullCall:
     active: true
   EqualsOnSignatureLine:
@@ -764,16 +782,29 @@ style:
   ForbiddenAnnotation:
     active: true
     annotations:
-      - 'java.lang.SuppressWarnings'
-      - 'java.lang.Deprecated'
-      - 'java.lang.annotation.Documented'
-      - 'java.lang.annotation.Target'
-      - 'java.lang.annotation.Retention'
-      - 'java.lang.annotation.Repeatable'
-      - 'java.lang.annotation.Inherited'
+      - reason: 'it is a java annotation. Use `Suppress` instead.'
+        value: 'java.lang.SuppressWarnings'
+      - reason: 'it is a java annotation. Use `kotlin.Deprecated` instead.'
+        value: 'java.lang.Deprecated'
+      - reason: 'it is a java annotation. Use `kotlin.annotation.MustBeDocumented` instead.'
+        value: 'java.lang.annotation.Documented'
+      - reason: 'it is a java annotation. Use `kotlin.annotation.Target` instead.'
+        value: 'java.lang.annotation.Target'
+      - reason: 'it is a java annotation. Use `kotlin.annotation.Retention` instead.'
+        value: 'java.lang.annotation.Retention'
+      - reason: 'it is a java annotation. Use `kotlin.annotation.Repeatable` instead.'
+        value: 'java.lang.annotation.Repeatable'
+      - reason: 'Kotlin does not support @Inherited annotation, see https://youtrack.jetbrains.com/issue/KT-22265'
+        value: 'java.lang.annotation.Inherited'
   ForbiddenComment:
     active: false
-    comments: ['FIXME:', 'STOPSHIP:', 'TODO:']
+    comments:
+      - reason: 'Forbidden FIXME todo marker in comment, please fix the problem.'
+        value: 'FIXME:'
+      - reason: 'Forbidden STOPSHIP todo marker in comment, please address the problem before shipping the code.'
+        value: 'STOPSHIP:'
+      - reason: 'Forbidden TODO todo marker in comment, please do the changes.'
+        value: 'TODO:'
     allowedPatterns: ''
   ForbiddenImport:
     active: false
@@ -782,20 +813,30 @@ style:
   ForbiddenMethodCall:
     active: true
     methods:
-      # do not write directly to stdout
-      - 'kotlin.io.print'
-      - 'kotlin.io.println'
-      # do not access system time (except through mockable CurrentTime)
-      - 'java.lang.System.currentTimeMillis'
-      - 'java.lang.System.nanoTime'
-      - 'java.time.Instant.now'
-      - 'java.util.Date.<init>'
-      - 'java.util.Calendar.getInstance'
-      - 'java.time.Clock.systemUTC'
-      - 'java.time.Clock.system'
-      - 'java.time.ZoneId.systemDefault'
-      - 'kotlin.time.TimeSource.markNow'
-      - 'kotlin.time.TimeSource.Monotonic.markNow'
+      - reason: 'print does not allow you to configure the output stream. Use a logger instead.'
+        value: 'kotlin.io.print'
+      - reason: 'println does not allow you to configure the output stream. Use a logger instead.'
+        value: 'kotlin.io.println'
+      - reason: 'do not access system time, except through mockable CurrentTime'
+        value: 'java.lang.System.currentTimeMillis'
+      - reason: 'do not access system time, except through mockable CurrentTime'
+        value: 'java.lang.System.nanoTime'
+      - reason: 'do not access system time, except through mockable CurrentTime'
+        value: 'java.time.Instant.now'
+      - reason: 'do not access system time, except through mockable CurrentTime'
+        value: 'java.util.Date.<init>'
+      - reason: 'do not access system time, except through mockable CurrentTime'
+        value: 'java.util.Calendar.getInstance'
+      - reason: 'do not access system time, except through mockable CurrentTime'
+        value: 'java.time.Clock.systemUTC'
+      - reason: 'do not access system time, except through mockable CurrentTime'
+        value: 'java.time.Clock.system'
+      - reason: 'do not access system time, except through mockable CurrentTime'
+        value: 'java.time.ZoneId.systemDefault'
+      - reason: 'do not access system time, except through mockable CurrentTime'
+        value: 'kotlin.time.TimeSource.markNow'
+      - reason: 'do not access system time, except through mockable CurrentTime'
+        value: 'kotlin.time.TimeSource.Monotonic.markNow'
   ForbiddenSuppress:
     active: false
     rules: []
@@ -808,7 +849,6 @@ style:
     ignoreOverridableFunction: true
     ignoreActualFunction: true
     excludedFunctions: []
-    ignoreAnnotated: ['dagger.Provides']
   LoopWithTooManyJumpStatements:
     active: true
     maxJumpCount: 1
@@ -875,9 +915,9 @@ style:
   ReturnCount:
     active: true
     max: 3
-    excludedFunctions: ['equals']
+    excludedFunctions: []
     excludeLabeled: false
-    excludeReturnFromLambda: true
+    excludeReturnFromLambda: false
     excludeGuardClauses: false
   SafeCast:
     active: true
@@ -887,6 +927,8 @@ style:
     active: true
   StringShouldBeRawString:
     active: true
+    maxEscapedCharacterCount: 2
+    ignoredCharacters: []
   ThrowsCount:
     active: false
     max: 2
@@ -953,6 +995,7 @@ style:
     active: true
   UseIfInsteadOfWhen:
     active: true
+    ignoreWhenContainingVariableDeclaration: false
   UseIsNullOrEmpty:
     active: true
   UseLet:
@@ -974,7 +1017,6 @@ style:
     ignoreLateinitVar: false
   WildcardImport:
     active: true
-    excludes: []
     excludeImports: []
 
 TwitterCompose:
