@@ -25,6 +25,5 @@ fun <T> retryForResult(attempts: Int, delayBetweenAttempts: Duration? = null, bl
         }
     }
 
-    @Suppress("TooGenericExceptionThrown")
     throw Throwable("Failed after $attempts attempts", cause = throwable)
 }

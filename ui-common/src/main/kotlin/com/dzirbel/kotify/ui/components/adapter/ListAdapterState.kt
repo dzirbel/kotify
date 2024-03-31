@@ -12,7 +12,6 @@ import com.dzirbel.kotify.util.coroutines.Computation
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.launch
@@ -59,8 +58,8 @@ fun <E> rememberListAdapterState(
  * This avoids race conditions when applying changes (e.g. new elements or changing the sort order) to the [ListAdapter]
  * in different places.
  *
- * @param scope [CoroutineScope] in which [mutate] is applied and [source] is collected
- * @param source an optional [Flow] whose emissions are applied as elements of the [ListAdapter]
+ * @param scope [CoroutineScope] in which [mutate] is applied
+ * @param initialValue initial list for the [ListAdapter]
  * @param defaultSort the initial sort order for the [ListAdapter]
  * @param defaultFilter the initial filter for the [ListAdapter]
  */

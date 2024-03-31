@@ -255,6 +255,7 @@ exceptions:
     allowedExceptionNameRegex: '^(_|(ignore|expected).*)'
   TooGenericExceptionThrown:
     active: true
+    excludes: ['**/test/**', '**/testFixtures/**']
     exceptionNames:
       - 'Error'
       - 'Exception'

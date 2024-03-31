@@ -145,7 +145,6 @@ open class TrackPopularityProperty<T>(private val toTrack: (T) -> TrackViewModel
         ) {
             if (popularity != null) {
                 Box(
-                    @Suppress("MagicNumber")
                     Modifier
                         .background(color)
                         .fillMaxHeight()

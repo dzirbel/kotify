@@ -233,9 +233,8 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
                 .collectAsState()
                 .value
 
-            @Suppress("BracesOnWhenStatements")
             val saveText = when (saveState) {
-                is SavedRepository.SaveState.Set -> {
+                is SavedRepository.SaveState.Set ->
                     if (saveState.saved) {
                         val saveTime = saveState.saveTime?.toEpochMilli()
                         if (saveTime != null) {
@@ -247,7 +246,6 @@ private fun ArtistDetailInsert(artist: ArtistViewModel) {
                     } else {
                         "Not saved"
                     }
-                }
 
                 SavedRepository.SaveState.NotFound -> "Save state not found"
                 is SavedRepository.SaveState.Setting -> if (saveState.saved) "Saving..." else "Removing..."

@@ -11,7 +11,7 @@ import com.dzirbel.kotify.network.properties.TrackProperties
 /**
  * Contains hardcoded data against which to test API calls.
  */
-@Suppress("LargeClass", "TooManyFunctions")
+@Suppress("LargeClass")
 object NetworkFixtures {
     /**
      * A valid Spotify ID which does not correspond to any object.

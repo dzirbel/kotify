@@ -34,7 +34,6 @@ interface MutableLog<T> : Log<T> {
  * @param bufferCapacity number of events to buffer in the [Log.eventsFlow], may be increased for logs which are
  *  "bursty" and likely to emit many events in a short period of time
  */
-@Suppress("FunctionNaming")
 fun <T> MutableLog(
     name: String,
     scope: CoroutineScope,

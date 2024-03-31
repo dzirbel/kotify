@@ -9,7 +9,6 @@ package com.dzirbel.kotify.util.collections
  * Behavior is undefined if this list is not sorted according to [comparator].
  */
 fun <E> List<E>.sortedIndexFor(element: E, comparator: Comparator<E>): Int {
-    @Suppress("BracesOnWhenStatements")
     return when {
         isEmpty() -> 0
         size == 1 -> if (comparator.compare(element, this[0]) < 0) 0 else 1
