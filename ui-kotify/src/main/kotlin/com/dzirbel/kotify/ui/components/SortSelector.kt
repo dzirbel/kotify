@@ -45,12 +45,13 @@ import kotlinx.collections.immutable.toPersistentList
 fun <T> SortSelector(
     sortableProperties: ImmutableList<SortableProperty<T>>,
     sorts: PersistentList<Sort<T>>,
+    onSetSort: (PersistentList<Sort<T>>) -> Unit,
+    modifier: Modifier = Modifier,
     allowEmpty: Boolean = false,
     contentPadding: PaddingValues = PaddingValues(Dimens.space3),
-    onSetSort: (PersistentList<Sort<T>>) -> Unit,
 ) {
     Surface(
-        modifier = Modifier.instrument(),
+        modifier = modifier.instrument(),
         elevation = Dimens.componentElevation,
         shape = RoundedCornerShape(size = Dimens.cornerSize),
     ) {

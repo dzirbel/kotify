@@ -41,11 +41,12 @@ import kotlinx.collections.immutable.ImmutableList
 fun <E> DividerSelector(
     dividableProperties: ImmutableList<DividableProperty<E>>,
     currentDivider: Divider<E>?,
-    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
     onSelectDivider: (Divider<E>?) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(Dimens.space3),
 ) {
     Surface(
-        modifier = Modifier.instrument(),
+        modifier = modifier.instrument(),
         elevation = Dimens.componentElevation,
         shape = RoundedCornerShape(size = Dimens.cornerSize),
     ) {

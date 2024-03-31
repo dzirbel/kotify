@@ -24,13 +24,14 @@ import kotlinx.coroutines.Dispatchers
 @Composable
 fun AverageStarRating(
     averageRating: AverageRating?,
+    modifier: Modifier = Modifier,
     maxRating: Int = Rating.DEFAULT_MAX_AVERAGE_RATING,
     starSize: Dp = Dimens.iconSmall,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.space1),
-        modifier = Modifier.instrument(),
+        modifier = modifier.instrument(),
     ) {
         val stars = averageRating?.averagePercent?.let { it * maxRating }
         StarRow(

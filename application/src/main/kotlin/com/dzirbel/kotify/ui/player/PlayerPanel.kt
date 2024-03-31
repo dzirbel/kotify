@@ -88,7 +88,7 @@ private const val CENTER_CONTROLS_WEIGHT = 0.5f
 private const val PROGRESS_SLIDER_UPDATE_DELAY_MS = 50L
 
 @Composable
-fun PlayerPanel() {
+fun PlayerPanel(modifier: Modifier = Modifier) {
     val item = LocalPlayer.current.currentItem.collectAsState().value
     val itemId = item?.id
 
@@ -97,7 +97,7 @@ fun PlayerPanel() {
         ?.collectAsState()
         ?.value
 
-    Surface(elevation = Dimens.panelElevationLarge) {
+    Surface(modifier = modifier, elevation = Dimens.panelElevationLarge) {
         val layoutDirection = LocalLayoutDirection.current
 
         Layout(

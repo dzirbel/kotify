@@ -41,8 +41,9 @@ fun FlowInProgress(
     manualRedirectLoading: Boolean,
     onManualRedirect: (uri: URI) -> Unit,
     onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column {
+    Column(modifier = modifier) {
         if (oauthError == null) {
             if (oauthResult != null) {
                 val errorMessage = when (oauthResult) {

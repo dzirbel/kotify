@@ -15,9 +15,9 @@ import com.dzirbel.kotify.ui.theme.Dimens
  * page is being loaded.
  */
 @Composable
-fun PageLoadingSpinner() {
+fun PageLoadingSpinner(modifier: Modifier = Modifier) {
     // TODO center vertically; this is difficult since this is typically placed inside a scrolling column
-    Box(Modifier.fillMaxWidth()) {
+    Box(modifier.fillMaxWidth()) {
         CircularProgressIndicator(
             Modifier
                 .padding(vertical = Dimens.space5)

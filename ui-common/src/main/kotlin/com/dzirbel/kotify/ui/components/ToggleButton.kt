@@ -39,10 +39,11 @@ fun <T> ToggleButtonGroup(
     elements: ImmutableList<T>,
     selectedElements: PersistentSet<T>,
     onSelectElements: (PersistentSet<T>) -> Unit,
+    modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(Dimens.space3),
     content: @Composable RowScope.(T) -> Unit,
 ) {
-    Surface(elevation = Dimens.componentElevation, shape = RoundedCornerShape(Dimens.cornerSize)) {
+    Surface(modifier = modifier, elevation = Dimens.componentElevation, shape = RoundedCornerShape(Dimens.cornerSize)) {
         FlowRow(modifier = Modifier.instrument()) {
             for (element in elements) {
                 ToggleButton(

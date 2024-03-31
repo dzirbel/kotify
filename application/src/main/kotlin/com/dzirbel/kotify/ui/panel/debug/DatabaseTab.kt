@@ -30,7 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.runningFold
 
 @Composable
-fun DatabaseTab() {
+fun DatabaseTab(modifier: Modifier = Modifier) {
     val groupByTransaction = remember { mutableStateOf(true) }
 
     val log = if (groupByTransaction.value) DatabaseLogger.transactionLog else DatabaseLogger.statementLog
@@ -42,6 +42,7 @@ fun DatabaseTab() {
 
     LogList(
         log = log,
+        modifier = modifier,
         filter = takingIf(filterDBs) {
             @Suppress("Wrapping") // ktlint false positive; fixed by https://github.com/pinterest/ktlint/pull/2127
             { it.event.data.db in selectedDBs.value }

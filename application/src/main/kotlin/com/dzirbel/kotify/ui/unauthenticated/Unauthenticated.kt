@@ -42,8 +42,8 @@ private const val WIDTH_FRACTION = 0.5f
  * Displays the un-authenticated landing page and authentication flow.
  */
 @Composable
-fun Unauthenticated() {
-    Surface {
+fun Unauthenticated(modifier: Modifier = Modifier) {
+    Surface(modifier = modifier) {
         Box(Modifier.fillMaxSize()) {
             val scrollState = rememberScrollState()
             Box(Modifier.verticalScroll(scrollState).fillMaxSize()) {

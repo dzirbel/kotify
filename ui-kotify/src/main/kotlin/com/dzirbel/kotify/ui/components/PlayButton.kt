@@ -17,7 +17,7 @@ import com.dzirbel.kotify.ui.util.derived
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 @Composable
-fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
+fun PlayButton(context: Player.PlayContext?, modifier: Modifier = Modifier, size: Dp = Dimens.iconMedium) {
     val player = LocalPlayer.current
 
     val currentContextState = player.playbackContextUri.collectAsState()
@@ -33,7 +33,7 @@ fun PlayButton(context: Player.PlayContext?, size: Dp = Dimens.iconMedium) {
 
     IconButton(
         enabled = playable && context != null,
-        modifier = Modifier.instrument().size(size),
+        modifier = modifier.instrument().size(size),
         onClick = {
             if (playing.value) player.pause() else player.play(context = context)
         },

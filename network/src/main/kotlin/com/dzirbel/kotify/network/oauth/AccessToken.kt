@@ -287,9 +287,9 @@ data class AccessToken(
                 file.inputStream()
                     .use { cacheFileJson.decodeFromStream<AccessToken>(it) }
                     .also { _tokenFlow.value = it }
-                    .also { mutableLog.success("Loaded access token from $cacheFile", duration = start.elapsedNow()) }
+                    .also { mutableLog.success("Loaded access token from $file", duration = start.elapsedNow()) }
             } catch (_: FileNotFoundException) {
-                null.also { mutableLog.info("No saved access token at $cacheFile", duration = start.elapsedNow()) }
+                null.also { mutableLog.info("No saved access token at $file", duration = start.elapsedNow()) }
             }
         }
 

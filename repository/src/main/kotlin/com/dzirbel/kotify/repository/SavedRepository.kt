@@ -113,12 +113,12 @@ interface SavedRepository : Logging<Repository.LogData> {
     /**
      * Ensures the entity with the given [id] is marked as saved.
      */
-    fun save(id: String) = setSaved(id = id, saved = true)
+    fun save(id: String): Unit = setSaved(id = id, saved = true)
 
     /**
      * Ensures the entity with the given [id] is not marked as saved.
      */
-    fun unsave(id: String) = setSaved(id = id, saved = false)
+    fun unsave(id: String): Unit = setSaved(id = id, saved = false)
 
     /**
      * Invalidates any local (on disk and in memory) state of the library specific to the current user, typically on log

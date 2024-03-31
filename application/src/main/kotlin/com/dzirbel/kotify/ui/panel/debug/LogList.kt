@@ -73,6 +73,7 @@ data class LogAndEvent<T>(val log: Log<T>, val event: Log.Event<T>)
 @Composable
 fun <T> LogList(
     log: Log<T>,
+    modifier: Modifier = Modifier,
     display: LogEventDisplay<T> = object : LogEventDisplay<T> {},
     sortProperties: ImmutableList<SortableProperty<Log.Event<T>>> = persistentListOf(),
     filter: ((LogAndEvent<T>) -> Boolean)? = null,
@@ -83,6 +84,7 @@ fun <T> LogList(
 ) {
     LogList(
         logs = listOf(log),
+        modifier = modifier,
         logMutex = log.writeLock,
         display = display,
         sortProperties = sortProperties,
@@ -99,6 +101,7 @@ fun <T> LogList(
 @Composable
 fun <T> LogList(
     logs: Iterable<Log<T>>,
+    modifier: Modifier = Modifier,
     logMutex: Mutex = remember(logs) { MergedMutex(logs.map { it.writeLock }) },
     display: LogEventDisplay<T> = object : LogEventDisplay<T> {},
     sortProperties: ImmutableList<SortableProperty<Log.Event<T>>> = persistentListOf(),
@@ -210,7 +213,7 @@ fun <T> LogList(
         display
     }
 
-    Surface {
+    Surface(modifier) {
         Column {
             Surface(elevation = Dimens.componentElevation) {
                 Column {

@@ -395,7 +395,7 @@ formatting:
     active: true
     autoCorrect: true
   NoEmptyFirstLineInClassBody:
-    active: false # does not allow for a space before a kdoc comment on members
+    active: false # does not allow for a space before a kdoc comment on members or after a complicated class signature
     autoCorrect: true
   NoEmptyFirstLineInMethodBlock:
     active: true
@@ -502,7 +502,7 @@ formatting:
     active: true
     autoCorrect: true
   StringTemplateIndent:
-    active: false # requirements are unclear and clash with MultilineRawStringIndentation
+    active: false # requirements are unclear and clash with Indentation/MultilineRawStringIndentation
     autoCorrect: true
     indentSize: 4
   TrailingCommaOnCallSite:
@@ -574,7 +574,7 @@ naming:
     active: true
     parameterPattern: '[a-z][A-Za-z0-9]*|_'
   MatchingDeclarationName:
-    active: false
+    active: false # does not always make sense with top-level Composable functions
     mustBeFirst: true
   MemberNameEqualsClassName:
     active: false
@@ -653,7 +653,7 @@ potential-bugs:
       - 'java.util.HashMap'
       - 'androidx.compose.runtime.MutableState'
   ElseCaseInsteadOfExhaustiveWhen:
-    active: false
+    active: true
   EqualsAlwaysReturnsTrueOrFalse:
     active: true
   EqualsWithHashCodeExist:
@@ -683,7 +683,7 @@ potential-bugs:
   ImplicitDefaultLocale:
     active: true
   ImplicitUnitReturnType:
-    active: false
+    active: true
     allowExplicitReturnType: true
   InvalidRange:
     active: true
@@ -702,7 +702,7 @@ potential-bugs:
   NullCheckOnMutableProperty:
     active: true
   NullableToStringCall:
-    active: false
+    active: false # many valid cases for nullable to-string, especially for logging
   PropertyUsedBeforeDeclaration:
     active: true
   UnconditionalJumpStatementInLoop:
@@ -738,8 +738,8 @@ style:
     multiLine: 'always'
   BracesOnWhenStatements:
     active: true
-    singleLine: 'necessary'
-    multiLine: 'consistent'
+    singleLine: 'never'
+    multiLine: 'necessary'
   CanBeNonNullable:
     active: false # appears to have many dubious warnings and/or false positives
   CascadingCallWrapping:
@@ -901,7 +901,7 @@ style:
   OptionalAbstractKeyword:
     active: true
   OptionalUnit:
-    active: true
+    active: false # exact opposite of ImplicitUnitReturnType; explicit Unit helps avoid types changing unexpectedly
   PreferToOverPairSyntax:
     active: false
   ProtectedMemberInFinalClass:
@@ -1027,30 +1027,26 @@ TwitterCompose:
     active: true
   ContentEmitterReturningValues:
     active: true
-    # contentEmitters: MyComposable,MyOtherComposable
   ModifierComposable:
     active: true
   ModifierMissing:
-    active: false
+    active: true
   ModifierReused:
     active: true
   ModifierWithoutDefault:
     active: true
   MultipleEmitters:
     active: true
-    # contentEmitters: MyComposable,MyOtherComposable
   MutableParams:
     active: true
   ComposableNaming:
     active: true
-    # allowedComposableFunctionNames: .*Presenter,.*MoleculePresenter
   ComposableParamOrder:
     active: true
   PreviewNaming:
     active: true
   PreviewPublic:
     active: true
-    # previewPublicOnlyIfParams: false
   RememberMissing:
     active: true
   UnstableCollections:

@@ -47,6 +47,7 @@ val DEFAULT_SEEK_TARGET_SIZE = 12.dp
  * A horizontal slider which displays a [progress] state and can be seeked by dragging or clicking.
  *
  * @param progress the current progress in the slider, or null to disable the slider
+ * @param modifier [Modifier]
  * @param sliderWidth the width of the slider
  * @param sliderHeight the height of the slider, by default [DEFAULT_SLIDER_HEIGHT]
  * @param seekTargetSize the size of the seek touch-target, by default [DEFAULT_SEEK_TARGET_SIZE]
@@ -58,6 +59,7 @@ val DEFAULT_SEEK_TARGET_SIZE = 12.dp
 @Composable
 fun SeekableSlider(
     progress: () -> Float?,
+    modifier: Modifier = Modifier,
     sliderWidth: Dp = Dp.Unspecified,
     sliderHeight: Dp = DEFAULT_SLIDER_HEIGHT,
     seekTargetSize: Dp = DEFAULT_SEEK_TARGET_SIZE,
@@ -86,7 +88,7 @@ fun SeekableSlider(
     }
 
     Row(
-        modifier = Modifier.instrument(),
+        modifier = modifier.instrument(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Dimens.space2),
     ) {

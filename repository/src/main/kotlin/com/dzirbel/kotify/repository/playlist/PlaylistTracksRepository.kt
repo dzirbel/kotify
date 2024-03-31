@@ -159,24 +159,19 @@ class DatabasePlaylistTracksRepository(
         fetchTime: Instant,
     ): PlaylistTrack? {
         val playlistTrack = when (val track = spotifyPlaylistTrack.track) {
-            is SimplifiedSpotifyTrack -> {
+            is SimplifiedSpotifyTrack ->
                 trackRepository.convertToDB(track, fetchTime)?.id?.value?.let { trackId ->
                     PlaylistTrack.findOrCreateFromTrack(trackId = trackId, playlistId = playlistId)
                 }
-            }
 
             is SimplifiedSpotifyEpisode -> {
                 val episode = EpisodeRepository.convertToDB(networkModel = track, fetchTime = fetchTime)
                 PlaylistTrack.findOrCreateFromEpisode(episodeId = episode.id.value, playlistId = playlistId)
             }
 
-            null -> {
-                null
-            }
+            null -> null
 
-            else -> {
-                error("unknown track type: $track")
-            }
+            else -> error("unknown track type: $track")
         }
 
         return playlistTrack?.apply {

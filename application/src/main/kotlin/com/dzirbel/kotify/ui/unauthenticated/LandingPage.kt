@@ -43,8 +43,13 @@ import com.dzirbel.kotify.util.collections.plusOrMinus
 import kotlinx.collections.immutable.toPersistentSet
 
 @Composable
-fun LandingPage(params: AuthenticationParams, onSetParams: (AuthenticationParams) -> Unit, onStartOAuth: () -> Unit) {
-    Column {
+fun LandingPage(
+    params: AuthenticationParams,
+    onSetParams: (AuthenticationParams) -> Unit,
+    onStartOAuth: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
         Text("Welcome to ${Application.name}!", style = MaterialTheme.typography.h5)
 
         Spacer(Modifier.height(Dimens.space4))
@@ -84,8 +89,8 @@ fun LandingPage(params: AuthenticationParams, onSetParams: (AuthenticationParams
 }
 
 @Composable
-fun Details(params: AuthenticationParams, onSetParams: (AuthenticationParams) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.space4)) {
+fun Details(params: AuthenticationParams, onSetParams: (AuthenticationParams) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Dimens.space4)) {
         UrlLinkedText {
             text("Kotify uses ")
             link(text = "OAuth 2.0", link = "https://oauth.net/2/")

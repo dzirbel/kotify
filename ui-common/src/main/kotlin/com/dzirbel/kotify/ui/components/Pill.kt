@@ -19,11 +19,13 @@ import com.dzirbel.kotify.ui.theme.KotifyColors
 @Composable
 fun Pill(
     text: String,
+    modifier: Modifier = Modifier,
     borderColor: Color = KotifyColors.current.divider,
     cornerSize: Dp = Dimens.cornerSize,
     padding: PaddingValues = PaddingValues(horizontal = Dimens.space2, vertical = Dimens.space1),
 ) {
     Surface(
+        modifier = modifier,
         elevation = Dimens.componentElevation,
         shape = RoundedCornerShape(size = cornerSize),
         border = BorderStroke(width = Dimens.divider, color = borderColor),

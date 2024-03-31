@@ -253,9 +253,7 @@ object Application {
                 EventLog.warn("Cannot write to $directoryName directory $normalizedAbsolutePath")
                 null
             }
-            else -> {
-                this
-            }
+            else -> this
         }
     }
 }

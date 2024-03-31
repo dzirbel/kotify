@@ -61,7 +61,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.runningFold
 
 @Composable
-fun RepositoryTab() {
+fun RepositoryTab(modifier: Modifier = Modifier) {
     val repositoryLogs = persistentListOf(
         LocalArtistRepository.current.log,
         LocalArtistAlbumsRepository.current.log,
@@ -93,6 +93,7 @@ fun RepositoryTab() {
 
     LogList(
         logs = allLogs,
+        modifier = modifier,
         logMutex = logMutex,
         display = RepositoryLogEventDisplay,
         sortProperties = persistentListOf(

@@ -21,10 +21,15 @@ import java.awt.Cursor
  * respectively.
  */
 @Composable
-fun DraggableSplitter(orientation: Orientation, dragTargetSize: Dp, onResize: (delta: Dp) -> Unit) {
+fun DraggableSplitter(
+    orientation: Orientation,
+    dragTargetSize: Dp,
+    onResize: (delta: Dp) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val density = LocalDensity.current
     Box(
-        Modifier
+        modifier
             .run {
                 when (orientation) {
                     Orientation.Vertical -> width(dragTargetSize).fillMaxHeight()

@@ -33,9 +33,9 @@ import com.dzirbel.kotify.ui.theme.KotifyColors
 import com.dzirbel.kotify.ui.util.instrumentation.instrument
 
 @Composable
-fun AlbumCell(album: AlbumViewModel, showRating: Boolean = true, onClick: () -> Unit) {
+fun AlbumCell(album: AlbumViewModel, onClick: () -> Unit, modifier: Modifier = Modifier, showRating: Boolean = true) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .instrument()
             .clickable(onClick = onClick)
             .padding(Dimens.space3),
@@ -89,9 +89,9 @@ fun AlbumCell(album: AlbumViewModel, showRating: Boolean = true, onClick: () -> 
 }
 
 @Composable
-fun SmallAlbumCell(album: AlbumViewModel, onClick: () -> Unit) {
+fun SmallAlbumCell(album: AlbumViewModel, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(Dimens.cornerSize))
             .clickable(onClick = onClick)
             .padding(Dimens.space2),

@@ -52,7 +52,7 @@ import java.time.format.DateTimeFormatter
 private val CURRENT_USER_DROPDOWN_MAX_WIDTH = 500.dp
 
 @Composable
-fun CurrentUser() {
+fun CurrentUser(modifier: Modifier = Modifier) {
     val userRepository = LocalUserRepository.current
 
     val currentUserCacheState: CacheState<UserViewModel>? = userRepository.currentUser.collectAsState().value
@@ -60,25 +60,23 @@ fun CurrentUser() {
 
     val expandedState = remember { mutableStateOf(false) }
 
-    SimpleTextButton(onClick = { expandedState.value = !expandedState.value }) {
+    SimpleTextButton(modifier = modifier, onClick = { expandedState.value = !expandedState.value }) {
         LoadedImage(currentUser, modifier = Modifier.size(Dimens.iconMedium))
 
         Spacer(Modifier.width(Dimens.space2))
 
         when (currentUserCacheState) {
-            is CacheState.Loaded -> {
+            is CacheState.Loaded ->
                 Text(
                     text = currentUserCacheState.cachedValue.name,
                     maxLines = 1,
                     modifier = Modifier.align(Alignment.CenterVertically),
                 )
-            }
 
-            is CacheState.Refreshing, null -> {
+            is CacheState.Refreshing, null ->
                 CircularProgressIndicator(
                     modifier = Modifier.size(Dimens.iconMedium).align(Alignment.CenterVertically),
                 )
-            }
 
             is CacheState.NotFound -> {
                 val currentUserId = userRepository.currentUserId.collectAsState().value

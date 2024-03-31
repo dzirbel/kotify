@@ -23,6 +23,7 @@ data class RelativeTimeInfo(
     fun formatLong(): String {
         if (amount == 0L) return "now"
 
+        @Suppress("ElseCaseInsteadOfExhaustiveWhen")
         val timeUnitName = when (unit) {
             TimeUnit.SECONDS -> "second"
             TimeUnit.MINUTES -> "minute"
@@ -43,6 +44,7 @@ data class RelativeTimeInfo(
     fun formatShort(): String {
         if (amount == 0L) return "now"
 
+        @Suppress("ElseCaseInsteadOfExhaustiveWhen")
         val timeUnitName = when (unit) {
             TimeUnit.SECONDS -> "s"
             TimeUnit.MINUTES -> "m"

@@ -18,11 +18,13 @@ fun AlbumTypePicker(
     albumTypeCounts: ImmutableMap<AlbumType?, Int>?,
     albumTypes: PersistentSet<AlbumType>,
     onSelectAlbumTypes: (PersistentSet<AlbumType>) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     ToggleButtonGroup(
         elements = AlbumType.entries.toImmutableList(),
         selectedElements = albumTypes,
         onSelectElements = onSelectAlbumTypes,
+        modifier = modifier,
         content = { albumType ->
             CachedIcon(name = albumType.iconName, size = Dimens.iconSmall)
 

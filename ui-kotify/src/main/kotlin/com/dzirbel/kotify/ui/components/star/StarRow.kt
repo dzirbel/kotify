@@ -122,13 +122,12 @@ fun StarRow(
 
                             when {
                                 // star is fully rated
-                                rating.toInt() > star -> {
+                                rating.toInt() > star ->
                                     if (hoveringLess) {
                                         draw(starColorFilter, alpha = starColors.removingAlpha)
                                     } else {
                                         draw(starColorFilter)
                                     }
-                                }
 
                                 // star is partially rated
                                 rating.toFloat() > star -> {
@@ -147,13 +146,12 @@ fun StarRow(
                                     }
                                 }
 
-                                else -> {
+                                else ->
                                     if (hoveringMore) {
                                         draw(starColorFilter, alpha = starColors.addingAlpha)
                                     } else {
                                         draw(backgroundColorFilter)
                                     }
-                                }
                             }
                         }
                     }

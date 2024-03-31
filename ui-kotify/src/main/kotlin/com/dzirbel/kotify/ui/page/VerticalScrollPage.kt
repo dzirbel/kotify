@@ -22,12 +22,13 @@ import com.dzirbel.kotify.ui.util.instrumentation.instrument
  */
 @Composable
 fun VerticalScrollPage(
+    modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
     onHeaderVisibilityChanged: ((Boolean) -> Unit)? = null,
     header: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    Box(Modifier.instrument()) {
+    Box(modifier.instrument()) {
         Column(modifier = Modifier.verticalScroll(scrollState)) {
             if (header != null) {
                 Box(

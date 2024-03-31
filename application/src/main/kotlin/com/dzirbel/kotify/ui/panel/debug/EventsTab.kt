@@ -17,8 +17,8 @@ import com.dzirbel.kotify.ui.invalidateRootComposable
 import com.dzirbel.kotify.ui.theme.Dimens
 
 @Composable
-fun EventsTab() {
-    LogList(listOf(EventLog, AccessToken.Cache.log), annotateTitlesByLog = false) {
+fun EventsTab(modifier: Modifier = Modifier) {
+    LogList(logs = listOf(EventLog, AccessToken.Cache.log), modifier = modifier, annotateTitlesByLog = false) {
         Column(Modifier.padding(Dimens.space3), verticalArrangement = Arrangement.spacedBy(Dimens.space2)) {
             Text("UI Instrumentation")
 

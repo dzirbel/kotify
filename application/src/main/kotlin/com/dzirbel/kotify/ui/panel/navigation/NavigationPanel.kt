@@ -44,7 +44,7 @@ import kotlinx.collections.immutable.ImmutableList
 private val titleAnimationSpec = TweenSpec<Float>(easing = LinearEasing)
 
 @Composable
-fun NavigationPanel(titleVisible: Boolean, titles: ImmutableList<() -> String?>) {
+fun NavigationPanel(titleVisible: Boolean, titles: ImmutableList<() -> String?>, modifier: Modifier = Modifier) {
     val key = pageStack.value.currentIndex
     val targetElevation = if (titleVisible) Dimens.panelElevationLarge else 0.dp
 
@@ -58,7 +58,7 @@ fun NavigationPanel(titleVisible: Boolean, titles: ImmutableList<() -> String?>)
 
     // use a high z-index to ensure the surface drop shadow is always on top of the content, even if the content has a
     // higher elevation
-    Surface(modifier = Modifier.zIndex(100f), elevation = elevationAnimatable.value) {
+    Surface(modifier = modifier.zIndex(100f), elevation = elevationAnimatable.value) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

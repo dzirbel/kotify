@@ -135,22 +135,10 @@ object ApplicationFixtures {
 
     fun ratingForArtist(artistId: String, random: Random): AverageRating {
         val ratings = when (artistId) {
-            pta.id -> {
-                List(18) { random.nextGaussianRating(mean = 9.7) }
-            }
-
-            "bigphil" -> {
-                List(3) { random.nextGaussianRating(mean = 8.2) }
-            }
-
-            "badghost" -> {
-                List(1) { random.nextGaussianRating(mean = 1.0) }
-            }
-
-            "among-thieves" -> {
-                emptyList()
-            }
-
+            pta.id -> List(18) { random.nextGaussianRating(mean = 9.7) }
+            "bigphil" -> List(3) { random.nextGaussianRating(mean = 8.2) }
+            "badghost" -> List(1) { random.nextGaussianRating(mean = 1.0) }
+            "among-thieves" -> emptyList()
             else -> {
                 val numRatings = random.nextGaussian(mean = 10.0, stddev = 7.5, min = 0).roundToInt()
                 val averageRating = random.nextGaussian(mean = 6.5, stddev = 2.0, min = 2.0, max = 9.0)

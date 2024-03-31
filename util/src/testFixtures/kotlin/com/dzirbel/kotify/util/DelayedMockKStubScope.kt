@@ -1,7 +1,6 @@
 package com.dzirbel.kotify.util
 
 import io.mockk.MockKStubScope
-import io.mockk.Runs
 import kotlinx.coroutines.delay
 
 /**
@@ -53,9 +52,3 @@ class DelayedMockKStubScope<T, B>(
         }
     }
 }
-
-/**
- * Mocks the stuck to return [Unit] after the delay.
- */
-@Suppress("UNUSED_PARAMETER")
-infix fun <B> DelayedMockKStubScope<Unit, B>.just(runs: Runs) = returns(Unit)

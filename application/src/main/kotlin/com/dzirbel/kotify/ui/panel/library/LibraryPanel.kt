@@ -46,8 +46,8 @@ import com.dzirbel.kotify.util.coroutines.flatMapLatestIn
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
-fun LibraryPanel() {
-    Surface(elevation = Dimens.panelElevationSmall) {
+fun LibraryPanel(modifier: Modifier = Modifier) {
+    Surface(modifier = modifier, elevation = Dimens.panelElevationSmall) {
         VerticalScroll(Modifier.fillMaxHeight()) {
             Text(
                 text = "Library",

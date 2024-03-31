@@ -21,13 +21,14 @@ import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.consumeKeyEvents
 
 @Composable
-fun NetworkTab() {
+fun NetworkTab(modifier: Modifier = Modifier) {
     val filterApi = remember { mutableStateOf(false) }
     val filterIncoming = remember { mutableStateOf(false) }
     val filterOutgoing = remember { mutableStateOf(false) }
 
     LogList(
         log = NetworkLogger.log,
+        modifier = modifier,
         display = NetworkLogEventDisplay,
         filter = { (_, event) ->
             (!filterApi.value || event.data.isSpotifyApi) &&

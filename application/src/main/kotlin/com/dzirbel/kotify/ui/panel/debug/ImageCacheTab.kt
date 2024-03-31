@@ -31,7 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.runningFold
 
 @Composable
-fun ImageCacheTab() {
+fun ImageCacheTab(modifier: Modifier = Modifier) {
     val selectedDataSources = remember { mutableStateOf(persistentSetOf<DataSource>()) }
 
     // do not filter if all or none are selected (no-op filter)
@@ -39,6 +39,7 @@ fun ImageCacheTab() {
 
     LogList(
         log = SpotifyImageCache.log,
+        modifier = modifier,
         display = ImageCacheLogEventDisplay,
         filter = takingIf(filterDataSource) {
             @Suppress("Wrapping") // ktlint false positive; fixed by https://github.com/pinterest/ktlint/pull/2127

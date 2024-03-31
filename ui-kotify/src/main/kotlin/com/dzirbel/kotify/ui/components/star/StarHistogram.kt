@@ -38,6 +38,7 @@ private val BAR_HEIGHT_DEFAULT = 150.dp
 @Composable
 fun RatingHistogram(
     ratings: AverageRating,
+    modifier: Modifier = Modifier,
     maxRating: Int = Rating.DEFAULT_MAX_RATING,
     barWidth: Dp = BAR_WIDTH_DEFAULT,
     barHeight: Dp = BAR_HEIGHT_DEFAULT,
@@ -51,7 +52,7 @@ fun RatingHistogram(
         }
     }
 
-    Row(Modifier.instrument()) {
+    Row(modifier.instrument()) {
         repeat(maxRating) { rating ->
             val hoverInteractionSource = remember(rating) { MutableInteractionSource() }
             Column(

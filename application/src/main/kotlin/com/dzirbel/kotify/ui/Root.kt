@@ -56,6 +56,7 @@ private val libraryPanelSize = PanelSize(
 )
 
 @Composable
+@Suppress("ModifierMissing")
 fun Root(authenticationState: AuthenticationState) {
     InvalidatingRootContent {
         KotifyTheme.Apply(
