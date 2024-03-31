@@ -5,9 +5,9 @@ import assertk.assertThat
 import assertk.assertions.hasSize
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
-import assertk.assertions.isNotSameAs
+import assertk.assertions.isNotSameInstanceAs
 import assertk.assertions.isNull
-import assertk.assertions.isSameAs
+import assertk.assertions.isSameInstanceAs
 import com.dzirbel.kotify.network.MockOkHttpClient
 import com.dzirbel.kotify.ui.SpotifyImageCache
 import com.dzirbel.kotify.util.MockedTimeExtension
@@ -76,7 +76,7 @@ internal class SpotifyImageCacheTest {
 
             assertThat(imageFlow1).isNotNull()
             assertThat(imageFlow1).isNotNull()
-            assertThat(imageFlow1).isSameAs(imageFlow2)
+            assertThat(imageFlow1).isSameInstanceAs(imageFlow2)
 
             runCurrent()
 
@@ -146,7 +146,7 @@ internal class SpotifyImageCacheTest {
             runCurrent()
 
             assertThat(imageFlow2).isNotNull()
-            assertThat(imageFlow2).isSameAs(imageFlow1)
+            assertThat(imageFlow2).isSameInstanceAs(imageFlow1)
             assertThat(client.requests).hasSize(1)
             assertThat(imageCache.metricsFlow.value?.inMemoryCount).isEqualTo(1)
         }
@@ -181,7 +181,7 @@ internal class SpotifyImageCacheTest {
                 runCurrent()
 
                 assertThat(imageCache.getFromMemory(url)).isNotNull()
-                assertThat(imageFlow2).isNotSameAs(imageFlow1)
+                assertThat(imageFlow2).isNotSameInstanceAs(imageFlow1)
                 assertThat(requireNotNull(imageFlow2.value).asSkiaBitmap().readPixels())
                     .isNotNull()
                     .isEqualTo(requireNotNull(requireNotNull(imageFlow1.value).asSkiaBitmap().readPixels()))

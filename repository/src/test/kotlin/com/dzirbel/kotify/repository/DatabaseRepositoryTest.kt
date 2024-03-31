@@ -10,7 +10,7 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import assertk.assertions.isSameAs
+import assertk.assertions.isSameInstanceAs
 import com.dzirbel.kotify.db.DatabaseExtension
 import com.dzirbel.kotify.db.KotifyDatabase
 import com.dzirbel.kotify.log.Log
@@ -81,7 +81,7 @@ class DatabaseRepositoryTest {
                     assertThat(repository.remoteFetches).isEmpty()
                     assertThat(repository.log.events).elementsSatisfy({ it.isSuccess(DataSource.DATABASE) })
 
-                    assertThat(repository.stateOf("id")).isSameAs(stateFlow)
+                    assertThat(repository.stateOf("id")).isSameInstanceAs(stateFlow)
                     assertThat(repository.databaseFetches).containsExactly("id")
                     assertThat(repository.remoteFetches).isEmpty()
                     assertThat(repository.log.events).elementsSatisfy(
@@ -121,7 +121,7 @@ class DatabaseRepositoryTest {
                     assertThat(repository.remoteFetches).containsExactly("id")
                     assertThat(repository.log.events).elementsSatisfy({ it.isSuccess(DataSource.REMOTE) })
 
-                    assertThat(repository.stateOf("id")).isSameAs(stateFlow)
+                    assertThat(repository.stateOf("id")).isSameInstanceAs(stateFlow)
                     assertThat(repository.databaseFetches).containsExactly("id")
                     assertThat(repository.remoteFetches).containsExactly("id")
                     assertThat(repository.log.events).elementsSatisfy(
@@ -167,7 +167,8 @@ class DatabaseRepositoryTest {
                     assertThat(repository.remoteFetches).isEmpty()
                     when (case.expectedValidity) {
                         CacheStrategy.CacheValidity.VALID -> {
-                            assertThat(stateFlow.value).isNotNull().transform { it.cachedValue }.isSameAs(cached)
+                            assertThat(stateFlow.value).isNotNull().transform { it.cachedValue }
+                                .isSameInstanceAs(cached)
                             assertThat(repository.log.events).elementsSatisfy({ it.isSuccess(DataSource.DATABASE) })
                         }
 
@@ -177,7 +178,8 @@ class DatabaseRepositoryTest {
                         }
 
                         CacheStrategy.CacheValidity.TRANSIENT -> {
-                            assertThat(stateFlow.value).isNotNull().transform { it.cachedValue }.isSameAs(cached)
+                            assertThat(stateFlow.value).isNotNull().transform { it.cachedValue }
+                                .isSameInstanceAs(cached)
                             assertThat(repository.log.events).elementsSatisfy({ it.isSuccess(DataSource.DATABASE) })
                         }
                     }
@@ -187,19 +189,22 @@ class DatabaseRepositoryTest {
                     assertThat(repository.databaseFetches).containsExactly("id")
                     when (case.expectedValidity) {
                         CacheStrategy.CacheValidity.VALID -> {
-                            assertThat(stateFlow.value).isNotNull().transform { it.cachedValue }.isSameAs(cached)
+                            assertThat(stateFlow.value).isNotNull().transform { it.cachedValue }
+                                .isSameInstanceAs(cached)
                             assertThat(repository.remoteFetches).isEmpty()
                             assertThat(repository.log.events).elementsSatisfy({ it.isSuccess(DataSource.DATABASE) })
                         }
 
                         CacheStrategy.CacheValidity.INVALID -> {
-                            assertThat(stateFlow.value).isNotNull().transform { it.cachedValue }.isSameAs(remote)
+                            assertThat(stateFlow.value).isNotNull().transform { it.cachedValue }
+                                .isSameInstanceAs(remote)
                             assertThat(repository.remoteFetches).containsExactly("id")
                             assertThat(repository.log.events).elementsSatisfy({ it.isSuccess(DataSource.REMOTE) })
                         }
 
                         CacheStrategy.CacheValidity.TRANSIENT -> {
-                            assertThat(stateFlow.value).isNotNull().transform { it.cachedValue }.isSameAs(remote)
+                            assertThat(stateFlow.value).isNotNull().transform { it.cachedValue }
+                                .isSameInstanceAs(remote)
                             assertThat(repository.remoteFetches).containsExactly("id")
                             assertThat(repository.log.events).elementsSatisfy(
                                 { it.isSuccess(DataSource.DATABASE) },

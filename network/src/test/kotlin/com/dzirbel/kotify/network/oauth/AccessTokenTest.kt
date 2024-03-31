@@ -8,9 +8,9 @@ import assertk.assertions.isFalse
 import assertk.assertions.isGreaterThan
 import assertk.assertions.isNotEqualTo
 import assertk.assertions.isNotNull
-import assertk.assertions.isNotSameAs
+import assertk.assertions.isNotSameInstanceAs
 import assertk.assertions.isNull
-import assertk.assertions.isSameAs
+import assertk.assertions.isSameInstanceAs
 import assertk.assertions.isTrue
 import com.dzirbel.kotify.network.MockOkHttpClient
 import com.dzirbel.kotify.util.CurrentTime
@@ -98,15 +98,15 @@ internal class AccessTokenTest {
             AccessToken.Cache.put(token1)
 
             assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
-            assertThat(runBlocking { AccessToken.Cache.get(client = client) }).isSameAs(token1)
-            assertThat(runBlocking { AccessToken.Cache.getOrThrow(client = client) }).isSameAs(token1)
+            assertThat(runBlocking { AccessToken.Cache.get(client = client) }).isSameInstanceAs(token1)
+            assertThat(runBlocking { AccessToken.Cache.getOrThrow(client = client) }).isSameInstanceAs(token1)
 
             val token2 = AccessToken(accessToken = "token2", tokenType = "", expiresIn = 0)
             AccessToken.Cache.put(token2)
 
             assertThat(AccessToken.Cache.tokenFlow.value).isNotNull()
-            assertThat(runBlocking { AccessToken.Cache.get(client = client) }).isSameAs(token2)
-            assertThat(runBlocking { AccessToken.Cache.getOrThrow(client = client) }).isSameAs(token2)
+            assertThat(runBlocking { AccessToken.Cache.get(client = client) }).isSameInstanceAs(token2)
+            assertThat(runBlocking { AccessToken.Cache.getOrThrow(client = client) }).isSameInstanceAs(token2)
 
             AccessToken.Cache.clear()
             assertNoToken(client = client)
@@ -127,7 +127,7 @@ internal class AccessTokenTest {
 
             val loadedToken = runBlocking { AccessToken.Cache.get(client = client) }
             assertThat(loadedToken).isEqualTo(token1)
-            assertThat(loadedToken).isNotSameAs(token1)
+            assertThat(loadedToken).isNotSameInstanceAs(token1)
         }
     }
 
@@ -281,7 +281,7 @@ internal class AccessTokenTest {
 
                 runCurrent()
 
-                assertThat(token1).isSameAs(token2)
+                assertThat(token1).isSameInstanceAs(token2)
                 assertThat(client.requests).hasSize(1)
             }
         }

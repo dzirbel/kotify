@@ -11,7 +11,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isLessThan
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
-import assertk.assertions.isSameAs
+import assertk.assertions.isSameInstanceAs
 import com.dzirbel.kotify.util.containsExactlyElementsOf
 import com.dzirbel.kotify.util.containsExactlyElementsOfInAnyOrder
 import kotlinx.coroutines.Dispatchers
@@ -90,7 +90,7 @@ class SynchronizedWeakStateFlowMapTest {
             onExisting = onExistingValues::add,
         )
 
-        assertThat(stateFlow2).isSameAs(stateFlow)
+        assertThat(stateFlow2).isSameInstanceAs(stateFlow)
         assertThat(onCreateValues).containsExactly(null)
         assertThat(onExistingValues).containsExactly(null)
         assertThat(map.getValue("key")).isNull() // new default value is not used
@@ -168,9 +168,9 @@ class SynchronizedWeakStateFlowMapTest {
         assertThat(flows2).hasSameSizeAs(keys2)
         assertThat(createdKeys2).containsExactlyElementsOfInAnyOrder(keys2.minus(keys1).toSet())
         assertThat(existingCounts2).containsExactly(keys2.minus(keys1).size)
-        assertThat(flows2).index(0).isSameAs(flows1[1]) // same flows for "b"
-        assertThat(flows2).index(3).isSameAs(flows1[2]) // same flows for "c"
-        assertThat(flows2).index(2).isSameAs(flows2[4]) // same flows for first and second "e"
+        assertThat(flows2).index(0).isSameInstanceAs(flows1[1]) // same flows for "b"
+        assertThat(flows2).index(3).isSameInstanceAs(flows1[2]) // same flows for "c"
+        assertThat(flows2).index(2).isSameInstanceAs(flows2[4]) // same flows for first and second "e"
     }
 
     @RepeatedTest(10)
@@ -326,7 +326,7 @@ class SynchronizedWeakStateFlowMapTest {
 
         // a new flow is not created for the same key
         assertThat(map.getOrCreateStateFlow("key", defaultValue = { 0 }, onCreate = { onCreateCalls++ }))
-            .isSameAs(stateFlow)
+            .isSameInstanceAs(stateFlow)
         assertThat(onCreateCalls).isEqualTo(1)
 
         @Suppress("UNUSED_VALUE")

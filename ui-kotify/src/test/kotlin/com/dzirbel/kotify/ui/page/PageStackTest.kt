@@ -6,7 +6,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
-import assertk.assertions.isSameAs
+import assertk.assertions.isSameInstanceAs
 import assertk.assertions.isTrue
 import org.junit.jupiter.api.Test
 
@@ -106,8 +106,8 @@ internal class PageStackTest {
 
         var stack = PageStack(page1)
 
-        assertThat(stack.to(page1, allowDuplicate = false)).isSameAs(stack)
-        assertThat(stack.to(page1b, allowDuplicate = false)).isSameAs(stack)
+        assertThat(stack.to(page1, allowDuplicate = false)).isSameInstanceAs(stack)
+        assertThat(stack.to(page1b, allowDuplicate = false)).isSameInstanceAs(stack)
 
         stack = stack.to(page1, allowDuplicate = true)
         assertThat(stack.currentIndex).isEqualTo(1)
