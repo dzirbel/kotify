@@ -20,7 +20,6 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.update
 import java.time.Instant
 
@@ -67,8 +66,8 @@ class DatabaseAlbumTracksRepository(scope: CoroutineScope, private val trackRepo
         }
 
         val databaseTrackIds = AlbumTable.AlbumTrackTable
-            .slice(AlbumTable.AlbumTrackTable.track)
-            .select { AlbumTable.AlbumTrackTable.album eq id }
+            .select(AlbumTable.AlbumTrackTable.track)
+            .where { AlbumTable.AlbumTrackTable.album eq id }
             .mapTo(mutableSetOf()) { row -> row[AlbumTable.AlbumTrackTable.track].value }
 
         val networkTrackIds = networkModel.mapNotNullTo(mutableSetOf()) { it.id }

@@ -5,7 +5,6 @@ import org.jetbrains.exposed.dao.EntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.select
 
 /**
  * Joins the table for the desired entities of type [E] on the given [idColumn], returning entities for which the
@@ -20,8 +19,8 @@ fun <ID : Comparable<ID>, EID : Comparable<EID>, E : Entity<EID>> EntityClass<EI
     val entityTable = this.table
     return entityTable
         .innerJoin(joinTable)
-        .slice(entityTable.columns)
-        .select { idColumn eq id }
+        .select(entityTable.columns)
+        .where { idColumn eq id }
         .withDistinct(distinct)
         .let { this.wrapRows(it) }
 }

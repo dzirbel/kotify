@@ -8,7 +8,6 @@ import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
-import org.jetbrains.exposed.sql.select
 
 /**
  * Convenience function which selects a single row of a single [column] from this [ColumnSet] (i.e. table or join),
@@ -19,8 +18,8 @@ fun <T> ColumnSet.single(
     order: Pair<Expression<*>, SortOrder>? = null,
     where: SqlExpressionBuilder.() -> Op<Boolean>,
 ): T? {
-    return slice(column)
-        .select(where = where)
+    return select(column)
+        .where(predicate = where)
         .run { if (order == null) this else orderBy(order) }
         .limit(1)
         .firstOrNull()
@@ -33,8 +32,8 @@ fun <A, B> ColumnSet.single(
     order: Pair<Expression<*>, SortOrder>? = null,
     where: SqlExpressionBuilder.() -> Op<Boolean>,
 ): Pair<A, B>? {
-    return slice(column1, column2)
-        .select(where = where)
+    return select(column1, column2)
+        .where(predicate = where)
         .run { if (order == null) this else orderBy(order) }
         .limit(1)
         .firstOrNull()
@@ -48,8 +47,8 @@ fun <A, B, C> ColumnSet.single(
     order: Pair<Expression<*>, SortOrder>? = null,
     where: SqlExpressionBuilder.() -> Op<Boolean>,
 ): Triple<A, B, C>? {
-    return slice(column1, column2, column3)
-        .select(where = where)
+    return select(column1, column2, column3)
+        .where(predicate = where)
         .run { if (order == null) this else orderBy(order) }
         .limit(1)
         .firstOrNull()

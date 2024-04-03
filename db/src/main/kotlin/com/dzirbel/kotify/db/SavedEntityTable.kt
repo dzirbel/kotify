@@ -7,7 +7,6 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchUpsert
 import org.jetbrains.exposed.sql.javatime.timestamp
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.upsert
 import java.time.Instant
 
@@ -126,8 +125,8 @@ abstract class SavedEntityTable(name: String) : Table(name = name) {
      * Gets the set of entity IDs which are marked as having been saved.
      */
     fun savedEntityIds(userId: String): Set<String> {
-        return slice(entityIdColumn)
-            .select { (savedColumn eq true) and (userIdColumn eq userId) }
+        return select(entityIdColumn)
+            .where { (savedColumn eq true) and (userIdColumn eq userId) }
             .mapTo(mutableSetOf()) { it[entityIdColumn] }
     }
 }

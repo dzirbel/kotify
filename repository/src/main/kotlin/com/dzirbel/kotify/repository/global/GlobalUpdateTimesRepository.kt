@@ -4,7 +4,7 @@ import com.dzirbel.kotify.db.model.GlobalUpdateTimesTable
 import com.dzirbel.kotify.db.util.single
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.upsert
 import java.time.Instant
 
@@ -22,8 +22,8 @@ internal object GlobalUpdateTimesRepository {
      * Must be called from within a transaction.
      */
     fun hasBeenUpdated(key: String): Boolean {
-        return !GlobalUpdateTimesTable
-            .select { GlobalUpdateTimesTable.key eq key }
+        return !GlobalUpdateTimesTable.selectAll()
+            .where { GlobalUpdateTimesTable.key eq key }
             .empty()
     }
 

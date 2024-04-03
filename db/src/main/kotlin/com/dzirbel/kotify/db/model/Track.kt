@@ -13,7 +13,6 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.select
 
 object TrackTable : SpotifyEntityTable(entityName = "track") {
     val discNumber: Column<Int> = integer("disc_number")
@@ -32,14 +31,14 @@ object TrackTable : SpotifyEntityTable(entityName = "track") {
         override val primaryKey = PrimaryKey(track, artist)
 
         fun artistIdsForTrack(trackId: String): Set<String> {
-            return slice(artist)
-                .select { track eq trackId }
+            return select(artist)
+                .where { track eq trackId }
                 .mapTo(mutableSetOf()) { it[artist].value }
         }
 
         fun trackIdsForArtist(artistId: String): Set<String> {
-            return slice(track)
-                .select { artist eq artistId }
+            return select(track)
+                .where { artist eq artistId }
                 .mapTo(mutableSetOf()) { it[track].value }
         }
 
