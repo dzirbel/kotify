@@ -1,12 +1,12 @@
 package com.dzirbel.kotify.ui
 
-import androidx.compose.ui.ComposeScene
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.scene.ComposeScenePointer
 
 /**
  * Moves the pointer to hover over the given [x], [y] coordinates.
@@ -15,7 +15,7 @@ fun ImageComposeScene.hover(x: Float, y: Float) {
     sendPointerEvent(
         eventType = PointerEventType.Move,
         pointers = listOf(
-            ComposeScene.Pointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = false),
+            ComposeScenePointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = false),
         ),
     )
 }
@@ -27,7 +27,7 @@ fun ImageComposeScene.click(x: Float, y: Float) {
     sendPointerEvent(
         eventType = PointerEventType.Move,
         pointers = listOf(
-            ComposeScene.Pointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = false),
+            ComposeScenePointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = false),
         ),
     )
 
@@ -36,7 +36,7 @@ fun ImageComposeScene.click(x: Float, y: Float) {
         buttons = PointerButtons(isPrimaryPressed = true),
         button = PointerButton.Primary,
         pointers = listOf(
-            ComposeScene.Pointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = true),
+            ComposeScenePointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = true),
         ),
     )
 
@@ -44,7 +44,7 @@ fun ImageComposeScene.click(x: Float, y: Float) {
         eventType = PointerEventType.Release,
         button = PointerButton.Primary,
         pointers = listOf(
-            ComposeScene.Pointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = false),
+            ComposeScenePointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = false),
         ),
     )
 }

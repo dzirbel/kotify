@@ -20,9 +20,9 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -98,7 +98,7 @@ private fun NavigationButtons(titles: ImmutableList<() -> String?>) {
             onClick = { pageStack.mutate { toPrevious() } },
         ) {
             Icon(
-                imageVector = Icons.Filled.KeyboardArrowLeft,
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 contentDescription = "Back",
                 modifier = Modifier.size(Dimens.iconMedium),
             )
@@ -110,7 +110,7 @@ private fun NavigationButtons(titles: ImmutableList<() -> String?>) {
             onClick = { historyExpanded.value = true },
         ) {
             Icon(
-                imageVector = Icons.Filled.List,
+                imageVector = Icons.AutoMirrored.Filled.List,
                 contentDescription = "History",
                 modifier = Modifier.size(Dimens.iconMedium),
             )
@@ -138,7 +138,7 @@ private fun NavigationButtons(titles: ImmutableList<() -> String?>) {
             onClick = { pageStack.mutate { toNext() } },
         ) {
             Icon(
-                imageVector = Icons.Filled.KeyboardArrowRight,
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Next",
                 modifier = Modifier.size(Dimens.iconMedium),
             )
