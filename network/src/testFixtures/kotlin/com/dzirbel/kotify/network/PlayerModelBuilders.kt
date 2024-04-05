@@ -16,6 +16,7 @@ fun SpotifyPlayback(track: FullSpotifyTrack? = null, progressMs: Long? = null): 
         progressMs = progressMs,
         isPlaying = false,
         shuffleState = false,
+        smartShuffle = false,
         repeatState = SpotifyRepeatMode.OFF,
         context = null,
         currentlyPlayingType = SpotifyPlayingType.UNKNOWN,

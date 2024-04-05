@@ -44,6 +44,8 @@ data class SpotifyPlayback(
      */
     @SerialName("shuffle_state") val shuffleState: Boolean,
 
+    @SerialName("smart_shuffle") val smartShuffle: Boolean?,
+
     /**
      * off, track, context
      */
