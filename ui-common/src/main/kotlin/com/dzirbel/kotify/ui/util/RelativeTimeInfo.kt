@@ -8,7 +8,7 @@ import kotlin.math.abs
  * Represents a relative duration as an [amount] (which may be negative) and a [unit].
  *
  * This relative duration is meant to be user-friendly, simply truncated to the largest [TimeUnit] of the duration and
- * its [amount]. A user-readable representation can be obtained via [formatLong].
+ * its [amount]. A user-readable representation can be obtained via [formatShort] or [formatLong].
  *
  * Also includes the amount of time until the [amount] would change as [msUntilNextIncrement].
  */
