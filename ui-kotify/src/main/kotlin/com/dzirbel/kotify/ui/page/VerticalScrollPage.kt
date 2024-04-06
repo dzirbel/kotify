@@ -4,6 +4,8 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
@@ -26,10 +28,10 @@ fun VerticalScrollPage(
     scrollState: ScrollState = rememberScrollState(),
     onHeaderVisibilityChanged: ((Boolean) -> Unit)? = null,
     header: @Composable (() -> Unit)? = null,
-    content: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(modifier.instrument()) {
-        Column(modifier = Modifier.verticalScroll(scrollState)) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
             if (header != null) {
                 Box(
                     modifier = if (onHeaderVisibilityChanged != null) {

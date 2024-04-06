@@ -1,5 +1,6 @@
 package com.dzirbel.kotify.ui.page
 
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -41,7 +42,11 @@ interface PageScope {
      * it to determine the state of the [title] in the navigation header.
      */
     @Composable
-    fun DisplayVerticalScrollPage(title: String?, header: (@Composable () -> Unit)?, content: @Composable () -> Unit) {
+    fun DisplayVerticalScrollPage(
+        title: String?,
+        header: (@Composable () -> Unit)?,
+        content: @Composable ColumnScope.() -> Unit,
+    ) {
         val scrollState = rememberScrollState()
 
         DisplayPage(title = title) { setNavigationTitleVisibility ->

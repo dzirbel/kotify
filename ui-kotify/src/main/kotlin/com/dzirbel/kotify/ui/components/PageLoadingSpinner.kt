@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -15,14 +16,12 @@ import com.dzirbel.kotify.ui.theme.Dimens
  * page is being loaded.
  */
 @Composable
-fun PageLoadingSpinner(modifier: Modifier = Modifier) {
-    // TODO center vertically; this is difficult since this is typically placed inside a scrolling column
-    Box(modifier.fillMaxWidth()) {
+fun ColumnScope.PageLoadingSpinner(modifier: Modifier = Modifier) {
+    Box(modifier = modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator(
             Modifier
                 .padding(vertical = Dimens.space5)
-                .size(Dimens.iconLarge)
-                .align(Alignment.Center),
+                .size(Dimens.iconLarge),
         )
     }
 }
