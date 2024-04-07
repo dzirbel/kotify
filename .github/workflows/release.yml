@@ -12,9 +12,9 @@ jobs:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: 'adopt'
           java-version: '18'
@@ -22,7 +22,7 @@ jobs:
       - run: ./gradlew --stacktrace packageReleaseDistributionForCurrentOS packageReleaseUberJarForCurrentOS
 
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release ${{ matrix.os }}
           if-no-files-found: error
