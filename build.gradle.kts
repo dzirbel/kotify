@@ -209,7 +209,7 @@ fun Project.configureJacoco() {
         jacocoTestReportLocal.executionData(this)
     }
 
-    tasks.named  { it == "testIntegration" }.configureEach {
+    tasks.named { it == "testIntegration" }.configureEach {
         jacocoTestReportIntegration.dependsOn(this)
         jacocoTestReportIntegration.sourceSets(sourceSets.main.get())
         jacocoTestReportIntegration.executionData(this)
