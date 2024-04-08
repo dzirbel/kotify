@@ -20,7 +20,7 @@ jobs:
           distribution: 'adopt'
           java-version: '18'
 
-      - run: ./gradlew --stacktrace --continue checkLocal jacocoTestReportLocal
+      - run: ./gradlew --stacktrace --continue check
 
       - name: Upload mismatching screenshots
         if: failure()
@@ -31,11 +31,22 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: Upload test results to codecov
+      - name: Upload unit test results to codecov
         uses: codecov/codecov-action@v4
         if: always() # upload even if the build failed, in case it was just test failures
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./code-coverage-report/build/reports/jacoco/jacocoMergedUnitTestReport/jacocoMergedUnitTestReport.xml
           fail_ci_if_error: true
           verbose: true
           flags: unit
+
+      - name: Upload screenshot test results to codecov
+        uses: codecov/codecov-action@v4
+        if: always() # upload even if the build failed, in case it was just test failures
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./code-coverage-report/build/reports/jacoco/jacocoMergedScreenshotTestReport/jacocoMergedScreenshotTestReport.xml
+          fail_ci_if_error: true
+          verbose: true
+          flags: screenshot

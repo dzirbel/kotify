@@ -8,16 +8,13 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import java.io.File
 
 /**
- * A JUnit test extension which sets up the [AccessToken.Cache] and sets [Spotify.enabled] to true for tests with
- * [TAG_NETWORK].
+ * A JUnit test extension which sets up the [AccessToken.Cache] and sets [Spotify.enabled] to true.
  */
 class NetworkExtension : BeforeEachCallback, AfterEachCallback {
     override fun beforeEach(context: ExtensionContext) {
-        if (context.tags.contains(TAG_NETWORK)) {
-            AccessToken.Cache.cacheFile = File("../.kotify/test-cache/access_token.json")
-            CurrentTime.enabled = true
-            Spotify.enabled = true
-        }
+        AccessToken.Cache.cacheFile = File("../.kotify/test-cache/access_token.json")
+        CurrentTime.enabled = true
+        Spotify.enabled = true
     }
 
     override fun afterEach(context: ExtensionContext) {

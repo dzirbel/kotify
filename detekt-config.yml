@@ -130,7 +130,7 @@ complexity:
     ignoreStringsRegex: '$^'
   TooManyFunctions:
     active: true
-    excludes: ['**/test/**', '**/testFixtures/**']
+    excludes: ['**/test/**', '**/*Test/**', '**/testFixtures/**']
     thresholdInFiles: 25
     thresholdInClasses: 25
     thresholdInInterfaces: 25
@@ -201,7 +201,7 @@ exceptions:
     methodNames: ['equals', 'finalize', 'hashCode', 'toString']
   InstanceOfCheckForException:
     active: true
-    excludes: ['**/test/**', '**/testFixtures/**']
+    excludes: ['**/test/**', '**/*Test/**', '**/testFixtures/**']
   NotImplementedDeclaration:
     active: true
   ObjectExtendsThrowable:
@@ -237,12 +237,12 @@ exceptions:
       - 'NullPointerException'
       - 'RuntimeException'
       - 'Throwable'
-    excludes: ['**/test/**', '**/testFixtures/**']
+    excludes: ['**/test/**', '**/*Test/**', '**/testFixtures/**']
   ThrowingNewInstanceOfSameException:
     active: true
   TooGenericExceptionCaught:
     active: false
-    excludes: ['**/test/**', '**/testFixtures/**']
+    excludes: ['**/test/**', '**/*Test/**', '**/testFixtures/**']
     exceptionNames:
       - 'ArrayIndexOutOfBoundsException'
       - 'Error'
@@ -255,7 +255,7 @@ exceptions:
     allowedExceptionNameRegex: '^(_|(ignore|expected).*)'
   TooGenericExceptionThrown:
     active: true
-    excludes: ['**/test/**', '**/testFixtures/**']
+    excludes: ['**/test/**', '**/*Test/**', '**/testFixtures/**']
     exceptionNames:
       - 'Error'
       - 'Exception'
@@ -616,12 +616,12 @@ performance:
   CouldBeSequence:
     active: true
     threshold: 3
-    excludes: ['**/test/**', '**/testFixtures/**']
+    excludes: ['**/test/**', '**/*Test/**', '**/testFixtures/**']
   ForEachOnRange:
     active: true
   SpreadOperator:
     active: true
-    excludes: ['**/test/**', '**/testFixtures/**']
+    excludes: ['**/test/**', '**/*Test/**', '**/testFixtures/**']
   UnnecessaryPartOfBinaryExpression:
     active: true
   UnnecessaryTemporaryInstantiation:
@@ -634,7 +634,7 @@ potential-bugs:
     forbiddenTypePatterns: ['kotlin.String']
   CastNullableToNonNullableType:
     active: true
-    excludes: ['**/test/**', '**/testFixtures/**']
+    excludes: ['**/test/**', '**/*Test/**', '**/testFixtures/**']
   CastToNullableType:
     active: true
   Deprecation:
@@ -694,7 +694,7 @@ potential-bugs:
     active: true
   LateinitUsage:
     active: false
-    excludes: ['**/test/**', '**/testFixtures/**']
+    excludes: ['**/test/**', '**/*Test/**', '**/testFixtures/**']
     ignoreOnClassesPattern: ''
   MapGetWithNotNullAssertionOperator:
     active: true
@@ -855,7 +855,7 @@ style:
     maxJumpCount: 1
   MagicNumber:
     active: true
-    excludes: ['**/test/**', '**/testFixtures/**']
+    excludes: ['**/test/**', '**/*Test/**', '**/testFixtures/**']
     ignoreNumbers: ['-1', '0', '1', '2', '100']
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: true

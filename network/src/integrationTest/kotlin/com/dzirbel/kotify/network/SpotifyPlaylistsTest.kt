@@ -15,7 +15,6 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
@@ -25,7 +24,6 @@ import java.nio.file.Path
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
-@Tag(TAG_NETWORK)
 @ExtendWith(NetworkExtension::class)
 class SpotifyPlaylistsTest {
     @Test

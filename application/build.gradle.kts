@@ -23,12 +23,13 @@ dependencies {
     implementation(project(":ui-kotify"))
     implementation(project(":util"))
 
-    testImplementation(testFixtures(project(":db")))
-    testImplementation(testFixtures(project(":network")))
-    testImplementation(testFixtures(project(":repository")))
-    testImplementation(testFixtures(project(":ui-common")))
-    testImplementation(testFixtures(project(":ui-kotify")))
-    testImplementation(testFixtures(project(":util")))
+    implementation(compose.desktop.currentOs)
+
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.immutable.collections)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.material.context.menu)
+    implementation(libs.okhttp)
 
     testFixturesImplementation(project(":repository"))
     testFixturesImplementation(project(":ui-common"))
@@ -38,21 +39,29 @@ dependencies {
     testFixturesImplementation(testFixtures(project(":ui-kotify")))
     testFixturesImplementation(testFixtures(project(":repository")))
 
-    implementation(compose.desktop.currentOs)
+    testFixturesApi(compose.desktop.currentOs)
+}
 
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.immutable.collections)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.material.context.menu)
-    implementation(libs.okhttp)
+@Suppress("UnstableApiUsage")
+testing {
+    suites {
+        withType<JvmTestSuite>().matching { it.name == "test" }.configureEach {
+            dependencies {
+                implementation(testFixtures(project(":util")))
+            }
+        }
 
-    testImplementation(libs.junit5.api)
-    testImplementation(libs.junit5.params)
-    testRuntimeOnly(libs.junit5.engine)
-
-    testImplementation(libs.assertk)
-
-    testFixturesImplementation(compose.desktop.currentOs)
+        withType<JvmTestSuite>().matching { it.name == "screenshotTest" }.configureEach {
+            dependencies {
+                implementation(testFixtures(project(":db")))
+                implementation(testFixtures(project(":network")))
+                implementation(testFixtures(project(":repository")))
+                implementation(testFixtures(project(":ui-common")))
+                implementation(testFixtures(project(":ui-kotify")))
+                implementation(testFixtures(project(":util")))
+            }
+        }
+    }
 }
 
 compose.desktop {

@@ -11,12 +11,6 @@ dependencies {
     implementation(project(":ui-common"))
     implementation(project(":util"))
 
-    testImplementation(testFixtures(project(":network")))
-    testImplementation(testFixtures(project(":ui-common")))
-    testImplementation(testFixtures(project(":util")))
-
-    testFixturesImplementation(project(":repository"))
-
     implementation(compose.desktop.currentOs)
 
     implementation(libs.kotlinx.coroutines.core)
@@ -24,14 +18,28 @@ dependencies {
     implementation(libs.material.context.menu)
     implementation(libs.okhttp)
 
-    testImplementation(libs.junit5.api)
-    testImplementation(libs.junit5.params)
-    testRuntimeOnly(libs.junit5.engine)
+    testFixturesImplementation(project(":repository"))
 
-    testImplementation(libs.assertk)
-    testImplementation(libs.kotlinx.coroutines.test)
+    testFixturesApi(compose.desktop.currentOs)
 
-    testFixturesImplementation(compose.desktop.currentOs)
     testFixturesImplementation(libs.assertk)
     testFixturesImplementation(libs.kotlinx.coroutines.test)
+}
+
+@Suppress("UnstableApiUsage")
+testing {
+    suites {
+        withType<JvmTestSuite>().matching { it.name == "test" }.configureEach {
+            dependencies {
+                implementation(testFixtures(project(":network")))
+                implementation(testFixtures(project(":util")))
+            }
+        }
+
+        withType<JvmTestSuite>().matching { it.name == "screenshotTest" }.configureEach {
+            dependencies {
+                implementation(testFixtures(project(":ui-common")))
+            }
+        }
+    }
 }

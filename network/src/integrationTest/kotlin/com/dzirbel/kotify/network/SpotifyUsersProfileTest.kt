@@ -4,13 +4,11 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 
-@Tag(TAG_NETWORK)
 @ExtendWith(NetworkExtension::class)
 internal class SpotifyUsersProfileTest {
     @Test

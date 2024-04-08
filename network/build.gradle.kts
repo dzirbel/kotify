@@ -11,27 +11,41 @@ dependencies {
     implementation(project(":runtime"))
     implementation(project(":util"))
 
-    testImplementation(testFixtures(project(":util")))
-
-    testFixturesImplementation(testFixtures(project(":util")))
-
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.netty)
     implementation(libs.okhttp)
     implementation(libs.slf4j.nop) // disables logging from ktor server
 
-    testImplementation(libs.junit5.api)
-    testImplementation(libs.junit5.params)
-    testRuntimeOnly(libs.junit5.engine)
-
-    testImplementation(libs.assertk)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.ktor.client)
+    testFixturesImplementation(testFixtures(project(":util")))
 
     testFixturesImplementation(libs.assertk)
     testFixturesImplementation(libs.junit5.api)
     testFixturesImplementation(libs.kotlinx.coroutines.core)
     testFixturesImplementation(libs.kotlinx.serialization.json)
     testFixturesImplementation(libs.okhttp)
+}
+
+@Suppress("UnstableApiUsage")
+testing {
+    suites {
+        withType<JvmTestSuite>().matching { it.name == "test" }.configureEach {
+            dependencies {
+                implementation(libs.ktor.client)
+                implementation(libs.kotlinx.coroutines.test)
+            }
+        }
+
+        register<JvmTestSuite>("integrationTest") {
+            testType = TestSuiteType.INTEGRATION_TEST
+
+            dependencies {
+                implementation(project(":util"))
+                implementation(testFixtures(project(":util")))
+
+                implementation(libs.okhttp)
+                implementation(libs.kotlinx.coroutines.core)
+            }
+        }
+    }
 }

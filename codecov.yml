@@ -8,6 +8,10 @@ flags:
     paths:
       - ".*"
     carryforward: true
+  screenshot:
+    paths:
+      - ".*"
+    carryforward: true
   integration:
     paths:
       - ".*"

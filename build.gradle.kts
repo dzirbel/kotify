@@ -17,48 +17,22 @@ plugins {
     kotlin("jvm") version libs.versions.kotlin
 }
 
-// provide a repository for the root project to resolve jacoco
-repositories {
-    mavenCentral()
-}
-
-// create root project tasks which depend on all subproject test tasks
-val jacocoTestReportLocal = project.tasks.create<JacocoReport>("jacocoTestReportLocal")
-val jacocoTestReportIntegration = project.tasks.create<JacocoReport>("jacocoTestReportIntegration")
-
-tasks.create<JacocoReportFixTask>("jacocoReportFixLocal") {
-    configureFrom(jacocoTestReportLocal)
-}
-
-tasks.create<JacocoReportFixTask>("jacocoReportFixIntegration") {
-    configureFrom(jacocoTestReportIntegration)
-}
-
-configureJacoco() // configure jacoco for the root project to use correct version and report settings
-
 subprojects {
-    repositories {
-        mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-        google()
-    }
-
     configurations.all {
         resolutionStrategy {
             failOnNonReproducibleResolution()
         }
     }
 
-    tasks.create<Task>("checkLocal") {
-        dependsOn("detektWithTypeResolution")
-        dependsOn("testLocal")
-    }
-
+    // TODO refactor to use pluginManager.withPlugin
     afterEvaluate {
-        configureKotlin()
-        configureDetekt()
-        configureTests()
         configureJacoco()
+
+        if (name != "code-coverage-report") {
+            configureKotlin()
+            configureDetekt()
+            configureTests()
+        }
     }
 }
 
@@ -84,6 +58,9 @@ fun Project.configureDetekt() {
 
     // run with type resolution; see https://detekt.dev/docs/gettingstarted/type-resolution
     tasks.create("detektWithTypeResolution") {
+        // TODO does this duplicate work by also depending on the base detekt task?
+        tasks.check.get().dependsOn(this)
+
         dependsOn(tasks.detektMain)
         dependsOn(tasks.detektTest)
         if (hasTestFixtures) {
@@ -139,35 +116,43 @@ fun Project.configureKotlin() {
 }
 
 fun Project.configureTests() {
-    tasks.test {
-        useJUnitPlatform()
-    }
+    @Suppress("UnstableApiUsage")
+    testing {
+        suites {
+            withType<JvmTestSuite> {
+                useJUnitJupiter()
 
-    tasks.create<Test>("testLocal") {
-        description = "Run non-network tests"
+                dependencies {
+                    implementation(project())
 
-        useJUnitPlatform {
-            excludeTags("network")
+                    if (project.plugins.any { it is JavaTestFixturesPlugin }) {
+                        implementation(testFixtures(project()))
+                    }
+
+                    implementation(libs.assertk)
+                }
+            }
+
+            if (extensions.findByType<ComposeExtension>() != null) {
+                register<JvmTestSuite>("screenshotTest") {
+                    testType = "screenshot-test"
+
+                    targets {
+                        all {
+                            // consider screenshot tests up to date based on REGEN_SCREENSHOTS environment variable
+                            testTask.configure {
+                                inputs.property("regen", System.getenv("REGEN_SCREENSHOTS")?.toBoolean() == true)
+                            }
+
+                            // default "test" task is finalized by the "screenshotTest" task
+                            tasks.test.configure {
+                                finalizedBy(testTask)
+                            }
+                        }
+                    }
+                }
+            }
         }
-    }
-
-    tasks.create<Test>("testIntegration") {
-        description = "Run network tests"
-
-        useJUnitPlatform {
-            includeTags("network")
-        }
-    }
-
-    tasks.create<Test>("regenScreenshots") {
-        description = "Run unit tests and regenerate screenshots"
-
-        // ideally, only screenshot tests would be run, but they do not have their own tag
-        useJUnitPlatform {
-            excludeTags("network")
-        }
-
-        systemProperties("REGEN_SCREENSHOTS" to true)
     }
 
     tasks.withType<Test> {
@@ -201,18 +186,6 @@ fun Project.configureTests() {
 fun Project.configureJacoco() {
     jacoco {
         toolVersion = libs.versions.jacoco.get()
-    }
-
-    tasks.named { it == "testLocal" }.configureEach {
-        jacocoTestReportLocal.dependsOn(this)
-        jacocoTestReportLocal.sourceSets(sourceSets.main.get())
-        jacocoTestReportLocal.executionData(this)
-    }
-
-    tasks.named { it == "testIntegration" }.configureEach {
-        jacocoTestReportIntegration.dependsOn(this)
-        jacocoTestReportIntegration.sourceSets(sourceSets.main.get())
-        jacocoTestReportIntegration.executionData(this)
     }
 
     tasks.withType<JacocoReport> {

@@ -8,8 +8,6 @@ plugins {
 dependencies {
     implementation(project(":util"))
 
-    testImplementation(testFixtures(project(":util")))
-
     api(libs.exposed.dao) // expose DAO classes in the API for access to Entity from dependencies
 
     implementation(libs.exposed.core)
@@ -18,12 +16,18 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.sqlite.jdbc)
 
-    testImplementation(libs.junit5.api)
-    testImplementation(libs.junit5.params)
-    testRuntimeOnly(libs.junit5.engine)
-
-    testImplementation(libs.assertk)
-    testImplementation(libs.kotlinx.coroutines.test)
-
     testFixturesImplementation(libs.junit5.api)
+}
+
+@Suppress("UnstableApiUsage")
+testing {
+    suites {
+        withType<JvmTestSuite>().matching { it.name == "test" }.configureEach {
+            dependencies {
+                implementation(testFixtures(project(":util")))
+
+                implementation(libs.kotlinx.coroutines.test)
+            }
+        }
+    }
 }

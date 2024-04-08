@@ -12,11 +12,13 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.swing.Swing
 import java.io.File
 
+// TODO refactor to only be available from screenshotTest suites
+
 private val resourcesDir = File("src/test/resources")
 private val screenshotsDir = resourcesDir.resolve("screenshots")
 
 private val regenScreenshots: Boolean
-    get() = System.getProperty("REGEN_SCREENSHOTS")?.toBoolean() == true
+    get() = System.getenv("REGEN_SCREENSHOTS")?.toBoolean() == true
 
 fun Any.themedScreenshotTest(
     filename: String,
