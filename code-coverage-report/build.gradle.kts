@@ -94,16 +94,16 @@ abstract class JacocoReportFixTask : DefaultTask() {
         // generally have newlines etc so parsing incrementally is non-trivial)
         val (readMs, contents) = measureTimeMillisWithResult { file.readText() }
         logger.info("Read ${contents.length} characters in ${readMs.milliseconds}")
-        val (replaceMs, fixed) = measureTimeMillisWithResult { contents.replace(INVALID_METHOD, "") }
-        val sizeDiff = contents.length - fixed.length
-        logger.info("Replaced $sizeDiff characters in ${replaceMs.milliseconds}")
+        // add space to be able to find the number of changes
+        val (replaceMs, fixed) = measureTimeMillisWithResult { contents.replace("line=\"0\"", " line=\"1\"") }
+        val replacements = fixed.length - contents.length
+        logger.info("Replaced $replacements 0-line references in ${replaceMs.milliseconds}")
 
-        if (sizeDiff > 0) {
+        if (contents != fixed) {
             val outputFile = outputReportFile
             val writeMs = measureTimeMillis { outputFile.writeText(fixed) }
             logger.info("Wrote fixed contents to ${outputFile.relativeTo(rootDir).path} in ${writeMs.milliseconds}")
 
-            val replacements = sizeDiff / INVALID_METHOD.length
             logger.warn("Replaced $replacements invalid line numbers in $filePath")
         } else {
             logger.warn("No 0-line methods found!")
@@ -111,11 +111,6 @@ abstract class JacocoReportFixTask : DefaultTask() {
 
         val duration = (System.nanoTime() - start).nanoseconds
         logger.info("Done in $duration")
-    }
-
-    companion object {
-        private const val INVALID_METHOD =
-            """<method name="invokeSuspend" desc="(Ljava/lang/Object;)Ljava/lang/Object;" line="0">"""
     }
 }
 
