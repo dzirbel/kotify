@@ -62,6 +62,10 @@ abstract class JacocoReportFixTask : DefaultTask() {
     // cannot access project during execution time
     private val rootDir = project.rootDir
 
+    init {
+        outputs.upToDateWhen { outputReportFile.exists() }
+    }
+
     override fun getGroup() = "Verification"
 
     override fun getDescription() = "Fix invalid 0-line methods in JaCoCo reports"
