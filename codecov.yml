@@ -3,6 +3,10 @@ coverage:
     project: off
     patch: off
 
+parsers:
+  jacoco:
+    partials_as_hits: true
+
 flags:
   unit:
     paths:
