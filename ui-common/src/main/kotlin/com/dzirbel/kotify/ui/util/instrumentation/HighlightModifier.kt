@@ -3,7 +3,7 @@ package com.dzirbel.kotify.ui.util.instrumentation
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -38,7 +38,7 @@ fun Modifier.highlightCompositions(resetTimeout: Duration = DEFAULT_RESET_TIMEOU
         totalCompositions++
 
         // use a State to trigger a draw (but not composition) on reset
-        var totalCompositionsAtReset: Long by remember { mutableStateOf(0) }
+        var totalCompositionsAtReset: Long by remember { mutableLongStateOf(0) }
 
         LaunchedEffect(totalCompositions) {
             delay(resetTimeout)

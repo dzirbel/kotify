@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -506,7 +507,7 @@ private fun VolumeControls() {
             }
         }
 
-        val errorResetCounter = remember { mutableStateOf(0) }
+        val errorResetCounter = remember { mutableIntStateOf(0) }
         val errorFlow = remember(errorResetCounter.value) {
             player.errors.runningFold(emptyList<Throwable>()) { list, throwable -> list.plus(throwable) }
         }

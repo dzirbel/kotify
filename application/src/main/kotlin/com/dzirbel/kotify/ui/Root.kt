@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,7 +44,7 @@ import kotlinx.collections.immutable.toImmutableList
  */
 val pageStack: MutableState<PageStack> = mutableStateOf(PageStack(ArtistsPage))
 
-private val invalidationCounter = mutableStateOf(0)
+private val invalidationCounter = mutableIntStateOf(0)
 
 fun invalidateRootComposable() {
     invalidationCounter.value++
@@ -106,7 +107,7 @@ fun Root(authenticationState: AuthenticationState) {
  */
 @Composable
 private fun InvalidatingRootContent(content: @Composable () -> Unit) {
-    var currentInvalidation by remember { mutableStateOf(0) }
+    var currentInvalidation by remember { mutableIntStateOf(0) }
     if (currentInvalidation != invalidationCounter.value) {
         currentInvalidation = invalidationCounter.value
         // remove content from the composition then immediately recompose with the counters matching each other

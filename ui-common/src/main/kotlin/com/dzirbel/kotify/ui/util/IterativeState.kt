@@ -11,9 +11,9 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun <T> iterativeState(key: Any? = null, generate: () -> Pair<T, Long>): T {
-    val (initialValue, initialDelay) = remember(key) { generate() }
+    val (initialValue, initialDelay) = remember(key, generate) { generate() }
 
-    return produceState(initialValue = initialValue, key1 = key) {
+    return produceState(initialValue = initialValue, key1 = key, key2 = generate) {
         // produceState does not update its initialValue when the key changes (i.e. it is remembered{} without a key),
         // so we need to re-emit it here to avoid waiting for the initial delay when the key changes
         value = initialValue

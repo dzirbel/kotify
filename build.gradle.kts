@@ -32,7 +32,7 @@ fun Project.configureDetekt() {
 
         dependencies {
             detektPlugins(libs.detekt.formatting)
-            detektPlugins(libs.twitter.compose.rules)
+            detektPlugins(libs.detekt.compose)
         }
 
         // disable :detekt task since it does not run with type resolution; instead have it depend on all the other

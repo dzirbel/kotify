@@ -320,7 +320,7 @@ formatting:
     active: true
     autoCorrect: true
   FunctionName:
-    active: false # does not allow for capitalized Composable functions
+    active: false # does not allow for interface constructor functions
     autoCorrect: true
   FunctionReturnTypeSpacing:
     active: true
@@ -1020,17 +1020,36 @@ style:
     active: true
     excludeImports: []
 
-TwitterCompose:
+Compose:
+  ComposableAnnotationNaming:
+    active: true
+  ComposableNaming:
+    active: true
+  ComposableParamOrder:
+    active: true
   CompositionLocalAllowlist:
     active: false
-    allowedCompositionLocals:
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:
     active: true
+  DefaultsVisibility:
+    active: true
+  LambdaParameterInRestartableEffect:
+    active: true
+  Material2:
+    active: false
+  ModifierClickableOrder:
+    active: true
   ModifierComposable:
     active: true
+  ModifierComposed:
+    active: false
   ModifierMissing:
+    active: true
+  ModifierNaming:
+    active: true
+  ModifierNotUsedAtRoot:
     active: true
   ModifierReused:
     active: true
@@ -1040,19 +1059,21 @@ TwitterCompose:
     active: true
   MutableParams:
     active: true
-  ComposableNaming:
+  MutableStateAutoboxing:
     active: true
-  ComposableParamOrder:
+  MutableStateParam:
     active: true
-  PreviewNaming:
+  PreviewAnnotationNaming:
     active: true
   PreviewPublic:
     active: true
   RememberMissing:
     active: true
+  RememberContentMissing:
+    active: true
   UnstableCollections:
     active: true
   ViewModelForwarding:
-    active: true
+    active: false
   ViewModelInjection:
-    active: true
+    active: false

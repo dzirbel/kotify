@@ -146,13 +146,7 @@ fun LinkedText(
     linkContextMenu: ((String) -> List<ContextMenuItem>)? = null,
     elements: @DisallowComposableCalls LinkElementScope.() -> Unit,
 ) {
-    // use a Ref to avoid recomposition when the layout result changes since it is only used in callbacks
-    val layoutResult = remember { Ref<TextLayoutResult?>(null) }
-
     val hoveredRangeStart = remember { mutableStateOf<Int?>(null) }
-
-    val hoveredLink = remember { Ref<String?>(null) }
-    val hoveringLink = remember { mutableStateOf(false) }
 
     val linkResult = if (hoveredSpanStyle != unhoveredSpanStyle) {
         // if the styles are different, we need to rebuild the text on hover offset change
@@ -181,69 +175,74 @@ fun LinkedText(
     if (linkResult.onlyText) {
         // if there are no links, just display the text
         BasicText(text = text, modifier = modifier, style = coloredStyle)
-        return
-    }
+    } else {
+        // use a Ref to avoid recomposition when the layout result changes since it is only used in callbacks
+        val layoutResult = remember { Ref<TextLayoutResult?>(null) }
 
-    val clickModifier = if (linkResult.singleLink == null) {
-        Modifier.pointerInput(text) {
-            detectTapGestures(matcher = PointerMatcher.mouse(PointerButton.Primary)) { offset ->
-                text.characterOffset(offset, layoutResult.value)
-                    ?.let { text.annotationAtOffset(it)?.item }
-                    ?.let(onClickLink)
+        val hoveredLink = remember { Ref<String?>(null) }
+        val hoveringLink = remember { mutableStateOf(false) }
+
+        val clickModifier = if (linkResult.singleLink == null) {
+            Modifier.pointerInput(text) {
+                detectTapGestures(matcher = PointerMatcher.mouse(PointerButton.Primary)) { offset ->
+                    text.characterOffset(offset, layoutResult.value)
+                        ?.let { text.annotationAtOffset(it)?.item }
+                        ?.let(onClickLink)
+                }
             }
+        } else {
+            Modifier.onClick { onClickLink(linkResult.singleLink) }
         }
-    } else {
-        Modifier.onClick { onClickLink(linkResult.singleLink) }
-    }
 
-    val hoverModifier = if (linkResult.singleLink == null) {
-        Modifier
-            .onPointerEvent(persistentSetOf(PointerEventType.Enter, PointerEventType.Move)) { event ->
-                val characterOffset = text.characterOffset(event.changes.first().position, layoutResult.value)
-                val range = characterOffset?.let { text.annotationAtOffset(it) }
-                val link = range?.item
+        val hoverModifier = if (linkResult.singleLink == null) {
+            Modifier
+                .onPointerEvent(persistentSetOf(PointerEventType.Enter, PointerEventType.Move)) { event ->
+                    val characterOffset = text.characterOffset(event.changes.first().position, layoutResult.value)
+                    val range = characterOffset?.let { text.annotationAtOffset(it) }
+                    val link = range?.item
 
-                hoveredRangeStart.value = range?.start
-                hoveredLink.value = link
-                hoveringLink.value = link != null
-            }
-            .onPointerEvent(PointerEventType.Exit) {
-                hoveredRangeStart.value = null
-                hoveredLink.value = null
-                hoveringLink.value = false
-            }
-    } else {
-        Modifier
-            .onPointerEvent(PointerEventType.Enter) {
-                hoveredRangeStart.value = 0
-                hoveredLink.value = linkResult.singleLink
-                hoveringLink.value = true
-            }
-            .onPointerEvent(PointerEventType.Exit) {
-                hoveredRangeStart.value = null
-                hoveredLink.value = null
-                hoveringLink.value = false
-            }
-    }
+                    hoveredRangeStart.value = range?.start
+                    hoveredLink.value = link
+                    hoveringLink.value = link != null
+                }
+                .onPointerEvent(PointerEventType.Exit) {
+                    hoveredRangeStart.value = null
+                    hoveredLink.value = null
+                    hoveringLink.value = false
+                }
+        } else {
+            Modifier
+                .onPointerEvent(PointerEventType.Enter) {
+                    hoveredRangeStart.value = 0
+                    hoveredLink.value = linkResult.singleLink
+                    hoveringLink.value = true
+                }
+                .onPointerEvent(PointerEventType.Exit) {
+                    hoveredRangeStart.value = null
+                    hoveredLink.value = null
+                    hoveringLink.value = false
+                }
+        }
 
-    // hack: apply pointer icon outside ContextMenuArea so it is cleared in the context menu
-    Box(
-        modifier = Modifier
-            .instrument()
-            .pointerHoverIcon(if (hoveringLink.value) PointerIcon.Hand else PointerIcon.Default),
-    ) {
-        ContextMenuArea(
-            enabled = linkContextMenu != null && hoveringLink.value,
-            items = {
-                hoveredLink.value?.let { linkContextMenu?.invoke(it) }.orEmpty()
-            },
+        // hack: apply pointer icon outside ContextMenuArea so it is cleared in the context menu
+        Box(
+            modifier = modifier
+                .instrument()
+                .pointerHoverIcon(if (hoveringLink.value) PointerIcon.Hand else PointerIcon.Default),
         ) {
-            BasicText(
-                text = text,
-                modifier = modifier.then(clickModifier).then(hoverModifier),
-                style = coloredStyle,
-                onTextLayout = { layoutResult.value = it },
-            )
+            ContextMenuArea(
+                enabled = linkContextMenu != null && hoveringLink.value,
+                items = {
+                    hoveredLink.value?.let { linkContextMenu?.invoke(it) }.orEmpty()
+                },
+            ) {
+                BasicText(
+                    text = text,
+                    modifier = Modifier.then(clickModifier).then(hoverModifier),
+                    style = coloredStyle,
+                    onTextLayout = { layoutResult.value = it },
+                )
+            }
         }
     }
 }

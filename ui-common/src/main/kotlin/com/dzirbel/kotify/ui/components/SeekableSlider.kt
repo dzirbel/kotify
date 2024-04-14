@@ -20,7 +20,7 @@ import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,7 +74,7 @@ fun SeekableSlider(
     val hoverLocation = remember { Ref(0f) }
 
     // the current drag offset, in pixels
-    val drag = remember { mutableStateOf(0f) }
+    val drag = remember { mutableFloatStateOf(0f) }
 
     // the total width of the slider bar, which is necessary for computing the click location as a percentage of the
     // max width
