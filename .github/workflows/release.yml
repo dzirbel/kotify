@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'adopt'
-          java-version: '18'
+          java-version: '21'
 
       - run: ./gradlew --stacktrace packageReleaseDistributionForCurrentOS packageReleaseUberJarForCurrentOS
 

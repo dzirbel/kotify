@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'adopt'
-          java-version: '18'
+          java-version: '21'
 
       - name: Download B2 binary
         run: curl https://github.com/Backblaze/B2_Command_Line_Tool/releases/download/v2.1.0/b2-linux -L -o b2

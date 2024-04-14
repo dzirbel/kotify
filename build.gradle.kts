@@ -141,8 +141,14 @@ fun Project.configureTests() {
             exceptionFormat = TestExceptionFormat.FULL
         }
 
-        // allowing mocking of java.time in JDK 16+ per https://mockk.io/doc/md/jdk16-access-exceptions.html
-        jvmArgs = listOf("--add-opens", "java.base/java.time=ALL-UNNAMED")
+        jvmArgs = listOf(
+            // allowing mocking of java.time in JDK 16+ per https://mockk.io/doc/md/jdk16-access-exceptions.html
+            "--add-opens",
+            "java.base/java.time=ALL-UNNAMED",
+
+            // avoid warning for mockk dynamic agent loading in Java 21+: https://github.com/mockito/mockito/issues/3037
+            "-XX:+EnableDynamicAgentLoading",
+        )
 
         // hacky, but causes gradle builds to fail if tests write or std_err (which often indicates exceptions handled
         // by the Thread.uncaughtExceptionHandler)
