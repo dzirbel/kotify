@@ -1,3 +1,4 @@
+
 import io.gitlab.arturbosch.detekt.Detekt
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
@@ -51,31 +52,33 @@ fun Project.configureKotlin() {
                 allWarningsAsErrors = true
                 jvmTarget = libs.versions.jvm.map(JvmTarget::fromTarget)
 
+                // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
+                freeCompilerArgs.add("-Xcontext-receivers")
+
+                freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
+
                 // hack: exclude runtime project because it has no coroutines dependency
                 if (!project.name.contains("runtime")) {
                     freeCompilerArgs.add("-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi")
-                    freeCompilerArgs.add("-opt-in=kotlin.contracts.ExperimentalContracts")
                     freeCompilerArgs.add("-opt-in=kotlinx.coroutines.DelicateCoroutinesApi") // allow use of GlobalScope
                 }
-
-                // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
-                freeCompilerArgs.add("-Xcontext-receivers")
 
                 pluginManager.withPlugin("org.jetbrains.compose") {
                     // hack: exclude repository project because it only has the runtime dependency
                     if (!project.name.contains("repository")) {
-                        freeCompilerArgs.add("-opt-in=androidx.compose.ui.ExperimentalComposeUiApi")
-                        freeCompilerArgs.add("-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi") // allow use of FlowRow
                         freeCompilerArgs.add("-opt-in=androidx.compose.foundation.ExperimentalFoundationApi")
-                        freeCompilerArgs.add("-opt-in=androidx.compose.material.ExperimentalMaterialApi")
+                        freeCompilerArgs.add("-opt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi") // allow use of FlowRow
+                        freeCompilerArgs.add("-opt-in=androidx.compose.ui.ExperimentalComposeUiApi")
                     }
 
-                    // enable Compose compiler metrics and reports:
-                    // https://github.com/androidx/androidx/blob/androidx-main/compose/compiler/design/compiler-metrics.md
-                    val composeCompilerReportsDir = layout.buildDirectory.dir("compose").get()
-                    val pluginPrefix = "plugin:androidx.compose.compiler.plugins.kotlin"
-                    freeCompilerArgs.addAll("-P", "$pluginPrefix:metricsDestination=$composeCompilerReportsDir")
-                    freeCompilerArgs.addAll("-P", "$pluginPrefix:reportsDestination=$composeCompilerReportsDir")
+                    if (System.getenv("COMPOSE_METRICS")?.toBoolean() == true) {
+                        // enable Compose compiler metrics and reports:
+                        // https://github.com/androidx/androidx/blob/androidx-main/compose/compiler/design/compiler-metrics.md
+                        val composeCompilerReportsDir = layout.buildDirectory.dir("compose").get()
+                        val pluginPrefix = "plugin:androidx.compose.compiler.plugins.kotlin"
+                        freeCompilerArgs.addAll("-P", "$pluginPrefix:metricsDestination=$composeCompilerReportsDir")
+                        freeCompilerArgs.addAll("-P", "$pluginPrefix:reportsDestination=$composeCompilerReportsDir")
+                    }
                 }
             }
         }

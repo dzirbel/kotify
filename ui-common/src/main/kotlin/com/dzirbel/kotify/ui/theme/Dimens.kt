@@ -1,6 +1,7 @@
 package com.dzirbel.kotify.ui.theme
 
 import androidx.compose.foundation.LocalScrollbarStyle
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.LocalMinimumInteractiveComponentEnforcement
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
@@ -54,6 +55,7 @@ object Dimens {
     private val scrollbarWidth = 12.dp
 
     @Composable
+    @OptIn(ExperimentalMaterialApi::class)
     fun ApplyDimens(content: @Composable () -> Unit) {
         CompositionLocalProvider(
             LocalTextStyle provides MaterialTheme.typography.body2,
