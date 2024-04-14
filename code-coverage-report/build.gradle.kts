@@ -6,11 +6,9 @@ import kotlin.time.Duration.Companion.nanoseconds
 plugins {
     id("jacoco-report-aggregation")
 
-    // add to create check/test tasks by default and avoid strange dependency resolution errors
+    // create check/test tasks by default and avoid strange dependency resolution errors
     kotlin("jvm") version libs.versions.kotlin
 }
-
-val integrationTest = tasks.create("integrationTest")
 
 @Suppress("UnstableApiUsage")
 reporting {
@@ -27,12 +25,13 @@ reporting {
 
         create<JacocoCoverageReport>("jacocoMergedIntegrationTestReport") {
             testType = TestSuiteType.INTEGRATION_TEST
-            integrationTest.finalizedBy(reportTask)
+            val integrationTest by tasks.registering(Task::class)
+            integrationTest.configure { finalizedBy(reportTask) }
         }
 
         withType<JacocoCoverageReport> {
             tasks.create<JacocoReportFixTask>(reportTask.name + "Fix") {
-                configureFrom(reportTask.get())
+                configureFrom(reportTask)
             }
         }
     }
@@ -70,15 +69,17 @@ abstract class JacocoReportFixTask : DefaultTask() {
 
     override fun getDescription() = "Fix invalid 0-line methods in JaCoCo reports"
 
-    fun configureFrom(jacocoReport: JacocoReport) {
-        reportFile.set(jacocoReport.reports.xml.outputLocation.get())
+    fun configureFrom(jacocoReport: TaskProvider<JacocoReport>) {
+        val fixTask = this
 
-        this.dependsOn(jacocoReport)
-        jacocoReport.finalizedBy(this)
+        fixTask.dependsOn(jacocoReport)
+        jacocoReport.configure { finalizedBy(fixTask) }
+
+        fixTask.reportFile.set(jacocoReport.map { it.reports.xml.outputLocation.get() })
 
         // hack: we cannot have the output file of this task be the same as its input file due to a circular reference,
         // so we create a different file, then finalize the task with a new one that replaces the input report
-        this.finalizedBy(
+        fixTask.finalizedBy(
             project.tasks.register<MoveFileTask>(name + "ReplaceReport") {
                 src.set(outputReportFile)
                 dst.set(reportFile)
