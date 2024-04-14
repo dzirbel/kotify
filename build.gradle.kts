@@ -141,6 +141,9 @@ fun Project.configureTests() {
             exceptionFormat = TestExceptionFormat.FULL
         }
 
+        // disable unused test reports
+        reports.all { required = false }
+
         jvmArgs = listOf(
             // allowing mocking of java.time in JDK 16+ per https://mockk.io/doc/md/jdk16-access-exceptions.html
             "--add-opens",
@@ -149,6 +152,10 @@ fun Project.configureTests() {
             // avoid warning for mockk dynamic agent loading in Java 21+: https://github.com/mockito/mockito/issues/3037
             "-XX:+EnableDynamicAgentLoading",
         )
+
+        // run tests in parallel and fork a new JVM for large test suites
+        maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+        forkEvery = 100
 
         // hacky, but causes gradle builds to fail if tests write or std_err (which often indicates exceptions handled
         // by the Thread.uncaughtExceptionHandler)

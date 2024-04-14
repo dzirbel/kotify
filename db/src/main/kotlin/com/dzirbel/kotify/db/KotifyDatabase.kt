@@ -109,7 +109,7 @@ object KotifyDatabase {
      */
     var enabled: Boolean = false
 
-    fun init(dbDir: File, sqlLogger: SqlLogger = NoOpSqlLogger, deleteOnExit: Boolean = false) {
+    fun init(dbDir: File, sqlLogger: SqlLogger = NoOpSqlLogger, tempFile: Boolean = false) {
         check(!initialized.getAndSet(true)) { "already initialized" }
 
         val databaseConfig = DatabaseConfig {
@@ -128,8 +128,13 @@ object KotifyDatabase {
 
         databaseByDB = Array(DB.entries.size) { i ->
             val db = DB.entries[i]
-            val dbFile = dbDir.resolve(db.databaseName)
-            if (deleteOnExit) dbFile.deleteOnExit()
+            val dbFile = if (tempFile) {
+                val (prefix, suffix) = db.databaseName.split('.')
+                File.createTempFile(prefix, ".$suffix", dbDir)
+                    .also { it.deleteOnExit() }
+            } else {
+                dbDir.resolve(db.databaseName)
+            }
             connectToSQLiteDatabase(databaseFile = dbFile, databaseConfig = databaseConfig)
                 .also { database ->
                     transaction(database) {
