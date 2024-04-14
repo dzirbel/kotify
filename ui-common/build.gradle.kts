@@ -16,9 +16,7 @@ dependencies {
     implementation(libs.kotlinx.immutable.collections)
     implementation(libs.material.context.menu)
 
-    testFixturesApi(compose.desktop.currentOs)
-    testFixturesImplementation(libs.kotlinx.coroutines.core)
-    testFixturesImplementation(libs.kotlinx.coroutines.swing) // Swing dispatcher for screenshot tests
+    testFixturesImplementation(project(":screenshot-test"))
 }
 
 @Suppress("UnstableApiUsage")

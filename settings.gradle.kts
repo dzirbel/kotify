@@ -8,6 +8,7 @@ include(
     "network",
     "repository",
     "runtime",
+    "screenshot-test",
     "ui-common",
     "ui-kotify",
     "util",

@@ -6,6 +6,7 @@ import com.dzirbel.kotify.Settings
 import com.dzirbel.kotify.ui.page.Page
 import com.dzirbel.kotify.ui.page.PageStack
 import com.dzirbel.kotify.ui.theme.KotifyColors
+import com.dzirbel.screenshot.screenshotTest
 
 /**
  * Wrapper around [screenshotTest] which provides setup for taking a screenshot of the entire application state.

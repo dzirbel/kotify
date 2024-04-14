@@ -32,14 +32,13 @@ dependencies {
     implementation(libs.okhttp)
 
     testFixturesImplementation(project(":repository"))
+    testFixturesImplementation(project(":screenshot-test"))
     testFixturesImplementation(project(":ui-common"))
     testFixturesImplementation(project(":ui-kotify"))
     testFixturesImplementation(project(":util"))
     testFixturesImplementation(testFixtures(project(":ui-common")))
     testFixturesImplementation(testFixtures(project(":ui-kotify")))
     testFixturesImplementation(testFixtures(project(":repository")))
-
-    testFixturesApi(compose.desktop.currentOs)
 }
 
 @Suppress("UnstableApiUsage")

@@ -110,6 +110,10 @@ fun Project.configureTests() {
                     register<JvmTestSuite>("screenshotTest") {
                         testType = "screenshot-test"
 
+                        dependencies {
+                            implementation(project(":screenshot-test"))
+                        }
+
                         targets {
                             all {
                                 // consider screenshot tests up to date based on REGEN_SCREENSHOTS environment variable

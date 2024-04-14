@@ -7,9 +7,9 @@ import androidx.compose.ui.text.SpanStyle
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
-import com.dzirbel.kotify.ui.click
-import com.dzirbel.kotify.ui.hover
-import com.dzirbel.kotify.ui.screenshotTest
+import com.dzirbel.screenshot.click
+import com.dzirbel.screenshot.hover
+import com.dzirbel.screenshot.screenshotTest
 import org.junit.jupiter.api.Test
 
 class LinkedTextTest {

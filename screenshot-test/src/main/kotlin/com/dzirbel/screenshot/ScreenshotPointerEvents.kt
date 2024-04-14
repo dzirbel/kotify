@@ -1,4 +1,4 @@
-package com.dzirbel.kotify.ui
+package com.dzirbel.screenshot
 
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.geometry.Offset

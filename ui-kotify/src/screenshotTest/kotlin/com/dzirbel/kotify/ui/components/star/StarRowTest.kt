@@ -1,8 +1,8 @@
 package com.dzirbel.kotify.ui.components.star
 
 import androidx.compose.ui.unit.dp
-import com.dzirbel.kotify.ui.hover
 import com.dzirbel.kotify.ui.themedScreenshotTest
+import com.dzirbel.screenshot.hover
 import org.junit.jupiter.api.Test
 
 class StarRowTest {

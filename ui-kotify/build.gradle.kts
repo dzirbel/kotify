@@ -20,8 +20,6 @@ dependencies {
 
     testFixturesImplementation(project(":repository"))
 
-    testFixturesApi(compose.desktop.currentOs)
-
     testFixturesImplementation(libs.assertk)
     testFixturesImplementation(libs.kotlinx.coroutines.test)
 }

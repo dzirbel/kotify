@@ -18,8 +18,8 @@ import com.dzirbel.kotify.ui.components.adapter.ListAdapter
 import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByNumber
 import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByString
-import com.dzirbel.kotify.ui.screenshotTest
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.screenshot.screenshotTest
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.jupiter.params.ParameterizedTest

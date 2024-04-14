@@ -1,52 +1,19 @@
-package com.dzirbel.kotify.ui
+package com.dzirbel.screenshot
 
-import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.use
-import com.dzirbel.kotify.ui.theme.KotifyColors
-import com.dzirbel.kotify.ui.theme.KotifyTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.swing.Swing
 import java.io.File
-
-// TODO refactor to only be available from screenshotTest suites
 
 private val resourcesDir = File("src/test/resources")
 private val screenshotsDir = resourcesDir.resolve("screenshots")
 
 private val regenScreenshots: Boolean
     get() = System.getenv("REGEN_SCREENSHOTS")?.toBoolean() == true
-
-fun Any.themedScreenshotTest(
-    filename: String,
-    windowWidth: Int = 1024,
-    windowHeight: Int = 768,
-    windowDensity: Density = Density(1f),
-    record: Boolean = false,
-    colors: List<KotifyColors> = listOf(KotifyColors.DARK, KotifyColors.LIGHT),
-    setUpComposeScene: ImageComposeScene.() -> Unit = {},
-    onColors: (colors: KotifyColors) -> Unit = {},
-    content: @Composable () -> Unit,
-) {
-    screenshotTest(
-        filename = filename,
-        configurations = colors,
-        windowWidth = windowWidth,
-        windowHeight = windowHeight,
-        windowDensity = windowDensity,
-        record = record,
-        setUpComposeScene = setUpComposeScene,
-        configurationName = { it.name.lowercase() },
-        onConfiguration = onColors,
-    ) { runColors ->
-        KotifyTheme.Apply(colors = runColors) {
-            Surface(content = content)
-        }
-    }
-}
 
 fun Any.screenshotTest(
     filename: String,
