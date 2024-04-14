@@ -56,7 +56,7 @@ internal class SpotifyTracksTest {
             assertThrows<Spotify.SpotifyError> { Spotify.Tracks.getTrack(NetworkFixtures.notFoundId) }
         }
 
-        assertThat(error.code).isEqualTo(404)
+        assertThat(error.code).isEqualTo(400)
     }
 
     @Test
