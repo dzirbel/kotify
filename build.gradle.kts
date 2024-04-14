@@ -48,7 +48,7 @@ fun Project.configureKotlin() {
     pluginManager.withPlugin("kotlin") {
         kotlin {
             compilerOptions {
-                // allWarningsAsErrors = true
+                allWarningsAsErrors = true
                 jvmTarget = libs.versions.jvm.map(JvmTarget::fromTarget)
 
                 // hack: exclude runtime project because it has no coroutines dependency
