@@ -14,9 +14,7 @@ import androidx.compose.ui.scene.ComposeScenePointer
 fun ImageComposeScene.hover(x: Float, y: Float) {
     sendPointerEvent(
         eventType = PointerEventType.Move,
-        pointers = listOf(
-            ComposeScenePointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = false),
-        ),
+        pointers = listOf(ComposeScenePointer(id = PointerId(0), position = Offset(x = x, y = y), pressed = false)),
     )
 }
 
@@ -24,27 +22,18 @@ fun ImageComposeScene.hover(x: Float, y: Float) {
  * Moves the pointer to hover over the given [x], [y] coordinates and clicks with the primary button.
  */
 fun ImageComposeScene.click(x: Float, y: Float) {
-    sendPointerEvent(
-        eventType = PointerEventType.Move,
-        pointers = listOf(
-            ComposeScenePointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = false),
-        ),
-    )
+    hover(x, y)
 
     sendPointerEvent(
         eventType = PointerEventType.Press,
         buttons = PointerButtons(isPrimaryPressed = true),
         button = PointerButton.Primary,
-        pointers = listOf(
-            ComposeScenePointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = true),
-        ),
+        pointers = listOf(ComposeScenePointer(id = PointerId(0), position = Offset(x = x, y = y), pressed = true)),
     )
 
     sendPointerEvent(
         eventType = PointerEventType.Release,
         button = PointerButton.Primary,
-        pointers = listOf(
-            ComposeScenePointer(id = PointerId(0L), position = Offset(x = x, y = y), pressed = false),
-        ),
+        pointers = listOf(ComposeScenePointer(id = PointerId(0), position = Offset(x = x, y = y), pressed = false)),
     )
 }
