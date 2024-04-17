@@ -1,4 +1,3 @@
-
 import io.gitlab.arturbosch.detekt.Detekt
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
@@ -9,7 +8,6 @@ plugins {
     alias(libs.plugins.compose)
     alias(libs.plugins.detekt)
     id("jacoco")
-    id("java-test-fixtures")
     kotlin("jvm") version libs.versions.kotlin
 }
 
@@ -40,7 +38,7 @@ fun Project.configureDetekt() {
         // tasks (detektMain, detektTest, etc.) which do, see https://detekt.dev/docs/gettingstarted/type-resolution
         tasks.detekt.configure {
             isEnabled = false
-            dependsOn(tasks.withType<Detekt>().named { it != "detekt" })
+            dependsOn(tasks.withType<Detekt>().matching { it != this })
         }
     }
 }
