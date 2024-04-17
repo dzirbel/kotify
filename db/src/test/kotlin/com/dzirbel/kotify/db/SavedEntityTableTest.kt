@@ -39,6 +39,7 @@ internal class SavedEntityTableTest {
             assertThat(TestSavedEntityTable.isSaved("id", "user")).isNull()
             assertThat(TestSavedEntityTable.savedTime("id", "user")).isNull()
             assertThat(TestSavedEntityTable.savedCheckTime("id", "user")).isNull()
+            assertThat(TestSavedEntityTable.saveState("id", "user")).isNull()
             assertThat(TestSavedEntityTable.savedEntityIds("user")).isEmpty()
         }
     }
@@ -66,6 +67,8 @@ internal class SavedEntityTableTest {
             // savedTime is null if not saved
             assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isEqualTo(savedTime.takeIf { saved })
             assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime)
+            assertThat(TestSavedEntityTable.saveState("id", "user")).isNotNull()
+                .isEqualTo(SavedEntityTable.SaveState(saved, savedTime.takeIf { saved }))
             assertThat(TestSavedEntityTable.savedEntityIds(userId))
                 .containsExactlyElementsOfInAnyOrder(if (saved) setOf(entityId) else emptySet())
         }
@@ -95,6 +98,8 @@ internal class SavedEntityTableTest {
                 // savedTime is null if not saved
                 assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isEqualTo(savedTime.takeIf { saved })
                 assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime)
+                assertThat(TestSavedEntityTable.saveState(entityId, userId)).isNotNull()
+                    .isEqualTo(SavedEntityTable.SaveState(saved, savedTime.takeIf { saved }))
             }
 
             assertThat(TestSavedEntityTable.savedEntityIds(userId))
@@ -123,6 +128,8 @@ internal class SavedEntityTableTest {
             assertThat(TestSavedEntityTable.isSaved(entityId, userId)).isNotNull().isEqualTo(saved)
             assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isNull()
             assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime)
+            assertThat(TestSavedEntityTable.saveState(entityId, userId)).isNotNull()
+                .isEqualTo(SavedEntityTable.SaveState(saved, null))
             assertThat(TestSavedEntityTable.savedEntityIds(userId))
                 .containsExactlyElementsOfInAnyOrder(if (saved) setOf(entityId) else emptySet())
         }
@@ -165,18 +172,21 @@ internal class SavedEntityTableTest {
             // savedTime is null if not saved
             assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isEqualTo(savedTime)
             assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime2)
+            assertThat(TestSavedEntityTable.saveState(entityId, userId)).isNotNull()
+                .isEqualTo(SavedEntityTable.SaveState(true, savedTime))
             assertThat(TestSavedEntityTable.savedEntityIds(userId)).containsExactlyInAnyOrder(entityId)
         }
     }
 
-    @Test
-    fun `batch update saved state with known savedTime`() {
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `batch update saved state`(knownSaveTime: Boolean) {
         val entityIds = List(20) { "id$it" }
         val initializedEntityIds = entityIds.take(10)
         val savedList = entityIds.indices.map { it % 2 == 0 }
         val savedListInitial = initializedEntityIds.indices.map { it % 3 == 0 }
         val userId = "user"
-        val savedTime = Instant.ofEpochMilli(1)
+        val savedTime = Instant.ofEpochMilli(1).takeIf { knownSaveTime }
         val savedCheckTime = Instant.ofEpochMilli(2)
 
         // initialize saved state for half the entities (with different saved states)
@@ -213,6 +223,8 @@ internal class SavedEntityTableTest {
                 // savedTime is null if not saved
                 assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isEqualTo(savedTime.takeIf { saved })
                 assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime)
+                assertThat(TestSavedEntityTable.saveState(entityId, userId)).isNotNull()
+                    .isEqualTo(SavedEntityTable.SaveState(saved, savedTime.takeIf { saved }))
             }
 
             assertThat(TestSavedEntityTable.savedEntityIds(userId))
@@ -257,6 +269,8 @@ internal class SavedEntityTableTest {
             // savedTime is null if not saved
             assertThat(TestSavedEntityTable.savedTime(entityId, userId)).isNull()
             assertThat(TestSavedEntityTable.savedCheckTime(entityId, userId)).isNotNull().isEqualTo(savedCheckTime2)
+            assertThat(TestSavedEntityTable.saveState(entityId, userId)).isNotNull()
+                .isEqualTo(SavedEntityTable.SaveState(true, null))
             assertThat(TestSavedEntityTable.savedEntityIds(userId)).containsExactlyInAnyOrder(entityId)
         }
     }
@@ -286,12 +300,15 @@ internal class SavedEntityTableTest {
             assertThat(TestSavedEntityTable.isSaved(entityId, user1)).isNotNull().isEqualTo(saved)
             assertThat(TestSavedEntityTable.savedTime(entityId, user1)).isEqualTo(savedTime1.takeIf { saved })
             assertThat(TestSavedEntityTable.savedCheckTime(entityId, user1)).isNotNull().isEqualTo(savedCheckTime1)
+            assertThat(TestSavedEntityTable.saveState(entityId, user1)).isNotNull()
+                .isEqualTo(SavedEntityTable.SaveState(saved, savedTime1.takeIf { saved }))
             assertThat(TestSavedEntityTable.savedEntityIds(user1))
                 .containsExactlyElementsOfInAnyOrder(if (saved) setOf(entityId) else emptySet())
 
             assertThat(TestSavedEntityTable.isSaved(entityId, user2)).isNull()
             assertThat(TestSavedEntityTable.savedTime(entityId, user2)).isNull()
             assertThat(TestSavedEntityTable.savedCheckTime(entityId, user2)).isNull()
+            assertThat(TestSavedEntityTable.saveState(entityId, user2)).isNull()
             assertThat(TestSavedEntityTable.savedEntityIds(user2)).isEmpty()
         }
 
@@ -310,12 +327,16 @@ internal class SavedEntityTableTest {
             assertThat(TestSavedEntityTable.isSaved(entityId, user1)).isNotNull().isEqualTo(saved)
             assertThat(TestSavedEntityTable.savedTime(entityId, user1)).isEqualTo(savedTime1.takeIf { saved })
             assertThat(TestSavedEntityTable.savedCheckTime(entityId, user1)).isNotNull().isEqualTo(savedCheckTime1)
+            assertThat(TestSavedEntityTable.saveState(entityId, user1)).isNotNull()
+                .isEqualTo(SavedEntityTable.SaveState(saved, savedTime1.takeIf { saved }))
             assertThat(TestSavedEntityTable.savedEntityIds(user1))
                 .containsExactlyElementsOfInAnyOrder(if (saved) setOf(entityId) else emptySet())
 
             assertThat(TestSavedEntityTable.isSaved(entityId, user2)).isNotNull().isEqualTo(saved2)
             assertThat(TestSavedEntityTable.savedTime(entityId, user2)).isEqualTo(savedTime2.takeIf { saved2 })
             assertThat(TestSavedEntityTable.savedCheckTime(entityId, user2)).isNotNull().isEqualTo(savedCheckTime2)
+            assertThat(TestSavedEntityTable.saveState(entityId, user2)).isNotNull()
+                .isEqualTo(SavedEntityTable.SaveState(saved2, savedTime2.takeIf { saved2 }))
             assertThat(TestSavedEntityTable.savedEntityIds(user2))
                 .containsExactlyElementsOfInAnyOrder(if (saved2) setOf(entityId) else emptySet())
         }
