@@ -9,6 +9,7 @@ import assertk.assertions.isNotNull
 import com.dzirbel.kotify.network.model.asFlow
 import com.dzirbel.kotify.network.properties.PlaylistProperties
 import com.dzirbel.kotify.util.CurrentTime
+import com.dzirbel.kotify.util.collections.zipEach
 import com.dzirbel.kotify.util.retryForResult
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -116,7 +117,7 @@ class SpotifyPlaylistsTest {
         val track2 = reorderedTracks.removeAt(1)
         reorderedTracks.add(2, track1)
         reorderedTracks.add(3, track2)
-        reorderedPlaylist.tracks.items.zip(reorderedTracks).forEach { (track, trackProperties) ->
+        reorderedPlaylist.tracks.items.zipEach(reorderedTracks) { track, trackProperties ->
             trackProperties.check(track)
         }
 
