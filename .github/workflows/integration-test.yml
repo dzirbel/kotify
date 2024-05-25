@@ -48,6 +48,6 @@ jobs:
 
       - name: Upload access_token.json to B2 (in case it was refreshed)
         run: ./b2 upload-file ${B2_BUCKET_NAME} .kotify/test-cache/access_token.json access_token.json
-        if: ${{ always() }} # upload even if the build failed
+        if: always() # upload even if the build failed
         env:
           B2_BUCKET_NAME: ${{ secrets.B2_BUCKET_NAME }}
