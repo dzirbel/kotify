@@ -116,7 +116,7 @@ object KotifyDatabase {
             this.sqlLogger = sqlLogger
 
             // do not retry on SQL errors, since transient failures to a local SQLite database are unexpected
-            defaultRepetitionAttempts = 0
+            defaultMaxAttempts = 1
 
             // no need for transaction isolation since transactions are run with limited parallelism
             defaultIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED
