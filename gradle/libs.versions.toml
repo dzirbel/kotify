@@ -16,7 +16,7 @@ material-context-menu = "0.1.0" # https://github.com/dzirbel/compose-material-co
 mockk = "1.13.11" # https://github.com/mockk/mockk
 okhttp = "4.12.0" # https://square.github.io/okhttp
 slf4j = "2.0.13" # http://www.slf4j.org/
-sqlite-jdbc = "3.45.2.0" # https://github.com/xerial/sqlite-jdbc
+sqlite-jdbc = "3.45.3.0" # https://github.com/xerial/sqlite-jdbc
 
 [libraries]
 assertk = { module = "com.willowtreeapps.assertk:assertk-jvm", version.ref = "assertk" }
