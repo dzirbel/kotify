@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 // apply plugins to the root project so that we can access their classes in the shared configuration
 plugins {
     alias(libs.plugins.compose)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.detekt)
     id("jacoco")
     kotlin("jvm") version libs.versions.kotlin

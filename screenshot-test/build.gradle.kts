@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.compose)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.detekt)
     kotlin("jvm") version libs.versions.kotlin
 }

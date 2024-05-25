@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.compose)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.detekt)
     id("jacoco")
     id("java-test-fixtures")
