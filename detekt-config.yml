@@ -1033,18 +1033,20 @@ Compose:
     active: true
   ContentEmitterReturningValues:
     active: true
+  ContentTrailingLambda:
+    active: true
   DefaultsVisibility:
     active: true
   LambdaParameterInRestartableEffect:
     active: true
   Material2:
-    active: false
+    active: false # TODO consider enabling
   ModifierClickableOrder:
     active: true
   ModifierComposable:
     active: true
   ModifierComposed:
-    active: false
+    active: false # TODO consider enabling
   ModifierMissing:
     active: true
   ModifierNaming:
@@ -1062,6 +1064,8 @@ Compose:
   MutableStateAutoboxing:
     active: true
   MutableStateParam:
+    active: true
+  ParameterNaming:
     active: true
   PreviewAnnotationNaming:
     active: true
