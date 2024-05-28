@@ -52,7 +52,7 @@ interface PageScope {
         DisplayPage(title = title) { setNavigationTitleVisibility ->
             VerticalScrollPage(
                 scrollState = scrollState,
-                onHeaderVisibilityChanged = { pageHeaderVisible ->
+                onHeaderVisibilityChange = { pageHeaderVisible ->
                     setNavigationTitleVisibility(!pageHeaderVisible)
                 },
                 header = header,

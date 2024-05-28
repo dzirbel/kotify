@@ -26,7 +26,7 @@ import com.dzirbel.kotify.ui.util.instrumentation.instrument
 fun VerticalScrollPage(
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
-    onHeaderVisibilityChanged: ((Boolean) -> Unit)? = null,
+    onHeaderVisibilityChange: ((Boolean) -> Unit)? = null,
     header: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -34,14 +34,14 @@ fun VerticalScrollPage(
         Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
             if (header != null) {
                 Box(
-                    modifier = if (onHeaderVisibilityChanged != null) {
+                    modifier = if (onHeaderVisibilityChange != null) {
                         Modifier.composed {
                             val headerVisibleState = remember { mutableStateOf<Boolean?>(null) }
                             onGloballyPositioned { coordinates ->
                                 val headerVisible = coordinates.boundsInParent().bottom - scrollState.value > 0
                                 if (headerVisible != headerVisibleState.value) {
                                     headerVisibleState.value = headerVisible
-                                    onHeaderVisibilityChanged(headerVisible)
+                                    onHeaderVisibilityChange(headerVisible)
                                 }
                             }
                         }
