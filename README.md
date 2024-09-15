@@ -29,6 +29,9 @@ Planned features include:
 
 For a full list of completed and upcoming features, see the [Roadmap](https://coda.io/@dominic-zirbel/kotify-roadmap).
 
+Development on Kotify is currently on hold and may or may not be resumed in the future. It is recommended for use only
+as a prototype and technology preview of what's possible with Spotify's API and Compose Multiplatform.
+
 ### Installation
 
 Kotify can be installed as an early **alpha** release. Expect performance issues, bugs, and missing features. In
@@ -59,9 +62,9 @@ you will never need to provide your Spotify password to Kotify. You may remove K
 
 Once installed and authorized, Kotify can replace using Spotify's desktop client for browsing and organizing your
 Spotify library. However, Kotify cannot directly play music from Spotify. You'll need to keep Spotify's client (or
-another device, like a phone) running in the background through which Kotify can play music.
+another device, like a phone) running in the background, through which Kotify can play music.
 
 ### Why "Kotify"?
 
-The name Kotify is a play on Spotify and [Kotlin](https://kotlinlang.org/), the language this project is written in.
-It also likens to "codify", meaning to systematize.
+The name Kotify is a play on Spotify and [Kotlin](https://kotlinlang.org/), the programming language this project is
+written in. It also likens to "codify", meaning to systematize.
