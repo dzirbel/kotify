@@ -30,7 +30,7 @@ reporting {
         }
 
         withType<JacocoCoverageReport> {
-            tasks.create<JacocoReportFixTask>(reportTask.name + "Fix") {
+            tasks.register<JacocoReportFixTask>(reportTask.name + "Fix") {
                 configureFrom(reportTask)
             }
         }
