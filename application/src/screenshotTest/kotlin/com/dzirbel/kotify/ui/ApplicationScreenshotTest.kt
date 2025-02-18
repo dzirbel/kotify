@@ -227,10 +227,10 @@ class ApplicationScreenshotTest {
     }
 
     private fun setupPlayer(playingTrack: TrackViewModel = ApplicationFixtures.streetcarSymphony): Player {
-        val artists = requireNotNull(playingTrack.artists.value).map {
+        val artists = requireNotNull(playingTrack.artists.value).map { artist ->
             SimplifiedSpotifyArtist(
-                id = it.id,
-                name = it.name,
+                id = artist.id,
+                name = artist.name,
                 externalUrls = SpotifyExternalUrl(),
                 type = "artist",
             )

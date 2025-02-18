@@ -7,7 +7,7 @@ import com.dzirbel.kotify.ui.CachedIcon
 import com.dzirbel.kotify.ui.theme.KotifyColors
 
 @Composable
-fun ThemeSwitcher(modifier: Modifier = Modifier, onSetColors: (KotifyColors) -> Unit) {
+fun ThemeSwitcher(onSetColors: (KotifyColors) -> Unit, modifier: Modifier = Modifier) {
     val isLight = KotifyColors.current == KotifyColors.LIGHT
     IconButton(
         modifier = modifier,

@@ -127,11 +127,11 @@ object Application {
 
         return systemCacheDir
             ?.takeIfIsWriteableDirectory(directoryName = "system cache")
-            ?.let {
+            ?.let { dir ->
                 when (os) {
-                    OperatingSystem.WINDOWS -> it.resolve(name).resolve("cache")
-                    OperatingSystem.MAC -> it.resolve(name)
-                    OperatingSystem.LINUX -> it.resolve(".$nameLower").resolve("cache")
+                    OperatingSystem.WINDOWS -> dir.resolve(name).resolve("cache")
+                    OperatingSystem.MAC -> dir.resolve(name)
+                    OperatingSystem.LINUX -> dir.resolve(".$nameLower").resolve("cache")
                     null -> error("impossible")
                 }
             }
@@ -174,12 +174,12 @@ object Application {
 
         return systemSettingsDir
             ?.takeIfIsWriteableDirectory(directoryName = "system settings")
-            ?.let {
+            ?.let { dir ->
                 // resolve a kotify-specific subdirectory
                 when (os) {
-                    OperatingSystem.WINDOWS -> it.resolve(name).resolve("settings")
-                    OperatingSystem.MAC -> it.resolve(name)
-                    OperatingSystem.LINUX -> it.resolve(".$nameLower").resolve("settings")
+                    OperatingSystem.WINDOWS -> dir.resolve(name).resolve("settings")
+                    OperatingSystem.MAC -> dir.resolve(name)
+                    OperatingSystem.LINUX -> dir.resolve(".$nameLower").resolve("settings")
                     null -> error("impossible")
                 }
             }
@@ -222,12 +222,12 @@ object Application {
 
         return systemSettingsDir
             ?.takeIfIsWriteableDirectory(directoryName = "system settings")
-            ?.let {
+            ?.let { dir ->
                 // resolve a kotify-specific subdirectory
                 when (os) {
-                    OperatingSystem.WINDOWS -> it.resolve(name).resolve("logs")
-                    OperatingSystem.MAC -> it.resolve(name).resolve("logs")
-                    OperatingSystem.LINUX -> it.resolve(".$nameLower").resolve("logs")
+                    OperatingSystem.WINDOWS -> dir.resolve(name).resolve("logs")
+                    OperatingSystem.MAC -> dir.resolve(name).resolve("logs")
+                    OperatingSystem.LINUX -> dir.resolve(".$nameLower").resolve("logs")
                     null -> error("impossible")
                 }
             }

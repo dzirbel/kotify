@@ -35,10 +35,10 @@ import kotlin.math.roundToInt
 fun <E> Table(
     columns: ImmutableList<Column<E>>,
     items: ListAdapter<E>,
+    onSetSort: (Sort<E>?) -> Unit,
     modifier: Modifier = Modifier,
     includeHeader: Boolean = true,
     dividerColor: Color = KotifyColors.current.divider,
-    onSetSort: (Sort<E>?) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
 

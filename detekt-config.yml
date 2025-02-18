@@ -1035,15 +1035,17 @@ Compose:
     active: true
   ContentTrailingLambda:
     active: true
+  ContentSlotReused:
+    active: true
   DefaultsVisibility:
+    active: true
+  LambdaParameterEventTrailing:
     active: true
   LambdaParameterInRestartableEffect:
     active: true
   Material2:
     active: false # TODO consider enabling
   ModifierClickableOrder:
-    active: true
-  ModifierComposable:
     active: true
   ModifierComposed:
     active: false # TODO consider enabling
@@ -1068,6 +1070,8 @@ Compose:
   ParameterNaming:
     active: true
   PreviewAnnotationNaming:
+    active: true
+  PreviewNaming:
     active: true
   PreviewPublic:
     active: true

@@ -78,8 +78,8 @@ fun NavigationPanel(titleVisible: Boolean, titles: ImmutableList<() -> String?>,
 
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.space3)) {
                 ThemeSwitcher(
-                    modifier = Modifier.align(Alignment.CenterVertically),
                     onSetColors = { Settings.colors = it },
+                    modifier = Modifier.align(Alignment.CenterVertically),
                 )
 
                 ProjectGithubIcon(githubUrl = Application.github, modifier = Modifier.align(Alignment.CenterVertically))

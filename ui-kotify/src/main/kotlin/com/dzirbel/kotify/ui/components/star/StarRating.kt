@@ -16,18 +16,18 @@ import com.dzirbel.kotify.ui.theme.Dimens
  * A generic star rating component, represented as a row of clickable stars.
  *
  * @param rating the current [Rating], i.e the number of stars currently given and the maximum number of stars
+ * @param onRate callback invoked when a star is clicked or the rating is cleared
  * @param modifier applied to the entire component
  * @param enabled whether rating buttons are enabled
  * @param starSize size of each star
- * @param onRate callback invoked when a star is clicked or the rating is cleared
  */
 @Composable
 fun StarRating(
     rating: Rating?,
+    onRate: (Rating?) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     starSize: Dp = Dimens.iconSmall,
-    onRate: (Rating?) -> Unit,
 ) {
     ContextMenuArea(
         enabled = rating != null,

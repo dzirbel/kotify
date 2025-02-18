@@ -88,6 +88,7 @@ fun <T> InvalidateButton(
 fun InvalidateButton(
     refreshing: Boolean,
     updated: Long?,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     error: Boolean = false,
     icon: String? = null,
@@ -98,7 +99,6 @@ fun InvalidateButton(
         relativeTime?.let { "Last fetched ${entityName?.plus(' ').orEmpty()}from Spotify ${it.formatLong()}" }
             ?: "Never fetched ${entityName?.plus(' ').orEmpty()}from Spotify"
     },
-    onClick: () -> Unit,
 ) {
     val relativeTime = updated?.let { liveRelativeTime(timestamp = updated) }
 

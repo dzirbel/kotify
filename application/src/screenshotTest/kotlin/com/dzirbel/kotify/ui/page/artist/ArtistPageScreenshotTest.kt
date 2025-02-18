@@ -34,15 +34,15 @@ internal class ArtistPageScreenshotTest {
             images = FakeImageViewModel(),
             genres = LazyTransactionStateFlow(null),
         )
-        val artistAlbums = List(20) {
+        val artistAlbums = List(20) { index ->
             ArtistAlbumViewModel(
                 artist = artist,
                 album = AlbumViewModel(
-                    id = "album-$it",
-                    name = "Album $it",
+                    id = "album-$index",
+                    name = "Album $index",
                     albumType = AlbumType.ALBUM,
                     totalTracks = 10,
-                    uri = "album-$it",
+                    uri = "album-$index",
                     images = FakeImageViewModel(),
                 ),
             )
