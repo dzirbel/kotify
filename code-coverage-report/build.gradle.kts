@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.utils.addToStdlib.measureTimeMillisWithResult
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
@@ -30,9 +29,8 @@ reporting {
         }
 
         withType<JacocoCoverageReport> {
-            tasks.register<JacocoReportFixTask>(reportTask.name + "Fix") {
-                configureFrom(reportTask)
-            }
+            tasks.register<JacocoReportFixTask>(reportTask.name + "Fix")
+                .get().configureFrom(reportTask) // on-demand configuration causes failures syncing gradle
         }
     }
 }
@@ -97,9 +95,12 @@ abstract class JacocoReportFixTask : DefaultTask() {
 
         // hack: read and write the entire file contents at once, without buffering/etc (note the report file does not
         // generally have newlines etc so parsing incrementally is non-trivial)
-        val (readMs, contents) = measureTimeMillisWithResult { file.readText() }
+        val contents: String
+        val readMs = measureTimeMillis { contents = file.readText() }
         logger.info("Read ${contents.length} characters in ${readMs.milliseconds}")
-        val (replaceMs, fixed) = measureTimeMillisWithResult { contents.replace(INVALID_METHOD, "") }
+
+        val fixed: String
+        val replaceMs = measureTimeMillis { fixed = contents.replace(INVALID_METHOD, "") }
         val sizeDiff = contents.length - fixed.length
         logger.info("Replaced $sizeDiff characters in ${replaceMs.milliseconds}")
 
