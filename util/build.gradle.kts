@@ -9,6 +9,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.immutable.collections)
 
+    testImplementation(libs.kotlinx.coroutines.test)
+
     testFixturesImplementation(libs.assertk)
     testFixturesImplementation(libs.junit5.api)
     testFixturesImplementation(libs.kotlinx.coroutines.core)

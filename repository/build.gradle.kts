@@ -23,6 +23,8 @@ dependencies {
     testFixturesImplementation(testFixtures(project(":db")))
     testFixturesImplementation(testFixtures(project(":log")))
     testFixturesImplementation(testFixtures(project(":network")))
+
+    testFixturesImplementation(compose.runtime)
 }
 
 @Suppress("UnstableApiUsage")

@@ -19,8 +19,13 @@ dependencies {
     implementation(libs.material.context.menu)
     implementation(libs.okhttp)
 
+    testImplementation(libs.kotlinx.coroutines.test)
+
     testFixturesImplementation(project(":repository"))
 
+    testFixturesImplementation(compose.runtime)
+    testFixturesImplementation(compose.ui) // required for opt-ins
+    testFixturesImplementation(compose.foundation) // required for opt-ins
     testFixturesImplementation(libs.assertk)
     testFixturesImplementation(libs.kotlinx.coroutines.test)
 }
