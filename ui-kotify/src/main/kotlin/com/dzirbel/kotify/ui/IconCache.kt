@@ -14,6 +14,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import com.dzirbel.kotify.ui.IconCache.load
+import com.dzirbel.kotify.ui.IconCache.logo
 import com.dzirbel.kotify.ui.theme.Dimens
 import com.dzirbel.kotify.ui.util.assertNotOnUIThread
 import com.dzirbel.kotify.ui.util.firstAsState
@@ -113,6 +115,9 @@ object IconCache {
 
         val iconPath = "$name.svg"
         return requireNotNull(classLoader.getResourceAsStream(iconPath)) { "Icon $iconPath not found" }
-            .use { loadSvgPainter(it, density) }
+            .use { inputStream ->
+                @Suppress("DEPRECATION") // TODO resolve
+                loadSvgPainter(inputStream, density)
+            }
     }
 }

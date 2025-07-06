@@ -1,6 +1,7 @@
 [versions]
 assertk = "0.28.1" # https://github.com/willowtreeapps/assertk
-compose = "1.6.10" # https://github.com/jetbrains/compose-jb
+compose = "1.9.0-alpha03" # https://github.com/jetbrains/compose-jb
+compose-material-icons = "1.7.3" # https://mvnrepository.com/artifact/org.jetbrains.compose.material/material-icons-core
 detekt = "1.23.7" # https://github.com/detekt/detekt
 detekt-compose = "0.4.22" # https://github.com/mrmans0n/compose-rules
 exposed = "0.50.1" # https://github.com/JetBrains/Exposed
@@ -20,6 +21,8 @@ sqlite-jdbc = "3.46.0.0" # https://github.com/xerial/sqlite-jdbc
 
 [libraries]
 assertk = { module = "com.willowtreeapps.assertk:assertk-jvm", version.ref = "assertk" }
+
+compose-material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "compose-material-icons" }
 
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 detekt-compose = { module = "io.nlopez.compose.rules:detekt", version.ref = "detekt-compose" }

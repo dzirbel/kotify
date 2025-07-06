@@ -14,6 +14,7 @@ dependencies {
 
     implementation(compose.desktop.currentOs)
 
+    implementation(libs.compose.material.icons.core)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.immutable.collections)
     implementation(libs.material.context.menu)
