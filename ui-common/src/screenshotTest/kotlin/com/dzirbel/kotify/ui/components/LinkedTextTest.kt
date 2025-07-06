@@ -7,6 +7,7 @@ import androidx.compose.ui.text.SpanStyle
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
+import com.dzirbel.kotify.ui.theme.KotifyTypography
 import com.dzirbel.screenshot.click
 import com.dzirbel.screenshot.hover
 import com.dzirbel.screenshot.screenshotTest
@@ -20,6 +21,7 @@ class LinkedTextTest {
             filename = "basic",
             windowWidth = 150,
             windowHeight = 60,
+            defaultFontFamily = KotifyTypography.Default,
         ) {
             LinkedText(
                 onClickLink = clicks::add,
@@ -43,6 +45,7 @@ class LinkedTextTest {
             filename = "hovered",
             windowWidth = 150,
             windowHeight = 60,
+            defaultFontFamily = KotifyTypography.Default,
             setUpComposeScene = {
                 hover(x = 80f, y = 10f)
             },
@@ -69,6 +72,7 @@ class LinkedTextTest {
             filename = "unhovered",
             windowWidth = 150,
             windowHeight = 60,
+            defaultFontFamily = KotifyTypography.Default,
             setUpComposeScene = {
                 hover(x = 20f, y = 10f)
             },
@@ -95,6 +99,7 @@ class LinkedTextTest {
             filename = "clicked-link",
             windowWidth = 150,
             windowHeight = 60,
+            defaultFontFamily = KotifyTypography.Default,
             setUpComposeScene = {
                 click(x = 70f, y = 10f)
             },
@@ -121,6 +126,7 @@ class LinkedTextTest {
             filename = "clicked-text",
             windowWidth = 150,
             windowHeight = 60,
+            defaultFontFamily = KotifyTypography.Default,
             setUpComposeScene = {
                 click(x = 20f, y = 10f)
             },
@@ -147,6 +153,7 @@ class LinkedTextTest {
             filename = "text-only-unhovered",
             windowWidth = 150,
             windowHeight = 60,
+            defaultFontFamily = KotifyTypography.Default,
         ) {
             LinkedText(
                 onClickLink = clicks::add,
@@ -169,6 +176,7 @@ class LinkedTextTest {
             filename = "text-only-hovered",
             windowWidth = 150,
             windowHeight = 60,
+            defaultFontFamily = KotifyTypography.Default,
             setUpComposeScene = {
                 hover(x = 40f, y = 10f)
             },
@@ -194,6 +202,7 @@ class LinkedTextTest {
             filename = "link-only-unhovered",
             windowWidth = 150,
             windowHeight = 60,
+            defaultFontFamily = KotifyTypography.Default,
         ) {
             LinkedText(
                 onClickLink = clicks::add,
@@ -215,6 +224,7 @@ class LinkedTextTest {
             filename = "link-only-hovered",
             windowWidth = 150,
             windowHeight = 60,
+            defaultFontFamily = KotifyTypography.Default,
             setUpComposeScene = {
                 hover(x = 20f, y = 10f)
             },
@@ -239,6 +249,7 @@ class LinkedTextTest {
             filename = "link-only-clicked",
             windowWidth = 150,
             windowHeight = 60,
+            defaultFontFamily = KotifyTypography.Default,
             setUpComposeScene = {
                 click(x = 20f, y = 10f)
             },

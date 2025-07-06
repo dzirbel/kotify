@@ -19,6 +19,7 @@ import com.dzirbel.kotify.ui.components.adapter.SortOrder
 import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByNumber
 import com.dzirbel.kotify.ui.components.adapter.properties.PropertyByString
 import com.dzirbel.kotify.ui.theme.Dimens
+import com.dzirbel.kotify.ui.theme.KotifyTypography
 import com.dzirbel.screenshot.screenshotTest
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -36,7 +37,11 @@ internal class TableTest {
     @ParameterizedTest
     @MethodSource("screenshotTestCases")
     fun test(testCase: ScreenshotTestCase<*>) {
-        screenshotTest(filename = testCase.filename, windowHeight = testCase.windowHeight) {
+        screenshotTest(
+            filename = testCase.filename,
+            windowHeight = testCase.windowHeight,
+            defaultFontFamily = KotifyTypography.Default,
+        ) {
             @Composable
             fun <T> ScreenshotTestCase<T>.Table() {
                 Table(

@@ -1,7 +1,10 @@
 package com.dzirbel.screenshot
 
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.use
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +23,7 @@ fun Any.screenshotTest(
     windowWidth: Int = 1024,
     windowHeight: Int = 768,
     windowDensity: Density = Density(1f),
+    defaultFontFamily: FontFamily = FontFamily.Default,
     record: Boolean = false,
     setUpComposeScene: ImageComposeScene.() -> Unit = {},
     content: @Composable () -> Unit,
@@ -30,6 +34,7 @@ fun Any.screenshotTest(
         windowWidth = windowWidth,
         windowHeight = windowHeight,
         windowDensity = windowDensity,
+        defaultFontFamily = defaultFontFamily,
         record = record,
         setUpComposeScene = setUpComposeScene,
     ) {
@@ -55,6 +60,7 @@ fun <T> Any.screenshotTest(
     windowWidth: Int = 1024,
     windowHeight: Int = 768,
     windowDensity: Density = Density(1f),
+    defaultFontFamily: FontFamily = FontFamily.Default,
     record: Boolean = false,
     setUpComposeScene: ImageComposeScene.() -> Unit = {},
     configurationName: (T) -> String = { it.toString() },
@@ -76,7 +82,9 @@ fun <T> Any.screenshotTest(
         val screenshotImage = runBlocking(Dispatchers.Swing) {
             ImageComposeScene(width = windowWidth, height = windowHeight, density = windowDensity).use { scene ->
                 scene.setContent {
-                    content(configuration)
+                    MaterialTheme(typography = Typography(defaultFontFamily = defaultFontFamily)) {
+                        content(configuration)
+                    }
                 }
 
                 scene.setUpComposeScene()
