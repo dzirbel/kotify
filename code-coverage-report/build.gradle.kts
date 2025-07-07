@@ -13,17 +13,17 @@ plugins {
 reporting {
     reports {
         create<JacocoCoverageReport>("jacocoMergedUnitTestReport") {
-            testType = TestSuiteType.UNIT_TEST
+            testSuiteName = "test"
             tasks.check.configure { finalizedBy(reportTask) }
         }
 
         create<JacocoCoverageReport>("jacocoMergedScreenshotTestReport") {
-            testType = "screenshot-test"
+            testSuiteName = "screenshotTest"
             tasks.check.configure { finalizedBy(reportTask) }
         }
 
         create<JacocoCoverageReport>("jacocoMergedIntegrationTestReport") {
-            testType = TestSuiteType.INTEGRATION_TEST
+            testSuiteName = "integrationTest"
             val integrationTest by tasks.registering(Task::class)
             integrationTest.configure { finalizedBy(reportTask) }
         }

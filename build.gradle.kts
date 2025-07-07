@@ -110,8 +110,6 @@ fun Project.configureTests() {
 
                 pluginManager.withPlugin("org.jetbrains.compose") {
                     register<JvmTestSuite>("screenshotTest") {
-                        testType = "screenshot-test"
-
                         dependencies {
                             implementation(project(":screenshot-test"))
                         }

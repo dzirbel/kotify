@@ -37,8 +37,6 @@ testing {
         }
 
         register<JvmTestSuite>("integrationTest") {
-            testType = TestSuiteType.INTEGRATION_TEST
-
             dependencies {
                 implementation(project(":util"))
                 implementation(testFixtures(project(":util")))
