@@ -10,11 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'adopt'
-          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: Download B2 binary
         run: curl https://github.com/Backblaze/B2_Command_Line_Tool/releases/download/v2.1.0/b2-linux -L -o b2
