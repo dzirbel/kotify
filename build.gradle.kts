@@ -49,7 +49,6 @@ fun Project.configureKotlin() {
         kotlin {
             compilerOptions {
                 allWarningsAsErrors = true
-                jvmTarget = libs.versions.jvm.map(JvmTarget::fromTarget)
 
                 // enable context receivers: https://github.com/Kotlin/KEEP/blob/master/proposals/context-receivers.md
                 freeCompilerArgs.add("-Xcontext-receivers")
@@ -85,7 +84,9 @@ fun Project.configureKotlin() {
 
     pluginManager.withPlugin("java") {
         java {
-            targetCompatibility = libs.versions.jvm.map { JavaVersion.valueOf("VERSION_$it") }.get()
+            toolchain {
+                languageVersion = libs.versions.jvm.map { JavaLanguageVersion.of(it) }.get()
+            }
         }
     }
 }
